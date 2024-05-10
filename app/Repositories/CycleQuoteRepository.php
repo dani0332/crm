@@ -80,7 +80,7 @@ class CycleQuoteRepository extends BaseRepository
             return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchExport()

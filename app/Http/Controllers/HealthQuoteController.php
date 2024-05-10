@@ -330,6 +330,13 @@ class HealthQuoteController extends Controller
                 QuoteStatusEnum::TransactionApproved])->values()->toArray();
         }
 
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
+
         $advisors = $this->crudService->getAdvisorsByModelType(quoteTypeCode::Health);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Health);
 
@@ -342,7 +349,7 @@ class HealthQuoteController extends Controller
             'teams' =>$userTeams,
             'quoteTypeId' => QuoteTypes::HEALTH->id(),
             'quoteType' => QuoteTypes::HEALTH->value,
-            'totalCount' => HealthQuoteRepository::getData(true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : HealthQuoteRepository::getData(true, true),
         ]);
     }
 }

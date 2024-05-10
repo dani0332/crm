@@ -109,7 +109,7 @@ class PetQuoteRepository extends BaseRepository
             return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchGetBy($column, $value)

@@ -83,10 +83,12 @@ class BusinessQuoteController extends Controller
         })->values();
 
         $gridData = $this->businessQuoteService->getGridData($this->genericModel, $request);
+        $count = $gridData->count();
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
-        $totalCount = BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
+        $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count :  BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
 
         return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount'));
     }
@@ -401,6 +403,14 @@ class BusinessQuoteController extends Controller
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Corpline);
         $insuranceTypeOptions = app(DropdownSourceService::class)->getDropdownSource('business_type_of_insurance_id', QuoteTypeId::Corpline);
 
+
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
+
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
@@ -410,7 +420,7 @@ class BusinessQuoteController extends Controller
             'insuranceTypeOptions' => $insuranceTypeOptions,
             'quoteTypeId' => QuoteTypes::BUSINESS->id(),
             'quoteType' => QuoteTypes::BUSINESS->value,
-            'totalCount' => BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true),
         ]);
     }
 }

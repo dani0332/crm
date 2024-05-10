@@ -57,11 +57,14 @@ class PetQuoteController extends Controller
             return $value['id'] != QuoteStatusEnum::Lost;
         })->values();
 
+        $count = $personalQuotes->count();
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
         return inertia('PetQuote/Index', [
-            'quotes' => $personalQuotes,
+            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
-            'totalCount' => PetQuoteRepository::getData(true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : PetQuoteRepository::getData(true, true),
         ]);
     }
 
@@ -238,6 +241,12 @@ class PetQuoteController extends Controller
                 QuoteStatusEnum::InNegotiation])->values()->toArray();
         }
 
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
 
         $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Pet);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Pet);
@@ -251,7 +260,7 @@ class PetQuoteController extends Controller
             'teams' =>$userTeams,
             'quoteTypeId' => QuoteTypes::PET->id(),
             'quoteType' => QuoteTypes::PET->value,
-            'totalCount' => PetQuoteRepository::getData(true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : PetQuoteRepository::getData(true, true),
         ]);
     }
 }

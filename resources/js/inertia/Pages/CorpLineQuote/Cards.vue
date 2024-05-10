@@ -208,6 +208,13 @@ onUnmounted(() => {
   channel.unbind('leads.count');
   channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
 });
+
+watch(
+  () => props.totalCount,
+  () => {
+    leadsCount.value = props.totalCount;
+  },
+);
 </script>
 
 <template>

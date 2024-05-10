@@ -55,11 +55,14 @@ class CycleQuoteController extends Controller
             return $value['id'] != QuoteStatusEnum::Lost;
         })->values();
 
+        $count = $personalQuotes->count();
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
         return inertia('CycleQuote/Index', [
-            'quotes' => $personalQuotes,
+            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
-            'totalCount' => CycleQuoteRepository::getData(true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : CycleQuoteRepository::getData(true, true),
         ]);
     }
 
@@ -227,6 +230,13 @@ class CycleQuoteController extends Controller
                 QuoteStatusEnum::InNegotiation, ])->values()->toArray();
         }
 
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
+
         $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Cycle);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Cycle);
 
@@ -236,7 +246,7 @@ class CycleQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
             'quoteType' => QuoteTypes::CYCLE->value,
-            'totalCount' => CycleQuoteRepository::getData(true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads :  CycleQuoteRepository::getData(true, true),
             'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,
             // 'vatPercentage' => $vatPercentage,

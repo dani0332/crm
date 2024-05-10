@@ -227,7 +227,10 @@ function onReset() {
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Health List</h2>
-        <LeadsCount :leadsCount="$page.props.totalCount" />
+        <LeadsCount
+          :leadsCount="$page.props.totalCount"
+          :key="$page.props.totalCount"
+        />
       </div>
 
       <div class="flex space-x-2 relative">

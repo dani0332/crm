@@ -265,6 +265,9 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         // inertia rendering for health quote
+        $count = $gridData->count();
+        $hasOtherFilters = count(array_diff_key($request->all(), ['page' => ''])) > 0;
+
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
@@ -291,7 +294,7 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
-                'totalCount' => HealthQuoteRepository::getData(true, true),
+                'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
             ]);
         }
 
@@ -309,7 +312,7 @@ class CRUDController extends Controller
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
-                'totalCount' => HomeQuoteRepository::getData(true, true),
+                'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HomeQuoteRepository::getData(true, true),
             ]);
         }
 
@@ -1158,6 +1161,13 @@ class CRUDController extends Controller
         }
 
 
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
+
         $advisors = $this->crudService->getAdvisorsByModelType(quoteTypeCode::Home);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
         return inertia('HomeQuote/Cards', [
@@ -1169,7 +1179,7 @@ class CRUDController extends Controller
             'teams' =>$userTeams,
             'quoteTypeId' => QuoteTypes::HOME->id(),
             'quoteType' => QuoteTypes::HOME->value,
-            'totalCount' => HomeQuoteRepository::getData(true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : HomeQuoteRepository::getData(true, true),
         ]);
     }
 

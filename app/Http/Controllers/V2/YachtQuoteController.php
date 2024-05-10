@@ -57,11 +57,14 @@ class YachtQuoteController extends Controller
             return $value['id'] != QuoteStatusEnum::Lost;
         })->values();
 
+        $count = $personalQuotes->count();
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
         return inertia('YachtQuote/Index', [
-            'quotes' => $personalQuotes,
+            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
-            'totalCount' => YachtQuoteRepository::getData(true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : YachtQuoteRepository::getData(true, true),
         ]);
     }
 
@@ -218,6 +221,13 @@ class YachtQuoteController extends Controller
                 QuoteStatusEnum::InNegotiation, ])->values()->toArray();
         }
 
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
+
         $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Yacht);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Yacht);
 
@@ -229,7 +239,7 @@ class YachtQuoteController extends Controller
             'advisors' => $advisors,
             'quoteTypeId' => QuoteTypes::YACHT->id(),
             'quoteType' => QuoteTypes::YACHT->value,
-            'totalCount' => YachtQuoteRepository::getData(true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : YachtQuoteRepository::getData(true, true),
         ]);
     }
 }
