@@ -55,10 +55,9 @@ class QuoteAllocation extends Command
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $to = now()->subMinutes(5)->toDateTimeString();
             $chunkSize = 200;
-            info('start and end dates are : '.$allocationStartDate.' and '.$to);
+            info('start and end dates are : ' . $allocationStartDate . ' and ' . $to);
             $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
-
         } else {
             info('Quote Allocation Command is turned Off');
         }
@@ -70,7 +69,7 @@ class QuoteAllocation extends Command
     {
         $processedRecords = 0;
         $shouldIncludeDubaiNow = $applicationStorageService->getValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
-        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD];
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
 
         if ($shouldIncludeDubaiNow) {
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
@@ -86,20 +85,20 @@ class QuoteAllocation extends Command
             ->where('sic_flow_enabled', 0)
             ->take($chunkSize);
 
-        info('leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
+        info('leads fetch query is : ' . $leads->toSql() . ' with params : ' . json_encode($leads->getBindings()));
 
         foreach ($leads->get() as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
-            info('Processing record for Quote Allocation with uuid: '.$lead->uuid);
+            info('Processing record for Quote Allocation with uuid: ' . $lead->uuid);
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
             $processedRecords++;
-            info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
+            info('Processed record for Quote Allocation with uuid: ' . $lead->uuid);
         }
         if ($processedRecords === 0) {
-            info('No records found for '.QuoteTypeId::getDescription($quoteType));
+            info('No records found for ' . QuoteTypeId::getDescription($quoteType));
         }
     }
 
@@ -122,7 +121,7 @@ class QuoteAllocation extends Command
             $processedRecords++;
         }
         if ($processedRecords === 0) {
-            info('No records found for '.QuoteTypeId::getDescription($quoteType));
+            info('No records found for ' . QuoteTypeId::getDescription($quoteType));
         }
     }
 }
