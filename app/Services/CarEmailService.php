@@ -88,6 +88,7 @@ class CarEmailService extends BaseService
             $emailData->renewalDueDate = $carbonDate;
         }
         info('emailData: '.json_encode($emailData));
+
         return $emailData;
     }
 
@@ -135,7 +136,7 @@ class CarEmailService extends BaseService
 
         $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
         if ($campaign) {
-        if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
+            if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
                 $wfsBanner = $campaign->banners->buyPolicy;
             }
             if (property_exists($campaign, 'landingPage')) {
