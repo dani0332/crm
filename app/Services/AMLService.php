@@ -54,6 +54,7 @@ class AMLService
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
+
         return Carbon::createFromFormat(
             config('constants.DATE_FORMAT_ONLY'),
             Carbon::parse($createdDate)->format(config('constants.DATE_FORMAT_ONLY'))
