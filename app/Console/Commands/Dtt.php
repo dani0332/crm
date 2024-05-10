@@ -86,7 +86,6 @@ class Dtt extends Command
 
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
-            info($logPrefix.'isTierR - '.! $isTierR);
             if (! $isTierR) {
                 $jobs[] = new CarRevivalLeadsCreationJob($carLead);
             }
@@ -109,7 +108,7 @@ class Dtt extends Command
                 ->withDelay(2)
                 ->dispatch();
         } else {
-            info('------No lead Found------');
+            info($logPrefix.'------No lead Found------');
         }
     }
 }
