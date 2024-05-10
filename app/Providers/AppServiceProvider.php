@@ -19,7 +19,6 @@ use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
-use App\Models\Payment;
 use App\Observers\BikeQuoteObserver;
 use App\Observers\BusinessQuoteDetailObserver;
 use App\Observers\BusinessQuoteObserver;
@@ -37,7 +36,6 @@ use App\Observers\PetQuoteObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
-use App\Observers\PaymentObserver;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use Illuminate\Support\ServiceProvider;
@@ -83,8 +81,7 @@ class AppServiceProvider extends ServiceProvider
         YachtQuote::observe(YachtQuoteObserver::class);
         CycleQuote::observe(CycleQuoteObserver::class);
         BikeQuote::observe(BikeQuoteObserver::class);
-        PersonalQuote::observe(PersonalQuoteObserver::class);
-        
+        PersonalQuote::observe(PersonalQuoteObserver::class);        
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

@@ -522,11 +522,11 @@ class SplitPaymentService
     {
         $paymentStatusText = $quotePaymentStatusText;
         if($quotePaymentStatusId == PaymentStatusEnum::CAPTURED ){
-            $paymentStatusText = 'PAID';
+            $paymentStatusText = PaymentStatusEnum::PAID_TEXT;
         } else if ($quotePaymentStatusId == PaymentStatusEnum::DRAFT){
-            $paymentStatusText = 'NEW';
+            $paymentStatusText = PaymentStatusEnum::NEW_TEXT;
         } else if ($quotePaymentStatusId == PaymentStatusEnum::PARTIAL_CAPTURED) {
-            $paymentStatusText = 'PARTIALLY_PAID';
+            $paymentStatusText = PaymentStatusEnum::PARTIALLY_PAID_TEXT;
         }
         return $paymentStatusText;
     }
