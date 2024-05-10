@@ -3,6 +3,8 @@ import moment from 'moment';
 
 const page = usePage();
 
+const { price_vat_notapplicable, amount } = useRules();
+
 const props = defineProps({
   record: {
     type: Object,
@@ -264,6 +266,7 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_notapplicable"
                   @change="caculateVatAmount"
+                  :rules="[price_vat_notapplicable]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
                   class="w-full"
@@ -310,6 +313,7 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.amount"
                   @change="caculateVatAmount"
+                  :rules="[amount]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"
                   class="w-full"
