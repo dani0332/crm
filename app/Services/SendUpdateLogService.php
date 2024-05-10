@@ -504,7 +504,7 @@ class SendUpdateLogService
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
         // send update to customer button visibility validations.
-            if ($sendUpdateCode != SendUpdateLogStatusEnum::CPD && $requiredDocumentsCheck == count($requiredDocuments)) {
+        if ($sendUpdateCode != SendUpdateLogStatusEnum::CPD && $requiredDocumentsCheck == count($requiredDocuments)) {
             return SendUpdateLogStatusEnum::SUC;
         }
 
