@@ -90,7 +90,7 @@ class HandleInertiaRequests extends Middleware
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
-            'policyIssuanceStatusEnum'=> PolicyIssuanceStatusEnum::asArray(),
+            'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
         ];
     }
 

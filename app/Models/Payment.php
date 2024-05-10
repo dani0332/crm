@@ -202,7 +202,6 @@ class Payment extends Model implements Auditable
         }
     }
 
-
     public function sendUpdateLog()
     {
         return $this->belongsTo(SendUpdateLog::class, 'send_update_log_id', 'id');

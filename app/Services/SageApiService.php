@@ -16,8 +16,8 @@ use App\Models\PaymentSplits;
 use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\SageApiLogRepository;
-use App\Traits\GenericQueriesAllLobs;
 use App\Repositories\SendUpdateLogRepository;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
 
