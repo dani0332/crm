@@ -31,6 +31,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     use GenericQueriesAllLobs;
 
     private $lead = null;
+
     /**
      * Create a new job instance.
      *
@@ -48,6 +49,12 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
+        $this->lead->refresh();
+        if ($this->lead->is_revived) {
+            info('carRevivalParentLead - '.$this->lead->uuid.' - Lead Already Revived');
+
+            return false;
+        }
         try {
             $dataArr = [
                 'firstName' => $this->lead->first_name,
@@ -99,13 +106,10 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 info('carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- quotePlansCount '.$quotePlansCount);
 
                 if ($quotePlansCount == 0) {
-
                     $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_ZERO_PLAN;
                 } elseif ($quotePlansCount == 1) {
-
                     $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_SINGLE_PLAN;
                 } else {
-
                     $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_MULTIPLE_PLANS;
                 }
                 $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
@@ -144,7 +148,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 info('carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- emailResponse '.json_encode($response));
                 if ($response == 201) {
-
                     info('carRevivalParentLead -'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'- emailSent -- '.$emailData->customerEmail);
 
                     DttRevival::create([
@@ -163,7 +166,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     info('carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'emailIsNotSent - '.$emailData->customerEmail);
                 }
             } else {
-
                 info('carRevivalParentLead -'.$this->lead->uuid.'- capiResponseError - '.json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
