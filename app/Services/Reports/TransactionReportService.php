@@ -54,7 +54,7 @@ class TransactionReportService extends ManagementReport
                 'btoi.text as sub_type_line_of_business'
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->join('payment_splits as ps', 'personal_quotes.code', '=', 'ps.code')
+            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
