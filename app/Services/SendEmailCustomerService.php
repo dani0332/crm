@@ -592,13 +592,13 @@ class SendEmailCustomerService extends BaseService
                 ->timeout(20)
                 ->retry(3, 90000)
                 ->post($this->url, $body);
-            info('sendDttEmail ---- Request Sent');
 
             $responseCode = $response->status();
             $response = json_decode(json_encode($responseCode.' '.$response->body()), true);
 
             if ($responseCode == 201) {
                 $isEmailSent = 1;
+                info('sendDttEmail - Email Sent - Ref-ID: '.$emailData->uuid);
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
