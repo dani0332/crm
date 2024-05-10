@@ -51,7 +51,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     {
         $this->lead->refresh();
         if ($this->lead->is_revived) {
-            info('carRevivalParentLead - '.$this->lead->uuid.' - Lead Already Revived');
+            info('CarRevivalLeadsCreationJob - '.$this->lead->uuid.' - Lead Already Revived');
 
             return false;
         }
