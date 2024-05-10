@@ -73,7 +73,11 @@ const selectedCategory = computed(() => {
 // as per the link 'Transaction Type' column -> https://docs.google.com/spreadsheets/d/1TE7RfMpEtL7kenl8s1DUVKRvP_DbUvCJ82XyCFYJ7Rw/edit#gid=803033517
 const transactionType = computed(() => {
   if (
-    ['CI', 'CIR', 'CPD'].includes(selectedCategory?.value?.subCategory.slug)
+    [
+      page.props.sendUpdateLogStatusEnum.CI,
+      page.props.sendUpdateLogStatusEnum.CIR,
+      page.props.sendUpdateLogStatusEnum.CPD,
+    ].includes(selectedCategory?.value?.subCategory.slug)
   ) {
     return 'Endorsement';
   }
@@ -92,9 +96,12 @@ const updateLogOptions = computed(() => {
 const isUpdateBooked = computed(() => {
   return (
     props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED &&
-    ['EF', 'CI', 'CIR', 'CPD'].includes(
-      selectedCategory?.value?.subCategory.slug,
-    )
+    [
+      page.props.sendUpdateLogStatusEnum.EF,
+      page.props.sendUpdateLogStatusEnum.CI,
+      page.props.sendUpdateLogStatusEnum.CIR,
+      page.props.sendUpdateLogStatusEnum.CPD,
+    ].includes(selectedCategory?.value?.subCategory.slug)
   );
 });
 
@@ -281,10 +288,14 @@ const isBookingDetailsVisible = computed(() => {
           <div class="grid sm:grid-cols-2">
             <template
               v-if="
-                selectedCategory.subCategory.slug !== 'CI' &&
-                selectedCategory.subCategory.slug !== 'CIR' &&
-                selectedCategory.subCategory.slug !== 'CPU' &&
-                selectedCategory.subCategory.slug !== 'CPD'
+                selectedCategory.subCategory.slug !==
+                  page.props.sendUpdateLogStatusEnum.CI &&
+                selectedCategory.subCategory.slug !==
+                  page.props.sendUpdateLogStatusEnum.CIR &&
+                selectedCategory.subCategory.slug !==
+                  page.props.sendUpdateLogStatusEnum.CPU &&
+                selectedCategory.subCategory.slug !==
+                  page.props.sendUpdateLogStatusEnum.CPD
               "
             >
               <dt>
@@ -367,7 +378,11 @@ const isBookingDetailsVisible = computed(() => {
       :quoteType="props.quoteType"
       :payments="props.payments || []"
       :proformaPayment="
-        payments.find(item => item.payment_methods_code === 'PPR')
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
       "
       :paymentDocument="props.paymentDocumentTypes"
       :quoteRequest="props.quoteRequest"

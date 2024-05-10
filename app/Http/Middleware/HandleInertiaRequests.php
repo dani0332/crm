@@ -16,6 +16,7 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Services\SplitPaymentService;
@@ -84,6 +85,7 @@ class HandleInertiaRequests extends Middleware
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'vat' => ApplicationStorageEnums::VAT,
             'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
+            'sendUpdateLogStatusEnum' => SendUpdateLogStatusEnum::asArray(),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'im_logo' => getIMLogo(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),

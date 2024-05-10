@@ -59,9 +59,11 @@ const policyIssuanceStatusOptions = computed(() => {
 const planQuoteInsurerNumber = computed(() => {
   let quotePlanList = page.props?.listQuotePlans;
   if (!quotePlanList || typeof quotePlanList === 'string') return null;
-  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
+  let quotePlan = quotePlanList?.filter(
+    item => item.id == page.props.record.plan_id,
+  );
 
-  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
+  return quotePlan === undefined ? null : quotePlan[0]?.insurerQuoteNo || null;
 });
 
 const policyDetailsState = reactive({
