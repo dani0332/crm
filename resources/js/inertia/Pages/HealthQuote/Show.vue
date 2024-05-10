@@ -2552,7 +2552,7 @@ watch(
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ quote.paid_at_payments? quote.paid_at_payments: 'N/AAA'}}</dd>
+            <dd>{{ quote.paid_at_payments? quote.paid_at_payments: 'N/A'}}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NETWORK</dt>
