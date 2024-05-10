@@ -36,12 +36,14 @@ const dateToYMD = date => {
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
-const quoteStatusEnum= page.props.quoteStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const policyIssuanceStatusOptions = computed(() => {
-  let policyIssuanceStatus= page.props.policyIssuanceStatus;
-  if( props.record.quote_status_id != quoteStatusEnum.PolicyIssued){
-    policyIssuanceStatus = policyIssuanceStatus.filter(item => item.text !== "Policy Issued");
+  let policyIssuanceStatus = page.props.policyIssuanceStatus;
+  if (props.record.quote_status_id != quoteStatusEnum.PolicyIssued) {
+    policyIssuanceStatus = policyIssuanceStatus.filter(
+      item => item.text !== 'Policy Issued',
+    );
   }
   return policyIssuanceStatus.map(item => {
     return {
@@ -49,8 +51,7 @@ const policyIssuanceStatusOptions = computed(() => {
       label: item.text,
     };
   });
-
- });
+});
 
 const planQuoteInsurerNumber = computed(() => {
   let obj = page.props?.listQuotePlans?.filter(
@@ -209,7 +210,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >Policy Number</label
                   >
                   <template #tooltip>
@@ -229,7 +230,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >ISSUANCE DATE</label
                   >
                   <template #tooltip>
@@ -251,7 +252,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >Price (VAT NOT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -275,7 +276,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >Start Date</label
                   >
                   <template #tooltip>
@@ -297,7 +298,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >Price (VAT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -321,7 +322,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >Expiry Date</label
                   >
                   <template #tooltip>
@@ -347,7 +348,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >Total VAT Amount</label
                   >
                   <template #tooltip>
@@ -368,7 +369,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >Total Price</label
                   >
                   <template #tooltip>
@@ -389,7 +390,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >Insurer Quote Number</label
                   >
                   <template #tooltip>
@@ -409,7 +410,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
                     >Issuance Status</label
                   >
                   <template #tooltip>
@@ -452,7 +453,8 @@ watch(
               <template
                 class="flex justify-end"
                 v-if="
-                  record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                  record.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
                   record.quote_status_id == quoteStatusEnum.PolicyPending ||
                   record.quote_status_id == quoteStatusEnum.PolicyIssued ||
                   record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
