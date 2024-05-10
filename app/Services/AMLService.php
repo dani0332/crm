@@ -27,7 +27,6 @@ use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use Carbon\Carbon;
-use Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -55,7 +54,6 @@ class AMLService
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
-
         return Carbon::createFromFormat(
             config('constants.DATE_FORMAT_ONLY'),
             Carbon::parse($createdDate)->format(config('constants.DATE_FORMAT_ONLY'))
@@ -213,7 +211,7 @@ class AMLService
 
     public static function sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode)
     {
-        $emailSystem = config('constants.emailL_sys');
+        $emailSystem = config('constants.APP_ENV');
         $errorEmailRecipients = explode(',', config('constants.ERROR_EMAIL_RECIPIENTS'));
 
         $subject = $emailSystem.' BRIDGER SEARCH API ERROR | '.\Request::url().' | '.date(config('constants.DB_DATE_FORMAT_MATCH'));
@@ -228,7 +226,7 @@ class AMLService
     public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
     {
         $emailRecipients = [];
-        $emailSystem = config('constants.emailL_sys');
+        $emailSystem = config('constants.APP_ENV');
         $complianceRole = $forComplianceSuperUser ? [RolesEnum::ComplianceSuperUser] : [RolesEnum::COMPLIANCE, RolesEnum::ComplianceSuperUser];
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
@@ -349,9 +347,8 @@ class AMLService
     public function checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, $isEmailSendingEnabled, $yob, $companyName)
     {
         $quoteId = $quoteRequestId;
-        $amlEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
-        $emailL_sys = Config::get('constants.emailL_sys');
-        $appUrl = env('APP_URL');
+        $amlEndPoint = config('constants.AML_SEARCH_API_ENDPOINT');
+        $appUrl = config('constants.APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
         $checkAMLResponseEntity = false;
         $isAMLResultFound = false;
@@ -390,9 +387,9 @@ class AMLService
             if ($isEmailSendingEnabled && $quoteCdbId) {
                 $fullName = $firstName.' '.$lastName;
                 if ($companyName != null) {
-                    $this->sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $checkAMLResponseEntity, $companyName, $quoteTypeName, $quoteCdbId);
+                    $this->sendAMLMatchedEmailComplianceTeam($amlUrl, $checkAMLResponseEntity, $companyName, $quoteTypeName, $quoteCdbId);
                 }
-                $this->sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $checkAMLResponseIndividual, $fullName, $quoteTypeName, $quoteCdbId);
+                $this->sendAMLMatchedEmailComplianceTeam($amlUrl, $checkAMLResponseIndividual, $fullName, $quoteTypeName, $quoteCdbId);
             }
         }
 
@@ -400,7 +397,7 @@ class AMLService
 
         return ''; // return http code
     }
-    public function checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl)
+    private function checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl)
     {
         // creating the data for the request
         $requestDataForEntity = [];
@@ -432,7 +429,7 @@ class AMLService
 
         return $response;
     }
-    public function checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl)
+    private function checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl)
     {
         // creating the data for the request
         $requestDataForIndividual = [];
@@ -470,11 +467,12 @@ class AMLService
         return $response;
     }
     // Match found Email
-    public function sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $AMLResponse, $fullName, $quoteTypeName, $quoteCdbId)
+    private function sendAMLMatchedEmailComplianceTeam($amlUrl, $AMLResponse, $fullName, $quoteTypeName, $quoteCdbId)
     {
         if ($AMLResponse['resultsFound'] == 0) {
             return;
         }
+        $emailL_sys = config('constants.APP_ENV');
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
@@ -497,16 +495,17 @@ class AMLService
             'fullName' => $fullName,
             'quoteTypeName' => $quoteTypeName,
             'quoteCdbId' => $quoteCdbId,
-        ], $emailSubject, $emailRecipients, $emailL_sys);
+        ], $emailSubject, $emailRecipients);
     }
-    public function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
+    private function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients)
     {
+        $emailL_sys = config('constants.APP_ENV');
         if ($emailL_sys == 'PRODUCTION') {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
-            $fromName = Config::get('constants.MAIL_FROM_NAME_AML');
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = config('constants.MAIL_FROM_NAME_AML');
         } else {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
-            $fromName = Config::get('constants.MAIL_FROM_NAME');
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+            $fromName = config('constants.MAIL_FROM_NAME');
         }
 
         Mail::send(
@@ -547,14 +546,14 @@ class AMLService
             $ccRecipients = $complianceEmailRecipients;
         }
 
-        $emailL_sys = Config::get('constants.emailL_sys');
+        $emailL_sys = config('constants.APP_ENV');
         if ($emailL_sys == 'PRODUCTION') {
             $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         } else {
             $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         }
 
-        $appUrl = env('APP_URL');
+        $appUrl = config('constants.APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
 
         $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
@@ -563,16 +562,17 @@ class AMLService
             'clientFullName' => $clientFullName,
             'quoteTypeName' => $quoteTypeText,
             'quoteCdbId' => $quoteCdbId,
-        ], $emailSubject, $toRecipient, $ccRecipients, $emailL_sys);
+        ], $emailSubject, $toRecipient, $ccRecipients);
     }
-    public function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients, $emailL_sys)
+    private function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients)
     {
+        $emailL_sys = config('constants.APP_ENV');
         if ($emailL_sys == 'PRODUCTION') {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
-            $fromName = Config::get('constants.MAIL_FROM_NAME_AML');
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = config('constants.MAIL_FROM_NAME_AML');
         } else {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
-            $fromName = Config::get('constants.MAIL_FROM_NAME');
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+            $fromName = config('constants.MAIL_FROM_NAME');
         }
 
         Mail::send(
@@ -586,10 +586,10 @@ class AMLService
     }
 
     // Error Email
-    public function sendAMLErrorEmailEngTeam($emailAmlData, $amlUrl, $chAmlStatus, $requestMessage)
+    private function sendAMLErrorEmailEngTeam($emailAmlData, $amlUrl, $chAmlStatus, $requestMessage)
     {
-        $email_sys = Config::get('constants.emailL_sys');
-        $errorEmailRecipients = Config::get('constants.ERROR_EMAIL_RECIPIENTS');
+        $email_sys = config('constants.APP_ENV');
+        $errorEmailRecipients = config('constants.ERROR_EMAIL_RECIPIENTS');
         $errorEmailRecipients = explode(',', $errorEmailRecipients);
         $subject = $email_sys.' RYU SEARCH API ERROR | '.\Request::url().' | '.date('d-m-Y H:i:s');
         MailService::sendEmail('AmlErrorMail', [
