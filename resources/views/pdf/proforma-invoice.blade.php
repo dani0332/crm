@@ -380,8 +380,10 @@
     $vat = 0;
 
     if($isRequestFromSendUpdateLogPage){
-        $subTotal =  $proformaPaymentRequest->total_price;
+        $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
+        $subTotal =  $sendUpdateLog->price_with_vat ?? $sendUpdateLog->price_without_vat;
         $totalAmount =  $proformaPaymentRequest->total_price;
+        $vat =  $sendUpdateLog->price_with_vat ? $totalAmount - $subTotal : 0; // if price with vat then vat = total - subTotal else 0
     }else{
         $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
         $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
