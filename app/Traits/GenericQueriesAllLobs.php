@@ -301,6 +301,14 @@ trait GenericQueriesAllLobs
                 }
                 $payment->total_amount -= $difference;
             }
+            // Case 2 if difference is greater than 0.99 and system adjusted discount is greater than 0 then subtract system adjusted discount from discount value
+            else if($difference > 0.99 && $payment->system_adjusted_discount > 0) {
+                $payment->discount_value -= $payment->system_adjusted_discount;
+                $payment->system_adjusted_discount = 0;
+                if ($payment->discount_type == 'system_adjusted_discount'){
+                    $payment->discount_type = null;
+                }
+            }
             // If status is partially paid & total price is less than price with vat then set status to partially paid
             if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
@@ -310,7 +318,7 @@ trait GenericQueriesAllLobs
             // total total_amount is after subtracting from discount
             $payment->total_amount = $payment->discount_value ? ($quoteModel->price_with_vat - $payment->discount_value) : $quoteModel->price_with_vat;
             $payment->save();
-            
+            // If payment frequency is upfront then update payment split amount && if not then set isSplitPayment to true
             if ($payment->frequency == 'upfront') {
                 $splitPayment= $payment->paymentSplits()->first();
                 $splitPayment->payment_amount = $payment->total_amount;
@@ -318,7 +326,7 @@ trait GenericQueriesAllLobs
             } else {
                 $isSplitPayment = true;
             }
-        }
+        } 
         return $isSplitPayment;
     }
     
