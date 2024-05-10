@@ -2055,8 +2055,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <dd>{{ selectedProviderPlan.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PAID AT</dt>
+            <dt class="font-medium">AUTHORISED AT</dt>
             <dd>{{ ecomDetails.paidAt }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAID AT</dt>
+            <dd>{{ ecomDetails.paidAtPayment }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>

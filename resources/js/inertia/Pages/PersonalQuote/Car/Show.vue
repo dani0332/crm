@@ -1610,8 +1610,12 @@ const handlePlanSelected = plan => {
             <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AUTHORISED AT</dt>
+            <dd>{{ record.paid_at ?? 'N/A' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ record.paid_at ?? '' }}</dd>
+            <dd>{{ record.paid_at_payments ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>

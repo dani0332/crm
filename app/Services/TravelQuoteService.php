@@ -60,6 +60,7 @@ class TravelQuoteService extends BaseService
             DB::raw('DATE_FORMAT(tqr.dob, "%d-%m-%Y") as dob'),
             'tqr.premium',
             'tqr.paid_at',
+            'tqr.paid_at_payments',
             'tqr.source',
             'tqr.policy_number',
             'tqr.nationality_id',

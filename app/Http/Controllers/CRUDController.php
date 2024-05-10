@@ -612,6 +612,7 @@ class CRUDController extends Controller
             $carMakeText = $record->car_make_id_text ?? '';
             $carModelText = $record->car_model_id_text ?? '';
             $this->carQuoteService->addOrUpdateQuoteViewCount($record);
+            $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id,$record->payment_status_id_text);
 
             foreach ($payments as $payment) {
                 $payment->payment_status_text = $payment->paymentStatus->text;
