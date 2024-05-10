@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -711,5 +712,25 @@ class SendUpdateLogService
         }
 
         return $quoteCode.'-'.$countPayments;
+    }
+
+    public function checkSendUpdatePermission($sendUpdateType): bool
+    {
+        switch ($sendUpdateType) {
+            case SendUpdateLogStatusEnum::EF:
+                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD);
+            case SendUpdateLogStatusEnum::EN:
+                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD);
+            case SendUpdateLogStatusEnum::CI:
+                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD);
+            case SendUpdateLogStatusEnum::CIR:
+                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD);
+            case SendUpdateLogStatusEnum::CPU:
+                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD);
+            case SendUpdateLogStatusEnum::CPD:
+                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD);
+            default:
+                return false;
+        }
     }
 }

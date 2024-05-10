@@ -111,6 +111,9 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        if ($this->sendUpdateLogService->checkSendUpdatePermission(explode('-', $sendUpdateLog->code)[0])) {
+            return redirect()->back()->with('error', 'You don\'t have permission to this. ');
+        }
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
 
