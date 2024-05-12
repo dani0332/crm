@@ -111,11 +111,22 @@ export const useConvertDate = date =>
 export const useDaysSinceStale = payload =>
 {
   const quoteRequest = payload;
-  const stale_days = quoteRequest
+  let stale_days = quoteRequest
     ? Math.round((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
     : false;
 
-  return (typeof stale_days === 'number' && stale_days <= 90) ? (stale_days === 0 ? 1 + ' day' : stale_days + ' days') : false;
+  if (typeof stale_days === 'number' && stale_days <= 89)
+  {
+    if (stale_days == 0)
+    {
+      stale_days += 1
+      return stale_days + ' day';
+    } else if (stale_days == 1)
+    {
+      return stale_days + ' day';
+    } else
+      return stale_days + ' days';
+  }
 
 };
 
