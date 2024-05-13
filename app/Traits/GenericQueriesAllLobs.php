@@ -320,9 +320,10 @@ trait GenericQueriesAllLobs
             // total total_amount is after subtracting from discount
             $payment->total_amount = $payment->discount_value ? ($quoteModel->price_with_vat - $payment->discount_value) : $quoteModel->price_with_vat;
             $payment->save();
+
+            $splitPayment= $payment->paymentSplits()->first();
             // If payment frequency is upfront then update payment split amount && if not then set isSplitPayment to true
-            if ($payment->frequency == 'upfront' &&  $payment->payment_status_id !== PaymentStatusEnum::PAID) {
-                $splitPayment= $payment->paymentSplits()->first();
+            if ($payment->frequency == 'upfront' &&  $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 $splitPayment->payment_amount = $payment->total_amount;
                 $splitPayment->save();
             } else if($payment->frequency != 'upfront') {
