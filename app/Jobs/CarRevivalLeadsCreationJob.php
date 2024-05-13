@@ -11,6 +11,7 @@ use App\Facades\Capi;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
+use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
@@ -153,10 +154,14 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 if ($response == 201) {
                     info('carRevivalParentLead -'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'- emailSent -- '.$emailData->customerEmail);
 
+                    // Get the latest quote batch and assign it to the lead.
+                    $quoteBatch = QuoteBatches::latest()->first();
+
                     DttRevival::create([
                         'quote_type_id' => QuoteTypes::CAR->id(),
                         'quote_id' => $carQuote->id,
                         'uuid' => $capiResponse->quoteUID,
+                        'revival_quote_batch_id' => $quoteBatch->id,
                         'email_sent' => true,
                     ]);
 
