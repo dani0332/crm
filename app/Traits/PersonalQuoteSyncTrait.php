@@ -28,19 +28,14 @@ trait PersonalQuoteSyncTrait
 {
     public function syncQuote($quote, $updatedFields)
     {
-        // update personal quote
+        $this->syncEntry($quote->uuid);
+
+        // get personal quote
         $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-        $quoteSyncEntries = QuoteSync::where('is_synced', false)->where('quote_uuid', $quote->uuid)->count();
+        if (! $personalQuote) {
+            Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
 
-        if (! $personalQuote || $quoteSyncEntries > 0) {
-            $this->syncEntry($quote->uuid);
-
-            $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-            if (! $personalQuote) {
-                Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
-
-                return;
-            }
+            return;
         }
 
         $this->syncTable($personalQuote, $updatedFields, 'personal_quotes');
@@ -49,19 +44,14 @@ trait PersonalQuoteSyncTrait
 
     public function syncQuoteDetail($quote, $updatedFields)
     {
+        $this->syncEntry($quote->uuid);
+
         // get personal quote
         $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-        $quoteSyncEntries = QuoteSync::where('is_synced', false)->where('quote_uuid', $quote->uuid)->count();
+        if (! $personalQuote) {
+            Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
 
-        if (! $personalQuote || $quoteSyncEntries > 0) {
-            $this->syncEntry($quote->uuid);
-
-            $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-            if (! $personalQuote) {
-                Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
-
-                return;
-            }
+            return;
         }
 
         // update personal quote details
