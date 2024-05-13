@@ -104,7 +104,7 @@ use App\Enums\PermissionsEnum;
                 PermissionsEnum::CycleQuotesList,
                 PermissionsEnum::YachtQuotesList,
                 PermissionsEnum::JetskiQuotesList,
-                PermissionsEnum::UtmLeadsSalesReport
+                PermissionsEnum::UtmLeadsSalesReport,
                 PermissionsEnum::CAR_REVIVAL_QUOTE_LIST
                 ])
                 <ul class="nav side-menu">

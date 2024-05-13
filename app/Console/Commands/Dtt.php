@@ -67,6 +67,13 @@ class Dtt extends Command
 
         $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
+        $excludeSources = ['AFIA Renewal', 'afia.ae enquiry', 'AQEED_LEAD', 'AQEED_RENEWALS', 'AQEED_REVIVAL', 'ARABIC_ADVISORY', 'ARABIC_CALL_DESK', 'ARABIC_TELE_MARKETING', 'asd', 'BDM', 'CALL_DESK', 'CALL_DESK_WHATSAPP', 'car form', 'carinsurance.ae', 'CarVault- Affinity Motor',
+            'CORPLINE_NB', 'CROSS_SELL', 'DUBAI_NOW', 'ECOM', 'Enquiry from reception (not an existing client)', 'Existing clients new business', 'Home - InsuranceMarket.ae', 'IM_PRIO', 'IMCRM', 'Medical & Life - InsuranceMarket.ae', 'Mobile', 'Motor Enquiry on InsuranceMarket.ae',
+            'Motor inquiry on Protectmycar.ae', 'Motor inquiry on zoompolicy.com', 'My personal contact (not an existing client)', 'postman', 'RECYCLED', 'REFERRAL',
+            'Referral from an existing client', 'Renewal_upload', 'REVIVAL', 'Revived Lead - InsuranceMarket.ae', 'test', 'test_postman', 'TIER_L_FUTUREDATELEADS', 'TIER_L_QUALFIED', 'TM_FACEBOOK', 'TM_OFFSHORE', 'TM_ORGANIC', 'TM_RENEWALS',
+            'TM_SP_RENEWAL', 'TM_WHATSAPP', 'TPL_COMP', 'TPL_Renewal', 'TPL_RENEWALS', 'Travel - InsuranceMarket.ae', 'Walk In Client (not an existing client)', 'web', LeadSourceEnum::RENEWAL_UPLOAD,
+        ];
+
         $jobs = [];
         $logPrefix = 'CarRevivalLeadsCreationJob -';
         $leads = CarQuote::where('is_revived', '=', false)
@@ -77,7 +84,7 @@ class Dtt extends Command
                 $q->where('source', '!=', LeadSourceEnum::REVIVAL)
                     ->where('created_at', '<=', $datethirtyDaysBefore);
             })
-            ->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->whereNotIn('source', $excludeSources)
             ->whereNull('renewal_batch')
             ->whereNull('previous_quote_policy_number')
 
