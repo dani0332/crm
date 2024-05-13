@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\CarRevivalLeadsCreationJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
@@ -54,18 +55,22 @@ class Dtt extends Command
 
             return false;
         }
+        $dttInProgress = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS);
+        if ($dttInProgress == 1) {
+
+            info('DTT already in progress');
+
+            return false;
+        }
+
         $dateOne = Carbon::now()->subMonths(11)->toDateString();
-        $dateTwo = Carbon::now()->subYear(1)->subMonths(11)->toDateString();
 
         $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
         $jobs = [];
         $logPrefix = 'CarRevivalLeadsCreationJob -';
         $leads = CarQuote::where('is_revived', '=', false)
-            ->where(function ($q) use ($dateOne, $dateTwo) {
-                $q->whereDate('created_at', '=', $dateOne);
-                $q->orWhereDate('created_at', '=', $dateTwo);
-            })
+            ->whereDate('created_at', '=', $dateOne)
 
             ->whereNotNull(['email'])
             ->where(function ($q) use ($datethirtyDaysBefore) {
@@ -92,6 +97,8 @@ class Dtt extends Command
         }
 
         if ($jobs != null && count($jobs)) {
+
+            ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS)->update(['value' => true]);
             Haystack::build()
                 ->addJobs($jobs)
 
@@ -102,10 +109,12 @@ class Dtt extends Command
                     info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
+
+                    ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS)->update(['value' => false]);
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(2)
+                ->withDelay(30)
                 ->dispatch();
         } else {
             info($logPrefix.'------No lead Found------');
