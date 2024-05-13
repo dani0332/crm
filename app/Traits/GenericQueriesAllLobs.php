@@ -287,7 +287,7 @@ trait GenericQueriesAllLobs
     {
         $isSplitPayment = false;
         $payment = $quoteModel->payments()->first();
-        if ($payment && $quoteModel->price_with_vat != $payment->total_price) {
+        if (true || $payment && $quoteModel->price_with_vat != $payment->total_price) {
             $difference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
             // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
             if ($difference <= 0.99 && $difference > 0) {
@@ -312,6 +312,8 @@ trait GenericQueriesAllLobs
             // If status is partially paid & total price is less than price with vat then set status to partially paid
             if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+            } elseif($quoteModel->price_with_vat <= ($payment->captured_amount + $payment->discount_value)){
+                $payment->payment_status_id = PaymentStatusEnum::PAID;
             }
             // total price is actual price without discount
             $payment->total_price = $quoteModel->price_with_vat;
@@ -319,11 +321,11 @@ trait GenericQueriesAllLobs
             $payment->total_amount = $payment->discount_value ? ($quoteModel->price_with_vat - $payment->discount_value) : $quoteModel->price_with_vat;
             $payment->save();
             // If payment frequency is upfront then update payment split amount && if not then set isSplitPayment to true
-            if ($payment->frequency == 'upfront') {
+            if ($payment->frequency == 'upfront' &&  $payment->payment_status_id !== PaymentStatusEnum::PAID) {
                 $splitPayment= $payment->paymentSplits()->first();
                 $splitPayment->payment_amount = $payment->total_amount;
                 $splitPayment->save();
-            } else {
+            } else if($payment->frequency != 'upfront') {
                 $isSplitPayment = true;
             }
         } 
