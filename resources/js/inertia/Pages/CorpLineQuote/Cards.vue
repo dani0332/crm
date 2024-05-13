@@ -18,7 +18,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
 const isAllowed = computed(() => {
-  return hasAnyRole([
+  return !hasAnyRole([
     rolesEnum.CORPLINE_RENEWAL_ADVISOR,
     rolesEnum.CORPLINE_NEW_BUSINESS_ADVISOR,
     rolesEnum.CORPLINE_ADVISOR,
