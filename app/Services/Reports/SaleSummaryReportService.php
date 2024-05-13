@@ -2,14 +2,15 @@
 
 namespace App\Services\Reports;
 
-use App\Enums\ManagementReportCategoriesEnum;
-use App\Enums\ManagementReportTypeEnum;
-use App\Models\PersonalQuote;
-use App\Strategies\ManagementReport;
-use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Models\PersonalQuote;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
+use App\Strategies\ManagementReport;
+use App\Enums\ManagementReportTypeEnum;
+use App\Enums\ManagementReportCategoriesEnum;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SaleSummaryReportService extends ManagementReport
 {
@@ -88,6 +89,12 @@ class SaleSummaryReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
 
+        if ($request->excel)
+        {
+            // dd($query->get()->toArray());
+            return $this->download('sale-summary-report', $query->get());
+        }
+
         return $query->simplePaginate(10)->withQueryString();
     }
 
@@ -117,5 +124,55 @@ class SaleSummaryReportService extends ManagementReport
             'reportCategory' => ManagementReportCategoriesEnum::SALE_SUMMARY,
             'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
         ];
+    }
+
+    public function headings(): array
+    {
+        return [
+            'Group By',
+            'Total Policies',
+            'Total Endorsements',
+            'Total Transactions',
+            'Price (VAT applicable)',
+            'Total VAT',
+            'Price (VAT not applicable)',
+            'Discount',
+            'Commission',
+            'Total Price',
+        ];
+    }
+
+    public function map($quote): array
+    {
+        return [
+            $quote->advisor,
+            $quote->total_policies,
+            $quote->total_endorsements,
+            $quote->total_transaction,
+            $quote->price_vat_applicable,
+            $quote->total_vat,
+            $quote->price_vat_not_applicable,
+            $quote->discount,
+            $quote->commission_vat_applicable,
+            $quote->total_price,
+        ];
+    }
+
+    public function download($fileName, $data)
+    {
+        $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
+
+        return new StreamedResponse(function () use ($data) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, $this->headings());
+            $data = collect($data);
+            foreach ($data as $quote) {
+                fputcsv($handle, $this->map($quote));
+            }
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'.csv"',
+        ]);
     }
 }
