@@ -224,17 +224,15 @@ function onReset() {
 <template>
   <div>
     <Head title="Health List ~ Card View" />
-    <div class="flex justify-between items-center">
-      <div class="flex items-center gap-5">
+    <sticky-header>
+      <template #header>
         <h2 class="text-xl font-semibold">Health List</h2>
         <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
         />
-      </div>
-
-      <div class="flex space-x-2 relative">
-        <!-- <SortButton :options="serverOptions" @handleSorting="onSubmit(true)" /> -->
+      </template>
+      <template #default>
         <FiltersButton
           :is-shown="showFilters"
           :filters="filters"
@@ -249,8 +247,8 @@ function onReset() {
         <Link :href="route('health.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
-      </div>
-    </div>
+      </template>
+    </sticky-header>
     <x-divider class="my-4" />
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">

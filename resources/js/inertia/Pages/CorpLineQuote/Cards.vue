@@ -220,20 +220,15 @@ watch(
 <template>
   <div>
     <Head title="Business Quote ~ Card View" />
-    <div class="flex justify-between items-center">
-      <div class="flex items-center gap-5">
+    <StickyHeader>
+      <template v-slot:header>
         <h2 class="text-xl font-semibold">Lead List</h2>
-        <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium"
-            >{{ leadsCount }}
-          </span>
-          <template #tooltip>
-            <span>Total Leads received since {{ previousDate() }}</span>
-          </template>
-        </x-tooltip>
-      </div>
-      <div class="flex space-x-3 relative">
-        <!-- <SortButton :options="serverOptions" @handleSorting="onSubmit(true)" /> -->
+        <LeadsCount
+          :leadsCount="$page.props.totalCount"
+          :key="$page.props.totalCount"
+        />
+      </template>
+      <template #default>
         <FiltersButton
           :is-shown="showFilters"
           :filters="filters"
@@ -248,8 +243,8 @@ watch(
         <Link :href="route('business.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
-      </div>
-    </div>
+      </template>
+    </StickyHeader>
     <x-divider class="my-4" />
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
