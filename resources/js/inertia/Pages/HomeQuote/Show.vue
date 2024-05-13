@@ -46,6 +46,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
 });
 
 const page = usePage();
@@ -549,7 +550,13 @@ watch(
               </x-button>
             </Link>
 
-            <Link :href="route('home.edit', quote.uuid)">
+            <x-tooltip :disabled="true" position="bottom" v-if="lockLeadSectionsDetails.lead_details">
+              <Link :href="route('home.edit', quote.uuid)">
+                <x-button :disabled="lockLeadSectionsDetails.lead_details" size="sm" tag="div">Edit</x-button>
+              </Link>
+              <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+            </x-tooltip>
+            <Link v-else :href="route('home.edit', quote.uuid)">
               <x-button size="sm" tag="div">Edit</x-button>
             </Link>
           </div>

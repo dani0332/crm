@@ -612,6 +612,7 @@ class CRUDController extends Controller
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
@@ -726,7 +727,7 @@ class CRUDController extends Controller
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
-                'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'listQuotePlans', 'isAmlClearedForPayment'
+                'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'listQuotePlans', 'isAmlClearedForPayment', 'lockLeadSectionsDetails'
             ]));
         }
 
@@ -865,6 +866,7 @@ class CRUDController extends Controller
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
+                'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             ]);
         }
 
@@ -1020,6 +1022,7 @@ class CRUDController extends Controller
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
+                'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             ]);
         } else {
             return view('shared.show', compact([

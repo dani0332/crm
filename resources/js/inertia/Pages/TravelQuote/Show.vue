@@ -60,6 +60,7 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -1301,9 +1302,14 @@ watch(
                 Travel List
               </x-button>
             </Link>
-
+            <x-tooltip :disabled="true" position="bottom" v-if="lockLeadSectionsDetails.lead_details">
+              <Link v-if="permissions.canEditQuote" :href="route('travel.edit', quote.uuid)">
+                <x-button :disabled="lockLeadSectionsDetails.lead_details" size="sm" tag="div">Edit</x-button>
+              </Link>
+              <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+            </x-tooltip>
             <Link
-              v-if="permissions.canEditQuote == true"
+              v-if="permissions.canEditQuote"
               :href="route('travel.edit', quote.uuid)"
             >
               <x-button size="sm" tag="div">Edit</x-button>

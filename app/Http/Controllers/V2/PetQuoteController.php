@@ -143,6 +143,7 @@ class PetQuoteController extends Controller
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
 
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
 
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
@@ -185,6 +186,7 @@ class PetQuoteController extends Controller
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
         ]);
     }
 

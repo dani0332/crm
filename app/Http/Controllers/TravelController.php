@@ -28,6 +28,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -210,6 +211,7 @@ class TravelController extends Controller
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         return inertia('TravelQuote/Show', [
             'record' => $record,
@@ -282,6 +284,7 @@ class TravelController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
         ]);
     }
 

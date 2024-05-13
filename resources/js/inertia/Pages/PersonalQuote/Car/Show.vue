@@ -94,6 +94,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -2024,8 +2025,14 @@ watch(
           </div>
           <x-divider class="mb-4 mt-4" />
           <div v-if="linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end mb-4" >
-            <Link :href="route('car.edit', record.uuid)">
-              <x-button size="sm" color="primary" tag="div">Edit </x-button>
+            <x-tooltip :disabled="true" position="bottom" v-if="lockLeadSectionsDetails.lead_details">
+              <Link :href="route('car.edit', record.uuid)">
+                <x-button :disabled="lockLeadSectionsDetails.lead_details" size="sm" color="primary" tag="div">Edit</x-button>
+              </Link>
+              <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+            </x-tooltip>
+            <Link v-else :href="route('car.edit', record.uuid)">
+              <x-button size="sm" color="primary" tag="div">Edit</x-button>
             </Link>
           </div>
         </template>

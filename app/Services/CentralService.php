@@ -366,4 +366,55 @@ class CentralService
 
         return $planModel::find($planId);
     }
+
+    public function lockLeadSectionsDetails($quote)
+    {
+        $quote = (object) $quote;
+        $lockFunctionalities = [
+            'available_plans' => false,
+            'plan_details' => false,
+            'lead_status' => false,
+            'lead_details' => true,
+            'memebr_details' => false,
+            'manage_payment' => false,
+        ];
+
+        $quoteStatuses = [
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            // QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        // Lock functioanlity check for Available Plans, Plan Details and Member Details
+        $quoteStatusForPlansAndMembers = array_merge($quoteStatuses, [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+        ]);
+
+        if (in_array($quote->quote_status_id, $quoteStatusForPlansAndMembers)) {
+            $lockFunctionalities['available_plans'] = true;
+            $lockFunctionalities['plan_details'] = true;
+            $lockFunctionalities['memebr_details'] = true;
+        }
+
+        // Lock functionality check for Lead status Section
+        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved]);
+        if (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
+            $lockFunctionalities['lead_status'] = true;
+        }
+
+        // Lock functionality check for edit lead details
+        if (in_array($quote->quote_status_id, $quoteStatuses)) {
+            $lockFunctionalities['lead_details'] = true;
+        }
+
+        // Lock functionality check for Manage Payment
+        $quoteStatusForManagePayment = array_merge($quoteStatuses, [QuoteStatusEnum::PolicyBooked]);
+        if (in_array($quote->quote_status_id, $quoteStatusForManagePayment)) {
+            $lockFunctionalities['manage_payment'] = true;
+        }
+
+        return $lockFunctionalities;
+    }
 }

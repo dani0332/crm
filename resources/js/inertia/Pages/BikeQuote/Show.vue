@@ -48,6 +48,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
 });
 
 const page = usePage();
@@ -247,6 +248,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 View Legacy policy
               </x-button>
             </Link>
+            <x-tooltip :disabled="true" position="bottom" v-if="lockLeadSectionsDetails.lead_details">
+              <Link v-if="can(permissionsEnum.BikeQuotesEdit)" :href="route('bike-quotes-edit', quote.uuid)">
+                <x-button :disabled="lockLeadSectionsDetails.lead_details" size="sm" tag="div">Edit</x-button>
+              </Link>
+              <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+            </x-tooltip>
             <Link
               v-if="can(permissionsEnum.BikeQuotesEdit)"
               :href="route('bike-quotes-edit', quote.uuid)"

@@ -305,6 +305,7 @@ class AmtController extends Controller
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BUSINESS->value);
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -351,6 +352,7 @@ class AmtController extends Controller
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $record->payments->toArray() ?? [],
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
         ]);
     }
 
