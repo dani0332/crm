@@ -2548,7 +2548,7 @@ watch(
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">AUTHORISED AT</dt>
-            <dd>{{ ecomDetails.paidAt }}</dd>
+            <dd>{{ ecomDetails.paidAt? ecomDetails.paidAt: 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
