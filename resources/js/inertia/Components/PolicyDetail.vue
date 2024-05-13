@@ -195,7 +195,6 @@ watch(
     }
   },
 );
-console.log('props.modelType', props.modelType, page.props.quoteType);
 </script>
 
 <template>

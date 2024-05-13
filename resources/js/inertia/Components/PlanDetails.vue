@@ -146,8 +146,6 @@ const can = permission => useCan(permission);
 
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
-
-console.log('props.quoteType', props.quoteType);
 </script>
 
 <template>
