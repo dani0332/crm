@@ -18,6 +18,7 @@ use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Carbon\Carbon;
 
 class AutomateActivitiesCommand extends Command
 {
@@ -94,7 +95,8 @@ class AutomateActivitiesCommand extends Command
                 $activityQuery->where('due_date', '<', now());
                 $activityQuery->where('status', false);
             })->with(['activities' => function ($activities) {
-                $activities->where('due_date', '<', now());
+                // $activities->where('due_date', '<', now());
+                $activities->where('due_date', '<', Carbon::now()->subHours(1));
                 $activities->where('status', false);
             }])
                 ->chunkById(1000, function ($quoteDetails) use ($quoteClass) {
@@ -117,7 +119,8 @@ class AutomateActivitiesCommand extends Command
                     $activityQuery->where('status', true);
                 })
                     ->with(['activities' => function ($activities) {
-                        $activities->where('due_date', '<', now());
+                        // $activities->where('due_date', '<', now());
+                        $activities->where('due_date', '<', Carbon::now()->subHours(1));
                         $activities->where('status', true);
                         $activities->orderBy('created_at', 'desc')->get();
                     }])

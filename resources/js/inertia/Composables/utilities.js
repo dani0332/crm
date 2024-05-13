@@ -110,23 +110,42 @@ export const useConvertDate = date =>
 
 export const useDaysSinceStale = payload =>
 {
-  const quoteRequest = payload;
-  let stale_days = quoteRequest
-    ? Math.round((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
-    : false;
 
-  if (typeof stale_days === 'number' && stale_days <= 89)
+  let diff = (new Date(payload).getTime() - new Date().getTime()) / 1000;
+  // Convert the difference from milliseconds to hours by dividing it by the number of seconds in an hour (3600)
+  diff /= (60 * 60);
+  // Return the absolute value of the rounded difference in hours
+  let result = Math.abs(Math.round(diff));
+
+  if (result >= 6 && result < 12)
   {
-    if (stale_days == 0)
-    {
-      stale_days += 1
-      return stale_days + ' day';
-    } else if (stale_days == 1)
-    {
-      return stale_days + ' day';
-    } else
-      return stale_days + ' days';
+    return ' 1 day';
   }
+  else if (result >= 12 && result < 18)
+  {
+    return ' 2 days'
+  } else
+  {
+    return false
+  }
+
+  // const quoteRequest = payload;
+  // let stale_days = quoteRequest
+  //   ? Math.round((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
+  //   : false;
+
+  // if (typeof stale_days === 'number' && stale_days <= 89)
+  // {
+  //   if (stale_days == 0)
+  //   {
+  //     stale_days += 1
+  //     return stale_days + ' day';
+  //   } else if (stale_days == 1)
+  //   {
+  //     return stale_days + ' day';
+  //   } else
+  //     return stale_days + ' days';
+  // }
 
 };
 
