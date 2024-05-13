@@ -220,8 +220,8 @@ class CarRevivalQuoteRepository extends BaseRepository
             $batch = QuoteBatches::find($item['quote_batch_id'])->name;
             $c['quote_batch_id'] = $batch;
             $c['conversion_captured'] = $item['conversion_captured'];
-            $c['total_revived'] = $item['total_revived'];
-            $c['ratio'] = $item['conversion_captured'] > 0 ? round(($item['conversion_captured'] / $item['total_revived']) * 100, 2).'%' : null;
+            $c['total_revived'] = $item['email_sent_count'];
+            $c['ratio'] = $item['conversion_captured'] > 0 ? round(($item['conversion_captured'] / $item['email_sent_count']) * 100, 2).'%' : null;
             $data['conversionRate'][] = $c;
 
             $ac['quote_batch_id'] = $batch;
