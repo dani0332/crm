@@ -15,7 +15,8 @@ export const useRules = () => {
 
   const allowEmpty = v => true || 'This field is required';
 
-  const isNumber = v => /^\d+$/.test(v) || 'This field must be a number';
+  const isNumber = v =>
+    !v || /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number';
 
   const policy_number = v => {
     if (v) {
@@ -75,23 +76,17 @@ export const useRules = () => {
     }
   };
   const price_vat_notapplicable = v => {
-    if (v.length > 13) {
-      return 'Price (VAT NOT APPLICABLE) should be less or equal to 13 digits long';
-    }
     return (
       !v ||
       /^\d+(\.\d{1,2})?$/.test(v) ||
-      'Price (VAT NOT APPLICABLE) should be number and greater than 0'
+      'Price (VAT NOT APPLICABLE) should be number with 2 decimals and greater than 0'
     );
   };
-  const amount = v => {
-    if (v.length > 13) {
-      return 'Price (VAT NOT APPLICABLE) should be less or equal to 13 digits long';
-    }
+  const price_vat_applicable = v => {
     return (
       !v ||
       /^\d+(\.\d{1,2})?$/.test(v) ||
-      'Price (VAT APPLICABLE) should be number and greater than 0'
+      'Price (VAT APPLICABLE) should be number with 2 decimals  and greater than 0'
     );
   };
   const vat = v => {
@@ -123,7 +118,7 @@ export const useRules = () => {
     emptyOrDecimal,
     isMobileNo,
     price_vat_notapplicable,
-    amount,
+    price_vat_applicable,
     vat,
     amount_with_vat,
   };

@@ -3,7 +3,7 @@ import moment from 'moment';
 
 const page = usePage();
 
-const { price_vat_notapplicable, amount } = useRules();
+const { price_vat_notapplicable, price_vat_applicable, isNumber } = useRules();
 
 const props = defineProps({
   record: {
@@ -195,6 +195,7 @@ watch(
     }
   },
 );
+console.log('props.modelType', props.modelType, page.props.quoteType);
 </script>
 
 <template>
@@ -266,13 +267,14 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_notapplicable"
                   @change="caculateVatAmount"
-                  :rules="[price_vat_notapplicable]"
+                  :rules="[price_vat_notapplicable, isNumber]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
                   class="w-full"
                   :disabled="
                     !policyDetailsState.isEditing ||
-                    policyDetailsForm.amount > 0
+                    (page.props.quoteType != quoteTypeCodeEnum.Life &&
+                      page.props.quoteType != quoteTypeCodeEnum.Business)
                   "
                 />
               </div>
@@ -313,13 +315,14 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.amount"
                   @change="caculateVatAmount"
-                  :rules="[amount]"
+                  :rules="[price_vat_applicable, isNumber]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"
                   class="w-full"
                   :disabled="
                     !policyDetailsState.isEditing ||
-                    policyDetailsForm.price_vat_notapplicable > 0
+                    (page.props.quoteType == quoteTypeCodeEnum.Life &&
+                      page.props.quoteType != quoteTypeCodeEnum.Business)
                   "
                 />
               </div>
@@ -386,7 +389,7 @@ watch(
                   placeholder="Price"
                   class="w-full"
                   readonly
-                  :disabled="!policyDetailsState.isEditing"
+                  :disabled="true"
                 />
               </div>
             </div>
