@@ -74,7 +74,7 @@ const loader = reactive({
 });
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
-const showFilters = ref(true);
+const showFilters = ref(false);
 const filtersCount = ref(0);
 const filters = reactive({
   date: null,
