@@ -762,4 +762,13 @@ function getCardViewRequestFilters($partialQuery, Request $request, $modelType)
     if ($request->has('payment_status') && $request->filled('payment_status') && count($request->payment_status)) {
         $partialQuery->whereIn('payment_status_id', $request->payment_status);
     }
+
+    if (isset($request->is_renewal) && $request->is_renewal != '') {
+        if ($request->is_renewal == quoteTypeCode::yesText) {
+            $partialQuery->whereNotNull('previous_quote_policy_number');
+        }
+        if ($request->is_renewal == quoteTypeCode::noText) {
+            $partialQuery->whereNull('previous_quote_policy_number');
+        }
+    }
 }
