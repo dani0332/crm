@@ -56,8 +56,7 @@ class Dtt extends Command
             return false;
         }
         $dttInProgress = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS);
-        if ($dttInProgress == 1) {
-
+        if ($dttInProgress == true) {
             info('DTT already in progress');
 
             return false;
@@ -97,7 +96,6 @@ class Dtt extends Command
         }
 
         if ($jobs != null && count($jobs)) {
-
             ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS)->update(['value' => true]);
             Haystack::build()
                 ->addJobs($jobs)
@@ -109,7 +107,6 @@ class Dtt extends Command
                     info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
-
                     ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS)->update(['value' => false]);
                     info($logPrefix.' everything done');
                 })
