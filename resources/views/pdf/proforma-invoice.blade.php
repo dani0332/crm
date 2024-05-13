@@ -364,7 +364,7 @@
 @php
     use App\Enums\PaymentCollectionTypeEnum;
     use App\Enums\PaymentMethodsEnum;
-    use App\Enums\PaymentStatusEnum;
+    use App\Enums\PaymentStatusEnum;use App\Enums\QuoteTypes;
 
     $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
 
@@ -386,9 +386,16 @@
         $vat =  $sendUpdateLog->price_with_vat ? $totalAmount - $subTotal : 0; // if price with vat then vat = total - subTotal else 0
     }else{
         $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
-        $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
-        $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
-        $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+        if(explode('-', $quote->code)[0] == QuoteTypes::CAR->name){
+            $carQuoteDetails = $quote->carQuoteRequestDetail;
+            $subTotal =  $carQuoteDetails->actual_premium;
+            $vat =  $carQuoteDetails->premium_vat;
+            $totalAmount =  $subTotal + $vat;
+        }else{
+            $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
+            $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
+            $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+        }
     }
 
 
@@ -481,7 +488,7 @@
     </table>
     <table class="tbl-footer">
         <tr>
-            <td colspan="2" class="text-center"><h4>InsuranceMarket.ae™  is the registered trademark of AFIA Insurance
+            <td colspan="2" class="text-center"><h4>InsuranceMarket.ae™ is the registered trademark of AFIA Insurance
                     Brokerage Services LLC</h4></td>
         </tr>
         <tr>
