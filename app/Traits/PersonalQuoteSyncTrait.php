@@ -34,7 +34,7 @@ trait PersonalQuoteSyncTrait
         if (! $personalQuote) {
             $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
         }
-        
+
         if (! $personalQuote) {
             Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
 
@@ -120,7 +120,7 @@ trait PersonalQuoteSyncTrait
         foreach ($entries as $entry) {
 
             info('quote_sync Syncing entry: '.$entry->quote_uuid.' - id '.$entry->id);
-            if(empty($quote)) {
+            if (empty($quote)) {
                 $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
             }
 
@@ -140,19 +140,19 @@ trait PersonalQuoteSyncTrait
     {
         DB::transaction(function () use ($quote, $entry) {
             if ($entry->quote_type_id) {
-                info('Entry for quote: ' . $entry->quote_uuid . ' found in personal quotes table');
+                info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
                 try {
                     $newValues = json_decode($entry->updated_fields, true);
                     $this->syncTable($quote, $newValues, 'personal_quotes');
                     $quote->quote_type_id = $entry->quote_type_id;
                     $quote->save();
                     $entry->update(['is_synced' => true, 'synced_at' => now()]);
-                    info('Entry for quote: ' . $entry->quote_uuid . ' updated in quote sync table');
+                    info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
                 } catch (Exception $e) {
-                    Log::error('QuoteSyncJob Error: ' . $e->getMessage());
+                    Log::error('QuoteSyncJob Error: '.$e->getMessage());
                 }
             } else {
-                info('Entry for quote: ' . $entry->quote_uuid . ' found in personal quotes table but missing required fields');
+                info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table but missing required fields');
                 $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
                 if ($sourceQuote) {
                     $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');

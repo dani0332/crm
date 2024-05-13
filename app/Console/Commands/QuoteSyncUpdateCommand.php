@@ -52,8 +52,8 @@ class QuoteSyncUpdateCommand extends Command
 
             info('Syncing entry: '.$entry->quote_uuid);
 
-            $key = $entry->quote_uuid . '-' . $entry->quote_type_id;
-            if(empty($quotes[$key])) {
+            $key = $entry->quote_uuid.'-'.$entry->quote_type_id;
+            if (empty($quotes[$key])) {
                 $quotes[$key] = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
             }
 
