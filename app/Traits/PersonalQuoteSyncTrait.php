@@ -28,10 +28,13 @@ trait PersonalQuoteSyncTrait
 {
     public function syncQuote($quote, $updatedFields)
     {
-        $this->syncEntry($quote->uuid);
+        $personalQuote = $this->syncEntry($quote->uuid);
 
-        // get personal quote
-        $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
+        // get personal quote if not recieved from syncEntry (incase of missing quote_sync entries or entries already synced)
+        if (! $personalQuote) {
+            $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
+        }
+        
         if (! $personalQuote) {
             Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
 
@@ -44,10 +47,14 @@ trait PersonalQuoteSyncTrait
 
     public function syncQuoteDetail($quote, $updatedFields)
     {
-        $this->syncEntry($quote->uuid);
+        $personalQuote = $this->syncEntry($quote->uuid);
 
-        // get personal quote
-        $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
+        // get personal quote if not recieved from syncEntry (incase of missing quote_sync entries or entries already synced
+        if (! $personalQuote) {
+            $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
+        }
+
+        // log warning if personal quote not found
         if (! $personalQuote) {
             Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
 
@@ -109,47 +116,54 @@ trait PersonalQuoteSyncTrait
             return;
         }
 
+        $quote = null;
         foreach ($entries as $entry) {
 
             info('quote_sync Syncing entry: '.$entry->quote_uuid.' - id '.$entry->id);
-            $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
+            if(empty($quote)) {
+                $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
+            }
 
             if ($quote) {
                 // Existing quote
                 $this->processExistingQuote($quote, $entry);
             } else {
                 // Quote not found
-                $this->processQuoteNotFound($entry);
+                $quote = $this->processQuoteNotFound($entry);
             }
         }
+
+        return $quote;
     }
 
     private function processExistingQuote($quote, $entry)
     {
-        if ($entry->quote_type_id) {
-            info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
-            try {
-                $newValues = json_decode($entry->updated_fields, true);
-                $this->syncTable($quote, $newValues, 'personal_quotes');
-                $quote->quote_type_id = $entry->quote_type_id;
-                $quote->save();
-                $entry->update(['is_synced' => true, 'synced_at' => now()]);
-                info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
-            } catch (Exception $e) {
-                Log::error('QuoteSyncJob Error: '.$e->getMessage());
+        DB::transaction(function () use ($quote, $entry) {
+            if ($entry->quote_type_id) {
+                info('Entry for quote: ' . $entry->quote_uuid . ' found in personal quotes table');
+                try {
+                    $newValues = json_decode($entry->updated_fields, true);
+                    $this->syncTable($quote, $newValues, 'personal_quotes');
+                    $quote->quote_type_id = $entry->quote_type_id;
+                    $quote->save();
+                    $entry->update(['is_synced' => true, 'synced_at' => now()]);
+                    info('Entry for quote: ' . $entry->quote_uuid . ' updated in quote sync table');
+                } catch (Exception $e) {
+                    Log::error('QuoteSyncJob Error: ' . $e->getMessage());
+                }
+            } else {
+                info('Entry for quote: ' . $entry->quote_uuid . ' found in personal quotes table but missing required fields');
+                $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
+                if ($sourceQuote) {
+                    $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');
+                    $quote->quote_type_id = $entry->quote_type_id;
+                    $quote->save();
+                    $this->syncTable($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
+                    $quote->quote_type_id = $entry->quote_type_id;
+                    $quote->save();
+                }
             }
-        } else {
-            info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table but missing required fields');
-            $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
-            if ($sourceQuote) {
-                $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');
-                $quote->quote_type_id = $entry->quote_type_id;
-                $quote->save();
-                $this->syncTable($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
-                $quote->quote_type_id = $entry->quote_type_id;
-                $quote->save();
-            }
-        }
+        });
 
         $this->upsertPersonalQuoteDetail($quote, json_decode($entry->updated_fields, true));
     }
@@ -159,6 +173,7 @@ trait PersonalQuoteSyncTrait
         info('Entry for quote: '.$entry->quote_uuid.' not found in personal quotes table');
         $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
 
+        $personalQuote = null;
         if ($sourceQuote) {
             try {
                 $newValues = json_decode($entry->updated_fields, true);
@@ -171,6 +186,8 @@ trait PersonalQuoteSyncTrait
                 Log::error('QuoteSyncJob Error: '.$e->getMessage().$e->getTraceAsString());
             }
         }
+
+        return $personalQuote;
     }
 
     private function getQuoteRecord($quote_type_id, $quote_uuid)
