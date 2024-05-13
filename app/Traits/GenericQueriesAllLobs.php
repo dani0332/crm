@@ -288,13 +288,16 @@ trait GenericQueriesAllLobs
         $isSplitPayment = false;
         $payment = $quoteModel->payments()->first();
         if (true || $payment && $quoteModel->price_with_vat != $payment->total_price) {
-            $difference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
+            $difference = $initialDifference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
+            if ($payment->system_adjusted_discount != null) {
+                $difference += $payment->system_adjusted_discount;
+            }
             // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
             if ($difference <= 0.99 && $difference > 0) {
                 $payment->system_adjusted_discount = $difference;
                 // If condition to check if discount value is not null & add difference to it else set difference as discount value
                 if ($payment->discount_value != null) {
-                    $payment->discount_value += $difference;
+                    $payment->discount_value += $initialDifference;
                 } else {
                     $payment->discount_value = $difference;
                     $payment->discount_type = 'system_adjusted_discount';
@@ -318,17 +321,17 @@ trait GenericQueriesAllLobs
             // total price is actual price without discount
             $payment->total_price = $quoteModel->price_with_vat;
             // total total_amount is after subtracting from discount
-            $payment->total_amount = $payment->discount_value ? ($quoteModel->price_with_vat - $payment->discount_value) : $quoteModel->price_with_vat;
+            // $payment->total_amount = $payment->discount_value ? ($quoteModel->price_with_vat - $payment->discount_value) : $quoteModel->price_with_vat;
             $payment->save();
 
-            $splitPayment= $payment->paymentSplits()->first();
-            // If payment frequency is upfront then update payment split amount && if not then set isSplitPayment to true
-            if ($payment->frequency == 'upfront' &&  $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
-                $splitPayment->payment_amount = $payment->total_amount;
-                $splitPayment->save();
-            } else if($payment->frequency != 'upfront') {
-                $isSplitPayment = true;
-            }
+            // $splitPayment= $payment->paymentSplits()->first();
+            // // If payment frequency is upfront then update payment split amount && if not then set isSplitPayment to true
+            // if ($payment->frequency == 'upfront' &&  $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
+            //     $splitPayment->payment_amount = $payment->total_amount;
+            //     $splitPayment->save();
+            // } else if($payment->frequency != 'upfront') {
+            //     $isSplitPayment = true;
+            // }
         } 
         return $isSplitPayment;
     }
