@@ -7,6 +7,7 @@ use App\Facades\Capi;
 use App\Models\HomeQuote;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 
 class HomeQuoteRepository extends BaseRepository
 {
@@ -31,6 +32,9 @@ class HomeQuoteRepository extends BaseRepository
             'nationality',
             'insuranceProvider',
         ])
+        ->when(\auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
+            $query->where('advisor_id', \auth()->user()->id);
+        })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy('created_at', 'desc');
 
