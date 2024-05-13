@@ -31,8 +31,8 @@ trait PersonalQuoteSyncTrait
         // update personal quote
         $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
         $quoteSyncEntries = QuoteSync::where('is_synced', false)->where('quote_uuid', $quote->uuid)->count();
-        
-        if(!$personalQuote || $quoteSyncEntries > 0) {
+
+        if (! $personalQuote || $quoteSyncEntries > 0) {
             $this->syncEntry($quote->uuid);
 
             $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
@@ -205,7 +205,7 @@ trait PersonalQuoteSyncTrait
         $quoteTypeId = $entry->quote_type_id;
         $this->syncTable($personalQuote, $sourceAttributes, 'personal_quotes');
         $personalQuote->quote_type_id = $entry->quote_type_id;
-        
+
         return DB::transaction(function () use ($personalQuote, $sourceAttributes, $quoteUuid, $quoteTypeId) {
             $existingQuote = PersonalQuote::where('uuid', $quoteUuid)->where('quote_type_id', $quoteTypeId)->first();
             if ($existingQuote) {
@@ -222,7 +222,7 @@ trait PersonalQuoteSyncTrait
 
                 return $personalQuote;
             }
-        });   
+        });
     }
 
     public function getQuoteType($quoteTypeId)
