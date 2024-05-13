@@ -30,6 +30,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     use Dispatchable, InteractsWithQueue, Queueable, Stackable;
     use GenericQueriesAllLobs;
 
+    public $tries = 3;
+    public $timeout = 90;
+    public $backoff = 300;
     private $lead = null;
 
     /**
@@ -51,7 +54,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     {
         $this->lead->refresh();
         if ($this->lead->is_revived) {
-            info('carRevivalParentLead - '.$this->lead->uuid.' - Lead Already Revived');
+            info('CarRevivalLeadsCreationJob - '.$this->lead->uuid.' - Lead Already Revived');
 
             return false;
         }

@@ -416,6 +416,20 @@ class SendEmailCustomerService extends BaseService
                 $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
             }
 
+            $wfsBanner = null;
+            $wfsBannerRedirectUrl = null;
+
+            $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
+            if ($campaign) {
+                $emailTemplateId = (int) getAppStorageValueByKey(ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN);
+                if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
+                    $wfsBanner = $campaign->banners->buyPolicy;
+                }
+                if (property_exists($campaign, 'landingPage')) {
+                    $wfsBannerRedirectUrl = $campaign->landingPage;
+                }
+            }
+
             info('sendMyAlfredWelcomeEmail  , emailTemplateId: '.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
@@ -436,6 +450,8 @@ class SendEmailCustomerService extends BaseService
                     'customerEmail' => $emailData->customerEmail,
                     'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'email' => $emailData->customerEmail,
+                    'wfsBanner' => $wfsBanner,
+                    'wfsBannerRedirectUrl' => $wfsBannerRedirectUrl,
                 ],
                 'tags' => [
                     $tag,
@@ -592,13 +608,13 @@ class SendEmailCustomerService extends BaseService
                 ->timeout(20)
                 ->retry(3, 90000)
                 ->post($this->url, $body);
-            info('sendDttEmail ---- Request Sent');
 
             $responseCode = $response->status();
             $response = json_decode(json_encode($responseCode.' '.$response->body()), true);
 
             if ($responseCode == 201) {
                 $isEmailSent = 1;
+                info('sendDttEmail - Email Sent - Ref-ID: '.$emailData->uuid);
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
