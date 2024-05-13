@@ -12,8 +12,8 @@ const props = defineProps({
   expanded: {
     type: Boolean,
     required: false,
-    default: true
-  }
+    default: true,
+  },
 });
 
 const can = permission => useCan(permission);
@@ -69,17 +69,6 @@ const rolesEnum = page.props.rolesEnum;
           <h3 class="font-semibold text-primary-800 text-lg">
             Last Year's Policy Details
           </h3>
-          <div>
-            <Link
-                v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${inslyId}`"
-                preserve-scroll
-            >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
-            </Link>
-        </div>
         </div>
       </template>
       <template #body>
@@ -92,22 +81,22 @@ const rolesEnum = page.props.rolesEnum;
                   <div class="font-medium">Renewal Batch#</div>
                   <div>{{ props?.quote?.renewal_batch }}</div>
                 </div>
-  
+
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Policy Number</div>
                   <div>{{ props?.quote?.previous_quote_policy_number }}</div>
                 </div>
-  
+
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Policy Expiry Date</div>
                   <div>{{ props?.quote?.previous_policy_expiry_date }}</div>
                 </div>
-  
+
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Policy Premium</div>
                   <div>{{ props?.quote?.previous_quote_policy_premium }}</div>
                 </div>
-  
+
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Policy Start Date</div>
                   <div>{{ props?.quote?.policy_start_date }}</div>
@@ -155,6 +144,6 @@ const rolesEnum = page.props.rolesEnum;
           </div>
         </x-form>
       </template>
-    </Collapsible>   
+    </Collapsible>
   </div>
 </template>
