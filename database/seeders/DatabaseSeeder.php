@@ -66,6 +66,7 @@ class DatabaseSeeder extends Seeder
             AddDttFlagApplicationStorage::class,
             DttOCBNewBusinessSeeder::class,
             RevivalConversionReportPermissionSeeder::class,
+            AddPaymentPermissions::class,
             // end
         ]);
     }

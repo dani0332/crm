@@ -91,6 +91,10 @@ const isDiscountError = ref(false);
 const discountError = ref('');
 const isTotalPriceUpdated = ref(false);
 const trashedFilesModal = ref([]);
+const isCreditApprovalAllowed = ref(true);
+const isVerificationAllowed = ref(true);
+const isPaymentFrequencyNotSelected = ref(false);
+const isDiscountAllowed = ref(true);
 
 const modal2Ref = ref(null);
 
@@ -275,6 +279,12 @@ const validatePaymentOption = () => {
       var totalSplitAmount = 0;
       var issueFound = false;
       isPaymentCalculationError.value = false;
+      isPaymentFrequencyNotSelected.value = false;
+      // Check if payment frequency is selected
+      if (paymentMethodsForm.frequency === '') {
+        isPaymentFrequencyNotSelected.value = true;
+        issueFound = true;
+      }
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
         totalSplitAmount = (parseFloat(totalSplitAmount) + parseFloat(splitAmountModels.value[i]));       
         const validationResult = rules.notEmptyOrZero(paymentMethodsModels.value[i]);
@@ -496,6 +506,7 @@ const handleCollectionTypeChange = () => {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IP'].includes(item.value));
     paymentMethodsModels.value[1] = '';
   }
+  applyPermissions();
 };
 
 const handlePaymentTypes = (count) => {
@@ -773,6 +784,7 @@ const formatAmount = (amount) => {
 const handleFrequencyChange = (noPaymentUpdate=true) => {
   
   var resetPaymentMethod = false;
+  isPaymentFrequencyNotSelected.value = false;
   totalPayments.value = []; 
   if ( paymentMethodsForm.status === 'create' ) {
     paymentMethodsForm.credit_approval = '';
@@ -940,6 +952,7 @@ const addPaymentModal = () => {
   paymentMethodsForm.payment_no = '1';  
   handleCollectionTypeChange();
   calculatePaymentBreakup();
+  applyPermissions();
 };
 
 const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
@@ -1045,7 +1058,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   handleDiscountChange();
   handleDeclinedReasonChange();
   calculateTotalAmount();
-
+  applyPermissions();
   var isAnyPaid = false;
 
   const paidStatusIds = [
@@ -1327,7 +1340,8 @@ const addPayment = isValid => {
       is_capture: isCreditCardView.value,
       is_approved: isApproveClicked.value,
       declined_reason: paymentMethodsForm.declined_reason,
-      declined_custom_reason: declinedCustomReason,      
+      declined_custom_reason: declinedCustomReason,
+      collection_type: paymentMethodsForm.collection_type,       
     };
     paymentMethodsForm
       .transform(data => viewData)
@@ -1362,7 +1376,8 @@ const addPayment = isValid => {
       is_approved: isApproveClicked.value,
       declined_reason: paymentMethodsForm.declined_reason,
       approved_document_model: approvedDocumentModel.value,
-      declined_custom_reason: declinedCustomReason,      
+      declined_custom_reason: declinedCustomReason,
+      collection_type: paymentMethodsForm.collection_type,     
     };
     paymentMethodsForm
       .transform(data => viewData)
@@ -1427,6 +1442,70 @@ const addPayment = isValid => {
         });
       },
     });
+};
+
+const applyPermissions = () => {
+  
+  frequencyTypes.value = paymentLookups.paymentFrequencyTypes.map(item => ({
+    value: item.code,  label: item.text,  tooltip: item.description,
+  }));
+  if (paymentMethodsForm.status === 'create') {
+      paymentMethodsForm.frequency = '';      
+  }
+  //PAYMENTS-DISCOUNT-ADD
+  can(permissionEnum.PAYMENTS_DISCOUNT_ADD) ? isDiscountAllowed.value = true : isDiscountAllowed.value = false; 
+  
+  //PAYMENTS-CREDIT-APPROVAL-ADD
+  can(permissionEnum.PAYMENTS_CREDIT_APPROVAL_ADD) ? isCreditApprovalAllowed.value = true : isCreditApprovalAllowed.value = false; 
+  
+  //Set permission for broker
+  if (paymentMethodsForm.collection_type === 'broker') {
+      //PAYMENTS-FREQUENCY-UPRONT-SPLIT-COLLECTED-BY-BROKER-ADD
+      const hasPermissionToBroker = can(permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD);
+      const hasPermissionToTermFrequencies = can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD);
+      if (!hasPermissionToBroker) {
+        frequencyTypes.value = frequencyTypes.value.filter(item => item.value !== 'upfront' && item.value !== 'split_payments');
+      } else if (paymentMethodsForm.status === 'create') {
+          paymentMethodsForm.frequency = 'upfront';
+      }
+      
+      if (!hasPermissionToTermFrequencies) {
+        frequencyTypes.value = frequencyTypes.value.filter(
+          item => 
+            item.value !== 'custom' &&
+            item.value !== 'monthly' &&
+            item.value !== 'quarterly' &&
+            item.value !== 'semi_annual'
+          );
+      }
+    // Set verification allowed if the payment is in view mode and the user has the permission 
+    isVerificationAllowed.value = false;
+    if (paymentMethodsForm.status === 'view' && can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_BROKER)) {
+      isVerificationAllowed.value = true;
+    }
+  }
+  
+  // Set permission for insurer
+  if(paymentMethodsForm.collection_type === 'insurer' ){
+    
+    if (!can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD)){
+      frequencyTypes.value = frequencyTypes.value.filter(
+      item => 
+        item.value !== 'custom' &&
+        item.value !== 'monthly' &&
+        item.value !== 'quarterly' &&
+        item.value !== 'semi_annual'
+      );
+    }
+    if (paymentMethodsForm.status === 'create') {
+      paymentMethodsForm.frequency = 'upfront';
+    }
+    // Set verification allowed if the payment is in view mode and the user has the permission
+    isVerificationAllowed.value = false;
+    if (paymentMethodsForm.status === 'view' && can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_INSURER)) {
+      isVerificationAllowed.value = true;
+    }    
+  } 
 };
 
 const documentForm = useForm({
@@ -1965,7 +2044,7 @@ const isMasterPaymentPaid = computed(() => {
                         @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 1) : alertCapture(item)">
                             Capture
                         </x-button>
-                        <x-button v-if="getCaptureOption(item)==='approve' && getCaptureValidation(item)" size="xs" color="orange" outlined 
+                        <x-button v-if="getCaptureOption(item)==='approve' && getCaptureValidation(item) && isVerificationAllowed" size="xs" color="orange" outlined 
                         @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 2) : alertCapture(item)">
                             Approve
                         </x-button>
@@ -2113,6 +2192,7 @@ const isMasterPaymentPaid = computed(() => {
               </span>            
               <select
                   v-if="!isFieldReadonly"
+                  :class="{'custom-select-error': isPaymentFrequencyNotSelected}"
                   class="custom-select"
                   v-model="paymentMethodsForm.frequency"
                   :rules="[rules.isRequired]"
@@ -2122,6 +2202,7 @@ const isMasterPaymentPaid = computed(() => {
                       <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
                   </template>
               </select>
+              <p v-if="isPaymentFrequencyNotSelected" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
             </x-field>
           </div>
 
@@ -2190,7 +2271,7 @@ const isMasterPaymentPaid = computed(() => {
             </x-field>
           </div>
 
-          <div>
+          <div v-if="isCreditApprovalAllowed">
             <ToolTip
               title="CREDIT APPROVAL"
               :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"              
@@ -2228,7 +2309,7 @@ const isMasterPaymentPaid = computed(() => {
                 :rules="[rules.isRequired]"                
               />
           </x-field>          
-          <div v-if="showDiscountOptions">
+          <div v-if="showDiscountOptions && isDiscountAllowed">
             <x-tooltip>
               <span class="border-b-2 border-dotted border-black text-sm">DISCOUNT APPLICABLE (DISCOUNT TYPE)</span> 
               <template #tooltip>
@@ -2259,7 +2340,7 @@ const isMasterPaymentPaid = computed(() => {
             </x-field>            
           </div>
           
-          <div v-if="isDiscountReasonEnabled" class="">
+          <div v-if="isDiscountReasonEnabled && isDiscountAllowed" class="">
             <ToolTip
                title="DISCOUNT REASON"
               :tooltip="(isFieldReadonly)? discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).tooltip: paymentTooltipEnum.DISCOUNT_REASON"
@@ -2284,7 +2365,7 @@ const isMasterPaymentPaid = computed(() => {
               <p v-if="isDiscountReasonError" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
             </x-field>
           </div>
-          <x-field v-if="isCustomDiscountReasonEnabled" label="CUSTOM DISCOUNT REASON" :required="!isFieldReadonly" class="w-full">
+          <x-field v-if="isCustomDiscountReasonEnabled && isDiscountAllowed" label="CUSTOM DISCOUNT REASON" :required="!isFieldReadonly" class="w-full">
             <span v-if="isFieldReadonly">{{ paymentMethodsForm.discount_custom_reason }}</span>
             <x-input
                 v-if="!isFieldReadonly"
@@ -2293,7 +2374,7 @@ const isMasterPaymentPaid = computed(() => {
                 :rules="[rules.isRequired]"                
               />
           </x-field>
-          <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'" class="">
+          <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A' && isDiscountAllowed" class="">
             <ToolTip
                title="DISCOUNT PROOF"
               :tooltip="(isFieldReadonly)? paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_VIEW: paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_TITLE"
@@ -2345,7 +2426,7 @@ const isMasterPaymentPaid = computed(() => {
               </span>
             </div>
           </div>
-            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'">             
+            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A' && isDiscountAllowed">             
               <ToolTip
                   title="DISCOUNT VALUE"
                   :tooltip="paymentTooltipEnum.DISCOUNT_VALUE"
@@ -2368,7 +2449,7 @@ const isMasterPaymentPaid = computed(() => {
               </x-field>
             </div>            
             
-            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'">            
+            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A' && isDiscountAllowed">            
               <ToolTip
                 title="TOTAL AMOUNT"
                 :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"                
@@ -2960,7 +3041,7 @@ const isMasterPaymentPaid = computed(() => {
                 </x-button>
               </div>
               <div v-if="!isDeclineClicked && (paymentMethodsModels[splitPaymentNo]!='CC' || isCreditApprovalView)">
-                <x-button v-if="!isApproveClicked && isViewEnabled" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked" tabindex="0">
+                <x-button v-if="!isApproveClicked && isViewEnabled && isVerificationAllowed" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked" tabindex="0">
                   Approve
                 </x-button>
                 <x-button v-if="isApproveClicked || (isCreditApprovalView && !isDeclineClicked)" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0"
@@ -2969,7 +3050,7 @@ const isMasterPaymentPaid = computed(() => {
                   <template v-if="isCreditApprovalView && isCreditCardView">
                   Capture
                   </template>
-                  <template v-else>
+                  <template v-else-if="isVerificationAllowed">
                   Approve
                   </template>
                 </x-button>
