@@ -48,7 +48,7 @@ class AddDttFlagApplicationStorage extends Seeder
         if (count($item) == 0) {
             DB::table('application_storage')->insert([[
                 'key_name' => ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS,
-                'value' => '0',
+                'value' => false,
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
