@@ -371,10 +371,10 @@ class CentralService
     {
         $quote = (object) $quote;
         $lockFunctionalities = [
-            'available_plans' => false,
+            'plan_selection' => false,
             'plan_details' => false,
             'lead_status' => false,
-            'lead_details' => true,
+            'lead_details' => false,
             'memebr_details' => false,
             'manage_payment' => false,
         ];
@@ -393,7 +393,7 @@ class CentralService
         ]);
 
         if (in_array($quote->quote_status_id, $quoteStatusForPlansAndMembers)) {
-            $lockFunctionalities['available_plans'] = true;
+            $lockFunctionalities['plan_selection'] = true;
             $lockFunctionalities['plan_details'] = true;
             $lockFunctionalities['memebr_details'] = true;
         }

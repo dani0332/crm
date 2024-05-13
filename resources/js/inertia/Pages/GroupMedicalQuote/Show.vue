@@ -374,6 +374,9 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -442,18 +445,21 @@ watch(
                 Group Medical List
               </x-button>
             </Link>
-            <x-tooltip :disabled="true" position="bottom" v-if="lockLeadSectionsDetails.lead_details">
-              <Link v-if="!can(permissionsEnum.canEditQuote)" :href="route('amt.edit', quote.uuid)">
-                <x-button :disabled="lockLeadSectionsDetails.lead_details" size="sm" tag="div">Edit</x-button>
+
+            <LeadEditBtnTemplate v-slot="{ isDisabled }">
+              <Link :href="route('amt.edit', quote.uuid)">
+                <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
               </Link>
+            </LeadEditBtnTemplate>
+
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+              <LeadEditBtnReuseTemplate v-if="!can(permissionsEnum.canEditQuote)" :isDisabled="true"/>
               <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
             </x-tooltip>
-            <Link
-              v-if="!can(permissionsEnum.canEditQuote)"
-              :href="route('amt.edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
+            <template v-else>
+              <LeadEditBtnReuseTemplate v-if="!can(permissionsEnum.canEditQuote)"/>
+            </template>
+            
           </div>
           <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">

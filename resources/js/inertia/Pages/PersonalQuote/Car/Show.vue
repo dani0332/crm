@@ -1633,16 +1633,15 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
   <div>
     <Head title="Car Detail" />
-    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">E-COM Detail</h2>
-    </div>
-    <x-divider class="my-4" /> -->
-
     <AssignTier
       v-if="
         !can(permissionEnum.ApprovePayments) &&
@@ -2024,17 +2023,21 @@ watch(
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
+          
+          <LeadEditBtnTemplate v-slot="{ isDisabled }">
+            <Link :href="route('car.edit', record.uuid)">
+              <x-button :disabled="isDisabled" size="sm" color="primary" tag="div">Edit</x-button>
+            </Link>
+          </LeadEditBtnTemplate>
+
           <div v-if="linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end mb-4" >
-            <x-tooltip :disabled="true" position="bottom" v-if="lockLeadSectionsDetails.lead_details">
-              <Link :href="route('car.edit', record.uuid)">
-                <x-button :disabled="lockLeadSectionsDetails.lead_details" size="sm" color="primary" tag="div">Edit</x-button>
-              </Link>
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+              <LeadEditBtnReuseTemplate :isDisabled="true"/>
               <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
             </x-tooltip>
-            <Link v-else :href="route('car.edit', record.uuid)">
-              <x-button size="sm" color="primary" tag="div">Edit</x-button>
-            </Link>
+            <LeadEditBtnReuseTemplate v-else/>
           </div>
+
         </template>
       </Collapsible>
     </div>
@@ -2967,33 +2970,25 @@ watch(
               Send OCB Email to Customer
             </x-button>
 
-            <x-button
-              @click.prevent="modals.createPlan = true"
-              size="sm"
-              color="orange"
-              class="mr-2"
-              v-if="
-                (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
-                can(permissionEnum.CarQuotesPlansCreate)
+            <AddPlanButtonTemplate>
+              <x-button
+                @click.prevent="modals.createPlan = true"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                v-if="can(permissionEnum.CarQuotesPlansCreate) && ((access.carManagerCanEdit || access.carAdvisorCanEdi) || hasRole(rolesEnum.Admin))"
+                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+              >
+                Add Plan
+              </x-button>
+            </AddPlanButtonTemplate>
+            
+            <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
+              <AddPlanButtonReuseTemplate />
+              <template #tooltip>No further action is allowed on an issued policy. If changes are required, such as a change in insurer, please proceed through the 'Send Update' feature using the 'Cancellation from inception and reissuance' option.</template>
+            </x-tooltip>
+            <AddPlanButtonReuseTemplate v-else />
 
-              "
-              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            >
-              Add Plan
-            </x-button>
-            <x-button
-              v-else-if="
-                hasRole(rolesEnum.Admin) &&
-                can(permissionEnum.CarQuotesPlansCreate)
-              "
-              @click.prevent="modals.createPlan = true"
-              size="sm"
-              color="orange"
-              class="mr-2"
-              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            >
-              Add Plan
-            </x-button>
             <x-button
               @click.prevent="copyLink"
               size="sm"
@@ -3408,6 +3403,7 @@ watch(
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
+    
     <PaymentTable
       v-else
       :payments="payments"

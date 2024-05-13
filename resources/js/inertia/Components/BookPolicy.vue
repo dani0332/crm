@@ -253,6 +253,8 @@ const calculateCommission = () => {
     bpForm.total_commission = '';
   }
 };
+const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -527,6 +529,19 @@ const calculateCommission = () => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
+
+            <EditBookPolicyBtnTemplate v-slot="{ isDisabled }">
+              <x-button
+                  class="mt-4 mr-2"
+                  color="emerald"
+                  size="sm"
+                  @click.prevent="bp.isEditing = true"
+                  :disabled="isDisabled"
+                >
+                  Edit
+                </x-button>
+            </EditBookPolicyBtnTemplate>
+
             <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end">
               <template
                 v-if="
@@ -561,15 +576,18 @@ const calculateCommission = () => {
                 >
                   Update
                 </x-button>
-                <x-button
-                  v-if="!bp.isEditing && props.bookPolicyDetails?.editButton"
-                  class="mt-4 mr-2"
-                  color="emerald"
-                  size="sm"
-                  @click.prevent="bp.isEditing = true"
-                >
-                  Edit
-                </x-button>
+
+                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
+                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton" :isDisabled="true"/>
+                  <template #tooltip>
+                    This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy'
+                  </template>
+                </x-tooltip>
+
+                <template v-else>
+                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton"/>
+                </template>
+                
                 <x-button
                   size="sm"
                   color="orange"
@@ -598,7 +616,7 @@ const calculateCommission = () => {
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      'The button is not accessable because policy has been booked'
+                      "This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy'"
                     }}</span>
                   </template>
                 </x-tooltip>
@@ -646,17 +664,17 @@ const calculateCommission = () => {
                   >
                     Update
                   </x-button>
-                  <div v-if="!bp.isEditing && props.bookPolicyDetails?.editButton">
-                    <x-button
-                      class="mt-4 mr-2"
-                      color="emerald"
-                      size="sm"
-                      :disabled="!props.bookPolicyDetails?.editButton"
-                      @click.prevent="bp.isEditing = true"
-                    >
-                      Edit
-                    </x-button>
-                  </div>
+
+                  <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
+                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton" :isDisabled="true"/>
+                    <template #tooltip>
+                      This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy'
+                    </template>
+                  </x-tooltip>
+
+                  <template v-else>
+                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton" :isDisabled="!props.bookPolicyDetails?.editButton"/>
+                  </template>
 
                   <template v-if="props.bookPolicyDetails?.editButton">
                     <x-button

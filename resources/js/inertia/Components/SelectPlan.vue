@@ -139,18 +139,31 @@ watch(() => {
       can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON);
   }
 });
+const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] = createReusableTemplate();
 </script>
 
 <template>
-  <x-button
-    size="xs"
-    color="success"
-    outlined
-    :loading="isLoading"
-    v-if="isPlanSelectionEnable"
-    :disabled="hasChildLead"
-    @click.prevent="updateSelectedPlan()"
-  >
-    Select
-  </x-button>
+
+  <SelectPlanButtonTemplate>
+    <x-button
+      v-if="isPlanSelectionEnable"
+      size="xs"
+      color="success"
+      outlined
+      :loading="isLoading"
+      :disabled="hasChildLead"
+      @click.prevent="updateSelectedPlan()"
+    >
+      Select
+    </x-button>
+  </SelectPlanButtonTemplate>
+
+  <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
+    <SelectPlanButtonReuseTemplate />
+    <template #tooltip>
+        No further action is allowed on an issued policy. If changes are required, such as a change in insurer, please proceed through the 'Send Update' feature using the 'Cancellation from inception and reissuance' option.
+    </template>
+  </x-tooltip>
+  <SelectPlanButtonReuseTemplate v-else/>
+
 </template>

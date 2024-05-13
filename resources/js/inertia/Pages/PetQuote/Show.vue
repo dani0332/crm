@@ -262,6 +262,8 @@ const linkEntity = () => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 </script>
 
 <template>
@@ -331,18 +333,20 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
               Duplicate Lead
             </x-button>
-            <x-tooltip :disabled="true" position="bottom" v-if="lockLeadSectionsDetails.lead_details">
-              <Link v-if="can(permissionsEnum.PetQuotesEdit)" :href="route('pet-quotes-edit', quote.uuid)">
-                <x-button :disabled="lockLeadSectionsDetails.lead_details" size="sm" tag="div">Edit</x-button>
+
+            <LeadEditBtnTemplate v-slot="{ isDisabled }">
+              <Link :href="route('pet-quotes-edit', quote.uuid)">
+                <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
               </Link>
+            </LeadEditBtnTemplate>
+
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.PetQuotesEdit)" :isDisabled="true"/>
               <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
             </x-tooltip>
-            <Link
-              v-if="can(permissionsEnum.PetQuotesEdit)"
-              :href="route('pet-quotes-edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
+            <template v-else>
+              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.PetQuotesEdit)"/>
+            </template>
 
             <Link
               v-if="can(permissionsEnum.PetQuotesList)"

@@ -192,6 +192,9 @@ watch(
     }
   },
 );
+
+const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -448,9 +451,20 @@ watch(
               <div class="w-full md:w-1/2" />
             </div>
 
+            <EditPolicyButtonTemplate v-slot="{ isDisabled }" >
+              <x-button
+                class="mt-4"
+                color="emerald"
+                size="sm"
+                @click.prevent="policyDetailsState.isEditing = true"
+                :disabled="isDisabled"
+              >
+              Edit
+              </x-button>
+            </EditPolicyButtonTemplate>
+
             <div class="flex justify-end">
               <template
-                class="flex justify-end"
                 v-if="
                   record.quote_status_id == quoteStatusEnum.TransactionApproved ||
                   record.quote_status_id == quoteStatusEnum.PolicyPending ||
@@ -484,34 +498,25 @@ watch(
                   Update
                 </x-button>
 
-                <template
-                  v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()"
-                >
-                  <x-button
-                    v-if="
-                      !policyDetailsState.isEditing && hasRole(rolesEnum.PA)
-                    "
-                    class="mt-4"
-                    color="emerald"
-                    size="sm"
-                    @click.prevent="policyDetailsState.isEditing = true"
-                  >
-                    Edit
-                  </x-button></template
-                >
+                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
+                  <template v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()">
+                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.PA)" :isDisabled="true"/>
+                  </template>
+                  <template v-else>
+                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.NRA)" :isDisabled="true"/>
+                  </template>
+                  <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+                </x-tooltip>
+
                 <template v-else>
-                  <x-button
-                    v-if="
-                      !policyDetailsState.isEditing && hasRole(rolesEnum.NRA)
-                    "
-                    class="mt-4"
-                    color="emerald"
-                    size="sm"
-                    @click.prevent="policyDetailsState.isEditing = true"
-                  >
-                    Edit
-                  </x-button></template
-                >
+                  <template v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()">
+                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.PA)"/>
+                  </template>
+                  <template v-else>
+                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.NRA)"/>
+                  </template>
+                </template>
+
               </template>
               <template v-else>
                 <x-tooltip>
@@ -526,7 +531,7 @@ watch(
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      'The button is not accessable because policy has been booked'
+                      "This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy'"
                     }}</span>
                   </template>
                 </x-tooltip>

@@ -1522,6 +1522,8 @@ watch(
   },
 );
 
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -1654,15 +1656,19 @@ watch(
               <x-button size="sm" color="primary" tag="div"> Health List </x-button>
             </Link>
 
-            <x-tooltip :disabled="true" position="bottom" v-if="lockLeadSectionsDetails.lead_details">
+            <LeadEditBtnTemplate v-slot="{ isDisabled }">
               <Link :href="route('health.edit', quote.uuid)">
-                <x-button :disabled="lockLeadSectionsDetails.lead_details" size="sm" tag="div">Edit</x-button>
+                <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
               </Link>
+            </LeadEditBtnTemplate>
+
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+              <LeadEditBtnReuseTemplate :isDisabled="true"/>
               <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
             </x-tooltip>
-            <Link v-else :href="route('health.edit', quote.uuid)">
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
+            <LeadEditBtnReuseTemplate v-else/>
+                          
+
           </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
