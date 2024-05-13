@@ -193,7 +193,7 @@ class CarRevivalQuoteRepository extends BaseRepository
 
         $query = $this
             ->select(
-                'quote_batch_id',
+                'dtt_revivals.revival_quote_batch_id as quote_batch_id',
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as conversion_captured'),
                 DB::raw('COUNT(CASE  WHEN source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE NULL END) as total_revived'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' and  quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE NULL END) as captured'),
@@ -202,8 +202,8 @@ class CarRevivalQuoteRepository extends BaseRepository
                 DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
             )
             ->leftjoin('dtt_revivals', 'dtt_revivals.quote_id', 'car_quote_request.id')
-            ->whereNotNull(['quote_batch_id', 'payment_status_id'])
-            ->orderBy('quote_batch_id', 'desc');
+            ->whereNotNull(['dtt_revivals.revival_quote_batch_id', 'payment_status_id'])
+            ->orderBy('dtt_revivals.revival_quote_batch_id', 'desc');
 
         if (! empty($leadSource)) {
             $query->where('source', $leadSource);
@@ -213,7 +213,7 @@ class CarRevivalQuoteRepository extends BaseRepository
         if (! empty($carInsurancetypeId)) {
             $query->where('car_type_insurance_id', $carInsurancetypeId);
         }
-        $record = $query->groupBy('quote_batch_id')->get()->toArray();
+        $record = $query->groupBy('dtt_revivals.revival_quote_batch_id')->get()->toArray();
 
         $data = [];
         foreach ($record as $item) {

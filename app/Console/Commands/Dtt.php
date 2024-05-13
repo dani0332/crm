@@ -66,6 +66,14 @@ class Dtt extends Command
 
         $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
+        $excludeSources = [LeadSourceEnum::AFIA_RENEWAL, LeadSourceEnum::AFIA_ENQUIRY, LeadSourceEnum::AQEED_LEAD, LeadSourceEnum::AQEED_RENEWALS, LeadSourceEnum::AQEED_REVIVAL, LeadSourceEnum::ARABIC_ADVISORY, LeadSourceEnum::ARABIC_CALL_DESK, LeadSourceEnum::ARABIC_TELE_MARKETING, LeadSourceEnum::ASD,
+            LeadSourceEnum::BDM, LeadSourceEnum::CALL_DESK, LeadSourceEnum::CALL_DESK_WHATSAPP, LeadSourceEnum::CAR_FORM, LeadSourceEnum::CAR_INSURANCE_AE, LeadSourceEnum::CAR_VAULT_AFFINITY_MOTOR, LeadSourceEnum::CORPOLINE_NB, LeadSourceEnum::CROSS_SELL, LeadSourceEnum::DUBAI_NOW,
+            LeadSourceEnum::ECOM, LeadSourceEnum::ENQUIRY_FROM_RECEPTION, LeadSourceEnum::EXISTING_CLIENT_NEW_BUSINESS, LeadSourceEnum::HOME_INSURANCEMARKET_AE, LeadSourceEnum::IM_PRIO, LeadSourceEnum::IMCRM, LeadSourceEnum::MEDICAL_LIFE_INSURANCEMARKET_AE, LeadSourceEnum::MOBILE,
+            LeadSourceEnum::MOTOR_INQUIRY_INSURANCEMARKET_AE, LeadSourceEnum::MOTOR_INQUIRY_PROTECTMYCAR, LeadSourceEnum::MOTOR_INQUIRY_ZOOM, LeadSourceEnum::PERSONAL_CONTACT, LeadSourceEnum::POSTMAN, LeadSourceEnum::RECYCLED, LeadSourceEnum::REFERRAL, LeadSourceEnum::REFERRAL_FROM_EXISTING_CLIENT,
+            LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVED_LEADS_INSURANCEMARKET_AE, LeadSourceEnum::TEST, LeadSourceEnum::TEST_POSTMAN, LeadSourceEnum::TIER_L_FUTUREDATELEADS, LeadSourceEnum::TIER_L_QUALFIED, LeadSourceEnum::TM_FACEBOOK, LeadSourceEnum::TM_OFFSHORE,
+            LeadSourceEnum::TM_ORGANIC, LeadSourceEnum::TM_RENEWALS, LeadSourceEnum::TM_SP_RENEWAL, LeadSourceEnum::TM_WHATSAPP, LeadSourceEnum::TPL_COMP, LeadSourceEnum::TPL_Renewal, LeadSourceEnum::TPL_RENEWALS, LeadSourceEnum::TRAVEL_INSURANCEMARKET_AE, LeadSourceEnum::WALK_IN_CLIENT, LeadSourceEnum::WEB,
+        ];
+
         $jobs = [];
         $logPrefix = 'CarRevivalLeadsCreationJob -';
         $leads = CarQuote::where('is_revived', '=', false)
@@ -76,11 +84,12 @@ class Dtt extends Command
                 $q->where('source', '!=', LeadSourceEnum::REVIVAL)
                     ->where('created_at', '<=', $datethirtyDaysBefore);
             })
-            ->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->whereNotIn('source', $excludeSources)
             ->whereNull('renewal_batch')
             ->whereNull('previous_quote_policy_number')
 
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
+
             ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
 
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
