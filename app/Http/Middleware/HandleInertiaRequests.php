@@ -140,6 +140,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW,
             PermissionsEnum::UtmLeadsSalesReport,
             PermissionsEnum::RENEWAL_BATCH_REPORT,
+            PermissionsEnum::MANAGEMENT_REPORT,
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
@@ -150,6 +151,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW), 'Revival Conversion', route('revival-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::MANAGEMENT_REPORT), 'Management Report', route('management-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT), 'Total Premium Report', route('total-premium-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
