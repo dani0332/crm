@@ -173,7 +173,7 @@ const bookingDetailsForm = useForm({
   commission_vat_applicable:
     props.bookingDetails?.commission_vat_applicable ||
     props?.payments[0]?.commission_vat_applicable ||
-    '0.00',
+    '',
   total_commission:
     props.bookingDetails?.total_commission || props?.payments[0]?.commission || "",
   total_vat_amount: props.bookingDetails?.total_vat_amount || null,
