@@ -3,8 +3,7 @@ import { useCan } from '../../../Composables/can';
 
 defineProps({
   quote: Object,
-  quoteStatusEnum: Object,
-  can: Object,
+  quoteStatusEnum: Object
 });
 
 const notification = useNotifications('toast');

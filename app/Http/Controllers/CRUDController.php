@@ -11,6 +11,7 @@ use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
@@ -224,7 +225,6 @@ class CRUDController extends Controller
             $isManualAllocationAllowed = Auth::user()->isAdmin() ? true : $isManager;
         }
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
-
         $tiers = Tier::where('is_active', 1)->get();
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->isRenewalUser();
@@ -358,7 +358,6 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
-
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
@@ -392,7 +391,6 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
-
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -496,7 +494,6 @@ class CRUDController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-
             if (in_array($modelType, [quoteTypeCode::Health, quoteTypeCode::Home])) {
                 event(new LeadsCount($modelDetails[$modelType]['totalLeadsCount']));
             }
@@ -620,6 +617,11 @@ class CRUDController extends Controller
         $tiers = $this->lookupService->getTierR();
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+
+        if (in_array($this->genericModel->modelType, [quoteTypeCode::Health, quoteTypeCode::Car])) {
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
+        }
+
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
@@ -635,7 +637,7 @@ class CRUDController extends Controller
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $carMakeText = $record->car_make_id_text ?? '';
             $carModelText = $record->car_model_id_text ?? '';
-            $this->carQuoteService->addOrUpdateQuoteViewCount($record);
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Car);
 
             foreach ($payments as $payment) {
                 $payment->payment_status_text = $payment->paymentStatus->text;
@@ -728,7 +730,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'isAmlClearedForPayment',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'isAmlClearedForPayment', 'clientInquiryLogs',
             ]));
         }
 
@@ -799,7 +801,6 @@ class CRUDController extends Controller
             }
             $filteredInsuranceProviders = [];
             if (! empty($insuranceProviders)) {
-
                 $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
                     return [
                         'value' => $paymentMethod->id,
@@ -866,6 +867,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Health);
             $listQuotePlans = [];
             $quotePlans = $this->healthQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
@@ -932,7 +934,6 @@ class CRUDController extends Controller
                 })->values();
             }
             if (! empty($insuranceProviders)) {
-
                 $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                     return [
                         'value' => $paymentMethod->id,
@@ -970,6 +971,7 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
+                'planTypes' => HealthPlanTypeEnum::withLabels(),
                 'lostReasons' => $lostReasons,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
@@ -1008,6 +1010,7 @@ class CRUDController extends Controller
                 'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
+                'clientInquiryLogs' => $clientInquiryLogs,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1071,7 +1074,6 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
-
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -1160,7 +1162,6 @@ class CRUDController extends Controller
             ])->values()->toArray();
         }
 
-
         $totalLeads = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
 
@@ -1170,6 +1171,7 @@ class CRUDController extends Controller
 
         $advisors = $this->crudService->getAdvisorsByModelType(quoteTypeCode::Home);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
+
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
@@ -1785,7 +1787,6 @@ class CRUDController extends Controller
         $payment->update($paymentInformation);
 
         return back()->with('success', 'Payment has been updated');
-
     }
 
     public function sendEmailOneClickBuy(Request $request)
@@ -1844,7 +1845,6 @@ class CRUDController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
         }
-
     }
 
     public function manualTierAssignment(Request $request)
@@ -1863,11 +1863,6 @@ class CRUDController extends Controller
             'quote_status_date' => now(),
             'is_renewal_tier_email_sent' => 0,
         ]);
-    }
-
-    public function cancelPayment(Request $request)
-    {
-        return $this->crudService->cancelPayment($request);
     }
 
     public function toggleEmbeddedProduct(Request $request)
@@ -1891,6 +1886,7 @@ class CRUDController extends Controller
     {
         return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
     }
+
     public function riskRatingDetails($quoteType, $uuid)
     {
         $quoteModel = $this->getQuoteObject($quoteType, $uuid);

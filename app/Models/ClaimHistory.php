@@ -14,4 +14,14 @@ class ClaimHistory extends BaseModel
     {
         return self::processGetBaseDSL($filters, 'claim_history', ['code', 'id', 'text']);
     }
+
+    /**
+     * scope to get active records
+     *
+     * @return mixed
+     */
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
 }

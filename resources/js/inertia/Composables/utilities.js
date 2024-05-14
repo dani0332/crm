@@ -1,40 +1,31 @@
-
-
-export const useRoundIt = (num, decimalPlaces = 2) =>
-{
+export const useRoundIt = (num, decimalPlaces = 2) => {
   const p = Math.pow(10, decimalPlaces);
   const n = num * p * (1 + Number.EPSILON);
   return Math.round(n) / p;
 };
 
-export const useCleanObj = reactive =>
-{
-  Object.keys(reactive).forEach(key =>
-  {
+export const useCleanObj = reactive => {
+  Object.keys(reactive).forEach(key => {
     if (
       reactive[key] === null ||
       reactive[key] === undefined ||
       reactive[key] === '' ||
       reactive[key] === false ||
-      reactive[key]?.length === 0
-    )
-    {
+      reactive[key].length === 0
+    ) {
       delete reactive[key];
     }
   });
   return reactive;
 };
 
-export const useObjToUrl = obj =>
-{
+export const useObjToUrl = obj => {
   Object.keys(obj).forEach(
     key => (obj[key] === '' || obj[key]?.length === 0) && delete obj[key],
   );
   return Object.keys(obj)
-    .map(key =>
-    {
-      if (Array.isArray(obj[key]))
-      {
+    .map(key => {
+      if (Array.isArray(obj[key])) {
         return obj[key].map(value => `${key}[]=${value}`).join('&');
       }
       return `${key}=${obj[key]}`;
@@ -42,10 +33,15 @@ export const useObjToUrl = obj =>
     .join('&');
 };
 
-export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insurance_id) =>
-{
-
-  let business_route = (business_type_of_insurance_id == 5) ? route('amt.show', uuid) : route('business.show', uuid);
+export const useGetShowPageRoute = (
+  uuid,
+  quoteTypeId,
+  business_type_of_insurance_id,
+) => {
+  let business_route =
+    business_type_of_insurance_id == 5
+      ? route('amt.show', uuid)
+      : route('business.show', uuid);
 
   const routesObj = {
     1: route('car.show', uuid),
@@ -61,46 +57,39 @@ export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insuranc
   };
 
   return routesObj[quoteTypeId];
-}
+};
 
 // Function to format the date
-export const formatDate = (dateObject) =>
-{
-  if (dateObject && dateObject.$date && dateObject.$date.$numberLong)
-  {
+export const formatDate = dateObject => {
+  if (dateObject && dateObject.$date && dateObject.$date.$numberLong) {
     const timestamp = parseInt(dateObject.$date.$numberLong);
     const formattedDate = new Date(timestamp);
     const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
     return formattedDate.toLocaleDateString('en-US', options);
-  } else if (dateObject && dateObject.includes('-'))
-  {
+  } else if (dateObject && dateObject.includes('-')) {
     return dateObject;
   }
   return null;
-}
-export const useGenerateQueryString = filters =>
-{
+};
+export const useGenerateQueryString = filters => {
   const query = {};
-  Object.keys(filters).forEach(key =>
-  {
-    if (filters[key] !== '' && filters[key] != null)
-    {
+  Object.keys(filters).forEach(key => {
+    if (Array.isArray(filters[key]) && filters[key].length > 0) {
+      query[key] = filters[key];
+    } else if (filters[key] !== '' && filters[key] != null) {
       query[key] = filters[key];
     }
   });
   return query;
 };
 
-export const useConvertDate = date =>
-{
-  if (date == null)
-  {
+export const useConvertDate = date => {
+  if (date == null) {
     return null;
   }
 
   const splitedDate = date.split('-');
-  if (splitedDate[0].length === 4)
-  {
+  if (splitedDate[0].length === 4) {
     return date;
   }
 
@@ -108,25 +97,19 @@ export const useConvertDate = date =>
   return `${year}-${month}-${day}`;
 };
 
-export const useDaysSinceStale = payload =>
-{
-
+export const useDaysSinceStale = payload => {
   let diff = (new Date(payload).getTime() - new Date().getTime()) / 1000;
   // Convert the difference from milliseconds to hours by dividing it by the number of seconds in an hour (3600)
-  diff /= (60 * 60);
+  diff /= 60 * 60;
   // Return the absolute value of the rounded difference in hours
   let result = Math.abs(Math.round(diff));
 
-  if (result >= 6 && result < 12)
-  {
+  if (result >= 6 && result < 12) {
     return ' 1 day';
-  }
-  else if (result >= 12 && result < 18)
-  {
-    return ' 2 days'
-  } else
-  {
-    return false
+  } else if (result >= 12 && result < 18) {
+    return ' 2 days';
+  } else {
+    return false;
   }
 
   // const quoteRequest = payload;
@@ -146,22 +129,26 @@ export const useDaysSinceStale = payload =>
   //   } else
   //     return stale_days + ' days';
   // }
-
 };
 
-export const fileUploadErrorMessage = (doc, rejectReason) =>
-{
+export const useFormatPrice = (price, thousandSeparator = false) => {
+  return thousandSeparator
+    ? parseFloat(price).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : parseFloat(price).toFixed(2);
+};
+
+export const fileUploadErrorMessage = (doc, rejectReason) => {
   let errorMessage = '';
-  if (rejectReason.code == 'file-too-large')
-  {
+  if (rejectReason.code == 'file-too-large') {
     errorMessage =
       'File size must be less than ' + doc.max_size + ' MB for ' + doc.text;
-  } else if (rejectReason.code == 'file-invalid-type')
-  {
+  } else if (rejectReason.code == 'file-invalid-type') {
     errorMessage =
       'You can only upload a ' + doc.accepted_files + ' for ' + doc.text;
-  } else
-  {
+  } else {
     errorMessage =
       'You can only upload a ' +
       doc.accepted_files +
@@ -171,7 +158,7 @@ export const fileUploadErrorMessage = (doc, rejectReason) =>
       doc.text;
   }
   return errorMessage;
-}
+};
 
 // export const fileUploadErrorMessage = (doc, rejectReason) => {
 //   let errorMessage = "";
@@ -188,13 +175,7 @@ export const fileUploadErrorMessage = (doc, rejectReason) =>
 //   return errorMessage;
 // };
 
-export const useFormatPrice = (price, thousandSeparator = false) =>
-{
-  return (thousandSeparator ? parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : parseFloat(price).toFixed(2));
-}
-
-export const useCompareDueDate = dueDateString =>
-{
+export const useCompareDueDate = dueDateString => {
   const currentDate = new Date();
 
   const [day, month, year, hour, minute, second] = dueDateString.split(/[- :]/);
@@ -207,17 +188,13 @@ export const useCompareDueDate = dueDateString =>
   return currentDate > dueDate;
 };
 
-export const useCalculateTotalSum = (data, key) =>
-{
-  const totalSum = data.reduce((accumulator, currentItem) =>
-  {
+export const useCalculateTotalSum = (data, key) => {
+  const totalSum = data.reduce((accumulator, currentItem) => {
     // Ensure the current item has the specified key
-    if (key in currentItem)
-    {
+    if (key in currentItem) {
       // Parse the value to a number and add it to the accumulator
-      let value = currentItem[key] != null ? currentItem[key] : 0
-      accumulator += +parseFloat((value.toString()).replace(/,/g, '')) || 0;
-
+      let value = currentItem[key] != null ? currentItem[key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
     }
     return accumulator;
   }, 0);
@@ -225,8 +202,7 @@ export const useCalculateTotalSum = (data, key) =>
   return totalSum.toFixed(2);
 };
 
-export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') =>
-{
+export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
   // Get the current date
   let currentDate = new Date();
 
@@ -236,60 +212,77 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') =>
   return useDateFormat(previousDate, format).value;
 };
 
-
-export const setQueryStringFilters = (params, filters) =>
-{
-  for (const [key] of Object.entries(params))
-  {
-    if (key.includes('[]'))
-    {
+export const setQueryStringFilters = (params, filters) => {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];
-    } else
-    {
+    } else {
       filters[key] = params[key];
     }
   }
-}
+};
 
+export const saveQueryParams = () => {
+  let { component, url } = router.page;
+  let routes = [
+    'HealthQuote/Index',
+    'PetQuote/Index',
+    'CycleQuote/Index',
+    'CorpLineQuote/Index',
+    'YachtQuote/Index',
+    'HomeQuote/Index',
+  ];
 
-export const saveQueryParams = () =>
-{
-  let { component, url } = router.page
-  let routes = ['HealthQuote/Index', 'PetQuote/Index', 'CycleQuote/Index', 'CorpLineQuote/Index', 'YachtQuote/Index', 'HomeQuote/Index']
-
-  if (routes.includes(component))
-  {
+  if (routes.includes(component)) {
     const urlWithParams = { url: component, params: url };
     // Serialize the object to JSON
     localStorage.setItem(component, JSON.stringify(urlWithParams));
   }
+};
 
-}
-
-export const removedSavedParams = () =>
-{
-  let { component } = router.page
+export const removedSavedParams = () => {
+  let { component } = router.page;
   localStorage.removeItem(component);
-}
+};
 
-export const getSavedQueryParams = () =>
-{
-  let { component } = router.page
+export const getSavedQueryParams = () => {
+  let { component } = router.page;
   const savedParams = localStorage.getItem(component);
-  if (savedParams)
-  {
+  if (savedParams) {
     let routerInfo = JSON.parse(savedParams);
-    const params = new URLSearchParams(routerInfo.params.split("?")[1]);
+    const params = new URLSearchParams(routerInfo.params.split('?')[1]);
 
     // Convert the URLSearchParams object into an object
     const queryParams = {};
-    for (const [key, value] of params.entries())
-    {
+    for (const [key, value] of params.entries()) {
       queryParams[key] = value;
     }
 
-    router.reload({ method: 'get', data: queryParams })
-    return queryParams
+    router.reload({ method: 'get', data: queryParams });
+    return queryParams;
   }
-  return false
-}
+  return false;
+};
+export const maskEmail = emails => {
+  if (!emails) return null;
+  return emails
+    .split(',')
+    .map(email => {
+      const [localPart, domainPart] = email.split('@');
+      const maskedLocalPart =
+        localPart.substring(0, Math.ceil(localPart.length / 2)) +
+        '*'.repeat(localPart.length - Math.ceil(localPart.length / 2));
+      return `${maskedLocalPart}@${domainPart}`;
+    })
+    .join(',');
+};
+
+export const maskPhone = mobile_no => {
+  if (mobile_no) {
+    return mobile_no
+      .split('')
+      .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
+      .join('');
+  }
+  return null;
+};

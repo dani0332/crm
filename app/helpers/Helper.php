@@ -6,6 +6,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
@@ -16,9 +17,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
-if (!function_exists('generate_code')) {
+if (! function_exists('generate_code')) {
     /**
      * Checks if a value exists in an array in a case-insensitive manner.
      *
@@ -29,15 +31,15 @@ if (!function_exists('generate_code')) {
     {
         $transaction = DB::table('transactions')->count();
         $now = Carbon::now();
-        $day = $now->day < 10 ? '0' . $now->day : $now->day;
-        $month = $now->month < 10 ? '0' . $now->month : $now->month;
+        $day = $now->day < 10 ? '0'.$now->day : $now->day;
+        $month = $now->month < 10 ? '0'.$now->month : $now->month;
         $year = substr($now->year, 2);
 
-        return $prefix . $year . $month . $day;
+        return $prefix.$year.$month.$day;
     }
 }
 
-if (!function_exists('vAbort')) {
+if (! function_exists('vAbort')) {
     /**
      * abort script execution and return errors in validation format with http status 422.
      *
@@ -47,14 +49,14 @@ if (!function_exists('vAbort')) {
      */
     function vAbort($messages, $field = 'error')
     {
-        if (!is_array($messages)) {
+        if (! is_array($messages)) {
             $messages = [$field => [$messages]];
         }
         throw ValidationException::withMessages($messages);
     }
 }
 
-if (!function_exists('generateUuid')) {
+if (! function_exists('generateUuid')) {
     function generateUuid()
     {
         $client = new Hidehalo\Nanoid\Client();
@@ -65,7 +67,7 @@ if (!function_exists('generateUuid')) {
     }
 }
 
-if (!function_exists('storageUrl')) {
+if (! function_exists('storageUrl')) {
     /**
      * get azure storage url.
      *
@@ -73,7 +75,7 @@ if (!function_exists('storageUrl')) {
      */
     function storageUrl()
     {
-        return config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        return config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
     }
 }
 
@@ -85,11 +87,11 @@ function get_guid()
         mt_srand((float) microtime() * 10000);
         $charid = strtoupper(md5(uniqid(rand(), true)));
         $hyphen = chr(45);
-        $uuid = substr($charid, 0, 8) . $hyphen
-        . substr($charid, 8, 4) . $hyphen
-        . substr($charid, 12, 4) . $hyphen
-        . substr($charid, 16, 4) . $hyphen
-        . substr($charid, 20, 12);
+        $uuid = substr($charid, 0, 8).$hyphen
+        .substr($charid, 8, 4).$hyphen
+        .substr($charid, 12, 4).$hyphen
+        .substr($charid, 16, 4).$hyphen
+        .substr($charid, 20, 12);
 
         return $uuid;
     }
@@ -100,10 +102,10 @@ function mapPhoneNumber($customerPhoneNo)
     $customerCorrectPhoneNo = $customerPhoneNo;
     $customerCorrectPhoneNo1 = $customerPhoneNo;
     if (strlen($customerPhoneNo) == 9) { // 563264418 9
-        $customerCorrectPhoneNo = '0' . $customerPhoneNo;
+        $customerCorrectPhoneNo = '0'.$customerPhoneNo;
     } elseif (strlen($customerPhoneNo) == 12) { // 971563264418 12
         $customerPhoneNo = substr($customerPhoneNo, 3);
-        $customerCorrectPhoneNo = '0' . $customerPhoneNo;
+        $customerCorrectPhoneNo = '0'.$customerPhoneNo;
     } elseif (strlen($customerPhoneNo) == 13) {
         $customerPhoneNo = substr($customerPhoneNo, 0, 4);
 
@@ -112,14 +114,14 @@ function mapPhoneNumber($customerPhoneNo)
         }
         if ($customerPhoneNo == '+971') { // +971563264418 13 Working
             $customerPhoneNo = substr($customerCorrectPhoneNo1, 4);
-            $customerCorrectPhoneNo = '0' . $customerPhoneNo;
+            $customerCorrectPhoneNo = '0'.$customerPhoneNo;
         }
     } elseif (strlen($customerPhoneNo) == 14) {
         $customerPhoneNo = substr($customerPhoneNo, 0, 5);
 
         if ($customerPhoneNo == '00971') { // 00971563264418 14
             $customerCorrectPhoneNo = substr($customerCorrectPhoneNo1, 5);
-            $customerCorrectPhoneNo = '0' . $customerCorrectPhoneNo;
+            $customerCorrectPhoneNo = '0'.$customerCorrectPhoneNo;
         }
         if ($customerPhoneNo == '+9710') { // +9710563264418 14
             $customerCorrectPhoneNo = substr($customerCorrectPhoneNo1, 4);
@@ -145,15 +147,15 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     // dd($request->all());
     $result = [];
 
-    if (!$modelType) {
+    if (! $modelType) {
         return $result;
     }
 
     $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
     $nameSpace = 'App\\Models\\';
-    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($modelType) . 'Quote';
+    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-    if (!class_exists($modelType)) {
+    if (! class_exists($modelType)) {
         return false;
     }
 
@@ -184,7 +186,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             getCardViewRequestFilters($query, $request, $modelType);
         });
 
-        // Reminder: previous quote id is not available in personal quote 
+    // Reminder: previous quote id is not available in personal quote
 
     // if (auth()->user()->isRenewalAdvisor()) {
     //     $result['total_leads'] = $modelQuery->whereNotNull('previous_quote_id')->count();
@@ -197,20 +199,18 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     //     $result['leads_list'] = $modelQuery->whereNull('previous_quote_id')->paginate(10);
 
     // } else
-    
+
     if ($modelType == HealthQuote::class && auth()->user()->isCarAdvisor() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
         $result['total_leads'] = $modelQuery->count();
         $result['total_premium'] = $modelQuery->sum('premium');
         $result['leads_list'] = $modelQuery->paginate(10);
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
-
     } elseif ($modelType == HealthQuote::class && auth()->user()->isCarManager() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
         $ids = app(HealthQuoteService::class)->walkTree(auth()->user()->id);
         $result['total_leads'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->count();
         $result['total_premium'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->sum('premium');
         $result['leads_list'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->paginate(10);
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
-
     } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
         $result['total_premium'] = $modelQuery->sum('premium');
@@ -233,11 +233,11 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 function getDataAgainstEveryStatus($modelType, $request)
 {
     $result = [];
-    if (!$modelType) {
+    if (! $modelType) {
         return $result;
     }
     $nameSpace = '\\App\\Models\\';
-    $modelType = $nameSpace . $modelType . 'Quote';
+    $modelType = $nameSpace.$modelType.'Quote';
     if ($request->has('myleads')) {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
@@ -274,66 +274,66 @@ function getDataAgainstEveryStatus($modelType, $request)
 function getDataAgainstSearchTerm($modelType, $request)
 {
     $result = [];
-    if (!$request->term) {
+    if (! $request->term) {
         return $result;
     }
     $nameSpace = '\\App\\Models\\';
-    $modelType = $nameSpace . $modelType . 'Quote';
+    $modelType = $nameSpace.$modelType.'Quote';
     if ($modelType == 'Business') {
         if ($request->has('myleads') && $request->myleads) {
             if (Auth::user()->isRenewalAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term . '*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term.'*'])
                     ->where('advisor_id', Auth::user()->id)
                     ->whereNotNull('previous_quote_id')
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term . '*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term.'*'])
                     ->where('advisor_id', Auth::user()->id)
                     ->whereNull('previous_quote_id')
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             }
         } else {
             if (Auth::user()->isRenewalAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->whereNotNull('previous_quote_id')
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->whereNull('previous_quote_id')
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->get();
             }
         }
     } else {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                 ->whereNotNull('previous_quote_id')
                 ->where('advisor_id', Auth::user()->id)
                 ->get();
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                 ->whereNull('previous_quote_id')
                 ->where('advisor_id', Auth::user()->id)
                 ->get();
         } else {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])->get();
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])->get();
         }
     }
 
@@ -342,7 +342,7 @@ function getDataAgainstSearchTerm($modelType, $request)
 
 function getAdditionalInfo($modelType, $quoteId)
 {
-    $result = CustomerAdditionalInfo::where(['quote_request_id' => $quoteId, 'quote_type' => $modelType . 'Quote'])->get();
+    $result = CustomerAdditionalInfo::where(['quote_request_id' => $quoteId, 'quote_type' => $modelType.'Quote'])->get();
 
     return $result;
 }
@@ -373,18 +373,18 @@ function addSearchClauses($model, $request, $query, $searchPrefix)
             $propertyMetaData = $model->properties[$searchProperty];
             switch ($propertyMetaData) {
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::LIKE_SEARCH):
-                    $query = $query->where($searchPrefix . $searchProperty, 'like', '%' . $request->$searchProperty . '%');
+                    $query = $query->where($searchPrefix.$searchProperty, 'like', '%'.$request->$searchProperty.'%');
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::EQUAL_SEARCH):
-                    $query = $query->where($searchPrefix . $searchProperty, $request->$searchProperty);
+                    $query = $query->where($searchPrefix.$searchProperty, $request->$searchProperty);
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::DATE_RANGE):
                     $dateFrom = Carbon::createFromFormat($dateFormat, $request[$searchProperty])->startOfDay()->toDateTimeString();
-                    $dateTo = Carbon::createFromFormat($dateFormat, $request[$searchProperty . '_end'])->endOfDay()->toDateTimeString();
-                    $query = $query->whereBetween($searchPrefix . $searchProperty, [$dateFrom, $dateTo]);
+                    $dateTo = Carbon::createFromFormat($dateFormat, $request[$searchProperty.'_end'])->endOfDay()->toDateTimeString();
+                    $query = $query->whereBetween($searchPrefix.$searchProperty, [$dateFrom, $dateTo]);
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::MULTI_SEARCH):
-                    $query = $query->whereIn($searchPrefix . $searchProperty, $request->$searchProperty);
+                    $query = $query->whereIn($searchPrefix.$searchProperty, $request->$searchProperty);
                     break;
                 default:
                     break;
@@ -406,9 +406,9 @@ function addOrderByClauses($request, $query, $searchPrefix)
     if ($column != '' && $direction != '') {
         $columnName = $request->get('columns')[$column]['name'];
 
-        return $query->orderBy($searchPrefix . $columnName, $direction);
+        return $query->orderBy($searchPrefix.$columnName, $direction);
     } else {
-        return $query->orderBy($searchPrefix . 'created_at', 'DESC');
+        return $query->orderBy($searchPrefix.'created_at', 'DESC');
     }
 }
 
@@ -416,24 +416,24 @@ function formatAmount($value, $decimals = 2, $appendPrefix = true)
 {
     $value = number_format($value, $decimals);
 
-    return ($appendPrefix) ? 'AED ' . $value : $value;
+    return ($appendPrefix) ? 'AED '.$value : $value;
 }
 
 function generateRouteNames($prefix)
 {
     return [
-        'index' => $prefix . '-list',
-        'create' => $prefix . '-create',
-        'store' => $prefix . '-store',
-        'show' => $prefix . '-show',
-        'edit' => $prefix . '-edit',
-        'update' => $prefix . '-update',
-        'destroy' => $prefix . '-delete',
-        'search' => $prefix . '-search',
+        'index' => $prefix.'-list',
+        'create' => $prefix.'-create',
+        'store' => $prefix.'-store',
+        'show' => $prefix.'-show',
+        'edit' => $prefix.'-edit',
+        'update' => $prefix.'-update',
+        'destroy' => $prefix.'-delete',
+        'search' => $prefix.'-search',
     ];
 }
 
-if (!function_exists('newUi')) {
+if (! function_exists('newUi')) {
     function newUi(): array
     {
         return [
@@ -454,28 +454,28 @@ if (!function_exists('newUi')) {
     }
 }
 
-if (!function_exists('isCarLostStatus')) {
+if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
         return $quoteStatus == QuoteStatusEnum::CarSold || $quoteStatus == QuoteStatusEnum::Uncontactable;
     }
 }
 
-if (!function_exists('createCdnUrl')) {
+if (! function_exists('createCdnUrl')) {
     function createCdnUrl($path): string
     {
-        return config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/' . $path;
+        return config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$path;
     }
 }
 
-if (!function_exists('getAutomationUser')) {
+if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
         return ['im.automation4@gmail.com', 'muhammad.abdullah@insurancemarket.ae'];
     }
 }
 
-if (!function_exists('formatLandlineNumber')) {
+if (! function_exists('formatLandlineNumber')) {
     function formatLandlineNumber($landlineNumber)
     {
         return preg_replace(
@@ -486,7 +486,7 @@ if (!function_exists('formatLandlineNumber')) {
     }
 }
 
-if (!function_exists('formatMobileNumber')) {
+if (! function_exists('formatMobileNumber')) {
     function formatMobileNumber($mobileNumber)
     {
         return preg_replace(
@@ -497,7 +497,7 @@ if (!function_exists('formatMobileNumber')) {
     }
 }
 
-if (!function_exists('checkPersonalQuotes')) {
+if (! function_exists('checkPersonalQuotes')) {
     function checkPersonalQuotes($quoteType)
     {
         return in_array($quoteType, [
@@ -510,7 +510,7 @@ if (!function_exists('checkPersonalQuotes')) {
     }
 }
 
-if (!function_exists('getBase64FileInfo')) {
+if (! function_exists('getBase64FileInfo')) {
     function getBase64FileInfo($base64File)
     {
         $fileSize = strlen($base64File);
@@ -523,7 +523,7 @@ if (!function_exists('getBase64FileInfo')) {
     }
 }
 
-if (!function_exists('sanitizeFileName')) {
+if (! function_exists('sanitizeFileName')) {
     function sanitizeFileName($fileName)
     {
         // Remove any Unicode control characters
@@ -545,7 +545,7 @@ if (!function_exists('sanitizeFileName')) {
     }
 }
 
-if (!function_exists('getQueryForLogWithBindings')) {
+if (! function_exists('getQueryForLogWithBindings')) {
     function getQueryForLogWithBindings(Builder $builder)
     {
         $addSlashes = str_replace('?', "'?'", $builder->toSql());
@@ -554,27 +554,27 @@ if (!function_exists('getQueryForLogWithBindings')) {
     }
 }
 
-if (!function_exists('formatMobileNo')) {
+if (! function_exists('formatMobileNo')) {
     function formatMobileNo($mobile)
     {
         return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
     }
 }
 
-if (!function_exists('removeCountryCode')) {
+if (! function_exists('removeCountryCode')) {
     function removeCountryCode($mobile)
     {
         $mobile = preg_replace('/^\+971|0(?=\d{9})/', '', $mobile);
 
         if (substr($mobile, 0, 1) !== '0') {
-            return '0' . $mobile;
+            return '0'.$mobile;
         }
 
         return $mobile;
     }
 }
 
-if (!function_exists('formatMobileNoDisplay')) {
+if (! function_exists('formatMobileNoDisplay')) {
     function formatMobileNoDisplay($mobile)
     {
         $mobile = removeCountryCode($mobile);
@@ -583,7 +583,7 @@ if (!function_exists('formatMobileNoDisplay')) {
     }
 }
 
-if (!function_exists('formatLandlineDisplay')) {
+if (! function_exists('formatLandlineDisplay')) {
     function formatLandlineDisplay($landline)
     {
         $landline = removeCountryCode($landline);
@@ -592,7 +592,7 @@ if (!function_exists('formatLandlineDisplay')) {
     }
 }
 
-if (!function_exists('getRepositoryObject')) {
+if (! function_exists('getRepositoryObject')) {
     function getRepositoryObject($quoteType)
     {
         if (checkPersonalQuotes($quoteType)) {
@@ -601,11 +601,11 @@ if (!function_exists('getRepositoryObject')) {
 
         $quoteType = ucfirst($quoteType);
 
-        return 'App\\Repositories\\' . $quoteType . 'QuoteRepository';
+        return 'App\\Repositories\\'.$quoteType.'QuoteRepository';
     }
 }
 
-if (!function_exists('checkModifiedRecord')) {
+if (! function_exists('checkModifiedRecord')) {
     function checkModifiedRecord($firstDate, $secondDate): bool
     {
         return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
@@ -613,11 +613,11 @@ if (!function_exists('checkModifiedRecord')) {
     }
 }
 
-if (!function_exists('dateQueryFilter')) {
+if (! function_exists('dateQueryFilter')) {
     function dateQueryFilter($firstDate, $secondDate, $clauseTypeBetween = true): array
     {
-        $firstDate = date(config('constants.DATE_FORMAT_ONLY') . ' 00:00:00', strtotime($firstDate));
-        $secondDate = date(config('constants.DATE_FORMAT_ONLY') . ' 23:59:59', strtotime($secondDate));
+        $firstDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($firstDate));
+        $secondDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($secondDate));
         $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH'));
 
         if ($clauseTypeBetween) {
@@ -628,7 +628,7 @@ if (!function_exists('dateQueryFilter')) {
     }
 }
 
-if (!function_exists('addDaysExcludeWeekend')) {
+if (! function_exists('addDaysExcludeWeekend')) {
     function addDaysExcludeWeekend($daysToAdd, $date = null)
     {
         // $date = $date ?? Carbon::now();
@@ -643,7 +643,7 @@ if (!function_exists('addDaysExcludeWeekend')) {
     }
 }
 
-if (!function_exists('getIMLogo')) {
+if (! function_exists('getIMLogo')) {
     function getIMLogo($isPDF = false)
     {
         $imLogo = 'images/im_logo_21k-hi.png';
@@ -652,7 +652,7 @@ if (!function_exists('getIMLogo')) {
     }
 }
 
-if (!function_exists('apiResponse')) {
+if (! function_exists('apiResponse')) {
     function apiResponse($data, $statusCode = 200, $message = null)
     {
         // If the data is an instance of Exception, handle it separately
@@ -680,95 +680,123 @@ if (!function_exists('apiResponse')) {
         ], $statusCode);
     }
 }
+if (! function_exists('getCardViewRequestFilters')) {
+    function getCardViewRequestFilters($partialQuery, Request $request, $modelType)
+    {
+        if ($modelType == HealthQuote::class && ! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
 
-function getCardViewRequestFilters($partialQuery, Request $request, $modelType)
-{
-
-    if ($modelType == HealthQuote::class && !empty($request->assigned_to_date_start) && !empty($request->assigned_to_date_end)) {
-
-        $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
-        $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
-
-        $partialQuery->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-
-    }
-    if (isset($request->code) && $request->code != '') {
-        $partialQuery->where('code', $request->code);
-    }
-
-    if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-        $partialQuery->where('renewal_batch', $request->renewal_batch);
-    }
-
-    if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
-        $partialQuery->whereIn('quote_status_id', $request->quote_status);
-    }
-
-    if (isset($request->first_name) && $request->first_name != '') {
-        $partialQuery->where('first_name', $request->first_name);
-    }
-    if (isset($request->last_name) && $request->last_name != '') {
-        $partialQuery->where('last_name', $request->last_name);
-    }
-    if (isset($request->email) && $request->email != '') {
-        $partialQuery->where('email', $request->email);
-    }
-
-    if (isset($request->mobile_no) && $request->mobile_no != '') {
-        $partialQuery->where('mobile_no', $request->mobile_no);
-    }
-
-    if (!empty($request->created_at_start) && !empty($request->created_at_end)) {
-        $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
-        $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-
-        $partialQuery->whereBetween('created_at', [$dateFrom, $dateTo]);
-    }
-
-    if (isset($request->is_ecommerce)) {
-        $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
-        $partialQuery->where('is_ecommerce', $isEcommerce);
-    }
-
-    if (isset($request->assignment_type) && !empty($request->assignment_type)) {
-        $partialQuery->where('assignment_type', $request->assignment_type);
-    }
-
-    if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-        $partialQuery->where('previous_quote_policy_number', $request->previous_quote_policy_number);
-    }
-
-    if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-        $partialQuery->where('renewal_batch', $request->renewal_batch);
-    }
-
-    if (isset($request->sub_team) && $request->sub_team != '') {
-        $partialQuery->where('health_team_type', $request->sub_team);
-    }
-
-    if ($request->hasAny(['created_at_start', 'created_at_end']) && $request->filled(['created_at_start', 'created_at_end'])) {
-        $partialQuery->whereBetween('created_at', dateQueryFilter($request->created_at_start, $request->created_at_end));
-    }
-
-    if ($request->has('is_cold') && $request->filled('is_cold')) {
-        $partialQuery->where('is_cold', true);
-    }
-
-    if ($request->has('is_stale') && $request->filled('is_stale')) {
-        $partialQuery->whereNotNull('stale_at');
-    }
-
-    if ($request->has('payment_status') && $request->filled('payment_status') && count($request->payment_status)) {
-        $partialQuery->whereIn('payment_status_id', $request->payment_status);
-    }
-
-    if (isset($request->is_renewal) && $request->is_renewal != '') {
-        if ($request->is_renewal == quoteTypeCode::yesText) {
-            $partialQuery->whereNotNull('previous_quote_policy_number');
+            $partialQuery->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
-        if ($request->is_renewal == quoteTypeCode::noText) {
-            $partialQuery->whereNull('previous_quote_policy_number');
+        if (isset($request->code) && $request->code != '') {
+            $partialQuery->where('code', $request->code);
         }
+
+        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+            $partialQuery->where('renewal_batch', $request->renewal_batch);
+        }
+
+        if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
+            $partialQuery->whereIn('quote_status_id', $request->quote_status);
+        }
+
+        if (isset($request->first_name) && $request->first_name != '') {
+            $partialQuery->where('first_name', $request->first_name);
+        }
+        if (isset($request->last_name) && $request->last_name != '') {
+            $partialQuery->where('last_name', $request->last_name);
+        }
+        if (isset($request->email) && $request->email != '') {
+            $partialQuery->where('email', $request->email);
+        }
+
+        if (isset($request->mobile_no) && $request->mobile_no != '') {
+            $partialQuery->where('mobile_no', $request->mobile_no);
+        }
+
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
+
+            $partialQuery->whereBetween('created_at', [$dateFrom, $dateTo]);
+        }
+
+        if (isset($request->is_ecommerce)) {
+            $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
+            $partialQuery->where('is_ecommerce', $isEcommerce);
+        }
+
+        if (isset($request->assignment_type) && ! empty($request->assignment_type)) {
+            $partialQuery->where('assignment_type', $request->assignment_type);
+        }
+
+        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+            $partialQuery->where('previous_quote_policy_number', $request->previous_quote_policy_number);
+        }
+
+        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+            $partialQuery->where('renewal_batch', $request->renewal_batch);
+        }
+
+        if (isset($request->sub_team) && $request->sub_team != '') {
+            $partialQuery->where('health_team_type', $request->sub_team);
+        }
+
+        if ($request->hasAny(['created_at_start', 'created_at_end']) && $request->filled(['created_at_start', 'created_at_end'])) {
+            $partialQuery->whereBetween('created_at', dateQueryFilter($request->created_at_start, $request->created_at_end));
+        }
+
+        if ($request->has('is_cold') && $request->filled('is_cold')) {
+            $partialQuery->where('is_cold', true);
+        }
+
+        if ($request->has('is_stale') && $request->filled('is_stale')) {
+            $partialQuery->whereNotNull('stale_at');
+        }
+
+        if ($request->has('payment_status') && $request->filled('payment_status') && count($request->payment_status)) {
+            $partialQuery->whereIn('payment_status_id', $request->payment_status);
+        }
+
+        if (isset($request->is_renewal) && $request->is_renewal != '') {
+            if ($request->is_renewal == quoteTypeCode::yesText) {
+                $partialQuery->whereNotNull('previous_quote_policy_number');
+            }
+            if ($request->is_renewal == quoteTypeCode::noText) {
+                $partialQuery->whereNull('previous_quote_policy_number');
+            }
+        }
+    }
+}
+
+if (! function_exists('getMyAlfredCampaign')) {
+    function getMyAlfredCampaign($campaignId)
+    {
+        $response = Http::get(config('constants.MA_V1_ENDPOINT').'/campaigns/'.$campaignId);
+
+        if ($response->ok()) {
+            $response = $response->object();
+
+            if ($response->data && $response->data->isActive) {
+                return $response;
+            }
+        }
+
+        return null;
+    }
+}
+
+if (! function_exists('getAppStorageValueByKey')) {
+    function getAppStorageValueByKey($keyName)
+    {
+        $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+
+        if (! $query) {
+            return false;
+        }
+
+        return $query->value;
     }
 }

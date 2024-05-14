@@ -30,7 +30,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
 use App\Models\PaymentAction;
 use App\Models\QuoteType;
-use App\Models\QuoteViewCount;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
@@ -1192,7 +1191,7 @@ class HealthQuoteService extends BaseService
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
 
-            $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
+            $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Health, $userId);
 
             $lead->quote_updated_at = now();
 
@@ -1291,23 +1290,6 @@ class HealthQuoteService extends BaseService
                 // Save the updated allocation record
                 $previousAdvisorAllocationRecord->save();
             }
-        }
-    }
-
-    private function updateExistingQuoteViewCount($userId, $leadId)
-    {
-        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->where('quote_type_id', 3)->first();
-        if ($quoteViewCount) {
-            $quoteViewCount->user_id = $userId;
-            $quoteViewCount->visit_count = 0;
-            $quoteViewCount->save();
-        } else {
-            QuoteViewCount::create([
-                'quote_id' => $leadId,
-                'quote_type_id' => 3,
-                'user_id' => $userId,
-                'visit_count' => 1,
-            ]);
         }
     }
 
@@ -1467,9 +1449,10 @@ class HealthQuoteService extends BaseService
                 'quoteUID' => $request->quoteUID,
                 'update' => true,
                 'plans' => [$plansArray],
-                'callSource' => LeadSourceEnum::IMCRM,
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
+            info('Health Plan Modify V2 Request Data: '.json_encode($dataArray));
             $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
             return $response;

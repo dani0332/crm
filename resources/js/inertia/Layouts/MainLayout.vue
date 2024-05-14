@@ -26,6 +26,7 @@ const onLogout = () => {
     window.location.href = '/login';
   });
 };
+
 </script>
 
 <template>
@@ -257,7 +258,9 @@ const onLogout = () => {
             </div>
 
             <div class="flex gap-3 items-center">
-              <OnlineStatusToggle :user="user" />
+               <OnlineStatusToggle
+                    :user="user"
+                />
               <!-- <UserStatus /> -->
               <x-popover align="right" block>
                 <x-button size="sm" ghost>

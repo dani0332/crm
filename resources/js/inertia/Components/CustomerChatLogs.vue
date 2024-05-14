@@ -64,6 +64,7 @@ const showChat = item => {
       loader.value = false;
       chatMessages.value.created_at = item._id;
       chatMessages.value.data = data;
+      chatMessages.value.id = item.quote_type + '-' + item.quote_id;
       showChatLogs.value = true;
     })
     .catch(error => {

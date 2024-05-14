@@ -2,7 +2,6 @@
 
 namespace App\Console;
 
-
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\CarLost\UnconSubmissionReminder;
@@ -19,6 +18,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\AddBatchNumber::class,
+        Commands\Dtt::class,
+        Commands\DttFollowUp::class,
         Commands\TierAssignment::class,
         Commands\UpdateUserStatus::class,
         Commands\QuoteAllocation::class,
@@ -57,7 +58,6 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
 
-
         $schedule->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
@@ -76,9 +76,10 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(1);
 
         $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->everySixHours()->onOneServer()->withoutOverlapping(1);
-
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->hourly()->onOneServer()->withoutOverlapping(1);
 
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->everyThirtyMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('11:45');
     }
 
     /**
