@@ -146,6 +146,8 @@ const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
+const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -165,6 +167,7 @@ const permissionEnum = page.props.permissionsEnum;
             :options="insuranceProviderOptions"
             label="Insurance Provider"
             class="w-full"
+            :disabled="page.props.lockLeadSectionsDetails.plan_details"
           />
         </div>
 
@@ -176,10 +179,10 @@ const permissionEnum = page.props.permissionsEnum;
                 ? []
                 : [rules.conditionalRequired, rules.isNumber, rules.isNegative, rules.lengthCheck]
             "
-            :disabled="
+            :disabled="(
               props.quoteType == quoteTypeCodeEnum.Life &&
               props.quoteType != quoteTypeCodeEnum.Business
-            "
+            ) || page.props.lockLeadSectionsDetails.plan_details"
             label="Price (VAT Applicable)"
             class="w-full"
             type="text"
@@ -196,10 +199,10 @@ const permissionEnum = page.props.permissionsEnum;
                 ? [rules.conditionalRequired, rules.isNumber, rules.isNegative, rules.lengthCheck]
                 : []
             "
-            :disabled="
+            :disabled="(
               props.quoteType != quoteTypeCodeEnum.Life &&
               props.quoteType != quoteTypeCodeEnum.Business
-            "
+            ) || page.props.lockLeadSectionsDetails.plan_details"
             type="text"
             label="Price (VAT not applicable)"
             class="w-full"
@@ -225,12 +228,31 @@ const permissionEnum = page.props.permissionsEnum;
             type="text"
             label="Insurer Quote Number"
             class="w-full"
+            :disabled="page.props.lockLeadSectionsDetails.plan_details"
           />
         </div>
       </div>
 
+      <SavePlanDetailsButtonTemplate v-slot="{ isDisabled }">
+        <x-button
+          color="#26B99A"
+          type="submit"
+          size="sm"
+          :loading="formProcessing"
+          :disabled="isDisabled"
+        >
+          Save
+        </x-button>
+      </SavePlanDetailsButtonTemplate>
+
       <div class="text-right space-x-4 mt-12">
-        <x-button color="#26B99A" type="submit" size="sm" :loading="formProcessing">Save</x-button>
+        <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_details" position="bottom">
+          <SavePlanDetailsButtonReuseTemplate :isDisabled="true"/>
+          <template #tooltip>
+            This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
+          </template>
+        </x-tooltip>
+        <SavePlanDetailsButtonReuseTemplate v-else />
       </div>
     </x-form>
   </div>

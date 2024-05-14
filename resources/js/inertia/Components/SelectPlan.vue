@@ -161,7 +161,7 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] = createReusable
   <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
     <SelectPlanButtonReuseTemplate :isDisabled="true"/>
     <template #tooltip>
-        No further action is allowed on an issued policy. If changes are required, such as a change in insurer, please proceed through the 'Send Update' feature using the 'Cancellation from inception and reissuance' option.
+      No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.
     </template>
   </x-tooltip>
   <SelectPlanButtonReuseTemplate v-else :isDisabled="hasChildLead"/>

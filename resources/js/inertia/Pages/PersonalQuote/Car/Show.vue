@@ -1634,8 +1634,9 @@ watch(
   },
 );
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate(); 
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
 
 </script>
 
@@ -2033,7 +2034,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
           <div v-if="linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end mb-4" >
             <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
               <LeadEditBtnReuseTemplate :isDisabled="true"/>
-              <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
             </x-tooltip>
             <LeadEditBtnReuseTemplate v-else/>
           </div>
@@ -2440,7 +2441,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                   label="Status"
                   class="w-full"
                   placeholder="Please select Lead Status"
-                  :disabled="leadStatusDisabled"
+                  :disabled="leadStatusDisabled || lockLeadSectionsDetails.lead_status"
                   :options="leadStatusOptions"
                 />
                 <x-field
@@ -2457,6 +2458,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                     class="w-full"
                     :rules="[rules.isRequired]"
                     :error="leadStatusForm.errors.trans_code"
+                    :disabled="lockLeadSectionsDetails.lead_status"
                   />
                 </x-field>
                 <x-field
@@ -2475,6 +2477,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                     placeholder="Lost Reason is required"
                     class="w-full"
                     :error="leadStatusForm.errors.lostReason"
+                    :disabled="lockLeadSectionsDetails.lead_status"
                   />
                 </x-field>
                 <x-field
@@ -2492,6 +2495,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                     placeholder="Please select follow-up date & time"
                     :error="leadStatusForm.errors.next_followup_date"
                     class="w-full"
+                    :disabled="lockLeadSectionsDetails.lead_status"
                   />
                   <!-- <x-input
                     v-model="leadStatusForm.next_followup_date"
@@ -2516,6 +2520,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                   placeholder="Please Select Tier"
                   class="w-full"
                   :error="leadStatusForm.errors.tier_id"
+                  :disabled="lockLeadSectionsDetails.lead_status"
                 />
                 <x-field
                   label="Notes"
@@ -2539,10 +2544,10 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                         : []
                     "
                     :error="leadStatusForm.errors.notes"
-                    :disabled="
+                    :disabled="(
                       record.quote_status_id ==
                         quoteStatusEnum.TransactionApproved ||
-                      isCarLostStatus(record.quote_status_id)
+                      isCarLostStatus(record.quote_status_id)) || lockLeadSectionsDetails.lead_status
                     "
                   />
                 </x-field>
@@ -2559,8 +2564,8 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                     "
                     type="file"
                     :disabled="
-                      isCarLostStatus(record.quote_status_id) &&
-                      !carLostChangeStatus
+                      (isCarLostStatus(record.quote_status_id) &&
+                      !carLostChangeStatus) || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Car Sold / Uncontactable Proof"
                     class="form-control w-full"
@@ -2585,7 +2590,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                   <x-select
                     v-model="leadStatusForm.lost_approval_status"
                     :options="leadApprovalStatusOptions"
-                    :disabled="!allowQuoteLogAction"
+                    :disabled="!allowQuoteLogAction || lockLeadSectionsDetails.lead_status"
                     placeholder="Approval Status"
                     class="w-full"
                     :rules="[isRequired]"
@@ -2609,8 +2614,8 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                       }))
                     "
                     :disabled="
-                      !allowQuoteLogAction ||
-                      !hasRole(rolesEnum.MarketingOperations)
+                      (!allowQuoteLogAction ||
+                      !hasRole(rolesEnum.MarketingOperations)) || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Approval Reasons"
                     class="w-full"
@@ -2634,8 +2639,8 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                       }))
                     "
                     :disabled="
-                      !allowQuoteLogAction ||
-                      !hasRole(rolesEnum.MarketingOperations)
+                      (!allowQuoteLogAction ||
+                      !hasRole(rolesEnum.MarketingOperations)) || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Rejection Reasons"
                     class="w-full"
@@ -2653,7 +2658,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                   <x-field label="Notes">
                     <x-textarea
                       v-model="leadStatusForm.lost_notes"
-                      :disabled="!allowQuoteLogAction"
+                      :disabled="!allowQuoteLogAction || lockLeadSectionsDetails.lead_status"
                       placeholder="Notes"
                       class="w-full"
                     />
@@ -2665,7 +2670,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                           $event.target.files[0]
                       "
                       type="file"
-                      :disabled="!allowQuoteLogAction"
+                      :disabled="!allowQuoteLogAction || lockLeadSectionsDetails.lead_status"
                       placeholder="Car Sold / Uncontactable Proof"
                       class="w-full"
                       :rules="[isRequired]"
@@ -2707,21 +2712,31 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
           </DataTable>
 
           <x-divider class="mb-1 mt-10" />
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
-              v-if="!can(permissionEnum.ApprovePayments)"
               class="mt-4"
               color="emerald"
               size="sm"
               :disabled="
-                record.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                (!carLostChangeStatus && !allowQuoteLogAction)
+                (record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                (!carLostChangeStatus && !allowQuoteLogAction)) || isDisabled
               "
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+  
+          <div class="flex justify-end">
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
+            
           </div>
         </template>
       </Collapsible>
@@ -2985,7 +3000,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
             
             <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
               <AddPlanButtonReuseTemplate :isDisabled="true"/>
-              <template #tooltip>No further action is allowed on an issued policy. If changes are required, such as a change in insurer, please proceed through the 'Send Update' feature using the 'Cancellation from inception and reissuance' option.</template>
+              <template #tooltip>No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.</template>
             </x-tooltip>
             <AddPlanButtonReuseTemplate v-else :isDisabled="page.props.linkedQuoteDetails.childLeadsCount > 0"/>
 

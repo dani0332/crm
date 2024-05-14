@@ -1524,6 +1524,7 @@ watch(
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
 
 </script>
 
@@ -1665,7 +1666,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
 
             <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
               <LeadEditBtnReuseTemplate :isDisabled="true"/>
-              <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
             </x-tooltip>
             <LeadEditBtnReuseTemplate v-else/>
                           
@@ -2557,7 +2558,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                   v-model="leadStatusForm.leadStatus"
                   label="Status"
                   :options="leadStatusOptions"
-                  :disabled="quote.quote_status_id == 15"
+                  :disabled="quote.quote_status_id == 15 || lockLeadSectionsDetails.lead_status"
                   placeholder="Lead Status"
                   class="w-full"
                 />
@@ -2567,7 +2568,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                   label="Notes"
                   placeholder="Lead Notes"
                   class="w-full"
-                  :disabled="quote.quote_status_id == 15"
+                  :disabled="quote.quote_status_id == 15 || lockLeadSectionsDetails.lead_status"
                 />
               </div>
             </div>
@@ -2580,6 +2581,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                   placeholder="TransApp Code is required"
                   class="w-full"
                   :error="leadStatusForm.errors.trans_code"
+                  :disabled="lockLeadSectionsDetails.lead_status"
                 />
                 <x-select
                   v-if="leadStatusForm.leadStatus == 17"
@@ -2594,6 +2596,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                   placeholder="Lost Reason is required"
                   class="w-full"
                   :error="leadStatusForm.errors.lostReason"
+                  :disabled="lockLeadSectionsDetails.lead_status"
                 />
                 <x-field class="" label="Transaction Type">
                   <x-input
@@ -2607,16 +2610,26 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
             </div>
           </div>
           <x-divider class="mb-1 mt-10" />
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
+              :disabled="isDisabled"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>
@@ -2750,7 +2763,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
             
             <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
               <AddPlanButtonReuseTemplate :isDisabled="true"/>
-              <template #tooltip>No further action is allowed on an issued policy. If changes are required, such as a change in insurer, please proceed through the 'Send Update' feature using the 'Cancellation from inception and reissuance' option.</template>
+              <template #tooltip>No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.</template>
             </x-tooltip>
             <AddPlanButtonReuseTemplate v-else />
 

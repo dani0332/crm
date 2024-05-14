@@ -70,6 +70,9 @@ watch(
     }
   },
 );
+
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -90,7 +93,7 @@ watch(
                 label="Status"
                 :error="quoteStatusForm.errors.quote_status_id"
                 :options="quoteStatusOptions"
-                :disabled="allowStatusUpdate"
+                :disabled="allowStatusUpdate || page.props.lockLeadSectionsDetails.lead_status"
                 :rules="[rules.isRequired]"
                 placeholder="Lead Status"
                 class="w-full"
@@ -102,7 +105,7 @@ watch(
                 placeholder="Lead Notes"
                 class="w-full"
                 :error="quoteStatusForm.errors.notes"
-                :disabled="allowStatusUpdate"
+                :disabled="allowStatusUpdate || page.props.lockLeadSectionsDetails.lead_status"
               />
             </div>
           </div>
@@ -112,7 +115,7 @@ watch(
                 v-model="quoteStatusForm.transapp_code"
                 placeholder="TransApp Code is required"
                 class="w-full"
-                :disabled="allowStatusUpdate"
+                :disabled="allowStatusUpdate || page.props.lockLeadSectionsDetails.lead_status"
                 :error="quoteStatusForm.errors.transapp_code"
               />
             </x-field>
@@ -128,6 +131,7 @@ watch(
                 placeholder="Lost Reason is required"
                 class="w-full"
                 :error="quoteStatusForm.errors.lost_reason_id"
+                :disabled="page.props.lockLeadSectionsDetails.lead_status"
               />
             </x-field>
             <x-field label="Transaction Type">
@@ -140,17 +144,26 @@ watch(
           </x-field>
           </div>
         </div>
-        <div class="flex justify-end">
+        <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
           <x-button
             class="mt-4"
             color="emerald"
             size="sm"
             :loading="quoteStatusForm.processing"
             @click.prevent="onLeadStatus"
-            :disabled="allowStatusUpdate"
+            :disabled="allowStatusUpdate || isDisabled"
           >
             Change Status
           </x-button>
+        </StatusUpdateButtonTemplate>
+        <div class="flex justify-end">
+          <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_status" position="bottom">
+              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
         </div>
       </template>
     </Collapsible>

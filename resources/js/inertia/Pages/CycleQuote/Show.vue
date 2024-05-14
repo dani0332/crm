@@ -373,7 +373,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 
             <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
               <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.CycleQuotesEdit)" :isDisabled="true"/>
-              <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
             </x-tooltip>
             <template v-else>
               <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.CycleQuotesEdit)"/>

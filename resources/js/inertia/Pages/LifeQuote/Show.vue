@@ -493,6 +493,7 @@ watch(
 );
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
 
 </script>
 
@@ -581,7 +582,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 
             <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
               <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)" :isDisabled="true"/>
-              <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
             </x-tooltip>
             <template v-else>
               <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)"/>
@@ -1110,7 +1111,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                   <x-select
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
-                    :disabled="allowStatusUpdate"
+                    :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
                     placeholder="Lead Status"
                     class="w-full"
                   />
@@ -1121,7 +1122,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                     type="text"
                     placeholder="Lead Notes"
                     class="w-full"
-                    :disabled="allowStatusUpdate"
+                    :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
                   />
                 </x-field>
               </div>
@@ -1140,6 +1141,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                   placeholder="TransApp Code is required"
                   class="w-full"
                   :error="leadStatusForm.errors.trans_code"
+                  :disabled="lockLeadSectionsDetails.lead_status"
                 />
               </x-field>
               <x-field
@@ -1159,6 +1161,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                   placeholder="Lost Reason is required"
                   class="w-full"
                   :error="leadStatusForm.errors.lostReason"
+                  :disabled="lockLeadSectionsDetails.lead_status"
                 />
               </x-field>
             <x-field label="Transaction Type">
@@ -1172,17 +1175,26 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
           </div>
             </div>
           </div>
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="allowStatusUpdate"
+              :disabled="allowStatusUpdate || isDisabled"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>

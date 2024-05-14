@@ -580,7 +580,7 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                 <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
                   <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton" :isDisabled="true"/>
                   <template #tooltip>
-                    This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy'
+                    This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
                   </template>
                 </x-tooltip>
 
@@ -616,7 +616,7 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      "This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy'"
+                      "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
                     }}</span>
                   </template>
                 </x-tooltip>
@@ -668,7 +668,7 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                   <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
                     <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton" :isDisabled="true"/>
                     <template #tooltip>
-                      This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy'
+                      This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
                     </template>
                   </x-tooltip>
 

@@ -505,7 +505,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
                   <template v-else>
                     <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.NRA)" :isDisabled="true"/>
                   </template>
-                  <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy' </template>
+                  <template #tooltip>TThis lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
                 </x-tooltip>
 
                 <template v-else>
@@ -531,7 +531,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      "This lead is now locked as the policy has been booked. If changes are needed, please make them through the 'Send Update' section via 'Correction of Policy'"
+                      "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
                     }}</span>
                   </template>
                 </x-tooltip>
