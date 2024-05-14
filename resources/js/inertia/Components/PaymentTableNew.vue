@@ -91,6 +91,8 @@ const isDiscountError = ref(false);
 const discountError = ref('');
 const isTotalPriceUpdated = ref(false);
 const trashedFilesModal = ref([]);
+const isApproveNotChecked = ref(true);
+const isApproveConfirmed = ref(false);
 
 const modal2Ref = ref(null);
 
@@ -211,7 +213,14 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
 
   const closeInnerModal = () => {
     zoomLevel.value = 1;
-    isGalleryModelOpen.value = false;      
+    isGalleryModelOpen.value = false;
+    isApproveConfirmed.value = false;
+    isApproveNotChecked.value = true;   
+  };
+
+  const closeConfirmModal = () => {
+    isApproveConfirmed.value = false;
+    isApproveNotChecked.value = true;
   };
 
   const hasNextFile = computed(() => {
@@ -988,7 +997,9 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isDiscountEnabled.value = false;
   isTotalPriceUpdated.value = false;
   isGalleryModelOpen.value = false;
-  authorizedPayments.value = []; 
+  authorizedPayments.value = [];
+  isApproveConfirmed.value = false;
+  isApproveNotChecked.value = false;
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1102,6 +1113,10 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       }
      }
   }
+  // Assign the first document to the approve document model for insurer
+  if (paymentMethodsForm.status == 'view' && paymentMethodsForm.collection_type==='insurer') {
+    approvedDocumentModel.value = fileUploadModels.value.slice();    
+  }
 
   if (paymentMethodsForm.status == 'edit') {
     totalPrice.value = payment.total_price;
@@ -1181,13 +1196,13 @@ const validateViewPayment = (isValid) => {
       }      
   }
   
-  if(isApproveConfirm.value === false && isValid) {
+  if(isApproveConfirmed.value === false && isValid) {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
     }
-    isApproveConfirm.value = true;
+    isApproveConfirmed.value = true;    
     return true;
-  }
+  }  
   return false;
 }
 
@@ -1231,12 +1246,12 @@ const addPayment = isValid => {
   if(isCreditApprovalView.value === true && isDeclineClicked.value === false){
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
-    if (validateViewPayment(isValid)) return;    
+    if (validateViewPayment(isValid)) return;
   } else if (paymentMethodsForm.status !== 'view') {
     if (validatePaymentOption()) return;  
   }  
   if (!isValid) return;  
-
+  
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]?paymentMethodsModels.value[0]:paymentMethodsModels.value[1];
   if(paymentMethodsForm.credit_approval!=='' && paymentMethodsForm.credit_approval!==null){
@@ -1438,7 +1453,7 @@ const documentForm = useForm({
 });
 
 const deleteDocument = (docName,count) => {
-  if (paymentMethodsForm.status == 'edit') {
+  if (paymentMethodsForm.status == 'edit') { 
     if (fileUploadModels.value[count]){
       fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
     }
@@ -1449,6 +1464,8 @@ const deleteDocument = (docName,count) => {
       discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
     }
     trashedFilesModal.value.push(docName);
+  } else if (paymentMethodsForm.status == 'view' && paymentMethodsForm.collection_type==='insurer' && approvedDocumentModel.value[count]) { 
+    approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);    
   } else {    
     router.post(
       `/documents/delete`,
@@ -2629,6 +2646,11 @@ const isMasterPaymentPaid = computed(() => {
                   </template>
                 </x-tooltip>               
               </div>
+              <div class="w-1/5 px-2">
+                <span class="text-sm  ">
+                  <span class="border-b-2 border-dotted border-black text-sm">VERIFIED AT</span>
+                </span>
+              </div>
             </div>
 
             <div class="flex w-full custombreak pb-5" >
@@ -2636,7 +2658,22 @@ const isMasterPaymentPaid = computed(() => {
               <div class="w-1/5 px-2">{{ formatString(splitPaymentRecord.payment_status.text) }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_allocation_status !== null ? formatString(splitPaymentRecord.payment_allocation_status) : 'N/A' }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.collection_amount !== null ? formatAmount(splitPaymentRecord.collection_amount) : '0.00' }}</div>
-            </div>            
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.verified_at !== null ? splitPaymentRecord.verified_at : 'N/A' }}</div>
+            </div>
+
+            <div class="flex w-full custombreak" >
+              <div class="w-1/6 px-2 text-center"></div>              
+              <div class="w-1/5 px-2">
+                <span class="text-sm  ">
+                  <span class="border-b-2 border-dotted border-black text-sm">VERIFIED BY</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="flex w-full custombreak pb-5" >
+              <div class="w-1/6 px-2 text-center"></div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.verified_by !== null ? splitPaymentRecord.verified_by_user.name : 'N/A' }}</div>              
+            </div>  
 
           </template>
             <template v-else>              
@@ -2770,8 +2807,15 @@ const isMasterPaymentPaid = computed(() => {
 
       <div v-if="isViewEnabled" class="p-1 mb-2">
         <h3>Notes</h3>
+      </div>      
+
+      <div class="flex items-center justify-center" v-if="splitPaymentRecord.verified_by !== null">        
+        <p class="text-lg font-bold text-blue-900">Payment has been verified</p>
+        <svg class="h-6 w-6 mr-2 text-blue-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
       </div>
-      
+
       <div class="w-full grid">
         <x-field>
           <label v-if="!isViewEnabled">Notes</label>
@@ -2996,8 +3040,49 @@ const isMasterPaymentPaid = computed(() => {
             </div>          
         </div>
       </template>
+
+      <div class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center" v-if="isApproveConfirmed">
+        <div class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg">        
+          <div class="modal-confirm-header text-base text-white bg-gray-800">
+            <div class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b">
+                <div class="flex items-center space-x-2">
+                  Payment Verification
+                </div>           
+                <div class="flex items-center space-x-2" >
+                  <span @click="closeConfirmModal" class="text-gray-800 font-bold cursor-pointer pr-1" >
+                    <!-- SVG for Close Modal -->
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" tabindex="0" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </span>
+                </div>
+            </div>
+          </div>
+          <div class="modal-body w-full h-full mt-2 flex flex-col items-center">            
+            <div class="text-lg font-semibold px-6 py-4 border-b">
+            <span class="font-bold py-2">
+              <input type="checkbox" @click="isApproveNotChecked = !isApproveNotChecked" class="mr-2">
+              <span v-if="paymentMethodsForm.collection_type==='insurer'">I certify that all details provided, including the official receipt or payment confirmation, are correct and in compliance with our conduct standards.</span>
+              <span v-if="paymentMethodsForm.collection_type==='broker'">I verify that the information provided is accurate and my actions align with our standards of conduct.</span>
+            </span>
+            </div>            
+            <x-button
+              size="lg"
+              type="submit"
+              color="orange"
+              class="px-4 py-2 mt-4"
+              :disabled="isApproveNotChecked"
+              :loading = "paymentMethodsForm.processing"
+            >
+              Confirm
+            </x-button>
+          </div>          
+        </div>
+      </div> 
       </x-form>
-    
+      
+       
+          
       <div class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center" v-if="isGalleryModelOpen">
         <div class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg" tabindex="0" ref="modal2Ref" @keydown="handleKeyDown">        
           <div class="modal-header text-base text-white bg-gray-800">
@@ -3076,6 +3161,36 @@ const isMasterPaymentPaid = computed(() => {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1040;
+}
+
+.modal-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #33333333;
+  z-index: 1040;
+}
+
+.modal-confirm-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 55%;
+  height: 37%; 
+  background-color: hsla(0, 0%, 100%, 0.99);
+  border-radius: 8px; /* Adjust the radius for desired roundness */
+  padding: 2px;
+  z-index: 1050;
+  border: 1px solid #ccc; /* Grey color for the border */
+}
+/* Modal header */
+.modal-confirm-header {
+  background-color: hsla(0, 0%, 97%, 0.938);
+  color: #000;
+  
 }
 /* Modal container */
 .modal-container {

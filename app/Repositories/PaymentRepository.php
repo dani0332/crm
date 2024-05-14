@@ -488,7 +488,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchUpdatePaymentStatus($request)
     {
         $successMessage = 'Payment Verified';
-        $splitPayment = PaymentSplits::find($request->splitPaymentId);
+        $splitPayment = PaymentSplits::find($request->splitPaymentId);       
         $masterPayment = $splitPayment->payment;
         if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
             $paymentInformation = [
@@ -497,6 +497,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_status_id' => PaymentStatusEnum::CAPTURED,
                 'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
                 'updated_by' => $request->user()->id,
+                'verified_at' => now(),
+                'verified_by' => $request->user()->id,
             ];
 
             //associate approved documents with payment split
