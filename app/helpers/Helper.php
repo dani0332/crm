@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
@@ -696,13 +697,17 @@ if (! function_exists('getMyAlfredCampaign')) {
     function getMyAlfredCampaign($campaignId)
     {
         return Cache::remember("MA_CAMPAIGN_{$campaignId}", now()->addHours(24), function () use ($campaignId) {
-            $response = Http::get(config('constants.MA_V1_ENDPOINT')."/campaigns/{$campaignId}");
-            if ($response->ok()) {
-                $response = $response->object();
+            try {
+                $response = Http::timeout(20)->retry(3, 3000)->get(config('constants.MA_V1_ENDPOINT')."/campaigns/{$campaignId}");
+                if ($response->ok()) {
+                    $response = $response->object();
 
-                if ($response->data && $response->data->isActive) {
-                    return $response;
+                    if ($response->data && $response->data->isActive) {
+                        return $response;
+                    }
                 }
+            } catch (Exception $e) {
+                Log::error('getMyAlfredCampaign Error: '.$e->getMessage().$e->getTraceAsString());
             }
 
             return null;
