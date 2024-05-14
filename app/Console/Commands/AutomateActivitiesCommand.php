@@ -92,7 +92,7 @@ class AutomateActivitiesCommand extends Command
 
             info('------------------- Updating Cold Activities for : '.$quoteClass.' -------------------');
             $quoteClass::whereHas('activities', function ($activityQuery) {
-                $activityQuery->where('due_date', '<', now());
+                $activityQuery->where('due_date', '<', Carbon::now()->subHours(1));
                 $activityQuery->where('status', false);
             })->with(['activities' => function ($activities) {
                 // $activities->where('due_date', '<', now());
@@ -115,13 +115,13 @@ class AutomateActivitiesCommand extends Command
 
                 info('------------------- Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
                 $quoteClass::whereHas('activities', function ($activityQuery) {
-                    $activityQuery->where('due_date', '<', now());
-                    $activityQuery->where('status', true);
+                    $activityQuery->where('due_date', '<',Carbon::now()->subHours(1));
+                    $activityQuery->orWhere('status', true);
                 })
                     ->with(['activities' => function ($activities) {
                         // $activities->where('due_date', '<', now());
                         $activities->where('due_date', '<', Carbon::now()->subHours(1));
-                        $activities->where('status', true);
+                        $activities->orWhere('status', true);
                         $activities->orderBy('created_at', 'desc')->get();
                     }])
                     ->chunkById(1000, function ($quoteDetails) use ($quoteTypeDetail) {
