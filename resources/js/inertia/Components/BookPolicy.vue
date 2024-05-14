@@ -682,7 +682,7 @@ const calculateCommission = () => {
                   <template
                     v-if="
                       props.bookPolicyDetails?.editButton &&
-                      can(permissionsEnum.BOOK_POLICY_BUTTON)
+                      can(permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON)
                     "
                   >
                     <x-button
