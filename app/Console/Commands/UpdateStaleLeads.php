@@ -91,13 +91,7 @@ class UpdateStaleLeads extends Command
                 ->whereNotNull('stale_at')
             // ->where('stale_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))
                 // ->where('stale_at', '<=', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-2 days')))->endOfDay())
-                ->where(function ($query) {
-                    $query->where('stale_at', '<=', Carbon::now()->timezone('Asia/Dubai')->subHours(18))
-                        ->orWhere(function ($subQuery) {
-                            $subQuery->where('stale_at', '>=', Carbon::now()->timezone('Asia/Dubai'))
-                                ->where('stale_at', '<=', Carbon::now()->timezone('Asia/Dubai')->subHours(18)->addDays(1)); // Handles cases where it's within the same day
-                        });
-                })
+                ->where('stale_at', '<=', Carbon::now()->timezone('Asia/Dubai')->subHours(18))
                 ->chunkById(1000, function ($staleLeads) use ($eligibleQuoteType, $lostReasonId) {
                     foreach ($staleLeads as $staleLead) {
 
