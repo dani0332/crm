@@ -48,9 +48,9 @@ class DatabaseSeeder extends Seeder
             AddCapAdvisorPermissionSeeder::class,
             UpdateLeadAllocationByQuoteId::class,
             AddLegacyPaymentsPermssion::class,
+            ApplicationStorageSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
-            ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,*/
             // AddNewDocumentTypesSeeder::class,

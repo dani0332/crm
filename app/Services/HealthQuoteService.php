@@ -31,7 +31,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
 use App\Models\PaymentAction;
 use App\Models\QuoteType;
-use App\Models\QuoteViewCount;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
@@ -1268,23 +1267,6 @@ class HealthQuoteService extends BaseService
                 // Save the updated allocation record
                 $previousAdvisorAllocationRecord->save();
             }
-        }
-    }
-
-    private function updateExistingQuoteViewCount($userId, $leadId)
-    {
-        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->where('quote_type_id', 3)->first();
-        if ($quoteViewCount) {
-            $quoteViewCount->user_id = $userId;
-            $quoteViewCount->visit_count = 0;
-            $quoteViewCount->save();
-        } else {
-            QuoteViewCount::create([
-                'quote_id' => $leadId,
-                'quote_type_id' => 3,
-                'user_id' => $userId,
-                'visit_count' => 1,
-            ]);
         }
     }
 

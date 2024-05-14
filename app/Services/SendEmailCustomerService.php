@@ -416,6 +416,20 @@ class SendEmailCustomerService extends BaseService
                 $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
             }
 
+            $wfsBanner = null;
+            $wfsBannerRedirectUrl = null;
+
+            $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
+            if ($campaign) {
+                $emailTemplateId = (int) getAppStorageValueByKey(ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN);
+                if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
+                    $wfsBanner = $campaign->banners->buyPolicy;
+                }
+                if (property_exists($campaign, 'landingPage')) {
+                    $wfsBannerRedirectUrl = $campaign->landingPage;
+                }
+            }
+
             info('sendMyAlfredWelcomeEmail  , emailTemplateId: '.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
@@ -436,6 +450,8 @@ class SendEmailCustomerService extends BaseService
                     'customerEmail' => $emailData->customerEmail,
                     'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'email' => $emailData->customerEmail,
+                    'wfsBanner' => $wfsBanner,
+                    'wfsBannerRedirectUrl' => $wfsBannerRedirectUrl,
                 ],
                 'tags' => [
                     $tag,
@@ -490,7 +506,7 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
-            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
@@ -555,20 +571,23 @@ class SendEmailCustomerService extends BaseService
 
     public function sendDttEmail($emailData)
     {
-
         $headers = [
             'Accept' => 'application/json',
             'api-key' => $this->apiKey,
             'Content-Type' => 'application/json',
         ];
 
+        $tag = $this->appEnv == EnvEnum::PRODUCTION ? $emailData->tag : $this->appEnv.'-'.$emailData->tag;
         $body = [
-            'subject' => $emailData->subject,
+            'subject' => $this->appEnv == EnvEnum::PRODUCTION ? $emailData->subject : $this->appEnv.' - '.$emailData->subject,
             'sender' => [
                 'email' => 'no-reply@alert.insurancemarket.email',
                 'name' => 'InsuranceMarket.ae',
             ],
             'params' => $emailData,
+            'tags' => [
+                $tag,
+            ],
             'to' => [[
                 'email' => $emailData->customerEmail,
                 'name' => $emailData->customerName,
@@ -589,13 +608,13 @@ class SendEmailCustomerService extends BaseService
                 ->timeout(20)
                 ->retry(3, 90000)
                 ->post($this->url, $body);
-            info('sendDttEmail ---- Request Sent');
 
             $responseCode = $response->status();
             $response = json_decode(json_encode($responseCode.' '.$response->body()), true);
 
             if ($responseCode == 201) {
                 $isEmailSent = 1;
+                info('sendDttEmail - Email Sent - Ref-ID: '.$emailData->uuid);
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
@@ -664,7 +683,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
-            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
@@ -710,6 +729,12 @@ class SendEmailCustomerService extends BaseService
 
     public function sendActivityAlertEmail($user)
     {
+        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE)->first();
+        if ($emailEnable && $emailEnable->value == 0) {
+            info('sendActivityAlertEmail is Disable');
+
+            return false;
+        }
         $emailTemplateId = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_TEMPLATE')->value('value');
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
