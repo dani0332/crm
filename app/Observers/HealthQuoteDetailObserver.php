@@ -16,6 +16,6 @@ class HealthQuoteDetailObserver
     public function updated(HealthQuoteRequestDetail $healthQuoteDetail): void
     {
         $healthQuote = HealthQuote::find($healthQuoteDetail->health_quote_request_id);
-        $this->syncQuoteDetail($healthQuote, $healthQuoteDetail->getDirty());
+        $this->syncQuote($healthQuote, $healthQuoteDetail->getDirty());
     }
 }
