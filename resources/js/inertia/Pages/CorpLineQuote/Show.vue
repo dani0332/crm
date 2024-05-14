@@ -1059,12 +1059,15 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-      </div>
-      <template #content>
-        <x-divider class="mb-4 mt-1" />
+    <Collapsible expanded class="p-4 rounded shadow mb-6 bg-white">
+      <template #header>
+        <div>
+          <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+        </div>
+      </template>
+
+      <template #body>
+        <x-divider class="my-4" />
         <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
           <div class="w-full md:w-1/2">
             <div class="flex flex-col gap-4">
@@ -1128,7 +1131,7 @@ const linkEntity = () => {
           </x-button>
         </div>
       </template>
-    </x-collapse>
+    </Collapsible>
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>

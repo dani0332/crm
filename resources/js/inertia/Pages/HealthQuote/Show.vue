@@ -850,7 +850,7 @@ const onPlanFiltersSubmit = () => {
       onlineMatch = true;
     }
     if (planFilters.plan_types && planFilters.plan_types.length > 0) {
-        planTypeMatch = planFilters.plan_types.includes(plan.planTypeId);
+      planTypeMatch = planFilters.plan_types.includes(plan.planTypeId);
     } else {
       planTypeMatch = true;
     }
@@ -864,7 +864,13 @@ const onPlanFiltersSubmit = () => {
     } else {
       networkMatch = true;
     }
-      return manualMatch && insurerMatch && networkMatch && onlineMatch && planTypeMatch;
+    return (
+      manualMatch &&
+      insurerMatch &&
+      networkMatch &&
+      onlineMatch &&
+      planTypeMatch
+    );
   });
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
@@ -1513,7 +1519,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],
+    only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
   });
 };
 
@@ -2488,70 +2494,76 @@ watch(
     />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-50">
-          <div class="flex flex-col gap-4">
-            <x-select
-              v-model="leadStatusForm.leadStatus"
-              label="Status"
-              :options="leadStatusOptions"
-              :disabled="quote.quote_status_id == 15"
-              placeholder="Lead Status"
-              class="w-full"
-            />
-            <x-textarea
-              v-model="leadStatusForm.notes"
-              type="text"
-              label="Notes"
-              placeholder="Lead Notes"
-              class="w-full"
-              :disabled="quote.quote_status_id == 15"
-            />
+      <Collapsible expanded>
+        <template #header>
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           </div>
-        </div>
-        <div class="w-full md:w-50">
-          <div class="flex flex-col gap-4">
-            <x-select
-              v-if="leadStatusForm.leadStatus == 17"
-              v-model="leadStatusForm.lostReason"
-              label="Lost Reason"
-              :options="
-                lostReasons?.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))
-              "
-              placeholder="Lost Reason is required"
-              class="w-full"
-              :error="leadStatusForm.errors.lostReason"
-            />
-            <x-field class="" label="Transaction Type">
-              <x-input
-                type="text"
-                :value="quote.transaction_type_text"
-                class="w-full"
-                :disabled="true"
-              />
-            </x-field>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+            <div class="w-full md:w-50">
+              <div class="flex flex-col gap-4">
+                <x-select
+                  v-model="leadStatusForm.leadStatus"
+                  label="Status"
+                  :options="leadStatusOptions"
+                  :disabled="quote.quote_status_id == 15"
+                  placeholder="Lead Status"
+                  class="w-full"
+                />
+                <x-textarea
+                  v-model="leadStatusForm.notes"
+                  type="text"
+                  label="Notes"
+                  placeholder="Lead Notes"
+                  class="w-full"
+                  :disabled="quote.quote_status_id == 15"
+                />
+              </div>
+            </div>
+            <div class="w-full md:w-50">
+              <div class="flex flex-col gap-4">
+                <x-select
+                  v-if="leadStatusForm.leadStatus == 17"
+                  v-model="leadStatusForm.lostReason"
+                  label="Lost Reason"
+                  :options="
+                    lostReasons?.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  placeholder="Lost Reason is required"
+                  class="w-full"
+                  :error="leadStatusForm.errors.lostReason"
+                />
+                <x-field class="" label="Transaction Type">
+                  <x-input
+                    type="text"
+                    :value="quote.transaction_type_text"
+                    class="w-full"
+                    :disabled="true"
+                  />
+                </x-field>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      <x-divider class="mb-1 mt-10" />
-      <div class="flex justify-end">
-        <x-button
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="leadStatusForm.processing"
-          @click.prevent="onLeadStatus"
-        >
-          Change Status
-        </x-button>
-      </div>
+          <x-divider class="mb-1 mt-10" />
+          <div class="flex justify-end">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="leadStatusForm.processing"
+              @click.prevent="onLeadStatus"
+            >
+              Change Status
+            </x-button>
+          </div>
+        </template>
+      </Collapsible>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3000,7 +3012,6 @@ watch(
             />
           </div>
 
-
           <ComboBox
             v-model="planFilters.plan_types"
             :label="'Plan Type'"
@@ -3040,16 +3051,27 @@ watch(
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Health"
-			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+      v-if="isNewPaymentStructure"
+      quoteType="Health"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes.QUOTE.filter(
+          item =>
+            item.code === 'HPD' ||
+            item.code === 'HPDR' ||
+            item.code === 'HDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :isAmlClearedForPayment="isAmlClearedForPayment"
     />
     <PaymentTable
@@ -3338,7 +3360,11 @@ watch(
       :quoteType="'HEALTH'"
     />
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+    <AuditLogs
+      :type="'App\\Models\\HealthQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
 
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
