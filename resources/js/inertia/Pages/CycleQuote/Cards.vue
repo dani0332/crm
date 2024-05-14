@@ -19,9 +19,9 @@ const rolesEnum = page.props.rolesEnum;
 
 const isAllowed = computed(() => {
   return !hasAnyRole([
-    rolesEnum.CYCLE_ADVISOR,
-    rolesEnum.CYCLE_NEW_BUSINESS_ADVISOR,
-    rolesEnum.CYCLE_RENEWAL_ADVISOR,
+    rolesEnum.CycleAdvisor,
+    rolesEnum.CycleNewBusinessAdvisor,
+    rolesEnum.CycleRenewalAdvisor,
   ]);
 });
 
