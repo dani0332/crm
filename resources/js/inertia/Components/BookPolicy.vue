@@ -593,7 +593,7 @@ const calculateCommission = () => {
                     ])
                   "
                 >
-                  {{ props.bookPolicyDetails?.text }} 12
+                  {{ props.bookPolicyDetails?.text }}
                 </x-button></template
               >
 
