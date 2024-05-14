@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\QuoteTypeId;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
@@ -25,13 +26,12 @@ use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
+use App\Repositories\PersonalQuoteRepository;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use App\Repositories\PersonalQuoteRepository;
-use App\Enums\QuoteTypeId;
 
 trait PersonalQuoteSyncTrait
 {
@@ -50,7 +50,7 @@ trait PersonalQuoteSyncTrait
             Log::warning("Quote not synced from quote_sync table, uuid: {$uuid}");
             $quoteTypeId = $this->getQuoteTypeId($quote::class);
             $sourceQuote = $this->getQuoteRecord($quoteTypeId, $uuid);
-            
+
             if ($sourceQuote) {
                 $this->addQuoteSyncEntry($uuid, $quoteTypeId, $sourceQuote->getAttributes());
 
