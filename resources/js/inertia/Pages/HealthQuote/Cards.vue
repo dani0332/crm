@@ -47,9 +47,9 @@ const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.RMAdvisor,
     rolesEnum.EBPAdvisor,
-    rolesEnum.HEALTH_RENEWAL_ADVISOR,
-    rolesEnum.HEALTH_NEW_BUSINESS_ADVISOR,
-    rolesEnum.HEALTH_ADVISOR,
+    rolesEnum.HealthRenewalAdvisor,
+    rolesEnum.HealthNewBusinessAdvisor,
+    rolesEnum.HealthAdvisor,
   ]);
 });
 
