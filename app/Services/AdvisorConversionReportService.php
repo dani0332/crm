@@ -33,7 +33,11 @@ class AdvisorConversionReportService extends BaseService
 
     public function getReportData($request)
     {
-        $lob = $request->lob ?? quoteTypeCode::Car;
+        $lob = $request->lob ?? '';
+        if(empty($lob)) {
+            return [];
+        }
+
         $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
         $lobId = QuoteTypeRepository::where('code', $lob)->first();
 
