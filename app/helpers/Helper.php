@@ -213,7 +213,8 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
-        $result['total_premium'] = $modelQuery->sum('premium');
+        // $result['total_premium'] = $modelQuery->sum('premium');
+        $result['total_premium'] = $modelType == PersonalQuote::class ? $modelQuery->sum('price_with_vat') : $modelQuery->sum('premium');
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
