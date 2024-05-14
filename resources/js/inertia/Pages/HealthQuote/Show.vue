@@ -1523,6 +1523,7 @@ watch(
 );
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
 
 </script>
 
@@ -2731,20 +2732,27 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
               <template #content> {{ planFiltersCount }} </template>
             </x-badge>
 
-            <x-button
-              v-if="
-                hasAnyRole([
+            <AddPlanButtonTemplate v-slot="{ isDisabled }">
+              <x-button
+                v-if="hasAnyRole([
                   rolesEnum.BetaUser,
                   rolesEnum.RMAdvisor,
                   rolesEnum.HealthManager,
-                ])
-              "
-              size="sm"
-              color="emerald"
-              @click.prevent="modals.createPlan = true"
-            >
-              Add Plan
-            </x-button>
+                ])"
+                size="sm"
+                color="emerald"
+                @click.prevent="modals.createPlan = true"
+                :disabled="isDisabled"
+              >
+                Add Plan
+              </x-button>
+            </AddPlanButtonTemplate>
+            
+            <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
+              <AddPlanButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>No further action is allowed on an issued policy. If changes are required, such as a change in insurer, please proceed through the 'Send Update' feature using the 'Cancellation from inception and reissuance' option.</template>
+            </x-tooltip>
+            <AddPlanButtonReuseTemplate v-else />
 
             <DataTable
               ref="planDataTable"

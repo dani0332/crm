@@ -144,14 +144,14 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] = createReusable
 
 <template>
 
-  <SelectPlanButtonTemplate>
+  <SelectPlanButtonTemplate v-slot="{ isDisabled }">
     <x-button
       v-if="isPlanSelectionEnable"
       size="xs"
       color="success"
       outlined
       :loading="isLoading"
-      :disabled="hasChildLead"
+      :disabled="isDisabled"
       @click.prevent="updateSelectedPlan()"
     >
       Select
@@ -159,11 +159,11 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] = createReusable
   </SelectPlanButtonTemplate>
 
   <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
-    <SelectPlanButtonReuseTemplate />
+    <SelectPlanButtonReuseTemplate :isDisabled="true"/>
     <template #tooltip>
         No further action is allowed on an issued policy. If changes are required, such as a change in insurer, please proceed through the 'Send Update' feature using the 'Cancellation from inception and reissuance' option.
     </template>
   </x-tooltip>
-  <SelectPlanButtonReuseTemplate v-else/>
+  <SelectPlanButtonReuseTemplate v-else :isDisabled="hasChildLead"/>
 
 </template>

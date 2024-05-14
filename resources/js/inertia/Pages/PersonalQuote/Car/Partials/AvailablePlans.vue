@@ -11,8 +11,8 @@ const props = defineProps({
 });
 const { isRequired } = useRules();
 
+const page = usePage();
 const emit = defineEmits(['onLoadAvailablePlansData']);
-
 const notification = useToast();
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
 const halfLiveInsurer = [
@@ -189,6 +189,9 @@ const onToggleManual = () => {
     toggleManualLoader.value = false;
   }, 300);
 };
+
+const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -219,6 +222,17 @@ const onToggleManual = () => {
 
       <TabPanels class="mt-2 text-sm min-h-[70vh]">
         <TabPanel>
+          <ToggleManualButtonTemplate v-slot="{ isDisabled }">
+            <x-toggle
+              v-model="planForm.is_manual_update"
+              color="success"
+              label="Manual"
+              :disabled="isDisabled"
+              @change="onToggleManual"
+              :loading="toggleManualLoader"
+            />
+          </ToggleManualButtonTemplate>
+
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             <div class="grid sm:grid-cols-2 mb-3">
               <x-toggle
@@ -230,14 +244,15 @@ const onToggleManual = () => {
               />
             </div>
             <div class="grid sm:grid-cols-2 mb-3">
-              <x-toggle
-                v-model="planForm.is_manual_update"
-                color="success"
-                label="Manual"
-                @change="onToggleManual"
-                :loading="toggleManualLoader"
-              />
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
+                <ToggleManualButtonReuseTemplate :isDisabled="true"/>
+                <template #tooltip>
+                  No further action allowed on issued policy, If changes are required, such as increase in price, please proceed through the 'Send Update' feature using the 'Correction of Policy' option.
+                </template>
+              </x-tooltip>
+              <ToggleManualButtonReuseTemplate v-else/>
             </div>
+
             <div class="grid sm:grid-cols-2">
               <dt class="">Provider Name</dt>
               <dd>{{ props.plan.providerName }}</dd>
@@ -260,7 +275,7 @@ const onToggleManual = () => {
               <dt class="mt-2">Insurer Quote No.:</dt>
               <x-input
                 v-model="planForm.insurer_quote_no"
-                :disabled="!planForm.is_manual_update"
+                :disabled="!planForm.is_manual_update || page.props.lockLeadSectionsDetails.plan_selection"
                 :error="showInsurerError ? 'This field is required' : ''"
                 maxlength="50"
                 size="sm"
@@ -270,7 +285,7 @@ const onToggleManual = () => {
               <dt class="mt-2">Price:</dt>
               <x-input
                 v-model="planForm.actual_premium"
-                :disabled="!planForm.is_manual_update"
+                :disabled="!planForm.is_manual_update || page.props.lockLeadSectionsDetails.plan_selection"
                 size="sm"
                 type="number"
               />
@@ -281,6 +296,7 @@ const onToggleManual = () => {
                 v-model="planForm.discounted_premium"
                 size="sm"
                 type="number"
+                :disabled="page.props.lockLeadSectionsDetails.plan_selection"
               />
             </div>
             <div class="grid sm:grid-cols-2">
@@ -294,13 +310,14 @@ const onToggleManual = () => {
                 "
                 size="sm"
                 type="number"
+                :disabled="page.props.lockLeadSectionsDetails.plan_selection"
               />
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Excess:</dt>
               <x-input
                 v-model="planForm.excess"
-                :disabled="!planForm.is_manual_update"
+                :disabled="!planForm.is_manual_update || page.props.lockLeadSectionsDetails.plan_selection"
                 type="number"
                 size="sm"
               />
@@ -312,6 +329,7 @@ const onToggleManual = () => {
                 placeholder="Select Option"
                 :options="ancillaryExcessOptions"
                 class="w-full"
+                :disabled="page.props.lockLeadSectionsDetails.plan_selection"
               />
             </div>
             <div class="grid sm:grid-cols-2">
@@ -321,6 +339,7 @@ const onToggleManual = () => {
                 placeholder="Select Option"
                 :options="insurerAvailableTrimsOptions"
                 class="w-full"
+                :disabled="page.props.lockLeadSectionsDetails.plan_selection"
               />
             </div>
             <div class="grid sm:grid-cols-2"></div>
@@ -356,9 +375,9 @@ const onToggleManual = () => {
           <div class="flex justify-end">
             <x-button
               v-if="
-                access.carManagerCanEdit ||
+                (access.carManagerCanEdit ||
                 access.carAdvisorCanEdit ||
-                notAdvisorAndManagerAndPA
+                notAdvisorAndManagerAndPA) && !page.props.lockLeadSectionsDetails.plan_selection
               "
               color="primary"
               size="sm"
@@ -403,9 +422,9 @@ const onToggleManual = () => {
             <div class="flex justify-end">
               <x-button
                 v-if="
-                  access.carManagerCanEdit ||
+                  (access.carManagerCanEdit ||
                   access.carAdvisorCanEdit ||
-                  notAdvisorAndManagerAndPA
+                  notAdvisorAndManagerAndPA) && !page.props.lockLeadSectionsDetails.plan_selection
                 "
                 color="primary"
                 class="mt-5"

@@ -2970,24 +2970,24 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
               Send OCB Email to Customer
             </x-button>
 
-            <AddPlanButtonTemplate>
+            <AddPlanButtonTemplate v-slot="{ isDisabled }">
               <x-button
                 @click.prevent="modals.createPlan = true"
                 size="sm"
                 color="orange"
                 class="mr-2"
                 v-if="can(permissionEnum.CarQuotesPlansCreate) && ((access.carManagerCanEdit || access.carAdvisorCanEdi) || hasRole(rolesEnum.Admin))"
-                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                :disabled="isDisabled"
               >
                 Add Plan
               </x-button>
             </AddPlanButtonTemplate>
             
             <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
-              <AddPlanButtonReuseTemplate />
+              <AddPlanButtonReuseTemplate :isDisabled="true"/>
               <template #tooltip>No further action is allowed on an issued policy. If changes are required, such as a change in insurer, please proceed through the 'Send Update' feature using the 'Cancellation from inception and reissuance' option.</template>
             </x-tooltip>
-            <AddPlanButtonReuseTemplate v-else />
+            <AddPlanButtonReuseTemplate v-else :isDisabled="page.props.linkedQuoteDetails.childLeadsCount > 0"/>
 
             <x-button
               @click.prevent="copyLink"
@@ -3234,7 +3234,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
                     :plan="item"
                     :quoteType="quoteType"
                     :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
-                :uuid="quote.uuid"
+                    :uuid="quote.uuid"
                   />
 
                   <x-button
