@@ -287,7 +287,7 @@ trait GenericQueriesAllLobs
     {
         $isSplitPayment = false;
         $payment = $quoteModel->payments()->first();
-        if (true || $payment && $quoteModel->price_with_vat != $payment->total_price) {
+        if ($payment && $quoteModel->price_with_vat != $payment->total_price) {
             $difference = $initialDifference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
             if ($payment->system_adjusted_discount != null) {
                 $difference += $payment->system_adjusted_discount;
@@ -302,10 +302,9 @@ trait GenericQueriesAllLobs
                     $payment->discount_value = $difference;
                     $payment->discount_type = 'system_adjusted_discount';
                 }
-                $payment->total_amount -= $difference;
             }
             // Case 2 if difference is greater than 0.99 and system adjusted discount is greater than 0 then subtract system adjusted discount from discount value
-            else if($difference > 0.99 && $payment->system_adjusted_discount > 0) {
+            else if(($difference > 0.99 || $difference == 0) && $payment->system_adjusted_discount > 0) {
                 $payment->discount_value -= $payment->system_adjusted_discount;
                 $payment->system_adjusted_discount = 0;
                 if ($payment->discount_type == 'system_adjusted_discount'){
