@@ -20,6 +20,7 @@ const props = defineProps({
     default: true,
   },
 });
+const paymentStatusEnum = page.props.paymentStatusEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -51,7 +52,7 @@ const policyIssuanceStatusOptions = computed(() => {
       label: item.text,
     };
   });
-  
+
  });
 
 const planQuoteInsurerNumber = computed(() => {
@@ -180,12 +181,15 @@ const isUpfrontOrSplitPayments = () => {
   return getPayment()?.frequency == 'upfront' || getPayment()?.frequency == 'split_payments';
 }
 
-const isPartiallyPaid = () => {
-  return getPayment()?.payment_status?.text == 'PARTIALLY_PAID';
-}
-
 const showInsufficientPaymentAlert = () => {
-  if (isUpfrontOrSplitPayments() && isPartiallyPaid()) {
+  const paymentId = getPayment().payment_status_id ?? 0;
+  const insufficientPaymentStatuses = [
+    paymentStatusEnum.PARTIALLY_PAID,
+    paymentStatusEnum.NEW,
+    paymentStatusEnum.OVERDUE
+  ];
+
+  if (isUpfrontOrSplitPayments() && insufficientPaymentStatuses.includes(paymentId)) {
     notification.error({
       title: 'Insufficient payment',
       position: 'top',

@@ -98,7 +98,6 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
-console.log(page.props);
 
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
@@ -2919,7 +2918,7 @@ watch(
               v-if="
                 (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
                 can(permissionEnum.CarQuotesPlansCreate)
-                
+
               "
             >
               Add Plan
@@ -3328,10 +3327,10 @@ watch(
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
       :paymentCode = "record.code"
-      :quoteType="quoteType"      
-    />    
+      :quoteType="quoteType"
+    />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Car"
 			:payments="payments"
@@ -3562,7 +3561,7 @@ watch(
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}} 
+            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}}
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
