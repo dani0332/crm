@@ -29,7 +29,6 @@ const isAllowed = computed(() => {
     rolesEnum.HOME_ADVISOR,
     rolesEnum.HOME_RENEWAL_ADVISOR,
     rolesEnum.HOME_NEW_BUSINESS_ADVISOR,
-    rolesEnum.HEALTH_ADVISOR,
   ]);
 });
 
