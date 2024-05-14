@@ -96,7 +96,6 @@ const permissionAssignLeads = ref(false);
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-const rolesEnum = page.props.rolesEnum;
 
 function onSubmit(isValid) {
   if (isValid) {

@@ -17,7 +17,6 @@ defineProps({
 
 const page = usePage();
 
-const rolesEnum = page.props.rolesEnum;
 const loader = reactive({
   table: false,
   export: false,
