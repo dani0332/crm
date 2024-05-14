@@ -184,11 +184,12 @@ const isUpfrontOrSplitPayments = () => {
 const showInsufficientPaymentAlert = () => {
   const paymentId = getPayment().payment_status_id ?? 0;
   const insufficientPaymentStatuses = [
-    paymentStatusEnum.PARTIALLY_PAID,
+    paymentStatusEnum.PENDING,
     paymentStatusEnum.NEW,
-    paymentStatusEnum.OVERDUE
+    paymentStatusEnum.OVERDUE,
+    paymentStatusEnum.PARTIALLY_PAID,
+    paymentStatusEnum.CREDIT_APPROVED,
   ];
-
   if (isUpfrontOrSplitPayments() && insufficientPaymentStatuses.includes(paymentId)) {
     notification.error({
       title: 'Insufficient payment',
