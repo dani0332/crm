@@ -174,6 +174,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         updated_at,
         company_name,
         leadName,
+        price_with_vat,
         health_cover_for,
         business_type_of_insurance,
         stale_at,
@@ -240,7 +241,9 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
             </div>
           </template>
         </x-tooltip>
-        <p class="text-xs">{{ Number(premium).toLocaleString() }}</p>
+        <p class="text-xs">
+          {{ Number(premium ?? price_with_vat).toLocaleString() }}
+        </p>
       </div>
 
       <div class="flex items-center gap-2">
