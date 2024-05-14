@@ -119,7 +119,7 @@ use App\Enums\PermissionsEnum;
                                     <li><a href="{{ url('quotes/car') }}">Lead List</a></li>
 
                                     @can(PermissionsEnum::CAR_REVIVAL_QUOTE_LIST)
-                                    <li><a href="{{ route('revival-quotes-list') }}">Revival Quotes</a></li>
+                                    <li><a href="{{ route('carrevival-quotes-list') }}">Revival Quotes</a></li>
                                     @endcan
                                 </ul>
                             </li>
