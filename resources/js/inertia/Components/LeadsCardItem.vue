@@ -1,5 +1,7 @@
 <script setup>
+import { router } from '@inertiajs/vue3';
 import { useSortable } from '@vueuse/integrations/useSortable';
+import axios from 'axios';
 
 const page = usePage();
 
@@ -48,12 +50,13 @@ const updateList = async data => {
       data,
     });
     emit('UpdateLeadsCount', data);
-    if (response && response.data) {
-      notification.success({
-        title: response.data.message,
-        position: 'top',
-      });
-    }
+    notification.success({
+      title:
+        typeof response.data.message != 'string'
+          ? response.data.message[0]
+          : response.data.message,
+      position: 'top',
+    });
     router.reload();
     return true;
   } catch ({ response }) {
@@ -118,7 +121,6 @@ useSortable(`#${props.title}`, leads.value, {
     let listResponse = await updateList(data);
 
     if (!listResponse) moveElemToOriginalList(e);
-
     showModal.value = false;
   },
 });
