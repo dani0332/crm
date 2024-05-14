@@ -12,6 +12,7 @@ defineProps({
 
 const page = usePage();
 const hasRole = role => useHasRole(role);
+const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -363,9 +364,17 @@ watch(
             :options="leadStatusOptions"
           />
         </x-field>
-        <x-field label="Advisor">
+        <x-field
+          label="Advisor"
+          v-if="
+            !hasAnyRole([
+              rolesEnum.HomeAdvisor,
+              rolesEnum.HomeRenewalAdvisor,
+              rolesEnum.HomeNewBusinessAdvisor,
+            ])
+          "
+        >
           <ComboBox
-            v-if="!hasRole(rolesEnum.Advisor)"
             v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"

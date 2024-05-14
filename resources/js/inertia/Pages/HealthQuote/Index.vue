@@ -470,6 +470,9 @@ watch(
               rolesEnum.RMAdvisor,
               rolesEnum.EBPAdvisor,
               rolesEnum.CarAdvisor,
+              rolesEnum.HealthRenewalAdvisor,
+              rolesEnum.HealthNewBusinessAdvisor,
+              rolesEnum.HealthAdvisor,
             ])
           "
           v-model="filters.advisors"

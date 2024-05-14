@@ -16,6 +16,8 @@ defineProps({
 });
 
 const page = usePage();
+const hasAnyRole = role => useHasAnyRole(role);
+const rolesEnum = page.props.rolesEnum;
 
 const loader = reactive({
   table: false,
@@ -382,7 +384,16 @@ watch(
             "
           />
         </x-field>
-        <x-field label="Advisor">
+        <x-field
+          label="Advisor"
+          v-if="
+            !hasAnyRole([
+              rolesEnum.YachtAdvisor,
+              rolesEnum.YachtNewBusinessAdvisor,
+              rolesEnum.YachtRenewalAdvisor,
+            ])
+          "
+        >
           <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"

@@ -11,6 +11,8 @@ defineProps({
 });
 
 const page = usePage();
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 const canExport = ref(false);
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
@@ -437,7 +439,16 @@ watch(
             class="w-full"
           />
         </x-field>
-        <x-field label="Advisor">
+        <x-field
+          label="Advisor"
+          v-if="
+            !hasAnyRole([
+              rolesEnum.CorpLineRenewalAdvisor,
+              rolesEnum.CorpLineNewBusinessAdvisor,
+              rolesEnum.CorpLineAdvisor,
+            ])
+          "
+        >
           <x-select
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
