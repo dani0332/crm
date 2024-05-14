@@ -65,11 +65,18 @@ const tableHeader = reactive([
     }
 
 ]);
+const isCustomDate = ref(false);
+
 function formatNumber(number) {
-    return parseFloat(number).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (number === 0 || number === '' || number === null) {
+        return '0.00';
+    } else {
+        return parseFloat(number).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
 }
 const activeButton = ref('');
 function setExpireDate() {
+    isCustomDate.value = false;
     activeButton.value = 'expire';
     const currentDate = new Date();
     const expireDate = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -78,9 +85,11 @@ function setExpireDate() {
     filters.todayDate = [];
     filters.tomorrowDate = '';
     filters.thisWeek = [];
+    filters.customDate=[];
 
 }
 function setTodayDate(){
+    isCustomDate.value = false;
     activeButton.value = 'today';
     const currentDate = new Date();
     const startOfDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0); // Set time to 00:00:00
@@ -91,8 +100,11 @@ function setTodayDate(){
     filters.tomorrowDate = '';
     filters.expireDate = '';
     filters.thisWeek = [];
+    filters.customDate=[];
+
 }
 function setTomorrowDate(){
+    isCustomDate.value = false;
     activeButton.value = 'tomorrow';
     const currentDate = new Date();
     const tomorrowDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000); // Add 1 day
@@ -101,9 +113,12 @@ function setTomorrowDate(){
     filters.todayDate = [];
     filters.expireDate = '';
     filters.thisWeek = [];
+    filters.customDate=[];
+
 
 }
 function setThisWeek(){
+    isCustomDate.value = false;
     activeButton.value = 'thisWeek';
     const currentDate = new Date();
     const currentDay = currentDate.getDay();
@@ -118,7 +133,17 @@ function setThisWeek(){
     filters.tomorrowDate = '';
     filters.todayDate = [];
     filters.expireDate = '';
+    filters.customDate=[];
 
+
+}
+function showCustomDate(){
+    activeButton.value = 'customDate';
+    isCustomDate.value = true;
+    filters.tomorrowDate = '';
+    filters.todayDate = [];
+    filters.expireDate = '';
+    filters.thisWeek = [];
 }
 const currentDate = new Date().toISOString().split('T')[0];
 
@@ -131,16 +156,6 @@ const currentDate = new Date().toISOString().split('T')[0];
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
         <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <x-field label="Custom Date">
-                <DatePicker
-                    v-model="filters.customDate"
-                    placeholder="Select Start & End Date"
-                    range
-                    :max-range="92"
-                    size="sm"
-                    model-type="yyyy-MM-dd"
-                />
-            </x-field>
             <x-field label="Teams">
                 <ComboBox
                     v-model="filters.teams"
@@ -151,11 +166,25 @@ const currentDate = new Date().toISOString().split('T')[0];
                 />
             </x-field>
         </div>
-        <div class="flex gap-3">
+        <div class="flex gap-3 pt-3">
             <x-button size="sm" :color="activeButton === 'expire' ? 'black' : 'primary'" @click="setExpireDate" type="submit">Expired</x-button>
             <x-button size="sm" :color="activeButton === 'today' ? 'black' : 'primary'" @click="setTodayDate" type="submit">Today</x-button>
             <x-button size="sm" :color="activeButton === 'tomorrow' ? 'black' : 'primary'" @click="setTomorrowDate" type="submit">Tomorrow</x-button>
             <x-button size="sm" :color="activeButton === 'thisWeek' ? 'black' : 'primary'" @click="setThisWeek" type="submit">ThisWeek</x-button>
+            <x-button size="sm" :color="activeButton === 'customDate' ? 'black' : 'primary'" @click="showCustomDate">Custom</x-button>
+
+        </div>
+        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+            <x-field label="Custom Date" v-if="isCustomDate">
+                <DatePicker
+                    v-model="filters.customDate"
+                    placeholder="Select Start & End Date"
+                    range
+                    :max-range="92"
+                    size="sm"
+                    model-type="yyyy-MM-dd"
+                />
+            </x-field>
         </div>
 
         <div class="flex gap-3 justify-end">
@@ -179,7 +208,7 @@ const currentDate = new Date().toISOString().split('T')[0];
     >
         <template #item-total_premium="{ total_premium }">
             <div class="text-left">
-              {{formatNumber(total_premium)}}
+              AED {{formatNumber(total_premium)}}
             </div>
         </template>
         <template #item-advisor_name="{ advisor_name, advisor_id }">

@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
@@ -18,6 +19,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ReportService extends BaseService
@@ -270,24 +272,231 @@ class ReportService extends BaseService
 
     public function getPaymentAuthorisedSummary($request)
     {
-        $query = DB::table('car_quote_request');
+        $userRole = auth()->user();
+        $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
 
-        $query
-            ->select(
-                'users.id as advisor_id',
-                'users.name as advisor_name',
-                DB::raw('COUNT(*) as total_leads'),
-                DB::raw('SUM(car_quote_request.premium) as total_premium'),
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-            )
-            ->leftJoin('payments as py', 'py.code', '=', 'car_quote_request.code')
-            ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->join('user_team', 'users.id', '=', 'user_team.user_id')
-            ->join('teams', 'teams.id', '=', 'user_team.team_id')
-            ->where('car_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->groupBy('users.id', 'users.name')
-            ->orderBy('total_leads', 'desc');
 
+        if ($userRole->hasRole(RolesEnum::CarManager)) {
+
+            $query = DB::table('car_quote_request');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(car_quote_request.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'car_quote_request.code')
+                ->join('users', 'users.id', 'car_quote_request.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('car_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::HealthManager)) {
+            $query = DB::table('health_quote_request');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(health_quote_request.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'health_quote_request.code')
+                ->join('users', 'users.id', 'health_quote_request.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('health_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::BusinessManager)) {
+            $query = DB::table('business_quote_request');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(business_quote_request.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'business_quote_request.code')
+                ->join('users', 'users.id', 'business_quote_request.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('business_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::TravelManager)) {
+            $query = DB::table('personal_quotes');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->where('personal_quotes.quote_type_id', QuoteTypeId::Travel)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::HomeManager)) {
+            $query = DB::table('personal_quotes');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::PetManager)) {
+            $query = DB::table('personal_quotes');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->where('personal_quotes.quote_type_id', QuoteTypeId::Pet)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::YachtManager)) {
+            $query = DB::table('personal_quotes');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->where('personal_quotes.quote_type_id', QuoteTypeId::Yacht)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::LifeManager)) {
+            $query = DB::table('personal_quotes');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->where('personal_quotes.quote_type_id', QuoteTypeId::Life)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::BikeManager)) {
+            $query = DB::table('personal_quotes');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->where('personal_quotes.quote_type_id', QuoteTypeId::Bike)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::CycleManager)) {
+            $query = DB::table('personal_quotes');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->where('personal_quotes.quote_type_id', QuoteTypeId::Cycle)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        } elseif ($userRole->hasRole(RolesEnum::JetskiManager)) {
+            $query = DB::table('personal_quotes');
+
+            $query
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                )
+                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                ->where('personal_quotes.quote_type_id', QuoteTypeId::Jetski)
+                ->whereIn('teams.name', $userTeams)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_leads', 'desc');
+        }
+
+        //FILTERS
         if (isset($request->teams)) {
             $teamIds = $request->teams;
             $query->whereIn('users.id', function ($subQuery) use ($teamIds) {
@@ -319,7 +528,12 @@ class ReportService extends BaseService
             $query->whereBetween('py.authorized_at', $request->customDate);
         }
 
-        return $query->simplePaginate(5)->withQueryString();
+        if (! empty($query)) {
+            return $query->simplePaginate(5)->withQueryString();
+
+        }
+
+        return false;
 
     }
     public function getDefaultFiltersForTotalPremium()
