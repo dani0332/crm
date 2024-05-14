@@ -150,6 +150,7 @@ class GenericPermissionSeeder extends Seeder
 
         $this->generateSegmentFilterPermission();
         $this->embeddedProductSeeds();
+        $this->syncMasterPermissionList();
     }
 
     private function generateSegmentFilterPermission()
@@ -196,6 +197,71 @@ class GenericPermissionSeeder extends Seeder
             $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
             foreach ($roles as $roleName) {
                 if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($dataset->id)) {
+                    $role->givePermissionTo($dataset->id);
+                }
+            }
+        }
+    }
+
+    private function syncMasterPermissionList()
+    {
+        $permissionList = [
+            PermissionsEnum::ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION => [
+                RolesEnum::Admin,
+                RolesEnum::ServiceExecutive,
+                RolesEnum::SeniorManagement,
+                RolesEnum::GMManager,
+                RolesEnum::CorplineManager,
+            ],
+            PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON => [
+            ],
+            PermissionsEnum::POLICY_DETAILS_ADD => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::BOOK_POLICY_DETAILS_ADD => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::BOOK_POLICY_BUTTON => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+        ];
+
+        $this->syncPermissionsWithRole($permissionList);
+
+    }
+
+    private function syncPermissionsWithRole($permissionList)
+    {
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::findOrCreate($permission, 'web');
+            foreach ($roles as $roleName) {
+                if (($role = Role::findOrCreate($roleName, 'web')) && ! $role->hasPermissionTo($dataset->id)) {
                     $role->givePermissionTo($dataset->id);
                 }
             }
