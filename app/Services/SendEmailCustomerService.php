@@ -8,6 +8,7 @@ use App\Enums\EnvEnum;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -871,58 +872,41 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $user->advisor = [
-                'name' => $user->name,
+            $advisorData = [];
+            $total_premium = 0;
+            $total_leads = 0;
+            foreach ($user as $userData) {
+                $advisor = (object) [];
+                $advisor->name = $userData->advisor_name;
+                $advisor->email = $userData->advisor_email;
+                $advisorData[] = $advisor;
+                $total_premium += $userData->total_premium;
+                $total_leads += $userData->total_leads;
+            }
+            $leadData = (object) [
+                'total_leads' => $total_leads,
+                'total_premium' => $total_premium,
+                'date' => Carbon::now()->toDateString(),
             ];
 
-            $roles = $user->usersroles->pluck('name');
-
-            $emailMapping = [
-                'CAR_ADVISOR',
-                'HEALTH_ADVISOR',
-            ];
-
-            $advisorEmail = '';
-            $advisorName = '';
-
-            foreach ($emailMapping as $role) {
-                if ($roles->contains($role)) {
-                    $HealthEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_'.$role)->value('value');
-                    $health = explode(',', $HealthEmail);
-                    $advisorEmail = $health[1];
-                    $advisorName = $health[0];
-                    break;
-                }
+            $totalLeadPremium[] = $leadData;
+            if (isset($totalLeadPremium) && empty($totalLeadPremium)) {
+                return false;
             }
-            if ($advisorEmail == '') {
-                return;
+            if (isset($advisorData) && empty($advisorData)) {
+                return false;
             }
-            $BccEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_BCC_EMAILS')->value('value');
-            $bcc = explode(',', $BccEmail);
-            $bccAdditional = [];
 
-            $i = 0;
-            foreach ($bcc as $pair) {
-                if (isset($bcc[$i])) {
-                    $bccAdditional[] = ['email' => $bcc[$i + 1], 'name' => $bcc[$i]];
-                    $i++;
-                }
-                $i++;
-            }
             $body = json_encode([
-                'sender' => ['name' => $tag.' '.' Urgent: '.$user->name.' IMCRM Inactivity Alert', 'email' => $advisorEmail],
-                'to' => [[
-                    'email' => $advisorEmail,
-                    'name' => $advisorName,
-                ]],
-                'replyTo' => [
-                    'email' => $advisorEmail,
-                    'name' => $advisorName,
-                ],
-                'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
+                'sender' => ['name' => $tag.' '.'IMCRM Payment Notification Alert', 'email' => 'no-reply@notify@insurancemarket.ae'],
+                'to' => $advisorData,
+                'replyTo' => $advisorData,
+                //  'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => intval($emailTemplateId),
-                'params' => $user,
+                'params' => $totalLeadPremium,
             ], JSON_UNESCAPED_SLASHES);
+            info("BODYYYY",[$body]);
+            return;
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
@@ -933,10 +917,10 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
             $responseCode = $clientRequest->getStatusCode();
-            info('sendActivityAlertEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            info('sendPaymentNotificationEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'sendPaymentNotificationEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
         }
 
