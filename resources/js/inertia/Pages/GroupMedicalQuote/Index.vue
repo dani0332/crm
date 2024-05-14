@@ -298,7 +298,7 @@ onMounted(() => {
           />
         </x-field>
         <x-field label="Advisor">
-          <x-select
+          <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
@@ -362,13 +362,14 @@ onMounted(() => {
         >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
+              <ComboBox
                 v-model="assignForm.assigned_to_id_new"
                 label="Assign Advisor"
                 :options="advisorOptions"
+                :single="true"
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
-                :rules="[isRequired]"
+                :error="assignForm.errors.assigned_to_id_new"
               />
               <div class="mb-3 md:pt-6">
                 <x-button

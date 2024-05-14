@@ -43,11 +43,10 @@ class DatabaseSeeder extends Seeder
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             GenericPermissionSeeder::class,
-            addSICWorkflow::class,
             UpdateOldTeamNamesSeeder::class,
             AddCapAdvisorPermissionSeeder::class,
             UpdateLeadAllocationByQuoteId::class,
-            AddLegacyPaymentsPermssion::class,
+            // AddLegacyPaymentsPermssion::class,
             ApplicationStorageSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
@@ -67,9 +66,9 @@ class DatabaseSeeder extends Seeder
             TotalPremiumReportPermissionSeeder::class,*/
 
             // dtt seeder
-            AddDttFlagApplicationStorage::class,
-            DttOCBNewBusinessSeeder::class,
-            RevivalConversionReportPermissionSeeder::class,
+            // AddDttFlagApplicationStorage::class,
+            // DttOCBNewBusinessSeeder::class,
+            // RevivalConversionReportPermissionSeeder::class,
             // end
         ]);
     }
