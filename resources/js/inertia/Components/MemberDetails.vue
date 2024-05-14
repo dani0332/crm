@@ -166,6 +166,11 @@ const memberDeleteConfirmed = () => {
     },
   );
 };
+
+const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] = createReusableTemplate();
+const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] = createReusableTemplate();
+const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -181,11 +186,49 @@ const memberDeleteConfirmed = () => {
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <div class="flex mb-3 justify-end" v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
-          <x-button @click.prevent="addMemberModal" size="sm" color="orange">
+        <AddMemberButtonTemplate v-slot="{ isDisabled }">
+          <x-button
+            @click.prevent="addMemberModal" 
+            size="sm" 
+            color="orange"
+            :disabled="isDisabled"
+          >
             Add Member
           </x-button>
+        </AddMemberButtonTemplate>
+        <div class="flex mb-3 justify-end" v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
+          <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
+            <AddMemButtonReuseTemplate :isDisabled="true"/>
+            <template #tooltip>
+              This lead is now locked as the policy has been booked. If changes are needed such midterm addition of member, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+            </template>
+          </x-tooltip>
+          <AddMemButtonReuseTemplate v-else />
         </div>
+
+        <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="primary"
+            outlined
+            @click.prevent="onEditMember(item)"
+            :disabled="isDisabled"
+          >
+            Edit
+          </x-button>
+        </EditMemberButtonTemplate>
+
+        <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="error"
+            outlined
+            @click.prevent="memberDelete(item.id)"
+            :disabled="isDisabled"
+          >
+            Delete
+          </x-button>
+        </DeleteMemberButtonTemplate>
 
         <DataTable
           table-class-name="tablefixed compact"
@@ -210,22 +253,21 @@ const memberDeleteConfirmed = () => {
           </template>
           <template #item-action="item">
             <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="flex gap-2">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="onEditMember(item)"
-              >
-                Edit
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="memberDelete(item.id)"
-              >
-                Delete
-              </x-button>
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
+                <EditMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                </template>
+              </x-tooltip>
+              <EditMemberButtonReuseTemplate v-else :item="item"/>
+
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
+                <DeleteMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                </template>
+              </x-tooltip>
+              <DeleteMemberButtonReuseTemplate v-else :item="item"/>
             </div>
           </template>
         </DataTable>
