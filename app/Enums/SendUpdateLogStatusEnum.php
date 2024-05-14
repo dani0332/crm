@@ -64,6 +64,11 @@ final class SendUpdateLogStatusEnum extends Enum
     const IISI = 'IISI'; // Increase in sum Insured
     const RFTC = 'RFTC'; // Request for travel certificate
     const AAI = 'AAI'; // Add additional insured
-    const AOC = 'AOC'; // Addition of clauses
+    const AOC = 'AOC'; // Addition of clauses, it's for bike and business lob
     const COA = 'COA'; // Change of address
+    const CAR_AOC = 'AOC'; // Add optional cover, it's for car lob
+    const COE = 'COE'; // Change of Emirate
+    const CISC = 'CISC'; // Change in seating capacity
+    const CISC_NFI = 'CISC(NFI'; // Change in seating capacity (with no financial impact)
+    const COE_NFI = 'COE(NFI'; // Change of Emirates (with no financial impact)
 }

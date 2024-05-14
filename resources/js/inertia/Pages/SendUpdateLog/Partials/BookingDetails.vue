@@ -470,6 +470,13 @@ const sendUpdateValidation = () => {
       if(errors.response.data.errors.error) {
         let responseError = errors.response.data.errors.error;
         Object.keys(responseError).forEach(function (key) {
+            if (
+            responseError[key] === 'Please select Addons' ||
+            responseError[key] === 'Please select Emirate' ||
+            responseError[key] === 'Please select Seating capacity'
+            ) {
+            window.scrollTo(0, 0);
+            }
           notification.error({
             title: responseError[key],
             position: "top",
@@ -591,6 +598,7 @@ const submitToCustomer = () => {
   let url = "send-update-to-customer";
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
+    quoteType: props.quoteType,
   };
   axios
     .post(url, data)

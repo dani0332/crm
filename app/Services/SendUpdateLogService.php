@@ -12,7 +12,9 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestAddOn;
 use App\Models\CycleQuote;
+use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
@@ -685,6 +687,24 @@ class SendUpdateLogService
             }
 
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
+                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
+                    if (! empty($sendUpdateLog->car_addons)) { // will work on Add optional cover.
+                        foreach ($sendUpdateLog->car_addons as $addonId) {
+                            CarQuoteRequestAddOn::updateOrCreate([
+                                'quote_request_id' => $quote->id,
+                                'addon_option_id' => $addonId,
+                            ], [
+                                'quote_request_id' => $quote->id,
+                                'addon_option_id' => $addonId,
+                                'price' => 0,
+                            ]);
+                        }
+                    } elseif (! empty($sendUpdateLog->emirates_registration)) { // will work on Change of Emirate.
+                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_registration]);
+                    } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity.
+                        $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
+                    }
+                }
                 $sendUpdateLog->update([
                     'booking_date' => now(),
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
@@ -718,19 +738,50 @@ class SendUpdateLogService
     {
         switch ($sendUpdateType) {
             case SendUpdateLogStatusEnum::EF:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD);
             case SendUpdateLogStatusEnum::EN:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD);
             case SendUpdateLogStatusEnum::CI:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD);
             case SendUpdateLogStatusEnum::CIR:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD);
             case SendUpdateLogStatusEnum::CPU:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD);
             case SendUpdateLogStatusEnum::CPD:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD);
             default:
                 return false;
         }
+    }
+
+    public function getAdditionalOptionsForCar($sendUpdateLog): array
+    {
+        $data = [];
+        switch ($sendUpdateLog->category->code) {
+            case SendUpdateLogStatusEnum::EF:
+                switch ($sendUpdateLog->option->code) {
+                    case SendUpdateLogStatusEnum::CAR_AOC:
+                        $data = $this->getCarAddons($sendUpdateLog->quote_uuid);
+                        break;
+                    case SendUpdateLogStatusEnum::COE:
+                        $data = Emirate::where('is_active', true)->get()->toArray();
+                        break;
+                }
+                break;
+            case SendUpdateLogStatusEnum::EN:
+                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::COE_NFI) {
+                    $data = Emirate::where('is_active', true)->get()->toArray();
+                }
+                break;
+        }
+
+        return $data;
+    }
+
+    public function getCarAddons($quoteUuid): array
+    {
+        $carQuote = CarQuote::where('uuid', $quoteUuid)->first();
+
+        return $carQuote->plan->carAddons->toArray();
     }
 }
