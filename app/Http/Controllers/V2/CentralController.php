@@ -360,7 +360,7 @@ class CentralController extends Controller
             }
 
             $previousStatusIdChanged = false;
-            if($repository->quote_status_id != (int)$dataTo['quote_status_id']){
+            if ($repository->quote_status_id != (int) $dataTo['quote_status_id']) {
                 $previousStatusIdChanged = true;
             }
 

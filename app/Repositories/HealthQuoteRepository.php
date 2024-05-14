@@ -3,12 +3,10 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\HealthQuote;
 use App\Traits\CentralTrait;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\RolesEnum;
 
 class HealthQuoteRepository extends BaseRepository
 {
@@ -29,9 +27,9 @@ class HealthQuoteRepository extends BaseRepository
             'nationality',
             'insuranceProvider',
         ])
-        ->when(\auth()->user()->hasRole(RolesEnum::HealthAdvisor), function ($query) {
-            $query->where('advisor_id', \auth()->user()->id);
-        })
+            ->when(\auth()->user()->hasRole(RolesEnum::HealthAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy($sort_by, $sort_type);
 
@@ -39,7 +37,6 @@ class HealthQuoteRepository extends BaseRepository
             return $query->count();
         }
 
-     
         return ($forExport) ? $query->get() : $query->Paginate();
     }
 

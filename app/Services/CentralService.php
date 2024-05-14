@@ -457,7 +457,7 @@ class CentralService
         )->orderBy('created_at', 'desc')->first();
 
         $lastActivityDueDateIsGreater = false;
-        
+
         if ($lastActivity) {
             // Check if the due date is greater than today's date
             if (Carbon::parse($lastActivity->due_date)->greaterThan(now()->format('d-m-Y'))) {

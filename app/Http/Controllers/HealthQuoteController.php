@@ -8,24 +8,23 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Http\Requests\MemberDetailRequest;
-use App\Models\HealthQuote;
 use App\Repositories\HealthQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
-use App\Services\HealthQuoteService;
-use Illuminate\Http\Request;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\HealthQuoteService;
+use Illuminate\Http\Request;
+
 class HealthQuoteController extends Controller
 {
     protected $healthQuoteService;
     protected $crudService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, CRUDService $crudService,)
+    public function __construct(HealthQuoteService $healthQuoteService, CRUDService $crudService)
     {
         $this->healthQuoteService = $healthQuoteService;
         $this->crudService = $crudService;
@@ -346,7 +345,7 @@ class HealthQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,
-            'teams' =>$userTeams,
+            'teams' => $userTeams,
             'quoteTypeId' => QuoteTypes::HEALTH->id(),
             'quoteType' => QuoteTypes::HEALTH->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : HealthQuoteRepository::getData(true, true),

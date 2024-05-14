@@ -17,8 +17,8 @@ use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
-use Illuminate\Console\Command;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class AutomateActivitiesCommand extends Command
 {
@@ -115,7 +115,7 @@ class AutomateActivitiesCommand extends Command
 
                 info('------------------- Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
                 $quoteClass::whereHas('activities', function ($activityQuery) {
-                    $activityQuery->where('due_date', '<',Carbon::now()->subHours(1));
+                    $activityQuery->where('due_date', '<', Carbon::now()->subHours(1));
                     $activityQuery->orWhere('status', true);
                 })
                     ->with(['activities' => function ($activities) {

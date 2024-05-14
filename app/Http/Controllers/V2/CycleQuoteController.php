@@ -246,7 +246,7 @@ class CycleQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
             'quoteType' => QuoteTypes::CYCLE->value,
-            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads :  CycleQuoteRepository::getData(true, true),
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : CycleQuoteRepository::getData(true, true),
             'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,
             // 'vatPercentage' => $vatPercentage,
