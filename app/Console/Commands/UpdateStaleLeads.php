@@ -69,7 +69,7 @@ class UpdateStaleLeads extends Command
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
             // ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
             // ->where('quote_status_date', '<=', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-1 days')))->endOfDay())
-                ->where('quote_status_date', '<=', Carbon::now()->subHours(6))
+                ->where('quote_status_date', '<=', Carbon::now()->timezone('Asia/Dubai'))
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
                     $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
                 })
@@ -92,10 +92,10 @@ class UpdateStaleLeads extends Command
             // ->where('stale_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))
                 // ->where('stale_at', '<=', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-2 days')))->endOfDay())
                 ->where(function ($query) {
-                    $query->where('stale_at', '<=', Carbon::now()->subHours(18))
+                    $query->where('stale_at', '<=', Carbon::now()->timezone('Asia/Dubai')->subHours(18))
                         ->orWhere(function ($subQuery) {
-                            $subQuery->where('stale_at', '>=', Carbon::now())
-                                ->where('stale_at', '<=', Carbon::now()->subHours(18)->addDays(1)); // Handles cases where it's within the same day
+                            $subQuery->where('stale_at', '>=', Carbon::now()->timezone('Asia/Dubai'))
+                                ->where('stale_at', '<=', Carbon::now()->timezone('Asia/Dubai')->subHours(18)->addDays(1)); // Handles cases where it's within the same day
                         });
                 })
                 ->chunkById(1000, function ($staleLeads) use ($eligibleQuoteType, $lostReasonId) {
