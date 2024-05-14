@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
@@ -248,6 +249,12 @@ class CentralController extends Controller
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
         if ($request->send_policy_type == 'sage') {
+            if (!auth()->user()->can(PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON)){
+                return response()->json(['errors' => [
+                    'message' => 'You are not authorized to perform this action',
+                ]], 403);
+            }
+            dd($request);
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->first();
             $paymentSplits = PaymentSplits::where('code', $quote['code'])->get();

@@ -32,7 +32,9 @@ const props = defineProps({
 
 const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
-
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -271,84 +273,84 @@ const calculateCommission = () => {
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Booking Date
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.BOOKING_DATE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Booking Date
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.BOOKING_DATE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.booking_date.split(' ')[0] }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
-                    <x-tooltip>
-                      Invoice Description
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.INVOICE_DESCRIPTION
-                        }}</span>
-                      </template>
-                    </x-tooltip>
+                  <x-tooltip>
+                    Invoice Description
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.INVOICE_DESCRIPTION
+                      }}</span>
+                    </template>
+                  </x-tooltip>
                 </dt>
                 <dd>{{ bpForm.invoice_description }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
-                    <x-tooltip>
-                      Line of Business
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.LINE_OF_BUSINESS
-                        }}</span>
-                      </template>
-                    </x-tooltip>
+                  <x-tooltip>
+                    Line of Business
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.LINE_OF_BUSINESS
+                      }}</span>
+                    </template>
+                  </x-tooltip>
                 </dt>
                 <dd>{{ props?.quoteType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
-                    <x-tooltip>
-                      Transaction Payment Status
+                  <x-tooltip>
+                    Transaction Payment Status
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
-                        }}</span>
-                      </template>
-                    </x-tooltip>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
+                      }}</span>
+                    </template>
+                  </x-tooltip>
                 </dt>
                 <dd>{{ bpForm.transaction_payment_status }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                     Sub Type
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Sub Type
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.SUB_TYPE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.SUB_TYPE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd></dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Insurer Invoice Date
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Insurer Invoice Date
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.INSURER_INVOICE_DATE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.INSURER_INVOICE_DATE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <DatePicker
                     v-model="bpForm.invoice_date"
@@ -361,30 +363,30 @@ const calculateCommission = () => {
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Broker Invoice No
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Broker Invoice No
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.BROKER_INVOICE_NUMBER
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.BROKER_INVOICE_NUMBER
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.broker_invoice_number }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Insurer Tax Invoice No
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.INSURER_TAX_INVOICE_NUMBER
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Insurer Tax Invoice No
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.INSURER_TAX_INVOICE_NUMBER
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <x-input
                     v-model="bpForm.insurer_tax_invoice_number"
@@ -396,32 +398,32 @@ const calculateCommission = () => {
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Discount Value
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.DISCOUNT_VALUE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Discount Value
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.DISCOUNT_VALUE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.discount }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Insurer Commission Tax Invoice No
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Insurer Commission Tax Invoice No
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">
-                          {{
-                            productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
-                          }}
-                        </span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{
+                          productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                        }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <x-input
                     v-model="bpForm.insurer_commmission_invoice_number"
@@ -433,30 +435,30 @@ const calculateCommission = () => {
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Commission(%)
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.COMMISSION_PERCENTAGE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Commission(%)
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.COMMISSION_PERCENTAGE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.commission_percentage }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Commission (VAT NOT APPLICABLE)
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Commission (VAT NOT APPLICABLE)
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <x-input
                     v-model="bpForm.commission_vat_not_applicable"
@@ -470,31 +472,31 @@ const calculateCommission = () => {
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      VAT on Commission
+                <dt class="font-medium">
+                  <x-tooltip>
+                    VAT on Commission
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.VAT_ON_COMMISSION
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.VAT_ON_COMMISSION
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.vat_on_commission }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Commission (VAT APPLICABLE)
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Commission (VAT APPLICABLE)
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <x-input
                     v-model="bpForm.commission_vat_applicable"
@@ -509,17 +511,17 @@ const calculateCommission = () => {
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Total Commission
+                <dt class="font-medium">
+                  <x-tooltip>
+                    Total Commission
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.TOTAL_COMMISSION
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.TOTAL_COMMISSION
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
               </div>
             </dl>
@@ -527,7 +529,10 @@ const calculateCommission = () => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
-            <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end">
+            <div
+              v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
+              class="flex justify-end"
+            >
               <template
                 v-if="
                   props.quote.quote_status_id ==
@@ -562,7 +567,11 @@ const calculateCommission = () => {
                   Update
                 </x-button>
                 <x-button
-                  v-if="!bp.isEditing && props.bookPolicyDetails?.editButton"
+                  v-if="
+                    !bp.isEditing &&
+                    props.bookPolicyDetails?.editButton &&
+                    can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                  "
                   class="mt-4 mr-2"
                   color="emerald"
                   size="sm"
@@ -576,9 +585,15 @@ const calculateCommission = () => {
                   class="mt-4"
                   @click.prevent="confirmSendPolicy"
                   :disabled="bp.isEditing"
-                  v-if="props.bookPolicyDetails?.sendButton"
+                  v-if="
+                    props.bookPolicyDetails?.sendButton &&
+                    canAny([
+                      permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON,
+                      permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON,
+                    ])
+                  "
                 >
-                  {{ props.bookPolicyDetails?.text }}
+                  {{ props.bookPolicyDetails?.text }} 12
                 </x-button></template
               >
 
@@ -646,7 +661,13 @@ const calculateCommission = () => {
                   >
                     Update
                   </x-button>
-                  <div v-if="!bp.isEditing && props.bookPolicyDetails?.editButton">
+                  <div
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
+                  >
                     <x-button
                       class="mt-4 mr-2"
                       color="emerald"
@@ -658,12 +679,21 @@ const calculateCommission = () => {
                     </x-button>
                   </div>
 
-                  <template v-if="props.bookPolicyDetails?.editButton">
+                  <template
+                    v-if="
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_BUTTON)
+                    "
+                  >
                     <x-button
                       size="sm"
                       class="mt-4 mr-2"
                       color="orange"
-                      :disabled="!props.bookPolicyDetails?.editButton || bp.isEditing"
+                      :disabled="
+                        !props.bookPolicyDetails?.editButton ||
+                        bp.isEditing ||
+                        !can(permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON)
+                      "
                       @click.prevent="confirmSendPolicy"
                     >
                       Send Policy
@@ -675,7 +705,10 @@ const calculateCommission = () => {
                         size="sm"
                         class="mt-4 mr-2"
                         color="orange"
-                        :disabled="!props.bookPolicyDetails?.editButton"
+                        :disabled="
+                          !props.bookPolicyDetails?.editButton ||
+                          !can(permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON)
+                        "
                       >
                         Sending Policy To Customer
                       </x-button>

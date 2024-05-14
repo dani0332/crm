@@ -18,6 +18,8 @@ const props = defineProps({
     default: true,
   },
 });
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -36,12 +38,14 @@ const dateToYMD = date => {
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
-const quoteStatusEnum= page.props.quoteStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const policyIssuanceStatusOptions = computed(() => {
-  let policyIssuanceStatus= page.props.policyIssuanceStatus;
-  if( props.record.quote_status_id != quoteStatusEnum.PolicyIssued){
-    policyIssuanceStatus = policyIssuanceStatus.filter(item => item.text !== "Policy Issued");
+  let policyIssuanceStatus = page.props.policyIssuanceStatus;
+  if (props.record.quote_status_id != quoteStatusEnum.PolicyIssued) {
+    policyIssuanceStatus = policyIssuanceStatus.filter(
+      item => item.text !== 'Policy Issued',
+    );
   }
   return policyIssuanceStatus.map(item => {
     return {
@@ -49,8 +53,7 @@ const policyIssuanceStatusOptions = computed(() => {
       label: item.text,
     };
   });
-
- });
+});
 
 const planQuoteInsurerNumber = computed(() => {
   let obj = page.props?.listQuotePlans?.filter(
@@ -452,7 +455,8 @@ watch(
               <template
                 class="flex justify-end"
                 v-if="
-                  record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                  record.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
                   record.quote_status_id == quoteStatusEnum.PolicyPending ||
                   record.quote_status_id == quoteStatusEnum.PolicyIssued ||
                   record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
@@ -480,6 +484,7 @@ watch(
                   size="sm"
                   :loading="policyDetailsForm.processing"
                   type="submit"
+                  :disabled="!can(permissionsEnum.POLICY_DETAILS_ADD)"
                 >
                   Update
                 </x-button>
@@ -489,7 +494,8 @@ watch(
                 >
                   <x-button
                     v-if="
-                      !policyDetailsState.isEditing && hasRole(rolesEnum.PA)
+                      !policyDetailsState.isEditing &&
+                      can(permissionsEnum.POLICY_DETAILS_ADD)
                     "
                     class="mt-4"
                     color="emerald"
@@ -502,7 +508,8 @@ watch(
                 <template v-else>
                   <x-button
                     v-if="
-                      !policyDetailsState.isEditing && hasRole(rolesEnum.NRA)
+                      !policyDetailsState.isEditing &&
+                      can(permissionsEnum.POLICY_DETAILS_ADD)
                     "
                     class="mt-4"
                     color="emerald"
