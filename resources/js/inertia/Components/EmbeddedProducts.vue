@@ -140,10 +140,6 @@ const epTable = reactive({
       value: 'prices',
     },
     {
-      text: 'EP Status',
-      value: 'ep_status',
-    },
-    {
       text: 'Last Updated Date',
       value: 'updated_at',
     },
@@ -286,8 +282,6 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             </div>
 
           </template>
-
-          <template #item-ep_status="{ ep_status }"> N/A </template>
 
           <template #item-payment_status="{ prices }">
             {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}

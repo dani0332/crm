@@ -450,7 +450,13 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
-        $dataset = EmbeddedTransaction::with('quoteRequest.customer', 'quoteRequest.carMake', 'quoteRequest.carModel', 'quoteRequest.quoteStatus')
+        $dataset = EmbeddedTransaction::with(
+            'quoteRequest.customer', 
+            'quoteRequest.carMake', 
+            'quoteRequest.carModel', 
+            'quoteRequest.quoteStatus', 
+            'quoteRequest.advisor',
+            )
             ->join('embedded_product_options', function ($join) use ($ep) {
                 $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
                     ->where('embedded_product_options.embedded_product_id', $ep->id);
