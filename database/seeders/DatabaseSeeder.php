@@ -70,6 +70,7 @@ class DatabaseSeeder extends Seeder
             // DttOCBNewBusinessSeeder::class,
             // RevivalConversionReportPermissionSeeder::class,
             // end
+            AddCrossLOBSeeder::class
         ]);
     }
 }
