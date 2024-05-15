@@ -7,6 +7,11 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   inslyId: String,
+  expanded: {
+    type: Boolean,
+    required: false,
+    default: true
+  }
 });
 
 const page = usePage();
@@ -126,31 +131,36 @@ const uploadFile = (doc, filesWithInfo) => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Documents
-        <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-      </h3>
-      <div class="flex gap-2">
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Documents
+            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="flex gap-2 mb-4 justify-end">
           <Link
-              v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${inslyId}`"
-              preserve-scroll
+            v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${inslyId}`"
+            preserve-scroll
           >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                  View Legacy policy
-              </x-button>
+            <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+            </x-button>
           </Link>
-        <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
-          Upload Documents
-        </x-button>
-      </div>
-    </div>
-
-    <DataTable
+          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+            Upload Documents
+          </x-button>
+        </div>
+        
+      <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"
-      :items="quoteDocuments || []"
+      :items="quoteDocuments.sort((a, b) => b.id - a.id) || []"
       border-cell
       hide-rows-per-page
       :rows-per-page="15"
@@ -177,7 +187,9 @@ const uploadFile = (doc, filesWithInfo) => {
           </x-button>
         </div>
       </template>
-    </DataTable>
+        </DataTable>
+      </template>
+    </Collapsible>
 
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>
@@ -188,7 +200,7 @@ const uploadFile = (doc, filesWithInfo) => {
         v-if="Object.keys(docForm.errors).length"
       >
         <ul>
-          <li v-for="error in docForm?.errors">{{ error }}</li>
+          <li v-for="error in docForm?.errors" :key="error">{{ error }}</li>
         </ul>
       </x-alert>
 
@@ -199,7 +211,7 @@ const uploadFile = (doc, filesWithInfo) => {
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }}
+            {{ documentType.text }}  {{ documentType.is_required ? '*' : ''}}
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>

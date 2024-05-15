@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="{{ asset('image/favicon.ico') }}">
   <title inertia>{{ config('constants.APP_NAME', 'IMCRM') }}</title>
-  @routes
+  @routes()
   @vite(['resources/js/inertia/inertia.js'])
   @inertiaHead
 </head>

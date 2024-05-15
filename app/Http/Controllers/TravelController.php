@@ -15,6 +15,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
@@ -25,6 +26,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -33,6 +35,7 @@ use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Response;
@@ -41,6 +44,8 @@ use RuntimeException;
 
 class TravelController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     protected $travelQuoteService;
     private $renewalQuoteService;
     protected $lookupService;
@@ -172,6 +177,7 @@ class TravelController extends Controller
         $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
         $documentTypes = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
+
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
@@ -190,8 +196,21 @@ class TravelController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
+
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record->id);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
 
         return inertia('TravelQuote/Show', [
+            'record' => $record,
             'quote' => $record,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
@@ -245,10 +264,9 @@ class TravelController extends Controller
 
             ],
             'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
+            'sendUpdateEnum' => $sendUpdateEnum,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
@@ -256,7 +274,11 @@ class TravelController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
+            'bookPolicyDetails' => $bookPolicyDetails,
             'isNewPaymentStructure' => $isNewPaymentStructure,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
         ]);
     }
 

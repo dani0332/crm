@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -15,88 +16,68 @@ class SendPolicyApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-        $sibCarTemplateId = ApplicationStorage::where('key_name', 'SIB_CAR_SEND_POLICY_TEMPLATE_ID')->first();
-        if (! $sibCarTemplateId) {
+        $data = [
+            'SIB_CAR_SEND_POLICY_TEMPLATE_ID' => '389',
+            'DNIRC_CUSTOMER_SUPPORT_NUMBER' => '800-4101',
+            'AXA_CUSTOMER_SUPPORT_NUMBER' => '800 292',
+            'NT_CUSTOMER_SUPPORT_NUMBER' => '800 4101',
+            'OIC_CUSTOMER_SUPPORT_NUMBER' => '800-6565',
+            'QIC_CUSTOMER_SUPPORT_NUMBER' => '800 4900',
+            'RSA_CUSTOMER_SUPPORT_NUMBER' => '800 462 372',
+            'TM_CUSTOMER_SUPPORT_NUMBER' => '800 4900',
+            ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE => '591',
+            ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE => '612',
+            ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE => '593',
+            ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE => '617',
+            ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE => '616',
+            ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE => '615',
+            ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE => '592',
+            ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE => '618',
+            ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE => '622',
+            ApplicationStorageEnums::GROUP_MEDICAL_BOOK_POLICY_TEMPLATE => '613',
+            ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE => '614',
+        ];
+
+        foreach ($data as $key => $value) {
+            $record = ApplicationStorage::where('key_name', $key)->first();
+            if (! $record) {
+                DB::table('application_storage')->insert([
+                    'key_name' => $key,
+                    'value' => $value,
+                    'is_active' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        $bikeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE)->first();
+        if (! $bikeBookPolicy) {
             DB::table('application_storage')->insert([
-                'key_name' => 'SIB_CAR_SEND_POLICY_TEMPLATE_ID',
-                'value' => '389',
+                'key_name' => ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE,
+                'value' => '592',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
 
-        $dnircContactNumber = ApplicationStorage::where('key_name', 'DNIRC_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $dnircContactNumber) {
+        $cycleBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE)->first();
+        if (! $cycleBookPolicy) {
             DB::table('application_storage')->insert([
-                'key_name' => 'DNIRC_CUSTOMER_SUPPORT_NUMBER',
-                'value' => '800-4101',
+                'key_name' => ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE,
+                'value' => '618',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
 
-        $axaContactNumber = ApplicationStorage::where('key_name', 'AXA_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $axaContactNumber) {
+        $yachtBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE)->first();
+        if (! $yachtBookPolicy) {
             DB::table('application_storage')->insert([
-                'key_name' => 'AXA_CUSTOMER_SUPPORT_NUMBER',
-                'value' => '800 292',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $ntContactNumber = ApplicationStorage::where('key_name', 'NT_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $ntContactNumber) {
-            DB::table('application_storage')->insert([
-                'key_name' => 'NT_CUSTOMER_SUPPORT_NUMBER',
-                'value' => '800 4101',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $oicContactNumber = ApplicationStorage::where('key_name', 'OIC_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $oicContactNumber) {
-            DB::table('application_storage')->insert([
-                'key_name' => 'OIC_CUSTOMER_SUPPORT_NUMBER',
-                'value' => '800-6565',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $qicContactNumber = ApplicationStorage::where('key_name', 'QIC_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $qicContactNumber) {
-            DB::table('application_storage')->insert([
-                'key_name' => 'QIC_CUSTOMER_SUPPORT_NUMBER',
-                'value' => '800 4900',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $rsaContactNumber = ApplicationStorage::where('key_name', 'RSA_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $rsaContactNumber) {
-            DB::table('application_storage')->insert([
-                'key_name' => 'RSA_CUSTOMER_SUPPORT_NUMBER',
-                'value' => '800 462 372',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $tmContactNumber = ApplicationStorage::where('key_name', 'TM_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $tmContactNumber) {
-            DB::table('application_storage')->insert([
-                'key_name' => 'TM_CUSTOMER_SUPPORT_NUMBER',
-                'value' => '800 4900',
+                'key_name' => ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE,
+                'value' => '618',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

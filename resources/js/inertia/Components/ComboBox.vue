@@ -214,8 +214,11 @@ const removeSelected = item => {
                       : selected,
                   }"
                   class="relative flex items-center whitespace-nowrap px-3 text-sm cursor-pointer py-1.5 hover:bg-primary-50"
+                  :title="item.tooltip"
                 >
-                  <span class="flex-1 truncate py-px">{{ item.label }}</span>
+                  <span class="flex-1 truncate py-px">
+                    {{ item.label }}
+                  </span>
                   <span class="ml-1 shrink-0">
                     <svg
                       v-if="

@@ -29,6 +29,11 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true,
+  },
   paymentStatusEnum: {
     type: Array,
     default: () => [],
@@ -37,6 +42,7 @@ const props = defineProps({
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionsEnum = page.props.permissionsEnum;
+
 const modals = reactive({
   cancelPayment: false,
 });
@@ -182,8 +188,14 @@ const checkTransactionExist = item => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
-
-let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'/payment?planId='+props.quote.plan_id+'&providerCode='+props.quote.plan_provider_code;
+  let paymentLink =
+    page.props.epLink +
+    '/car-insurance/quote/' +
+    props.quote.uuid +
+    '/payment?planId=' +
+    props.quote.plan_id +
+    '&providerCode=' +
+    props.quote.plan_provider_code;
   copy(paymentLink);
   if (copied)
     notification.success({
@@ -193,7 +205,7 @@ let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'
 };
 
 const paymentStatus = id => {
-  const enums = paymentStatusEnum || {};
+  const enums = props.paymentStatusEnum || {};
   const item = Object.keys(enums).find(key => enums[key] === id);
   return item ? item : 'N/A';
 };
@@ -203,17 +215,21 @@ const toggleProduct = (ep, event) => {
   if (event.target.checked) {
     selectedEp.value.push(id);
   } else {
-    var index =  selectedEp.value.indexOf(id);
+    var index = selectedEp.value.indexOf(id);
     if (index !== -1) {
       selectedEp.value.splice(id, 1);
     }
   }
-  let data = { quote_uuid: props.quote.uuid, id: id,modelType:props.modelType };
+  let data = {
+    quote_uuid: props.quote.uuid,
+    id: id,
+    modelType: props.modelType,
+  };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
     .post(requestUrl, data)
     .then(res => {
-        console.log('res',res);
+      console.log('res', res);
       notification.success('Updated');
     })
     .catch(err => {
@@ -228,7 +244,7 @@ const onActivitySubmit = isValid => {
   axios
     .post(url, paymentForm)
     .then(res => {
-        modals.cancelPayment = false;
+      modals.cancelPayment = false;
       notification.success('Processed');
     })
     .catch(err => {
@@ -246,35 +262,50 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
 <template>
-  <div v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_ADVISOR, permissionsEnum.EMBEDDED_PRODUCT_ADMIN])">
-    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
-
-      <div class="flex flex-wrap gap-4 justify-between items-center">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Embedded Products <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
-        </h3>
-        <div style="margin-right:50px;">
-          <x-button v-if="selectedEp.length > 0" size="sm" @click.stop="onCopyText()">
+  <div
+    v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_ADVISOR, permissionsEnum.EMBEDDED_PRODUCT_ADMIN])"
+    class="p-4 rounded shadow mb-6 bg-white"
+  >
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex flex-wrap gap-4 justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Embedded Products
+            <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <div class="flex flex-wrap gap-3 justify-end my-4">
+          <x-button
+            v-if="selectedEp.length > 0"
+            size="sm"
+            @click.prevent="onCopyText()"
+          >
             Copy Payment Link
           </x-button>
         </div>
-      </div>
-      <template #content>
-        <x-divider class="mb-4 mt-2 mt-1" />
-        <DataTable table-class-name="tablefixed" :headers="epTable.columns" :items="props.data || []" border-cell
-          hide-rows-per-page hide-footer>
+        <DataTable
+          table-class-name="tablefixed"
+          :headers="epTable.columns"
+          :items="props.data || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
           <template #item-code="{ short_code }">
             {{ short_code + '-' + props.code }}
           </template>
 
           <template #item-prices="{ prices }">
-
             <div v-if="prices.length > 0" class="flex gap-3">
-
-
               <x-tag color="primary" v-for="priceItem in prices">
-                <x-checkbox v-if="priceItem.transactions[0]?.is_selected == '1'"
-                  @change="toggleProduct(priceItem, $event)" :model-value="true" color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+                <x-checkbox
+                    v-if="priceItem.transactions[0]?.is_selected == '1'"
+                    @change="toggleProduct(priceItem, $event)"
+                    :model-value="true"
+                    color="primary"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
                     || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
                     || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED" />
                 <x-checkbox v-else @change="toggleProduct(priceItem, $event)" color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
@@ -343,6 +374,6 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           </x-form>
         </x-modal>
       </template>
-    </x-collapse>
+    </Collapsible>
   </div>
 </template>

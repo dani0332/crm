@@ -21,10 +21,13 @@ class Payment extends Model implements Auditable
     protected $primaryKey = 'code';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount',
+    protected $fillable = [
+        'code', 'payment_status_id', 'plan_id', 'captured_amount',
         'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by',
         'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'total_payments', 'credit_approval', 'frequency', 'discount_type', 'discount_reason', 'custom_reason', 'notes', 'total_price', 'collection_date', 'payer_name', 'paid_by',
         'discount_value', 'total_amount', 'payment_allocation_status', 'decline_reason_id', 'decline_custom_reason', 'discount_custom_reason',
+        'commission_vat', 'commission_without_vat', 'commission_vat_applicable', 'commission_vat_not_applicable', 'commission', 'tax_invoice_number', 'broker_invoice_number', 'insurer_invoice_date', 'invoice_description', 'insurer_tax_number', 'transaction_payment_status', 'insurer_commmission_invoice_number', 'commmission_percentage',
+
     ];
     protected $forceDeleting = true;
 
@@ -179,6 +182,11 @@ class Payment extends Model implements Auditable
     public function paymentSplits()
     {
         return $this->hasMany(PaymentSplits::class, 'code', 'code');
+    }
+
+    public function policyIssuer()
+    {
+        return $this->belongsTo(User::class, 'policy_issuer_id', 'id')->select(['id', 'name', 'email']);
     }
 
     // render payment status PAID if payment status is CAPTURED

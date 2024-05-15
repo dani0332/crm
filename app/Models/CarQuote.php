@@ -297,6 +297,11 @@ class CarQuote extends BaseModel
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
     public function scopeRelationWhere($query, $isGetList, $filters)
     {
         if (Auth::user()->hasRole('pa') && $isGetList) {

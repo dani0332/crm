@@ -160,6 +160,13 @@ class HealthQuoteService extends BaseService
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
+            'hqr.price_vat_not_applicable',
+            'hqr.price_without_vat',
+            'hqr.price_with_vat',
+            'hqr.vat',
+            'hqr.insurer_quote_number',
+            'hqr.policy_issuance_status_id',
+            'hqr.policy_issuance_status_other',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')

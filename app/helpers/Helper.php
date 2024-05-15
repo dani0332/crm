@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
+use App\Models\User;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -661,6 +662,39 @@ if (! function_exists('getIMLogo')) {
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
 }
+if (! function_exists('mimeContentType')) {
+    function mimeContentType($ext = null, $mimeType = null)
+    {
+
+        $mime_types = [ // images
+            'png' => 'image/png',
+            'jpeg' => 'image/jpeg',
+            'jpg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'bmp' => 'image/bmp',
+            'ico' => 'image/vnd.microsoft.icon',
+            'tiff' => 'image/tiff',
+            'tif' => 'image/tiff',
+            'svg' => 'image/svg+xml',
+            'svgz' => 'image/svg+xml',
+
+            'pdf' => 'application/pdf',
+            'psd' => 'image/vnd.adobe.photoshop',
+            'ai' => 'application/postscript',
+            'eps' => 'application/postscript',
+            'ps' => 'application/postscript',
+        ];
+
+        if (! empty($ext)) {
+            array_key_exists($ext, $mime_types);
+
+            return $mime_types[$ext];
+        }
+        if (! empty($mimeType)) {
+            return array_search($mimeType, $mime_types);
+        }
+    }
+}
 
 if (! function_exists('apiResponse')) {
     function apiResponse($data, $statusCode = 200, $message = null)
@@ -719,4 +753,14 @@ if (! function_exists('getAppStorageValueByKey')) {
 
         return $query->value;
     }
+}
+
+if (! function_exists('getManagersByUser')) {
+    function getManagersByUser($userId)
+    {
+        $managerIds = DB::table('user_manager')->where('user_id', $userId)->get()->pluck('manager_id');
+
+        return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
+    }
+
 }
