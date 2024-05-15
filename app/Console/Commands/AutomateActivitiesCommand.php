@@ -140,6 +140,10 @@ class AutomateActivitiesCommand extends Command
                                         $quoteDetail->id,
                                     )->orderBy('created_at', 'desc')->first();
                                     
+                                    $activityCreationAllowed = true;
+                                    if(! $lastActivity->is_cold || ! $lastActivity->is_cold && $lastActivity->status == 0){
+                                        $activityCreationAllowed = false;
+                                    }
 
                                     $scheduledActivitiesIDs = collect($quoteDetail->activities->pluck('activity_schedule_id'))
                                     ->unique()->filter(function ($filter) {
@@ -162,7 +166,7 @@ class AutomateActivitiesCommand extends Command
                                         $query->where('team_id', $renewalTeamID ?? null);
                                     })->first();
 
-                                if ($activitySchedules && ! $lastActivity->is_cold) {
+                                if ($activitySchedules && $activityCreationAllowed) {
                                     Activities::create([
                                         'title' => $activitySchedules->name,
                                         'description' => $activitySchedules->description,

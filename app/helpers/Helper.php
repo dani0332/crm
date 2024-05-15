@@ -648,7 +648,7 @@ if (!function_exists('addMinutesExcludeWeekend')) {
     function addMinutesExcludeWeekend($minutesToAdd, $date = null)
     {
         $date = Carbon::parse($date) ?? Carbon::now();
-        $date = $date->addMinutes(10);
+        $date = $date->addMinutes(8);
 
         if ($date->isWeekend()) {
             $date = $date->addHours(48);
