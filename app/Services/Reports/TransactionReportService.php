@@ -2,23 +2,32 @@
 
 namespace App\Services\Reports;
 
-use App\Enums\ManagementReportCategoriesEnum;
-use App\Enums\ManagementReportTypeEnum;
-use App\Models\PersonalQuote;
-use App\Strategies\ManagementReport;
-use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Models\PersonalQuote;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
+use App\Strategies\ManagementReport;
+use App\Enums\ManagementReportTypeEnum;
+use App\Enums\ManagementReportCategoriesEnum;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TransactionReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
 
+    protected $reportDateRange;
+
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::TRANSACTION;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::TRANSACTION_PAYMENTS;
+
+        if ($request['paymentDueDate'] && !empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
+            $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
+                .' - '.
+                Carbon::parse($request['paymentDueDate'][1])->toDateString();
+        }
 
         $query = PersonalQuote::query()
             ->select(
@@ -77,7 +86,20 @@ class TransactionReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
-        return $query->simplePaginate(10)->withQueryString();
+        if ($request->export == 1) {
+            $data = $query->get();
+
+            // Columns that are not integar and should not be summed
+            $nonIntegarIndexes = [0, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
+
+            return $this->download(
+                'Transaction Report '.$this->reportDateRange,
+                $data,
+                $this->headings(),
+                $nonIntegarIndexes);
+        } else {
+            return $query->simplePaginate(10)->withQueryString();
+        }
     }
 
     public function getDefaultFilters()
@@ -92,6 +114,74 @@ class TransactionReportService extends ManagementReport
             'paymentDueDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::TRANSACTION,
             'reportType' => ManagementReportTypeEnum::TRANSACTION_PAYMENTS,
+        ];
+    }
+
+    public function headings(): array
+    {
+        return [
+            'Policy Number',
+            'Transactions',
+            'Policy Start Date',
+            'Payment Due Date',
+            'Price (VAT applicable)',
+            'Total VAT',
+            'Price (VAT not applicable)',
+            'Discount',
+            'Total Price',
+            'Commission (VAT applicable)',
+            'VAT on Commission',
+            'Commission (VAT not applicable)',
+            'Collected Amount',
+            'Payment Date',
+            'Unpaid',
+            'Collects',
+            'Insurer',
+            'Line Of Business',
+            'Sub-Type',
+            'Customer Name',
+            'Advisor',
+            'Policy Issuer',
+            'Invoice Description',
+            'Payment Method',
+            'Payment Gateway',
+            'Insurer Invoice No.',
+            'Insurer Invoice Date',
+            'Broker Invoice No'
+        ];
+    }
+
+    public function map($quote): array
+    {
+        return [
+            $quote->policy_number ?? 'N/A',
+            $quote->transactions ?? 0,
+            $quote->policy_start_date ?? 'N/A',
+            $quote->payment_due_date ?? 'N/A',
+            $quote->price_vat_applicable ?? '0.00',
+            $quote->vat ?? '0.00',
+            $quote->price_vat_not_applicable ?? '0.00',
+            $quote->discount ?? '0.00',
+            $quote->total_price ?? '0.00',
+            $quote->commission_vat_applicable ?? '0.00',
+            $quote->commission_vat ?? '0.00',
+            $quote->commission_vat_not_applicable ?? '0.00',
+            $quote->collected_amount ?? '0.00',
+            $quote->payment_date ?? 'N/A',
+            $quote->pending_balance ?? '0.00',
+            $quote->collects ?? 'N/A',
+            $quote->insurer ?? 'N/A',
+            $quote->line_of_business ?? 'N/A',
+            $quote->sub_type_line_of_business ?? 'N/A',
+            $quote->customer_name ?? 'N/A',
+            $quote->advisor ?? 'N/A',
+            $quote->policy_issuer ?? 'N/A',
+            $quote->invoice_description ?? 'N/A',
+            $quote->payment_method ?? 'N/A',
+            $quote->payment_gateway ?? 'N/A',
+            $quote->insurer_invoice_number ?? 'N/A',
+            $quote->insurer_tax_invoice_date ?? 'N/A',
+            $quote->broker_invoice_number ?? 'N/A',
         ];
     }
 }

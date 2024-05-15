@@ -2,22 +2,27 @@
 
 namespace App\Services\Reports;
 
-use App\Enums\ManagementReportCategoriesEnum;
-use App\Enums\ManagementReportTypeEnum;
-use App\Models\PersonalQuote;
-use App\Strategies\ManagementReport;
-use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Models\PersonalQuote;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
+use App\Strategies\ManagementReport;
+use App\Enums\ManagementReportTypeEnum;
+use App\Enums\ManagementReportCategoriesEnum;
 
 class ActivePoliciesReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
+    protected $reportDateRange;
 
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ACTIVE_POLICIES;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ACTIVE_POLICIES;
+        if ($request['createdAt'] && !empty($request['createdAt']) ) {
+            $this->reportDateRange = Carbon::parse($request['createdAt'])->toDateString();
+        }
 
         $query = PersonalQuote::query()
             ->select(
@@ -37,7 +42,42 @@ class ActivePoliciesReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
 
-        return $query->simplePaginate(10)->withQueryString();
+        if ($request->export == 1) {
+            $data = $query->get();
+
+            // Columns that are not integar and should not be summed
+            $nonIntegarIndexes = [0, 1];
+
+            return $this->download(
+                'Active Policies Report '.$this->reportDateRange,
+                $data,
+                $this->headings(),
+                $nonIntegarIndexes);
+        } else {
+            return $query->simplePaginate(10)->withQueryString();
+        }
+    }
+
+    public function headings(): array
+    {
+        return [
+            'Insurer',
+            'Line of Business',
+            'Active Policy Count',
+            'Price (VAT applicable)',
+            'Price (VAT not applicable)',
+        ];
+    }
+
+    public function map($quote): array
+    {
+        return [
+            $quote->insurer ?? 'N/A',
+            $quote->line_of_business ?? 'N/A',
+            $quote->active_policy_count ?? 0,
+            $quote->price_with_vat ?? '0.00',
+            $quote->price_without_vat ?? '0.00',
+        ];
     }
 
     public function getDefaultFilters()

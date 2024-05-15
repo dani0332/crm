@@ -1,4 +1,5 @@
 <script setup>
+import { useObjToUrl } from '../../Composables/utilities';
 import ActivePolicies from './Partials/ActivePolicies.vue';
 import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
@@ -21,7 +22,6 @@ const reportComponents = {
 };
 
 const subTeams = ref([]);
-const objToUrl = obj => useObjToUrl(obj);
 
 const { isRequired } = useRules();
 
@@ -74,7 +74,7 @@ let filters = reactive({
   includeCancelledPolicies: null,
   groupBy: route().params.groupBy ?? 'advisor',
   utmGroupBy: [],
-  excel: 0, //false
+  export: 0, //false
   page: 1,
 });
 
@@ -227,6 +227,7 @@ const onSubmit = isValid => {
   filterkeys();
   if (!isValid) return;
   filters.page = 1;
+  filters.export = 0;
   router.visit(route('management-report'), {
     method: 'get',
     data: useGenerateQueryString(filters),
@@ -238,58 +239,12 @@ const onSubmit = isValid => {
 };
 
 const onDataExport = (flag) => {
-    filters.excel = flag;
-  const data = useObjToUrl(filters);
-  const url = route('management-report');
-  window.open(url + '?' + new URLSearchParams(data).toString());
-};
-
-
-const onGenerateExcel = (flag) => {
-
-  filterkeys();
-//   filters.excel = flag;
-// //   filters.page = 1;
-//   router.visit(route('management-report'), {
-//     method: 'get',
-//     data: useGenerateQueryString(filters),
-//     preserveState: true,
-//     preserveScroll: true,
-//     onBefore: () => (loaders.table = true),
-//     onFinish: () => (loaders.table = false),
-//   });
-
-//   ==============================
-
-        loaders.table = true;
-        filters.excel = flag;
-        const payLoad = cleanFilters(filters);
-
-        console.log(payLoad);
-
-        axios
-            .get(
-                route('management-report'),
-                {
-                    ...payLoad
-                },
-                {
-                    // responseType: 'arraybuffer',
-                },
-            )
-            .then(response => {
-                console.log(response.data);
-                const url = window.URL.createObjectURL(new Blob([response.data]))
-                const link = document.createElement('a')
-                link.href = url
-                link.setAttribute('download', "test.csv")
-                document.body.appendChild(link)
-                link.click();
-            })
-            .catch(error => {})
-            .finally(() => {
-                loaders.table = false;
-            });
+    filterkeys();
+    filters.export = flag;
+    filters.page = 1;
+    const data = useGenerateQueryString(filters);
+    const url = route('management-report-export');
+    window.open(url + '?' + useObjToUrl(data));
 };
 
 function onReset() {
@@ -452,13 +407,6 @@ function onReset() {
     </div>
 
     <div class="flex gap-3 justify-end">
-      <!-- <x-button
-        size="sm"
-        color="#48bb78"
-        :href="`/reports/management-report?${objToUrl(filters)}&excel=1`"
-        >
-        Export to Excel
-      </x-button> -->
       <x-button
         size="sm"
         color="#48bb78"

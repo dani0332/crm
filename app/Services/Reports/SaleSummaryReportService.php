@@ -16,11 +16,25 @@ class SaleSummaryReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
 
+    protected $groupByColumn;
+    protected $reportDateRange;
+
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ISSUED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
+        $this->groupByColumn = $request['groupBy'];
+
+        if ($request['policyIssuanceDate'] && !empty($request['policyIssuanceDate']) && is_array($request['policyIssuanceDate'])) {
+            $this->reportDateRange = Carbon::parse($request['policyIssuanceDate'][0])->toDateString()
+                .' - '.
+                Carbon::parse($request['policyIssuanceDate'][1])->toDateString();
+        } else if ($request['paymentDueDate'] && !empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
+            $this->reportDateRange =  Carbon::parse($request['paymentDueDate'][0])->toDateString()
+            .' - '.
+            Carbon::parse($request['paymentDueDate'][1])->toDateString();
+        }
 
         $query = PersonalQuote::query()
             ->leftJoin('send_update_logs as sul', 'personal_quotes.id', '=', 'sul.personal_quote_id')
@@ -89,13 +103,20 @@ class SaleSummaryReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
 
-        if ($request->excel)
-        {
-            // dd($query->get()->toArray());
-            return $this->download('sale-summary-report', $query->get());
-        }
+        if ($request->export == 1) {
+            $data = $query->get();
 
-        return $query->simplePaginate(10)->withQueryString();
+            // Columns that are not integar and should not be summed
+            $nonIntegarIndexes = [0];
+
+            return $this->download(
+                'Sale Summary Report '.$this->reportDateRange,
+                $data,
+                $this->headings(),
+                $nonIntegarIndexes);
+        } else {
+            return $query->simplePaginate(10)->withQueryString();
+        }
     }
 
     private function resolveGroupByColumn($groupBy)
@@ -129,7 +150,7 @@ class SaleSummaryReportService extends ManagementReport
     public function headings(): array
     {
         return [
-            'Group By',
+            ucwords(str_replace('_', ' ', $this->groupByColumn)),
             'Total Policies',
             'Total Endorsements',
             'Total Transactions',
@@ -144,35 +165,18 @@ class SaleSummaryReportService extends ManagementReport
 
     public function map($quote): array
     {
+        $groupBy = $this->groupByColumn;
         return [
-            $quote->advisor,
-            $quote->total_policies,
-            $quote->total_endorsements,
-            $quote->total_transaction,
-            $quote->price_vat_applicable,
-            $quote->total_vat,
-            $quote->price_vat_not_applicable,
-            $quote->discount,
-            $quote->commission_vat_applicable,
-            $quote->total_price,
+            $quote->$groupBy ?? 'N/A',
+            $quote->total_policies ?? 0,
+            $quote->total_endorsements ?? 0,
+            $quote->total_transaction ?? 0,
+            $quote->price_vat_applicable ?? '0.00',
+            $quote->total_vat ?? '0.00',
+            $quote->price_vat_not_applicable ?? '0.00',
+            $quote->discount ?? '0.00',
+            $quote->commission_vat_applicable ?? '0.00',
+            $quote->total_price ?? '0.00',
         ];
-    }
-
-    public function download($fileName, $data)
-    {
-        $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
-
-        return new StreamedResponse(function () use ($data) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, $this->headings());
-            $data = collect($data);
-            foreach ($data as $quote) {
-                fputcsv($handle, $this->map($quote));
-            }
-            fclose($handle);
-        }, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="'.$fileName.'.csv"',
-        ]);
     }
 }
