@@ -268,9 +268,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
 
-    // Route::get('/allocations', [LeadAllocationController::class, 'showAllocations'])->name('allocations.index');
-    // Route::post('/store-allocation', [LeadAllocationController::class, 'storeAllocation'])->name('allocation.store');
-    // Route::get('/create-allocation', [LeadAllocationController::class, 'createAllocation'])->name('allocation.create');
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
     Route::get('/advisor-by-quotetype/{user_id}', [LeadAllocationController::class, 'getAdvisorByQuoteType'])->name('allocations.advisor-quotestype');
 
