@@ -219,9 +219,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
         }
     } else {
-       
+
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
-        $result['total_premium'] =  $modelQueryWithOutAdvisor->sum('price_with_vat');
+        $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
