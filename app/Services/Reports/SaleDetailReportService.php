@@ -2,15 +2,14 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
+use App\Models\PersonalQuote;
+use App\Strategies\ManagementReport;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\PersonalQuote;
-use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
-use App\Strategies\ManagementReport;
-use App\Enums\ManagementReportTypeEnum;
-use App\Enums\ManagementReportCategoriesEnum;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SaleDetailReportService extends ManagementReport
 {
@@ -23,12 +22,12 @@ class SaleDetailReportService extends ManagementReport
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_DETAIL;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ISSUED_POLICIES;
 
-        if ($request['policyIssuanceDate'] && !empty($request['policyIssuanceDate']) && is_array($request['policyIssuanceDate'])) {
+        if ($request['policyIssuanceDate'] && ! empty($request['policyIssuanceDate']) && is_array($request['policyIssuanceDate'])) {
             $this->reportDateRange = Carbon::parse($request['policyIssuanceDate'][0])->toDateString()
                 .' - '.
                 Carbon::parse($request['policyIssuanceDate'][1])->toDateString();
-        } else if ($request['paymentDueDate'] && !empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange =  Carbon::parse($request['paymentDueDate'][0])->toDateString()
+        } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
+            $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
             .' - '.
             Carbon::parse($request['paymentDueDate'][1])->toDateString();
         }
@@ -150,7 +149,7 @@ class SaleDetailReportService extends ManagementReport
             'Line of Business',
             'Sub-Type',
             'Advisor',
-            'Policy Issuer '
+            'Policy Issuer ',
         ];
     }
 
@@ -176,7 +175,7 @@ class SaleDetailReportService extends ManagementReport
             $quote->insurer_tax_invoice_number ?? 'N/A',
             $quote->insurer_tax_invoice_date ?? 'N/A',
             $quote->transaction_payment_status ?? 'N/A',
-            $quote->date_paid  ?? 'N/A',
+            $quote->date_paid ?? 'N/A',
             $quote->collected_amount ?? '0.00',
             $quote->customer_name ?? 'N/A',
             $quote->customer_type ?? 'N/A',

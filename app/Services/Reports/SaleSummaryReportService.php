@@ -2,15 +2,14 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
+use App\Models\PersonalQuote;
+use App\Strategies\ManagementReport;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\PersonalQuote;
-use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
-use App\Strategies\ManagementReport;
-use App\Enums\ManagementReportTypeEnum;
-use App\Enums\ManagementReportCategoriesEnum;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SaleSummaryReportService extends ManagementReport
 {
@@ -26,12 +25,12 @@ class SaleSummaryReportService extends ManagementReport
         $request['groupBy'] = $request->groupBy ?? 'advisor';
         $this->groupByColumn = $request['groupBy'];
 
-        if ($request['policyIssuanceDate'] && !empty($request['policyIssuanceDate']) && is_array($request['policyIssuanceDate'])) {
+        if ($request['policyIssuanceDate'] && ! empty($request['policyIssuanceDate']) && is_array($request['policyIssuanceDate'])) {
             $this->reportDateRange = Carbon::parse($request['policyIssuanceDate'][0])->toDateString()
                 .' - '.
                 Carbon::parse($request['policyIssuanceDate'][1])->toDateString();
-        } else if ($request['paymentDueDate'] && !empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
-            $this->reportDateRange =  Carbon::parse($request['paymentDueDate'][0])->toDateString()
+        } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
+            $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
             .' - '.
             Carbon::parse($request['paymentDueDate'][1])->toDateString();
         }
@@ -166,6 +165,7 @@ class SaleSummaryReportService extends ManagementReport
     public function map($quote): array
     {
         $groupBy = $this->groupByColumn;
+
         return [
             $quote->$groupBy ?? 'N/A',
             $quote->total_policies ?? 0,

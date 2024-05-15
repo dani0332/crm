@@ -2,17 +2,17 @@
 
 namespace App\Strategies;
 
-use Carbon\Carbon;
-use App\Models\Team;
-use App\Models\Lookup;
-use App\Enums\LookupsEnum;
-use App\Models\LeadSource;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\GenericRequestEnum;
-use App\Traits\TeamHierarchyTrait;
-use App\Enums\ManagementReportTypeEnum;
-use App\Services\ApplicationStorageService;
+use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\LeadSource;
+use App\Models\Lookup;
+use App\Models\Team;
+use App\Services\ApplicationStorageService;
+use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ManagementReport
@@ -160,7 +160,7 @@ class ManagementReport
             }
         }
 
-        if (isset($request['teams']) && !empty($request['teams']) && count($request['teams']) > 0) {
+        if (isset($request['teams']) && ! empty($request['teams']) && count($request['teams']) > 0) {
             $value = $request['teams'];
             $query->whereIn('t.id', $value);
         } else {
@@ -218,8 +218,8 @@ class ManagementReport
      *
      * @param [type] $fileName
      * @param [type] $data
-     * @param array $headers
-     * @param array $nonIntegarIndexes
+     * @param  array  $headers
+     * @param  array  $nonIntegarIndexes
      * @return void
      */
     public function download($fileName, $data, $headers = [], $nonIntegarIndexes = [])
@@ -237,11 +237,10 @@ class ManagementReport
 
                 // Update sums
                 foreach ($this->map($quote) as $index => $value) {
-                    if ( !in_array($index, $nonIntegarIndexes))
-                    {
+                    if (! in_array($index, $nonIntegarIndexes)) {
                         $floatValue = (float) str_replace(',', '', $value);
                         $sums[$index] += $floatValue;
-                    } else if ($index == 0) {
+                    } elseif ($index == 0) {
                         $sums[$index] = 'TOTAL';
                     } else {
                         $sums[$index] = 'N/A';
@@ -254,9 +253,9 @@ class ManagementReport
 
             // Format the sums to always show up to two decimal places
             foreach ($sums as $index => &$sum) {
-                if (!in_array($index, $nonIntegarIndexes)) {
+                if (! in_array($index, $nonIntegarIndexes)) {
                     $formattedSums[$index] = number_format($sum, 2);
-                }else{
+                } else {
                     $formattedSums[$index] = $sum;
                 }
             }
