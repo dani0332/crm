@@ -920,6 +920,7 @@ class CRUDController extends Controller
             // Get user teams
             $teams = $this->crudService->getUserTeams(Auth::user()->id);
 
+            $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id,$record->payment_status_text);
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'quote' => $record,

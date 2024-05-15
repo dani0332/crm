@@ -637,7 +637,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($quoteModel) {
                 $quoteModel->payment_status_id = $payment->payment_status_id;
                 if ($payment->payment_status_id == PaymentStatusEnum::PAID) {
-                    $quoteModel->paid_at_payments = now();
+                    $quoteModel->payment_paid_at = now();
                 } 
                 $quoteModel->save();
             }

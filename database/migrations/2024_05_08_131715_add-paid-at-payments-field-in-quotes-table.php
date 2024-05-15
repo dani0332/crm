@@ -12,20 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if (! Schema::hasColumn('car_quote_request', 'paid_at_payments')) {
-                $table->dateTime('paid_at_payments')->nullable()->default(null);
+            if (! Schema::hasColumn('car_quote_request', 'payment_paid_at')) {
+                $table->dateTime('payment_paid_at')->nullable()->default(null);
             }
         });
 
         Schema::table('travel_quote_request', function (Blueprint $table) {
-            if (! Schema::hasColumn('travel_quote_request', 'paid_at_payments')) {
-                $table->dateTime('paid_at_payments')->nullable()->default(null);
+            if (! Schema::hasColumn('travel_quote_request', 'payment_paid_at')) {
+                $table->dateTime('payment_paid_at')->nullable()->default(null);
             }
         });
 
         Schema::table('health_quote_request', function (Blueprint $table) {
-            if (! Schema::hasColumn('health_quote_request', 'paid_at_payments')) {
-                $table->dateTime('paid_at_payments')->nullable()->default(null);
+            if (! Schema::hasColumn('health_quote_request', 'payment_paid_at')) {
+                $table->dateTime('payment_paid_at')->nullable()->default(null);
             }
         });
     }

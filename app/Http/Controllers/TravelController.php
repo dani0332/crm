@@ -165,7 +165,7 @@ class TravelController extends Controller
             'paymentStatus' => $record->payment_status_id_text,
             'planName' => $record->plan_id_text,
             'providerName' => $record->travel_plan_provider_text,
-            'paidAtPayment' => ($record->paid_at_payments) ? Carbon::parse($record->paid_at_payments)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
+            'paidAtPayment' => ($record->payment_paid_at) ? Carbon::parse($record->payment_paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
         ];
 
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
