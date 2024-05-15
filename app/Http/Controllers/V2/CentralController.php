@@ -330,8 +330,9 @@ class CentralController extends Controller
             $payment->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
         } else {
             $totalAmount = $payment->captured_amount + $payment->discount_value;
+            $priceWithVat = $quote->price_with_vat;
             if ($payment->captured_amount > 0) {
-                if ($totalAmount <= $quote->price_with_vat) {
+                if ($totalAmount <= $priceWithVat) {
                     $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
                 } else {
                     $payment->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
@@ -343,21 +344,25 @@ class CentralController extends Controller
         $payment->save();
     }
 
-    private function firstSplitAllocationStatus($paymentSplit, $quote)
+    private function firstSplitAllocationStatus($payment, $paymentSplit, $quote)
     {
-        if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
-            $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
+        if ($payment->frequency == 'upfront') {
+            $paymentSplit->payment_allocation_status = $payment->payment_allocation_status;
         } else {
-            if ($paymentSplit->collection_amount > 0) {
-                if ($paymentSplit->collection_amount <= $quote->price_with_vat) {
-                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
-                } elseif ($paymentSplit->collection_amount > $quote->price_with_vat) {
-                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
+            if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
+                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
+            } else {
+                if ($paymentSplit->collection_amount > 0) {
+                    if ($paymentSplit->collection_amount <= $quote->price_with_vat) {
+                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+                    } elseif ($paymentSplit->collection_amount > $quote->price_with_vat) {
+                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
+                    } else {
+                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
+                    }
                 } else {
                     $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
                 }
-            } else {
-                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
             }
         }
         $paymentSplit->save();
@@ -394,7 +399,7 @@ class CentralController extends Controller
             $this->updatePaymentAllocationStatus($payment, $quote);
             if (in_array($payment->frequency, ['upfront', 'semi_annual', 'quarterly', 'monthly', 'custom'])) {
                 $paymentSplit = $paymentSplits->first();
-                $this->firstSplitAllocationStatus($paymentSplit, $quote);
+                $this->firstSplitAllocationStatus($payment, $paymentSplit, $quote);
             }
 
             if ($payment->frequency == 'split_payments') {
