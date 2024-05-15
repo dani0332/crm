@@ -13,6 +13,7 @@ use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Jobs\CammyJob;
@@ -50,7 +51,6 @@ class HealthQuoteService extends BaseService
     protected $query;
     protected $leadAllocationService;
     protected $httpService;
-
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
@@ -334,7 +334,7 @@ class HealthQuoteService extends BaseService
 
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
+        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor(HealthTeamType::EBP) || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
@@ -411,7 +411,7 @@ class HealthQuoteService extends BaseService
             }
         }
 
-        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
+        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor(HealthTeamType::EBP) || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
@@ -673,7 +673,7 @@ class HealthQuoteService extends BaseService
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
             'dob' => 'input|date|title|required',
-            'health_team_type' => '|static|default:All|All,RM-NB,RM-Speed,EBP,Wow-Call,No-Type',
+            'health_team_type' => '|static|default:All|All,Good,Best,Entry-Level,Wow-Call,No-Type',
             'next_followup_date' => 'input|date|title|range',
             'transapp_code' => 'readonly|none',
             'lost_reason' => 'input|text',
@@ -1137,11 +1137,15 @@ class HealthQuoteService extends BaseService
     public function processManualLeadAssignment($request): array
     {
         // Extract lead IDs from the request
+
         $sourceData = ($request->selectTmLeadId == '' || $request->selectTmLeadId === null) ? $request->entityId : $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', trim($sourceData, ',')));
+
         $userId = (int) $request->assigned_to_id_new;
+        $quote_type = $request->modelType;
 
         foreach ($leadsIds as $leadId) {
+
             $lead = $this->getEntityPlain($leadId);
 
             if (isset($request->assign_team) && $request->assign_team !== '') {
@@ -1157,13 +1161,13 @@ class HealthQuoteService extends BaseService
             $lead->advisor_id = $userId;
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
-
-            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId); // will update the car quote request detail entity about assignment
+            // will update the car quote request detail entity about assignment
+            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId);
 
             info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
-
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
-
+            // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quote_type);
+            // update existing record of quote view count if exists and reset count to zero
             $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Health, $userId);
 
             $lead->quote_updated_at = now();
@@ -1184,8 +1188,7 @@ class HealthQuoteService extends BaseService
 
         return [];
     }
-
-    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteType = null)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
@@ -1197,15 +1200,16 @@ class HealthQuoteService extends BaseService
         //Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
         // Get the allocation record for the new advisor
-        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
+        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor (if applicable)
         $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
-            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
+            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
