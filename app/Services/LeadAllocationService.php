@@ -126,7 +126,7 @@ class LeadAllocationService extends BaseService
         try {
             DB::beginTransaction();
             $leadAllocation = LeadAllocation::where('user_id', $userId);
-            if (!empty($quoteTypeId)) {
+            if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
             $leadAllocation = $leadAllocation->first();
