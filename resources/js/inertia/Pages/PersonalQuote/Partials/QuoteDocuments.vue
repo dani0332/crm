@@ -63,13 +63,6 @@ const quoteDocumentsTable = reactive({
   ],
 });
 
-if (isSendUpdatePage) {
-  quoteDocumentsTable.columns.push({
-    text: 'Action',
-    value: 'action',
-  });
-}
-
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
@@ -239,7 +232,7 @@ const sendUpdateValidation = () => {
           {{ item.original_name }}
         </a>
       </template>
-      <template #item-action="{ doc_name }">
+      <template #item-action="{ doc_name }" v-if="!isSendUpdatePage">
         <div>
           <x-button
             size="xs"
