@@ -118,14 +118,14 @@ class UserController extends Controller
             if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
                     $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name)) ?? null;
-                    if(!empty($quoteTypeId)) {
-                    $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
-                    if (empty($isLead)) {
-                        $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
-                    } else {
-                        $this->leadAllocationService->createLeadAllocationRecord($user->id);
+                    if (! empty($quoteTypeId)) {
+                        $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
+                        if (empty($isLead)) {
+                            $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                        } else {
+                            $this->leadAllocationService->createLeadAllocationRecord($user->id);
+                        }
                     }
-                  }
                 }
             }
         }
@@ -257,7 +257,7 @@ class UserController extends Controller
             if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
                     $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name)) ?? null;
-                    if(!empty($quoteTypeId)) {
+                    if (! empty($quoteTypeId)) {
 
                         $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
                         if (empty($isLead)) {
