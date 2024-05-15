@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\PermissionsEnum;
 use App\Factories\ManagementReportServiceFactory;
 use App\Models\RenewalBatch;
 use App\Models\User;
@@ -21,6 +22,16 @@ class ReportsController extends Controller
 {
     use GetUserTreeTrait;
     use TeamHierarchyTrait;
+
+    public function __construct()
+    {
+        $this->middleware(
+            'permission:'.PermissionsEnum::DATA_EXTRACTION,
+            [
+                'only' => 'exportSaleManagementReport'
+            ]
+        );
+    }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {

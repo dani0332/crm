@@ -13,6 +13,8 @@ const props = defineProps({
   reportName: String,
 });
 
+const page = usePage();
+
 const reportComponents = {
   'Active Policies': ActivePolicies,
   'Ending Policies': EndingPolicies,
@@ -22,6 +24,8 @@ const reportComponents = {
 };
 
 const subTeams = ref([]);
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const { isRequired } = useRules();
 
@@ -408,6 +412,7 @@ function onReset() {
 
     <div class="flex gap-3 justify-end">
       <x-button
+        v-if="can(permissionsEnum.DATA_EXTRACTION)"
         size="sm"
         color="#48bb78"
         @click.prevent="onDataExport(1)"
