@@ -2,20 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Events\UserStatusChanged;
-use App\Http\Requests\LeadAllocationRequest;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
 use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
-use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\CarAllocationService;
 use App\Services\CRUDService;
@@ -252,6 +249,5 @@ class LeadAllocationController extends Controller
     {
         return $this->leadAllocationService->getTierUsersWithLeadAllocationRecord($tierId);
     }
-
 
 }
