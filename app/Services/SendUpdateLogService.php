@@ -27,6 +27,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
 {
@@ -380,11 +381,6 @@ class SendUpdateLogService
                 'quote_type_code' => $quoteTypeCode,
             ]);
         }
-        // Change quote status to Policy Cancelled and remove quote batch id to remove it from batches
-        $quoteObject->update([
-            'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-            'quote_batch_id' => null,
-        ]);
 
         return $childLeadDetails;
     }
@@ -658,7 +654,7 @@ class SendUpdateLogService
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
 
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
 
@@ -685,16 +681,23 @@ class SendUpdateLogService
             }
 
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
+                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                        'quote_batch_id' => null,
+                    ]);
+                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
+                }
                 $sendUpdateLog->update([
                     'booking_date' => now(),
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
                 ]);
             }
 
-            \DB::commit();
+            DB::commit();
 
         } catch (\Exception $exception) {
-            \DB::rollBack();
+            DB::rollBack();
             info('Send update Lead impact Failed - Error : '.$exception->getMessage());
 
             return ['status' => false, 'message' => 'Update not booked'];
@@ -718,17 +721,17 @@ class SendUpdateLogService
     {
         switch ($sendUpdateType) {
             case SendUpdateLogStatusEnum::EF:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD);
             case SendUpdateLogStatusEnum::EN:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD);
             case SendUpdateLogStatusEnum::CI:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD);
             case SendUpdateLogStatusEnum::CIR:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD);
             case SendUpdateLogStatusEnum::CPU:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD);
             case SendUpdateLogStatusEnum::CPD:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD);
             default:
                 return false;
         }
