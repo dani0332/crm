@@ -596,17 +596,39 @@ const sendPolicyConfirmationHeading = computed(() => {
                 >
                   Edit
                 </x-button>
-                <x-button
-                  size="sm"
-                  color="orange"
-                  class="mt-4"
-                  @click.prevent="confirmSendPolicy"
-                  :disabled="bp.isEditing"
-                  v-if="props.bookPolicyDetails?.sendButton"
-                >
-                  {{ props.bookPolicyDetails?.text }}
-                </x-button></template
-              >
+                <template v-if="getPayment().payment_status_id == paymentStatusEnum.PARTIALLY_PAID">
+                  <x-tooltip>
+                    <x-button
+                      size="sm"
+                      color="orange"
+                      class="mt-4"
+                      @click.prevent="confirmSendPolicy"
+                      :disabled="bp.isEditing || getPayment().payment_status_id == paymentStatusEnum.PARTIALLY_PAID"
+                      v-if="props.bookPolicyDetails?.sendButton"
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content"> 
+                        Action Needed: Please revise payment details to reflect plan changes.
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <x-button
+                    size="sm"
+                    color="orange"
+                    class="mt-4"
+                    @click.prevent="confirmSendPolicy"
+                    :disabled="bp.isEditing || getPayment().payment_status_id == paymentStatusEnum.PARTIALLY_PAID"
+                    v-if="props.bookPolicyDetails?.sendButton"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+                </template>
+
+               </template>
 
               <template
                 v-else-if="

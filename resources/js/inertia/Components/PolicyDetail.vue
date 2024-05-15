@@ -146,11 +146,11 @@ const onUpdatePolicyDetails = isValid => {
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
     onSuccess: () => {
-      if (page.props.flash?.isSplitPayment){
+      if (page.props.flash?.isPaymentModificationAllowed){
         notification.error({
           title: 'Action Needed: Please revise payment details to reflect plan changes.',
           position: 'top',
-          timeout: 5000
+          timeout: 10000
         });
       }
       policyDetailsState.isEditing = false;

@@ -1663,12 +1663,12 @@ class CRUDController extends Controller
 
         // update status policy issued of req fulfilled
         // Manage payment total price update
-        $isSplitPayment= $this->updatePriceAndDiscount($quoteModel);
+        $isPaymentModificationAllowed= $this->updatePriceAndDiscount($quoteModel);
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
         return redirect()->back()->with([
             'success' => 'Quote Policy Detail has been updated.',
-            'isSplitPayment' => $isSplitPayment
+            'isPaymentModificationAllowed' => $isPaymentModificationAllowed
         ]);
     }
 

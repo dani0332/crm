@@ -1983,22 +1983,59 @@ const isMasterPaymentPaid = computed(() => {
                 <td>{{ formatString(item.payment_status.text) }}</td>
                 <td>{{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}</td>             
                 <td>
-                  <div class="flex gap-2">                                
-                      <x-button v-if="can(permissionEnum.PaymentsEdit)" size="xs" color="primary" outlined @click="editPaymentModal(item,0,0,0)">
-                          Edit
+                  <div class="flex gap-2">
+                    <template v-if="item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID">
+                      <x-tooltip position="left" class="arrow-b">
+                        <x-badge size="xs" color="error" outlined offset-x="-8" offset-y="-10">
+                          <x-button 
+                            v-if="can(permissionEnum.PaymentsEdit)" 
+                            size="xs" 
+                            color="primary" 
+                            outlined 
+                            @click="editPaymentModal(item, 0, 0, 0)"
+                          >
+                            Edit
+                          </x-button> 
+                          <template #content>!</template>
+                        </x-badge>
+                        <template #tooltip>
+                          Action Needed: Please revise payment <br /> details to reflect plan changes.
+                        </template>
+                      </x-tooltip>
+                    </template>
+                    <template v-else>
+                      <x-button 
+                        v-if="can(permissionEnum.PaymentsEdit)" 
+                        size="xs" 
+                        color="primary" 
+                        outlined 
+                        @click="editPaymentModal(item, 0, 0, 0)"
+                      >
+                        Edit 
+                      </x-button> 
+                    </template>
+                    <template v-if="can(permissionEnum.ApprovePayments)">
+                      <x-button 
+                        v-if="getCaptureOption(item) === 'capture' && getCaptureValidation(item)" 
+                        size="xs" 
+                        color="orange" 
+                        outlined 
+                        @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 1) : alertCapture(item)"
+                      >
+                        Capture
                       </x-button>
-                      <template v-if="can(permissionEnum.ApprovePayments)">
-                        <x-button v-if="getCaptureOption(item)==='capture' && getCaptureValidation(item)" size="xs" color="orange" outlined 
-                        @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 1) : alertCapture(item)">
-                            Capture
-                        </x-button>
-                        <x-button v-if="getCaptureOption(item)==='approve' && getCaptureValidation(item)" size="xs" color="orange" outlined 
-                        @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 2) : alertCapture(item)">
-                            Approve
-                        </x-button>
-                      </template>               
-              </div>
-                </td>                   
+                      <x-button 
+                        v-if="getCaptureOption(item) === 'approve' && getCaptureValidation(item)" 
+                        size="xs" 
+                        color="orange" 
+                        outlined 
+                        @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 2) : alertCapture(item)"
+                      >
+                        Approve
+                      </x-button>
+                    </template>               
+                  </div>
+                </td>                 
               </tr>
               <template v-if="isExpandedSplitPayments[index]">
               <tr v-for="splitPayment in item.payment_splits" :key="splitPayment.id">

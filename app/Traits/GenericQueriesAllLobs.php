@@ -285,7 +285,7 @@ trait GenericQueriesAllLobs
 
     public function updatePriceAndDiscount($quoteModel)
     {
-        $isSplitPayment = false;
+        $isPaymentModificationAllowed = false;
         $payment = $quoteModel->payments()->first();
         if ($payment && $quoteModel->price_with_vat != $payment->total_price) {
             $difference = $initialDifference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
@@ -329,10 +329,13 @@ trait GenericQueriesAllLobs
             //     $splitPayment->payment_amount = $payment->total_amount;
             //     $splitPayment->save();
             // } else if($payment->frequency != 'upfront') {
-            //     $isSplitPayment = true;
+            //     $isPaymentModificationAllowed = true;
             // }
         } 
-        return $isSplitPayment;
+        if ($payment && $payment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID) {
+            $isPaymentModificationAllowed = true;
+        }
+        return $isPaymentModificationAllowed;
     }
     
     private function isFilledPolicyDetails($type, $quote)
