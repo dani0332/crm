@@ -60,7 +60,7 @@ const policyIssuanceStatusOptions = computed(() => {
 });
 
 const planQuoteInsurerNumber = computed(() => {
-  if (props.availablePlans) {
+  if (props.availablePlans?.length > 0) {
     return (
       props.availablePlans.filter(
         item => item.id == page.props.record.plan_id,
