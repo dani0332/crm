@@ -20,23 +20,23 @@ class AddCrossLOBSeeder extends Seeder
     public function run(): void
     {
         //
-        $adviosrCapPermission = Permission::where('name', PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT)->first();
-        if ($adviosrCapPermission == null) {
-            DB::table('permissions')->insert([
-                'name' => PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT,
-                'guard_name' => 'web',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+        // $adviosrCapPermission = Permission::where('name', PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT)->first();
+        // if ($adviosrCapPermission == null) {
+        //     DB::table('permissions')->insert([
+        //         'name' => PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT,
+        //         'guard_name' => 'web',
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ]);
+        // }
 
-        $leadPoolRole = Role::where('name', RolesEnum::LeadPool)->first();
-        $capLeadAllocationPermission = Permission::where('name', PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT)->first();
+        // $leadPoolRole = Role::where('name', RolesEnum::LeadPool)->first();
+        // $capLeadAllocationPermission = Permission::where('name', PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT)->first();
 
-        if (count(DB::table('role_has_permissions')->where('role_id', $leadPoolRole->id)->where('permission_id', $capLeadAllocationPermission->id)->get()) == 0) {
+        // if (count(DB::table('role_has_permissions')->where('role_id', $leadPoolRole->id)->where('permission_id', $capLeadAllocationPermission->id)->get()) == 0) {
 
-            $leadPoolRole->givePermissionTo($capLeadAllocationPermission);
-        }
+        //     $leadPoolRole->givePermissionTo($capLeadAllocationPermission);
+        // }
 
         // get all Advisors Car Lead Allocation
         $carLeadAllocations = DB::table('users')
@@ -62,8 +62,8 @@ class AddCrossLOBSeeder extends Seeder
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('user_team', 'user_team.user_id', '=', 'users.id')
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
-            ->where('users.is_active', 1)
             ->whereNull('la.quote_type_id')
+            ->where('users.is_active', 1)
             ->groupBy('users.name', 'users.id', 'la.id')
             ->get()->count();
 
@@ -82,6 +82,7 @@ class AddCrossLOBSeeder extends Seeder
                                 ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
                                 ->join('user_team', 'user_team.user_id', '=', 'users.id')
                                 ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                                ->whereNull('la.quote_type_id')
                                 ->where('users.is_active', 1)
                                 ->groupBy('users.id', 'la.id');
                         });
@@ -109,8 +110,8 @@ class AddCrossLOBSeeder extends Seeder
             ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
             ->groupBy('u.name', 'u.id', 'lead_allocation.id')
             ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
-            ->where('u.is_active', true)
             ->whereNull('lead_allocation.quote_type_id')
+            ->where('u.is_active', true)
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])->get()->count();
 
         if ($healthLeadAllocations > 0) {
@@ -122,8 +123,8 @@ class AddCrossLOBSeeder extends Seeder
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
                 ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
                 ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
-                ->where('u.is_active', true)
                 ->whereNull('lead_allocation.quote_type_id')
+                ->where('u.is_active', true)
                 ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
                 ->update(['lead_allocation.quote_type_id' => QuoteTypes::HEALTH->id()]);
         }

@@ -175,13 +175,13 @@ class HandleInertiaRequests extends Middleware
                         'Car',
                         url('car-lead-allocation'),
                         fn ($s) => $s->attributes(['icon' => 'car'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT),
-                        'Advisors Capacity',
-                        route('allocations.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
+                    // ->addIf(
+                    //     auth()->user()->can(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT),
+                    //     'Advisors Capacity',
+                    //     route('allocations.index'),
+                    //     fn ($s) => $s->attributes(['icon' => 'box'])
+                    // );
             });
         }
 
