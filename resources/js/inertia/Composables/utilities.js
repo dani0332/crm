@@ -119,14 +119,14 @@ export const useDaysSinceStale = payload =>
 {
   let diff = (new Date(payload).getTime() - new Date().getTime()) / 1000;
   // Convert the difference from milliseconds to hours by dividing it by the number of seconds in an hour (3600)
-  diff /= 60 * 60;
+  diff /= 60;
   // Return the absolute value of the rounded difference in hours
   let result = Math.abs(Math.round(diff));
 
-  if (result >= 6 && result < 12)
+  if (result >= 0 && result <= 40)
   {
     return ' 1 day';
-  } else if (result >= 12 && result < 18)
+  } else if (result >= 40 && result <= 120)
   {
     return ' 2 days';
   } else
