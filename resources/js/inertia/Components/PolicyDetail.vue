@@ -10,6 +10,10 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  availablePlans: {
+    type: Object,
+    default: {},
+  },
   modelType: {
     type: String,
     default: '',
@@ -56,6 +60,13 @@ const policyIssuanceStatusOptions = computed(() => {
 });
 
 const planQuoteInsurerNumber = computed(() => {
+  if (props.availablePlans) {
+    return (
+      props.availablePlans.filter(
+        item => item.id == page.props.record.plan_id,
+      )[0]?.insurerQuoteNo ?? null
+    );
+  }
   let obj = page.props?.listQuotePlans?.filter(
     item => item.id == page.props.record.plan_id,
   );
@@ -193,6 +204,14 @@ watch(
         .add(12, 'months')
         .subtract(1, 'days');
     }
+  },
+);
+
+watch(
+  () => props.availablePlans,
+  availablePlans => {
+    policyDetailsForm.quote_plan_insurer_quote_number =
+      planQuoteInsurerNumber.value || page.props.record.insurer_quote_number;
   },
 );
 </script>

@@ -98,8 +98,6 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
-console.log(page.props);
-
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
   id: page.props.record.plan_id,
@@ -3559,6 +3557,7 @@ watch(
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
       :record="record"
+      :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
     />
 
