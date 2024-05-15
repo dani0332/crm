@@ -118,17 +118,16 @@ class UserController extends Controller
             if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
                     $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name));
-                    $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id,$quoteTypeId );
-                    if(empty($isLead)){
-                        $this->leadAllocationService->createLeadAllocationRecord($user->id,(object)['quoteTypeId'=>$quoteTypeId]);
-                    }
-                    else {
+                    $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
+                    if (empty($isLead)) {
+                        $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                    } else {
                         $this->leadAllocationService->createLeadAllocationRecord($user->id);
                     }
                 }
             }
         }
-      
+
         $user->assignRole($request->input('roles'));
 
         return redirect(route('users.show', $user->id))->with('success', $user->name.' with a email '.$user->email.' '.'has been store');

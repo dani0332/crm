@@ -2,15 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Models\LeadAllocation;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class AddCrossLOBSeeder extends Seeder
 {
