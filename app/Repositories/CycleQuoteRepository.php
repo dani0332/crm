@@ -149,6 +149,7 @@ class CycleQuoteRepository extends BaseRepository
                         'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
                     ]);
                 },

@@ -197,7 +197,7 @@ class HealthQuoteService extends BaseService
     {
         return HealthQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
             $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser'])->first();
     }
 
     public function getSelectedLostReason($id)

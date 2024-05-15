@@ -748,12 +748,22 @@ const calculatePaymentBreakup = (changeMethod = true) => {
  calculateDueDates(); 
 }
 
-const  formatDate = (date) =>  {
+const  formatDate = (date,timeFlag=false) =>  {
     const parsedDate = new Date(date);
     const day = parsedDate.getDate().toString().padStart(2, '0');
     const month = (parsedDate.getMonth() + 1).toString().padStart(2, '0');
     const year = parsedDate.getFullYear();
-    return `${day}-${month}-${year}`;
+    const formatedDate = `${day}-${month}-${year}`;
+
+    if (!timeFlag) {
+      return formatedDate;
+    }
+    const hours = parsedDate.getHours().toString().padStart(2, '0');
+    const minutes = parsedDate.getMinutes().toString().padStart(2, '0');
+    const seconds = parsedDate.getSeconds().toString().padStart(2, '0');
+    const formattedTime = `${hours}:${minutes}:${seconds}`;
+    
+    return formatedDate.concat(' ', formattedTime);
   }
 
 function formatString(input) {
@@ -999,7 +1009,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isGalleryModelOpen.value = false;
   authorizedPayments.value = [];
   isApproveConfirmed.value = false;
-  isApproveNotChecked.value = false;
+  isApproveNotChecked.value = true;
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -2658,7 +2668,7 @@ const isMasterPaymentPaid = computed(() => {
               <div class="w-1/5 px-2">{{ formatString(splitPaymentRecord.payment_status.text) }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_allocation_status !== null ? formatString(splitPaymentRecord.payment_allocation_status) : 'N/A' }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.collection_amount !== null ? formatAmount(splitPaymentRecord.collection_amount) : '0.00' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.verified_at !== null ? splitPaymentRecord.verified_at : 'N/A' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.verified_at !== null ? formatDate(splitPaymentRecord.verified_at,true) : 'N/A' }}</div>
             </div>
 
             <div class="flex w-full custombreak" >
@@ -2809,11 +2819,8 @@ const isMasterPaymentPaid = computed(() => {
         <h3>Notes</h3>
       </div>      
 
-      <div class="flex items-center justify-center" v-if="splitPaymentRecord.verified_by !== null">        
-        <p class="text-lg font-bold text-blue-900">Payment has been verified</p>
-        <svg class="h-6 w-6 mr-2 text-blue-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-        </svg>
+      <div class="flex items-center justify-center" v-if="splitPaymentRecord.verified_by !== null && paymentMethodsForm.status == 'view'">        
+        <p class="text-lg font-bold text-blue-400 mr-2">Payment has been verified</p><img style="width:30px;height:30px;" src="/images/payment_verified.jpg">
       </div>
 
       <div class="w-full grid">
@@ -3058,30 +3065,42 @@ const isMasterPaymentPaid = computed(() => {
                 </div>
             </div>
           </div>
-          <div class="modal-body w-full h-full mt-2 flex flex-col items-center">            
+          <div class="w-full h-full mt-2 flex flex-col items-center">            
             <div class="text-lg font-semibold px-6 py-4 border-b">
             <span class="font-bold py-2">
-              <input type="checkbox" @click="isApproveNotChecked = !isApproveNotChecked" class="mr-2">
+              <input type="checkbox" @click="isApproveNotChecked = !isApproveNotChecked" class="h-6 w-6 mr-2 border border-gray-300 rounded checked:bg-blue-500 checked:border-transparent focus:ring-blue-400">
               <span v-if="paymentMethodsForm.collection_type==='insurer'">I certify that all details provided, including the official receipt or payment confirmation, are correct and in compliance with our conduct standards.</span>
               <span v-if="paymentMethodsForm.collection_type==='broker'">I verify that the information provided is accurate and my actions align with our standards of conduct.</span>
             </span>
-            </div>            
-            <x-button
-              size="lg"
-              type="submit"
-              color="orange"
-              class="px-4 py-2 mt-4"
-              :disabled="isApproveNotChecked"
-              :loading = "paymentMethodsForm.processing"
-            >
-              Confirm
-            </x-button>
+            </div>              
+                <x-tooltip v-if="isApproveNotChecked">
+                  <x-button
+                    size="lg"
+                    type="submit"
+                    color="orange"
+                    class="px-4 py-2 mt-4"
+                    :disabled="isApproveNotChecked"
+                    :loading = "paymentMethodsForm.processing"
+                  >
+                  <span>Confirm</span></x-button>
+                  <template #tooltip>
+                        <span >{{ paymentTooltipEnum.CONFIRM_APPROVE_UNSELECT }}</span>
+                  </template>
+                </x-tooltip>
+                <x-button
+                    v-if="!isApproveNotChecked"
+                    size="lg"
+                    type="submit"
+                    color="orange"
+                    class="px-4 py-2 mt-4"
+                    :disabled="isApproveNotChecked"
+                    :loading = "paymentMethodsForm.processing"
+                  >
+                  <span>Confirm</span></x-button>
           </div>          
         </div>
       </div> 
       </x-form>
-      
-       
           
       <div class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center" v-if="isGalleryModelOpen">
         <div class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg" tabindex="0" ref="modal2Ref" @keydown="handleKeyDown">        
@@ -3179,7 +3198,7 @@ const isMasterPaymentPaid = computed(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 55%;
-  height: 37%; 
+  height: 38%; 
   background-color: hsla(0, 0%, 100%, 0.99);
   border-radius: 8px; /* Adjust the radius for desired roundness */
   padding: 2px;

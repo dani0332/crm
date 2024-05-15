@@ -505,7 +505,7 @@ class TravelQuoteService extends BaseService
     {
         return TravelQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
             $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'child', 'parent'])->first();
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'child', 'parent'])->first();
     }
 
     public function getSelectedLostReason($id)
