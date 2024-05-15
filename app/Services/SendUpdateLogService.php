@@ -384,7 +384,7 @@ class SendUpdateLogService
         }
         // Change quote status to Policy Cancelled and remove quote batch id to remove it from batches
         $quoteObject->update([
-            'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+            // 'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
             'quote_batch_id' => null,
         ]);
 
