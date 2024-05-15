@@ -9,6 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
+use App\Models\LeadSource;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -192,7 +193,7 @@ class DashboardService extends BaseService
             ->whereNull('advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('tiers.name', '!=', TiersEnum::TIER_R)
-            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL, LeadSourceEnum::DUBAI_NOW])
             ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
                 $query->distinct()
                     ->select('quote_uuid')
