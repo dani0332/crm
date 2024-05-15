@@ -124,15 +124,12 @@ class UserController extends Controller
                         $this->leadAllocationService->createLeadAllocationRecord($user->id,(object)['quoteTypeId'=>$quoteTypeId]);
                     }
                     else {
-                        $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active, $quoteTypeId);
+                        $this->leadAllocationService->createLeadAllocationRecord($user->id);
                     }
-                   
                 }
             }  
         }
       
-        $this->leadAllocationService->createLeadAllocationRecord($user->id);
-
         $user->assignRole($request->input('roles'));
 
         return redirect(route('users.show', $user->id))->with('success', $user->name.' with a email '.$user->email.' '.'has been store');
