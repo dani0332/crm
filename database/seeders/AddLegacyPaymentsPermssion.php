@@ -19,7 +19,7 @@ class AddLegacyPaymentsPermssion extends Seeder
     public function run()
     {
         $permission = Permission::findOrCreate(PermissionsEnum::LEGACY_INSTALLMENTS, 'web');
-        $role = Role::where('name', RolesEnum::Accounts)->first();
+        $role = Role::findOrCreate(RolesEnum::Accounts, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(
@@ -29,7 +29,7 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
-        $role = Role::where('name', RolesEnum::Invoicing)->first();
+        $role = Role::findOrCreate(RolesEnum::Invoicing, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(
@@ -41,7 +41,7 @@ class AddLegacyPaymentsPermssion extends Seeder
         }
         ////////
         $permission = Permission::findOrCreate(PermissionsEnum::LEGACY_INVOICES, 'web');
-        $role = Role::where('name', RolesEnum::Accounts)->first();
+        $role = Role::findOrCreate(RolesEnum::Accounts, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(
@@ -51,7 +51,7 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
-        $role = Role::where('name', RolesEnum::Invoicing)->first();
+        $role = Role::findOrCreate(RolesEnum::Invoicing, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(
@@ -63,7 +63,7 @@ class AddLegacyPaymentsPermssion extends Seeder
         }
         ////////
         $permission = Permission::findOrCreate(PermissionsEnum::LEGACY_PAYMENTS, 'web');
-        $role = Role::where('name', RolesEnum::Accounts)->first();
+        $role = Role::findOrCreate(RolesEnum::Accounts, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(
@@ -73,7 +73,7 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
-        $role = Role::where('name', RolesEnum::Invoicing)->first();
+        $role = Role::findOrCreate(RolesEnum::Invoicing, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(
@@ -85,7 +85,7 @@ class AddLegacyPaymentsPermssion extends Seeder
         }
         ///////
         $permission = Permission::findOrCreate(PermissionsEnum::LEGACY_OTHER_DETAILS, 'web');
-        $role = Role::where('name', RolesEnum::Accounts)->first();
+        $role = Role::findOrCreate(RolesEnum::Accounts, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(
@@ -95,7 +95,7 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
-        $role = Role::where('name', RolesEnum::Invoicing)->first();
+        $role = Role::findOrCreate(RolesEnum::Invoicing, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(
@@ -107,7 +107,7 @@ class AddLegacyPaymentsPermssion extends Seeder
         }
         ///////
         $permission = Permission::findOrCreate(PermissionsEnum::VIEW_LEGACY_DETAILS, 'web');
-        $role = Role::where('name', RolesEnum::Accounts)->first();
+        $role = Role::findOrCreate(RolesEnum::Accounts, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(
@@ -117,7 +117,7 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
-        $role = Role::where('name', RolesEnum::Invoicing)->first();
+        $role = Role::findOrCreate(RolesEnum::Invoicing, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
             DB::table('role_has_permissions')->insert(

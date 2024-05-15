@@ -41,6 +41,7 @@ defineProps({
   paymentMethods: Object,
   sendPolicy: Boolean,
   insuranceProviders: Array,
+  planTypes: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
   customerTypeEnum: Object,
@@ -58,6 +59,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  clientInquiryLogs: Array,
 });
 
 const isManualPlansCount = ref(0);
@@ -193,9 +195,9 @@ const memberCategoryText = memberCategoryId =>
 // });
 
 const subTeamOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
+  { value: 'Best', label: 'Best' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
 ];
@@ -577,10 +579,16 @@ const plansTable = reactive({
     {
       text: 'Provider Name',
       value: 'providerName',
+      sortable: true,
     },
     {
       text: 'Plan Name',
       value: 'name',
+    },
+    {
+      text: 'Plan Type',
+      value: 'planTypeId',
+      sortable: true,
     },
     {
       text: 'Network Provider',
@@ -594,6 +602,7 @@ const plansTable = reactive({
     {
       text: 'Price',
       value: 'actualPremium',
+      sortable: true,
     },
     {
       text: 'Basmah',
@@ -770,6 +779,7 @@ const planFilters = reactive({
   network: [],
   manual_plan: null,
   current_online: null,
+  plan_types: [],
 });
 const planFiltersCount = ref(0);
 const options = reactive({
@@ -827,6 +837,7 @@ const onPlanFiltersSubmit = () => {
     let insurerMatch = false;
     let networkMatch = false;
     let onlineMatch = false;
+    let planTypeMatch = false;
     if (isManualPlan != null) {
       manualMatch = plan.isManualPlan == isManualPlan;
     } else {
@@ -836,6 +847,11 @@ const onPlanFiltersSubmit = () => {
       onlineMatch = !plan.isHidden == isCurrentlyOnline;
     } else {
       onlineMatch = true;
+    }
+    if (planFilters.plan_types && planFilters.plan_types.length > 0) {
+        planTypeMatch = planFilters.plan_types.includes(plan.planTypeId);
+    } else {
+      planTypeMatch = true;
     }
     if (insurerIds?.length > 0) {
       insurerMatch = insurerIds.includes(plan.providerId);
@@ -847,7 +863,7 @@ const onPlanFiltersSubmit = () => {
     } else {
       networkMatch = true;
     }
-    return manualMatch && insurerMatch && networkMatch && onlineMatch;
+      return manualMatch && insurerMatch && networkMatch && onlineMatch && planTypeMatch;
   });
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
@@ -1492,7 +1508,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],
   });
 };
 
@@ -2740,10 +2756,15 @@ watch(
               hide-rows-per-page
               :rows-per-page="15"
               class="flex-wrap"
+              :sort-by="'actualPremium'"
+              :sort-type="'asc'"
               :hide-footer="listQuotePlansFiltered.length < 15"
             >
               <template #item-copayName="item">
                 <span class="copay-max">{{ item.copayName }}</span>
+              </template>
+              <template #item-planTypeId="item">
+                <span class="copay-max">{{ item.plan_type }}</span>
               </template>
               <template
                 #item-providerName="{ providerName, isManualPlan, isHidden }"
@@ -2968,6 +2989,14 @@ watch(
             class="w-full"
           />
         </div>
+        <ComboBox
+            v-model="planFilters.plan_types"
+            :label="'Plan Type'"
+            :options="planTypes"
+            :disabled="planFilters.plan_types?.length == 0"
+            select-all
+            deselect-all
+          />
       </div>
 
       <div class="flex justify-end gap-3 mb-4">
@@ -2991,7 +3020,9 @@ watch(
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       quoteType="Health"
-    :payments="payments"/>
+      :payments="payments"
+    />
+
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Health"
@@ -3105,6 +3136,7 @@ watch(
       </template>
     </Collapsible>
   </div>
+
   <BookPolicy
       v-if="
         canAny([
@@ -3117,7 +3149,19 @@ watch(
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-    /><x-modal v-model="modals.doc" size="xl" show-close backdrop>
+    />
+    
+  <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+    <template #header> Upload Documents </template>
+    <LazyDocumentUploader
+      :members="memberDataDocs(membersDetail)"
+      :doc-types="documentTypes"
+      :docs="quoteDocuments || []"
+      :cdn="cdnPath"
+    />
+  </x-modal>
+    
+  <x-modal v-model="modals.doc" size="xl" show-close backdrop>
     <template #header> Upload Documents </template>
     <LazyDocumentUploader
       :members="memberDataDocs(membersDetail)"
@@ -3393,40 +3437,6 @@ watch(
     v-if="clientInquiryLogs?.length > 0"
     :logs="clientInquiryLogs"
   />
-
-  <div class="p-4 rounded shadow mb-6 bg-white">
-    <Collapsible :expanded="sectionExpanded">
-      <template #header>
-        <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        </div>
-      </template>
-      <template #body>
-        <x-divider class="my-4" />
-        <div v-if="historyData === null" class="text-center py-3">
-          <x-button
-            size="sm"
-            color="primary"
-            outlined
-            @click.prevent="onLoadHistoryData"
-            :loading="historyLoading"
-          >
-            Load History Data
-          </x-button>
-        </div>
-        <DataTable
-          v-else
-          table-class-name="compact"
-          :headers="historyDataTable"
-          :items="historyData || []"
-          border-cell
-          hide-rows-per-page
-          :rows-per-page="15"
-          :hide-footer="historyData.length < 15"
-        />
-      </template>
-    </Collapsible>
-  </div>
 
   <CustomerChatLogs
     :customerName="quote?.first_name + ' ' + quote?.last_name"
