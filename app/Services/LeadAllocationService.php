@@ -121,7 +121,7 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function updateUserAllocationRecord($userId, $allocationCount, $maxCapacity, $isAvailable)
+    public function updateUserAllocationRecord($userId, $allocationCount, $maxCapacity, $isAvailable,$quoteTypeId=null)
     {
         try {
             DB::beginTransaction();
@@ -139,6 +139,9 @@ class LeadAllocationService extends BaseService
             }
             if (isset($isAvailable)) {
                 $leadAllocation->is_available = $isAvailable;
+            }
+            if(isset($quoteTypeId)){
+                $leadAllocation->quote_type_id = $quoteTypeId;
             }
 
             $leadAllocation->save();
