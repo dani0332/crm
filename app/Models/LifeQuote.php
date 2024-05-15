@@ -50,7 +50,7 @@ class LifeQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->belongsTo(User::class)->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class)->select(['id', 'email', 'name', 'profile_photo_path']);
     }
     public function previousAdvisor()
     {

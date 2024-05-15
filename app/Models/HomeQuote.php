@@ -68,7 +68,7 @@ class HomeQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'profile_photo_path']);
     }
 
     public function customer()
