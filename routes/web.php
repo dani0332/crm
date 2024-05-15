@@ -159,11 +159,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::group(['prefix' => 'quotes/'], function () {
-            Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('revival-quotes-list');
-            Route::get('revival/{uuid}/edit', [CarRevivalQuoteController::class, 'edit'])->name('revival-quotes-edit');
-            Route::put('revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('revival-quotes-update');
+            Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
+            Route::get('revival/{uuid}/edit', [CarRevivalQuoteController::class, 'edit'])->name('carrevival-quotes-edit');
+            Route::put('revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('carrevival-quotes-update');
 
-            Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('revival-quotes-show');
+            Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
         });
 
         if (in_array(quoteTypeCode::Life, newUi())) {
@@ -268,8 +268,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
-    Route::post('/lead-allocation/update-availability', [LeadAllocationController::class, 'updateAvailability']);
-    Route::post('/lead-allocation/update-cap', [LeadAllocationController::class, 'updateCaps']);
+
+    Route::get('/allocations', [LeadAllocationController::class, 'showAllocations'])->name('allocations.index');
+    Route::post('/store-allocation', [LeadAllocationController::class, 'storeAllocation'])->name('allocation.store');
+    Route::get('/create-allocation', [LeadAllocationController::class, 'createAllocation'])->name('allocation.create');
+    Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
+    Route::get('/advisor-by-quotetype/{user_id}', [LeadAllocationController::class, 'getAdvisorByQuoteType'])->name('allocations.advisor-quotestype');
+
+    Route::post('/lead-allocation/{quoteType}/update-availability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/{quoteType}/update-cap', [LeadAllocationController::class, 'updateCaps']);
     Route::post('/lead-allocation/toggle-reset-cap', [LeadAllocationController::class, 'updateResetCapSwitch']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
