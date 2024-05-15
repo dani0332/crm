@@ -39,7 +39,7 @@ class QuoteSyncUpdateCommand extends Command
             return;
         }
 
-        $entries = QuoteSync::where('is_synced', false)->orderBy('created_at', 'asc')->take(100)->get();
+        $entries = QuoteSync::where('is_synced', false)->orderBy('created_at', 'asc')->take(150)->get();
 
         if ($entries->isEmpty()) {
             info('----------- No entries found to be processed in quote sync table -----------');
