@@ -22,6 +22,7 @@ use App\Http\Requests\YachtQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\QuoteStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -210,14 +211,17 @@ class YachtQuoteController extends Controller
 
         $userId = auth()->id();
         $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if (array_intersect([TeamNameEnum::YACHT], $userTeams)) {
+        // dd($userTeams);
+        if (array_intersect([TeamNameEnum::YACHT_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
+                QuoteStatusEnum::FinalizingTerms,
             ])->values()->toArray();
         } elseif (array_intersect([TeamNameEnum::YACHT_RENEWALS], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::NewLead,
+                QuoteStatusEnum::FinalizingTerms,
                 QuoteStatusEnum::InNegotiation, ])->values()->toArray();
         }
 
