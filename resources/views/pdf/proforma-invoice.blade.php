@@ -373,7 +373,7 @@
     $quoteType = $quote->quoteType;
     $insuranceProvider = $quote->insuranceProvider;
     $advisor = $quote->advisor;
-    $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->created_at)->format($dateFormat);
+    $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->collection_date)->format($dateFormat);
     $customer = $quote->customer;
     $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
     $customerDetail =  $customer->detail;
@@ -562,7 +562,7 @@
             <tr>
 
                 <td class="customer">
-                    {{ $customerName }}
+                    {{ $customerName }} </br> {{ $quote->address }}
                 </td>
 
                 <th class="date">
