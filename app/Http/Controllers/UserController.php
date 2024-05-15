@@ -2,24 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use Auth;
-use Carbon\Carbon;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
+use App\Enums\UserStatusEnum;
 use App\Models\Team;
 use App\Models\User;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\TeamTypeEnum;
-use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
-use App\Enums\UserStatusEnum;
-use App\Services\UserService;
-use Illuminate\Validation\Rule;
-use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
 use App\Services\LeadAllocationService;
-use PDO;
+use App\Services\UserService;
+use App\Traits\TeamHierarchyTrait;
+use Auth;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -113,10 +112,10 @@ class UserController extends Controller
         ]);
 
         $user = $this->userService->createUserRecord($request);
-        $products = $this->getAllProducts(); 
-        if(!empty($request->products)){
-            $products_types = collect($products)->whereIn('id',$request->products )->values()->all();
-            if(!empty($products_types)) {
+        $products = $this->getAllProducts();
+        if (! empty($request->products)) {
+            $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
+            if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
                     $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name));
                     $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id,$quoteTypeId );
@@ -127,7 +126,7 @@ class UserController extends Controller
                         $this->leadAllocationService->createLeadAllocationRecord($user->id);
                     }
                 }
-            }  
+            }
         }
       
         $user->assignRole($request->input('roles'));
@@ -251,24 +250,23 @@ class UserController extends Controller
          * temp fix: health lead allocation is using team_id to target health product
          * this needs to be updated with new team/product structure
          */
-        $products = $this->getAllProducts(); 
-        if(!empty($request->products)){
-            $products_types = collect($products)->whereIn('id',$request->products )->values()->all();
-            if(!empty($products_types)) {
+        $products = $this->getAllProducts();
+        if (! empty($request->products)) {
+            $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
+            if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
                     $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name));
-                    $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id,$quoteTypeId );
-                    if(empty($isLead)){
-                        $this->leadAllocationService->createLeadAllocationRecord($user->id,(object)['quoteTypeId'=>$quoteTypeId]);
-                    }
-                    else {
+                    $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
+                    if (empty($isLead)) {
+                        $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                    } else {
                         $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active, $quoteTypeId);
                     }
-                   
+
                 }
-            }  
+            }
         }
-        
+
         if (! empty($request->additionalTeams) && isset($request->additionalTeams)) {
             if (count((array) $request->additionalTeams) > 1) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
