@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Reports;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
@@ -15,6 +15,8 @@ use App\Models\QuoteType;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\ApplicationStorageService;
+use App\Services\BaseService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;

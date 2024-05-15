@@ -612,7 +612,7 @@ class CRUDController extends Controller
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $carMakeText = $record->car_make_id_text ?? '';
             $carModelText = $record->car_model_id_text ?? '';
-            $this->carQuoteService->addOrUpdateQuoteViewCount($record);
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Car);
 
             foreach ($payments as $payment) {
                 $payment->payment_status_text = $payment->paymentStatus->text;
@@ -841,6 +841,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Health);
             $listQuotePlans = [];
             $quotePlans = $this->healthQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
