@@ -3224,14 +3224,10 @@ watch(
           />
         </template>
         <template #item-due_date="{ due_date, is_cold }">
-          <template v-if="compareDueDate(due_date)">
+          <template v-if="is_cold">
             <x-tooltip align="right" position="right">
-              <p
-                :class="
-                  compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
-                "
-              >
-                {{ due_date }} {{ is_cold }}
+              <p :class="is_cold ? 'bg-error-300 rounded p-1' : ''">
+                {{ due_date }}
               </p>
               <template #tooltip>
                 <span
@@ -3240,7 +3236,7 @@ watch(
               </template>
             </x-tooltip>
           </template>
-          <span v-else>{{ due_date }} {{ is_cold }}</span>
+          <span v-else>{{ due_date }} </span>
         </template>
         <template #item-action="item">
           <div class="space-x-4">
