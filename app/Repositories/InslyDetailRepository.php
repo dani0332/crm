@@ -42,7 +42,7 @@ class InslyDetailRepository extends BaseRepository
         }
 
         if (! empty(request()->email)) {
-            $query->where('customer.email', '=', request()->email);
+            $query->where('customer.email', 'like', '%'.request()->email.'%');
         }
 
         if (! empty(request()->mobile_no)) {

@@ -54,4 +54,6 @@ final class QuoteStatusEnum extends Enum
     const Stale = 54;
     const CarSold = 52;
     const Uncontactable = 53;
+    const PolicyBooked = 56;
+    const PolicyCancelled = 58;
 }

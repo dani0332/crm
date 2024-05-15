@@ -83,6 +83,9 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD)
                             <li><a href="{{ url('car-lead-allocation') }}">Car</a></li>
                             @endcan
+                            @can(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT)
+                            <li><a href="{{ route('allocations.index') }}">Capacity Management</a></li>
+                            @endcan
                         </ul>
                     </li>
                 </ul>
@@ -104,7 +107,8 @@ use App\Enums\PermissionsEnum;
                 PermissionsEnum::CycleQuotesList,
                 PermissionsEnum::YachtQuotesList,
                 PermissionsEnum::JetskiQuotesList,
-                PermissionsEnum::UtmLeadsSalesReport
+                PermissionsEnum::UtmLeadsSalesReport,
+                PermissionsEnum::CAR_REVIVAL_QUOTE_LIST
                 ])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
@@ -118,7 +122,7 @@ use App\Enums\PermissionsEnum;
                                     <li><a href="{{ url('quotes/car') }}">Lead List</a></li>
 
                                     @can(PermissionsEnum::CAR_REVIVAL_QUOTE_LIST)
-                                    <li><a href="{{ route('revival-quotes-list') }}">Revival Quotes</a></li>
+                                    <li><a href="{{ route('carrevival-quotes-list') }}">Revival Quotes</a></li>
                                     @endcan
                                 </ul>
                             </li>

@@ -247,35 +247,42 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $splitPaymentDocumentIds = [];
         //Skipping paid payments and deleting extra payments
         if ($paymentSplits) {
-            foreach ($paymentSplits as $paymentSplit) {
-                if (
-                    in_array($paymentSplit->payment_status_id, [
-                        PaymentStatusEnum::PAID,
-                        PaymentStatusEnum::PARTIAL_CAPTURED,
-                        PaymentStatusEnum::PARTIALLY_PAID,
-                        PaymentStatusEnum::CAPTURED,
-                        PaymentStatusEnum::AUTHORISED,
-                    ])
-                ) {
-                    $paymentPaidSerialNo[] = $paymentSplit->sr_no;
+            DB::beginTransaction();
+            try {
+                foreach ($paymentSplits as $paymentSplit) {
+                    if (
+                        in_array($paymentSplit->payment_status_id, [
+                            PaymentStatusEnum::PAID,
+                            PaymentStatusEnum::PARTIAL_CAPTURED,
+                            PaymentStatusEnum::PARTIALLY_PAID,
+                            PaymentStatusEnum::CAPTURED,
+                            PaymentStatusEnum::AUTHORISED,
+                        ])
+                    ) {
+                        $paymentPaidSerialNo[] = $paymentSplit->sr_no;
 
-                    continue;
-                }
-                if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
+                        continue;
+                    }
+                    if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
 
-                    // Delete QuoteDocuments referencing the payment split
-                    $paymentSplit->documents()->delete();
-                    // Then delete the payment split
-                    $paymentSplit->delete();
+                        // Delete QuoteDocuments referencing the payment split
+                        $paymentSplit->documents()->forceDelete();
+                        // Then delete the payment split
+                        $paymentSplit->delete();
 
-                    // Unset/remove the element with sr_no from the split payment object
-                    foreach ($masterPayment->payment_splits as $key => $payment_split) {
-                        if ($payment_split['sr_no'] === $paymentSplit->sr_no) {
-                            unset($masterPayment->payment_splits[$key]);
+                        // Unset/remove the element with sr_no from the split payment object
+                        foreach ($masterPayment->payment_splits as $key => $payment_split) {
+                            if ($payment_split['sr_no'] === $paymentSplit->sr_no) {
+                                unset($masterPayment->payment_splits[$key]);
+                            }
                         }
                     }
                 }
+                DB::commit();
+            } catch (Exception $exception) {
+                DB::rollBack();
             }
+
         }
         $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;

@@ -16,6 +16,6 @@ class TravelQuoteDetailObserver
     public function updated(TravelQuoteRequestDetail $travelQuoteDetail): void
     {
         $travelQuote = TravelQuote::find($travelQuoteDetail->travel_quote_request_id);
-        $this->syncQuoteDetail($travelQuote, $travelQuoteDetail->getDirty());
+        $this->syncQuote($travelQuote, $travelQuoteDetail->getDirty());
     }
 }
