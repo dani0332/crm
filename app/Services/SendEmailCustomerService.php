@@ -905,8 +905,6 @@ class SendEmailCustomerService extends BaseService
                 'templateId' => intval($emailTemplateId),
                 'params' => $totalLeadPremium,
             ], JSON_UNESCAPED_SLASHES);
-            info("BODYYYY",[$body]);
-            return;
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
