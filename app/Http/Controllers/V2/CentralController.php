@@ -254,7 +254,6 @@ class CentralController extends Controller
                     'message' => 'You are not authorized to perform this action',
                 ]], 403);
             }
-            dd($request);
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->first();
             $paymentSplits = PaymentSplits::where('code', $quote['code'])->get();
