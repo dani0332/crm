@@ -65,7 +65,7 @@ trait RolePermissionConditions
                 });
             }
             // This condition allows cross-LOB access if a user possesses two roles, such as health manager and car manager.
-            if ($isHealthManager && $restrictedQuoteType == quoteTypeCode::Health && !$isAdmin) {
+            if ($isHealthManager && $restrictedQuoteType == quoteTypeCode::Health && ! $isAdmin) {
                 $ids = $this->associateAdvisorsWithManager(Auth::user()->id);
                 $ids[] = Auth::user()->id;
                 $query->whereIn($prefix.'.'.'advisor_id', $ids);
