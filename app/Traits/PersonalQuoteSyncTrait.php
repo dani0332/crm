@@ -2,21 +2,30 @@
 
 namespace App\Traits;
 
-use App\Models\ApplicationStorage;
+use App\Enums\QuoteTypeId;
 use App\Models\BikeQuote;
+use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\HomeQuote;
+use App\Models\HomeQuoteRequestDetail;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
+use App\Models\LifeQuoteRequestDetail;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
+use App\Models\PetQuoteRequestDetail;
 use App\Models\QuoteSync;
 use App\Models\TravelQuote;
+use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
+use App\Models\YachtQuoteRequestDetail;
 use App\Repositories\PersonalQuoteRepository;
 use Exception;
 use Illuminate\Support\Carbon;
@@ -28,48 +37,42 @@ trait PersonalQuoteSyncTrait
 {
     public function syncQuote($quote, $updatedFields)
     {
-        // update personal quote
-        $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-        if (! $personalQuote) {
-            $this->syncEntry($quote->uuid);
+        $quoteTypeId = $this->getQuoteTypeId($quote::class);
+        $uuid = $quote->uuid;
 
-            $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-            if (! $personalQuote) {
-                Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
+        // add entry to quote sync table if missing entries in personal quotes and quote sync table
+        $personalQuote = PersonalQuoteRepository::where('uuid', $uuid)->count();
+        $entries = QuoteSync::where('is_synced', false)
+            ->where('quote_uuid', $uuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->count();
+        if ($personalQuote == 0 && $entries == 0) {
+            Log::warning("Quote not synced from quote_sync table, uuid: {$uuid}");
+            $quoteTypeId = $this->getQuoteTypeId($quote::class);
+            $sourceQuote = $this->getQuoteRecord($quoteTypeId, $uuid);
 
-                return;
+            if ($sourceQuote) {
+                $this->addQuoteSyncEntry($uuid, $quoteTypeId, $sourceQuote->getAttributes());
+
+                $sourceQuoteDetails = $this->getQuoteDetailRecord($quoteTypeId, $sourceQuote->id);
+                if ($sourceQuoteDetails) {
+                    $this->addQuoteSyncEntry($uuid, $quoteTypeId, $sourceQuoteDetails->getAttributes());
+                }
             }
         }
 
-        $this->syncTable($personalQuote, $updatedFields, 'personal_quotes');
-        $personalQuote->save();
+        $this->addQuoteSyncEntry($uuid, $quoteTypeId, $updatedFields);
     }
 
-    public function syncQuoteDetail($quote, $updatedFields)
+    private function addQuoteSyncEntry($uuid, $quoteTypeId, $updatedFields)
     {
-        // get personal quote
-        $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-        if (! $personalQuote) {
-            $this->syncEntry($quote->uuid);
-
-            $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-            if (! $personalQuote) {
-                Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
-
-                return;
-            }
-        }
-
-        // update personal quote details
-        $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
-        if (! $personalQuoteDetail) {
-            Log::warning("Quote details not found in personal quote details table, personal_quote_id: {$personalQuote->id}");
-
-            return;
-        }
-
-        $this->syncTable($personalQuoteDetail, $updatedFields, 'personal_quote_details');
-        $personalQuoteDetail->save();
+        unset($updatedFields['created_at'], $updatedFields['updated_at']);
+        $quoteSync = new QuoteSync();
+        $quoteSync->is_synced = 0;
+        $quoteSync->quote_uuid = $uuid;
+        $quoteSync->quote_type_id = $quoteTypeId;
+        $quoteSync->updated_fields = json_encode($updatedFields);
+        $quoteSync->save();
     }
 
     public function syncTable($quote, $updatedFields, $quoteTable)
@@ -97,65 +100,34 @@ trait PersonalQuoteSyncTrait
         return $value;
     }
 
-    private function syncEntry($uuid)
-    {
-        info('----------- Syncing entry '.$uuid.' -----------');
-        $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
-
-        if (! $isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
-            info('----------- QuoteSync is disabled -----------');
-
-            return;
-        }
-
-        $entries = QuoteSync::where('is_synced', false)->where('quote_uuid', $uuid)->get();
-        if ($entries->isEmpty()) {
-            info('----------- No entries found to be processed in quote sync table -----------');
-
-            return;
-        }
-
-        foreach ($entries as $entry) {
-
-            info('quote_sync Syncing entry: '.$entry->quote_uuid.' - id '.$entry->id);
-            $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
-
-            if ($quote) {
-                // Existing quote
-                $this->processExistingQuote($quote, $entry);
-            } else {
-                // Quote not found
-                $this->processQuoteNotFound($entry);
-            }
-        }
-    }
-
     private function processExistingQuote($quote, $entry)
     {
-        if ($entry->quote_type_id) {
-            info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
-            try {
-                $newValues = json_decode($entry->updated_fields, true);
-                $this->syncTable($quote, $newValues, 'personal_quotes');
-                $quote->quote_type_id = $entry->quote_type_id;
-                $quote->save();
-                $entry->update(['is_synced' => true, 'synced_at' => now()]);
-                info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
-            } catch (Exception $e) {
-                Log::error('QuoteSyncJob Error: '.$e->getMessage());
+        DB::transaction(function () use ($quote, $entry) {
+            if ($entry->quote_type_id) {
+                info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
+                try {
+                    $newValues = json_decode($entry->updated_fields, true);
+                    $this->syncTable($quote, $newValues, 'personal_quotes');
+                    $quote->quote_type_id = $entry->quote_type_id;
+                    $quote->save();
+                    $entry->update(['is_synced' => true, 'synced_at' => now()]);
+                    info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
+                } catch (Exception $e) {
+                    Log::error('QuoteSyncJob Error: '.$e->getMessage());
+                }
+            } else {
+                info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table but missing required fields');
+                $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
+                if ($sourceQuote) {
+                    $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');
+                    $quote->quote_type_id = $entry->quote_type_id;
+                    $quote->save();
+                    $this->syncTable($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
+                    $quote->quote_type_id = $entry->quote_type_id;
+                    $quote->save();
+                }
             }
-        } else {
-            info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table but missing required fields');
-            $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
-            if ($sourceQuote) {
-                $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');
-                $quote->quote_type_id = $entry->quote_type_id;
-                $quote->save();
-                $this->syncTable($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
-                $quote->quote_type_id = $entry->quote_type_id;
-                $quote->save();
-            }
-        }
+        });
 
         $this->upsertPersonalQuoteDetail($quote, json_decode($entry->updated_fields, true));
     }
@@ -165,10 +137,11 @@ trait PersonalQuoteSyncTrait
         info('Entry for quote: '.$entry->quote_uuid.' not found in personal quotes table');
         $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
 
+        $personalQuote = null;
         if ($sourceQuote) {
             try {
                 $newValues = json_decode($entry->updated_fields, true);
-                $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $entry);
+                $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $entry->quote_uuid, $entry->quote_type_id);
                 $this->syncTable($personalQuote, $newValues, 'personal_quotes');
                 $this->upsertPersonalQuoteDetail($personalQuote, $newValues);
                 $entry->update(['is_synced' => true, 'synced_at' => now()]);
@@ -177,6 +150,8 @@ trait PersonalQuoteSyncTrait
                 Log::error('QuoteSyncJob Error: '.$e->getMessage().$e->getTraceAsString());
             }
         }
+
+        return $personalQuote;
     }
 
     private function getQuoteRecord($quote_type_id, $quote_uuid)
@@ -187,33 +162,72 @@ trait PersonalQuoteSyncTrait
         return $sourceQuote;
     }
 
+    private function getQuoteDetailRecord($quoteTypeId, $sourceId)
+    {
+        if (in_array($quoteTypeId, [QuoteTypeId::Cycle, QuoteTypeId::Jetski])) {
+            return null;
+        }
+
+        $modelDetail = $this->getQuoteTypeDetail($quoteTypeId);
+        $modelDetailClassName = $modelDetail[0];
+        $modelColumnName = $modelDetail[1];
+        $sourceQuoteDetails = $modelDetailClassName::where($modelColumnName, $sourceId)->first();
+
+        return $sourceQuoteDetails;
+    }
+
     /**
      * Create a new personal quote from source quote
      *
      * @param  $sourceQuote  - Existing object of car/heath/travel/... quote
      * @param  $entry  - Entry from quote_sync table
      */
-    private function createPersonalQuoteFromSource($sourceQuote, $entry)
+    private function createPersonalQuoteFromSource($sourceQuote, $quoteUuid, $quoteTypeId)
     {
         $personalQuote = new PersonalQuote();
         $sourceAttributes = $sourceQuote->getAttributes();
         $this->syncTable($personalQuote, $sourceAttributes, 'personal_quotes');
-        $personalQuote->quote_type_id = $entry->quote_type_id;
-        $existingQuote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
-        if ($existingQuote) {
-            $this->syncTable($existingQuote, $sourceAttributes, 'personal_quotes');
-            $existingQuote->quote_type_id = $entry->quote_type_id;
-            $existingQuote->save();
+        $personalQuote->quote_type_id = $quoteTypeId;
 
-            return $existingQuote;
-        } else {
+        return DB::transaction(function () use ($personalQuote, $sourceAttributes, $quoteUuid, $quoteTypeId) {
+            $existingQuote = PersonalQuote::where('uuid', $quoteUuid)->where('quote_type_id', $quoteTypeId)->first();
+            if ($existingQuote) {
+                $this->syncTable($existingQuote, $sourceAttributes, 'personal_quotes');
+                $existingQuote->quote_type_id = $quoteTypeId;
+                $existingQuote->save();
 
-            // update missing required fields
-            $this->updateMissingFields($personalQuote, 'personal_quotes', $entry->quote_uuid);
-            $personalQuote->save();
+                return $existingQuote;
+            } else {
 
-            return $personalQuote;
-        }
+                // update missing required fields
+                $this->updateMissingFields($personalQuote, 'personal_quotes', $quoteTypeId);
+                $personalQuote->save();
+
+                return $personalQuote;
+            }
+        });
+    }
+
+    public function getQuoteTypeId($modelClassName)
+    {
+        $quoteTypeModels = [
+            CarQuote::class => 1,
+            HomeQuote::class => 2,
+            HealthQuote::class => 3,
+            LifeQuote::class => 4,
+            BusinessQuote::class => 5,
+            BikeQuote::class => 6,
+            YachtQuote::class => 7,
+            TravelQuote::class => 8,
+            PetQuote::class => 9,
+            CycleQuote::class => 10,
+            JetskiQuote::class => 11,
+        ];
+
+        // Retrieve the source quote based on quote type and UUID
+        $quoteTypeId = $quoteTypeModels[$modelClassName];
+
+        return $quoteTypeId;
     }
 
     public function getQuoteType($quoteTypeId)
@@ -230,6 +244,26 @@ trait PersonalQuoteSyncTrait
             9 => PetQuote::class,
             10 => CycleQuote::class,
             11 => JetskiQuote::class,
+        ];
+
+        // Retrieve the source quote based on quote type and UUID
+        $modelClassName = $quoteTypeModels[$quoteTypeId];
+
+        return $modelClassName;
+    }
+
+    public function getQuoteTypeDetail($quoteTypeId)
+    {
+        $quoteTypeModels = [
+            1 => [CarQuoteRequestDetail::class, 'car_quote_request_id'],
+            2 => [HomeQuoteRequestDetail::class, 'home_quote_request_id'],
+            3 => [HealthQuoteRequestDetail::class, 'health_quote_request_id'],
+            4 => [LifeQuoteRequestDetail::class, 'life_quote_request_id'],
+            5 => [BusinessQuoteRequestDetail::class, 'business_quote_request_id'],
+            6 => [BikeQuoteRequestDetail::class, 'bike_quote_request_id'],
+            7 => [YachtQuoteRequestDetail::class, 'yacht_quote_request_id'],
+            8 => [TravelQuoteRequestDetail::class, 'travel_quote_request_id'],
+            9 => [PetQuoteRequestDetail::class, 'pet_quote_request_id'],
         ];
 
         // Retrieve the source quote based on quote type and UUID
