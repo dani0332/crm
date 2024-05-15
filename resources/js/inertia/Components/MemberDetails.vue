@@ -25,7 +25,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
-const {isRequired} = useRules();
+const { isRequired } = useRules();
 
 const modals = reactive({
   member: false,
@@ -49,7 +49,7 @@ const memberRelationOptions = computed(() => {
 
 const members = ref(props.membersDetails);
 const computedMembers = computed(() => {
-    return members.value.filter(x => !x.is_third_party_payer);
+  return members.value.filter(x => !x.is_third_party_payer);
 });
 
 const memberActionEdit = ref(false);
@@ -167,10 +167,12 @@ const memberDeleteConfirmed = () => {
   );
 };
 
-const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] = createReusableTemplate();
-const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] = createReusableTemplate();
-const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReusableTemplate();
-
+const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] =
+  createReusableTemplate();
+const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
@@ -188,19 +190,27 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         <x-divider class="my-4" />
         <AddMemberButtonTemplate v-slot="{ isDisabled }">
           <x-button
-            @click.prevent="addMemberModal" 
-            size="sm" 
+            @click.prevent="addMemberModal"
+            size="sm"
             color="orange"
             :disabled="isDisabled"
           >
             Add Member
           </x-button>
         </AddMemberButtonTemplate>
-        <div class="flex mb-3 justify-end" v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
-          <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
-            <AddMemButtonReuseTemplate :isDisabled="true"/>
+        <div
+          class="flex mb-3 justify-end"
+          v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
+        >
+          <x-tooltip
+            v-if="page.props.lockLeadSectionsDetails.memebr_details"
+            position="bottom"
+          >
+            <AddMemButtonReuseTemplate :isDisabled="true" />
             <template #tooltip>
-              This lead is now locked as the policy has been booked. If changes are needed such midterm addition of member, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+              This lead is now locked as the policy has been booked. If changes
+              are needed such midterm addition of member, go to 'Send Update',
+              select 'Add Update', and choose 'Endorsement Financial'
             </template>
           </x-tooltip>
           <AddMemButtonReuseTemplate v-else />
@@ -252,22 +262,49 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
             {{ nationality?.text }}
           </template>
           <template #item-action="item">
-            <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="flex gap-2">
-              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="top">
-                <EditMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+            <div
+              v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
+              class="flex gap-2 py-8"
+            >
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.memebr_details"
+                position="left"
+              >
+                <EditMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
                 <template #tooltip>
-                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                  <div class="whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
                 </template>
               </x-tooltip>
-              <EditMemberButtonReuseTemplate v-else :item="item"/>
 
-              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="top">
-                <DeleteMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+              <EditMemberButtonReuseTemplate v-else :item="item" />
+
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.memebr_details"
+                position="left"
+              >
+                <DeleteMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
                 <template #tooltip>
-                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                  <div class="whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
                 </template>
               </x-tooltip>
-              <DeleteMemberButtonReuseTemplate v-else :item="item"/>
+
+              <DeleteMemberButtonReuseTemplate v-else :item="item" />
             </div>
           </template>
         </DataTable>
@@ -283,10 +320,10 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         <div class="grid md:grid-cols-2 gap-4">
           <input type="hidden" :value="memberForm.id" />
           <x-input
-                        v-model="memberForm.first_name"
-                        label="Member Name*"
-                        placeholder="Member Name"
-                        :rules="[isRequired]"
+            v-model="memberForm.first_name"
+            label="Member Name*"
+            placeholder="Member Name"
+            :rules="[isRequired]"
           />
           <ComboBox
             v-model="memberForm.nationality_id"
@@ -297,10 +334,10 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
             :hasError="memberFieldReq.nationality"
           />
           <DatePicker
-                        v-model="memberForm.dob"
-                        label="DOB*"
-                        :hasError="memberFieldReq.dob"
-                        :rules="[isRequired]"
+            v-model="memberForm.dob"
+            label="DOB*"
+            :hasError="memberFieldReq.dob"
+            :rules="[isRequired]"
           />
           <x-select
             v-model="memberForm.relation_code"
