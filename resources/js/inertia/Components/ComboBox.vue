@@ -151,6 +151,7 @@ const removeSelected = item => {
           :displayValue="list => list?.label"
           :class="{
             'border-red-500': props.hasError,
+            '!bg-gray-100': props.disabled,
           }"
           class="appearance-none block placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 border shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 focus:outline-sky-500 w-full"
           :placeholder="props.placeholder"
