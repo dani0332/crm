@@ -19,25 +19,6 @@ class AddCrossLOBSeeder extends Seeder
      */
     public function run(): void
     {
-        //
-        // $adviosrCapPermission = Permission::where('name', PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT)->first();
-        // if ($adviosrCapPermission == null) {
-        //     DB::table('permissions')->insert([
-        //         'name' => PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT,
-        //         'guard_name' => 'web',
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ]);
-        // }
-
-        // $leadPoolRole = Role::where('name', RolesEnum::LeadPool)->first();
-        // $capLeadAllocationPermission = Permission::where('name', PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT)->first();
-
-        // if (count(DB::table('role_has_permissions')->where('role_id', $leadPoolRole->id)->where('permission_id', $capLeadAllocationPermission->id)->get()) == 0) {
-
-        //     $leadPoolRole->givePermissionTo($capLeadAllocationPermission);
-        // }
-
         // get all Advisors Car Lead Allocation
         $carLeadAllocations = DB::table('users')
             ->select(
