@@ -778,4 +778,21 @@ class CRUDService extends BaseService
 
         return optional($quote)->duplicateInquiryLog;
     }
+
+    public function hashCollapsibleStatuses($quoteTypeId, $quoteId)
+    {
+        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $quoteId)
+            ->where(function ($query) {
+                $query->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicyBooked)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyBooked);
+            })
+            ->first() !== null;
+    }
 }

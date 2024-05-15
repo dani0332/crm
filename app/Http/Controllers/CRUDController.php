@@ -911,6 +911,8 @@ class CRUDController extends Controller
 
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
+            $hashCollapsibleStatuses = $this->crudService->hashCollapsibleStatuses($quoteTypeId, $record->id);
+
             $payments->each(function ($payment) {
                 $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
                 $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
@@ -977,6 +979,7 @@ class CRUDController extends Controller
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
                 ],
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'hashCollapsibleStatuses' => $hashCollapsibleStatuses,
                 'modelType' => $quoteType,
                 'quoteTypeId' => $quoteTypeId,
                 'notProductionApproval' => $notProductionApproval,
