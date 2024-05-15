@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class ActivePoliciesReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
-    
+
     private $reportDateRange;
 
     public function getReportData(Request $request)
