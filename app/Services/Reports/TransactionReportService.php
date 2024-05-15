@@ -2,15 +2,14 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
+use App\Models\PersonalQuote;
+use App\Strategies\ManagementReport;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\PersonalQuote;
-use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
-use App\Strategies\ManagementReport;
-use App\Enums\ManagementReportTypeEnum;
-use App\Enums\ManagementReportCategoriesEnum;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TransactionReportService extends ManagementReport
 {
@@ -23,7 +22,7 @@ class TransactionReportService extends ManagementReport
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::TRANSACTION;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::TRANSACTION_PAYMENTS;
 
-        if ($request['paymentDueDate'] && !empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
+        if ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
             $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
                 .' - '.
                 Carbon::parse($request['paymentDueDate'][1])->toDateString();
@@ -147,7 +146,7 @@ class TransactionReportService extends ManagementReport
             'Payment Gateway',
             'Insurer Invoice No.',
             'Insurer Invoice Date',
-            'Broker Invoice No'
+            'Broker Invoice No',
         ];
     }
 

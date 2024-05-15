@@ -2,15 +2,14 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
+use App\Models\PersonalQuote;
+use App\Strategies\ManagementReport;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\PersonalQuote;
-use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
-use App\Strategies\ManagementReport;
-use App\Enums\ManagementReportTypeEnum;
-use App\Enums\ManagementReportCategoriesEnum;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EndingPoliciesReportService extends ManagementReport
 {
@@ -23,7 +22,7 @@ class EndingPoliciesReportService extends ManagementReport
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ENDING_POLICIES;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::EXPIRING_POLICIES;
 
-        if ($request['policyExpiredDate'] && !empty($request['policyExpiredDate']) && is_array($request['policyExpiredDate'])) {
+        if ($request['policyExpiredDate'] && ! empty($request['policyExpiredDate']) && is_array($request['policyExpiredDate'])) {
             $this->reportDateRange = Carbon::parse($request['policyExpiredDate'][0])->toDateString()
                 .' - '.
                 Carbon::parse($request['policyExpiredDate'][1])->toDateString();

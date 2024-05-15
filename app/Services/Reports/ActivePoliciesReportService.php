@@ -2,25 +2,26 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
+use App\Models\PersonalQuote;
+use App\Strategies\ManagementReport;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\PersonalQuote;
-use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
-use App\Strategies\ManagementReport;
-use App\Enums\ManagementReportTypeEnum;
-use App\Enums\ManagementReportCategoriesEnum;
 
 class ActivePoliciesReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
+
     protected $reportDateRange;
 
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ACTIVE_POLICIES;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ACTIVE_POLICIES;
-        if ($request['createdAt'] && !empty($request['createdAt']) ) {
+        if ($request['createdAt'] && ! empty($request['createdAt'])) {
             $this->reportDateRange = Carbon::parse($request['createdAt'])->toDateString();
         }
 
