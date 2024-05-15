@@ -23,10 +23,8 @@ class SaveBookingDetailsRequest extends FormRequest
     {
         return [
             'commission_vat_applicable' => 'required|numeric|min:1',
-            'booking_date' => 'required|date',
             'invoice_description' => 'required|string',
             'broker_invoice_number' => 'required|string',
-            'transaction_payment_status' => 'required|string',
             'invoice_date' => 'required|date',
             'insurer_tax_invoice_number' => 'required|string',
             'insurer_commission_invoice_number' => 'required|string',
