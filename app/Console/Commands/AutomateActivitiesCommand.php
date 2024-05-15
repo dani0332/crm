@@ -118,12 +118,12 @@ class AutomateActivitiesCommand extends Command
                 info('------------------- Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
                 $quoteClass::whereHas('activities', function ($activityQuery) {
                     $activityQuery->where('due_date', '<', Carbon::now());
-                    $activityQuery->orWhere('status', true);
+                    $activityQuery->where('status', true);
                 })
                     ->with(['activities' => function ($activities) {
                         // $activities->where('due_date', '<', now());
                         $activities->where('due_date', '<', Carbon::now());
-                        $activities->orWhere('status', true);
+                        $activities->where('status', true);
                         $activities->orderBy('created_at', 'desc')->get();
                     }])
                     ->chunkById(1000, function ($quoteDetails) use ($quoteTypeDetail) {
