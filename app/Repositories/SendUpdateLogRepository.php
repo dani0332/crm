@@ -4,8 +4,10 @@ namespace App\Repositories;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\CarQuote;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
@@ -115,6 +117,9 @@ class SendUpdateLogRepository extends BaseRepository
             $log = $this->find($id)->update([
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
+                'car_addons' => $data['car_addons'] ?? '',
+                'emirates_registration' => $data['emirates_registration'] ?? '',
+                'seating_capacity' => $data['seating_capacity'] ?? '',
             ]);
         } catch (\Exception $ex) {
             $log = (object) [
@@ -212,7 +217,17 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSendUpdateToCustomer($data)
     {
         try {
-            $result = $this->where('id', $data['sendUpdateId'])->update([
+            $sendUpdateLog = $this->find($data['sendUpdateId']);
+            if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
+                $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
+                if (! empty($sendUpdateLog->emirates_registration)) { // will work on Change of Emirates (with no financial impact).
+                    $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_registration]);
+                } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity (with no financial impact).
+                    $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
+                }
+            }
+
+            $result = $sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             ]);
         } catch (\Exception $ex) {

@@ -173,7 +173,7 @@ const bookingDetailsForm = useForm({
   commission_vat_applicable:
     props.bookingDetails?.commission_vat_applicable ||
     props?.payments[0]?.commission_vat_applicable ||
-    '0.00',
+    '',
   total_commission:
     props.bookingDetails?.total_commission || props?.payments[0]?.commission || "",
   total_vat_amount: props.bookingDetails?.total_vat_amount || null,
@@ -470,6 +470,13 @@ const sendUpdateValidation = () => {
       if(errors.response.data.errors.error) {
         let responseError = errors.response.data.errors.error;
         Object.keys(responseError).forEach(function (key) {
+            if (
+            responseError[key] === 'Please select Addons' ||
+            responseError[key] === 'Please select Emirate' ||
+            responseError[key] === 'Please select Seating capacity'
+            ) {
+            window.scrollTo(0, 0);
+            }
           notification.error({
             title: responseError[key],
             position: "top",
@@ -591,6 +598,7 @@ const submitToCustomer = () => {
   let url = "send-update-to-customer";
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
+    quoteType: props.quoteType,
   };
   axios
     .post(url, data)

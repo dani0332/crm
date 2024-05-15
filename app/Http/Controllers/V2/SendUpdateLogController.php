@@ -110,11 +110,16 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
-        if ($this->sendUpdateLogService->checkSendUpdatePermission(explode('-', $sendUpdateLog->code)[0])) {
+        if ($this->sendUpdateLogService->checkSendUpdatePermission($sendUpdateLog->category->code)) {
             return redirect()->back()->with('error', 'You don\'t have permission to this. ');
         }
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
+        if ($quoteType == quoteTypeCode::Car) {
+            if (in_array($sendUpdateLog->option->code, [SendUpdateLogStatusEnum::CAR_AOC, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
+                $additionalField = $this->sendUpdateLogService->getAdditionalOptionsForCar($sendUpdateLog);
+            }
+        }
 
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
 
@@ -193,6 +198,7 @@ class SendUpdateLogController extends Controller
         } else {
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         }
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType, $quote);
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
@@ -222,6 +228,8 @@ class SendUpdateLogController extends Controller
             'paymentMethods' => $filteredPaymentMethods,
             'quoteRequest' => $paymentEntityModel ?? $realQuote,
             'isPolicyDetailsEnabled' => $this->sendUpdateLogService->isPolicyDetailsVisible($categoryCode, $optionCode),
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'additionalField' => $additionalField ?? [],
         ]);
     }
 
