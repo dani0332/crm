@@ -162,7 +162,7 @@ class AutomateActivitiesCommand extends Command
                                         $query->where('team_id', $renewalTeamID ?? null);
                                     })->first();
 
-                                if ($activitySchedules && !$lastActivity->is_cold) {
+                                if ($activitySchedules && ! $lastActivity->is_cold) {
                                     Activities::create([
                                         'title' => $activitySchedules->name,
                                         'description' => $activitySchedules->description,
