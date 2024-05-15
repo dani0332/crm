@@ -112,17 +112,27 @@ watch(
 );
 
 const caculateVatAmount = () => {
-  if (policyDetailsForm.amount > 0) {
-    let vat = policyDetailsForm.amount * page.props.vat.toFixed(2);
+  let amount = Number(policyDetailsForm.amount);
+  let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
+  // if price var applicable and not applicable both are there
+  if (amount > 0 && priceVatNotApplicable > 0) {
+    let vat = amount * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
     policyDetailsForm.amount_with_vat = (
-      Number(vat) + Number(policyDetailsForm.amount)
+      Number(vat) +
+      Number(amount) +
+      Number(priceVatNotApplicable)
     ).toFixed(2);
-    Number(vat) + Number(policyDetailsForm.amount);
-  } else if (policyDetailsForm.price_vat_notapplicable > 0) {
-    policyDetailsForm.amount_with_vat = Number(
-      policyDetailsForm.price_vat_notapplicable,
-    ).toFixed(2);
+  } else if (amount > 0) {
+    let vat = amount * page.props.vat.toFixed(2);
+    policyDetailsForm.vat = vat.toFixed(2);
+    policyDetailsForm.amount_with_vat = (Number(vat) + Number(amount)).toFixed(
+      2,
+    );
+  } else if (priceVatNotApplicable > 0) {
+    policyDetailsForm.amount_with_vat = Number(priceVatNotApplicable).toFixed(
+      2,
+    );
   } else {
     policyDetailsForm.vat = '';
     policyDetailsForm.amount_with_vat = '';
@@ -292,7 +302,8 @@ watch(
                   :disabled="
                     !policyDetailsState.isEditing ||
                     (page.props.quoteType != quoteTypeCodeEnum.Life &&
-                      page.props.quoteType != quoteTypeCodeEnum.Business)
+                      page.props.quoteType != quoteTypeCodeEnum.Business &&
+                      page.props.quoteType != quoteTypeCodeEnum.Health)
                   "
                 />
               </div>
@@ -340,7 +351,8 @@ watch(
                   :disabled="
                     !policyDetailsState.isEditing ||
                     (page.props.quoteType == quoteTypeCodeEnum.Life &&
-                      page.props.quoteType != quoteTypeCodeEnum.Business)
+                      page.props.quoteType != quoteTypeCodeEnum.Business &&
+                      page.props.quoteType != quoteTypeCodeEnum.Health)
                   "
                 />
               </div>
