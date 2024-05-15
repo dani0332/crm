@@ -44,73 +44,73 @@ class AutomateActivitiesCommand extends Command
         info('------------------- Automate Activities Command Started At: '.now().' -------------------');
 
         $quoteTypeDetails = [
-            CarQuote::class => [
-                'eligible_for_automate' => false,
-            ],
-            HomeQuote::class => [
-                'eligible_for_automate' => true,
-                'quote_type_id' => QuoteTypeId::Home,
-                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::HOME_RENEWALS])->first()->id,
-            ],
+            // CarQuote::class => [
+            //     'eligible_for_automate' => false,
+            // ],
+            // HomeQuote::class => [
+            //     'eligible_for_automate' => true,
+            //     'quote_type_id' => QuoteTypeId::Home,
+            //     'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::HOME_RENEWALS])->first()->id,
+            // ],
             HealthQuote::class => [
                 'eligible_for_automate' => true,
                 'quote_type_id' => QuoteTypeId::Health,
                 'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
             ],
-            LifeQuote::class => [
-                'eligible_for_automate' => false,
-            ],
-            BusinessQuote::class => [
-                'eligible_for_automate' => true,
-                'quote_type_id' => QuoteTypeId::Business,
-                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CORPLINE_RENEWALS])->first()->id,
-            ],
-            TravelQuote::class => [
-                'eligible_for_automate' => false,
-            ],
-            PersonalQuote::class => [
-                'eligible_for_automate' => true,
-                'multiple_lobs' => true,
-                'quote_type_details' => [
-                    QuoteTypeId::Pet => [
-                        'quote_type_id' => QuoteTypeId::Pet,
-                        'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::PET_RENEWALS])->first()->id,
-                    ],
-                    QuoteTypeId::Cycle => [
-                        'quote_type_id' => QuoteTypeId::Cycle,
-                        'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CYCLE_RENEWALS])->first()->id,
-                    ],
-                    QuoteTypeId::Yacht => [
-                        'quote_type_id' => QuoteTypeId::Yacht,
-                        'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::YACHT_RENEWALS])->first()->id,
-                    ],
-                ],
-            ],
+            // LifeQuote::class => [
+            //     'eligible_for_automate' => false,
+            // ],
+            // BusinessQuote::class => [
+            //     'eligible_for_automate' => true,
+            //     'quote_type_id' => QuoteTypeId::Business,
+            //     'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CORPLINE_RENEWALS])->first()->id,
+            // ],
+            // TravelQuote::class => [
+            //     'eligible_for_automate' => false,
+            // ],
+            // PersonalQuote::class => [
+            //     'eligible_for_automate' => true,
+            //     'multiple_lobs' => true,
+            //     'quote_type_details' => [
+            //         QuoteTypeId::Pet => [
+            //             'quote_type_id' => QuoteTypeId::Pet,
+            //             'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::PET_RENEWALS])->first()->id,
+            //         ],
+            //         QuoteTypeId::Cycle => [
+            //             'quote_type_id' => QuoteTypeId::Cycle,
+            //             'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CYCLE_RENEWALS])->first()->id,
+            //         ],
+            //         QuoteTypeId::Yacht => [
+            //             'quote_type_id' => QuoteTypeId::Yacht,
+            //             'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::YACHT_RENEWALS])->first()->id,
+            //         ],
+            //     ],
+            // ],
         ];
 
         foreach ($quoteTypeDetails as $quoteClass => $quoteTypeDetail) {
 
-            info('------------------- Updating Cold Activities for : '.$quoteClass.' -------------------');
-            $quoteClass::whereHas('activities', function ($activityQuery) {
-                $activityQuery->where('due_date', '<', Carbon::now());
-                $activityQuery->where('status', false);
-            })->with(['activities' => function ($activities) {
-                // $activities->where('due_date', '<', now());
-                $activities->where('due_date', '<', Carbon::now());
-                $activities->where('status', false);
-            }])
-                ->chunkById(1000, function ($quoteDetails) use ($quoteClass) {
-                    foreach ($quoteDetails as $quoteDetail) {
-                        $activitiesIDs = $quoteDetail->activities->pluck('id');
-                            Activities::whereIn('id', $activitiesIDs)->update(['is_cold' => true]);
+            // info('------------------- Updating Cold Activities for : '.$quoteClass.' -------------------');
+            // $quoteClass::whereHas('activities', function ($activityQuery) {
+            //     $activityQuery->where('due_date', '<', Carbon::now());
+            //     $activityQuery->where('status', false);
+            // })->with(['activities' => function ($activities) {
+            //     // $activities->where('due_date', '<', now());
+            //     $activities->where('due_date', '<', Carbon::now());
+            //     $activities->where('status', false);
+            // }])
+            //     ->chunkById(1000, function ($quoteDetails) use ($quoteClass) {
+            //         foreach ($quoteDetails as $quoteDetail) {
+            //             $activitiesIDs = $quoteDetail->activities->pluck('id');
+            //                 Activities::whereIn('id', $activitiesIDs)->update(['is_cold' => true]);
     
-                            if (in_array($quoteClass, [HealthQuote::class, HomeQuote::class, BusinessQuote::class, PersonalQuote::class])) {
-                                $quoteDetail->update(['is_cold' => true]);
-                            }
+            //                 if (in_array($quoteClass, [HealthQuote::class, HomeQuote::class, BusinessQuote::class, PersonalQuote::class])) {
+            //                     $quoteDetail->update(['is_cold' => true]);
+            //                 }
      
-                    }
-                });
-            info('------------------- Updated Cold Activities for : '.$quoteClass.' -------------------');
+            //         }
+            //     });
+            // info('------------------- Updated Cold Activities for : '.$quoteClass.' -------------------');
 
             if ($quoteTypeDetail['eligible_for_automate'] == true) {
 
@@ -128,18 +128,25 @@ class AutomateActivitiesCommand extends Command
                     }])
                     ->chunkById(1000, function ($quoteDetails) use ($quoteTypeDetail) {
                         foreach ($quoteDetails as $quoteDetail) {
-                            if (! empty($quoteDetail->advisor_id)) {
+                            if (! empty($quoteDetail->advisor_id) && $quoteDetail->code == 'HEA-JWEZH3Q9') {
                                 $advisorDetails = User::with('usersroles', 'teams')->where('id', $quoteDetail->advisor_id)->first();
                                 $getQuoteType = isset($quoteTypeDetail['multiple_lobs']) ?
                                     (isset($quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]) ?
                                         $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['quote_type_id'] :
                                         null) :
                                     $quoteTypeDetail['quote_type_id'];
-                                $scheduledActivitiesIDs = collect($quoteDetail->activities->pluck('activity_schedule_id'))
+
+                                    $lastActivity = Activities::where(
+                                        'quote_request_id',
+                                        $quoteDetail->id,
+                                    )->orderBy('created_at', 'desc')->first();
+                                    
+
+                                    $scheduledActivitiesIDs = collect($quoteDetail->activities->pluck('activity_schedule_id'))
                                     ->unique()->filter(function ($filter) {
                                         return ! is_null($filter);
                                     })->toArray();
-
+                                    
                                 $activitySchedules = ActivitySchedule::where([
                                     'quote_type_id' => $getQuoteType,
                                     'quote_status_id' => $quoteDetail->quote_status_id,
@@ -156,7 +163,7 @@ class AutomateActivitiesCommand extends Command
                                         $query->where('team_id', $renewalTeamID ?? null);
                                     })->first();
 
-                                if ($activitySchedules) {
+                                if ($activitySchedules && !$lastActivity->is_cold) {
                                     Activities::create([
                                         'title' => $activitySchedules->name,
                                         'description' => $activitySchedules->description,
