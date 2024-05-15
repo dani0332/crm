@@ -65,6 +65,7 @@ const isManualPlansCount = ref(0);
 const page = usePage();
 
 let countDays = ref(useDaysSinceStale(props.quoteRequest?.stale_at));
+const compareDueDate = useCompareDueDate;
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 
@@ -3205,7 +3206,7 @@ watch(
       <x-divider class="my-4" />
 
       <DataTable
-        table-class-name="compact"
+        table-class-name="overflow-hidden-table"
         :headers="activityTable"
         :items="activities"
         border-cell
@@ -3221,6 +3222,25 @@ watch(
             :disabled="status === 1"
             @change="onActivityStatusUpdate(id)"
           />
+        </template>
+        <template #item-due_date="{ due_date, is_cold }">
+          <template v-if="compareDueDate(due_date)">
+            <x-tooltip align="right" position="right">
+              <p
+                :class="
+                  compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
+                "
+              >
+                {{ due_date }} {{ is_cold }}
+              </p>
+              <template #tooltip>
+                <span
+                  >Pending overdue task! <br />Please complete immediately</span
+                >
+              </template>
+            </x-tooltip>
+          </template>
+          <span v-else>{{ due_date }} {{ is_cold }}</span>
         </template>
         <template #item-action="item">
           <div class="space-x-4">

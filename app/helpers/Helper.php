@@ -644,6 +644,20 @@ if (! function_exists('addDaysExcludeWeekend')) {
     }
 }
 
+if (!function_exists('addMinutesExcludeWeekend')) {
+    function addMinutesExcludeWeekend($minutesToAdd, $date = null)
+    {
+        $date = Carbon::parse($date) ?? Carbon::now();
+        $date = $date->addMinutes(10);
+
+        if ($date->isWeekend()) {
+            $date = $date->addHours(48);
+        }
+
+        return $date;
+    }
+}
+
 if (! function_exists('getIMLogo')) {
     function getIMLogo($isPDF = false)
     {
