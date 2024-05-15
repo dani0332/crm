@@ -14,7 +14,8 @@ use App\Enums\ManagementReportCategoriesEnum;
 class ActivePoliciesReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
-    protected $reportDateRange;
+    
+    private $reportDateRange;
 
     public function getReportData(Request $request)
     {

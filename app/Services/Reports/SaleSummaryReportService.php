@@ -16,8 +16,8 @@ class SaleSummaryReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
 
-    protected $groupByColumn;
-    protected $reportDateRange;
+    private $groupByColumn;
+    private $reportDateRange;
 
     public function getReportData(Request $request)
     {
