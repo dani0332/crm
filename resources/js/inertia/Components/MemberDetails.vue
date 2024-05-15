@@ -253,7 +253,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
           </template>
           <template #item-action="item">
             <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="flex gap-2">
-              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="top">
                 <EditMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
                 <template #tooltip>
                   This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
@@ -261,7 +261,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
               </x-tooltip>
               <EditMemberButtonReuseTemplate v-else :item="item"/>
 
-              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="top">
                 <DeleteMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
                 <template #tooltip>
                   This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'

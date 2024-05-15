@@ -245,7 +245,7 @@ const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] = crea
         </x-button>
       </SavePlanDetailsButtonTemplate>
 
-      <div class="text-right space-x-4 mt-12">
+      <div class="flex justify-end space-x-4 mt-12">
         <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_details" position="bottom">
           <SavePlanDetailsButtonReuseTemplate :isDisabled="true"/>
           <template #tooltip>

@@ -371,11 +371,11 @@ class CentralService
     {
         $quote = (object) $quote;
         $lockFunctionalities = [
-            'plan_selection' => false,
-            'plan_details' => false,
-            'lead_status' => false,
-            'lead_details' => false,
-            'memebr_details' => false,
+            'plan_selection' => true,
+            'plan_details' => true,
+            'lead_status' => true,
+            'lead_details' => true,
+            'memebr_details' => true,
             'manage_payment' => false,
         ];
 
