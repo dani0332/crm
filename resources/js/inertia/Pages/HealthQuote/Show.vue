@@ -58,6 +58,7 @@ const props = defineProps({
   noteDocumentType: Object,
   quoteNotes: Object,
   clientInquiryLogs: Array,
+  hashCollapsibleStatuses: Boolean,
 });
 
 const isManualPlansCount = ref(0);
@@ -67,6 +68,8 @@ const page = usePage();
 let countDays = ref(useDaysSinceStale(props.quoteRequest?.stale_at));
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
+
+let showPlans = ref(props.hashCollapsibleStatuses);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -2704,162 +2707,192 @@ watch(
     </div> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Available Plans
-          <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
-        </h3>
-        <div class="flex flex-wrap gap-3">
-          <x-button-group v-if="selectedPlans.length > 0" size="sm">
-            <x-button
-              @click.prevent="onTogglePlans(false)"
-              :loading="toggleLoader"
-            >
-              Show
-            </x-button>
-            <x-button
-              @click.prevent="onTogglePlans(true)"
-              :loading="toggleLoader"
-            >
-              Hide
-            </x-button>
-          </x-button-group>
+      <Collapsible :expanded="showPlans">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Available Plans
+              <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4"></x-divider>
+          <div class="flex flex-wrap gap-3 justify-end my-2">
+            <x-button-group v-if="selectedPlans.length > 0" size="sm">
+              <x-button
+                @click.prevent="onTogglePlans(false)"
+                :loading="toggleLoader"
+              >
+                Show
+              </x-button>
+              <x-button
+                @click.prevent="onTogglePlans(true)"
+                :loading="toggleLoader"
+              >
+                Hide
+              </x-button>
+            </x-button-group>
 
-          <x-button
-            v-if="selectedPlans.length > 0"
-            size="sm"
-            color="emerald"
-            @click.prevent="onExportPlans"
-            :loading="exportLoader"
-          >
-            Download PDF
-          </x-button>
+            <x-button
+              v-if="selectedPlans.length > 0"
+              size="sm"
+              color="emerald"
+              @click.prevent="onExportPlans"
+              :loading="exportLoader"
+            >
+              Download PDF
+            </x-button>
 
-          <x-button
-            v-if="plansTable.data.length > 0"
-            size="sm"
-            color="orange"
-            @click.prevent="
-              onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
-            "
-          >
-            Copy Link
-          </x-button>
-          <x-badge
-            size="sm"
-            color="error"
-            outlined
-            animated
-            :show="planFiltersCount > 0"
-          >
             <x-button
               v-if="plansTable.data.length > 0"
               size="sm"
-              color="primary"
-              @click.prevent="modals.planFilters = true"
-            >
-              Filters
-            </x-button>
-            <template #content> {{ planFiltersCount }} </template>
-          </x-badge>
-
-          <x-button
-            v-if="
-              hasAnyRole([
-                rolesEnum.BetaUser,
-                rolesEnum.RMAdvisor,
-                rolesEnum.HealthManager,
-              ])
-            "
-            size="sm"
-            color="emerald"
-            @click.prevent="modals.createPlan = true"
-          >
-            Add Plan
-          </x-button>
-        </div>
-      </div>
-      <DataTable
-        ref="planDataTable"
-        v-model:items-selected="selectedPlans"
-        table-class-name="tablefixed compact"
-        :headers="plansTable.columns"
-        :items="listQuotePlansFiltered || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        class="flex-wrap"
-        :sort-by="'actualPremium'"
-        :sort-type="'asc'"
-        :hide-footer="listQuotePlansFiltered.length < 15"
-      >
-        <template #item-copayName="item">
-          <span class="copay-max">{{ item.copayName }}</span>
-        </template>
-        <template #item-planTypeId="item">
-          <span class="copay-max">{{ item.plan_type }}</span>
-        </template>
-        <template #item-providerName="{ providerName, isManualPlan, isHidden }">
-          <p>{{ providerName }}</p>
-          <div class="flex gap-1">
-            <x-tag
-              v-if="isManualPlan"
-              size="xs"
-              color="primary"
-              class="mt-0.5 text-[10px]"
-            >
-              Manual Plan
-            </x-tag>
-            <x-tag
-              v-if="isHidden"
-              size="xs"
-              color="error"
-              class="mt-0.5 text-[10px]"
-            >
-              Hidden
-            </x-tag>
-            <x-tag
-              v-if="!isHidden"
-              size="xs"
-              color="success"
-              class="mt-0.5 text-[10px]"
-            >
-              Currently Online
-            </x-tag>
-          </div>
-        </template>
-        <template
-          #item-total="{ actualPremium, policyFee, basmah, vat, loadingPrice }"
-        >
-          {{
-            fixedValue(
-              actualPremium +
-                (policyFee || 0) +
-                (basmah || 0) +
-                vat +
-                (loadingPrice || 0),
-            )
-          }}
-        </template>
-        <template #item-action="item">
-          <div class="flex gap-2 pr-2">
-            <!-- put here -->
-            <!-- don't remove this commented code anyone please -->
-            <template
-              v-if="
-                (item.isManualPlan && membersDetailsUpdated) ||
-                item.needPriceUpdate
+              color="orange"
+              @click.prevent="
+                onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
               "
             >
-              <!-- always false temporarily -->
-              <x-tooltip position="top" class="arrow-b">
-                <x-badge
+              Copy Link
+            </x-button>
+            <x-badge
+              size="sm"
+              color="error"
+              outlined
+              animated
+              :show="planFiltersCount > 0"
+            >
+              <x-button
+                v-if="plansTable.data.length > 0"
+                size="sm"
+                color="primary"
+                @click.prevent="modals.planFilters = true"
+              >
+                Filters
+              </x-button>
+              <template #content> {{ planFiltersCount }} </template>
+            </x-badge>
+
+            <x-button
+              v-if="
+                hasAnyRole([
+                  rolesEnum.BetaUser,
+                  rolesEnum.RMAdvisor,
+                  rolesEnum.HealthManager,
+                ])
+              "
+              size="sm"
+              color="emerald"
+              @click.prevent="modals.createPlan = true"
+            >
+              Add Plan
+            </x-button>
+          </div>
+          <DataTable
+            ref="planDataTable"
+            v-model:items-selected="selectedPlans"
+            table-class-name="tablefixed compact"
+            :headers="plansTable.columns"
+            :items="listQuotePlansFiltered || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            class="flex-wrap"
+            :sort-by="'actualPremium'"
+            :sort-type="'asc'"
+            :hide-footer="listQuotePlansFiltered.length < 15"
+          >
+            <template #item-copayName="item">
+              <span class="copay-max">{{ item.copayName }}</span>
+            </template>
+            <template #item-planTypeId="item">
+              <span class="copay-max">{{ item.plan_type }}</span>
+            </template>
+            <template
+              #item-providerName="{ providerName, isManualPlan, isHidden }"
+            >
+              <p>{{ providerName }}</p>
+              <div class="flex gap-1">
+                <x-tag
+                  v-if="isManualPlan"
+                  size="xs"
+                  color="primary"
+                  class="mt-0.5 text-[10px]"
+                >
+                  Manual Plan
+                </x-tag>
+                <x-tag
+                  v-if="isHidden"
                   size="xs"
                   color="error"
-                  outlined
-                  offset-x="-8"
-                  offset-y="-10"
+                  class="mt-0.5 text-[10px]"
                 >
+                  Hidden
+                </x-tag>
+                <x-tag
+                  v-if="!isHidden"
+                  size="xs"
+                  color="success"
+                  class="mt-0.5 text-[10px]"
+                >
+                  Currently Online
+                </x-tag>
+              </div>
+            </template>
+            <template
+              #item-total="{
+                actualPremium,
+                policyFee,
+                basmah,
+                vat,
+                loadingPrice,
+              }"
+            >
+              {{
+                fixedValue(
+                  actualPremium +
+                    (policyFee || 0) +
+                    (basmah || 0) +
+                    vat +
+                    (loadingPrice || 0),
+                )
+              }}
+            </template>
+            <template #item-action="item">
+              <div class="flex gap-2 pr-2">
+                <!-- put here -->
+                <!-- don't remove this commented code anyone please -->
+                <template
+                  v-if="
+                    (item.isManualPlan && membersDetailsUpdated) ||
+                    item.needPriceUpdate
+                  "
+                >
+                  <!-- always false temporarily -->
+                  <x-tooltip position="top" class="arrow-b">
+                    <x-badge
+                      size="xs"
+                      color="error"
+                      outlined
+                      offset-x="-8"
+                      offset-y="-10"
+                    >
+                      <x-button
+                        size="xs"
+                        color="primary"
+                        outlined
+                        @click.prevent="planClicked(item)"
+                      >
+                        View
+                      </x-button>
+                      <template #content>!</template>
+                    </x-badge>
+                    <template #tooltip>
+                      Price outdated! <br />
+                      Please update
+                    </template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
                   <x-button
                     size="xs"
                     color="primary"
@@ -2868,178 +2901,165 @@ watch(
                   >
                     View
                   </x-button>
-                  <template #content>!</template>
-                </x-badge>
-                <template #tooltip>
-                  Price outdated! <br />
-                  Please update
                 </template>
-              </x-tooltip>
-            </template>
-            <template v-else>
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="planClicked(item)"
-              >
-                View
-              </x-button>
-            </template>
-            <x-button
-              size="xs"
-              color="emerald"
-              outlined
-              @click.prevent="
-                onCopyText(
-                  ecomHealthInsuranceQuoteUrl +
-                    quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
-                )
-              "
-            >
-              Copy
-            </x-button>
+                <x-button
+                  size="xs"
+                  color="emerald"
+                  outlined
+                  @click.prevent="
+                    onCopyText(
+                      ecomHealthInsuranceQuoteUrl +
+                        quote.uuid +
+                        `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
+                    )
+                  "
+                >
+                  Copy
+                </x-button>
 
-            <span>
-              <SelectPlan
-                v-if="selectedProviderPlan.id != item.id"
-                @update:selectedPlanChanged="handlePlanSelected"
-                :plan="item"
-                :quoteType="quoteType"
-                :uuid="quote.uuid"
+                <span>
+                  <SelectPlan
+                    v-if="selectedProviderPlan.id != item.id"
+                    @update:selectedPlanChanged="handlePlanSelected"
+                    :plan="item"
+                    :quoteType="quoteType"
+                    :uuid="quote.uuid"
+                  />
+
+                  <x-button
+                    v-else
+                    size="xs"
+                    color="orange"
+                    outlined
+                    :disabled="true"
+                  >
+                    Selected
+                  </x-button>
+                </span>
+              </div>
+            </template>
+          </DataTable>
+
+          <LazyAvailablePlan
+            v-model="modals.plan"
+            :plan="selectedPlan"
+            :genders="genderOptions"
+            :members="membersDetail"
+            :memberCategories="memberCategories"
+            :memebersDetailsChanged="membersDetailsUpdated"
+            @copay-update="onSelectedCopay"
+            @onLoadAvailablePlansData="onLoadAvailablePlansData"
+            @membersDetailsReviewed="onRecieveMembersDetailsReview"
+            @markPlanAsManual="onMarkPlanAsManual"
+          />
+
+          <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
+            <template #header> Add Plan </template>
+            <LazyCreatePlan
+              :uuid="quote.uuid"
+              :members="membersDetail"
+              :genders="genderOptions"
+              @success="onCreatePlan"
+              @error="onPlanError"
+            />
+          </x-modal>
+
+          <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
+            <template #header> Filters </template>
+
+            <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
+              <ComboBox
+                v-model="planFilters.insurer"
+                label="Insurer"
+                :options="insuranceProviders"
+                :loading="planFilters.processing"
+                select-all
+                deselect-all
               />
+              <ComboBox
+                v-model="planFilters.network"
+                :label="
+                  planFilters.insurer?.length == 0
+                    ? 'Network (please select insurer first)'
+                    : 'Network'
+                "
+                :options="options.network"
+                :disabled="planFilters.insurer?.length == 0"
+                select-all
+                deselect-all
+              />
+              <div>
+                <x-tooltip position="right" class="arrow-l">
+                  <label
+                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+                  >
+                    Manual Plan
+                  </label>
+                  <template #tooltip>Manually Added Plans</template>
+                </x-tooltip>
+                <x-select
+                  v-model="planFilters.manual_plan"
+                  :options="[
+                    { value: '', label: 'All' },
+                    { value: '1', label: 'Yes' },
+                    { value: '0', label: 'No' },
+                  ]"
+                  class="w-full"
+                />
+              </div>
 
+              <div>
+                <x-tooltip position="right" class="arrow-l">
+                  <label
+                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+                  >
+                    Currently Online
+                  </label>
+                  <template #tooltip>
+                    Plans that are Currently Online
+                  </template>
+                </x-tooltip>
+                <x-select
+                  v-model="planFilters.current_online"
+                  :options="[
+                    { value: '', label: 'All' },
+                    { value: '1', label: 'Yes' },
+                    { value: '0', label: 'No' },
+                  ]"
+                  class="w-full"
+                />
+              </div>
+
+              <ComboBox
+                v-model="planFilters.plan_types"
+                :label="'Plan Type'"
+                :options="planTypes"
+                :disabled="planFilters.plan_types?.length == 0"
+                select-all
+                deselect-all
+              />
+            </div>
+
+            <div class="flex justify-end gap-3 mb-4">
               <x-button
-                v-else
-                size="xs"
-                color="orange"
-                outlined
-                :disabled="true"
+                size="sm"
+                color="#ff5e00"
+                type="submit"
+                @click="onPlanFiltersSubmit"
               >
-                Selected
+                Apply
               </x-button>
-            </span>
-          </div>
+              <x-button
+                size="sm"
+                color="primary"
+                @click.prevent="onPlanFiltersReset"
+              >
+                Reset
+              </x-button>
+            </div>
+          </x-modal>
         </template>
-      </DataTable>
-
-      <LazyAvailablePlan
-        v-model="modals.plan"
-        :plan="selectedPlan"
-        :genders="genderOptions"
-        :members="membersDetail"
-        :memberCategories="memberCategories"
-        :memebersDetailsChanged="membersDetailsUpdated"
-        @copay-update="onSelectedCopay"
-        @onLoadAvailablePlansData="onLoadAvailablePlansData"
-        @membersDetailsReviewed="onRecieveMembersDetailsReview"
-        @markPlanAsManual="onMarkPlanAsManual"
-      />
-
-      <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
-        <template #header> Add Plan </template>
-        <LazyCreatePlan
-          :uuid="quote.uuid"
-          :members="membersDetail"
-          :genders="genderOptions"
-          @success="onCreatePlan"
-          @error="onPlanError"
-        />
-      </x-modal>
-
-      <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
-        <template #header> Filters </template>
-
-        <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
-          <ComboBox
-            v-model="planFilters.insurer"
-            label="Insurer"
-            :options="insuranceProviders"
-            :loading="planFilters.processing"
-            select-all
-            deselect-all
-          />
-          <ComboBox
-            v-model="planFilters.network"
-            :label="
-              planFilters.insurer?.length == 0
-                ? 'Network (please select insurer first)'
-                : 'Network'
-            "
-            :options="options.network"
-            :disabled="planFilters.insurer?.length == 0"
-            select-all
-            deselect-all
-          />
-          <div>
-            <x-tooltip position="right" class="arrow-l">
-              <label
-                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
-              >
-                Manual Plan
-              </label>
-              <template #tooltip>Manually Added Plans</template>
-            </x-tooltip>
-            <x-select
-              v-model="planFilters.manual_plan"
-              :options="[
-                { value: '', label: 'All' },
-                { value: '1', label: 'Yes' },
-                { value: '0', label: 'No' },
-              ]"
-              class="w-full"
-            />
-          </div>
-
-          <div>
-            <x-tooltip position="right" class="arrow-l">
-              <label
-                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
-              >
-                Currently Online
-              </label>
-              <template #tooltip> Plans that are Currently Online </template>
-            </x-tooltip>
-            <x-select
-              v-model="planFilters.current_online"
-              :options="[
-                { value: '', label: 'All' },
-                { value: '1', label: 'Yes' },
-                { value: '0', label: 'No' },
-              ]"
-              class="w-full"
-            />
-          </div>
-
-          <ComboBox
-            v-model="planFilters.plan_types"
-            :label="'Plan Type'"
-            :options="planTypes"
-            :disabled="planFilters.plan_types?.length == 0"
-            select-all
-            deselect-all
-          />
-        </div>
-
-        <div class="flex justify-end gap-3 mb-4">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            type="submit"
-            @click="onPlanFiltersSubmit"
-          >
-            Apply
-          </x-button>
-          <x-button
-            size="sm"
-            color="primary"
-            @click.prevent="onPlanFiltersReset"
-          >
-            Reset
-          </x-button>
-        </div>
-      </x-modal>
+      </Collapsible>
     </div>
 
     <MigratePayment
