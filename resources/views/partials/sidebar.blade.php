@@ -28,9 +28,6 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('dashboard/car-conversion') }}">Car Conversion</a></li>
                             <li><a href="{{ url('dashboard/travel-conversion') }}">Travel Conversion</a></li>
                             @endcan
-                            @can(PermissionsEnum::TPL_DASHBOARD_VIEW)
-                            <li><a href="{{ url('/tpl-conversion-dashboard') }}">TPL Conversion</a></li>
-                            @endcan
                             @can(PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW)
                             <li><a href="{{ url('/comprehensive-conversion-dashboard') }}">Comprehensive Conversion</a></li>
                             @endcan

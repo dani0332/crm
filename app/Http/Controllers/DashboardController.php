@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Team;
 use App\Models\Tier;
+use App\Services\ComprehensiveConversionDashboardService;
 use App\Services\DashboardService;
 use App\Services\TierService;
 use App\Traits\TeamHierarchyTrait;
@@ -29,6 +31,9 @@ class DashboardController extends Controller
     {
         $this->dashboardService = $dashboardService;
         $this->tierService = $tierService;
+
+        $comprehensiveDashboardPermissions = implode('|', PermissionsEnum::getComprehensiveDashboardPermissions());
+        $this->middleware(['permission:'.$comprehensiveDashboardPermissions], ['only' => ['renderComprehensiveDashboard']]);
     }
 
     /**
@@ -420,22 +425,16 @@ class DashboardController extends Controller
         return (count($userTeams) > 0 && count($teamsByProduct) > 0) ? array_intersect($userTeams, $teamsByProduct) : [];
     }
 
-    public function renderComprehensiveDashboard(Request $request)
+    public function renderComprehensiveDashboard(Request $request, ComprehensiveConversionDashboardService $comprehensiveConversionDashboardService)
     {
-
-        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
-        $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
+        $comprehensiveDashboardStats = $comprehensiveConversionDashboardService->getReportData($request);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
-        $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
-        $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-        $teams = $teams->filter(function ($item) use ($commonTeams) {
-            return in_array($item->id, $commonTeams);
-        });
 
         return inertia('Dashboard/ComperhensiveConversion', [
-            'comprehensiveDashboardStats' => $comprehensiveDashboardStats,
-            'teams' => $teams,
-            'tiers' => $tiers,
+            'reportData' => $comprehensiveDashboardStats,
+            'filtersByLob' => $comprehensiveConversionDashboardService->getFiltersByLob(),
+            'filterOptions' => $comprehensiveConversionDashboardService->getFilterOptions(),
+            'defaultFilters' => $comprehensiveConversionDashboardService->getDefaultFilters(),
         ]);
     }
 

@@ -117,12 +117,14 @@ class UserController extends Controller
             $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
             if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
-                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name));
-                    $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
-                    if (empty($isLead)) {
-                        $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
-                    } else {
-                        $this->leadAllocationService->createLeadAllocationRecord($user->id);
+                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name)) ?? null;
+                    if (! empty($quoteTypeId)) {
+                        $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
+                        if (empty($isLead)) {
+                            $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                        } else {
+                            $this->leadAllocationService->createLeadAllocationRecord($user->id);
+                        }
                     }
                 }
             }
@@ -254,14 +256,16 @@ class UserController extends Controller
             $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
             if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
-                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name));
-                    $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
-                    if (empty($isLead)) {
-                        $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
-                    } else {
-                        $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active, $quoteTypeId);
-                    }
+                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name)) ?? null;
+                    if (! empty($quoteTypeId)) {
 
+                        $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
+                        if (empty($isLead)) {
+                            $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                        } else {
+                            $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active, $quoteTypeId);
+                        }
+                    }
                 }
             }
         }
