@@ -360,7 +360,7 @@ trait GenericQueriesAllLobs
 
     private function isLackingPayment($payment)
     {
-        if ($payment) {
+        if ($payment && !$payment->isEmpty()) {
             $payment = $payment->first();
             $paymentTotalPrice = $payment->total_price + $payment->discount_value;
             $sumOfSplitPayment = $payment->paymentSplits()->sum('payment_amount');
