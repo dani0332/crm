@@ -279,7 +279,7 @@ final class PermissionsEnum extends Enum
     public const PET_COMPREHENSIVE_DASHBOARD = 'pet-comprehensive-dashboard';
     public const CYCLE_COMPREHENSIVE_DASHBOARD = 'cycle-comprehensive-dashboard';
     public const YACHT_COMPREHENSIVE_DASHBOARD = 'yacht-comprehensive-dashboard';
-    public const BUSINESS_COMPREHENSIVE_DASHBOARD = 'business-comprehensive-dashboard';
+    public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
 
     public static function getAdvisorConverionReportPermissions()
@@ -311,7 +311,7 @@ final class PermissionsEnum extends Enum
             PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD,
             PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD,
             PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::BUSINESS_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
             PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
         ];
     }

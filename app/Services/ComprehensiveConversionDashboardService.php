@@ -155,7 +155,7 @@ class ComprehensiveConversionDashboardService extends BaseService
             quoteTypeCode::Yacht => PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
             quoteTypeCode::Life => PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD,
             quoteTypeCode::Home => PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD,
-            quoteTypeCode::Business => PermissionsEnum::BUSINESS_COMPREHENSIVE_DASHBOARD,
+            quoteTypeCode::Business => PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
         ];
 
         $lobs = array_filter($lobs, function ($permission) {

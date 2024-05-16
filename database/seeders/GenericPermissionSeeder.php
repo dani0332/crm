@@ -313,14 +313,14 @@ class GenericPermissionSeeder extends Seeder
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ],
-            PermissionsEnum::BUSINESS_COMPREHENSIVE_DASHBOARD => [
-                RolesEnum::BusinessManager,
+            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::CorplineManager,
                 RolesEnum::SeniorManagement,
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ],
             PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD => [
-                RolesEnum::BusinessManager,
+                RolesEnum::GMManager,
                 RolesEnum::SeniorManagement,
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
