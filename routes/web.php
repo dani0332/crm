@@ -165,7 +165,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
             Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
 
-
             // health revival
             Route::get('health-revival', [HealthRevivalQuoteController::class, 'index'])->name('healthrevival-quotes-list');
         });

@@ -6,7 +6,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\HealthQuote;
-use App\Models\LeadSource;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use Illuminate\Support\Facades\Auth;
@@ -32,13 +31,13 @@ class HealthRevivalQuoteRepository extends BaseRepository
             'memberCategory',
             'currentProvider',
             'healthLeadType',
-            'healthQuoteRequestDetail.lostReason'
+            'healthQuoteRequestDetail.lostReason',
         ])->where('source', LeadSourceEnum::REVIVAL)
 
             ->filter();
-        if (!empty($request->assignment_type)) {
+        if (! empty($request->assignment_type)) {
             $query->where('assignment_type', $request->assignment_type);
-        } if (!empty($request->advisors)) {
+        } if (! empty($request->advisors)) {
             $query->whereIn('advisor_id', $request->advisors);
         }
         $query->orderBy('created_at', 'desc');
