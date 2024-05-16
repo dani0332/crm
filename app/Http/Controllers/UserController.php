@@ -110,10 +110,10 @@ class UserController extends Controller
                 return QuoteTypes::BUSINESS->value;
                 break;
             default:
-             return QuoteTypes::BUSINESS->value;
+                return QuoteTypes::BUSINESS->value;
                 break;
         }
-        
+
     }
     public function store(Request $request)
     {
