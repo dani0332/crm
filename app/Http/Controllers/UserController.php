@@ -100,6 +100,21 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function getBusinessQuoteType($type)
+    {
+        switch ($type) {
+            case QuoteTypes::CORPLINE->value:
+                return QuoteTypes::BUSINESS->value;
+                break;
+            case QuoteTypes::GROUP_MEDICAL->value:
+                return QuoteTypes::BUSINESS->value;
+                break;
+            default:
+                return QuoteTypes::BUSINESS->value;
+                break;
+        }
+
+    }
     public function store(Request $request)
     {
         $this->validate($request, [
@@ -117,7 +132,12 @@ class UserController extends Controller
             $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
             if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
-                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name)) ?? null;
+                    if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
+                        $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
+                    } else {
+                        $quoteTypeName = $type->name;
+                    }
+                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($quoteTypeName)) ?? null;
                     if (! empty($quoteTypeId)) {
                         $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
                         if (empty($isLead)) {
@@ -256,9 +276,13 @@ class UserController extends Controller
             $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
             if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
-                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name)) ?? null;
+                    if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
+                        $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
+                    } else {
+                        $quoteTypeName = $type->name;
+                    }
+                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($quoteTypeName)) ?? null;
                     if (! empty($quoteTypeId)) {
-
                         $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
                         if (empty($isLead)) {
                             $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
