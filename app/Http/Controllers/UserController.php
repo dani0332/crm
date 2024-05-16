@@ -103,6 +103,12 @@ class UserController extends Controller
 
     public function getBusinessQuoteType($type){
         switch ($type) {
+            case QuoteTypes::CORPLINE->value:
+                return QuoteTypes::BUSINESS->value;
+                break;
+            case QuoteTypes::GROUP_MEDICAL->value:
+                return QuoteTypes::BUSINESS->value;
+                break;
             default:
              return QuoteTypes::BUSINESS->value;
                 break;
