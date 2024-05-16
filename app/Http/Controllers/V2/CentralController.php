@@ -326,8 +326,8 @@ class CentralController extends Controller
 
     private function updatePaymentAllocationStatus($payment, $quote)
     {
-        if (in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
-            $payment->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
+        if (in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW])) {
+            $payment->payment_allocation_status = null;
         } else {
             $totalAmount = $payment->captured_amount + $payment->discount_value;
             $priceWithVat = $quote->price_with_vat;
@@ -395,7 +395,7 @@ class CentralController extends Controller
 
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
-        if ($payment && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+        if ($payment) {
             $this->updatePaymentAllocationStatus($payment, $quote);
             if (in_array($payment->frequency, ['upfront', 'semi_annual', 'quarterly', 'monthly', 'custom'])) {
                 $paymentSplit = $paymentSplits->first();
@@ -411,7 +411,7 @@ class CentralController extends Controller
     private function handleInsufficientPayment($request, $payment)
     {
         if ($request->is_send_policy && $payment) {
-            $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+            // $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
             $payment->transaction_payment_status = $request->transaction_payment_status;
             $payment->save();
         }
