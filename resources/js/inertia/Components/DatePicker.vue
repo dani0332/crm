@@ -45,6 +45,10 @@ const props = defineProps({
     type: String,
     default: 'md',
   },
+  onlySelect: {
+    type: Boolean,
+    default: false,
+  },
   maxDate: {
     type: Date,
     default: null,
@@ -114,6 +118,7 @@ const onlyCurentYear = () => {
         :error="props.customError ? props.customError : ''"
         @update:modelValue="onInput"
         @blur="onBlur"
+        :readonly="props.onlySelect"
       />
       <div
         v-if="!props.disabled"

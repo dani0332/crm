@@ -17,14 +17,15 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
-        $healthManagerAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)->first();
-        if (! $healthManagerAccess) {
+        $managementReport = Permission::where('name', PermissionsEnum::MANAGEMENT_REPORT)->first();
+        if (! $managementReport) {
             Permission::create([
-                'name' => PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
+                'name' => PermissionsEnum::MANAGEMENT_REPORT,
                 'guard_name' => 'web',
             ]);
         }
 
+        // Add Permission to Admin
         $healthQuoteAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_ACCESS)->first();
         if (! $healthQuoteAccess) {
             Permission::create([
@@ -68,12 +69,8 @@ class GenericPermissionSeeder extends Seeder
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
-            $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS);
-        }
-
-        if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
-            $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS);
+        if (! $role->hasPermissionTo(PermissionsEnum::MANAGEMENT_REPORT)) {
+            $role->givePermissionTo(PermissionsEnum::MANAGEMENT_REPORT);
         }
 
         // Plans Selection & Plan Details Section Permissions
@@ -174,7 +171,8 @@ class GenericPermissionSeeder extends Seeder
     private function embeddedProductSeeds()
     {
         // update name of existing permission
-        Permission::where(['name' => 'embedded-product-view'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR]);
+        Permission::where(['name' => 'embedded-product-advisor'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR]);
+        Permission::where(['name' => 'embedded-product-admin'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_ADMIN]);
 
         $permissionList = [
             PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR => [

@@ -19,6 +19,7 @@ enum QuoteTypes: string
     case PERSONAL = 'Personal';
     case GROUP_MEDICAL = 'Group Medical';
     case CORPLINE = 'Corpline';
+    case CAR_REVIVAL = 'CarRevival';
 
     public function id(): string
     {
@@ -62,5 +63,25 @@ enum QuoteTypes: string
         ];
 
         return $types[$value];
+    }
+
+    public static function getIdFromValue(string $value): ?int
+    {
+        return self::getId(match (ucfirst($value)) {
+            'Car' => QuoteTypes::CAR,
+            'Home' => QuoteTypes::HOME,
+            'Health' => QuoteTypes::HEALTH,
+            'Life' => QuoteTypes::LIFE,
+            'Business' => QuoteTypes::BUSINESS,
+            'Bike' => QuoteTypes::BIKE,
+            'Yacht' => QuoteTypes::YACHT,
+            'Travel' => QuoteTypes::TRAVEL,
+            'Pet' => QuoteTypes::PET,
+            'Cycle' => QuoteTypes::CYCLE,
+            'Jetski' => QuoteTypes::JETSKI,
+            'Corpline' => QuoteTypes::CORPLINE,
+            'Group Medical' => QuoteTypes::GROUP_MEDICAL,
+            default => null,
+        });
     }
 }

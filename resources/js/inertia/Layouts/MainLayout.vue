@@ -15,6 +15,7 @@ const onLogout = () => {
     window.location.href = '/login';
   });
 };
+
 </script>
 
 <template>
@@ -246,7 +247,7 @@ const onLogout = () => {
             </div>
 
             <div class="flex gap-3 items-center">
-                <OnlineStatusToggle
+               <OnlineStatusToggle
                     :user="user"
                 />
               <!-- <UserStatus /> -->

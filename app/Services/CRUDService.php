@@ -6,7 +6,6 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -19,12 +18,9 @@ use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
 use App\Models\GenericModel;
 use App\Models\PaymentAction;
 use App\Models\QuoteStatusLog;
-use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -577,82 +573,6 @@ class CRUDService extends BaseService
         ];
 
         $response = Ken::request('/toggle-embedded-product', 'post', $toggleData);
-
-        return $response;
-    }
-
-    public function cancelPayment($request)
-    {
-        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
-        $type = QuoteType::where('code', $request->modelType)->first();
-
-        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $request->quote_id)
-            ->where('quote_type_id', $type->id)
-            ->where('is_selected', true)
-            ->whereIn('product_id', $embeddedProductOptionsIds)
-            ->get();
-
-        if ($embededTransaction->isNotEmpty()) {
-            if (! empty($embededTransaction[0]['payments'][0])) {
-                $transaction = $embededTransaction[0];
-
-                $payment = $transaction['payments'][0];
-                $paymentStatus = $payment['payment_status_id'];
-
-                $maxAmount = 0;
-                $errorMessage = 'Cancel amount should not exceeded from transaction amount';
-                if (in_array($paymentStatus, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])) {
-                    $maxAmount = $payment->premium_captured - $payment->premium_refunded;
-                } elseif ($paymentStatus === PaymentStatusEnum::AUTHORISED) {
-                    $maxAmount = $payment->premium_authorized - $payment->premium_refunded;
-                } else {
-                    $errorMessage = 'Invalid Payment status';
-                }
-
-                if ($maxAmount >= $request->amount) {
-                    PaymentAction::create([
-                        'payment_code' => $transaction->code,
-                        'is_fulfilled' => 0,
-                        'action_type' => 'REFUND',
-                        'reason' => $request->reason,
-                        'amount' => $request->amount,
-                        'created_by' => auth()->user()->email,
-                        'is_manager_approved' => 1,
-
-                    ]);
-                    $data = [
-                        'uuid' => $request->uuid,
-                        'type_id' => $type->id,
-                        'code' => $transaction->code,
-
-                    ];
-                    $processResponse = $this->processCancelPayment($data);
-
-                    return response($processResponse, 200);
-                } else {
-                    return response([$errorMessage], 403);
-                }
-            } else {
-                return response(['Payment not exist'], 403);
-            }
-        }
-
-        return response(['Transaction does not exist'], 403);
-    }
-
-    public function processCancelPayment($data)
-    {
-        $planData = [
-            'quoteUID' => $data['uuid'],
-            'quoteTypeId' => $data['type_id'],
-            'payments' => [
-                [
-                    'codeRef' => $data['code'],
-                ],
-            ],
-        ];
-
-        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
 
         return $response;
     }

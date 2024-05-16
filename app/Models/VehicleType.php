@@ -39,4 +39,9 @@ class VehicleType extends BaseModel
     {
         return self::processGetBaseDSL($filters, false);
     }
+
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
 }

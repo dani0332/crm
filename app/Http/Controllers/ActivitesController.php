@@ -68,14 +68,19 @@ class ActivitesController extends Controller
     public function store(ActivitiesRequest $request)
     {
         $record = '';
+        $quoteType = $request->parentType;
         if (isset($request->entityId)) {
             $record = $this->crudService->getEntity($request->modelType, $request->entityUId);
         }
         $this->activitiesService->createActivity($request, $record);
+        if (isset($request->is_car_revival)) {
+            $quoteType = quoteTypeCode::Car_Revival;
+        }
+
         if (isset($request->isActivityView)) {
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         } else {
-            return redirect()->to('/quotes/'.strtolower($request->parentType).'/'.$request->entityUId)->with('success', ' Activity has been Created');
+            return redirect()->to('/quotes/'.strtolower($quoteType).'/'.$request->entityUId)->with('success', ' Activity has been Created');
         }
     }
 
@@ -143,11 +148,12 @@ class ActivitesController extends Controller
             QuoteTypeId::Life,
             QuoteTypeId::Car,
         ];
-        if (isset($request->quoteType) && in_array($request->quoteType, $types)) {
+        if ((isset($request->quoteType) && in_array($request->quoteType, $types)) || isset($request->isInertia)) {
             return redirect()->back();
         }
 
         return redirect('/activities')->with('success', 'Activity updated successfully');
+
     }
 
     /**

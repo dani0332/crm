@@ -6,6 +6,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\ApplicationStorage;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
@@ -15,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
@@ -756,6 +758,36 @@ if (! function_exists('strToFloat')) {
     function strToFloat($value): float
     {
         return floatval(str_replace(',', '', $value));
+    }
+}
+
+if (! function_exists('getMyAlfredCampaign')) {
+    function getMyAlfredCampaign($campaignId)
+    {
+        $response = Http::get(config('constants.MA_V1_ENDPOINT').'/campaigns/'.$campaignId);
+
+        if ($response->ok()) {
+            $response = $response->object();
+
+            if ($response->data && $response->data->isActive) {
+                return $response;
+            }
+        }
+
+        return null;
+    }
+}
+
+if (! function_exists('getAppStorageValueByKey')) {
+    function getAppStorageValueByKey($keyName)
+    {
+        $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+
+        if (! $query) {
+            return false;
+        }
+
+        return $query->value;
     }
 }
 
