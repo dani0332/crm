@@ -241,7 +241,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Policy Number</label
                   >
                   <template #tooltip>
@@ -261,7 +261,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >ISSUANCE DATE</label
                   >
                   <template #tooltip>
@@ -283,7 +283,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Price (VAT NOT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -310,7 +310,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Start Date</label
                   >
                   <template #tooltip>
@@ -332,7 +332,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Price (VAT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -359,7 +359,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Expiry Date</label
                   >
                   <template #tooltip>
@@ -385,7 +385,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Total VAT Amount</label
                   >
                   <template #tooltip>
@@ -406,7 +406,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Total Price</label
                   >
                   <template #tooltip>
@@ -427,7 +427,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Insurer Quote Number</label
                   >
                   <template #tooltip>
@@ -447,7 +447,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Issuance Status</label
                   >
                   <template #tooltip>
