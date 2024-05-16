@@ -100,8 +100,8 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-
-    public function getBusinessQuoteType($type){
+    public function getBusinessQuoteType($type)
+    {
         switch ($type) {
             case QuoteTypes::CORPLINE->value:
                 return QuoteTypes::BUSINESS->value;
@@ -132,10 +132,9 @@ class UserController extends Controller
             $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
             if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
-                    if(in_array(ucfirst($type->name),[QuoteTypes::CORPLINE->value,QuoteTypes::GROUP_MEDICAL->value])){
+                    if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
                         $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
-                    }
-                    else {
+                    } else {
                         $quoteTypeName = $type->name;
                     }
                     $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($quoteTypeName)) ?? null;
@@ -277,10 +276,9 @@ class UserController extends Controller
             $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
             if (! empty($products_types)) {
                 foreach ($products_types as $key => $type) {
-                    if(in_array(ucfirst($type->name),[QuoteTypes::CORPLINE->value,QuoteTypes::GROUP_MEDICAL->value])){
+                    if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
                         $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
-                    }
-                    else {
+                    } else {
                         $quoteTypeName = $type->name;
                     }
                     $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($quoteTypeName)) ?? null;
