@@ -130,8 +130,14 @@ const bpForm = useForm({
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
   modelType: props.modelType,
-  is_lacking_payment: page.props.bookPolicyDetails.isLackingOfPayment || false,
 });
+
+let is_lacking_payment = ref(page.props.bookPolicyDetails.isLackingOfPayment || false);
+
+watch(() => page.props.bookPolicyDetails.isLackingOfPayment, (newVal) => {
+  is_lacking_payment.value = newVal || false;
+});
+
 
 const onUpdatebookPolicyDetails = isValid => {
   if (isValid) {
@@ -597,14 +603,14 @@ const sendPolicyConfirmationHeading = computed(() => {
                 >
                   Edit
                 </x-button>
-                <template v-if="bpForm.is_lacking_payment">
+                <template v-if="is_lacking_payment">
                   <x-tooltip>
                     <x-button
                       size="sm"
                       color="orange"
                       class="mt-4"
                       @click.prevent="confirmSendPolicy"
-                      :disabled="bp.isEditing || bpForm.is_lacking_payment"
+                      :disabled="bp.isEditing || is_lacking_payment"
                       v-if="props.bookPolicyDetails?.sendButton"
                     >
                       {{ props.bookPolicyDetails?.text }}
@@ -622,7 +628,7 @@ const sendPolicyConfirmationHeading = computed(() => {
                     color="orange"
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
-                    :disabled="bp.isEditing || bpForm.is_lacking_payment"
+                    :disabled="bp.isEditing || is_lacking_payment"
                     v-if="props.bookPolicyDetails?.sendButton"
                   >
                     {{ props.bookPolicyDetails?.text }}

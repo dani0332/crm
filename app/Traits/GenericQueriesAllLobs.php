@@ -364,7 +364,6 @@ trait GenericQueriesAllLobs
             $payment = $payment->first();
             $paymentTotalPrice = $payment->total_price + $payment->discount_value;
             $sumOfSplitPayment = $payment->paymentSplits()->sum('payment_amount');
-            $sumOfSplitPayment = $payment->paymentSplits()->sum('payment_amount');
             return !($sumOfSplitPayment >= $paymentTotalPrice);
         }
         return true;

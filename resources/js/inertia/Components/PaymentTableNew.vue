@@ -1813,7 +1813,12 @@ const isMasterPaymentPaid = computed(() => {
   return false;  
 });
  
-const is_lacking_payment= page.props.bookPolicyDetails.isLackingOfPayment || false;
+let is_lacking_payment = ref(page.props.bookPolicyDetails.isLackingOfPayment || false);
+
+watch(() => page.props.bookPolicyDetails.isLackingOfPayment, (newVal) => {
+  console.log('is_lacking_payment payment table', newVal);
+  is_lacking_payment.value = newVal || false;
+});
 
 </script>
 
