@@ -141,7 +141,7 @@ class AutomateActivitiesCommand extends Command
                                     )->orderBy('created_at', 'desc')->first();
                                     
                                     $activityCreationAllowed = true;
-                                    if(! $lastActivity->is_cold || ! $lastActivity->is_cold && $lastActivity->status == 0){
+                                    if($lastActivity->is_cold || $lastActivity->is_cold && $lastActivity->status == 0){
                                         $activityCreationAllowed = false;
                                     }
 
