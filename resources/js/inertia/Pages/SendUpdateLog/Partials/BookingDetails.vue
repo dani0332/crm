@@ -1068,13 +1068,25 @@ const onCancel = () => {
       <template #body>
         <x-divider class="my-4" />
         <x-form @submit="saveBookingDetail">
-          <div class="text-xs">
+          <div class="text-xs booking-custom-class">
             <dl class="grid md:grid-cols-2 gap-y-4">
               <div class="grid sm:grid-cols-2 mt-4">
-                <dt class="font-bold text-right mr-10"></dt>
-                <dd></dd>
+                <dt>
+                  <x-tooltip position="left">
+                    <label
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      INVOICE DESCRIPTION
+                    </label>
+                    <template #tooltip>
+                      This field provides a brief description of the invoice, summarizing its content or purpose within the booking.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <span>{{ bookingDetailsForm.invoice_description ?? 'N/A' }}</span>
+                </dd>
               </div>
-
               <div class="grid sm:grid-cols-2 mt-4">
                 <dt class="font-bold">
                   <x-tooltip position="left">
@@ -1089,37 +1101,9 @@ const onCancel = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.booking_date }}</span>
+                  <span>{{ bookingDetailsForm.booking_date ?? 'N/A' }}</span>
                 </dd>
               </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt>
-                  <x-tooltip position="left">
-                    <label
-                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                    >
-                      INVOICE DESCRIPTION
-                    </label>
-                    <template #tooltip>
-                      This field provides a brief description of the invoice, summarizing its content or purpose within the booking.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ bookingDetailsForm.invoice_description }}</span>
-                </dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold">
-                  <span>MAIN CLASS OF INSURANCE</span>
-                </dt>
-                <dd>
-                  <span>{{ quoteType }}</span>
-                </dd>
-              </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
@@ -1134,26 +1118,17 @@ const onCancel = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.transaction_payment_status }}</span>
+                  <span>{{ bookingDetailsForm.transaction_payment_status ?? 'N/A' }}</span>
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
-                <dt>
-                  <x-tooltip position="left">
-                    <label
-                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                    >
-                      SUB CLASS
-                    </label>
-                    <template #tooltip>
-                      Identifies the specific coverage or insurance plan offered by the provider.
-                    </template>
-                  </x-tooltip>
+                <dt class="font-bold">
+                  <span>MAIN CLASS OF INSURANCE</span>
                 </dt>
-                <dd></dd>
+                <dd>
+                  <span>{{ quoteType ?? 'N/A' }}</span>
+                </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
@@ -1180,25 +1155,21 @@ const onCancel = () => {
                   <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
-                      BROKER INVOICE NUMBER
+                      SUB CLASS
                     </label>
                     <template #tooltip>
-                      Invoice number provided by the broker.
+                      Identifies the specific coverage or insurance plan offered by the provider.
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>
-                  <span>{{ bookingDetailsForm.broker_invoice_number }}</span>
-                </dd>
+                <dd>N/A</dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
@@ -1225,25 +1196,23 @@ const onCancel = () => {
                   <!-- <span>{{ bookingDetailsForm.insurer_tax_invoice_number }}</span> -->
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
-                      DISCOUNT
+                      BROKER INVOICE NUMBER
                     </label>
                     <template #tooltip>
-                      If applicable, this field indicates the exact amount or percentage reduced from the original price.
+                      Invoice number provided by the broker.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.discount }}</span>
+                  <span>{{ bookingDetailsForm.broker_invoice_number ?? 'N/A' }}</span>
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
@@ -1270,25 +1239,23 @@ const onCancel = () => {
                   <!--<span>{{ bookingDetailsForm.insurer_commission_invoice_number }}</span>-->
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
-                      COMMISSION (%)
+                      DISCOUNT
                     </label>
                     <template #tooltip>
-                      Commission percentage for this transaction.
+                      If applicable, this field indicates the exact amount or percentage reduced from the original price.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.commission_percentage }}%</span>
+                  <span>{{ bookingDetailsForm.discount ?? 'N/A' }}</span>
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
@@ -1316,25 +1283,23 @@ const onCancel = () => {
                   <!-- <span>{{ bookingDetailsForm.price_vat_applicable }}</span> -->
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
-                      VAT ON COMMISSION
+                      COMMISSION (%)
                     </label>
                     <template #tooltip>
-                      Value Added Tax (VAT) amount applicable to the commission.
+                      Commission percentage for this transaction.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ thousandSeparator(bookingDetailsForm.vat_on_commission) }}</span>
+                  <span>{{ bookingDetailsForm.commission_percentage }}%</span>
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
@@ -1349,28 +1314,26 @@ const onCancel = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.price_vat_not_applicable }}</span>
+                  <span>{{ bookingDetailsForm.price_vat_not_applicable ?? 'N/A' }}</span>
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
-                      TOTAL COMMISSION
+                      VAT ON COMMISSION
                     </label>
                     <template #tooltip>
-                      Display the total commission amount including VAT for this transaction. Ensure it matches the calculations.
+                      Value Added Tax (VAT) amount applicable to the commission.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ thousandSeparator(bookingDetailsForm.total_commission) }}</span>
+                  <span>{{ thousandSeparator(bookingDetailsForm.vat_on_commission) ?? 'N/A' }}</span>
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
@@ -1398,25 +1361,23 @@ const onCancel = () => {
                   <!-- <span>{{ bookingDetailsForm.commission_vat_applicable }}</span> -->
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
-                      TOTAL VAT AMOUNT
+                      TOTAL COMMISSION
                     </label>
                     <template #tooltip>
-                      Display the total Value Added Tax (VAT) amount for this transaction. Verify this amount before submission.
+                      Display the total commission amount including VAT for this transaction. Ensure it matches the calculations.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ thousandSeparator(bookingDetailsForm.total_vat_amount) }}</span>
+                  <span>{{ thousandSeparator(bookingDetailsForm.total_commission) ?? 'N/A' }}</span>
                 </dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
@@ -1431,10 +1392,30 @@ const onCancel = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.commission_vat_not_applicable }}</span>
+                  <span>{{ bookingDetailsForm.commission_vat_not_applicable ?? 'N/A' }}</span>
                 </dd>
               </div>
-
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="left">
+                    <label
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      TOTAL VAT AMOUNT
+                    </label>
+                    <template #tooltip>
+                      Display the total Value Added Tax (VAT) amount for this transaction. Verify this amount before submission.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <span>{{ thousandSeparator(bookingDetailsForm.total_vat_amount) ?? 'N/A' }}</span>
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-bold text-right"></dt>
+                <dd></dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="left">
@@ -1449,7 +1430,7 @@ const onCancel = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ thousandSeparator(bookingDetailsForm.total_price) }}</span>
+                  <span>{{ thousandSeparator(bookingDetailsForm.total_price) ?? 'N/A' }}</span>
                 </dd>
               </div>
             </dl>
