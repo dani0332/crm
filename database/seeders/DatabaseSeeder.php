@@ -39,12 +39,12 @@ class DatabaseSeeder extends Seeder
             // addReassignmentTime::class,
             // GenericPermissionSeeder::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
-            LookupSeeder::class,
+            // LookupSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            GenericPermissionSeeder::class,
-            AddLegacyPaymentsPermssion::class,
-            ApplicationStorageSeeder::class,
+            // GenericPermissionSeeder::class,
+            // AddLegacyPaymentsPermssion::class,
+            // ApplicationStorageSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
             addDubaiNowEmailGroup::class,
@@ -63,10 +63,12 @@ class DatabaseSeeder extends Seeder
             TotalPremiumReportPermissionSeeder::class,*/
 
             // dtt seeder
-            AddDttFlagApplicationStorage::class,
-            DttOCBNewBusinessSeeder::class,
-            RevivalConversionReportPermissionSeeder::class,
+            // AddDttFlagApplicationStorage::class,
+            // DttOCBNewBusinessSeeder::class,
+            // RevivalConversionReportPermissionSeeder::class,
             // end
+
+            HealthRevivalQuotesSeeder::class,
         ]);
     }
 }

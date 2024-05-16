@@ -24,6 +24,7 @@ use App\Http\Controllers\FormController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
+use App\Http\Controllers\HealthRevivalQuoteController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
@@ -163,6 +164,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::put('revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('carrevival-quotes-update');
 
             Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
+
+
+            // health revival
+            Route::get('health-revival', [HealthRevivalQuoteController::class, 'index'])->name('healthrevival-quotes-list');
         });
 
         if (in_array(quoteTypeCode::Life, newUi())) {
