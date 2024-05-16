@@ -35,9 +35,9 @@ function onSubmit(isValid) {
 }
 
 const tabs = ref([
-  { index: 0, label: 'Conversion Rate', tooltip: 'It indicates the effectiveness of revival mails which helps converting revival leads into customers with payment status captured'},
-  { index: 1, label: 'Auth To Capture Rate', tooltip: 'This rate offers insight into the efficiency of converting authorized transactions into completed payments'},
-  { index: 2, label: 'Response Rate Of Customer', tooltip: 'It offers insight into the effectiveness of your communication outreach efforts, reflecting the responsiveness of the customer'},
+  { index: 0, label: 'Conversion Rate', tooltip: 'It indicates the effectiveness of revival mails which helps converting revival leads into customers with payment status captured' },
+  { index: 1, label: 'Auth To Capture Rate', tooltip: 'This rate offers insight into the efficiency of converting authorized transactions into completed payments' },
+  { index: 2, label: 'Response Rate Of Customer', tooltip: 'It offers insight into the effectiveness of your communication outreach efforts, reflecting the responsiveness of the customer' },
 ]);
 function onReset() {
   router.visit('/reports/revival-conversion', {
@@ -120,38 +120,30 @@ const emailConversionReportTableHeader = [
 
 </script>
 
+<style>
+.vue3-easy-data-table__main, .vue3-easy-data-table {
+  overflow-x: unset !important;
+}
+</style>
+
+
 <template>
   <div>
+
     <Head title="Revival Conversion Report" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-select
-          v-model="filters.lead_source"
-          label="Lead Source"
-          placeholder="Lead Source"
-          :options="[
+        <x-select v-model="filters.lead_source" label="Lead Source" placeholder="Lead Source" :options="[
             { value: 'REVIVAL', label: 'Revival' },
             { value: 'REVIVAL_REPLIED', label: 'Revival Replied' },
             { value: 'REVIVAL_PAID', label: 'Revival Paid' },
-          ]"
-          class="w-full"
-        />
-        <x-select
-          v-model="filters.car_type_insurance_id"
-          label="Type Of Car Insurance"
-          placeholder="Type Of Car Insurance"
-          :options="[
+          ]" class="w-full" />
+        <x-select v-model="filters.car_type_insurance_id" label="Type Of Car Insurance"
+          placeholder="Type Of Car Insurance" :options="[
             { value: '1', label: 'Comprehensive' },
             { value: '2', label: 'TPL' },
-          ]"
-          class="w-full"
-        />
-        <DatePicker
-          v-model="filters.date_assigned"
-          name="created_at"
-          label="Date Assigned"
-          class="w-full"
-        />
+          ]" class="w-full" />
+        <DatePicker v-model="filters.date_assigned" name="created_at" label="Date Assigned" class="w-full" />
       </div>
 
       <div class="flex justify-end gap-3 mb-4">
@@ -163,119 +155,55 @@ const emailConversionReportTableHeader = [
     </x-form>
 
     <TabGroup>
-      <TabList
-        class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full justify-center"
-      >
-        <Tab
-          v-for="{ index, label, tooltip } in tabs"
-          :key="index"
-          v-slot="{ selected }"
-        >
-      <x-tooltip>
-          <button
-            :class="[
-              'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
+      <TabList class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full justify-center">
+        <Tab v-for="{ index, label, tooltip } in tabs" :key="index" v-slot="{ selected }">
+          <x-tooltip position="top">
+            <button :class="[
+              'underline decoration-dotted rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
               'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
               selected
                 ? 'bg-white shadow text-primary-600'
                 : 'hover:bg-white/50',
-            ]"
-          >
-            {{ label }}
-          </button>
-          <template #tooltip>
+            ]">
+              {{ label }}
+            </button>
+            <template #tooltip>
               <span>{{ tooltip }}</span>
-          </template>
-        </x-tooltip> 
+            </template>
+          </x-tooltip>
         </Tab>
-        
+
       </TabList>
 
       <TabPanels class="mt-2">
         <TabPanel>
-          <DataTable
-            table-class-name="tablefixed"
-            :loading="loader.table"
-            :headers="conversionRateTableHeader"
-            :items="reportsData.conversionRate || []"
-            border-cell
-            hide-rows-per-page
-          >
-          
+          <DataTable table-class-name="tablefixed" 
+                :loading="loader.table" 
+                :headers="conversionRateTableHeader"
+                :items="reportsData.conversionRate || []" 
+                border-cell 
+                hide-rows-per-page
+                >
+
           <template #header-quote_batch_id="header">
-            <div class="customize-header underline">
-              <x-tooltip position="bottom" class="arrow-t underline">
-                <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
-                  {{ header.text }}
+            <x-tooltip align="left" position="top">
+              <span class="underline decoration-dotted">{{ header.text }}</span>
+              <template #tooltip>
+                <span
+                  class="whitespace-break-spaces !normal-case"
+                  style="margin-top: 50px"
+                >
+                  {{ header.tooltip }}
                 </span>
-                <template #tooltip>
-                  <div class="whitespace-normal normal-case">
-                    {{ header.tooltip }}
-                  </div>
-                </template>
-              </x-tooltip>
-            </div>
+              </template>
+            </x-tooltip>
           </template>
 
-          <template #header-conversion_captured="header">
-            <div class="customize-header underline">
-              <x-tooltip position="bottom" class="arrow-t underline">
-                <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
-                  {{ header.text }}
-                </span>
-                <template #tooltip>
-                  <div class="whitespace-normal normal-case">
-                    {{ header.tooltip }}
-                  </div>
-                </template>
-              </x-tooltip>
-            </div>
-          </template>
-
-          <template #header-total_revived="header">
-            <div class="customize-header underline">
-              <x-tooltip position="bottom" class="arrow-t underline">
-                <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
-                  {{ header.text }}
-                </span>
-                <template #tooltip>
-                  <div class="whitespace-normal normal-case">
-                    {{ header.tooltip }}
-                  </div>
-                </template>
-              </x-tooltip>
-            </div>
-          </template>
-
-          <template #header-ratio="header">
-            <div class="customize-header underline">
-              <x-tooltip position="bottom" class="arrow-t underline">
-                <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
-                  {{ header.text }}
-                </span>
-                <template #tooltip>
-                  <div class="whitespace-normal normal-case">
-                    {{ header.tooltip }}
-                  </div>
-                </template>
-              </x-tooltip>
-            </div>
-          </template>
-      </DataTable>
-        </TabPanel>
-        <TabPanel>
-          <DataTable
-            table-class-name="tablefixed"
-            :loading="loader.table"
-            :headers="tableHeader"
-            :items="reportsData.leadConversionReport || []"
-            border-cell
-            hide-rows-per-page
-          >
-          <template #header-quote_batch_id="header">
+            <template #header-conversion_captured="header">
               <div class="customize-header underline">
                 <x-tooltip position="bottom" class="arrow-t underline">
-                  <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
                     {{ header.text }}
                   </span>
                   <template #tooltip>
@@ -287,25 +215,11 @@ const emailConversionReportTableHeader = [
               </div>
             </template>
 
-            <template #header-captured="header">
+            <template #header-total_revived="header">
               <div class="customize-header underline">
                 <x-tooltip position="bottom" class="arrow-t underline">
-                  <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
-                    {{ header.text }}
-                  </span>
-                  <template #tooltip>
-                    <div class="whitespace-normal normal-case">
-                      {{ header.tooltip }}
-                    </div>
-                  </template>
-                </x-tooltip>
-              </div>
-            </template>
-
-            <template #header-authorized="header">
-              <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
-                  <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
                     {{ header.text }}
                   </span>
                   <template #tooltip>
@@ -320,7 +234,8 @@ const emailConversionReportTableHeader = [
             <template #header-ratio="header">
               <div class="customize-header underline">
                 <x-tooltip position="bottom" class="arrow-t underline">
-                  <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
                     {{ header.text }}
                   </span>
                   <template #tooltip>
@@ -334,75 +249,137 @@ const emailConversionReportTableHeader = [
           </DataTable>
         </TabPanel>
         <TabPanel>
-          <DataTable
-            table-class-name="tablefixed"
-            :loading="loader.table"
-            :headers="emailConversionReportTableHeader"
-            :items="reportsData.emailConversionReport || []"
-            border-cell
-            hide-rows-per-page
-          >
-          <template #header-quote_batch_id="header">
-          <div class="customize-header underline">
-            <x-tooltip position="bottom" class="arrow-t underline">
-              <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
-                {{ header.text }}
-              </span>
+          <DataTable table-class-name="tablefixed" :loading="loader.table" :headers="tableHeader"
+            :items="reportsData.leadConversionReport || []" border-cell hide-rows-per-page>
+            <template #header-quote_batch_id="header">
+            <x-tooltip align="left" position="top">
+              <span class="underline decoration-dotted">{{ header.text }}</span>
               <template #tooltip>
-                <div class="whitespace-normal normal-case">
+                <span
+                  class="whitespace-break-spaces !normal-case"
+                  style="margin-top: 50px"
+                >
                   {{ header.tooltip }}
-                </div>
+                </span>
               </template>
             </x-tooltip>
-          </div>
-      </template>
+          </template>
 
-      <template #header-reply_received_count="header">
-        <div class="customize-header underline">
-          <x-tooltip position="bottom" class="arrow-t underline">
-            <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
-              {{ header.text }}
-            </span>
-            <template #tooltip>
-              <div class="whitespace-normal normal-case">
-                {{ header.tooltip }}
+            <template #header-captured="header">
+              <div class="customize-header underline">
+                <x-tooltip position="bottom" class="arrow-t underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
               </div>
             </template>
-          </x-tooltip>
-        </div>
-      </template>
 
-      <template #header-email_sent_count="header">
-        <div class="customize-header underline">
-          <x-tooltip position="bottom" class="arrow-t underline">
-            <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
-              {{ header.text }}
-            </span>
-            <template #tooltip>
-              <div class="whitespace-normal normal-case">
-                {{ header.tooltip }}
+            <template #header-authorized="header">
+              <div class="customize-header underline">
+                <x-tooltip position="bottom" class="arrow-t underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
               </div>
             </template>
-          </x-tooltip>
-        </div>
-      </template>
-      <template #header-ratio="header">
-        <div class="customize-header underline">
-          <x-tooltip position="bottom" class="arrow-t underline">
-            <span class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
-              {{ header.text }}
-            </span>
-            <template #tooltip>
-              <div class="whitespace-normal normal-case">
-                {{ header.tooltip }}
+
+            <template #header-ratio="header">
+              <div class="customize-header underline">
+                <x-tooltip position="bottom" class="arrow-t underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
               </div>
             </template>
-          </x-tooltip>
-        </div>
-      </template>
+          </DataTable>
+        </TabPanel>
+        <TabPanel>
+          <DataTable table-class-name="tablefixed" :loading="loader.table" :headers="emailConversionReportTableHeader"
+            :items="reportsData.emailConversionReport || []" border-cell hide-rows-per-page>
+            <template #header-quote_batch_id="header">
+            <x-tooltip align="left" position="top">
+              <span class="underline decoration-dotted">{{ header.text }}</span>
+              <template #tooltip>
+                <span
+                  class="whitespace-break-spaces !normal-case"
+                  style="margin-top: 50px"
+                >
+                  {{ header.tooltip }}
+                </span>
+              </template>
+            </x-tooltip>
+          </template>
 
-          </DataTable
-        ></TabPanel>
+            <template #header-reply_received_count="header">
+              <div class="customize-header underline">
+                <x-tooltip position="bottom" class="arrow-t underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
+              </div>
+            </template>
+
+            <template #header-email_sent_count="header">
+              <div class="customize-header underline">
+                <x-tooltip position="bottom" class="arrow-t underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
+              </div>
+            </template>
+            <template #header-ratio="header">
+              <div class="customize-header underline">
+                <x-tooltip position="bottom" class="arrow-t underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600">
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
+              </div>
+            </template>
+
+          </DataTable>
+        </TabPanel>
       </TabPanels>
     </TabGroup>
   </div>
