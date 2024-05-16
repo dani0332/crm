@@ -140,6 +140,11 @@ class ComprehensiveConversionDashboardService extends BaseService
                     quoteTypeCode::Home,
                 ],
             ],
+            'segment_filter' => [
+                'lobs' => [
+                    quoteTypeCode::Car,
+                ],
+            ],
         ];
     }
 
@@ -294,6 +299,10 @@ class ComprehensiveConversionDashboardService extends BaseService
                     $join->on('car_model.id', 'car_quote_request.car_model_id')
                     ->where('car_model.is_commercial', $filters->isCommercial);
                 });
+            }
+
+            if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
+                $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
             }
         }
 

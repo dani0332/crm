@@ -472,9 +472,16 @@ const insuranceForOptions = computed(() => {
         <x-select v-model="filters.insurance_for" placeholder="Select insurance for"
           :options="[ { value: '', label: 'Select insurance for' }, ...insuranceForOptions ]" class="w-full" />
       </x-field>
+      <x-field label="Segment" v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')">
+          <x-select v-model="filters.segment_filter" placeholder="Select Segment" :options="quoteSegments" class="w-full" />
+      </x-field>
     </div>
-    <ChartsColumn :title="'COMPREHENSIVE CONVERSION REPORT'" :yAxisTitle="'Total Net Conversion'"
-      :seriesName="'Net Conversion'" :data="columnChartData" />
+    <ChartsColumn
+      :title="'COMPREHENSIVE CONVERSION REPORT'"
+      :yAxisTitle="'Total Net Conversion'"
+      :seriesName="'Net Conversion'"
+      :data="columnChartData"
+    />
     <div class="mt-auto">
       <span class="text-xs">
         © AFIA Insurance Brokerage Services LLC, registration no. 85, under UAE
