@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
@@ -99,8 +100,8 @@ function get_guid()
 
 function mapPhoneNumber($customerPhoneNo)
 {
-    $customerCorrectPhoneNo = $customerPhoneNo;
-    $customerCorrectPhoneNo1 = $customerPhoneNo;
+    $customerCorrectPhoneNo = $customerCorrectPhoneNo1 = $customerPhoneNo = str_replace(' ', '', trim($customerPhoneNo));
+
     if (strlen($customerPhoneNo) == 9) { // 563264418 9
         $customerCorrectPhoneNo = '0'.$customerPhoneNo;
     } elseif (strlen($customerPhoneNo) == 12) { // 971563264418 12
@@ -789,17 +790,18 @@ if (! function_exists('getCardViewRequestFilters')) {
 if (! function_exists('getMyAlfredCampaign')) {
     function getMyAlfredCampaign($campaignId)
     {
-        $response = Http::get(config('constants.MA_V1_ENDPOINT').'/campaigns/'.$campaignId);
+        return Cache::remember("MA_CAMPAIGN_{$campaignId}", now()->addHours(24), function () use ($campaignId) {
+            $response = Http::get(config('constants.MA_V1_ENDPOINT')."/campaigns/{$campaignId}");
+            if ($response->ok()) {
+                $response = $response->object();
 
-        if ($response->ok()) {
-            $response = $response->object();
-
-            if ($response->data && $response->data->isActive) {
-                return $response;
+                if ($response->data && $response->data->isActive) {
+                    return $response;
+                }
             }
-        }
 
-        return null;
+            return null;
+        });
     }
 }
 

@@ -273,4 +273,58 @@ final class PermissionsEnum extends Enum
     public const LEGACY_PAYMENTS = 'legacy-payments';
     public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
     public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
+    public const BIKE_CONVERSION_REPORT = 'bike-conversion-report';
+    public const HEALTH_CONVERSION_REPORT = 'health-conversion-report';
+    public const TRAVEL_CONVERSION_REPORT = 'travel-conversion-report';
+    public const LIFE_CONVERSION_REPORT = 'life-conversion-report';
+    public const HOME_CONVERSION_REPORT = 'home-conversion-report';
+    public const PET_CONVERSION_REPORT = 'pet-conversion-report';
+    public const CYCLE_CONVERSION_REPORT = 'cycle-conversion-report';
+    public const YACHT_CONVERSION_REPORT = 'yacht-conversion-report';
+    public const CORPLINE_CONVERSION_REPORT = 'corpline-conversion-report';
+    public const GROUPMEDICAL_CONVERSION_REPORT = 'groupmedicals-conversion-report';
+    public const BIKE_COMPREHENSIVE_DASHBOARD = 'bike-comprehensive-dashboard';
+    public const HEALTH_COMPREHENSIVE_DASHBOARD = 'health-comprehensive-dashboard';
+    public const TRAVEL_COMPREHENSIVE_DASHBOARD = 'travel-comprehensive-dashboard';
+    public const LIFE_COMPREHENSIVE_DASHBOARD = 'life-comprehensive-dashboard';
+    public const HOME_COMPREHENSIVE_DASHBOARD = 'home-comprehensive-dashboard';
+    public const PET_COMPREHENSIVE_DASHBOARD = 'pet-comprehensive-dashboard';
+    public const CYCLE_COMPREHENSIVE_DASHBOARD = 'cycle-comprehensive-dashboard';
+    public const YACHT_COMPREHENSIVE_DASHBOARD = 'yacht-comprehensive-dashboard';
+    public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
+    public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
+
+    public static function getAdvisorConverionReportPermissions()
+    {
+        return [
+            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
+            PermissionsEnum::BIKE_CONVERSION_REPORT,
+            PermissionsEnum::HEALTH_CONVERSION_REPORT,
+            PermissionsEnum::TRAVEL_CONVERSION_REPORT,
+            PermissionsEnum::LIFE_CONVERSION_REPORT,
+            PermissionsEnum::HOME_CONVERSION_REPORT,
+            PermissionsEnum::PET_CONVERSION_REPORT,
+            PermissionsEnum::CYCLE_CONVERSION_REPORT,
+            PermissionsEnum::YACHT_CONVERSION_REPORT,
+            PermissionsEnum::CORPLINE_CONVERSION_REPORT,
+            PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT,
+        ];
+    }
+
+    public static function getComprehensiveDashboardPermissions()
+    {
+        return [
+            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
+            PermissionsEnum::BIKE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::HEALTH_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::TRAVEL_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+        ];
+    }
 }

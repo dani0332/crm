@@ -30,6 +30,7 @@ use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
 use App\Models\PaymentAction;
+use App\Models\QuoteBatches;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\Team;
@@ -1170,6 +1171,7 @@ class HealthQuoteService extends BaseService
 
         $userId = (int) $request->assigned_to_id_new;
         $quote_type = $request->modelType;
+        $quoteBatch = QuoteBatches::latest()->first();
 
         foreach ($leadsIds as $leadId) {
 
@@ -1191,13 +1193,15 @@ class HealthQuoteService extends BaseService
             // will update the car quote request detail entity about assignment
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId);
 
-            info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
+            info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
             // update new and previous (if applicable) advisor counts in lead allocation table
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quote_type);
             // update existing record of quote view count if exists and reset count to zero
             $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Health, $userId);
 
             $lead->quote_updated_at = now();
+
+            $lead->quote_batch_id = $quoteBatch->id;
 
             $lead->save();
 

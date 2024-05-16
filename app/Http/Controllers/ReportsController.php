@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Factories\ManagementReportServiceFactory;
 use App\Models\RenewalBatch;
 use App\Models\Team;
@@ -17,6 +19,7 @@ use App\Services\Reports\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ReportsController extends Controller
 {
@@ -25,21 +28,15 @@ class ReportsController extends Controller
 
     public function __construct()
     {
-        $this->verifyPermissions([
-            'renderAdvisorConversionReport' => 'ADVISOR_CONVERSION_REPORT_VIEW',
-            'renderAdvisorPerformanceReport' => 'ADVISOR_PERFORMANCE_REPORT_VIEW',
-            'renderAdvisorDistributionReport' => 'ADVISOR_DISTRIBUTION_REPORT_VIEW, BIKE_DISTRIBUTION_REPORT, HEALTH_DISTRIBUTION_REPORT, TRAVEL_DISTRIBUTION_REPORT, LIFE_DISTRIBUTION_REPORT, HOME_DISTRIBUTION_REPORT, PET_DISTRIBUTION_REPORT, CYCLE_DISTRIBUTION_REPORT, YACHT_DISTRIBUTION_REPORT, BUSINESS_DISTRIBUTION_REPORT, GROUPMEDICAL_DISTRIBUTION_REPORT',
-            'renderLeadDistributionReport' => 'LEAD_DISTRIBUTION_REPORT_VIEW',
-            'utmLeadsSaleReport' => 'UtmLeadsSalesReport',
-            'renderRenewalReport' => 'RENEWAL_BATCH_REPORT',
-            'renderStaleLeadsReport' => 'STALE_LEADS_REPORT',
-        ]);
+        $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConverionReportPermissions());
+        $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
         return inertia('Reports/AdvisorConversion', [
             'reportData' => $advisorConversionReportService->getReportData($request),
+            'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),
             'defaultFilters' => $advisorConversionReportService->getDefaultFilters(),
         ]);
@@ -61,6 +58,14 @@ class ReportsController extends Controller
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
             'page' => $request->page,
+            'isCommercial' => $request->isCommercial,
+            'lob' => $request->lob,
+            'subeams' => $request->sub_teams,
+            'vehicle_type' => $request->vehicle_type,
+            'insurance_type' => $request->insurance_type,
+            'insurance_for' => $request->insurance_for,
+            'travel_coverage' => $request->travel_coverage,
+            'segment_filter' => $request->segment_filter,
         ];
 
         return $advisorConversionReportService->getAdvisorsAssignedLeads($filters);
@@ -110,13 +115,151 @@ class ReportsController extends Controller
         ]);
     }
 
+    /**
+     * Fetches the team list based on the line of business (LOB) requested.
+     *
+     * @param  Request  $request  The HTTP request object.
+     * @return array The array of team names and IDs.
+     */
+    public function fetchTeamListByLob(Request $request)
+    {
+        $lobId = $this->getProductByName($request->lob)->id;
+        $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
+
+        if (auth()->user()->hasAnyRole([
+            RolesEnum::SeniorManagement,
+            RolesEnum::Admin,
+            RolesEnum::Engineering,
+        ])) {
+            $commonteamIds = $allTeams;
+        } else {
+            $userTeams = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+            $commonteamIds = array_intersect($allTeams, $userTeams);
+        }
+
+        $teams = Team::whereIn('id', $commonteamIds)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1);
+
+        return $teams->get()->toArray();
+    }
+
+    /**
+     * Fetches the list of advisors by line of business (LOB).
+     *
+     * @return array
+     */
+    public function fetchAdvisorsListByLob(Request $request)
+    {
+        $loginUserId = auth()->user()->id;
+        if (
+            auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
+            $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
+        } else {
+            $usersReportToLoggedInUser = $this->walkTree($loginUserId, $request->lob);
+
+            if (auth()->user()->isManagerOrDeputy()) {
+                $usersReportToLoggedInUser = array_filter($usersReportToLoggedInUser, function ($userId) use ($loginUserId) {
+                    return $userId !== $loginUserId;
+                });
+            }
+        }
+
+        return User::whereIn('id', $usersReportToLoggedInUser)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Fetches the list of sub-teams based on the given team IDs and the current user's teams and sub-teams.
+     *
+     * @param  Request  $request  The HTTP request object.
+     * @return array The list of sub-teams as an array of associative arrays containing 'name' and 'id' keys.
+     */
+    public function fetchSubTeamListByTeam(Request $request)
+    {
+        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->pluck('id')->toArray();
+        if (
+            auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
+            $ids = $subTeams;
+        } else {
+            $userTeams = $this->getCurrentUserTeamsAndSubTeams(Auth::user()->id)->pluck('id')->toArray();
+            $ids = array_intersect($subTeams, $userTeams);
+        }
+
+        return Team::whereIn('id', $ids)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
     public function fetchAdvisorListByTeam(Request $request)
     {
-        $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+        if (
+            auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
+            $advisorIdsByTeam = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+        } else {
+            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
+            $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
 
-        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id);
+            if (auth()->user()->isManagerOrDeputy()) {
+                $advisorIdsByTeam = array_filter($advisorIdsByTeam, function ($userId) {
+                    return $userId !== auth()->user()->id;
+                });
+            }
+        }
 
-        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+        return User::whereIn('id', $advisorIdsByTeam)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+    public function fetchAdvisorListBySubTeam(Request $request)
+    {
+        $teamUsers = $this->getUsersBySubTeamIds($request->teamIds)->pluck('id')->toArray();
+        if (
+            auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
+            $advisorIdsByTeam = $teamUsers;
+        } else {
+            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
+            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+
+            if (auth()->user()->isManagerOrDeputy()) {
+                $advisorIdsByTeam = array_filter($advisorIdsByTeam, function ($userId) {
+                    return $userId !== auth()->user()->id;
+                });
+            }
+        }
 
         return User::whereIn('id', $advisorIdsByTeam)
             ->select('name', 'id')
