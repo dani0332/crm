@@ -92,21 +92,22 @@ class AutomateActivitiesCommand extends Command
 
             info('------------------- Updating Cold Activities for : '.$quoteClass.' -------------------');
             $quoteClass::whereHas('activities', function ($activityQuery) {
-                $activityQuery->where('due_date', '<', Carbon::now()->subHours(1));
+                $activityQuery->where('due_date', '<', Carbon::now());
                 $activityQuery->where('status', false);
             })->with(['activities' => function ($activities) {
                 // $activities->where('due_date', '<', now());
-                $activities->where('due_date', '<', Carbon::now()->subHours(1));
+                $activities->where('due_date', '<', Carbon::now());
                 $activities->where('status', false);
             }])
                 ->chunkById(1000, function ($quoteDetails) use ($quoteClass) {
                     foreach ($quoteDetails as $quoteDetail) {
                         $activitiesIDs = $quoteDetail->activities->pluck('id');
-                        Activities::whereIn('id', $activitiesIDs)->update(['is_cold' => true]);
-
-                        if (in_array($quoteClass, [HealthQuote::class, HomeQuote::class, BusinessQuote::class, PersonalQuote::class])) {
-                            $quoteDetail->update(['is_cold' => true]);
-                        }
+                            Activities::whereIn('id', $activitiesIDs)->update(['is_cold' => true]);
+    
+                            if (in_array($quoteClass, [HealthQuote::class, HomeQuote::class, BusinessQuote::class, PersonalQuote::class])) {
+                                $quoteDetail->update(['is_cold' => true]);
+                            }
+     
                     }
                 });
             info('------------------- Updated Cold Activities for : '.$quoteClass.' -------------------');
@@ -115,13 +116,13 @@ class AutomateActivitiesCommand extends Command
 
                 info('------------------- Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
                 $quoteClass::whereHas('activities', function ($activityQuery) {
-                    $activityQuery->where('due_date', '<', Carbon::now()->subHours(1));
-                    $activityQuery->orWhere('status', true);
+                    $activityQuery->where('due_date', '<', Carbon::now());
+                    $activityQuery->where('status', true);
                 })
                     ->with(['activities' => function ($activities) {
                         // $activities->where('due_date', '<', now());
-                        $activities->where('due_date', '<', Carbon::now()->subHours(1));
-                        $activities->orWhere('status', true);
+                        $activities->where('due_date', '<', Carbon::now());
+                        $activities->where('status', true);
                         $activities->orderBy('created_at', 'desc')->get();
                     }])
                     ->chunkById(1000, function ($quoteDetails) use ($quoteTypeDetail) {
@@ -133,11 +134,22 @@ class AutomateActivitiesCommand extends Command
                                         $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['quote_type_id'] :
                                         null) :
                                     $quoteTypeDetail['quote_type_id'];
-                                $scheduledActivitiesIDs = collect($quoteDetail->activities->pluck('activity_schedule_id'))
+
+                                    $lastActivity = Activities::where(
+                                        'quote_request_id',
+                                        $quoteDetail->id,
+                                    )->orderBy('created_at', 'desc')->first();
+                                    
+                                    $activityCreationAllowed = true;
+                                    if($lastActivity->is_cold || $lastActivity->is_cold && $lastActivity->status == 0){
+                                        $activityCreationAllowed = false;
+                                    }
+
+                                    $scheduledActivitiesIDs = collect($quoteDetail->activities->pluck('activity_schedule_id'))
                                     ->unique()->filter(function ($filter) {
                                         return ! is_null($filter);
                                     })->toArray();
-
+                                    
                                 $activitySchedules = ActivitySchedule::where([
                                     'quote_type_id' => $getQuoteType,
                                     'quote_status_id' => $quoteDetail->quote_status_id,
@@ -154,7 +166,7 @@ class AutomateActivitiesCommand extends Command
                                         $query->where('team_id', $renewalTeamID ?? null);
                                     })->first();
 
-                                if ($activitySchedules) {
+                                if ($activitySchedules && $activityCreationAllowed) {
                                     Activities::create([
                                         'title' => $activitySchedules->name,
                                         'description' => $activitySchedules->description,
@@ -165,7 +177,8 @@ class AutomateActivitiesCommand extends Command
                                         'updated_at' => now(),
                                         'assignee_id' => $quoteDetail->advisor_id,
                                         'uuid' => generateUuid(),
-                                        'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->created_at ?? now()),
+                                        // 'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->created_at ?? now()),
+                                        'due_date' => addMinutesExcludeWeekend($activitySchedules->due_days, now()),
                                         'client_name' => $quoteDetail->first_name.' '.$quoteDetail->last_name,
                                         'client_email' => $quoteDetail->email,
                                         'quote_uuid' => $quoteDetail->uuid,

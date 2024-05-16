@@ -1284,14 +1284,10 @@ const linkEntity = () => {
           <template #item-code="{ code }">
             {{ code }}
           </template>
-          <template #item-due_date="{ due_date }">
-            <template v-if="compareDueDate(due_date)">
+          <template #item-due_date="{ due_date, is_cold }">
+            <template v-if="is_cold">
               <x-tooltip align="right" position="top">
-                <p
-                  :class="
-                    compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
-                  "
-                >
+                <p :class="is_cold ? 'bg-error-300 rounded p-1' : ''">
                   {{ due_date }}
                 </p>
                 <template #tooltip>
