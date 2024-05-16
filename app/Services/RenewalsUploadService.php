@@ -1031,6 +1031,10 @@ class RenewalsUploadService
                 $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
             }
 
+            if ($renewalUploadLead->skip_plans == 2 && $data['make'] == 'MOTOR BIKE') {
+                $quoteData['vehicle_type_id'] = VehicleType::where('text', 'BIKE')->first()->id ?? null;
+            }
+
             $quoteData['vehicle_type_id'] = ! empty($data['vehicle_type_id'] ?? '') ? $data['vehicle_type_id'] : ($quoteData['vehicle_type_id'] ?? null);
 
             if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
@@ -1465,10 +1469,6 @@ class RenewalsUploadService
 
                             if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
                                 $leadValidationErrors->push('Invalid Car Model');
-                            }
-
-                            if ($renewalsUploadLead->skip_plans == 2 && $leadData->make == 'MOTOR BIKE') {
-                                $lead->vehicle_type_id = VehicleType::where('text', 'BIKE')->first()->id ?? null;
                             }
 
                             if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
