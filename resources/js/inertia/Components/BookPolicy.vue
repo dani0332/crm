@@ -115,6 +115,7 @@ const bpForm = useForm({
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
   modelType: props.modelType,
+  transaction_payment_status_tool_tip: page.props.bookPolicyDetails.paymentStatusTooltip
 });
 
 const onUpdatebookPolicyDetails = isValid => {
@@ -356,10 +357,15 @@ const sendPolicyConfirmationHeading = computed(() => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-tooltip position="center">
-                  <dd class="border-b border-dotted border-black"> {{ bpForm.transaction_payment_status }}</dd>
-                  <template #tooltip> {{ bpForm.transaction_payment_status_tool_tip }}</template>
-                </x-tooltip>
+                <template v-if="props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked">
+                   <x-tooltip position="center">
+                    <dd class="border-b border-dotted border-black"> {{ bpForm.transaction_payment_status }}</dd>
+                    <template #tooltip> {{ bpForm.transaction_payment_status_tool_tip }}</template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <dd>N/A</dd>
+                </template>
               </div>
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>
