@@ -225,7 +225,7 @@ return;
 loaders.teamOptions = true;
 
 axios
-.post(`/dashboard/fetch-teams-by-lob`, {
+.post(`/reports/fetch-teams-by-lob`, {
   lob: e,
 })
 .then(res => {
@@ -249,7 +249,7 @@ return;
 loaders.subteamOptions = true;
 
 axios
-.post(`/dashboard/fetch-subteams-by-team`, {
+.post(`/reports/fetch-subteams-by-team`, {
   teamIds: Array.isArray(e) ? e : [e],
   lob: filters.lob,
 })
@@ -274,7 +274,7 @@ return;
 loaders.advisorOptions = true;
 
 axios
-.post(`/dashboard/fetch-advisor-by-team`, {
+.post(`/reports/fetch-advisor-by-team`, {
   teamIds: Array.isArray(e) ? e : [e],
   lob: filters.lob,
 })
@@ -299,7 +299,7 @@ const loadAdvisorsBySubteams = e => {
   loaders.advisorOptions = true;
 
   axios
-    .post(`/dashboard/fetch-advisor-by-sub-team`, {
+    .post(`/reports/fetch-advisor-by-sub-team`, {
       teamIds: Array.isArray(e) ? e : [e],
       lob: filters.lob,
     })
@@ -324,7 +324,7 @@ return;
 loaders.advisorOptions = true;
 
 axios
-.post(`/dashboard/fetch-advisors-by-lob`, {
+.post(`/reports/fetch-advisors-by-lob`, {
   lob: e,
 })
 .then(res => {
