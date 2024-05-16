@@ -1662,13 +1662,11 @@ class CRUDController extends Controller
         ]);
 
         // update status policy issued of req fulfilled
-        // Manage payment total price update
-        $isPaymentModificationAllowed= $this->updatePriceAndDiscount($quoteModel);
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
         return redirect()->back()->with([
             'success' => 'Quote Policy Detail has been updated.',
-            'isPaymentModificationAllowed' => $isPaymentModificationAllowed
+            'isPaymentModificationAllowed' => $this->updatePriceAndDiscount($quoteModel)
         ]);
     }
 

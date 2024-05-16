@@ -90,6 +90,7 @@ class HandleInertiaRequests extends Middleware
 
     protected function shareFlashData(Request $request)
     {
+        // dd($request->session()->all());
         $flash = [
             'message' => $request->session()->get('message'),
             'error' => $request->session()->get('error'),

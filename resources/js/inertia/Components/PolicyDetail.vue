@@ -145,7 +145,9 @@ const onUpdatePolicyDetails = isValid => {
   if (!isValid) return;
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
-    onSuccess: () => {
+    onSuccess: () => { 
+      console.clear()
+      console.log("isPaymentModificationAllowed", page.props.flash?.isPaymentModificationAllowed);
       if (page.props.flash?.isPaymentModificationAllowed){
         notification.error({
           title: 'Action Needed: Please revise payment details to reflect plan changes.',

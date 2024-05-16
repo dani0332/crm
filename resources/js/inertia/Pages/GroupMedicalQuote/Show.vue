@@ -984,6 +984,7 @@ watch(
 			:storageUrl="storageUrl"
       quoteSubType="Group Medical"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :bookPolicyDetails="bookPolicyDetails"
 		/>
 
     <SendUpdates

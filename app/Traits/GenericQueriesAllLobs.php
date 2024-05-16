@@ -227,6 +227,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['editButton'] = false;
         $bookPolicyDetails['sendPolicyType'] = null;
         $bookPolicyDetails['text'] = '';
+        $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payments);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
@@ -285,7 +286,6 @@ trait GenericQueriesAllLobs
 
     public function updatePriceAndDiscount($quoteModel)
     {
-        $isPaymentModificationAllowed = false;
         $payment = $quoteModel->payments()->first();
         if ($payment && $quoteModel->price_with_vat != $payment->total_price) {
             $difference = $initialDifference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
@@ -332,10 +332,7 @@ trait GenericQueriesAllLobs
             //     $isPaymentModificationAllowed = true;
             // }
         } 
-        if ($payment && $payment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID) {
-            $isPaymentModificationAllowed = true;
-        }
-        return $isPaymentModificationAllowed;
+        return $this->isLackingPayment($quoteModel->payments);
     }
     
     private function isFilledPolicyDetails($type, $quote)
@@ -359,5 +356,17 @@ trait GenericQueriesAllLobs
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
 
         return $quoteDocumentsCount == count($documentTypeCodes);
+    }
+
+    private function isLackingPayment($payment)
+    {
+        if ($payment) {
+            $payment = $payment->first();
+            $paymentTotalPrice = $payment->total_price + $payment->discount_value;
+            $sumOfSplitPayment = $payment->paymentSplits()->sum('payment_amount');
+            $sumOfSplitPayment = $payment->paymentSplits()->sum('payment_amount');
+            return !($sumOfSplitPayment >= $paymentTotalPrice);
+        }
+        return true;
     }
 }

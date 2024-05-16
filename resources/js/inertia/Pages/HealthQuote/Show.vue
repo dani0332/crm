@@ -3022,6 +3022,7 @@ watch(
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :bookPolicyDetails="bookPolicyDetails"
 
     />
 

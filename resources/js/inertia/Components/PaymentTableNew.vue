@@ -29,6 +29,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  bookPolicyDetails: {
+    type: Array,
+    default: [],
+  },
 });
 
 const createPaymentModal = ref(false);
@@ -1808,6 +1812,8 @@ const isMasterPaymentPaid = computed(() => {
   }
   return false;  
 });
+ 
+const is_lacking_payment= page.props.bookPolicyDetails.isLackingOfPayment || false;
 
 </script>
 
@@ -1984,8 +1990,8 @@ const isMasterPaymentPaid = computed(() => {
                 <td>{{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}</td>             
                 <td>
                   <div class="flex gap-2">
-                    <template v-if="item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID">
-                      <x-tooltip position="left" class="arrow-b">
+                    <template v-if="is_lacking_payment">
+                      <x-tooltip position="left" class="arrow-r">
                         <x-badge size="xs" color="error" outlined offset-x="-8" offset-y="-10">
                           <x-button 
                             v-if="can(permissionEnum.PaymentsEdit)" 

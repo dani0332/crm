@@ -1164,6 +1164,7 @@ watch(
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :bookPolicyDetails="bookPolicyDetails"
 		/>
 
     <EmbeddedProducts
