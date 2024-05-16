@@ -1596,7 +1596,7 @@ const isPlanDetailEnabled = computed(() => {
   return false;
 });
 
-if(isPlanDetailEnabled.value && page.props.record.payment_status_id == page.props.paymentStatusEnum.PAID ) {
+if(isPlanDetailEnabled.value && page.props.record.insurer_name !== '' ) {
   selectedProviderPlan.value.premium = page.props.record.price_with_vat;
   selectedProviderPlan.value.providerName = page.props.record.insurer_name;
 }
