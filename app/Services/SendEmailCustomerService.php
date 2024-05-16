@@ -9,6 +9,7 @@ use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
+use Illuminate\Support\Facades\Http;
 use finfo;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +21,7 @@ class SendEmailCustomerService extends BaseService
     protected $apiKey = '';
     protected $url = '';
     protected $appEnv = '';
+    protected $appUrl = '';
 
     public function __construct(
         EmailActivityService $emailActivityService,
@@ -32,6 +34,7 @@ class SendEmailCustomerService extends BaseService
         $this->apiKey = config('constants.SENDINBLUE_KEY');
         $this->url = config('constants.SIB_URL');
         $this->appEnv = config('constants.APP_ENV');
+        $this->appUrl = config('constants.APP_URL');
     }
 
     public function sendEmail($emailTemplateId, $emailData, $tag)
@@ -414,6 +417,20 @@ class SendEmailCustomerService extends BaseService
                 $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
             }
 
+            $wfsBanner = null;
+            $wfsBannerRedirectUrl = null;
+
+            $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
+            if ($campaign) {
+                $emailTemplateId = (int) getAppStorageValueByKey(ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN);
+                if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
+                    $wfsBanner = $campaign->banners->buyPolicy;
+                }
+                if (property_exists($campaign, 'landingPage')) {
+                    $wfsBannerRedirectUrl = $campaign->landingPage;
+                }
+            }
+
             info('sendMyAlfredWelcomeEmail  , emailTemplateId: '.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
@@ -423,7 +440,7 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $body = json_encode([
+            $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerFirstName.' '.$emailData->customerLastName,
@@ -434,24 +451,24 @@ class SendEmailCustomerService extends BaseService
                     'customerEmail' => $emailData->customerEmail,
                     'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'email' => $emailData->customerEmail,
+                    'wfsBanner' => $wfsBanner,
+                    'wfsBannerRedirectUrl' => $wfsBannerRedirectUrl,
                 ],
                 'tags' => [
                     $tag,
                 ],
-            ], JSON_UNESCAPED_SLASHES);
+            ];
 
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                config('constants.SIB_URL'),
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 20,
-                ]
-            );
+            $response = Http::withHeaders($headers)
+                ->beforeSending(function () {
+                    info('sendMyAlfredWelcomeEmail ---- Request is Sending ');
+                })
+                ->timeout(20)
+                ->retry(3, 90000)
+                ->post($this->url, $body);
 
-            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
-            $responseCode = $clientRequest->getStatusCode();
+            $responseCode = $response->status();
+            $response = json_decode(json_encode($responseCode.' '.$response->body()), true);
 
             if ($responseCode == 201) {
                 $isEmailSent = 1;
@@ -473,7 +490,7 @@ class SendEmailCustomerService extends BaseService
     {
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
-            info('sendLMSIntroEmail ---- Tag : '.$tag);
+            info('sendLMSIntroEmail ---- Tag : '.$tag.' for ID : '.$emailData->carQuoteId);
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
@@ -481,7 +498,6 @@ class SendEmailCustomerService extends BaseService
             ];
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
-
             if ($emailAttachments) {
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
@@ -491,7 +507,7 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
-            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
@@ -533,24 +549,83 @@ class SendEmailCustomerService extends BaseService
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
             }
 
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                $this->url,
-                [
-                    'headers' => $headers,
-                    'body' => json_encode($body, JSON_UNESCAPED_SLASHES),
-                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
-                ]
-            );
-            info('sendLMSIntroEmail ---- Request Sent');
-            $responseCode = $clientRequest->getStatusCode();
-            info('sendLMSIntroEmail ---- Received Code : '.$responseCode);
-            info('sendLMSIntroEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            $response = Http::withHeaders($headers)
+                ->beforeSending(function ($request) use ($emailData) {
+                    info('sendLMSIntroEmail ---- Request is Sending '.$emailData->carQuoteId);
+                })
+                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
+                ->retry(3, 90000)
+                ->post($this->url, $body);
+
+            info('sendLMSIntroEmail ---- Request Sent '.$emailData->carQuoteId);
+            $responseCode = $response->status();
+            info('sendLMSIntroEmail ---- Received Code : '.$responseCode.' '.$emailData->carQuoteId);
+            info('sendLMSIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$emailData->carQuoteId;
             Log::error($responseDetail);
         }
+
+        return $responseCode;
+    }
+
+    public function sendDttEmail($emailData)
+    {
+        $headers = [
+            'Accept' => 'application/json',
+            'api-key' => $this->apiKey,
+            'Content-Type' => 'application/json',
+        ];
+
+        $tag = $this->appEnv == EnvEnum::PRODUCTION ? $emailData->tag : $this->appEnv.'-'.$emailData->tag;
+        $body = [
+            'subject' => $this->appEnv == EnvEnum::PRODUCTION ? $emailData->subject : $this->appEnv.' - '.$emailData->subject,
+            'sender' => [
+                'email' => 'no-reply@alert.insurancemarket.email',
+                'name' => 'InsuranceMarket.ae',
+            ],
+            'params' => $emailData,
+            'tags' => [
+                $tag,
+            ],
+            'to' => [[
+                'email' => $emailData->customerEmail,
+                'name' => $emailData->customerName,
+            ]],
+            'templateId' => $emailData->templateId,
+        ];
+
+        $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO);
+        $body['replyTo'] = [
+            'email' => $replyToEmail,
+            'name' => 'InsuranceMarket.ae',
+        ];
+        try {
+            $response = Http::withHeaders($headers)
+                ->beforeSending(function () {
+                    info('sendDttEmail ---- Request is Sending ');
+                })
+                ->timeout(20)
+                ->retry(3, 90000)
+                ->post($this->url, $body);
+
+            $responseCode = $response->status();
+            $response = json_decode(json_encode($responseCode.' '.$response->body()), true);
+
+            if ($responseCode == 201) {
+                $isEmailSent = 1;
+                info('sendDttEmail - Email Sent - Ref-ID: '.$emailData->uuid);
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'Dtt Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' uuid: '.$emailData->uuid.' CustomerEmail: '.$emailData->customerEmail;
+            info($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         return $responseCode;
     }
@@ -583,7 +658,7 @@ class SendEmailCustomerService extends BaseService
         try {
             $appEnv = config('constants.APP_ENV');
 
-            info('sendNonAdvisorIntroEmail  , emailTemplateId: '.$emailTemplateId);
+            info('sendNonAdvisorIntroEmail  , emailTemplateId: '.$emailTemplateId.' '.$emailData->carQuoteId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $headers = [
@@ -609,7 +684,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
-            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
@@ -618,7 +693,7 @@ class SendEmailCustomerService extends BaseService
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $emailData->env = $subjectEnvTag;
 
-            $body = json_encode([
+            $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
@@ -630,24 +705,23 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
-            ], JSON_UNESCAPED_SLASHES);
+            ];
 
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                $this->url,
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
-                ]
-            );
-            info('sendNonAdvisorIntroEmail ---- Request Sent');
-            $responseCode = $clientRequest->getStatusCode();
-            info('sendNonAdvisorIntroEmail ---- Received Code : '.$responseCode);
-            info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            $response = Http::withHeaders($headers)
+                ->beforeSending(function ($request) use ($emailData) {
+                    info('sendNonAdvisorIntroEmail ---- Request is Sending '.$emailData->carQuoteId);
+                })
+                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
+                ->retry(3, 90000)
+                ->post($this->url, $body);
+
+            info('sendNonAdvisorIntroEmail ---- Request Sent '.$emailData->carQuoteId);
+            $responseCode = $response->status();
+            info('sendNonAdvisorIntroEmail ---- Received Code : '.$responseCode.' '.$emailData->carQuoteId);
+            info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$emailData->carQuoteId;
             Log::error($responseDetail);
         }
 
@@ -656,6 +730,12 @@ class SendEmailCustomerService extends BaseService
 
     public function sendActivityAlertEmail($user)
     {
+        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE)->first();
+        if ($emailEnable && $emailEnable->value == 0) {
+            info('sendActivityAlertEmail is Disable');
+
+            return false;
+        }
         $emailTemplateId = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_TEMPLATE')->value('value');
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
@@ -809,6 +889,72 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
+            Log::error($responseDetail);
+        }
+
+        return $responseCode;
+    }
+
+    public function sendSICNotificationToAdvisor($lead, $user)
+    {
+        info('sendSICNotificationToAdvisor ---- Start');
+
+        try {
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
+
+            $subject = $subjectEnvTag.'CALL NOW! Customer with REF-ID '.$lead->code.' has requested for an advisor right now!';
+
+            $htmlContent = '<html>
+            <head></head>
+            <body>
+              <p>Dear <b>'.$user->name.'</b>,</p>
+              <p>
+                  A customer with REF-ID <a href="'.$this->appUrl.'/quotes/car/'.$lead->uuid.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
+              </p>
+              <p>
+                Please call the customer urgently as they have requested for an advisor right now.
+              </p>
+              <p>
+                Regards,<br>
+                Alfred
+              </p>
+            </body>
+          </html>';
+
+            $body = [
+                'to' => [(object) [
+                    'email' => $user->email, // advsior email
+                    'name' => $user->name, // advsior name
+                ]],
+                'sender' => [
+                    'email' => 'no-reply@alert.insurancemarket.email',
+                    'name' => 'InsuranceMarket.ae',
+                ],
+                'subject' => $subject,
+                'htmlContent' => $htmlContent,
+            ];
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => json_encode($body),
+                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
+                ]
+            );
+            info('sendSICNotificationToAdvisor ---- Request Sent');
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendSICNotificationToAdvisor ---- Received Code : '.$responseCode);
+            info('sendSICNotificationToAdvisor ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'sendSICNotificationToAdvisor: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
         }
 

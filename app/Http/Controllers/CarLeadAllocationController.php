@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuoteTypes;
 use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
 use App\Services\CarLeadAllocationDashboardService;
@@ -66,6 +67,7 @@ class CarLeadAllocationController extends Controller
                 'isFIFO' => (int) $isFIFO,
                 'todayTotalLeadCount' => $todayTotalLeadCount,
                 'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
+                'quoteType' => QuoteTypes::CAR->value,
                 'data' => $data,
             ]);
         } else {
