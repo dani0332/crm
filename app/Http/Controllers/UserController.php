@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
@@ -111,8 +112,21 @@ class UserController extends Controller
         ]);
 
         $user = $this->userService->createUserRecord($request);
-
-        $this->leadAllocationService->createLeadAllocationRecord($user->id);
+        $products = $this->getAllProducts();
+        if (! empty($request->products)) {
+            $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
+            if (! empty($products_types)) {
+                foreach ($products_types as $key => $type) {
+                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name));
+                    $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
+                    if (empty($isLead)) {
+                        $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                    } else {
+                        $this->leadAllocationService->createLeadAllocationRecord($user->id);
+                    }
+                }
+            }
+        }
 
         $user->assignRole($request->input('roles'));
 
@@ -235,12 +249,22 @@ class UserController extends Controller
          * temp fix: health lead allocation is using team_id to target health product
          * this needs to be updated with new team/product structure
          */
+        $products = $this->getAllProducts();
+        if (! empty($request->products)) {
+            $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
+            if (! empty($products_types)) {
+                foreach ($products_types as $key => $type) {
+                    $quoteTypeId = QuoteTypes::getIdFromValue(ucfirst($type->name));
+                    $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
+                    if (empty($isLead)) {
+                        $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                    } else {
+                        $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active, $quoteTypeId);
+                    }
 
-        if (! empty($request->primary_product)) {
-            $user->team_id = $request->primary_product;
+                }
+            }
         }
-
-        $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active);
 
         if (! empty($request->additionalTeams) && isset($request->additionalTeams)) {
             if (count((array) $request->additionalTeams) > 1) {

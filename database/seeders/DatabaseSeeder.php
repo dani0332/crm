@@ -42,9 +42,12 @@ class DatabaseSeeder extends Seeder
             // LookupSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            // GenericPermissionSeeder::class,
+            GenericPermissionSeeder::class,
+            UpdateOldTeamNamesSeeder::class,
+            // AddCapAdvisorPermissionSeeder::class,
+            // UpdateLeadAllocationByQuoteId::class,
             // AddLegacyPaymentsPermssion::class,
-            // ApplicationStorageSeeder::class,
+            ApplicationStorageSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
             addDubaiNowEmailGroup::class,
@@ -69,6 +72,7 @@ class DatabaseSeeder extends Seeder
             // end
 
             HealthRevivalQuotesSeeder::class,
+            AddCrossLOBSeeder::class,
         ]);
     }
 }
