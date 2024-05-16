@@ -14,12 +14,9 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteStatusLog;
-use App\Models\TravelQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -279,14 +276,7 @@ class CentralService
                     'quoteUID' => $uuid,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
-
                 $response = Ken::request($endpoint, 'post', $data);
-                info('car plan update response: '.json_encode($response));
-
-                // if (isset($response['planProcessValue']['totalPremium'])) {
-                //     $quote = CarQuote::where('uuid', $uuid)->first();
-                //     $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
-                // }
                 break;
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
@@ -304,12 +294,6 @@ class CentralService
                 }
 
                 $response = Ken::request($endpoint, 'post', $data);
-                info('travel plan update response: '.json_encode($response));
-
-                // if (isset($response['planProcessValue'])) {
-                //     $quote = TravelQuote::where('uuid', $uuid)->first();
-                //     $this->updateQuotePayment($quote, collect($response['planProcessValue'])->sum('totalPremium'));
-                // }
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';
@@ -323,11 +307,6 @@ class CentralService
                 ];
 
                 $response = Capi::request($endpoint, 'post', $data);
-                info('health plan update response: '.json_encode($response));
-                // if (isset($response->totalPremium)) {
-                //     $quote = HealthQuote::where('uuid', $uuid)->first();
-                //     $this->updateQuotePayment($quote, $response->totalPremium);
-                // }
                 break;
         }
 
