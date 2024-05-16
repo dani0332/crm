@@ -95,8 +95,8 @@ function get_guid()
 
 function mapPhoneNumber($customerPhoneNo)
 {
-    $customerCorrectPhoneNo = $customerPhoneNo;
-    $customerCorrectPhoneNo1 = $customerPhoneNo;
+    $customerCorrectPhoneNo = $customerCorrectPhoneNo1 = $customerPhoneNo = str_replace(' ', '', trim($customerPhoneNo));
+
     if (strlen($customerPhoneNo) == 9) { // 563264418 9
         $customerCorrectPhoneNo = '0'.$customerPhoneNo;
     } elseif (strlen($customerPhoneNo) == 12) { // 971563264418 12
