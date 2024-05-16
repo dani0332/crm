@@ -3389,40 +3389,6 @@ watch(
     :logs="clientInquiryLogs"
   />
 
-  <div class="p-4 rounded shadow mb-6 bg-white">
-    <Collapsible :expanded="sectionExpanded">
-      <template #header>
-        <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        </div>
-      </template>
-      <template #body>
-        <x-divider class="my-4" />
-        <div v-if="historyData === null" class="text-center py-3">
-          <x-button
-            size="sm"
-            color="primary"
-            outlined
-            @click.prevent="onLoadHistoryData"
-            :loading="historyLoading"
-          >
-            Load History Data
-          </x-button>
-        </div>
-        <DataTable
-          v-else
-          table-class-name="compact"
-          :headers="historyDataTable"
-          :items="historyData || []"
-          border-cell
-          hide-rows-per-page
-          :rows-per-page="15"
-          :hide-footer="historyData.length < 15"
-        />
-      </template>
-    </Collapsible>
-  </div>
-
   <CustomerChatLogs
     :customerName="quote?.first_name + ' ' + quote?.last_name"
     :quoteId="quote.uuid"
