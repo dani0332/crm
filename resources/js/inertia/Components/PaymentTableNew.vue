@@ -3050,19 +3050,19 @@ const isMasterPaymentPaid = computed(() => {
 
       <div class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center" v-if="isApproveConfirmed">
         <div class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg">        
-          <div class="modal-confirm-header text-base text-white bg-gray-800">
+          <div class="modal-confirm-header text-base text-white bg-white">
             <div class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b">
                 <div class="flex items-center space-x-2">
                   Payment Verification
                 </div>           
-                <div class="flex items-center space-x-2" >
-                  <span @click="closeConfirmModal" class="text-gray-800 font-bold cursor-pointer pr-1" >
-                    <!-- SVG for Close Modal -->
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" tabindex="0" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+                <div class="flex items-center space-x-2">
+                  <span @click="closeConfirmModal" class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer">
+                      <!-- Cross icon -->
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" tabindex="0" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4 text-gray-800">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
                   </span>
-                </div>
+              </div>
             </div>
           </div>
           <div class="w-full h-full mt-2 flex flex-col items-center"> 
@@ -3209,9 +3209,7 @@ const isMasterPaymentPaid = computed(() => {
 }
 /* Modal header */
 .modal-confirm-header {
-  background-color: hsla(0, 0%, 97%, 0.938);
-  color: #000;
-  
+  color: #000;  
 }
 /* Modal container */
 .modal-container {
