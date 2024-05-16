@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Factories\ManagementReportServiceFactory;
-use App\Models\Team;
 use App\Models\RenewalBatch;
+use App\Models\Team;
 use App\Models\User;
 use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\Reports\AdvisorConversionReportService;
@@ -17,11 +19,7 @@ use App\Services\Reports\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
-use App\Enums\TeamNameEnum;
-use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\PermissionsEnum;
-use App\Enums\RolesEnum;
 
 class ReportsController extends Controller
 {
@@ -31,7 +29,7 @@ class ReportsController extends Controller
     public function __construct()
     {
         $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConverionReportPermissions());
-        $this->middleware(['permission:' . $advisorConverionReportPermissions],['only' => ['renderAdvisorConversionReport']]);
+        $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -120,19 +118,19 @@ class ReportsController extends Controller
     /**
      * Fetches the team list based on the line of business (LOB) requested.
      *
-     * @param \Illuminate\Http\Request $request The HTTP request object.
+     * @param  \Illuminate\Http\Request  $request  The HTTP request object.
      * @return array The array of team names and IDs.
      */
     public function fetchTeamListByLob(Request $request)
     {
         $lobId = $this->getProductByName($request->lob)->id;
         $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
-        
+
         if (auth()->user()->hasAnyRole([
             RolesEnum::SeniorManagement,
             RolesEnum::Admin,
             RolesEnum::Engineering,
-            ])) {
+        ])) {
             $commonteamIds = $allTeams;
         } else {
             $userTeams = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
@@ -150,7 +148,6 @@ class ReportsController extends Controller
     /**
      * Fetches the list of advisors by line of business (LOB).
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return array
      */
     public function fetchAdvisorsListByLob(Request $request)
@@ -185,7 +182,7 @@ class ReportsController extends Controller
     /**
      * Fetches the list of sub-teams based on the given team IDs and the current user's teams and sub-teams.
      *
-     * @param \Illuminate\Http\Request $request The HTTP request object.
+     * @param  \Illuminate\Http\Request  $request  The HTTP request object.
      * @return array The list of sub-teams as an array of associative arrays containing 'name' and 'id' keys.
      */
     public function fetchSubTeamListByTeam(Request $request)
@@ -203,7 +200,7 @@ class ReportsController extends Controller
             $userTeams = $this->getCurrentUserTeamsAndSubTeams(Auth::user()->id)->pluck('id')->toArray();
             $ids = array_intersect($subTeams, $userTeams);
         }
-        
+
         return Team::whereIn('id', $ids)
             ->select('name', 'id')
             ->orderBy('name')

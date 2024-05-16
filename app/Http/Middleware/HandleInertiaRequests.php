@@ -101,10 +101,10 @@ class HandleInertiaRequests extends Middleware
             ->add('Home', url('/home'));
 
         if (auth()->user()->hasAnyPermission(array_merge([
-                PermissionsEnum::DashboardView,
-                PermissionsEnum::TPL_DASHBOARD_VIEW,
-                PermissionsEnum::MAIN_DASHBOARD_VIEW,
-                PermissionsEnum::UtmLeadsSalesReport,
+            PermissionsEnum::DashboardView,
+            PermissionsEnum::TPL_DASHBOARD_VIEW,
+            PermissionsEnum::MAIN_DASHBOARD_VIEW,
+            PermissionsEnum::UtmLeadsSalesReport,
         ], PermissionsEnum::getComprehensiveDashboardPermissions()))) {
             $nav = $nav->add('Dashboard', '', function (Section $section) {
                 $section

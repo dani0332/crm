@@ -3,21 +3,21 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\TiersEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Models\Tier;
+use App\Repositories\QuoteTypeRepository;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\DB;
-use App\Models\PersonalQuote;
-use App\Enums\quoteTypeCode;
-use App\Enums\PermissionsEnum;
-use App\Repositories\QuoteTypeRepository;
-use App\Enums\TravelQuoteEnum;
-use App\Enums\quoteBusinessTypeCode;
-use App\Enums\TiersEnum;
-use App\Enums\PaymentStatusEnum;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ComprehensiveConversionDashboardService extends BaseService
 {
@@ -85,8 +85,8 @@ class ComprehensiveConversionDashboardService extends BaseService
             $labels[] = $record['batch_name'].'-('.$record['start_date'].' to '.$record['end_date'].')';
         }
 
-        if(empty($data)) {
-            $data[] = ["0.00"];
+        if (empty($data)) {
+            $data[] = ['0.00'];
             $labels = [' '];
         }
 
@@ -187,13 +187,13 @@ class ComprehensiveConversionDashboardService extends BaseService
     public function getFilterOptions()
     {
         $tiers = Tier::where('can_handle_tpl', 0)
-                ->orderBy('name', 'asc')
-                ->where('name', '!=', TiersEnum::TIER_R)
-                ->where('is_active', 1)
-                ->get()
-                ->keyBy('id')
-                ->map(fn($t) => $t->name)
-                ->toArray();
+            ->orderBy('name', 'asc')
+            ->where('name', '!=', TiersEnum::TIER_R)
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($t) => $t->name)
+            ->toArray();
 
         $lobs = $this->getLobByPermissions();
         $dropdownSourceService = new DropdownSourceService();
@@ -207,19 +207,19 @@ class ComprehensiveConversionDashboardService extends BaseService
             return ['value' => $type['id'], 'label' => $type['text']];
         })->toArray();
         $businessInsuranceType = $dropdownSourceService->getDropdownSource('business_type_of_insurance_id')
-        ->filter(function ($type) {
-            return $type['text'] != quoteBusinessTypeCode::groupMedical;
-        })
-        ->map(function ($type) {
-            return ['value' => $type['id'], 'label' => $type['text']];
-        })
-        ->toArray();
+            ->filter(function ($type) {
+                return $type['text'] != quoteBusinessTypeCode::groupMedical;
+            })
+            ->map(function ($type) {
+                return ['value' => $type['id'], 'label' => $type['text']];
+            })
+            ->toArray();
         $businessInsuranceType = array_values($businessInsuranceType);
         $insuranceType = [
             quoteTypeCode::Travel => [
-                ["value" => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
-                ["value" => TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, 'label' => 'Multi Trip'],
-                ["value" => TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP, 'label' => 'Annual Trip'],
+                ['value' => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
+                ['value' => TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, 'label' => 'Multi Trip'],
+                ['value' => TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP, 'label' => 'Annual Trip'],
             ],
             quoteTypeCode::Life => $lifeInsuranceType,
             quoteTypeCode::CORPLINE => $businessInsuranceType,
@@ -237,6 +237,7 @@ class ComprehensiveConversionDashboardService extends BaseService
     {
         $lobs = $this->getLobByPermissions();
         $organicTeam = strval(Team::where('name', 'Organic')->first()->id);
+
         return [
             'lob' => reset($lobs),
             'isCommercial' => 'All',
@@ -301,14 +302,14 @@ class ComprehensiveConversionDashboardService extends BaseService
             $query = $query->whereIn('personal_quotes.advisor_id', $filters->advisors);
         }
 
-        if($lob === quoteTypeCode::Car) {
+        if ($lob === quoteTypeCode::Car) {
 
             if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
                 $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
                 $query->join('car_quote_request', 'car_quote_request.uuid', 'personal_quotes.uuid');
-                $query->leftJoin('car_model', function($join) use ($filters) {
+                $query->leftJoin('car_model', function ($join) use ($filters) {
                     $join->on('car_model.id', 'car_quote_request.car_model_id')
-                    ->where('car_model.is_commercial', $filters->isCommercial);
+                        ->where('car_model.is_commercial', $filters->isCommercial);
                 });
             }
 
@@ -317,49 +318,49 @@ class ComprehensiveConversionDashboardService extends BaseService
             }
         }
 
-        if($lob === quoteTypeCode::Health) {
-            if(!empty($filters->insurance_for) && $filters->insurance_for != '') {
-                $query->join('health_quote_request', function($join) use ($filters) {
+        if ($lob === quoteTypeCode::Health) {
+            if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
+                $query->join('health_quote_request', function ($join) use ($filters) {
                     $join->on('health_quote_request.uuid', 'personal_quotes.uuid')
-                    ->where('health_quote_request.cover_for_id', $filters->insurance_for);
+                        ->where('health_quote_request.cover_for_id', $filters->insurance_for);
                 });
             }
         }
 
-        if($lob === quoteTypeCode::Home) {
-            if(!empty($filters->insurance_for) && $filters->insurance_for != '') {
-                $query->join('home_quote_request', function($join) use ($filters) {
+        if ($lob === quoteTypeCode::Home) {
+            if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
+                $query->join('home_quote_request', function ($join) use ($filters) {
                     $join->on('home_quote_request.uuid', 'personal_quotes.uuid')
-                    ->where('home_quote_request.iam_possesion_type_id', $filters->insurance_for);
+                        ->where('home_quote_request.iam_possesion_type_id', $filters->insurance_for);
                 });
             }
         }
 
-        if($lob === quoteTypeCode::Travel) {
-            if((!empty($filters->insurance_type) && $filters->insurance_type != '')) {
+        if ($lob === quoteTypeCode::Travel) {
+            if ((! empty($filters->insurance_type) && $filters->insurance_type != '')) {
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
                 $query->where('travel_quote_request.coverage_code', $filters->insurance_type);
             }
         }
 
-        if($lob === quoteTypeCode::Life) {
-            if(!empty($filters->insurance_type) && $filters->insurance_type != '') {
+        if ($lob === quoteTypeCode::Life) {
+            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->join('life_quote_request', 'life_quote_request.uuid', 'personal_quotes.uuid');
                 $query->where('life_quote_request.tenure_of_insurance_id', $filters->insurance_type);
             }
         }
 
-        if($lob === quoteTypeCode::CORPLINE) {
+        if ($lob === quoteTypeCode::CORPLINE) {
             $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
-            
-            if(!empty($filters->insurance_type) && $filters->insurance_type != '') {
+
+            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('business_quote_request.business_type_of_insurance_id', $filters->insurance_type);
             } else {
                 $query->where('business_quote_request.business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
             }
         }
 
-        if($lob === quoteTypeCode::GroupMedical) {
+        if ($lob === quoteTypeCode::GroupMedical) {
             $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
             $query->where('business_quote_request.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
         }

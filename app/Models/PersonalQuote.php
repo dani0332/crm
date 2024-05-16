@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -12,9 +14,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteSegmentEnum;
-use App\Enums\quoteTypeCode;
 
 class PersonalQuote extends Model implements AuditableContract
 {
@@ -268,7 +267,7 @@ class PersonalQuote extends Model implements AuditableContract
         $user = auth()->user();
         if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
             $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($quoteTypeCode) {
-                $query->whereIn("personal_quotes.uuid", function ($query) use ($quoteTypeCode) {
+                $query->whereIn('personal_quotes.uuid', function ($query) use ($quoteTypeCode) {
                     $query->distinct()
                         ->select('quote_uuid')
                         ->from('quote_tags')
@@ -277,7 +276,7 @@ class PersonalQuote extends Model implements AuditableContract
                         ->where('quote_type.code', $quoteTypeCode);
                 });
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($quoteTypeCode) {
-                $query->whereNotIn("personal_quotes.uuid", function ($query) use ($quoteTypeCode) {
+                $query->whereNotIn('personal_quotes.uuid', function ($query) use ($quoteTypeCode) {
                     $query->distinct()
                         ->select('quote_uuid')
                         ->from('quote_tags')

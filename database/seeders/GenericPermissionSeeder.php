@@ -163,7 +163,7 @@ class GenericPermissionSeeder extends Seeder
     public function advisorConversionReportSeeds()
     {
         $permissionList = [
-                // car conversion report permission (already existing)
+            // car conversion report permission (already existing)
             PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW => [
                 RolesEnum::CarAdvisor,
                 RolesEnum::CarManager,
@@ -247,7 +247,7 @@ class GenericPermissionSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
 
             foreach ($roles as $roleName) {
-                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($permission)) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($permission)) {
                     $role->givePermissionTo($permission);
                 }
             }
@@ -331,7 +331,7 @@ class GenericPermissionSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
 
             foreach ($roles as $roleName) {
-                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($permission)) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($permission)) {
                     $role->givePermissionTo($permission);
                 }
             }

@@ -5,27 +5,27 @@ namespace App\Services\Reports;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Http\Traits\VehicleTypeTrait;
 use App\Models\LeadSource;
+use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
+use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
+use App\Services\DropdownSourceService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use App\Enums\quoteTypeCode;
-use App\Models\PersonalQuote;
-use App\Enums\PermissionsEnum;
-use App\Enums\TravelQuoteEnum;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Traits\VehicleTypeTrait;
-use App\Services\DropdownSourceService;
-use App\Repositories\QuoteTypeRepository;
-use App\Enums\quoteBusinessTypeCode;
+use Illuminate\Support\Facades\DB;
 
 class AdvisorConversionReportService extends BaseService
 {
@@ -36,7 +36,7 @@ class AdvisorConversionReportService extends BaseService
     public function getReportData($request)
     {
         $lob = $request->lob ?? '';
-        if(empty($lob)) {
+        if (empty($lob)) {
             return [];
         }
 
@@ -68,17 +68,17 @@ class AdvisorConversionReportService extends BaseService
             ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
-            ->groupBy('personal_quotes.advisor_id' ,'personal_quotes.quote_batch_id'
+            ->groupBy('personal_quotes.advisor_id', 'personal_quotes.quote_batch_id'
             )
             ->orderBy('personal_quotes.quote_batch_id')
             ->orderBy('users.email');
 
         if (! auth()->user()->hasAnyRole([
-            RolesEnum::LeadPool, 
+            RolesEnum::LeadPool,
             RolesEnum::SeniorManagement,
             RolesEnum::Admin,
             RolesEnum::Engineering,
-            ])) {
+        ])) {
             $userIds = $this->walkTree(auth()->user()->id, $request->lob);
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
@@ -127,17 +127,17 @@ class AdvisorConversionReportService extends BaseService
     public function getFiltersByLob()
     {
         $canView = [
-            quoteTypeCode::Car => !Auth::user()->hasRole(RolesEnum::CarAdvisor),
-            quoteTypeCode::Bike => !Auth::user()->hasRole(RolesEnum::BikeAdvisor),
-            quoteTypeCode::Health => !Auth::user()->hasRole(RolesEnum::RMAdvisor),
-            quoteTypeCode::Travel => !Auth::user()->hasRole(RolesEnum::TravelAdvisor),
-            quoteTypeCode::Pet => !Auth::user()->hasRole(RolesEnum::PetAdvisor),
-            quoteTypeCode::Cycle => !Auth::user()->hasRole(RolesEnum::CycleAdvisor),
-            quoteTypeCode::Yacht => !Auth::user()->hasRole(RolesEnum::YachtAdvisor),
-            quoteTypeCode::Life => !Auth::user()->hasRole(RolesEnum::LifeAdvisor),
-            quoteTypeCode::Home => !Auth::user()->hasRole(RolesEnum::HomeAdvisor),
-            quoteTypeCode::CORPLINE => !Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
-            quoteTypeCode::GroupMedical => !Auth::user()->hasRole(RolesEnum::GMAdvisor),
+            quoteTypeCode::Car => ! Auth::user()->hasRole(RolesEnum::CarAdvisor),
+            quoteTypeCode::Bike => ! Auth::user()->hasRole(RolesEnum::BikeAdvisor),
+            quoteTypeCode::Health => ! Auth::user()->hasRole(RolesEnum::RMAdvisor),
+            quoteTypeCode::Travel => ! Auth::user()->hasRole(RolesEnum::TravelAdvisor),
+            quoteTypeCode::Pet => ! Auth::user()->hasRole(RolesEnum::PetAdvisor),
+            quoteTypeCode::Cycle => ! Auth::user()->hasRole(RolesEnum::CycleAdvisor),
+            quoteTypeCode::Yacht => ! Auth::user()->hasRole(RolesEnum::YachtAdvisor),
+            quoteTypeCode::Life => ! Auth::user()->hasRole(RolesEnum::LifeAdvisor),
+            quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
+            quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
+            quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
         ];
 
         return [
@@ -229,17 +229,17 @@ class AdvisorConversionReportService extends BaseService
         });
 
         $lobs = QuoteTypeRepository::GetList()
-        ->filter(function ($lob) use ($lobs) {
-            return array_key_exists($lob->code, $lobs);
-        })
-        ->pluck('code', 'text')
-        ->toArray();
+            ->filter(function ($lob) use ($lobs) {
+                return array_key_exists($lob->code, $lobs);
+            })
+            ->pluck('code', 'text')
+            ->toArray();
 
         if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT)) {
             $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
         }
 
-        if(Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT)) {
+        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT)) {
             $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
         }
 
@@ -296,12 +296,12 @@ class AdvisorConversionReportService extends BaseService
         $travelCoverage = [
             quoteTypeCode::Travel => [
                 TravelQuoteEnum::TRAVEL_UAE_INBOUND => [
-                    ["value" => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
-                    ["value" => TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, 'label' => 'Multi Trip'],
+                    ['value' => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
+                    ['value' => TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, 'label' => 'Multi Trip'],
                 ],
                 TravelQuoteEnum::TRAVEL_UAE_OUTBOUND => [
-                    ["value" => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
-                    ["value" => TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP, 'label' => 'Annual Trip'],
+                    ['value' => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
+                    ['value' => TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP, 'label' => 'Annual Trip'],
                 ],
             ],
         ];
@@ -310,18 +310,18 @@ class AdvisorConversionReportService extends BaseService
             return ['value' => $type['id'], 'label' => $type['text']];
         })->toArray();
         $businessInsuranceType = $dropdownSourceService->getDropdownSource('business_type_of_insurance_id')
-        ->filter(function ($type) {
-            return $type['text'] != quoteBusinessTypeCode::groupMedical;
-        })
-        ->map(function ($type) {
-            return ['value' => $type['id'], 'label' => $type['text']];
-        })
-        ->toArray();
+            ->filter(function ($type) {
+                return $type['text'] != quoteBusinessTypeCode::groupMedical;
+            })
+            ->map(function ($type) {
+                return ['value' => $type['id'], 'label' => $type['text']];
+            })
+            ->toArray();
         $businessInsuranceType = array_values($businessInsuranceType);
         $insuranceType = [
             quoteTypeCode::Travel => [
-                ["value" => TravelQuoteEnum::TRAVEL_UAE_INBOUND, 'label' => 'To the UAE (Inbound)'],
-                ["value" => TravelQuoteEnum::TRAVEL_UAE_OUTBOUND, 'label' => 'Outside UAE (OutBound)'],
+                ['value' => TravelQuoteEnum::TRAVEL_UAE_INBOUND, 'label' => 'To the UAE (Inbound)'],
+                ['value' => TravelQuoteEnum::TRAVEL_UAE_OUTBOUND, 'label' => 'Outside UAE (OutBound)'],
             ],
             quoteTypeCode::Life => $lifeInsuranceType,
             quoteTypeCode::CORPLINE => $businessInsuranceType,
@@ -358,6 +358,7 @@ class AdvisorConversionReportService extends BaseService
         ];
 
         $lobs = $this->getLobByPermissions();
+
         return [
             'lob' => count($lobs) == 1 ? reset($lobs) : '',
             'advisorAssignedDates' => $advisorAssignedDates,
@@ -416,7 +417,7 @@ class AdvisorConversionReportService extends BaseService
                 $query->where('personal_quotes.source', '!=', LeadSourceEnum::IMCRM);
             }
         }
-        
+
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
             $query->whereIn('personal_quotes.source', $filters->leadSourceFilter);
         }
@@ -482,29 +483,29 @@ class AdvisorConversionReportService extends BaseService
             })->where('personal_quotes.source', '=', LeadSourceEnum::IMCRM);
         }
 
-        if($lob === quoteTypeCode::Car) {
+        if ($lob === quoteTypeCode::Car) {
 
             if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
                 $query->whereIn('personal_quotes.tier_id', $filters->tiersFilter);
             }
 
-            if((!empty($filters->vehicle_type) && $filters->vehicle_type != 'All') ||
+            if ((! empty($filters->vehicle_type) && $filters->vehicle_type != 'All') ||
             (isset($filters->isCommercial) && $filters->isCommercial != 'All')) {
                 $query->join('car_quote_request', 'car_quote_request.uuid', 'personal_quotes.uuid');
             }
 
-            if(!empty($filters->vehicle_type) && $filters->vehicle_type != 'All') {
-                $query->join('vehicle_type', function($join) use ($filters) {
+            if (! empty($filters->vehicle_type) && $filters->vehicle_type != 'All') {
+                $query->join('vehicle_type', function ($join) use ($filters) {
                     $join->on('vehicle_type.id', 'car_quote_request.vehicle_type_id')
-                    ->where('vehicle_type.category', $filters->vehicle_type);
+                        ->where('vehicle_type.category', $filters->vehicle_type);
                 });
             }
 
             if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
                 $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
-                $query->leftJoin('car_model', function($join) use ($filters) {
+                $query->leftJoin('car_model', function ($join) use ($filters) {
                     $join->on('car_model.id', 'car_quote_request.car_model_id')
-                    ->where('car_model.is_commercial', $filters->isCommercial);
+                        ->where('car_model.is_commercial', $filters->isCommercial);
                 });
             }
 
@@ -513,41 +514,40 @@ class AdvisorConversionReportService extends BaseService
             }
         }
 
-        if($lob === quoteTypeCode::Health) {
-            if(!empty($filters->insurance_for) && $filters->insurance_for != '') {
-                $query->join('health_quote_request', function($join) use ($filters) {
+        if ($lob === quoteTypeCode::Health) {
+            if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
+                $query->join('health_quote_request', function ($join) use ($filters) {
                     $join->on('health_quote_request.uuid', 'personal_quotes.uuid')
-                    ->where('health_quote_request.cover_for_id', $filters->insurance_for);
+                        ->where('health_quote_request.cover_for_id', $filters->insurance_for);
                 });
             }
         }
 
-        if($lob === quoteTypeCode::Home) {
-            if(!empty($filters->insurance_for) && $filters->insurance_for != '') {
-                $query->join('home_quote_request', function($join) use ($filters) {
+        if ($lob === quoteTypeCode::Home) {
+            if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
+                $query->join('home_quote_request', function ($join) use ($filters) {
                     $join->on('home_quote_request.uuid', 'personal_quotes.uuid')
-                    ->where('home_quote_request.iam_possesion_type_id', $filters->insurance_for);
+                        ->where('home_quote_request.iam_possesion_type_id', $filters->insurance_for);
                 });
             }
         }
 
-
-        if($lob === quoteTypeCode::Travel) {
-            if((!empty($filters->insurance_type) && $filters->insurance_type != '') ||
-                (!empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
+        if ($lob === quoteTypeCode::Travel) {
+            if ((! empty($filters->insurance_type) && $filters->insurance_type != '') ||
+                (! empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
             }
-            if(!empty($filters->insurance_type) && $filters->insurance_type != '') {
+            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('travel_quote_request.direction_code', $filters->insurance_type);
             }
 
-            if(!empty($filters->travel_coverage) && $filters->travel_coverage != '') {
+            if (! empty($filters->travel_coverage) && $filters->travel_coverage != '') {
                 $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
             }
         }
 
-        if($lob === quoteTypeCode::Life) {
-            if(!empty($filters->insurance_type) && $filters->insurance_type != '') {
+        if ($lob === quoteTypeCode::Life) {
+            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->join('life_quote_request', 'life_quote_request.uuid', 'personal_quotes.uuid');
                 $query->where('life_quote_request.tenure_of_insurance_id', $filters->insurance_type);
             }
@@ -555,14 +555,14 @@ class AdvisorConversionReportService extends BaseService
 
         if ($lob === quoteTypeCode::CORPLINE) {
             $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
-            if (!empty($filters->insurance_type) && $filters->insurance_type != '') {
+            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('business_quote_request.business_type_of_insurance_id', $filters->insurance_type);
             } else {
                 $query->where('business_quote_request.business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
             }
         }
 
-        if($lob === quoteTypeCode::GroupMedical) {
+        if ($lob === quoteTypeCode::GroupMedical) {
             $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
             $query->where('business_quote_request.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
         }

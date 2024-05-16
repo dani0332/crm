@@ -17,12 +17,12 @@ use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
-use App\Models\QuoteBatches;
 
 class HealthAllocationService extends AllocationService
 {
@@ -142,7 +142,7 @@ class HealthAllocationService extends AllocationService
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
-        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name . ' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
 

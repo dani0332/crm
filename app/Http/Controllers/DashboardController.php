@@ -5,23 +5,22 @@ namespace App\Http\Controllers;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Team;
 use App\Models\Tier;
+use App\Models\User;
+use App\Services\ComprehensiveConversionDashboardService;
 use App\Services\DashboardService;
 use App\Services\TierService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\ComprehensiveConversionDashboardService;
-use App\Enums\PermissionsEnum;
-use App\Enums\RolesEnum;
-use App\Models\User;
-use App\Enums\TeamNameEnum;
 
 class DashboardController extends Controller
 {
@@ -36,7 +35,7 @@ class DashboardController extends Controller
         $this->tierService = $tierService;
 
         $comprehensiveDashboardPermissions = implode('|', PermissionsEnum::getComprehensiveDashboardPermissions());
-        $this->middleware(['permission:' . $comprehensiveDashboardPermissions], ['only' => ['renderComprehensiveDashboard']]);
+        $this->middleware(['permission:'.$comprehensiveDashboardPermissions], ['only' => ['renderComprehensiveDashboard']]);
     }
 
     /**
@@ -431,7 +430,8 @@ class DashboardController extends Controller
     public function renderComprehensiveDashboard(Request $request, ComprehensiveConversionDashboardService $comprehensiveConversionDashboardService)
     {
         $comprehensiveDashboardStats = $comprehensiveConversionDashboardService->getReportData($request);
-        info('inside renderComprehensiveDashboard comp stats are : ' . json_encode($comprehensiveDashboardStats));
+        info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
+
         return inertia('Dashboard/ComperhensiveConversion', [
             'reportData' => $comprehensiveDashboardStats,
             'filtersByLob' => $comprehensiveConversionDashboardService->getFiltersByLob(),
@@ -443,7 +443,7 @@ class DashboardController extends Controller
     /**
      * Fetches the team list based on the line of business (LOB) requested.
      *
-     * @param \Illuminate\Http\Request $request The HTTP request object.
+     * @param  \Illuminate\Http\Request  $request  The HTTP request object.
      * @return array The array of team names and IDs.
      */
     public function fetchTeamListByLob(Request $request)
@@ -472,11 +472,9 @@ class DashboardController extends Controller
         return $teams->get()->toArray();
     }
 
-
     /**
      * Fetches the list of advisors by line of business (LOB).
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return array
      */
     public function fetchAdvisorsListByLob(Request $request)
@@ -508,11 +506,10 @@ class DashboardController extends Controller
             ->toArray();
     }
 
-
     /**
      * Fetches the list of sub-teams based on the given team IDs and the current user's teams and sub-teams.
      *
-     * @param \Illuminate\Http\Request $request The HTTP request object.
+     * @param  \Illuminate\Http\Request  $request  The HTTP request object.
      * @return array The list of sub-teams as an array of associative arrays containing 'name' and 'id' keys.
      */
     public function fetchSubTeamListByTeam(Request $request)
