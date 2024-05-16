@@ -17,6 +17,7 @@ use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
@@ -138,8 +139,10 @@ class HealthAllocationService extends AllocationService
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
         $lead->quote_updated_at = now();
+        $quoteBatch = QuoteBatches::latest()->first();
+        $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
-        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name);
+        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
 
