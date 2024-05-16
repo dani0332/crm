@@ -69,7 +69,7 @@ let countDays = ref(useDaysSinceStale(props.quoteRequest?.stale_at));
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 
-const showPlans = computed(() => !props.hashCollapsibleStatuses);
+const showPlans = ref(!props.hashCollapsibleStatuses);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -2707,7 +2707,7 @@ watch(
     </div> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="showPlans">
+      <TheCollapsible v-model:expanded="showPlans">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
             <h3 class="font-semibold text-primary-800 text-lg">
@@ -3059,7 +3059,7 @@ watch(
             </div>
           </x-modal>
         </template>
-      </Collapsible>
+      </TheCollapsible>
     </div>
 
     <MigratePayment
