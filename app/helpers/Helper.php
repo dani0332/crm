@@ -644,7 +644,7 @@ if (! function_exists('addDaysExcludeWeekend')) {
     }
 }
 
-if (!function_exists('addMinutesExcludeWeekend')) {
+if (! function_exists('addMinutesExcludeWeekend')) {
     function addMinutesExcludeWeekend($minutesToAdd, $date = null)
     {
         $date = Carbon::parse($date) ?? Carbon::now();

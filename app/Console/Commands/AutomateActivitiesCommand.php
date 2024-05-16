@@ -102,12 +102,12 @@ class AutomateActivitiesCommand extends Command
                 ->chunkById(1000, function ($quoteDetails) use ($quoteClass) {
                     foreach ($quoteDetails as $quoteDetail) {
                         $activitiesIDs = $quoteDetail->activities->pluck('id');
-                            Activities::whereIn('id', $activitiesIDs)->update(['is_cold' => true]);
-    
-                            if (in_array($quoteClass, [HealthQuote::class, HomeQuote::class, BusinessQuote::class, PersonalQuote::class])) {
-                                $quoteDetail->update(['is_cold' => true]);
-                            }
-     
+                        Activities::whereIn('id', $activitiesIDs)->update(['is_cold' => true]);
+
+                        if (in_array($quoteClass, [HealthQuote::class, HomeQuote::class, BusinessQuote::class, PersonalQuote::class])) {
+                            $quoteDetail->update(['is_cold' => true]);
+                        }
+
                     }
                 });
             info('------------------- Updated Cold Activities for : '.$quoteClass.' -------------------');
@@ -135,21 +135,21 @@ class AutomateActivitiesCommand extends Command
                                         null) :
                                     $quoteTypeDetail['quote_type_id'];
 
-                                    $lastActivity = Activities::where(
-                                        'quote_request_id',
-                                        $quoteDetail->id,
-                                    )->orderBy('created_at', 'desc')->first();
-                                    
-                                    $activityCreationAllowed = true;
-                                    if($lastActivity->is_cold || $lastActivity->is_cold && $lastActivity->status == 0){
-                                        $activityCreationAllowed = false;
-                                    }
+                                $lastActivity = Activities::where(
+                                    'quote_request_id',
+                                    $quoteDetail->id,
+                                )->orderBy('created_at', 'desc')->first();
 
-                                    $scheduledActivitiesIDs = collect($quoteDetail->activities->pluck('activity_schedule_id'))
+                                $activityCreationAllowed = true;
+                                if ($lastActivity->is_cold || $lastActivity->is_cold && $lastActivity->status == 0) {
+                                    $activityCreationAllowed = false;
+                                }
+
+                                $scheduledActivitiesIDs = collect($quoteDetail->activities->pluck('activity_schedule_id'))
                                     ->unique()->filter(function ($filter) {
                                         return ! is_null($filter);
                                     })->toArray();
-                                    
+
                                 $activitySchedules = ActivitySchedule::where([
                                     'quote_type_id' => $getQuoteType,
                                     'quote_status_id' => $quoteDetail->quote_status_id,
