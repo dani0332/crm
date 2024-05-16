@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\QuoteBatches;
 
 class LifeQuoteService extends BaseService
 {
@@ -609,11 +610,13 @@ class LifeQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $quoteBatch = QuoteBatches::latest()->first();
+        Log::info('Leads ids to assign: '.json_encode($leadsIds) .' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
+            $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
             $this->updateChildRecord($lead->id);
         }
