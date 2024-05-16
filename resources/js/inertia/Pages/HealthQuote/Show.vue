@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -442,6 +442,9 @@ const rules = {
     'Phone must be valid',
 };
 
+const initialEditCategoryId = ref(null);
+const previouslySelectedCategoryId = ref(null);
+
 function onEditMember(data) {
   memberActionEdit.value = true;
   modals.member = true;
@@ -457,6 +460,12 @@ function onEditMember(data) {
   memberForm.last_name = data.last_name;
   memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
+
+  // set initialEditCategoryId to member_category_id when any member is edited
+  initialEditCategoryId.value = data.member_category_id;
+
+  // set previouslySelectedCategoryId for the refernece of initialEditCategoryId
+  previouslySelectedCategoryId.value = initialEditCategoryId.value;
 }
 
 const onAddMemberModal = () => {
@@ -1511,10 +1520,7 @@ const selectedProviderPlan = ref({
   premium: page.props.ecomDetails.priceWithVAT,
 });
 
-console.log(selectedProviderPlan, 'LLLKKKKJ', page.props.quote);
-
 const handlePlanSelected = plan => {
-  console.log('HHH', plan);
   //se.value = plan.id;
   selectedProviderPlan.value.id = plan.id;
   selectedProviderPlan.value.planName = plan.planName;
@@ -1533,6 +1539,55 @@ watch(
     selectedProviderPlan.value.premium = value.priceWithVAT;
   },
   { deep: true },
+);
+
+const memberCategorySalaryMapping = {
+  'Investor or Partner': 2,
+  'Golden visa': 2,
+  'Self-employed or Freelancer': 2,
+  'Domestic worker': 1,
+  'Dependent spouse': 2,
+  'Dependent child': 2,
+  'Dependent parent': 2,
+  'Dependent sibling or Other relatives': 2,
+  'Employee with salary AED 4000 and below': 1,
+  'Employee with salary above AED 4000': 2,
+};
+
+const salaryBrandMapping = {
+  1: 'AED 4000 and below',
+  2: 'More than AED 4000',
+};
+
+watch(
+  () => memberForm.member_category_id,
+  (newValue, oldValue) => {
+    if (newValue) {
+      if (
+        (!memberActionEdit.value && modals.member) || // Add case
+        (memberActionEdit.value &&
+          (newValue !== initialEditCategoryId.value ||
+            (newValue === initialEditCategoryId.value &&
+              newValue !== previouslySelectedCategoryId.value)))
+      ) {
+        //fetch category text
+        const selectedCategory = memberCategoriesOptions.value.find(
+          option => option.value === newValue,
+        );
+
+        // fetch salary band id based on category text
+        const salaryBandId =
+          memberCategorySalaryMapping[selectedCategory.label];
+
+        // if quote status is Transaction Approved do not auto-popualte salary band automatically
+        if (page.props.quote.quote_status_id != 15) {
+          memberForm.salary_band_id = salaryBandId;
+        }
+        previouslySelectedCategoryId.value = newValue;
+      }
+    }
+  },
+  { immediate: true },
 );
 </script>
 
