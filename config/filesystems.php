@@ -53,6 +53,17 @@ return [
             // 'visibility' => 'public',
             'bucket_endpoint' => true,  //add this
         ],
+        'insly_documents' => [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            // 'visibility' => 'public',
+            'bucket_endpoint' => true,  //add this
+        ],
         'azure' => [
             'driver' => 'azure',
             'name' => env('AZURE_STORAGE_NAME'),

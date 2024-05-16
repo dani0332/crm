@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -197,6 +198,12 @@ class CentralService
                 } else {
                     if (gettype($quotePlans) != 'string') {
                         $listQuotePlans[] = $quotePlans->quote->plans;
+
+                        foreach ($listQuotePlans as $plans) {
+                            foreach ($plans as $plan) {
+                                $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
+                            }
+                        }
                     }
                 }
 

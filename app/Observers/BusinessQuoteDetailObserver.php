@@ -16,6 +16,6 @@ class BusinessQuoteDetailObserver
     public function updated(BusinessQuoteRequestDetail $businessQuoteDetail): void
     {
         $businessQuote = BusinessQuote::find($businessQuoteDetail->business_quote_request_id);
-        $this->syncQuoteDetail($businessQuote, $businessQuoteDetail->getDirty());
+        $this->syncQuote($businessQuote, $businessQuoteDetail->getDirty());
     }
 }

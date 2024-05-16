@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Factories\ManagementReportServiceFactory;
 use App\Models\RenewalBatch;
 use App\Models\User;
-use App\Services\AdvisorConversionReportService;
-use App\Services\AdvisorDistributionReportService;
-use App\Services\AdvisorPerformanceReportService;
-use App\Services\LeadDistributionReportService;
-use App\Services\RenewalBatchReportService;
-use App\Services\ReportService;
+use App\Repositories\CarRevivalQuoteRepository;
+use App\Services\Reports\AdvisorConversionReportService;
+use App\Services\Reports\AdvisorDistributionReportService;
+use App\Services\Reports\AdvisorPerformanceReportService;
+use App\Services\Reports\LeadDistributionReportService;
+use App\Services\Reports\RenewalBatchReportService;
+use App\Services\Reports\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
@@ -81,6 +84,15 @@ class ReportsController extends Controller
         return inertia('Reports/LeadListReport', [
             'reportData' => $reportService->getLeadsListReport($request),
             'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
+        ]);
+    }
+
+    public function renderRevivalConversionReport(Request $request)
+    {
+        $reportData = CarRevivalQuoteRepository::getReportsData($request);
+
+        return inertia('Reports/RevivalConversion', [
+            'reportsData' => $reportData,
         ]);
     }
 
@@ -170,6 +182,19 @@ class ReportsController extends Controller
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
             'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
             'renewalBatchesList' => $renewalBatches,
+        ]);
+    }
+
+    public function renderSaleManagementReport(Request $request)
+    {
+        $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
+        $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+
+        return inertia('ManagementReport/index', [
+            'reportData' => $reportInstance->getReportData($request),
+            'filterOptions' => $reportInstance->getFilterOptions(),
+            'defaultFilters' => $reportInstance->getDefaultFilters(),
+            'reportName' => $reportCategory,
         ]);
     }
 

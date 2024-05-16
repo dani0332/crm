@@ -90,6 +90,7 @@ defineProps({
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
+  clientInquiryLogs: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -3017,6 +3018,7 @@ watch(
                 isRenewal,
                 isDisabled,
                 puaPremium,
+                puaType
               }"
             >
               <p>{{ providerName }}</p>
@@ -3047,7 +3049,7 @@ watch(
                 </x-tag>
 
                 <x-tag
-                  v-if="puaPremium && puaPremium != null"
+                  v-if="puaPremium && puaPremium != null && puaType"
                   size="xs"
                   class="mt-0.5 text-[10px] text-white"
                   style="background-color: #e00000"
@@ -3063,7 +3065,7 @@ watch(
                         approval.
                       </span>
                     </template>
-                    PUA
+                    {{ puaType }}
                   </x-tooltip>
                 </x-tag>
               </div>
