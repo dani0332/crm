@@ -40,7 +40,7 @@ class SendBookPolicyRequest extends FormRequest
     {
 
         if (request()->send_policy_type == 'sage') {
-            if (!auth()->user()->can(PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON)){
+            if (!auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])){
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
                 ]], 403);
