@@ -1,5 +1,5 @@
 <script setup>
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -13,6 +13,7 @@ const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -87,16 +88,16 @@ const docForm = useForm({
 });
 
 const uploadFile = (doc, filesWithInfo) => {
-    let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-    const { files, rejectReason} = filesWithInfo;
-    if (files.length == 0) {
-        notification.error({
-            title: 'File upload failed',
-            position: 'top',
-        });
-        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-        return false
-    };
+  let url = '/personal-quotes/' + docForm.quote_id + '/documents';
+  const { files, rejectReason } = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -132,15 +133,30 @@ const uploadFile = (doc, filesWithInfo) => {
         <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
       </h3>
       <div class="flex gap-2">
-          <Link
-              v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${inslyId}`"
-              preserve-scroll
-          >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                  View Legacy policy
-              </x-button>
-          </Link>
+        <Link
+          v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+          :href="`/legacy-policy/${inslyId}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="route('legacy-policy.index')"
+          :data="{
+            policy_number: quote.previous_quote_policy_number,
+          }"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
           Upload Documents
         </x-button>

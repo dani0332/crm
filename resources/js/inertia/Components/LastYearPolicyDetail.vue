@@ -13,6 +13,8 @@ const props = defineProps({
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
+
 const dateFormat = date => {
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
@@ -54,6 +56,13 @@ function onSubmit(isValid) {
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+
+console.log(
+  'quote : ',
+  props.quote.source,
+  props.quote.previous_quote_policy_number,
+  leadSource.RENEWAL_UPLOAD,
+);
 </script>
 
 <template>
@@ -62,17 +71,32 @@ const rolesEnum = page.props.rolesEnum;
       <h3 class="font-semibold text-primary-800 text-lg">
         Last Year's Policy Details
       </h3>
-        <div>
-            <Link
-                v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${inslyId}`"
-                preserve-scroll
-            >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
-            </Link>
-        </div>
+      <div>
+        <Link
+          v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+          :href="`/legacy-policy/${inslyId}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="route('legacy-policy.index')"
+          :data="{
+            policy_number: quote.previous_quote_policy_number,
+          }"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+      </div>
     </div>
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="p-4 rounded shadow mb-6 bg-white">
