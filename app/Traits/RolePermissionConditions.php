@@ -23,7 +23,7 @@ trait RolePermissionConditions
         $isAdmin = Auth::user()->isAdmin();
 
         if ($isRenewalAdvisor) {
-         
+
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
         }
