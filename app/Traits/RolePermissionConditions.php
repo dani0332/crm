@@ -23,6 +23,7 @@ trait RolePermissionConditions
         $isAdmin = Auth::user()->isAdmin();
 
         if ($isRenewalAdvisor) {
+
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
         }
@@ -37,7 +38,6 @@ trait RolePermissionConditions
         }
         if ($isAdvisor) {
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
-            $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
         if ($isNewManager) {
             $ids = $this->walkTree(Auth::user()->id);
