@@ -682,7 +682,7 @@ const calculateCommission = () => {
                   <template
                     v-if="
                       props.bookPolicyDetails?.editButton &&
-                      can(permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON)
+                      can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
                     <x-button
@@ -692,7 +692,7 @@ const calculateCommission = () => {
                       :disabled="
                         !props.bookPolicyDetails?.editButton ||
                         bp.isEditing ||
-                        !can(permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON)
+                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
                       "
                       @click.prevent="confirmSendPolicy"
                     >
@@ -707,7 +707,7 @@ const calculateCommission = () => {
                         color="orange"
                         :disabled="
                           !props.bookPolicyDetails?.editButton ||
-                          !can(permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON)
+                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
                         "
                       >
                         Sending Policy To Customer
