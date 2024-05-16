@@ -69,7 +69,7 @@ let countDays = ref(useDaysSinceStale(props.quoteRequest?.stale_at));
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 
-let showPlans = ref(props.hashCollapsibleStatuses);
+const showPlans = computed(() => !props.hashCollapsibleStatuses);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
