@@ -128,6 +128,6 @@ final class PaymentTooltip extends Enum
     const DECLINED_REASON_5 = 'No proof of Credit approval';
     const DECLINED_REASON_6 = 'Other reasons';
 
-    const CONFIRM_APPROVE_UNSELECT = 'Please select the checkbox to proceed';
+    const CONFIRM_APPROVE_UNSELECT = 'Select the checkbox to enable the \'Confirm\' button and proceed';
 
 }

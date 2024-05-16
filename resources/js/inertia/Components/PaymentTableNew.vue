@@ -2656,7 +2656,7 @@ const isMasterPaymentPaid = computed(() => {
                   </template>
                 </x-tooltip>               
               </div>
-              <div class="w-1/5 px-2">
+              <div class="w-1/5 px-2" v-if="paymentMethodsModels[splitPaymentNo]!='CC'">
                 <span class="text-sm  ">
                   <span class="border-b-2 border-dotted border-black text-sm">VERIFIED AT</span>
                 </span>
@@ -2668,10 +2668,10 @@ const isMasterPaymentPaid = computed(() => {
               <div class="w-1/5 px-2">{{ formatString(splitPaymentRecord.payment_status.text) }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_allocation_status !== null ? formatString(splitPaymentRecord.payment_allocation_status) : 'N/A' }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.collection_amount !== null ? formatAmount(splitPaymentRecord.collection_amount) : '0.00' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.verified_at !== null ? formatDate(splitPaymentRecord.verified_at,true) : 'N/A' }}</div>
+              <div class="w-1/5 px-2" v-if="paymentMethodsModels[splitPaymentNo]!='CC'">{{ splitPaymentRecord.verified_at !== null ? formatDate(splitPaymentRecord.verified_at,true) : 'N/A' }}</div>
             </div>
 
-            <div class="flex w-full custombreak" >
+            <div class="flex w-full custombreak" v-if="paymentMethodsModels[splitPaymentNo]!='CC'" >
               <div class="w-1/6 px-2 text-center"></div>              
               <div class="w-1/5 px-2">
                 <span class="text-sm  ">
@@ -2680,7 +2680,7 @@ const isMasterPaymentPaid = computed(() => {
               </div>
             </div>
 
-            <div class="flex w-full custombreak pb-5" >
+            <div class="flex w-full custombreak pb-5" v-if="paymentMethodsModels[splitPaymentNo]!='CC'">
               <div class="w-1/6 px-2 text-center"></div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.verified_by !== null ? splitPaymentRecord.verified_by_user.name : 'N/A' }}</div>              
             </div>  
@@ -3065,14 +3065,16 @@ const isMasterPaymentPaid = computed(() => {
                 </div>
             </div>
           </div>
-          <div class="w-full h-full mt-2 flex flex-col items-center">            
-            <div class="text-lg font-semibold px-6 py-4 border-b">
-            <span class="font-bold py-2">
-              <input type="checkbox" @click="isApproveNotChecked = !isApproveNotChecked" class="h-6 w-6 mr-2 border border-gray-300 rounded checked:bg-blue-500 checked:border-transparent focus:ring-blue-400">
-              <span v-if="paymentMethodsForm.collection_type==='insurer'">I certify that all details provided, including the official receipt or payment confirmation, are correct and in compliance with our conduct standards.</span>
-              <span v-if="paymentMethodsForm.collection_type==='broker'">I verify that the information provided is accurate and my actions align with our standards of conduct.</span>
-            </span>
-            </div>              
+          <div class="w-full h-full mt-2 flex flex-col items-center"> 
+                <div class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start">
+                    <div class="flex items-center text-center mr-2 mt-4">
+                        <input type="checkbox" @click="isApproveNotChecked = !isApproveNotChecked" class="h-6 w-6 mr-2 border border-gray-300 rounded checked:bg-blue-500 checked:border-transparent focus:ring-blue-400">
+                    </div>
+                    <div class="text-left">
+                      <span v-if="paymentMethodsForm.collection_type==='insurer'">I certify that all details provided, including the official receipt or payment confirmation, are correct and in compliance with our conduct standards.</span>
+                      <span v-if="paymentMethodsForm.collection_type==='broker'">I verify that the information provided is accurate and my actions align with our standards of conduct.</span>
+                    </div>
+                </div>
                 <x-tooltip v-if="isApproveNotChecked">
                   <x-button
                     size="lg"
@@ -3084,7 +3086,7 @@ const isMasterPaymentPaid = computed(() => {
                   >
                   <span>Confirm</span></x-button>
                   <template #tooltip>
-                        <span >{{ paymentTooltipEnum.CONFIRM_APPROVE_UNSELECT }}</span>
+                        <span>{{ paymentTooltipEnum.CONFIRM_APPROVE_UNSELECT }}</span>
                   </template>
                 </x-tooltip>
                 <x-button
@@ -3170,7 +3172,7 @@ const isMasterPaymentPaid = computed(() => {
 } 
 .tooltip-display {
   display: inherit;
-} 
+}
 /* Modal overlay */
 .modal-overlay {
   position: fixed;
@@ -3197,8 +3199,8 @@ const isMasterPaymentPaid = computed(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 55%;
-  height: 38%; 
+  width: 75%;
+  height: 37%; 
   background-color: hsla(0, 0%, 100%, 0.99);
   border-radius: 8px; /* Adjust the radius for desired roundness */
   padding: 2px;
