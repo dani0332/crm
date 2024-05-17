@@ -1212,7 +1212,11 @@ const validateViewPayment = (isValid) => {
     }
     isApproveConfirmed.value = true;    
     return true;
-  }  
+  }
+  
+  if (isApproveNotChecked.value === true) {
+    return true;
+  }
   return false;
 }
 
@@ -2818,11 +2822,6 @@ const isMasterPaymentPaid = computed(() => {
       <div v-if="isViewEnabled" class="p-1 mb-2">
         <h3>Notes</h3>
       </div>      
-
-      <div class="flex items-center justify-center" v-if="splitPaymentRecord.verified_by !== null && paymentMethodsForm.status == 'view'">        
-        <p class="text-lg font-bold text-blue-400 mr-2">Payment has been verified</p><img style="width:30px;height:30px;" src="/images/payment_verified.jpg">
-      </div>
-
       <div class="w-full grid">
         <x-field>
           <label v-if="!isViewEnabled">Notes</label>
@@ -2834,6 +2833,10 @@ const isMasterPaymentPaid = computed(() => {
           />
         </x-field>
       </div>
+      <div class="flex items-center justify-center" v-if="splitPaymentRecord.verified_by !== null && paymentMethodsForm.status == 'view'">        
+        <p class="text-lg font-bold text-blue-400 mr-2">Payment has been verified</p><img style="width:30px;height:30px;" src="/images/payment_verified.jpg">
+      </div>
+      
       <template v-if="(isViewEnabled || isCreditApprovalView) && isDeclineClicked">
         <div class="p-1 mb-2">
           <h3 class="text-white">PAYMENT DECLINE</h3>
@@ -3078,11 +3081,9 @@ const isMasterPaymentPaid = computed(() => {
                 <x-tooltip v-if="isApproveNotChecked">
                   <x-button
                     size="lg"
-                    type="submit"
                     color="orange"
                     class="px-4 py-2 mt-4"
-                    :disabled="isApproveNotChecked"
-                    :loading = "paymentMethodsForm.processing"
+                    :disabled="isApproveNotChecked"                    
                   >
                   <span>Confirm</span></x-button>
                   <template #tooltip>
