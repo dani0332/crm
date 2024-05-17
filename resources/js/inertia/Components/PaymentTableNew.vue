@@ -1970,6 +1970,7 @@ const uploadDocument = (doc, files, count) => {
         folder_path: doc.folder_path,
         split_payment_doc_type: splitPaymentDocType,
         file: files,
+        send_update_id: props.sendUpdate?.id || null,
       }))
       .post(url, {
         preserveScroll: true,
@@ -3694,16 +3695,16 @@ watch(
                   </p>
                   <div
                     v-for="fileData in fileUploadModels[count]"
-                    :key="fileData.id"
+                    :key="fileData?.id"
                   >
                     <span style="display: flex; align-items: center">
                       <span
-                        :key="fileData.id"
+                        :key="fileData?.id"
                         class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                         style="flex: 1; text-decoration: none; cursor: pointer"
-                        @click="openInnerModal(fileData.id)"
+                        @click="openInnerModal(fileData?.id)"
                       >
-                        {{ fileData.original_name }}
+                        {{ fileData?.original_name }}
                       </span>
                       <span
                         class="delete-pointer"

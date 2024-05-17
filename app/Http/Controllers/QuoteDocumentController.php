@@ -9,6 +9,7 @@ use App\Http\Requests\PaymentDocumentRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
@@ -129,6 +130,9 @@ class QuoteDocumentController extends Controller
             ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
         ) {
             return false;
+        }
+        if ($request->send_update_id) {
+            $quote = SendUpdateLog::find($request->send_update_id);
         }
         foreach ($request->file as $file) {
             $this->quoteDocumentService->uploadQuoteDocument($file['file'], $request->all(), $quote);
