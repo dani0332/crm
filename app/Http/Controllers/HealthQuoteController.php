@@ -23,7 +23,7 @@ class HealthQuoteController extends Controller
 {
     protected $healthQuoteService;
 
-    public function __construct(HealthQuoteService $healthQuoteService,)
+    public function __construct(HealthQuoteService $healthQuoteService)
     {
         $this->healthQuoteService = $healthQuoteService;
     }
