@@ -61,6 +61,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  noMargin: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const selectedData = computed({
@@ -113,6 +117,7 @@ const onlyCurentYear = () => {
         :placeholder="placeholder"
         :disabled="props.disabled"
         :size="props.size"
+        :class="props.noMargin ? '!mb-0' : ''"
         class="w-full"
         :rules="value ? [] : props.rules"
         :error="props.customError ? props.customError : ''"
