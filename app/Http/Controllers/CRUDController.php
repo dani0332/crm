@@ -731,7 +731,7 @@ class CRUDController extends Controller
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
-                'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'listQuotePlans', 'isAmlClearedForPayment'
+                'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'listQuotePlans', 'isAmlClearedForPayment',
             ]));
         }
 

@@ -622,9 +622,9 @@ const policyDetailsState = reactive({
 });
 
 const planQuoteInsurerNumber = computed(() => {
-  let obj = page.props?.listQuotePlans?.filter(
-    item => item.id == page.props.record.plan_id,
-  );
+  let quotePlanList = page.props?.listQuotePlans;
+  if (!quotePlanList || typeof quotePlanList === 'string') return null;
+  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
   return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
 });
 const vatAmount = computed(() => {

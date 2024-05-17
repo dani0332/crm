@@ -75,7 +75,7 @@ class PetQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'profile_photo_path']);
     }
 
     /**
