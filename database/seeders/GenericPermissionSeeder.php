@@ -194,7 +194,7 @@ class GenericPermissionSeeder extends Seeder
         ];
 
         foreach ($permissionList as $permission => $roles) {
-            $dataset = Permission::findOrCreate(['name' => $permission, 'guard_name' => 'web']);
+            $dataset = Permission::findOrCreate($permission, 'web');
             foreach ($roles as $roleName) {
                 if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($dataset->id)) {
                     $role->givePermissionTo($dataset->id);
