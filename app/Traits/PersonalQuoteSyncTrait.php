@@ -67,12 +67,12 @@ trait PersonalQuoteSyncTrait
     private function addQuoteSyncEntry($uuid, $quoteTypeId, $updatedFields)
     {
         unset($updatedFields['created_at'], $updatedFields['updated_at']);
-        $quoteSync = new QuoteSync();
-        $quoteSync->is_synced = 0;
-        $quoteSync->quote_uuid = $uuid;
-        $quoteSync->quote_type_id = $quoteTypeId;
-        $quoteSync->updated_fields = json_encode($updatedFields);
-        $quoteSync->save();
+        QuoteSync::create([
+            'is_synced' => 0,
+            'quote_uuid' => $uuid,
+            'quote_type_id' => $quoteTypeId,
+            'updated_fields' => json_encode($updatedFields),
+        ]);
     }
 
     public function syncTable($quote, $updatedFields, $quoteTable)
