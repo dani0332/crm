@@ -244,6 +244,7 @@ class CRUDService extends BaseService
             $quoteDetailEntity->save();
 
             $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
+
             $previousQuoteStatus = $entity->quote_status_id;
             //if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
@@ -257,6 +258,15 @@ class CRUDService extends BaseService
             if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
                 $entity->tier_id = $request->tier_id;
             }
+
+            if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home), strtolower(quoteTypeCode::Business)])) {
+                // $entity->activities()->where('status', 0)->update(['status' => 1]);
+                $entity->quote_status_date = now();
+                if ($entity->stale_at) {
+                    $entity->stale_at = null;
+                }
+            }
+
             $entity->save();
 
             if (
@@ -344,6 +354,16 @@ class CRUDService extends BaseService
                 }
             }
 
+            $activityResponse = false;
+            $previousStatusIdChanged = false;
+            if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home), strtolower(quoteTypeCode::Business)])) {
+                $quoteTypeId = [strtolower(quoteTypeCode::Home) => QuoteTypeId::Home, strtolower(quoteTypeCode::Health) => QuoteTypeId::Health, strtolower(quoteTypeCode::Business) => QuoteTypeId::Business];
+                if ($entity->quotes_status_id != $previousQuoteStatus) {
+                    $previousStatusIdChanged = true;
+                }
+                $activityResponse = (new CentralService())->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)], $previousStatusIdChanged);
+            }
+
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
@@ -370,7 +390,7 @@ class CRUDService extends BaseService
                 'created_by' => Auth::user()->id,
             ]);
 
-            return $entity;
+            return ['entity' => $entity, 'activityResponse' => $activityResponse];
         });
     }
 
@@ -757,5 +777,22 @@ class CRUDService extends BaseService
             ->first();
 
         return optional($quote)->duplicateInquiryLog;
+    }
+
+    public function hashCollapsibleStatuses($quoteTypeId, $quoteId)
+    {
+        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $quoteId)
+            ->where(function ($query) {
+                $query->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicyBooked)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyBooked);
+            })
+            ->first() !== null;
     }
 }

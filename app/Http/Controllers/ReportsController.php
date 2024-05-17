@@ -118,7 +118,7 @@ class ReportsController extends Controller
     /**
      * Fetches the team list based on the line of business (LOB) requested.
      *
-     * @param  \Illuminate\Http\Request  $request  The HTTP request object.
+     * @param  Request  $request  The HTTP request object.
      * @return array The array of team names and IDs.
      */
     public function fetchTeamListByLob(Request $request)
@@ -182,7 +182,7 @@ class ReportsController extends Controller
     /**
      * Fetches the list of sub-teams based on the given team IDs and the current user's teams and sub-teams.
      *
-     * @param  \Illuminate\Http\Request  $request  The HTTP request object.
+     * @param  Request  $request  The HTTP request object.
      * @return array The list of sub-teams as an array of associative arrays containing 'name' and 'id' keys.
      */
     public function fetchSubTeamListByTeam(Request $request)
@@ -310,8 +310,48 @@ class ReportsController extends Controller
         ]);
     }
 
+    public function renderPipelineReport(Request $request, ReportService $reportService)
+    {
+        $data = $reportService->getStaleLeadsReport($request)->simplePaginate(15)->appends(request()->query());
+
+        return inertia('Reports/PipelineReport', [
+            'reportData' => $data,
+        ]);
+    }
+
+    public function fetchAdvisorsByTeam(Request $request)
+    {
+        $advisors = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+
+        return response()->json([
+            'advisors' => User::whereIn('id', $advisors)
+                ->select('name', 'id')
+                ->orderBy('name')
+                ->where('is_active', 1)
+                ->get()
+                ->toArray(),
+        ]);
+    }
+
+    public function fetchTeamsbyType(Request $request)
+    {
+        $parentId = Team::where('name', $request->lob)->first()->id;
+        $teams = Team::where('parent_team_id', $parentId)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        return response()->json([
+            'teams' => $teams,
+        ]);
+    }
+
     /**
-     * generate renewal reports function
+     * generate renewal reports function.
      *
      * @return void
      */
@@ -342,6 +382,14 @@ class ReportsController extends Controller
         ]);
     }
 
+    public function renderStaleLeadsReport(Request $request, ReportService $reportService)
+    {
+        $data = $reportService->getStaleLeadsReport($request, true)->simplePaginate(15)->appends(request()->query());
+
+        return inertia('Reports/StaleLeadsReport', [
+            'reportData' => $data, ]);
+    }
+
     public function renderSaleManagementReport(Request $request)
     {
         $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
@@ -364,5 +412,4 @@ class ReportsController extends Controller
             'filterOptions' => $reportService->getDefaultFiltersForTotalPremium(),
         ]);
     }
-
 }

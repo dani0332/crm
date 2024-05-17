@@ -1,5 +1,5 @@
 <script setup>
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -87,16 +87,16 @@ const docForm = useForm({
 });
 
 const uploadFile = (doc, filesWithInfo) => {
-    let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-    const { files, rejectReason} = filesWithInfo;
-    if (files.length == 0) {
-        notification.error({
-            title: 'File upload failed',
-            position: 'top',
-        });
-        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-        return false
-    };
+  let url = '/personal-quotes/' + docForm.quote_id + '/documents';
+  const { files, rejectReason } = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -125,7 +125,126 @@ const uploadFile = (doc, filesWithInfo) => {
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white">
+  <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+    <h3 class="font-semibold text-primary-800 text-lg">
+      Documents
+      <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+    </h3>
+    <template #content>
+      <x-divider class="mb-4 mt-1" />
+      <div class="flex justify-end gap-4 items-center mb-4">
+        <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+          Upload Documents
+        </x-button>
+      </div>
+      <DataTable
+        table-class-name="compact"
+        :headers="quoteDocumentsTable.columns"
+        :items="quoteDocuments || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="quoteDocuments.length < 15"
+      >
+        <template #item-original_name="item">
+          <a
+            :href="storageUrl + item.doc_url"
+            target="_blank"
+            class="text-primary-600"
+          >
+            {{ item.original_name }}
+          </a>
+        </template>
+        <template #item-action="{ doc_name }">
+          <div>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="onDocDelete(doc_name)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+
+      <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+        <template #header> Upload Documents </template>
+
+        <x-alert
+          color="error"
+          class="mb-5"
+          v-if="Object.keys(docForm.errors).length"
+        >
+          <ul>
+            <li v-for="error in docForm?.errors" :key="error">{{ error }}</li>
+          </ul>
+        </x-alert>
+
+        <div
+          v-for="documentType in documentTypes"
+          :key="documentType.id"
+          class="grid md:grid-cols-2 gap-2 my-4 border-b"
+        >
+          <div class="flex flex-col gap-1">
+            <h5 class="text-sm font-semibold">
+              {{ documentType.text }}
+            </h5>
+            <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+            <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
+            <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
+          </div>
+          <div class="pb-4">
+            <Dropzone
+              :id="documentType.id"
+              :accept="documentType.accepted_files"
+              :max-files="documentType.max_files"
+              :max-size="documentType.max_size"
+              :loading="docForm.processing"
+              @change="uploadFile(documentType, $event)"
+            />
+            <a
+              v-for="quoteDocument in quoteDocuments.filter(
+                d => d.document_type_code == documentType.code,
+              )"
+              :key="quoteDocument.id"
+              :href="storageUrl + quoteDocument.doc_url"
+              target="_blank"
+              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+            >
+              {{ quoteDocument.original_name || quoteDocument.doc_name }}
+            </a>
+          </div>
+        </div>
+      </x-modal>
+
+      <x-modal v-model="modals.docConfirm" show-close backdrop>
+        <template #header> Delete Document </template>
+        <p>Are you sure you want to delete this document?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.docConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              @click.prevent="confirmDeleteDoc"
+              :loading="quoteDocumentsTable.isLoading"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+    </template>
+  </x-collapse>
+  <!-- <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">
         Documents
@@ -188,7 +307,7 @@ const uploadFile = (doc, filesWithInfo) => {
         v-if="Object.keys(docForm.errors).length"
       >
         <ul>
-          <li v-for="error in docForm?.errors">{{ error }}</li>
+          <li v-for="error in docForm?.errors" :key="error">{{ error }}</li>
         </ul>
       </x-alert>
 
@@ -248,5 +367,5 @@ const uploadFile = (doc, filesWithInfo) => {
         </div>
       </template>
     </x-modal>
-  </div>
+  </div> -->
 </template>

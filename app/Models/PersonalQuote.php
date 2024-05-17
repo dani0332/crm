@@ -37,6 +37,8 @@ class PersonalQuote extends Model implements AuditableContract
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'is_cold' => FilterTypes::EXACT,
+        'stale_at' => FilterTypes::NULL_CHECK,
     ];
 
     /**
@@ -250,6 +252,17 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski]);
+    }
+
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
+            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet]);
+    }
+
+    public function notes()
+    {
+        return $this->morphMany(QuoteNote::class, 'quote_noteable');
     }
 
     public function insuranceProvider()

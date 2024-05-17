@@ -147,6 +147,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
         if (in_array(quoteTypeCode::Pet, newUi())) {
+            Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
             Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
         }
         if (in_array(quoteTypeCode::Bike, newUi())) {
@@ -154,9 +155,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         if (in_array(quoteTypeCode::Cycle, newUi())) {
             Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
+            Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
         }
         if (in_array(quoteTypeCode::Yacht, newUi())) {
             Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
+            Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
         }
         if (in_array(quoteTypeCode::Jetski, newUi())) {
             Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
@@ -184,6 +187,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction');
+        Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
+        Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
+        Route::delete('delete-quote-notes/{id}', [CentralController::class, 'deleteQuoteNotes'])->name('delete-quote-notes');
         Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-plan-detail');
         Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-leads-detail-with-email-mobile');
         Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-makes-models');
@@ -210,6 +216,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
     Route::post('embedded-products/download-document', [EmbeddedProductController::class, 'downloadDocument'])->name('embedded-products.download-document');
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
+
+    Route::post('updateLeadStatusDragDrop', [CentralController::class, 'updateLeadStatusDragDrop'])->name('update-lead-status-drag-drop');
 
     Route::get('/clear-cache', function () {
         if (request()->has('info')) {
@@ -314,6 +322,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/get-users-by-sub-team', [DashboardController::class, 'getUsersBySubTeam']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
+    Route::get('/reports/stale-leads', [ReportsController::class, 'renderStaleLeadsReport'])->name('stale-leads-report');
+    Route::get('/reports/pipeline-report', [ReportsController::class, 'renderPipelineReport'])->name('pipeline-report');
+
+    Route::post('/reports/fetch-advisors-by-team', [ReportsController::class, 'fetchAdvisorsByTeam'])->name('fetch-advisors-by-team');
+    Route::post('/reports/fetch-teams-by-type', [ReportsController::class, 'fetchTeamsbyType'])->name('fetch-teams-by-type');
+
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])
         ->middleware('check_lead_report_access')
         ->name('lead-list-report');

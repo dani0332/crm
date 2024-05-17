@@ -41,7 +41,7 @@ trait RolePermissionConditions
         }
         if ($isNewManager) {
             $ids = $this->walkTree(Auth::user()->id);
-            $query->whereIn($prefix.'.'.'advisor_id', $ids);
+            //    $query->whereIn($prefix.'.'.'advisor_id', $ids);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
         if ($isHealthManager && $restrictedQuoteType == quoteTypeCode::Health) {

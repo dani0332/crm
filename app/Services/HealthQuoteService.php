@@ -161,6 +161,7 @@ class HealthQuoteService extends BaseService
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
+            'hqr.stale_at'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -412,7 +413,22 @@ class HealthQuoteService extends BaseService
             }
         }
 
-        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor(HealthTeamType::EBP) || Auth::user()->isSpecificTeamAdvisor('RM')) {
+        // payment_status_id filter
+        if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
+            $this->query->whereIn('payment_status_id', $request->payment_status);
+        }
+
+        // is_cold filter
+        if (isset($request->is_cold) && $request->is_cold != '') {
+            $this->query->where('hqr.is_cold', 1);
+        }
+
+        // is_stale filter
+        if (isset($request->is_stale) && $request->is_stale != '') {
+            $this->query->whereNotNull('hqr.stale_at');
+        }
+
+        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
@@ -462,6 +478,7 @@ class HealthQuoteService extends BaseService
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
         }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
@@ -484,34 +501,9 @@ class HealthQuoteService extends BaseService
             }
         }
 
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-            $isAdmin = Auth::user()->hasRole('ADMIN');
-            if ($isAdmin || $isManagerORDeputy == '1') {
-                if ($column == 6) {
-                    $column = 'hqr.created_at';
-                }
-                if ($column == 7) {
-                    $column = 'hqr.updated_at';
-                }
-                if ($column == 9) {
-                    $column = 'hqrd.next_followup_date';
-                }
-            } else {
-                if ($column == 5) {
-                    $column = 'hqr.created_at';
-                }
-                if ($column == 6) {
-                    $column = 'hqr.updated_at';
-                }
-                if ($column == 8) {
-                    $column = 'hqrd.next_followup_date';
-                }
-            }
-
-            return $this->query->orderBy($column, $direction);
+        // sortBy filter
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
         } else {
             return $this->query->orderBy('hqr.created_at', 'DESC');
         }
@@ -1120,7 +1112,10 @@ class HealthQuoteService extends BaseService
         $lead->save();
         //check if team is assigned and status not qualified yet so mark it qualified.
         if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
-            HealthQuote::where('id', $lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
+            HealthQuote::where('id', $lead->id)->update([
+                'quote_status_id' => QuoteStatusEnum::Qualified,
+                'quote_status_date' => now(),
+            ]);
         }
 
         return true;
@@ -1305,7 +1300,7 @@ class HealthQuoteService extends BaseService
                                 }
                             }
                         }
-                        $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + ((float) $plan['basmah'] ?? 0) + ((float) $plan['policyFee'] ?? 0);
+                        $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + ((isset($plan['basmah']) ? (float) $plan['basmah'] : 0)) + ((isset($plan['policyFee']) ? (float) $plan['policyFee'] : 0));
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
