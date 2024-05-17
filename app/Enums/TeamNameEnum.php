@@ -19,4 +19,10 @@ final class TeamNameEnum extends Enum
     public const SBDM = 'SBDM';
     public const MOTOR_COOPERATE_RENEWALS = 'Motor cooperate Renewals';
     public const SIC_UNASSISTED = 'SIC 2.0 Unassisted';
+    public const VALUE = 'Value';
+    public const VOLUME = 'Volume';
+    public const AMT = 'AMT';
+    public const MICRO_SME = 'Micro SME';
+    public const CORPLINE_NEW = 'Corpline - Team';
+    public const CORPLINE_RENEWALS = 'Corpline - Renewals';
 }

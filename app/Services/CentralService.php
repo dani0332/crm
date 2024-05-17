@@ -14,12 +14,10 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteBatches;
 use App\Models\QuoteStatusLog;
-use App\Models\TravelQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -149,7 +147,8 @@ class CentralService
     {
         $leadsIds = $request->assigned_lead_id;
         $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $quoteBatch = QuoteBatches::latest()->first();
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
         if (str_starts_with($leadsIds, ',')) {
             $leadsIds = substr($leadsIds, 1);
@@ -164,11 +163,12 @@ class CentralService
             vAbort('Something went wrong');
         }
 
-        return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes) {
+        return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes, $quoteBatch) {
             foreach ($leadsIds as $leadId) {
 
                 $getQuoteLead = $model['parent']::findOrfail($leadId);
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
+                $getQuoteLead->quote_batch_id = $quoteBatch->id;
                 $getQuoteLead->save();
 
                 $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
@@ -279,14 +279,7 @@ class CentralService
                     'quoteUID' => $uuid,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
-
                 $response = Ken::request($endpoint, 'post', $data);
-                info('car plan update response: '.json_encode($response));
-
-                // if (isset($response['planProcessValue']['totalPremium'])) {
-                //     $quote = CarQuote::where('uuid', $uuid)->first();
-                //     $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
-                // }
                 break;
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
@@ -304,12 +297,6 @@ class CentralService
                 }
 
                 $response = Ken::request($endpoint, 'post', $data);
-                info('travel plan update response: '.json_encode($response));
-
-                // if (isset($response['planProcessValue'])) {
-                //     $quote = TravelQuote::where('uuid', $uuid)->first();
-                //     $this->updateQuotePayment($quote, collect($response['planProcessValue'])->sum('totalPremium'));
-                // }
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';
@@ -323,11 +310,6 @@ class CentralService
                 ];
 
                 $response = Capi::request($endpoint, 'post', $data);
-                info('health plan update response: '.json_encode($response));
-                // if (isset($response->totalPremium)) {
-                //     $quote = HealthQuote::where('uuid', $uuid)->first();
-                //     $this->updateQuotePayment($quote, $response->totalPremium);
-                // }
                 break;
         }
 
