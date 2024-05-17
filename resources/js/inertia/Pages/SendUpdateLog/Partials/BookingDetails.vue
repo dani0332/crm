@@ -675,8 +675,8 @@ const onCancel = () => {
       <template #body>
         <x-divider class="my-4" />
         <div class="text-xs">
-          <div class="grid md:grid-cols-2 gap-x-4 gap-y-2 py-4">
-            <div class="grid sm:grid-cols-2">
+          <div class="grid md:grid-cols-2 gap-x-4 gap-y-2 py-4 items-center">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div class="text-right"></div>
               <div>
                 <x-tooltip position="left">
@@ -692,8 +692,7 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <ComboBox
                   v-model="bookingDetailsForm.reversal_invoice"
@@ -707,31 +706,7 @@ const onCancel = () => {
               </div>
             </div>
 
-            <div class="grid sm:grid-cols-2">
-              <div class="font-bold text-right mr-10"></div>
-              <div></div>
-            </div>
-
-            <div class="grid sm:grid-cols-2">
-              <div>
-                <x-tooltip position="left">
-                  <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                  >
-                    BOOKING DATE
-                  </label>
-                  <template #tooltip>
-                    The exact date when the booking details was successfully
-                    recorded in the system.
-                  </template>
-                </x-tooltip>
-              </div>
-              <div>
-                <span>{{ reversalEntry.booking_date }}</span>
-              </div>
-            </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -746,20 +721,28 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.invoice_description }}</span>
+                <span>{{ reversalEntry.invoice_description !== '' ? reversalEntry.invoice_description : 'N/A' }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
-              <div class="font-bold">
-                <span>MAIN CLASS OF INSURANCE</span>
+            <div class="grid sm:grid-cols-2 pb-1.5">
+              <div>
+                <x-tooltip position="left">
+                  <label
+                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    BOOKING DATE
+                  </label>
+                  <template #tooltip>
+                    The exact date when the booking details was successfully
+                    recorded in the system.
+                  </template>
+                </x-tooltip>
               </div>
               <div>
-                <span>{{ quoteType }}</span>
+                <span>{{ reversalEntry.booking_date ?? 'N/A' }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -775,28 +758,18 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.transaction_payment_status }}</span>
+                <span>{{ reversalEntry.transaction_payment_status ?? 'N/A' }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
+              <div class="font-bold">
+                <span>MAIN CLASS OF INSURANCE</span>
+              </div>
               <div>
-                <x-tooltip position="left">
-                  <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                  >
-                    SUB CLASS
-                  </label>
-                  <template #tooltip>
-                    Identifies the specific coverage or insurance plan offered
-                    by the provider.
-                  </template>
-                </x-tooltip>
+                <span>{{ quoteType ?? 'N/A' }}</span>
               </div>
-              <div></div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -811,29 +784,26 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.invoice_date }}</span>
+                <span>{{ reversalEntry.invoice_date ?? 'N/A' }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
                     class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    BROKER INVOICE NUMBER
+                    SUB CLASS
                   </label>
                   <template #tooltip>
-                    Invoice number provided by the broker.
+                    Identifies the specific coverage or insurance plan offered
+                    by the provider.
                   </template>
                 </x-tooltip>
               </div>
-              <div>
-                <span>{{ reversalEntry.broker_invoice_number }}</span>
-              </div>
+              <div>N/A</div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -849,30 +819,27 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.insurer_tax_invoice_number }}</span>
+                <span>{{ reversalEntry.insurer_tax_invoice_number ?? 'N/A'}}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
                     class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    DISCOUNT
+                    BROKER INVOICE NUMBER
                   </label>
                   <template #tooltip>
-                    If applicable, this field indicates the exact amount or
-                    percentage reduced from the original price.
+                    Invoice number provided by the broker.
                   </template>
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.discount }}</span>
+                <span>{{ reversalEntry.broker_invoice_number ?? 'N/A' }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -888,12 +855,48 @@ const onCancel = () => {
               </div>
               <div>
                 <span>{{
-                  reversalEntry.insurer_commission_invoice_number
+                  reversalEntry.insurer_commission_invoice_number ?? 'N/A'
                 }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
+              <div>
+                <x-tooltip position="left">
+                  <label
+                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    DISCOUNT
+                  </label>
+                  <template #tooltip>
+                    If applicable, this field indicates the exact amount or
+                    percentage reduced from the original price.
+                  </template>
+                </x-tooltip>
+              </div>
+              <div>
+                <span>{{ reversalEntry.discount ?? 'N/A' }}</span>
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2 pb-1.5">
+              <div>
+                <x-tooltip position="left">
+                  <label
+                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    PRICE (VAT APPLICABLE)
+                  </label>
+                  <template #tooltip>
+                    Price as per the insurer's tax invoice that VAT is
+                    applicable. Please enter the price without including Value
+                    Added Tax (VAT). VAT will be calculated separately.
+                  </template>
+                </x-tooltip>
+              </div>
+              <div>
+                <span>{{ reversalEntry.price_vat_applicable ?? 'N/A' }}</span>
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -907,30 +910,28 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.commission_percentage }}</span>
+                <span>{{ reversalEntry.commission_percentage ?? 'N/A' }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
                     class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    COMMISSION (VAT NOT APPLICABLE)
+                    PRICE (VAT NOT APPLICABLE)
                   </label>
                   <template #tooltip>
-                    Commission amount as per the tax invoice raised by buyer
-                    that VAT is not applicable.
+                    Price that VAT is not applicable. Remember, VAT is exempt
+                    for Life Insurance policies.
                   </template>
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.commission_vat_not_applicable }}</span>
+                <span>{{ reversalEntry.price_vat_not_applicable ?? 'N/A' }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -944,11 +945,10 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.vat_on_commission }}</span>
+                <span>{{ reversalEntry.vat_on_commission ?? 'N/A'}}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -965,11 +965,10 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.commission_vat_applicable }}</span>
+                <span>{{ reversalEntry.commission_vat_applicable ?? 'N/A' }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -984,30 +983,29 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.total_commission }}</span>
+                <span>{{ reversalEntry.total_commission ?? 'N/A' }}</span>
               </div>
             </div>
 
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
                     class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    PRICE (VAT NOT APPLICABLE)
+                    COMMISSION (VAT NOT APPLICABLE)
                   </label>
                   <template #tooltip>
-                    Price that VAT is not applicable. Remember, VAT is exempt
-                    for Life Insurance policies.
+                    Commission amount as per the tax invoice raised by buyer
+                    that VAT is not applicable.
                   </template>
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.price_vat_not_applicable }}</span>
+                <span>{{ reversalEntry.commission_vat_not_applicable ?? 'N/A' }}</span>
               </div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -1022,31 +1020,14 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.total_vat_amount }}</span>
+                <span>{{ reversalEntry.total_vat_amount ?? 'N/A' }}</span>
               </div>
             </div>
-
             <div class="grid sm:grid-cols-2">
-              <div>
-                <x-tooltip position="left">
-                  <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                  >
-                    PRICE (VAT APPLICABLE)
-                  </label>
-                  <template #tooltip>
-                    Price as per the insurer's tax invoice that VAT is
-                    applicable. Please enter the price without including Value
-                    Added Tax (VAT). VAT will be calculated separately.
-                  </template>
-                </x-tooltip>
-              </div>
-              <div>
-                <span>{{ reversalEntry.price_vat_applicable }}</span>
-              </div>
+              <div class="font-bold text-right"></div>
+              <div></div>
             </div>
-
-            <div class="grid sm:grid-cols-2">
+            <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
@@ -1062,7 +1043,7 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.total_price }}</span>
+                <span>{{ reversalEntry.total_price ?? 'N/A' }}</span>
               </div>
             </div>
           </div>
@@ -1107,14 +1088,14 @@ const onCancel = () => {
       <template #header>
         <div class="flex justify-between gap-4 items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
-            Booking Details <span v-if="isCPD"> - New Entry</span>
+            Booking Details <span v-if="true"> - New Entry</span>
           </h3>
         </div>
       </template>
       <template #body>
         <x-divider class="my-4" />
         <x-form @submit="saveBookingDetail">
-          <div class="text-xs booking-custom-class">
+          <div class="text-xs">
             <div class="grid md:grid-cols-2 gap-x-4 gap-y-2 py-4 items-center">
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
@@ -1132,7 +1113,7 @@ const onCancel = () => {
                 </div>
                 <div>
                   <span>
-                    {{ bookingDetailsForm.invoice_description ?? 'N/A' }}
+                    {{ bookingDetailsForm.invoice_description !== '' ? bookingDetailsForm.invoice_description : 'N/A' }}
                   </span>
                 </div>
               </div>
@@ -1210,7 +1191,7 @@ const onCancel = () => {
                   <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1269,7 +1250,7 @@ const onCancel = () => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.broker_invoice_number ?? 'N/A'
+                    bookingDetailsForm.broker_invoice_number !== '' ? bookingDetailsForm.broker_invoice_number : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1317,7 +1298,7 @@ const onCancel = () => {
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ bookingDetailsForm.discount ?? 'N/A' }}</span>
+                  <span>{{ bookingDetailsForm.discount !== '0.00' ? bookingDetailsForm.discount : 'N/A' }}</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1363,7 +1344,10 @@ const onCancel = () => {
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ bookingDetailsForm.commission_percentage }}%</span>
+                  <span>{{ (bookingDetailsForm.commission_percentage !== '') ? 
+                    bookingDetailsForm.commission_percentage + '%' : 
+                    'N/A' 
+                  }}</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1382,7 +1366,7 @@ const onCancel = () => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.price_vat_not_applicable ?? 'N/A'
+                    bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1401,8 +1385,7 @@ const onCancel = () => {
                 </div>
                 <div>
                   <span>{{
-                    thousandSeparator(bookingDetailsForm.vat_on_commission) ??
-                    'N/A'
+                    bookingDetailsForm.vat_on_commission !== '' ? thousandSeparator(bookingDetailsForm.vat_on_commission) : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1452,8 +1435,7 @@ const onCancel = () => {
                 </div>
                 <div>
                   <span>{{
-                    thousandSeparator(bookingDetailsForm.total_commission) ??
-                    'N/A'
+                    bookingDetailsForm.total_commission !== '' ? thousandSeparator(bookingDetailsForm.total_commission) : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1473,7 +1455,7 @@ const onCancel = () => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.commission_vat_not_applicable ?? 'N/A'
+                    bookingDetailsForm.commission_vat_not_applicable !== '0.00' ? bookingDetailsForm.commission_vat_not_applicable : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1493,8 +1475,7 @@ const onCancel = () => {
                 </div>
                 <div>
                   <span>{{
-                    thousandSeparator(bookingDetailsForm.total_vat_amount) ??
-                    'N/A'
+                    bookingDetailsForm.total_vat_amount !== null ? thousandSeparator(bookingDetailsForm.total_vat_amount) : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1520,7 +1501,7 @@ const onCancel = () => {
                 <div>
                   <span>
                     {{
-                      thousandSeparator(bookingDetailsForm.total_price) ?? 'N/A'
+                      bookingDetailsForm.total_price !== '0.00' ? thousandSeparator(bookingDetailsForm.total_price) : 'N/A'
                     }}
                   </span>
                 </div>
