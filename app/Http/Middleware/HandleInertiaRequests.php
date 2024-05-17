@@ -90,14 +90,12 @@ class HandleInertiaRequests extends Middleware
 
     protected function shareFlashData(Request $request)
     {
-        // dd($request->session()->all());
         $flash = [
             'message' => $request->session()->get('message'),
             'error' => $request->session()->get('error'),
             'success' => $request->session()->get('success'),
             'warning' => $request->session()->get('warning'),
             'info' => $request->session()->get('info'),
-            'isPaymentModificationAllowed' => $request->session()->get('isPaymentModificationAllowed'),
         ];
 
         return array_filter($flash, fn ($value) => $value !== null);
