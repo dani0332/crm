@@ -60,7 +60,7 @@ class LeadsCountService
             $modelType::whereNotNull('stale_at')->where('quote_type_id', $quoteTypeEnum->id())->where('stale_at', '>=', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days'))) :
             $modelType::whereNotNull('stale_at')->where('stale_at', '>=', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')));
 
-            if (auth()->user()->isAdvisor() && !auth()->user()->isManagerOrDeputy()) {
+            if (auth()->user()->isAdvisor() && ! auth()->user()->isManagerOrDeputy()) {
                 $baseQuery->where('advisor_id', auth()->user()->id);
             }
 
