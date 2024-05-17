@@ -1088,7 +1088,7 @@ const onCancel = () => {
       <template #header>
         <div class="flex justify-between gap-4 items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
-            Booking Details <span v-if="true"> - New Entry</span>
+            Booking Details <span v-if="isCPD"> - New Entry</span>
           </h3>
         </div>
       </template>
