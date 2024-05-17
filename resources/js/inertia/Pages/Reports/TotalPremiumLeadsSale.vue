@@ -13,9 +13,11 @@ let availableFilters = {
   transaction_approved_dates:  ref([new Date(), new Date()]),
   quote_type_id:'1',
   teams:[],
+  userIds: []
 };
 const { isRequired, isEmail } = useRules();
 const filters = reactive(availableFilters);
+const teamUsers = ref([]);
 
 const quoteTypesOptions = computed(() => {
   return page.props.filterOptions.quoteTypes.map(method => ({
@@ -76,6 +78,13 @@ function setQueryStringFilters() {
     }
   }
 }
+
+const fetchTeamUsers = () => {
+  axios.post('/get-users-by-team', { team_filter: filters.teams }).then(response => {
+    teamUsers.value = response.data;
+  })
+}
+
 onMounted(() => {
   setQueryStringFilters();
 });
@@ -110,15 +119,26 @@ onMounted(() => {
           :options="quoteTypesOptions"
         />
         <ComboBox
-        v-model="filters.teams"
-        label="Teams"
-        placeholder="Search by Teams"
-        :options="
-          Object.keys(filterOptions.teams).map(key => ({
-            value: key,
-            label: filterOptions.teams[key],
-          }))
-        "
+          v-model="filters.teams"
+          label="Teams"
+          placeholder="Search by Teams"
+          :options="Object.keys(filterOptions.teams).map(key => ({
+              value: key,
+              label: filterOptions.teams[key],
+            }))
+          "
+          @update:modelValue="fetchTeamUsers"
+        />
+
+      <ComboBox
+        v-model="filters.userIds"
+        label="Advisor"
+        placeholder="Search by Advisor"
+        :options="teamUsers.map(user => ({
+          value: user.id,
+          label: user.name
+        }))"
+        deselect-all
       />
         
       </div>

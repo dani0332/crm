@@ -311,14 +311,16 @@ class ReportService extends BaseService
         }
 
         if (isset($request->teams) && $request->filled('teams')) {
-            $teamIds = $request->teams;
-            $query->whereIn('users.id', function ($query) use ($teamIds) {
+            $query->whereIn('users.id', function ($query) use ($request) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', 'user_team.team_id')
-                    ->whereIn('teams.id', $teamIds);
+                    ->whereIn('teams.id', $request->teams);
+                if (isset($request->userIds) && $request->filled('userIds')) {
+                    $query->whereIn('users.id', $request->userIds);
+                }
             });
         }
 
