@@ -228,6 +228,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['sendPolicyType'] = null;
         $bookPolicyDetails['text'] = '';
         $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payments);
+        // dd($bookPolicyDetails['isLackingOfPayment']);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
@@ -362,8 +363,10 @@ trait GenericQueriesAllLobs
     {
         if ($payment && !$payment->isEmpty()) {
             $payment = $payment->first();
-            $paymentTotalPrice = $payment->total_amount;
+            $paymentTotalPrice = $payment->total_price;
             $sumOfSplitPayment = $payment->paymentSplits()->sum('payment_amount') + $payment->discount_value ;
+            // dd($payment, $payment->paymentSplits(), $payment->paymentSplits()->sum('payment_amount'), $payment->total_amount , $payment->discount_value);
+            // dd($sumOfSplitPayment, $paymentTotalPrice);
             return !($sumOfSplitPayment >= $paymentTotalPrice);
         }
         return true;
