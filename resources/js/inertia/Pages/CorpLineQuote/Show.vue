@@ -1,6 +1,6 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
@@ -31,13 +31,14 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  record: Object,
+  bookPolicyDetails: Array,
 });
 
 const page = usePage();
@@ -46,6 +47,9 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
+const quoteStatusEnum = page.props.quoteStatusEnum;
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const { copy, copied } = useClipboard();
 
@@ -540,6 +544,15 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -1008,7 +1021,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   :options="leadStatusOptions"
                   :disabled="
                     quote.quote_status_id ==
-                    enums.quoteStatusEnum.TransactionApproved
+                    quoteStatusEnum.TransactionApproved
                   "
                   placeholder="Lead Status"
                   class="w-full"
@@ -1021,7 +1034,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   class="w-full"
                   :disabled="
                     quote.quote_status_id ==
-                    enums.quoteStatusEnum.TransactionApproved
+                    quoteStatusEnum.TransactionApproved
                   "
                 />
               </div>
@@ -1030,11 +1043,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               <x-input
                 v-if="
                   leadStatusForm.leadStatus ==
-                  enums.quoteStatusEnum.TransactionApproved
+                  quoteStatusEnum.TransactionApproved
                 "
                 :disabled="
                   quote.quote_status_id ==
-                  enums.quoteStatusEnum.TransactionApproved
+                  quoteStatusEnum.TransactionApproved
                 "
                 v-model="leadStatusForm.trans_code"
                 label="TRANSAPP CODE"
@@ -1043,7 +1056,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 :error="leadStatusForm.errors.trans_code"
               />
               <x-select
-                v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+                v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 v-model="leadStatusForm.lostReason"
                 label="LOST REASON"
                 :options="
@@ -1075,7 +1088,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               @click.prevent="onLeadStatus"
               :disabled="
                 quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
+                quoteStatusEnum.TransactionApproved
               "
             >
               Change Status
@@ -1091,7 +1104,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteType="page.props.quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
-    />  
+    />
 
     <!-- Payments -->
     <MigratePayment
@@ -1099,22 +1112,23 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="page.props.quoteType"
-      :payments="payments"    
-    />    
-    <PaymentTableNew 
+      :payments="payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes && documentTypes.filter && documentTypes.filter(item => item.code === 'CLPD' || item.code === 'CLPDR' || item.code === 'CLDPDR')"
 			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       quoteSubType="Corpline"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -1126,12 +1140,34 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
     />
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="Business"
+      :expanded="sectionExpanded"
+    />
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
+      :expanded="sectionExpanded"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Business"
+      modelType="Corpline"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
       :expanded="sectionExpanded"
     />
 
@@ -1284,8 +1320,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
         </template>
       </x-modal>
-    </div> 
-    
+    </div>
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>

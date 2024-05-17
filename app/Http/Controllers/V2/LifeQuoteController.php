@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -18,7 +17,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
-use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
@@ -165,9 +163,8 @@ class LifeQuoteController extends Controller
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $isQuoteDocumentEnabled = app(BaseService::class)->quoteDocumentEnabled(QuoteTypes::LIFE->value);
-        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
-        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -182,7 +179,6 @@ class LifeQuoteController extends Controller
             'allowedDuplicateLOB' => $duplicateAllowedLobs,
             'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
             'lostReasons' => $lostReasons,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'modelType' => QuoteTypes::LIFE,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
             'embeddedProducts' => $embeddedProducts,
@@ -196,7 +192,6 @@ class LifeQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'paymentMethods' => (new LookupService())->getPaymentMethods(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'payments' => $payments,
             'insuranceProviders' => $insuranceProviders,
             'permissions' => [
@@ -204,12 +199,9 @@ class LifeQuoteController extends Controller
             ],
 
             'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
-            'policyIssuanceStatus' => $policyIssuanceStatus,
-            'bPDetails' => $bPDetails,
+            'bookPolicyDetails' => $bookPolicyDetails,
             'vatPercentage' => $vatPercentage,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,

@@ -1,11 +1,12 @@
 <script setup>
+import { usePage } from '@inertiajs/vue3';
+
 const props = defineProps({
   quote: Object,
   documentTypes: Object,
   quoteStatuses: Object,
   lostReasons: Object,
   storageUrl: String,
-  quoteStatusEnum: Object,
   quoteType: String,
   expanded: {
     type: Boolean,
@@ -15,7 +16,6 @@ const props = defineProps({
 });
 
 const page = usePage();
-
 const notification = useNotifications('toast');
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
@@ -23,6 +23,7 @@ const quoteStatusOptions = computed(() => {
     label: status.text,
   }));
 });
+
 const quoteStatusForm = useForm({
   quote_uuid: props.quote.uuid,
   quote_status_id: props.quote.quote_status_id,
@@ -30,6 +31,7 @@ const quoteStatusForm = useForm({
   transapp_code: props.quote?.quote_detail?.transapp_code || null,
   lost_reason_id: props.quote?.quote_detail?.lost_reason_id || null,
 });
+
 
 const onLeadStatus = () => {
   quoteStatusForm.patch(
@@ -56,9 +58,18 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.TransactionApproved
   );
 });
+watch(
+  () => props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      quoteStatusForm.quote_status_id = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -96,7 +107,7 @@ const allowStatusUpdate = computed(() => {
             </div>
           </div>
           <div class="w-full md:w-2/3">
-            <x-field label="TransApp Code" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.TransactionApproved">
+            <x-field label="TransApp Code" required v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.TransactionApproved">
               <x-input
                 v-model="quoteStatusForm.transapp_code"
                 placeholder="TransApp Code is required"
@@ -105,7 +116,7 @@ const allowStatusUpdate = computed(() => {
                 :error="quoteStatusForm.errors.transapp_code"
               />
             </x-field>
-            <x-field label="Lost Reason" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost">
+            <x-field label="Lost Reason" required v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost">
               <x-select            
                 v-model="quoteStatusForm.lost_reason_id"            
                 :options="

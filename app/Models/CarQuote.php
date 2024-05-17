@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
@@ -24,19 +25,31 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
+    protected $guarded = [];
     public $filterables = [
+        'code' => FilterTypes::EXACT,
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
-        'previous_quote_policy_number' => FilterTypes::EXACT,
-        'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
-        'source' => FilterTypes::EXACT,
+        'mobile_no' => FilterTypes::EXACT,
+        'created_at' => FilterTypes::DATE_BETWEEN,
+        'payment_status_id' => FilterTypes::IN,
+        'is_ecommerce' => FilterTypes::EXACT,
+        'quote_status_id' => FilterTypes::IN,
+        'tier_id' => FilterTypes::IN,
+        'vehicle_type_id' => FilterTypes::EXACT,
+        'car_type_insurance_id' => FilterTypes::EXACT,
+        'renewal_batch' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_number' => FilterTypes::NULL_CHECK,
+        'source' => FilterTypes::EXACT,
+        'advisor_id' => FilterTypes::IN,
+        'created_at' => FilterTypes::DATE,
+        'previous_quote_policy_number' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'quote_batch_id' => FilterTypes::IN,
     ];
-    protected $guarded = [];
 
     public function getFullNameAttribute()
     {
@@ -53,6 +66,11 @@ class CarQuote extends BaseModel
         return $this->belongsTo(UAELicenseHeldFor::class, 'uae_license_held_for_id');
     }
 
+    public function uaeLicenseHeldForBackHome()
+    {
+        return $this->hasOne(UAELicenseHeldFor::class, 'id', 'back_home_license_held_for_id');
+    }
+
     public function carMake()
     {
         return $this->belongsTo(CarMake::class, 'car_make_id')->select(['id', 'code', 'text']);
@@ -61,6 +79,11 @@ class CarQuote extends BaseModel
     public function carModel()
     {
         return $this->belongsTo(CarModel::class, 'car_model_id')->select(['id', 'code', 'text']);
+    }
+
+    public function carModelDetail()
+    {
+        return $this->hasOne(CarModelDetail::class, 'id', 'car_model_detail_id');
     }
 
     public function emirate()
@@ -274,7 +297,7 @@ class CarQuote extends BaseModel
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
-    public function sageLogs()
+    public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
@@ -315,6 +338,19 @@ class CarQuote extends BaseModel
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_type.code', quoteTypeCode::Car);
                 });
+            })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
+                $query->whereNotIn("{$alias}.uuid", function ($query) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                        ->where('quote_type.code', quoteTypeCode::Car);
+                })->whereIn("{$alias}.source", [
+                    LeadSourceEnum::REVIVAL,
+                    LeadSourceEnum::REVIVAL_REPLIED,
+                    LeadSourceEnum::REVIVAL_PAID,
+                ]);
             });
         }
     }
@@ -471,6 +507,10 @@ class CarQuote extends BaseModel
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by', 'id');
+    }
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */

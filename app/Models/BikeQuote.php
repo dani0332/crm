@@ -13,6 +13,7 @@ class BikeQuote extends Model implements AuditableContract
 
     protected $table = 'bike_quote_request';
     protected $guarded = [];
+    public $allowedColumns = ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -78,7 +79,12 @@ class BikeQuote extends Model implements AuditableContract
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-    public function sageLogs()
+    public function allowedColumns()
+    {
+        return $this->allowedColumns;
+    }
+    
+    public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }

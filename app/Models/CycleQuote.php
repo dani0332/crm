@@ -11,6 +11,7 @@ class CycleQuote extends Model
 
     protected $table = 'cycle_quote_request';
     protected $fillable = ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition'];
+    public $allowedColumns = ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition'];
 
     /**
      * @return array
@@ -41,7 +42,12 @@ class CycleQuote extends Model
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-    public function sageLogs()
+    public function allowedColumns()
+    {
+        return $this->allowedColumns;
+    }
+    
+    public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }

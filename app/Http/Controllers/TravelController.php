@@ -21,7 +21,6 @@ use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
-use App\Models\PolicyIssuanceStatus;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -148,7 +147,7 @@ class TravelController extends Controller
                 ];
             })->sortBy('label')->values();
         }
-        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'travelPlan']);
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'travelPlan', 'travelPlan.insuranceProvider']);
 
         $payments->each(function ($payment) {
             $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
@@ -197,8 +196,7 @@ class TravelController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
-        $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
+        $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
@@ -266,8 +264,6 @@ class TravelController extends Controller
 
             ],
             'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
             'sendUpdateEnum' => $sendUpdateEnum,
@@ -278,9 +274,7 @@ class TravelController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
-            'policyIssuanceStatus' => $policyIssuanceStatus,
-            'bPDetails' => $bPDetails,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'bookPolicyDetails' => $bookPolicyDetails,
             'isNewPaymentStructure' => $isNewPaymentStructure,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,

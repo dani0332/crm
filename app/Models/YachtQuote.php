@@ -14,6 +14,7 @@ class YachtQuote extends Model implements AuditableContract
 
     protected $table = 'yacht_quote_request';
     protected $guarded = [];
+    public $allowedColumns = ['boat_details', 'engine_details', 'claim_experience', 'use', 'operator_experience'];
 
     public function getCreatedAtAttribute($table)
     {
@@ -53,7 +54,12 @@ class YachtQuote extends Model implements AuditableContract
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-    public function sageLogs()
+    public function allowedColumns()
+    {
+        return $this->allowedColumns;
+    }
+    
+    public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }

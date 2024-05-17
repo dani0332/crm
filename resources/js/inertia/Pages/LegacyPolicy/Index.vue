@@ -70,6 +70,23 @@ const dateFormat = date => {
   }
   return null;
 };
+
+const productName = item => {
+  let product = item?.product?.product;
+  let coverage = item?.policy?.coverage;
+  if (product) {
+    let productKey = product.toLowerCase().trim();
+    return page.props.legacyPolicyMapping[productKey] ?? '';
+  } else if (coverage) {
+    let coverageKey = coverage.toLowerCase().trim();
+    return (
+      page.props.coveragePolicyMapping[coverageKey] ??
+      page.props.legacyPolicyMapping[coverageKey] ??
+      ''
+    );
+  }
+  return '-';
+};
 </script>
 
 <template>
@@ -135,11 +152,7 @@ const dateFormat = date => {
         </Link>
       </template>
       <template #item-product_name="item">
-        {{
-          legacyPolicyMapping[item?.product?.product] ??
-          coveragePolicyMapping[item?.policy?.coverage] ??
-          ''
-        }}
+        {{ productName(item) }}
       </template>
       <template #item-policy_end_date="item">
         {{ dateFormat(item?.policy?.end_date) ?? '' }}

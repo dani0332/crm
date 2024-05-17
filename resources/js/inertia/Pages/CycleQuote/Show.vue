@@ -10,7 +10,7 @@ import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue
 import KycForm from '@/inertia/Components/KycForm.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
@@ -28,7 +28,6 @@ defineProps({
   activities: Object,
   advisors: Object,
   lostReasons: Object,
-  quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
   embeddedProducts: Array,
   customerTypeEnum: Object,
@@ -40,15 +39,13 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   record: Object,
   permissions: Object,
   enums: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   payments: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
@@ -65,7 +62,7 @@ const canAny = permissions => useCanAny(permissions);
 const modals = reactive({
   duplicate: false,
 });
-
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const leadDuplicateForm = useForm({
   modelType: 'cycle',
   parentType: 'cycle',
@@ -288,7 +285,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 <template>
   <div>
     <Head title="Cycle Quotes" />
-    
+
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -395,47 +392,47 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote.advisor?.name }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
             <dd class="break-words">{{ quote?.created_by?.email }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
             <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="bottom">
@@ -451,44 +448,44 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </div>
             </dl>
           </div>
-    
+
           <div class="mt-6">
             <h3 class="font-semibold text-primary-800">Quote Details</h3>
             <x-divider class="mb-4 mt-1" />
           </div>
-    
+
           <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CYCLE MAKE</dt>
                 <dd>{{ quote?.cycle_quote?.cycle_make }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CYCLE MODEL</dt>
                 <dd>{{ quote?.cycle_quote?.cycle_model }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">YEAR OF MANUFACTURE</dt>
                 <dd>{{ quote?.cycle_quote?.year_of_manufacture?.text }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PURCHASED OF VALUE(AED)</dt>
                 <dd>{{ quote?.asset_value }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ACCESSORIES</dt>
                 <dd>{{ quote?.cycle_quote?.accessories }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS ACCIDENT</dt>
                 <dd>{{ quote?.cycle_quote?.has_accident ? 'YES' : 'NO' }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS GOOD CONDITION</dt>
                 <dd>{{ quote?.cycle_quote?.has_good_condition ? 'YES' : 'NO' }}</dd>
@@ -833,7 +830,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
 
@@ -850,20 +846,22 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="quote.payments"      
-    />    
-    <PaymentTableNew 
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'CYCPD' || item.code === 'CYCPDR' || item.code === 'CYCDPDR')"
 			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
+
     <QuotePayments
       v-else
       :can="can"
@@ -875,37 +873,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="Cycle"
+      :expanded="sectionExpanded"
+    />
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.quote_detail?.insly_id"
-      :expanded="sectionExpanded"
-    />
-
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="Cycle"
-    />
-
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
       :expanded="sectionExpanded"
     />
 
@@ -918,8 +898,32 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       :quote="record"
       quoteType="Cycle"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :expanded="sectionExpanded"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
+
+    <QuotePolicy
+      :quote="quote"
+      :can="can"
+      :quoteStatusesEnum="quoteStatusesEnum"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
