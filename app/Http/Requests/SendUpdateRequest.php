@@ -43,7 +43,7 @@ class SendUpdateRequest extends FormRequest
             }
 
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';
-            $categorySubType = $this->sendUpdate->option->code ?? '';
+            $categorySubType = $sendUpdateLog?->option->code ?? '';
             $uploadedDocuments = $sendUpdateLog?->documents()->pluck('document_type_code')->toArray();
 
             if ($sendUpdateLog->quote_type_id == QuoteTypeId::Car) {
@@ -58,87 +58,137 @@ class SendUpdateRequest extends FormRequest
 
             if (in_array($sendUpdateCategoryCode, [
                 SendUpdateLogStatusEnum::EF,
-                SendUpdateLogStatusEnum::CI,
-                SendUpdateLogStatusEnum::CIR,
             ])) {
-                $mandatoryDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
-                // check if all mandatory documents uploaded
-                if (count(array_intersect($uploadedDocuments, $mandatoryDocuments)) == count($mandatoryDocuments)) {
+                switch ($sendUpdateLog->quote_type_id) {
+                    case QuoteTypeId::Business:
 
-                    // Check if any of these documents uploaded
-                    $optionalDocuments = [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE];
-                    if (count(array_intersect($uploadedDocuments, $optionalDocuments)) > 0) {
-                        switch ($sendUpdateLog->quote_type_id) {
-                            case QuoteTypeId::Car:
-                            case QuoteTypeId::Bike:
-                            case QuoteTypeId::Health:
+                        $requiredDocuments = [
+                            DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
+                            DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
+                            DocumentTypeCode::SEND_UPDATE_RECEIPT,
+                        ];
+                        $requiredDocumentsForMPC = [
+                            DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
+                            DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
+                        ];
 
-                                $_error = 'policy handbook';
-                                $requiredDocuments = [
-                                    DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
-                                ];
-
-                                if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health) {
-                                    $requiredDocuments = array_merge($requiredDocuments,
-                                        [DocumentTypeCode::SEND_UPDATE_NETWORK_LIST, DocumentTypeCode::SEND_UPDATE_SIGNED_MED_APP_FORM]
-                                    );
-                                    $_error = 'policy handbook, network list and signed medical application form';
-                                }
-
-                                if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
-                                    $validator->errors()->add('error', 'Please upload '.$_error);
-                                }
-                                break;
-
-                            case QuoteTypeId::Travel:
-                            case QuoteTypeId::Home:
-                            case QuoteTypeId::Pet:
-                            case QuoteTypeId::Cycle:
-                            case QuoteTypeId::Yacht:
-                            case QuoteTypeId::Business:
-                            case QuoteTypeId::Life:
-
-                                if ($sendUpdateLog->quote_type_id == QuoteTypeId::Yacht) {
-                                    $requiredDocuments = [
-                                        DocumentTypeCode::SEND_UPDATE_RECEIPT,
-                                        DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
-                                    ];
-
-                                    if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
-                                        $validator->errors()->add('error', 'Please upload receipt and policy handbook');
-                                    }
-                                }
-
-                                if ($sendUpdateLog->quote_type_id == QuoteTypeId::Life) {
-                                    $requiredDocuments = [
-                                        DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
-                                        DocumentTypeCode::SEND_UPDATE_APP_COPY,
-                                    ];
-
-                                    if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
-                                        $validator->errors()->add('error', 'Please upload application copy and policy handbook');
-                                    }
-                                }
-
-                                if ($sendUpdateLog->quote_type_id == QuoteTypeId::Business) {
-                                    $requiredDocuments = [
-                                        DocumentTypeCode::SEND_UPDATE_RECEIPT,
-                                        DocumentTypeCode::SEND_UPDATE_NETWORK_LIST,
-                                    ];
-
-                                    if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
-                                        $validator->errors()->add('error', 'Please upload receipt and network list');
-                                    }
-                                }
-                                break;
-                        }
-                    } else {
-                        $validator->errors()->add('error', 'Please upload endorsed schedule or endorsed certificate');
-                    }
-                } else {
-                    $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
+                        if (in_array($categorySubType, [
+                            SendUpdateLogStatusEnum::MAOM,
+                            SendUpdateLogStatusEnum::MDOM,
+                            SendUpdateLogStatusEnum::MD,
+                            SendUpdateLogStatusEnum::MSC,
+                            SendUpdateLogStatusEnum::PU,
+                            SendUpdateLogStatusEnum::SC,
+                            SendUpdateLogStatusEnum::AOLOPFMP,
+                            SendUpdateLogStatusEnum::AC,
+                            SendUpdateLogStatusEnum::AL,
+                            SendUpdateLogStatusEnum::EA,
+                            SendUpdateLogStatusEnum::ED,
+                            SendUpdateLogStatusEnum::EFMP,
+                            SendUpdateLogStatusEnum::ICOLOIALOLR,
+                            SendUpdateLogStatusEnum::IIEAFT,
+                            SendUpdateLogStatusEnum::IISI,
+                            SendUpdateLogStatusEnum::PPE,
+                        ])) {
+                            if (count(array_intersect($uploadedDocuments, $requiredDocuments)) == count($requiredDocuments)) {
+                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer and receipt');
+                            }
+                        } 
+                        
+                        if (in_array($categorySubType, [
+                            SendUpdateLogStatusEnum::MPC,
+                        ])) {
+                            if (count(array_intersect($uploadedDocuments, $requiredDocumentsForMPC)) == count($requiredDocumentsForMPC)) {
+                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
+                            }
+                        } 
+                        break;
                 }
             }
+
+            // if (in_array($sendUpdateCategoryCode, [
+            //     SendUpdateLogStatusEnum::EF,
+            //     SendUpdateLogStatusEnum::CI,
+            //     SendUpdateLogStatusEnum::CIR,
+            // ])) {
+            //     $mandatoryDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
+            //     // check if all mandatory documents uploaded
+            //     if (count(array_intersect($uploadedDocuments, $mandatoryDocuments)) == count($mandatoryDocuments)) {
+
+            //         // Check if any of these documents uploaded
+            //         $optionalDocuments = [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE];
+            //         if (count(array_intersect($uploadedDocuments, $optionalDocuments)) > 0) {
+            //             switch ($sendUpdateLog->quote_type_id) {
+            //                 case QuoteTypeId::Car:
+            //                 case QuoteTypeId::Bike:
+            //                 case QuoteTypeId::Health:
+
+            //                     $_error = 'policy handbook';
+            //                     $requiredDocuments = [
+            //                         DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
+            //                     ];
+
+            //                     if ($sendUpdateLog->quote_type_id == QuoteTypeId::Health) {
+            //                         $requiredDocuments = array_merge($requiredDocuments,
+            //                             [DocumentTypeCode::SEND_UPDATE_NETWORK_LIST, DocumentTypeCode::SEND_UPDATE_SIGNED_MED_APP_FORM]
+            //                         );
+            //                         $_error = 'policy handbook, network list and signed medical application form';
+            //                     }
+
+            //                     if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
+            //                         $validator->errors()->add('error', 'Please upload '.$_error);
+            //                     }
+            //                     break;
+
+            //                 case QuoteTypeId::Travel:
+            //                 case QuoteTypeId::Home:
+            //                 case QuoteTypeId::Pet:
+            //                 case QuoteTypeId::Cycle:
+            //                 case QuoteTypeId::Yacht:
+            //                 case QuoteTypeId::Business:
+            //                 case QuoteTypeId::Life:
+
+            //                     if ($sendUpdateLog->quote_type_id == QuoteTypeId::Yacht) {
+            //                         $requiredDocuments = [
+            //                             DocumentTypeCode::SEND_UPDATE_RECEIPT,
+            //                             DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
+            //                         ];
+
+            //                         if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
+            //                             $validator->errors()->add('error', 'Please upload receipt and policy handbook');
+            //                         }
+            //                     }
+
+            //                     if ($sendUpdateLog->quote_type_id == QuoteTypeId::Life) {
+            //                         $requiredDocuments = [
+            //                             DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
+            //                             DocumentTypeCode::SEND_UPDATE_APP_COPY,
+            //                         ];
+
+            //                         if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
+            //                             $validator->errors()->add('error', 'Please upload application copy and policy handbook');
+            //                         }
+            //                     }
+
+            //                     if ($sendUpdateLog->quote_type_id == QuoteTypeId::Business) {
+            //                         $requiredDocuments = [
+            //                             DocumentTypeCode::SEND_UPDATE_RECEIPT,
+            //                             DocumentTypeCode::SEND_UPDATE_NETWORK_LIST,
+            //                         ];
+
+            //                         if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
+            //                             $validator->errors()->add('error', 'Please upload receipt and network list');
+            //                         }
+            //                     }
+            //                     break;
+            //             }
+            //         } else {
+            //             $validator->errors()->add('error', 'Please upload endorsed schedule or endorsed certificate');
+            //         }
+            //     } else {
+            //         $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
+            //     }
+            // }
 
             if (in_array($sendUpdateCategoryCode, [
                 SendUpdateLogStatusEnum::EF,
