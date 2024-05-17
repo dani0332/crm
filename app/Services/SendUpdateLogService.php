@@ -495,23 +495,27 @@ class SendUpdateLogService
 
     public function getUpdateButtonStatus($sendUpdateLog): string
     {
-        $sendUpdateCode = $sendUpdateLog->category->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
-        // send update to customer button visibility validations.
-        if ($sendUpdateCode != SendUpdateLogStatusEnum::CPD && $requiredDocumentsCheck == count($requiredDocuments)) {
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
+            (
+                (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
+                in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
+                ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
+            )
+        ) {
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if ($sendUpdateCode != SendUpdateLogStatusEnum::CPU && $requiredDocumentsCheck == 0) {
-            return SendUpdateLogStatusEnum::SU;
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled) {
+            return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
-        return false;
+        return SendUpdateLogStatusEnum::SNBU;
     }
 
     public function getSendToCustomerValidation($sendUpdateId): string
