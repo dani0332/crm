@@ -32,6 +32,7 @@ const props = defineProps({
 
 const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -501,7 +502,10 @@ const calculateCommission = () => {
                     placeholder="Commission VAT NOT APPLICABLE"
                     class="w-full"
                     :disabled="
-                      !bp.isEditing || bpForm.commission_vat_applicable !== ''
+                      !bp.isEditing ||
+                      (page.props.quoteType != quoteTypeCodeEnum.Life &&
+                        page.props.quoteType != quoteTypeCodeEnum.Business &&
+                        page.props.quoteType != quoteTypeCodeEnum.Health)
                     "
                   />
                 </dd>
@@ -546,7 +550,9 @@ const calculateCommission = () => {
                     class="w-full"
                     :disabled="
                       !bp.isEditing ||
-                      bpForm.commission_vat_not_applicable !== ''
+                      (props.quoteType == quoteTypeCodeEnum.Life &&
+                        props.quoteType != quoteTypeCodeEnum.Business &&
+                        props.quoteType != quoteTypeCodeEnum.Health)
                     "
                   />
                 </dd>
