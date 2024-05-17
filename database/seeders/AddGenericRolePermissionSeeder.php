@@ -16,40 +16,40 @@ class AddGenericRolePermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            ['name' => [PermissionsEnum::HealthQuotesList], 'role' => [RolesEnum::HealthRenewalManager]],
-            ['name' => [PermissionsEnum::PetQuotesList, PermissionsEnum::PetQuotesCreate, PermissionsEnum::PetQuotesEdit], 'role' => [RolesEnum::PetRenewalAdvisor]],
-            ['name' => [PermissionsEnum::CycleQuotesList, PermissionsEnum::CycleQuotesCreate, PermissionsEnum::CycleQuotesEdit], 'role' => [RolesEnum::CycleRenewalAdvisor]],
-            ['name' => [PermissionsEnum::YachtQuotesList, PermissionsEnum::YachtQuotesCreate, PermissionsEnum::YachtQuotesEdit], 'role' => [RolesEnum::YachtRenewalAdvisor]],
-            ['name' => [PermissionsEnum::CycleQuotesList, PermissionsEnum::CycleQuotesCreate, PermissionsEnum::CycleQuotesShow, PermissionsEnum::CycleQuotesEdit], 'role' => [RolesEnum::CycleNewBusinessAdvisor]],
-            ['name' => [PermissionsEnum::YachtQuotesList, PermissionsEnum::YachtQuotesCreate, PermissionsEnum::YachtQuotesShow, PermissionsEnum::YachtQuotesEdit], 'role' => [RolesEnum::YachtNewBusinessAdvisor]],
+            ['name' => [PermissionsEnum::HealthQuotesList], 'role' => [RolesEnum::HealthRenewalManager, RolesEnum::Admin,]],
+            ['name' => [PermissionsEnum::PetQuotesList, PermissionsEnum::PetQuotesCreate, PermissionsEnum::PetQuotesEdit], 'role' => [RolesEnum::PetRenewalAdvisor, RolesEnum::Admin,]],
+            ['name' => [PermissionsEnum::CycleQuotesList, PermissionsEnum::CycleQuotesCreate, PermissionsEnum::CycleQuotesEdit], 'role' => [RolesEnum::CycleRenewalAdvisor, RolesEnum::Admin,]],
+            ['name' => [PermissionsEnum::YachtQuotesList, PermissionsEnum::YachtQuotesCreate, PermissionsEnum::YachtQuotesEdit], 'role' => [RolesEnum::YachtRenewalAdvisor, RolesEnum::Admin,]],
+            ['name' => [PermissionsEnum::CycleQuotesList, PermissionsEnum::CycleQuotesCreate, PermissionsEnum::CycleQuotesShow, PermissionsEnum::CycleQuotesEdit], 'role' => [RolesEnum::CycleNewBusinessAdvisor, RolesEnum::Admin,]],
+            ['name' => [PermissionsEnum::YachtQuotesList, PermissionsEnum::YachtQuotesCreate, PermissionsEnum::YachtQuotesShow, PermissionsEnum::YachtQuotesEdit], 'role' => [RolesEnum::YachtNewBusinessAdvisor, RolesEnum::Admin,]],
             ['name' => [PermissionsEnum::LEAD_CARD_SEARCH], 'role' => [
-                RolesEnum::HealthAdvisor, RolesEnum::HealthManager,
+                RolesEnum::HealthAdvisor, RolesEnum::HealthManager, RolesEnum::Admin,
                 RolesEnum::HomeAdvisor, RolesEnum::HomeManager,
                 RolesEnum::CorpLineAdvisor, RolesEnum::CorplineManager,
                 RolesEnum::PetAdvisor, RolesEnum::PetManager,
                 RolesEnum::CycleAdvisor, RolesEnum::CycleManager,
                 RolesEnum::YachtAdvisor, RolesEnum::YachtManager,
             ]],
-            ['name' => [PermissionsEnum::STALE_LEADS_REPORT], 'role' => []],
-            ['name' => [PermissionsEnum::PIPELINE_REPORT], 'role' => []],
+            ['name' => [PermissionsEnum::STALE_LEADS_REPORT], 'role' => [RolesEnum::Admin,]],
+            ['name' => [PermissionsEnum::PIPELINE_REPORT], 'role' => [RolesEnum::Admin,]],
             ['name' => [PermissionsEnum::HEALTH_CARD_VIEW], 'role' => [
                 RolesEnum::HealthManager, RolesEnum::HealthAdvisor,
-                RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor,
+                RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor,RolesEnum::Admin,
             ]],
             ['name' => [PermissionsEnum::CORPLINE_CARD_VIEW], 'role' => [
-                RolesEnum::CorplineManager, RolesEnum::CorpLineAdvisor,
+                RolesEnum::CorplineManager, RolesEnum::CorpLineAdvisor,RolesEnum::Admin,
             ]],
             ['name' => [PermissionsEnum::HOME_CARD_VIEW], 'role' => [
-                RolesEnum::HomeManager, RolesEnum::HomeAdvisor,
+                RolesEnum::HomeManager, RolesEnum::HomeAdvisor,RolesEnum::Admin,
             ]],
             ['name' => [PermissionsEnum::CYCLE_CARD_VIEW], 'role' => [
-                RolesEnum::CycleManager, RolesEnum::CycleAdvisor,
+                RolesEnum::CycleManager, RolesEnum::CycleAdvisor,RolesEnum::Admin,
             ]],
             ['name' => [PermissionsEnum::PET_CARD_VIEW], 'role' => [
-                RolesEnum::PetManager, RolesEnum::PetAdvisor,
+                RolesEnum::PetManager, RolesEnum::PetAdvisor,RolesEnum::Admin,
             ]],
             ['name' => [PermissionsEnum::YACHT_CARD_VIEW], 'role' => [
-                RolesEnum::YachtManager, RolesEnum::YachtAdvisor,
+                RolesEnum::YachtManager, RolesEnum::YachtAdvisor, RolesEnum::Admin,
             ]],
         ];
 
