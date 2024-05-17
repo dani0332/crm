@@ -103,7 +103,7 @@ const emailConversionReportTableHeader = [
   {
     text: 'Total Replied',
     value: 'reply_received_count',
-    tooltip: 'It indicates the count of responses(requested for an advisor or replied to the mail) received from the revival lead to our revival mails'
+    tooltip: 'It indicates the count of responses (requested for an advisor or replied to the mail) received from the revival lead to our revival mails'
   },
   {
     text: 'Total Sent',
