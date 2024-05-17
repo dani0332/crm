@@ -141,7 +141,6 @@ const rules = {
 };
 
 const onUpdatePolicyDetails = isValid => {
-  showInsufficientPaymentAlert();
   if (!isValid) return;
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
@@ -174,33 +173,6 @@ const onUpdatePolicyDetails = isValid => {
     },
   });
 };
-
-const getPayment = () => {
-  return page.props?.payments[0] ?? null;
-}
-
-const isUpfrontOrSplitPayments = () => {
-  return getPayment()?.frequency == 'upfront' || getPayment()?.frequency == 'split_payments';
-}
-
-const showInsufficientPaymentAlert = () => {
-  const paymentId = getPayment().payment_status_id ?? 0;
-  const insufficientPaymentStatuses = [
-    paymentStatusEnum.PENDING,
-    paymentStatusEnum.NEW,
-    paymentStatusEnum.OVERDUE,
-    paymentStatusEnum.PARTIALLY_PAID,
-    paymentStatusEnum.CREDIT_APPROVED,
-  ];
-  if (isUpfrontOrSplitPayments() && insufficientPaymentStatuses.includes(paymentId)) {
-    notification.error({
-      title: 'Insufficient payment',
-      position: 'top',
-      timeout: 30000
-    });
-  }
-}
-
 onBeforeMount(() => {
   caculateVatAmount();
 });

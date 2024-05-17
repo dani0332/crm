@@ -30,7 +30,21 @@ const props = defineProps({
   },
 });
 
+
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const insufficientPaymentStatuses = [
+  paymentStatusEnum.PARTIALLY_PAID,
+  paymentStatusEnum.PENDING,
+  paymentStatusEnum.NEW,
+  paymentStatusEnum.OVERDUE,
+  paymentStatusEnum.CREDIT_APPROVED,
+];
+
+const insufficientPaymentStatusesHeading = [
+  paymentStatusEnum.PENDING,
+  paymentStatusEnum.NEW,
+  paymentStatusEnum.OVERDUE
+];
 const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const dateToYMD = date => {
@@ -140,6 +154,7 @@ watch(() => page.props.bookPolicyDetails.isLackingOfPayment, (newVal) => {
 
 
 const onUpdatebookPolicyDetails = isValid => {
+  showInsufficientPaymentAlert();
   if (isValid) {
     bpForm.booking_date = currentDateTime;
     bpForm.post('/quotes/update-booking-policy', {
@@ -176,13 +191,6 @@ const modals = reactive({
 
 const confirmSendPolicy = () => {
   const paymentId = getPayment().payment_status_id ?? 0;
-  const insufficientPaymentStatuses = [
-    paymentStatusEnum.PENDING,
-    paymentStatusEnum.NEW,
-    paymentStatusEnum.OVERDUE,
-    paymentStatusEnum.PARTIALLY_PAID,
-    paymentStatusEnum.CREDIT_APPROVED,
-  ];
   if (insufficientPaymentStatuses.includes(paymentId)){
       modals.sendPolicyPopup = true;
   } else {
@@ -275,13 +283,6 @@ const caculateCommission = () => {
 };
 const sendPolicyConfirmation = () => {
   const paymentId = getPayment().payment_status_id ?? 0;
-  const insufficientPaymentStatuses = [
-    paymentStatusEnum.PARTIALLY_PAID,
-    paymentStatusEnum.PENDING,
-    paymentStatusEnum.NEW,
-    paymentStatusEnum.OVERDUE,
-    paymentStatusEnum.CREDIT_APPROVED,
-  ];
   if (insufficientPaymentStatuses.includes(paymentId)){
     isAllowToSendPolicy.value = true;
   }
@@ -295,20 +296,32 @@ const getPayment = () => {
 
 const sendPolicyConfirmationHeading = computed(() => {
   const paymentId = getPayment().payment_status_id ?? 0;
-  const insufficientPaymentStatuses = [
-    paymentStatusEnum.PENDING,
-    paymentStatusEnum.NEW,
-    paymentStatusEnum.OVERDUE
-  ];
-
+ 
   if(paymentId == paymentStatusEnum.PARTIAL_CAPTURED){ 
       return 'Insufficient payment received';
-  } else if (insufficientPaymentStatuses.includes(paymentId)) {
+  } else if (insufficientPaymentStatusesHeading.includes(paymentId)) {
       return 'Payment not yet completed';
   } else if (paymentId == paymentStatusEnum.CREDIT_APPROVED){
       return "Pending payment under 'Credit approval'";
   }
 });
+
+// const isUpfrontOrSplitPayments = () => {
+//   return getPayment()?.frequency == 'upfront' || getPayment()?.frequency == 'split_payments';
+// }
+
+const showInsufficientPaymentAlert = () => {
+  const paymentId = getPayment().payment_status_id ?? 0;
+  if (insufficientPaymentStatuses.includes(paymentId)) {
+    notification.error({
+      title: 'Insufficient payment',
+      position: 'top',
+      timeout: 30000
+    });
+  }
+}
+
+
 </script>
 
 <template>
