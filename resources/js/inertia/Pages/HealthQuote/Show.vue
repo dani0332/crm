@@ -26,7 +26,6 @@ defineProps({
   activities: Array,
   customerAdditionalContacts: Array,
   lostReasons: Array,
-  quoteStatusEnum: Object,
   modelType: String,
   quoteTypeId: Number,
   notProductionApproval: Boolean,
@@ -42,6 +41,7 @@ defineProps({
   paymentMethods: Object,
   sendPolicy: Boolean,
   insuranceProviders: Array,
+  planTypes: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
   customerTypeEnum: Object,
@@ -53,14 +53,13 @@ defineProps({
   quoteType: String,
   paymentTooltipEnum: Object,
   storageUrl: String,
-  enums: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  clientInquiryLogs: Array,
 });
 
 const isManualPlansCount = ref(0);
@@ -196,9 +195,9 @@ const memberCategoryText = memberCategoryId =>
 // });
 
 const subTeamOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
+  { value: 'Best', label: 'Best' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
 ];
@@ -348,6 +347,7 @@ const onLeadStatus = () => {
     `/quotes/Health/${page.props.quote.id}/update-lead-status`,
     {
       preserveScroll: true,
+      preserveState: true,
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
@@ -579,10 +579,16 @@ const plansTable = reactive({
     {
       text: 'Provider Name',
       value: 'providerName',
+      sortable: true,
     },
     {
       text: 'Plan Name',
       value: 'name',
+    },
+    {
+      text: 'Plan Type',
+      value: 'planTypeId',
+      sortable: true,
     },
     {
       text: 'Network Provider',
@@ -596,6 +602,7 @@ const plansTable = reactive({
     {
       text: 'Price',
       value: 'actualPremium',
+      sortable: true,
     },
     {
       text: 'Basmah',
@@ -772,6 +779,7 @@ const planFilters = reactive({
   network: [],
   manual_plan: null,
   current_online: null,
+  plan_types: [],
 });
 const planFiltersCount = ref(0);
 const options = reactive({
@@ -829,6 +837,7 @@ const onPlanFiltersSubmit = () => {
     let insurerMatch = false;
     let networkMatch = false;
     let onlineMatch = false;
+    let planTypeMatch = false;
     if (isManualPlan != null) {
       manualMatch = plan.isManualPlan == isManualPlan;
     } else {
@@ -838,6 +847,11 @@ const onPlanFiltersSubmit = () => {
       onlineMatch = !plan.isHidden == isCurrentlyOnline;
     } else {
       onlineMatch = true;
+    }
+    if (planFilters.plan_types && planFilters.plan_types.length > 0) {
+        planTypeMatch = planFilters.plan_types.includes(plan.planTypeId);
+    } else {
+      planTypeMatch = true;
     }
     if (insurerIds?.length > 0) {
       insurerMatch = insurerIds.includes(plan.providerId);
@@ -849,7 +863,7 @@ const onPlanFiltersSubmit = () => {
     } else {
       networkMatch = true;
     }
-    return manualMatch && insurerMatch && networkMatch && onlineMatch;
+      return manualMatch && insurerMatch && networkMatch && onlineMatch && planTypeMatch;
   });
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
@@ -915,16 +929,15 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(function callback(
-      breakDown,
-      index,
-    ) {
-      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-        if (ratePerCopay.notifyAgent) {
-          element.needPriceUpdate = true;
-        }
-      });
-    });
+    element.memberPremiumBreakdown?.forEach(
+      function callback(breakDown, index) {
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+          if (ratePerCopay.notifyAgent) {
+            element.needPriceUpdate = true;
+          }
+        });
+      },
+    );
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -1271,7 +1284,7 @@ const policyDetails = useForm({
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
     page.props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -1495,8 +1508,8 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],        
-  });  
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],
+  });
 };
 
 watch(
@@ -1508,6 +1521,15 @@ watch(
 );
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 
 </script>
 
@@ -1633,13 +1655,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
             <Link
-                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${quote.insly_id}`"
-                preserve-scroll
+              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+              :href="`/legacy-policy/${quote.insly_id}`"
+              preserve-scroll
             >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
             </Link>
             <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
               Duplicate Lead
@@ -2516,15 +2538,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-50">
-                  <div class="flex flex-col gap-4">
-                    <x-select
-                      v-model="leadStatusForm.leadStatus"
-                      label="Status"
-                      :options="leadStatusOptions"
-                      :disabled="quote.quote_status_id == 15"
-                      placeholder="Lead Status"
-                      class="w-full"
-                    />
+              <div class="flex flex-col gap-4">
+                <x-select
+                  v-model="leadStatusForm.leadStatus"
+                  label="Status"
+                  :options="leadStatusOptions"
+                  :disabled="quote.quote_status_id == 15"
+                  placeholder="Lead Status"
+                  class="w-full"
+                />
                 <x-textarea
                   v-model="leadStatusForm.notes"
                   type="text"
@@ -2537,28 +2559,28 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </div>
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                    <x-input
-                      v-if="leadStatusForm.leadStatus == 15"
-                      v-model="leadStatusForm.trans_code"
-                      label="TransApp Code"
-                      placeholder="TransApp Code is required"
-                      class="w-full"
-                      :error="leadStatusForm.errors.trans_code"
-                    />
-                    <x-select
-                      v-if="leadStatusForm.leadStatus == 17"
-                      v-model="leadStatusForm.lostReason"
-                      label="Lost Reason"
-                      :options="
-                        lostReasons?.map(item => ({
-                          value: item.id,
-                          label: item.text,
-                        }))
-                      "
-                      placeholder="Lost Reason is required"
-                      class="w-full"
-                      :error="leadStatusForm.errors.lostReason"
-                    />
+                <x-input
+                  v-if="leadStatusForm.leadStatus == 15"
+                  v-model="leadStatusForm.trans_code"
+                  label="TransApp Code"
+                  placeholder="TransApp Code is required"
+                  class="w-full"
+                  :error="leadStatusForm.errors.trans_code"
+                />
+                <x-select
+                  v-if="leadStatusForm.leadStatus == 17"
+                  v-model="leadStatusForm.lostReason"
+                  label="Lost Reason"
+                  :options="
+                    lostReasons?.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  placeholder="Lost Reason is required"
+                  class="w-full"
+                  :error="leadStatusForm.errors.lostReason"
+                />
                 <x-field class="" label="Transaction Type">
                   <x-input
                     type="text"
@@ -2567,7 +2589,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     :disabled="true"
                   />
                 </x-field>
-                  </div>
+              </div>
             </div>
           </div>
           <x-divider class="mb-1 mt-10" />
@@ -2642,14 +2664,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="health"
-    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2731,412 +2745,351 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             >
               Add Plan
             </x-button>
-          </div>
 
-          <DataTable
-            ref="planDataTable"
-            v-model:items-selected="selectedPlans"
-            table-class-name="tablefixed compact"
-            :headers="plansTable.columns"
-            :items="listQuotePlansFiltered || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            class="flex-wrap"
-            :hide-footer="listQuotePlansFiltered.length < 15"
-          >
-            <template #item-copayName="item">
-              <span class="copay-max">{{ item.copayName }}</span>
-            </template>
-            <template
-              #item-providerName="{ providerName, isManualPlan, isHidden }"
+            <DataTable
+              ref="planDataTable"
+              v-model:items-selected="selectedPlans"
+              table-class-name="tablefixed compact"
+              :headers="plansTable.columns"
+              :items="listQuotePlansFiltered || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              class="flex-wrap"
+              :sort-by="'actualPremium'"
+              :sort-type="'asc'"
+              :hide-footer="listQuotePlansFiltered.length < 15"
             >
-              <p>{{ providerName }}</p>
-              <div class="flex gap-1">
-                <x-tag
-                  v-if="isManualPlan"
-                  size="xs"
-                  color="primary"
-                  class="mt-0.5 text-[10px]"
-                >
-                  Manual Plan
-                </x-tag>
-                <x-tag
-                  v-if="isHidden"
-                  size="xs"
-                  color="error"
-                  class="mt-0.5 text-[10px]"
-                >
-                  Hidden
-                </x-tag>
-                <x-tag
-                  v-if="!isHidden"
-                  size="xs"
-                  color="success"
-                  class="mt-0.5 text-[10px]"
-                >
-                  Currently Online
-                </x-tag>
-              </div>
-            </template>
-            <template
-              #item-total="{
-                actualPremium,
-                policyFee,
-                basmah,
-                vat,
-                loadingPrice,
-              }"
-            >
-              {{
-                fixedValue(
-                  actualPremium +
-                    (policyFee || 0) +
-                    (basmah || 0) +
-                    vat +
-                    (loadingPrice || 0),
-                )
-              }}
-            </template>
-            <template #item-action="item">
-              <div class="flex gap-2 pr-2">
-                <!-- put here -->
-                <!-- don't remove this commented code anyone please -->
-                <template
-                  v-if="
-                    (item.isManualPlan && membersDetailsUpdated) ||
-                    item.needPriceUpdate
-                  "
-                >
-                  <!-- always false temporarily -->
-                  <x-tooltip position="top" class="arrow-b">
-                    <x-badge
-                      size="xs"
-                      color="error"
-                      outlined
-                      offset-x="-8"
-                      offset-y="-10"
-                    >
-                      <x-button
-                        size="xs"
-                        color="primary"
-                        outlined
-                        @click.prevent="planClicked(item)"
-                      >
-                        View
-                      </x-button>
-                      <template #content>!</template>
-                    </x-badge>
-                    <template #tooltip>
-                      Price outdated! <br />
-                      Please update
-                    </template>
-                  </x-tooltip>
-                </template>
-                <template v-else>
-                  <x-button
+              <template #item-copayName="item">
+                <span class="copay-max">{{ item.copayName }}</span>
+              </template>
+              <template #item-planTypeId="item">
+                <span class="copay-max">{{ item.plan_type }}</span>
+              </template>
+              <template
+                #item-providerName="{ providerName, isManualPlan, isHidden }"
+                ><p>{{ providerName }}</p>
+                <div class="flex gap-1">
+                  <x-tag
+                    v-if="isManualPlan"
                     size="xs"
                     color="primary"
-                    outlined
-                    @click.prevent="planClicked(item)"
+                    class="mt-0.5 text-[10px]"
                   >
-                    View
-                  </x-button>
-                </template>
-                <x-button
-                  size="xs"
-                  color="emerald"
-                  outlined
-                  @click.prevent="
-                    onCopyText(
-                      ecomHealthInsuranceQuoteUrl +
-                        quote.uuid +
-                        `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
-                    )
-                  "
-                >
-                  Copy
-                </x-button>
-
-            <span>
-              <SelectPlan
-                v-if="selectedProviderPlan.id != item.id"
-                @update:selectedPlanChanged="handlePlanSelected"
-                :plan="item"
-                :quoteType="quoteType"
-                :uuid="quote.uuid"
-              />
-
-                  <x-button
-                    v-else
+                    Manual Plan
+                  </x-tag>
+                  <x-tag
+                    v-if="isHidden"
                     size="xs"
-                    color="orange"
-                    outlined
-                    :disabled="true"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
                   >
-                    Selected
+                    Hidden
+                  </x-tag>
+                  <x-tag
+                    v-if="!isHidden"
+                    size="xs"
+                    color="success"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Currently Online
+                  </x-tag>
+                </div>
+              </template>
+              <template
+                #item-total="{
+                  actualPremium,
+                  policyFee,
+                  basmah,
+                  vat,
+                  loadingPrice,
+                }"
+              >
+                {{
+                  fixedValue(
+                    actualPremium +
+                      (policyFee || 0) +
+                      (basmah || 0) +
+                      vat +
+                      (loadingPrice || 0),
+                  )
+                }}
+              </template>
+              <template #item-action="item">
+                <div class="flex gap-2 pr-2">
+                  <!-- put here -->
+                  <!-- don't remove this commented code anyone please -->
+                  <template
+                    v-if="
+                      (item.isManualPlan && membersDetailsUpdated) ||
+                      item.needPriceUpdate
+                    "
+                  >
+                    <!-- always false temporarily -->
+                    <x-tooltip position="top" class="arrow-b">
+                      <x-badge
+                        size="xs"
+                        color="error"
+                        outlined
+                        offset-x="-8"
+                        offset-y="-10"
+                      >
+                        <x-button
+                          size="xs"
+                          color="primary"
+                          outlined
+                          @click.prevent="planClicked(item)"
+                        >
+                          View
+                        </x-button>
+                        <template #content>!</template>
+                      </x-badge>
+                      <template #tooltip>
+                        Price outdated! <br />
+                        Please update
+                      </template>
+                    </x-tooltip>
+                  </template>
+                  <template v-else>
+                    <x-button
+                      size="xs"
+                      color="primary"
+                      outlined
+                      @click.prevent="planClicked(item)"
+                    >
+                      View
+                    </x-button>
+                  </template>
+                  <x-button
+                    size="xs"
+                    color="emerald"
+                    outlined
+                    @click.prevent="
+                      onCopyText(
+                        ecomHealthInsuranceQuoteUrl +
+                          quote.uuid +
+                          `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
+                      )
+                    "
+                  >
+                    Copy
                   </x-button>
-                </span>
-              </div>
-            </template>
-          </DataTable>
+
+                  <span>
+                    <SelectPlan
+                      v-if="selectedProviderPlan.id != item.id"
+                      @update:selectedPlanChanged="handlePlanSelected"
+                      :plan="item"
+                      :quoteType="quoteType"
+                      :uuid="quote.uuid"
+                    />
+
+                    <x-button
+                      v-else
+                      size="xs"
+                      color="orange"
+                      outlined
+                      :disabled="true"
+                    >
+                      Selected
+                    </x-button>
+                  </span>
+                </div>
+              </template>
+            </DataTable>
+          </div>
         </template>
       </Collapsible>
     </div>
 
-      <LazyAvailablePlan
-        v-model="modals.plan"
-        :plan="selectedPlan"
-        :genders="genderOptions"
+    <LazyAvailablePlan
+      v-model="modals.plan"
+      :plan="selectedPlan"
+      :genders="genderOptions"
+      :members="membersDetail"
+      :memberCategories="memberCategories"
+      :memebersDetailsChanged="membersDetailsUpdated"
+      @copay-update="onSelectedCopay"
+      @onLoadAvailablePlansData="onLoadAvailablePlansData"
+      @membersDetailsReviewed="onRecieveMembersDetailsReview"
+      @markPlanAsManual="onMarkPlanAsManual"
+    />
+
+    <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
+      <template #header> Add Plan </template>
+      <LazyCreatePlan
+        :uuid="quote.uuid"
         :members="membersDetail"
-        :memberCategories="memberCategories"
-        :memebersDetailsChanged="membersDetailsUpdated"
-        @copay-update="onSelectedCopay"
-        @onLoadAvailablePlansData="onLoadAvailablePlansData"
-        @membersDetailsReviewed="onRecieveMembersDetailsReview"
-        @markPlanAsManual="onMarkPlanAsManual"
+        :genders="genderOptions"
+        @success="onCreatePlan"
+        @error="onPlanError"
       />
+    </x-modal>
 
-      <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
-        <template #header> Add Plan </template>
-        <LazyCreatePlan
-          :uuid="quote.uuid"
-          :members="membersDetail"
-          :genders="genderOptions"
-          @success="onCreatePlan"
-          @error="onPlanError"
+    <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
+      <template #header> Filters </template>
+
+      <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
+        <ComboBox
+          v-model="planFilters.insurer"
+          label="Insurer"
+          :options="insuranceProviders"
+          :loading="planFilters.processing"
+          select-all
+          deselect-all
         />
-      </x-modal>
+        <ComboBox
+          v-model="planFilters.network"
+          :label="
+            planFilters.insurer?.length == 0
+              ? 'Network (please select insurer first)'
+              : 'Network'
+          "
+          :options="options.network"
+          :disabled="planFilters.insurer?.length == 0"
+          select-all
+          deselect-all
+        />
+        <div>
+          <x-tooltip position="right" class="arrow-l">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+            >
+              Manual Plan
+            </label>
+            <template #tooltip>Manually Added Plans</template>
+          </x-tooltip>
+          <x-select
+            v-model="planFilters.manual_plan"
+            :options="[
+              { value: '', label: 'All' },
+              { value: '1', label: 'Yes' },
+              { value: '0', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </div>
 
-      <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
-        <template #header> Filters </template>
-
-        <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
-          <ComboBox
-            v-model="planFilters.insurer"
-            label="Insurer"
-            :options="insuranceProviders"
-            :loading="planFilters.processing"
+        <div>
+          <x-tooltip position="right" class="arrow-l">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+            >
+              Currently Online
+            </label>
+            <template #tooltip> Plans that are Currently Online </template>
+          </x-tooltip>
+          <x-select
+            v-model="planFilters.current_online"
+            :options="[
+              { value: '', label: 'All' },
+              { value: '1', label: 'Yes' },
+              { value: '0', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </div>
+        <ComboBox
+            v-model="planFilters.plan_types"
+            :label="'Plan Type'"
+            :options="planTypes"
+            :disabled="planFilters.plan_types?.length == 0"
             select-all
             deselect-all
           />
-          <ComboBox
-            v-model="planFilters.network"
-            :label="
-              planFilters.insurer?.length == 0
-                ? 'Network (please select insurer first)'
-                : 'Network'
-            "
-            :options="options.network"
-            :disabled="planFilters.insurer?.length == 0"
-            select-all
-            deselect-all
-          />
-          <div>
-            <x-tooltip position="right" class="arrow-l">
-              <label
-                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
-              >
-                Manual Plan
-              </label>
-              <template #tooltip>Manually Added Plans</template>
-            </x-tooltip>
-            <x-select
-              v-model="planFilters.manual_plan"
-              :options="[
-                { value: '', label: 'All' },
-                { value: '1', label: 'Yes' },
-                { value: '0', label: 'No' },
-              ]"
-              class="w-full"
-            />
-          </div>
+      </div>
 
-          <div>
-            <x-tooltip position="right" class="arrow-l">
-              <label
-                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
-              >
-                Currently Online
-              </label>
-              <template #tooltip> Plans that are Currently Online </template>
-            </x-tooltip>
-            <x-select
-              v-model="planFilters.current_online"
-              :options="[
-                { value: '', label: 'All' },
-                { value: '1', label: 'Yes' },
-                { value: '0', label: 'No' },
-              ]"
-              class="w-full"
-            />
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-3 mb-4">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            type="submit"
-            @click="onPlanFiltersSubmit"
-          >
-            Apply
-          </x-button>
-          <x-button
-            size="sm"
-            color="primary"
-            @click.prevent="onPlanFiltersReset"
-          >
-            Reset
-          </x-button>
-        </div>
-      </x-modal>
-    </div>
+      <div class="flex justify-end gap-3 mb-4">
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          type="submit"
+          @click="onPlanFiltersSubmit"
+        >
+          Apply
+        </x-button>
+        <x-button size="sm" color="primary" @click.prevent="onPlanFiltersReset">
+          Reset
+        </x-button>
+      </div>
+    </x-modal>
+  </div>
 
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode="quote.code"
+      :paymentCode = "quote.code"
       quoteType="Health"
       :payments="payments"
     />
+
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      quoteType="Health"
-      :payments="payments"
-      :paymentDocument="
-        documentTypes.QUOTE.filter(
-          item =>
-            item.code === 'HPD' ||
-            item.code === 'HPDR' ||
-            item.code === 'HDPDR',
-        )
-      "
-      :quoteRequest="quoteRequest"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-      :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
+			v-if="isNewPaymentStructure"
+			quoteType="Health"
+			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
+			:paymentDocument="
+      documentTypes.QUOTE.filter(
+        item =>
+          item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR',
+      )
+    "
+    :quoteRequest="quoteRequest"
+    :paymentStatusEnum="paymentStatusEnum"
+    :paymentTooltipEnum="paymentTooltipEnum"
+    :paymentMethods="
+      paymentMethods.map(pm => {
+        return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+      })
+    "
+    :storageUrl="storageUrl"
+    :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
+    :isAmlClearedForPayment="isAmlClearedForPayment"
+  />
 
-    />
+  <PaymentTable
+    v-else
+    :payments="payments"
+    :can="can"
+    :isBetaUser="isBetaUser"
+    :quoteRequest="quoteRequest"
+    :paymentMethods="paymentMethods"
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+  />
+  <EmbeddedProducts
+    :data="embeddedProducts"
+    :link="quote.uuid"
+    :code="quote.code"
+    :quote="quote"
+    :modelType="modelType"
+    :paymentLink="paymentLink"
+    :expanded="sectionExpanded"
+  />
 
-    <PaymentTable
-      v-else
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="modelType"
-      :paymentLink="paymentLink"
-      :expanded="sectionExpanded"
-    />
+  <PolicyDetail
+    v-if="
+      permissions.isQuoteDocumentEnabled"
+    :record="record"
+    modelType="health"
+    :expanded="sectionExpanded"
+    :payments="payments"
 
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="health"
-      :bPDetails="bPDetails"
-      :payments="payments"
-      :expanded="sectionExpanded"
-    />
+  />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Documents
-              <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="orange"
-            >
-              Upload Documents
-            </x-button>
-            <x-button
-              size="sm"
-              color="red"
-              v-if="sendPolicy"
-              @click="sendPolicyToClient"
-            >
-              Send Policy
-            </x-button>
-          </div>
-          <DataTable
-            table-class-name="compact"
-            :headers="quoteDocumentsTable.columns"
-            :items="quoteDocuments || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="quoteDocuments.length < 15"
-          >
-            <template #item-original_name="item">
-              <a
-                :href="cdnPath + item.doc_url"
-                target="_blank"
-                class="text-primary-600"
-              >
-                {{ item.original_name }}
-              </a>
-            </template>
-            <template #item-action="{ doc_name }">
-              <div>
-                <x-button
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="onDocDelete(doc_name)"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-    </div>
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-      <LazyDocumentUploader
-        :members="memberDataDocs(membersDetail)"
-        :doc-types="documentTypes"
-        :docs="quoteDocuments || []"
-        :cdn="cdnPath"
-      />
-    </x-modal>
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
-      <p>Are you sure you want to delete this document?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <Collapsible :expanded="sectionExpanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Documents
+            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="flex gap-2 mb-3 justify-end">
           <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
           </x-button>
@@ -3181,22 +3134,108 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </template>
         </DataTable>
       </template>
-    </x-modal>
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-      <LazyDocumentUploader
-        :members="memberDataDocs(membersDetail)"
-        :doc-types="documentTypes"
-        :docs="quoteDocuments || []"
-        :cdn="cdnPath"
-      />
-    </x-modal>
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
-      <p>Are you sure you want to delete this document?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
+    </Collapsible>
+  </div>
+
+  <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="health"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
+    />
+    
+  <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+    <template #header> Upload Documents </template>
+    <LazyDocumentUploader
+      :members="memberDataDocs(membersDetail)"
+      :doc-types="documentTypes"
+      :docs="quoteDocuments || []"
+      :cdn="cdnPath"
+    />
+  </x-modal>
+    
+  <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+    <template #header> Upload Documents </template>
+    <LazyDocumentUploader
+      :members="memberDataDocs(membersDetail)"
+      :doc-types="documentTypes"
+      :docs="quoteDocuments || []"
+      :cdn="cdnPath"
+    />
+  </x-modal>
+  <x-modal v-model="modals.docConfirm" show-close backdrop>
+    <template #header> Delete Document </template>
+    <p>Are you sure you want to delete this document?</p>
+    <template #actions>
+      <div class="text-right space-x-4">
+        <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+          Upload Documents
+        </x-button>
+        <x-button
+          size="sm"
+          color="red"
+          v-if="sendPolicy"
+          @click="sendPolicyToClient"
+        >
+          Send Policy
+        </x-button>
+      </div>
+      <DataTable
+        table-class-name="compact"
+        :headers="quoteDocumentsTable.columns"
+        :items="quoteDocuments || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="quoteDocuments.length < 15"
+      >
+        <template #item-original_name="item">
+          <a
+            :href="cdnPath + item.doc_url"
+            target="_blank"
+            class="text-primary-600"
+          >
+            {{ item.original_name }}
+          </a>
+        </template>
+        <template #item-action="{ doc_name }">
+          <div>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="onDocDelete(doc_name)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+    </template>
+  </x-modal>
+  <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+    <template #header> Upload Documents </template>
+    <LazyDocumentUploader
+      :members="memberDataDocs(membersDetail)"
+      :doc-types="documentTypes"
+      :docs="quoteDocuments || []"
+      :cdn="cdnPath"
+    />
+  </x-modal>
+  <x-modal v-model="modals.docConfirm" show-close backdrop>
+    <template #header> Delete Document </template>
+    <p>Are you sure you want to delete this document?</p>
+    <template #actions>
+      <div class="text-right space-x-4">
+        <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
+
             Cancel
           </x-button>
           <x-button
@@ -3211,119 +3250,119 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </template>
     </x-modal>
 
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
+  <SendUpdates
+    v-if="hasPolicyIssuedStatus"
+    :reportable="quote"
+    :quote_type_id="$page.props.quoteTypeId"
+    :options="sendUpdateOptions"
+    :data="sendUpdateLogs"
+  />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Activities
-              <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="mb-3 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
-              Add Activity
-            </x-button>
-          </div>
-          <DataTable
-            table-class-name="compact"
-            :headers="activityTable"
-            :items="activities"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="activities.length < 15"
-          >
-            <template #item-status="{ status, id }">
-              <x-checkbox
-                color="emerald"
-                size="xl"
-                :modelValue="status === 1"
-                :disabled="status === 1"
-                @change="onActivityStatusUpdate(id)"
-              />
-            </template>
-            <template #item-action="item">
-              <div class="space-x-4">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  outlined
-                  :disabled="item.status === 1"
-                  @click.prevent="activityEdit(item)"
-                >
-                  Edit
-                </x-button>
-                <x-button
-                  size="xs"
-                  color="error"
-                  :disabled="item.status === 1"
-                  outlined
-                  @click.prevent="activityDelete(item.id)"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-    </div>
-    <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <Collapsible :expanded="sectionExpanded">
       <template #header>
-        {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-      </template>
-
-      <x-form @submit="onActivitySubmit" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-input
-            v-model="activityForm.title"
-            label="Title"
-            :rules="[isRequired]"
-            class="w-full"
-          />
-
-          <x-textarea
-            v-model="activityForm.description"
-            label="Description"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-
-          <x-select
-            v-model="activityForm.assignee_id"
-            label="Assignee"
-            :options="advisorOptions"
-            :rules="[isRequired]"
-            placeholder="Select Assignee"
-            class="w-full"
-          />
-
-          <date-picker
-            v-model="activityForm.due_date"
-            label="Due Date"
-            :rules="[isRequired]"
-            class="w-full"
-            withTime
-            :timezone="'UTC'"
-          />
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Lead Activities
+            <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+          </h3>
         </div>
-
-        <div class="text-right space-x-4 mt-12">
-          <x-button size="sm" @click.prevent="modals.activity = false">
-            Cancel
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="mb-3 flex justify-end">
+          <x-button size="sm" color="orange" @click.prevent="addActivity">
+            Add Activity
           </x-button>
+        </div>
+        <DataTable
+          table-class-name="compact"
+          :headers="activityTable"
+          :items="activities"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="activities.length < 15"
+        >
+          <template #item-status="{ status, id }">
+            <x-checkbox
+              color="emerald"
+              size="xl"
+              :modelValue="status === 1"
+              :disabled="status === 1"
+              @change="onActivityStatusUpdate(id)"
+            />
+          </template>
+          <template #item-action="item">
+            <div class="space-x-4">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                :disabled="item.status === 1"
+                @click.prevent="activityEdit(item)"
+              >
+                Edit
+              </x-button>
+              <x-button
+                size="xs"
+                color="error"
+                :disabled="item.status === 1"
+                outlined
+                @click.prevent="activityDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+      </template>
+    </Collapsible>
+  </div>
+  <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+    <template #header>
+      {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+    </template>
+
+    <x-form @submit="onActivitySubmit" :auto-focus="false">
+      <div class="grid gap-4">
+        <x-input
+          v-model="activityForm.title"
+          label="Title"
+          :rules="[isRequired]"
+          class="w-full"
+        />
+
+        <x-textarea
+          v-model="activityForm.description"
+          label="Description"
+          :adjust-to-text="false"
+          class="w-full"
+        />
+
+        <x-select
+          v-model="activityForm.assignee_id"
+          label="Assignee"
+          :options="advisorOptions"
+          :rules="[isRequired]"
+          placeholder="Select Assignee"
+          class="w-full"
+        />
+
+        <date-picker
+          v-model="activityForm.due_date"
+          label="Due Date"
+          :rules="[isRequired]"
+          class="w-full"
+          withTime
+          :timezone="'UTC'"
+        />
+      </div>
+
+      <div class="text-right space-x-4 mt-12">
+        <x-button size="sm" @click.prevent="modals.activity = false">
+          Cancel
+        </x-button>
 
           <x-button
             size="sm"
@@ -3360,89 +3399,55 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </template>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <Collapsible :expanded="sectionExpanded">
+      <template #header>
+        <div>
+          <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <div v-if="historyData === null" class="text-center py-3">
+          <x-button
+            size="sm"
+            color="primary"
+            outlined
+            @click.prevent="onLoadHistoryData"
+            :loading="historyLoading"
+          >
+            Load History Data
+          </x-button>
+        </div>
+        <DataTable
+          v-else
+          table-class-name="compact"
+          :headers="historyDataTable"
+          :items="historyData || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="historyData.length < 15"
+        />
+      </template>
+    </Collapsible>
+  </div>
 
-    <ClientInquiryLogs
-      v-if="clientInquiryLogs?.length > 0"
-      :logs="clientInquiryLogs"
-    />
+  <ClientInquiryLogs
+    v-if="clientInquiryLogs?.length > 0"
+    :logs="clientInquiryLogs"
+  />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+  <CustomerChatLogs
+    :customerName="quote?.first_name + ' ' + quote?.last_name"
+    :quoteId="quote.uuid"
+    :quoteType="'HEALTH'"
+  />
 
-    <CustomerChatLogs
-      :customerName="quote?.first_name + ' ' + quote?.last_name"
-      :quoteId="quote.uuid"
-      :quoteType="'HEALTH'"
-    />
-
-    <AuditLogs
-      :type="'App\\Models\\HealthQuote'"
-      :id="$page.props.quote.id"
-      :quoteCode="$page.props.quote.code"
-      :expanded="sectionExpanded"
-    />
+  <AuditLogs
+    :type="'App\\Models\\HealthQuote'"
+    :id="$page.props.quote.id"
+    :quoteCode="$page.props.quote.code"
+    :expanded="sectionExpanded"
+  />
 </template>

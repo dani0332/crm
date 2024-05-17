@@ -82,7 +82,7 @@ class SplitPaymentService
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
         $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
 
-        $sageLogArray = $splitPayment->sageLogs->keyBy('step')->toArray();
+        $sageLogArray = $splitPayment->sageApiLogs->keyBy('step')->toArray();
 
         $sageApiService = new SageApiService();
         $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray);
@@ -92,6 +92,11 @@ class SplitPaymentService
             return $returnMessage;
         }
         $request->merge(['sage_customer_number' => $sageCustomerNumber]);
+
+        // check if the payment is the first child payment than add the discount to the sage request for prepayment of sage to balance the amounts
+        if ($splitPayment->sr_no == 1) {
+            $request->merge(['discount' => $splitPayment->payment->discount_value]);
+        }
         // create prepayment reciept
         $isLiveApiCallStep2 = true;
         if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {

@@ -120,7 +120,6 @@ const updatePriceWithVat = () => {
   if (props.quoteType == quoteTypeCodeEnum.Business) {
     //let priceVatApp = parseFloat( (planDetailsForm.price_vat_applicable ! ?? 0.00) );
     //let priceVatNotApp = parseFloat(planDetailsForm.price_vat_not_applicable ?? 0.00);
-    console.log('TOTAL', priceVatApp, priceVatNotApp);
     let totalPrice = parseFloat(
       priceVatApp + priceVatNotApp + (priceVatApp / 100) * props.vatPrice,
     );

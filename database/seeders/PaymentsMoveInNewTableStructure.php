@@ -4,8 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Models\Payment;
-use App\Models\PaymentSplits;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -31,18 +29,16 @@ class PaymentsMoveInNewTableStructure extends Seeder
         foreach ($allModelTypes as $modelType) {
             $quoteModelObject = $this->getModelObject(strtolower($modelType));
             echo $modelType.'--'.$quoteModelObject."\n";
+
             if ($quoteModelObject == '') {
                 Log::info('MigratePaymentSeeder::Model not found for: '.$modelType);
 
                 continue;
-
             }
-            $modelObjects = $quoteModelObject::where('created_at', '>', $thirtyDaysOldDate)->get();
-            //echo $modelObjects->count(); exit;
 
+            $modelObjects = $quoteModelObject::where('created_at', '>', $thirtyDaysOldDate)->get();
             if ($modelObjects->count() > 0) {
                 foreach ($modelObjects as $modelObject) {
-
                     if ($modelObject->payments()->count() > 0) {
                         $oldPayment = $modelObject->payments()
                             ->where('code', $modelObject->code)
@@ -50,7 +46,6 @@ class PaymentsMoveInNewTableStructure extends Seeder
                             ->where('frequency', null)
                             ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
                             ->get();
-
                         if ($oldPayment->count() == 1) {
                             Log::info('MigratePaymentSeeder::Payment migrated for: '.$modelObject->code);
                             ////app(SplitPaymentService::class)->migratePayments($oldPayment[0], $modelType);
@@ -65,31 +60,5 @@ class PaymentsMoveInNewTableStructure extends Seeder
                 Log::info('MigratePaymentSeeder::No '.$modelType.' found');
             }
         }
-
-        //temporary function to manage migration
-        /* $paymentsArchive = Payment::where('created_at', '>', '2023-04-09')
-             ->where('total_payments', '>' , 0)
-             ->get();
-         if($paymentsArchive->count()>0){
-             foreach($paymentsArchive as $payment){
-                 $splitPayments = PaymentSplits::where('code', $payment->code)->orderBy('sr_no')->get();
-                 if($splitPayments->count()>0){
-                     foreach($splitPayments as $splitPayment){
-                        if($splitPayment->sr_no == 1){
-                             $payment->captured_amount = $splitPayments[0]->payment_amount;
-                             $payment->total_payments = NULL;
-                             $payment->frequency = NULL;
-                             $payment->total_price = NULL;
-                             $payment->payment_status_id = PaymentStatusEnum::AUTHORISED;
-                             $payment->save();
-                        }
-                        $splitPayment->delete();
-                     }
-                     echo $payment->total_payments.'-'.$payment->captured_amount.'-'.$splitPayments[0]->payment_amount. "\n";
-
-                 }
-             }
-         }
-         echo $paymentsArchive->count(); exit;*/
     }
 }

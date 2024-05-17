@@ -1311,35 +1311,17 @@ class RenewalsUploadService
                     Log::info('Renewals OCB Email sent to uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                     RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-                    //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
                 } else {
                     Log::error('Renewals OCB Email failed for uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
                 }
             }
-
-            //$this->updateRenewalEmailBatchStatus($batchEmailId, $isCompleted);
             Log::info('Renewals OCB Email completed for uuid: '.$carQuote->uuid);
         } catch (\Exception $exception) {
             Log::info('Renewals OCB Email failed error: '.$exception->getMessage());
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
-
-    //    public function updateRenewalEmailBatchStatus($batchEmailId, $isCompleted)
-    //    {
-    //        Log::info('updateRenewalEmailBatchStatus START');
-    //        $renewalsBatchStatus = RenewalsBatchEmails::find($batchEmailId);
-    //        if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
-    //            $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
-    //            $renewalsBatchStatus->save();
-    //        }
-    //        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads || $isCompleted == 1) { // if all records are uploaded, update the status to completed
-    //            $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
-    //            $renewalsBatchStatus->save();
-    //        }
-    //        Log::info('updateRenewalEmailBatchStatus END');
-    //    }
 
     /**
      * //$modelName, $quoteRequestIdName.

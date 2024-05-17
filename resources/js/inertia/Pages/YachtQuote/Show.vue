@@ -25,7 +25,6 @@ defineProps({
   activities: Object,
   advisors: Object,
   lostReasons: Object,
-  quoteStatusEnum: Object,
   embeddedProducts: Array,
   customerTypeEnum: Object,
   nationalities: Array,
@@ -36,7 +35,6 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
@@ -46,8 +44,7 @@ defineProps({
   record: Object,
   permissions: Object,
   enums: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   payments: Array,
 });
 
@@ -61,6 +58,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
@@ -742,7 +740,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
 
@@ -753,27 +750,28 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     />
-    
+
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
-      :payments="quote.payments"    
-    />    
-    <PaymentTableNew 
+      :quoteType="quoteType"
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'YPD' || item.code === 'YPDR' || item.code === 'YDPDR')"
 			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <QuotePayments
       v-else
       :can="can"
@@ -794,9 +792,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="Yacht"
+      :expanded="sectionExpanded"
     />
 
     <EmbeddedProducts
@@ -808,19 +805,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="Yacht"
-      :bPDetails="bPDetails"
-      :payments="payments"
-    />
-    
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
@@ -830,6 +814,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
       :insly-id="quote?.quote_detail?.insly_id"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Yacht"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
     />
 
     <SendUpdates

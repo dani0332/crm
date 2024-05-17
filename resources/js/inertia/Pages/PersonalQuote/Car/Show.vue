@@ -31,11 +31,9 @@ defineProps({
   customerAdditionalContacts: Array,
   lostReasons: Array,
   tiers: Array,
-  quoteStatusEnum: Object,
   carPlanFeaturesCodeEnum: Object,
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
-  paymentStatusEnum: Object,
   modelType: String,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
@@ -79,8 +77,7 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   documentTypesByCategory: Array,
   customerTypeEnum: Object,
   memberRelations: Array,
@@ -93,6 +90,7 @@ defineProps({
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
+  clientInquiryLogs: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -157,6 +155,8 @@ onMounted(() => {
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const quoteStatusEnum= page.props.quoteStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -1618,6 +1618,14 @@ const handlePlanSelected = plan => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+watch(
+  () => page.props.record.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -2664,13 +2672,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
-    <!-- <QuoteStatus
-			:quoteStatuses="leadStatuses"
-			:lostReasons="lostReasons"
-			:quoteStatusEnum="quoteStatusEnum"
-			:quoteType="quoteType"
-			:quote="record"
-		/> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2919,7 +2920,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               v-if="
                 (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
                 can(permissionEnum.CarQuotesPlansCreate)
-                
+
               "
             >
               Add Plan
@@ -2965,6 +2966,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 isRenewal,
                 isDisabled,
                 puaPremium,
+                puaType
               }"
             >
               <p>{{ providerName }}</p>
@@ -2995,7 +2997,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </x-tag>
 
                 <x-tag
-                  v-if="puaPremium && puaPremium != null"
+                  v-if="puaPremium && puaPremium != null && puaType"
                   size="xs"
                   class="mt-0.5 text-[10px] text-white"
                   style="background-color: #e00000"
@@ -3011,7 +3013,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                         approval.
                       </span>
                     </template>
-                    PUA
+                    {{ puaType }}
                   </x-tooltip>
                 </x-tag>
               </div>
@@ -3328,13 +3330,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
       :paymentCode = "record.code"
-      :quoteType="quoteType"      
-    />    
-
-    <PaymentTableNew 
+      :quoteType="quoteType"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Car"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -3440,8 +3442,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       :modelType="quoteType"
     />
 
@@ -3563,7 +3563,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }}
+            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}}
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
@@ -3593,14 +3593,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </div>
     </x-modal>
 
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="record"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
-
     <BookPolicy
       v-if="
         canAny([
@@ -3610,8 +3602,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       :quote="record"
       :quoteType="quoteType"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="record"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3959,8 +3959,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
-  />
-
+/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
