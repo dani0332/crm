@@ -147,10 +147,12 @@ const uploadFile = (doc, filesWithInfo) => {
             quote.source == leadSource.RENEWAL_UPLOAD &&
             can(permissionsEnum.VIEW_LEGACY_DETAILS)
           "
-          :href="route('legacy-policy.index')"
-          :data="{
-            policy_number: quote.previous_quote_policy_number,
-          }"
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
           preserve-scroll
         >
           <x-button size="sm" color="#ff5e00" tag="div">

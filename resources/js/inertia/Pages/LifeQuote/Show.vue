@@ -1,10 +1,11 @@
 <script setup>
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MemberDetails from "../../Components/MemberDetails.vue";
+import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
+const page = usePage();
 defineProps({
   quote: Object,
   quoteStatuses: Object,
@@ -33,13 +34,13 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
-  insuranceProviders: Array,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
 });
 
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
+const leadSource = page.props.leadSource;
 const hasRole = role => useHasRole(role);
 
 const modals = reactive({
@@ -70,7 +71,6 @@ const emiratesOptions = computed(() => {
   }));
 });
 
-const page = usePage();
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
@@ -490,7 +490,29 @@ const linkEntity = () => {
             View Legacy policy
           </x-button>
         </Link>
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          class="ml-2"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
           Duplicate Lead
         </x-button>
         <Link
@@ -991,8 +1013,6 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-   
-
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
@@ -1073,29 +1093,39 @@ const linkEntity = () => {
       :quote="quote"
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
-      
     />
 
-<MigratePayment
+    <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
-      :payments="payments"    
-    />    
+      :payments="payments"
+    />
 
-    <PaymentTableNew 
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+    <PaymentTableNew
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'LPD' ||
+            item.code === 'LPDR' ||
+            item.code === 'LDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -1277,6 +1307,10 @@ const linkEntity = () => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
+    <AuditLogs
+      :type="'App\\Models\\LifeQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
   </div>
 </template>

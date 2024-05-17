@@ -68,4 +68,9 @@ class LegacyPolicyController extends Controller
             return response()->json(['error' => 'File does not exists on server']);
         }
     }
+    public function getPolicyByPolicyNumber($policyNumber)
+    {
+        $policy = InslyDetailRepository::getBy('policy_no', $policyNumber);
+        return redirect()->route('legacy-policy.show', ['legacy_policy' => $policy->_id]);
+    }
 }

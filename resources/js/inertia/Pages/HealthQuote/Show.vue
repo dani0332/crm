@@ -63,6 +63,7 @@ const isManualPlansCount = ref(0);
 const page = usePage();
 
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 
 const notification = useToast();
@@ -1594,7 +1595,29 @@ watch(
             View Legacy policy
           </x-button>
         </Link>
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          class="ml-2"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
           Duplicate Lead
         </x-button>
 
@@ -3119,8 +3142,26 @@ watch(
               View Legacy policy
             </x-button>
           </Link>
+          <Link
+            v-else-if="
+              quote.source == leadSource.RENEWAL_UPLOAD &&
+              can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            "
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                quote.previous_quote_policy_number,
+              )
+            "
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
           <x-button
             @click.prevent="modals.doc = true"
+            class="ml-2"
             size="sm"
             color="primary"
           >

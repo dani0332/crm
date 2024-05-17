@@ -56,13 +56,6 @@ function onSubmit(isValid) {
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
-
-console.log(
-  'quote : ',
-  props.quote.source,
-  props.quote.previous_quote_policy_number,
-  leadSource.RENEWAL_UPLOAD,
-);
 </script>
 
 <template>
@@ -86,10 +79,12 @@ console.log(
             quote.source == leadSource.RENEWAL_UPLOAD &&
             can(permissionsEnum.VIEW_LEGACY_DETAILS)
           "
-          :href="route('legacy-policy.index')"
-          :data="{
-            policy_number: quote.previous_quote_policy_number,
-          }"
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
           preserve-scroll
         >
           <x-button size="sm" color="#ff5e00" tag="div">

@@ -1711,10 +1711,12 @@ const handlePlanSelected = plan => {
               record.source == leadSource.RENEWAL_UPLOAD &&
               can(permissionEnum.VIEW_LEGACY_DETAILS)
             "
-            :href="route('legacy-policy.index')"
-            :data="{
-              policy_number: record.previous_quote_policy_number,
-            }"
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                record.previous_quote_policy_number,
+              )
+            "
             preserve-scroll
           >
             <x-button size="sm" color="#ff5e00" tag="div">
@@ -3454,10 +3456,12 @@ const handlePlanSelected = plan => {
               record.source == leadSource.RENEWAL_UPLOAD &&
               can(permissionEnum.VIEW_LEGACY_DETAILS)
             "
-            :href="route('legacy-policy.index')"
-            :data="{
-              policy_number: record.previous_quote_policy_number,
-            }"
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                record.previous_quote_policy_number,
+              )
+            "
             preserve-scroll
           >
             <x-button size="sm" color="#ff5e00" tag="div">
