@@ -10,6 +10,7 @@ use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
@@ -219,7 +220,6 @@ class CRUDController extends Controller
             $isManualAllocationAllowed = Auth::user()->isAdmin() ? true : $isManager;
         }
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
-
         $tiers = Tier::where('is_active', 1)->get();
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->isRenewalUser();
@@ -611,6 +611,11 @@ class CRUDController extends Controller
         $tiers = $this->lookupService->getTierR();
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+
+        if (in_array($this->genericModel->modelType, [quoteTypeCode::Health, quoteTypeCode::Car])) {
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
+        }
+
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
@@ -626,7 +631,7 @@ class CRUDController extends Controller
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $carMakeText = $record->car_make_id_text ?? '';
             $carModelText = $record->car_model_id_text ?? '';
-            $this->carQuoteService->addOrUpdateQuoteViewCount($record);
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Car);
 
             foreach ($payments as $payment) {
                 $payment->payment_status_text = $payment->paymentStatus->text;
@@ -869,6 +874,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Health);
             $listQuotePlans = [];
             $quotePlans = $this->healthQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
@@ -978,6 +984,7 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
+                'planTypes' => HealthPlanTypeEnum::withLabels(),
                 'lostReasons' => $lostReasons,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
@@ -1020,6 +1027,7 @@ class CRUDController extends Controller
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
+                'clientInquiryLogs' => $clientInquiryLogs,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1493,6 +1501,10 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
 
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
+        }
+
         return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 
@@ -1899,11 +1911,6 @@ class CRUDController extends Controller
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'is_renewal_tier_email_sent' => 0,
         ]);
-    }
-
-    public function cancelPayment(Request $request)
-    {
-        return $this->crudService->cancelPayment($request);
     }
 
     public function toggleEmbeddedProduct(Request $request)

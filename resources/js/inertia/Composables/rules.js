@@ -1,6 +1,6 @@
 export const useRules = () => {
   const isEmail = v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,4})+$/.test(v) ||
+    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/.test(v) ||
     'E-mail must be valid';
 
   const isMobile = v => {

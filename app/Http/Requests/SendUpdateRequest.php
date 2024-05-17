@@ -46,6 +46,16 @@ class SendUpdateRequest extends FormRequest
             $categorySubType = $this->sendUpdate->option->code ?? '';
             $uploadedDocuments = $sendUpdateLog?->documents()->pluck('document_type_code')->toArray();
 
+            if ($sendUpdateLog->quote_type_id == QuoteTypeId::Car) {
+                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::CAR_AOC && empty($sendUpdateLog->car_addons)) {
+                    return $validator->errors()->add('error', 'Please select Addons');
+                } elseif ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::COE && empty($sendUpdateLog->emirates_registration)) {
+                    return $validator->errors()->add('error', 'Please select Emirate');
+                } elseif ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::CISC && empty($sendUpdateLog->seating_capacity)) {
+                    return $validator->errors()->add('error', 'Please select Seating capacity');
+                }
+            }
+
             if (in_array($sendUpdateCategoryCode, [
                 SendUpdateLogStatusEnum::EF,
                 SendUpdateLogStatusEnum::CI,
@@ -151,8 +161,8 @@ class SendUpdateRequest extends FormRequest
                 }
 
                 if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF &&
-                    in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
-                    ! in_array($categorySubType, [
+                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
+                    in_array($categorySubType, [
                         SendUpdateLogStatusEnum::MPC,
                         SendUpdateLogStatusEnum::MDOM,
                         SendUpdateLogStatusEnum::MDOV,
