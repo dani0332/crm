@@ -111,5 +111,25 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        if (!ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED,
+                'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        if (!ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS,
+                'value' => 30,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
     }
 }
