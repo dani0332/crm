@@ -356,7 +356,7 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-        
+
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($request->sortBy, $request->sortType);
