@@ -2662,7 +2662,7 @@ const isMasterPaymentPaid = computed(() => {
               </div>
               <div class="w-1/5 px-2" v-if="paymentMethodsModels[splitPaymentNo]!='CC'">
                 <span class="text-sm  ">
-                  <span class="border-b-2 border-dotted border-black text-sm">VERIFIED AT</span>
+                  <span class="text-sm">VERIFIED AT</span>
                 </span>
               </div>
             </div>
@@ -2679,7 +2679,7 @@ const isMasterPaymentPaid = computed(() => {
               <div class="w-1/6 px-2 text-center"></div>              
               <div class="w-1/5 px-2">
                 <span class="text-sm  ">
-                  <span class="border-b-2 border-dotted border-black text-sm">VERIFIED BY</span>
+                  <span class="text-sm">VERIFIED BY</span>
                 </span>
               </div>
             </div>
