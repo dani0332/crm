@@ -13,6 +13,7 @@ defineProps({
   yesterdayManualCount: Number,
   genericRequestEnum: Array,
   isBetaUser: Boolean,
+  teams: Object,
 });
 
 const page = usePage();
@@ -61,6 +62,7 @@ const tableHeader = [
   { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'Team Name', value: 'team_name' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
@@ -157,6 +159,13 @@ const batchOptions = computed(() => {
   }));
 });
 
+const teamOptions = computed(() => {
+ return page.props.teams.map(team => ({
+    value: team.id,
+    label: team.name,
+  }));
+});
+
 function formatString(input) {
   const lowercaseString = input.toLowerCase();
   const words = lowercaseString.replace(/_/g, ' ').split(' ');
@@ -211,6 +220,8 @@ const filters = reactive({
   paid_at_start: '',
   paid_at_end: '',
   segment_filter: 'all',
+  teams:'',
+  transaction_approved_dates: page.props.transaction_approved_dates || ''
 });
 
 const loader = reactive({
@@ -535,6 +546,21 @@ onMounted(() => {
           :options="assignmentTypeOptions"
           placeholder="Please select assignment type"
           class="w-full"
+        />
+        <ComboBox
+        v-model="filters.teams"
+        label="Teams"
+        placeholder="Search by Teams"
+        :options="teamOptions"
+      />
+       <DatePicker
+          v-model="filters.transaction_approved_dates"
+          label="Transaction Approved Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="30"
         />
 
         <DatePicker

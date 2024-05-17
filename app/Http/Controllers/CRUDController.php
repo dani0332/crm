@@ -80,6 +80,7 @@ use App\Services\TierService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
@@ -113,7 +114,7 @@ class CRUDController extends Controller
     protected $emailDataService;
     protected $allocationService;
 
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, TeamHierarchyTrait;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -303,6 +304,8 @@ class CRUDController extends Controller
             $createdAtEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
             $genericRequestEnum = GenericRequestEnum::asArray();
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
+            $productTeam = $this->getProductByName(quoteTypeCode::Car);
+            $teams = $this->getTeamsByProductId($productTeam->id)->select('id','name');
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -318,6 +321,7 @@ class CRUDController extends Controller
                 'yesterdayManualCount' => $yesterdayManualCount,
                 'genericRequestEnum' => $genericRequestEnum,
                 'isBetaUser' => $isBetaUser,
+                'teams'=>$teams
             ]);
         }
 
