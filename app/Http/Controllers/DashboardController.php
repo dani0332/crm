@@ -437,12 +437,12 @@ class DashboardController extends Controller
     public function renderComprehensiveDashboard(Request $request, ComprehensiveConversionDashboardService $comprehensiveConversionDashboardService)
     {
         $lob = $request->lob ?? quoteTypeCode::Car;
-        if($lob === quoteTypeCode::Car) {
+        if ($lob === quoteTypeCode::Car) {
             $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request);
         } else {
-            $comprehensiveDashboardStats = $comprehensiveConversionDashboardService->getReportData($request);    
+            $comprehensiveDashboardStats = $comprehensiveConversionDashboardService->getReportData($request);
         }
-        
+
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
 
         return inertia('Dashboard/ComperhensiveConversion', [
