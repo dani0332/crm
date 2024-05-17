@@ -70,5 +70,5 @@ final class QuoteStatusEnum extends Enum
     public const QuotedByUW = 67;
     public const SentForTransactionApproval = 68;
     public const RenewalTermsSent = 69;
-    public const LOSTREASONID = 34,
+    public const LOSTREASONID = 34;
 }
