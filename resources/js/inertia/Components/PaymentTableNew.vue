@@ -1812,7 +1812,16 @@ const isMasterPaymentPaid = computed(() => {
   }
   return false;  
 });
-
+// verifiy if verify option is enabled
+const isVerifiedEnabled = computed(() => { 
+  if( paymentMethodsModels.value[splitPaymentNo.value] === 'CC' 
+      || paymentMethodsModels.value[splitPaymentNo.value] === 'CA'
+      || paymentMethodsModels.value[splitPaymentNo.value] === 'PPR'
+   ) {
+    return false;
+  }
+  return true;
+});
 </script>
 
 <template>
@@ -2660,7 +2669,7 @@ const isMasterPaymentPaid = computed(() => {
                   </template>
                 </x-tooltip>               
               </div>
-              <div class="w-1/5 px-2" v-if="paymentMethodsModels[splitPaymentNo]!='CC'">
+              <div class="w-1/5 px-2" v-if="isVerifiedEnabled">
                 <span class="text-sm  ">
                   <span class="text-sm">VERIFIED AT</span>
                 </span>
@@ -2672,10 +2681,10 @@ const isMasterPaymentPaid = computed(() => {
               <div class="w-1/5 px-2">{{ formatString(splitPaymentRecord.payment_status.text) }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_allocation_status !== null ? formatString(splitPaymentRecord.payment_allocation_status) : 'N/A' }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.collection_amount !== null ? formatAmount(splitPaymentRecord.collection_amount) : '0.00' }}</div>
-              <div class="w-1/5 px-2" v-if="paymentMethodsModels[splitPaymentNo]!='CC'">{{ splitPaymentRecord.verified_at !== null ? formatDate(splitPaymentRecord.verified_at,true) : 'N/A' }}</div>
+              <div class="w-1/5 px-2" v-if="isVerifiedEnabled">{{ splitPaymentRecord.verified_at !== null ? formatDate(splitPaymentRecord.verified_at,true) : 'N/A' }}</div>
             </div>
 
-            <div class="flex w-full custombreak" v-if="paymentMethodsModels[splitPaymentNo]!='CC'" >
+            <div class="flex w-full custombreak" v-if="isVerifiedEnabled" >
               <div class="w-1/6 px-2 text-center"></div>              
               <div class="w-1/5 px-2">
                 <span class="text-sm  ">
@@ -2684,7 +2693,7 @@ const isMasterPaymentPaid = computed(() => {
               </div>
             </div>
 
-            <div class="flex w-full custombreak pb-5" v-if="paymentMethodsModels[splitPaymentNo]!='CC'">
+            <div class="flex w-full custombreak pb-5" v-if="isVerifiedEnabled">
               <div class="w-1/6 px-2 text-center"></div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.verified_by !== null ? splitPaymentRecord.verified_by_user.name : 'N/A' }}</div>              
             </div>  
