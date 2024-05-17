@@ -77,6 +77,10 @@ function setQueryStringFilters() {
       filters[key] = params[key];
     }
   }
+
+  if (filters.teams.length > 0) {
+    fetchTeamUsers();
+  }
 }
 
 const fetchTeamUsers = () => {
