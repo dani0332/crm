@@ -805,8 +805,12 @@ class SageApiService
 
         $sageRequest->customerId = $sageCustomerNumber;
 
-        if (! $sageRequest->insurerGlLiaiblityAccount) {
-            return ['status' => false, 'message' => 'Insurance Provider not found'];
+        if (! $sageRequest->insurerGlLiaiblityAccount && ! $sageRequest->sageVenderId) {
+            return ['status' => false, 'message' => 'Sage Vendor ID and GL Account for Insurance Provider not found.'];
+        } elseif (! $sageRequest->insurerGlLiaiblityAccount) {
+            return ['status' => false, 'message' => 'GL Account for Insurance Provider not found.'];
+        } elseif (! $sageRequest->sageVenderId) {
+            return ['status' => false, 'message' => 'Sage Vendor ID for Insurance Provider not found.'];
         }
 
         // frequency  is 'upfront'

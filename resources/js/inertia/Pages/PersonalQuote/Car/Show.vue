@@ -99,8 +99,6 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
-console.log(page.props);
-
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
   id: page.props.record.plan_id,
@@ -2452,13 +2450,14 @@ watch(
                   v-model="leadStatusForm.leadStatus"
                   :single="true"
                   label="Status"
-                  class="w-full"
+                  class="w-full uppercase"
                   placeholder="Please select Lead Status"
                   :disabled="leadStatusDisabled"
                   :options="leadStatusOptions"
                 />
                 <x-field
                   label="TransApp Code"
+                  class="uppercase"
                   required
                   v-if="
                     leadStatusForm.leadStatus ==
@@ -2475,6 +2474,7 @@ watch(
                 </x-field>
                 <x-field
                   label="Lost Reason"
+                  class="uppercase"
                   required
                   v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 >
@@ -2493,6 +2493,7 @@ watch(
                 </x-field>
                 <x-field
                   label="Followup Date"
+                  class="uppercase"
                   v-if="
                     leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
                     leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
@@ -2528,11 +2529,12 @@ watch(
                     })),
                   ]"
                   placeholder="Please Select Tier"
-                  class="w-full"
+                  class="w-full uppercase"
                   :error="leadStatusForm.errors.tier_id"
                 />
                 <x-field
                   label="Notes"
+                  class="uppercase"
                   :required="
                     leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
                     leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
@@ -2562,6 +2564,7 @@ watch(
                 </x-field>
                 <x-field
                   label="Car Sold / Uncontactable Proof"
+                  class="uppercase"
                   v-if="
                     leadStatusForm.leadStatus == quoteStatusEnum.CarSold ||
                     leadStatusForm.leadStatus == quoteStatusEnum.Uncontactable
@@ -2580,7 +2583,7 @@ watch(
                     class="form-control w-full"
                   />
                 </x-field>
-                <x-field class="" label="Transaction Type">
+                <x-field class="uppercase" label="Transaction Type">
                   <x-input
                     type="text"
                     :value="record.transaction_type_text"
@@ -2595,7 +2598,7 @@ watch(
               v-if="isCarLostStatus(record.quote_status_id)"
             >
               <div class="flex flex-col gap-4">
-                <x-field required label="Approval Status">
+                <x-field required label="Approval Status" class="uppercase">
                   <x-select
                     v-model="leadStatusForm.lost_approval_status"
                     :options="leadApprovalStatusOptions"
@@ -2609,6 +2612,7 @@ watch(
                 <x-field
                   required
                   label="Approval Reasons"
+                  class="uppercase"
                   v-if="
                     leadStatusForm.lost_approval_status ==
                     genericRequestEnum.APPROVED
@@ -2634,6 +2638,7 @@ watch(
                 <x-field
                   required
                   label="Rejection Reasons"
+                  class="uppercase"
                   v-if="
                     leadStatusForm.lost_approval_status ==
                     genericRequestEnum.REJECTED
@@ -2664,7 +2669,7 @@ watch(
                     ].includes(leadStatusForm.lost_approval_status)
                   "
                 >
-                  <x-field label="Notes">
+                  <x-field class="uppercase" label="Notes">
                     <x-textarea
                       v-model="leadStatusForm.lost_notes"
                       :disabled="!allowQuoteLogAction"
@@ -2672,7 +2677,11 @@ watch(
                       class="w-full"
                     />
                   </x-field>
-                  <x-field required label="Car Sold / Uncontactable Proof">
+                  <x-field
+                    required
+                    label="Car Sold / Uncontactable Proof"
+                    class="uppercase"
+                  >
                     <input
                       @input="
                         leadStatusForm.mo_proof_document =
@@ -2752,7 +2761,7 @@ watch(
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
-              <x-field label="Cylinder" required>
+              <x-field label="Cylinder" class="uppercase" required>
                 <x-input
                   v-model="assumptionsForm.cylinder"
                   type="number"
@@ -2764,7 +2773,7 @@ watch(
               </x-field>
             </div>
             <div class="w-full md:w-1/2">
-              <x-field label="Seat Capacity" required>
+              <x-field label="Seat Capacity" class="uppercase" required>
                 <x-input
                   v-model="assumptionsForm.seat_capacity"
                   type="number"
@@ -2779,7 +2788,7 @@ watch(
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Vehicle Body Type" required>
+                <x-field label="Vehicle Body Type" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.vehicle_type_id"
                     :options="vehicleTypeOptions"
@@ -2793,7 +2802,11 @@ watch(
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is Vehicle modified?" required>
+                <x-field
+                  label="Is Vehicle modified?"
+                  class="uppercase"
+                  required
+                >
                   <x-select
                     v-model="assumptionsForm.is_modified"
                     :options="isOptions"
@@ -2809,7 +2822,7 @@ watch(
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is Bank Financed" required>
+                <x-field label="Is Bank Financed" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.is_bank_financed"
                     :options="isOptions"
@@ -2823,7 +2836,7 @@ watch(
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is GCC Standard?" required>
+                <x-field label="Is GCC Standard?" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.is_gcc_standard"
                     :options="isOptions"
@@ -2839,7 +2852,7 @@ watch(
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Current Insurance" required>
+                <x-field label="Current Insurance" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.current_insurance_status"
                     :options="currentInsuranceOptions"
@@ -2853,7 +2866,11 @@ watch(
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Year Of First Registration" required>
+                <x-field
+                  label="Year Of First Registration"
+                  class="uppercase"
+                  required
+                >
                   <x-select
                     v-model="assumptionsForm.year_of_first_registration"
                     :options="
@@ -3423,8 +3440,10 @@ watch(
       v-if="isNewPaymentStructure"
       quoteType="Car"
       :payments="payments"
-      :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="
+      :proformaPayment="
+        payments.find(item => item.payment_methods_code === 'PPR')
+      "
+      :paymentDocument="
         page.props.documentTypes.filter(
           item =>
             item.code === 'CPD' ||
@@ -3540,6 +3559,7 @@ watch(
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
       :record="record"
+      :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
     />
 
