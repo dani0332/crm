@@ -42,7 +42,7 @@ class UpdateLostStatus extends Command
      */
     public function handle()
     {
-        $lostReasonId = QuoteStatusId::Lost; //Stale for more than 90 days
+        $lostReasonId = QuoteStatusEnum::LOSTREASONID; //Stale for more than 90 days
         $eligibleQuoteTypes = [
             CarQuote::class,
             HomeQuote::class,
