@@ -108,7 +108,7 @@ const emailConversionReportTableHeader = [
   {
     text: 'Total Sent',
     value: 'email_sent_count',
-    tooltip: 'TIt represents the total count of revival leads contacted'
+    tooltip: 'It represents the total count of revival leads contacted'
   },
   {
     text: 'Response rate of customer',
