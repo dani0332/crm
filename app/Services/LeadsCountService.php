@@ -62,7 +62,7 @@ class LeadsCountService
 
             $response['quotes_count'][$allowedQuoteType]['count'] = $quoteCount;
             $response['quotes_count'][$allowedQuoteType]['quote_route'] = $cardViewRoute[strtoupper($allowedQuoteType)];
-            $totalCount = $totalCount + $quoteCount;
+            $totalCount = $quoteCount;
 
             if ($allowedLOBs > 1) {
                 $response['is_multiple_lobs_allowed'] = true;
