@@ -22,12 +22,10 @@ use Illuminate\Http\Request;
 class HealthQuoteController extends Controller
 {
     protected $healthQuoteService;
-    protected $crudService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, CRUDService $crudService)
+    public function __construct(HealthQuoteService $healthQuoteService,)
     {
         $this->healthQuoteService = $healthQuoteService;
-        $this->crudService = $crudService;
     }
 
     public function healthPlanCreateQuote(Request $request)
@@ -336,7 +334,7 @@ class HealthQuoteController extends Controller
             $totalLeads += $item['data']['total_leads'];
         }
 
-        $advisors = $this->crudService->getAdvisorsByModelType(quoteTypeCode::Health);
+        $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Health);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Health);
 
         return inertia('HealthQuote/Cards', [
