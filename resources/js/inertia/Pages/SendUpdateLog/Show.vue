@@ -31,10 +31,16 @@ const props = defineProps({
   paymentMethods: Object,
   quoteRequest: Object,
   isPolicyDetailsEnabled: Boolean,
+  additionalField: {
+    type: Object,
+    default: [],
+  },
 });
 
 const page = usePage();
 const notification = useToast();
+
+const { isRequired } = useRules();
 
 const state = reactive({
   edit: false,
@@ -120,6 +126,9 @@ const sendUpdateForm = useForm({
   childCategory: selectedCategory?.value?.subCategory,
   status: props.sendUpdateLog?.status || '',
   quote_uuid: props.realQuote.uuid,
+  car_addons: props.sendUpdateLog?.car_addons || null,
+  emirates_registration: props.sendUpdateLog?.emirates_registration || null,
+  seating_capacity: props.sendUpdateLog?.seating_capacity || null,
 });
 
 onMounted(() => {
@@ -144,9 +153,13 @@ const onCancel = () => {
   state.edit = false;
   sendUpdateForm.notes = props.sendUpdateLog?.notes || '';
   sendUpdateForm.option_id = props.sendUpdateLog?.option_id || null;
+  sendUpdateForm.car_addons = props.sendUpdateLog?.car_addons || null;
+  sendUpdateForm.emirates_registration = props.sendUpdateLog?.emirates_registration || null;
+  sendUpdateForm.seating_capacity = props.sendUpdateLog?.seating_capacity || null;
 };
 
-const onUpdateLog = () => {
+const onUpdateLog = (isValid) => {
+  if (!isValid) return;
   sendUpdateForm.patch(
     route('send-update-logs.update', { id: props.sendUpdateLog.id }),
     {
@@ -197,6 +210,21 @@ const isBookingDetailsVisible = computed(() => {
 
   return validSlugs.includes(selectedCategory?.value?.subCategory.slug);
 });
+
+const additionalFieldOptions = computed(() => {
+  if (props.additionalField) {
+    return props.additionalField.map(additional => ({
+      value: additional.id,
+      label: additional.text,
+    }));
+  }
+});
+
+const onKeyPress = (event) => {
+  if (event.key === 'e' || event.key === 'E') {
+    event.preventDefault();
+  }
+};
 </script>
 
 <template>
@@ -205,7 +233,8 @@ const isBookingDetailsVisible = computed(() => {
   </Head>
   <div>
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex gap-2 w-100 flex-grow justify-between">
+      <x-form @submit="onUpdateLog">
+        <div class="flex gap-2 w-100 flex-grow justify-between">
         <h3 class="text-lg font-semibold text-primary-800 capitalize">
           {{ selectedCategory.subCategory.title }}
         </h3>
@@ -296,7 +325,7 @@ const isBookingDetailsVisible = computed(() => {
                   page.props.sendUpdateLogStatusEnum.CPU &&
                 selectedCategory.subCategory.slug !==
                   page.props.sendUpdateLogStatusEnum.CPD
-              "
+                "
             >
               <dt>
                 <x-tooltip position="left">
@@ -324,7 +353,7 @@ const isBookingDetailsVisible = computed(() => {
               v-else-if="
                 selectedCategory.subCategory.slug !== 'CPU' &&
                 selectedCategory.subCategory.slug !== 'CPD'
-              "
+                "
             >
               <!-- <dt class="font-bold text-right mr-10">Reason</dt>
               <dd>
@@ -337,7 +366,68 @@ const isBookingDetailsVisible = computed(() => {
               </dd> -->
             </template>
           </div>
-        </dl>
+        <div class="grid sm:grid-cols-2">
+              <template v-if="props.additionalField && selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.AOC">
+                <dt>
+                  <label
+                      class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                  >
+                    ADDONS
+                  </label>
+                </dt>
+                <dd>
+                  <x-select
+                      :rules="[isRequired]"
+                      v-model="sendUpdateForm.car_addons"
+                      placeholder="Select Addons"
+                      :options="additionalFieldOptions"
+                      size="xs"
+                      :disabled="!state.edit"
+                      multiple
+                    />
+                </dd>
+              </template>
+              <template v-else-if="props.additionalField && (selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.COE || selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.COE_NFI)">
+                <dt>
+                  <label
+                      class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                  >
+                    EMIRATE OF REGISTRATION
+                  </label>
+                </dt>
+                <dd>
+                  <x-select
+                      :rules="[isRequired]"
+                      v-model="sendUpdateForm.emirates_registration"
+                      placeholder="Select Emirate of Registration"
+                      :options="additionalFieldOptions"
+                      size="xs"
+                      :disabled="!state.edit"
+                    />
+                </dd>
+              </template>
+              <template v-else-if="props.additionalField && (selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.CISC || selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.CISC_NFI)">
+                <dt>
+                  <label
+                      class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                  >
+                    SEATING CAPACITY
+                  </label>
+                </dt>
+                <dd>
+                  <x-input
+                    :rules="[isRequired]"
+                    placeholder="Enter Seating Capacity"
+                    v-model="sendUpdateForm.seating_capacity"
+                    size="xs"
+                    :disabled="!state.edit"
+                    type="number"
+                    @keypress="onKeyPress"
+                  />
+                </dd>
+              </template>
+            </div>
+          </dl>
       </div>
       <div class="flex justify-end">
         <x-button size="sm" @click="onEdit" v-if="!state.edit"> Edit </x-button>
@@ -354,13 +444,16 @@ const isBookingDetailsVisible = computed(() => {
           <x-button
             size="sm"
             color="primary"
-            @click="onUpdateLog"
-            :loading="sendUpdateForm.processing"
-            :disabled="sendUpdateForm.processing"
-            >Update</x-button
-          >
-        </template>
-      </div>
+            type="submit"
+              :loading="sendUpdateForm.processing"
+              :disabled="sendUpdateForm.processing"
+              >
+              Update
+            </x-button
+            >
+          </template>
+        </div>
+      </x-form>
     </div>
 
     <!-- Indicative additional price & Plan details comp -->

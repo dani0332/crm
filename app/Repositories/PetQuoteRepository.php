@@ -79,7 +79,10 @@ class PetQuoteRepository extends BaseRepository
             $quoteData['updated_by_id'] = Auth::user()->id;
             $quote->update($quoteData);
 
-            $quote->petQuote->update(Arr::only($data, ['premium', 'policy_number', 'breed_of_pet1', 'pet_type_id', 'pet_age_id', 'is_neutered', 'is_microchipped', 'microchip_no', 'is_mixed_breed', 'has_injury', 'gender', 'ilivein_accommodation_type_id', 'iam_possesion_type_id']));
+            $quote->petQuote()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                Arr::only($data, (new PetQuote())->allowedColumns())
+            );
 
             return $quote;
         });
