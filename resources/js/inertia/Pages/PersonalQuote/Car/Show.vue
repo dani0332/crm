@@ -11,7 +11,6 @@ import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
 
-
 defineProps({
   quote: Object,
   leadStatuses: Object,
@@ -156,7 +155,7 @@ onMounted(() => {
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-const quoteStatusEnum= page.props.quoteStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const dateFormat = date => {
@@ -625,9 +624,9 @@ const policyDetailsState = reactive({
 });
 
 const planQuoteInsurerNumber = computed(() => {
-  let obj = page.props?.listQuotePlans?.filter(
-    item => item.id == page.props.record.plan_id,
-  );
+  let quotePlanList = page.props?.listQuotePlans;
+  if (!quotePlanList || typeof quotePlanList === 'string') return null;
+  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
   return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
 });
 const vatAmount = computed(() => {
@@ -1620,10 +1619,8 @@ const handlePlanSelected = plan => {
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
-const getDetailPageRoute = (
-  uuid,
-  quote_type_id,
-) => useGetShowPageRoute(uuid, quote_type_id, null);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 
 watch(
   () => page.props.record.quote_status_id,
@@ -1667,7 +1664,7 @@ watch(
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
@@ -1679,7 +1676,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1693,7 +1690,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName }}</dd>
+                <dd>{{ selectedProviderPlan.planName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ECOMMERCE</dt>
@@ -1772,13 +1769,13 @@ watch(
           <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
             <Link
-                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${record.insly_id}`"
-                preserve-scroll
+              v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+              :href="`/legacy-policy/${record.insly_id}`"
+              preserve-scroll
             >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
             </Link>
             <template
               v-if="
@@ -1786,15 +1783,15 @@ watch(
                 allowedDuplicateLOB.length > 0
               "
             >
-            <x-button
-              v-if="hasAnyRole([rolesEnum.LeadPool])"
-              class="mr-2"
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openSendOCBConfirmNB"
-            >
-              Send NB OCB To Customer
-            </x-button>
+              <x-button
+                v-if="hasAnyRole([rolesEnum.LeadPool])"
+                class="mr-2"
+                size="sm"
+                color="#ff5e00"
+                @click.prevent="openSendOCBConfirmNB"
+              >
+                Send NB OCB To Customer
+              </x-button>
               <x-button
                 v-if="
                   !hasAnyRole([
@@ -1985,7 +1982,10 @@ watch(
                   </Link>
                 </dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <dt>
                   <x-tooltip position="bottom">
                     <label
@@ -1993,7 +1993,12 @@ watch(
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </dt>
                 <dd>
@@ -2017,14 +2022,17 @@ watch(
                 <dt class="font-medium">ID</dt>
                 <dd>{{ record.id }}</dd>
               </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ENQUIRY COUNT</dt>
-            <dd>{{ record.enquiry_count }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ENQUIRY COUNT</dt>
+                <dd>{{ record.enquiry_count }}</dd>
+              </div>
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
-          <div v-if="linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end mb-4" >
+          <div
+            v-if="linkedQuoteDetails.childLeadsCount == 0"
+            class="flex justify-end mb-4"
+          >
             <Link :href="route('car.edit', record.uuid)">
               <x-button size="sm" color="primary" tag="div">Edit </x-button>
             </Link>
@@ -2122,7 +2130,10 @@ watch(
                       :rules="[isRequired]"
                       placeholder="INSURED FIRST NAME"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow || linkedQuoteDetails.childLeadsCount > 0"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                     />
                   </dd>
                 </div>
@@ -2134,7 +2145,10 @@ watch(
                       :rules="[isRequired]"
                       placeholder="INSURED LAST NAME"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow  || linkedQuoteDetails.childLeadsCount > 0"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                     />
                   </dd>
                 </div>
@@ -2162,7 +2176,10 @@ watch(
                       :rules="[isRequired]"
                       placeholder="EMIRATES ID NUMBER"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow  || linkedQuoteDetails.childLeadsCount > 0"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                     />
                   </dd>
                 </div>
@@ -2173,7 +2190,10 @@ watch(
                       v-model="customerProfileForm.emirates_id_expiry_date"
                       :rules="[isRequired]"
                       placeholder="EMIRATES ID EXPIRY DATE"
-                      :disabled="!isProfileUpdateAllow || linkedQuoteDetails.childLeadsCount > 0"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                       :min-date="new Date()"
                     />
                   </dd>
@@ -2284,7 +2304,10 @@ watch(
                   </dd>
                 </div>
               </dl>
-              <div v-if="linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end">
+              <div
+                v-if="linkedQuoteDetails.childLeadsCount == 0"
+                class="flex justify-end"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -2847,48 +2870,48 @@ watch(
               </div>
             </div>
           </div>
-            <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
-                <div
-                    class="flex justify-end"
-                    v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)"
+          <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
+            <div
+              class="flex justify-end"
+              v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)"
+            >
+              <x-button
+                v-if="assumptionState.isEditing"
+                class="mt-4 mr-2"
+                color="orange"
+                size="sm"
+                @click.prevent="assumptionState.isEditing = false"
+              >
+                Cancel
+              </x-button>
+              <template v-if="!can(permissionEnum.ApprovePayments)">
+                <x-button
+                  v-if="assumptionState.isEditing"
+                  class="mt-4"
+                  color="primary"
+                  size="sm"
+                  :loading="assumptionsForm.processing"
+                  @click.prevent="onUpdateAssumption"
                 >
-                    <x-button
-                        v-if="assumptionState.isEditing"
-                        class="mt-4 mr-2"
-                        color="orange"
-                        size="sm"
-                        @click.prevent="assumptionState.isEditing = false"
-                    >
-                        Cancel
-                    </x-button>
-                    <template v-if="!can(permissionEnum.ApprovePayments)">
-                        <x-button
-                            v-if="assumptionState.isEditing"
-                            class="mt-4"
-                            color="primary"
-                            size="sm"
-                            :loading="assumptionsForm.processing"
-                            @click.prevent="onUpdateAssumption"
-                        >
-                            Update
-                        </x-button>
-                        <x-button
-                            v-if="
-                  !assumptionState.isEditing &&
-                  (access.carManagerCanEdit ||
-                    access.carAdvisorCanEdit ||
-                    !hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager]))
-                "
-                            class="mt-4"
-                            color="emerald"
-                            size="sm"
-                            @click.prevent="assumptionState.isEditing = true"
-                        >
-                            Edit Assumptions
-                        </x-button>
-                    </template>
-                </div>
+                  Update
+                </x-button>
+                <x-button
+                  v-if="
+                    !assumptionState.isEditing &&
+                    (access.carManagerCanEdit ||
+                      access.carAdvisorCanEdit ||
+                      !hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager]))
+                  "
+                  class="mt-4"
+                  color="emerald"
+                  size="sm"
+                  @click.prevent="assumptionState.isEditing = true"
+                >
+                  Edit Assumptions
+                </x-button>
+              </template>
             </div>
+          </div>
         </template>
       </Collapsible>
     </div>
@@ -2956,7 +2979,10 @@ watch(
               size="sm"
               color="orange"
               class="mr-2"
-              :disabled="record.advisor_id != $page.props.auth.user.id || page.props.linkedQuoteDetails.childLeadsCount > 0"
+              :disabled="
+                record.advisor_id != $page.props.auth.user.id ||
+                page.props.linkedQuoteDetails.childLeadsCount > 0
+              "
             >
               Send OCB Email to Customer
             </x-button>
@@ -2969,7 +2995,6 @@ watch(
               v-if="
                 (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
                 can(permissionEnum.CarQuotesPlansCreate)
-
               "
               :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
@@ -3221,7 +3246,9 @@ watch(
                     color="error"
                     outlined
                     @click="confirmChangeInsurer(item)"
-                    :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                    :disabled="
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
                   >
                     Change Insurer
                   </x-button>
@@ -3233,8 +3260,10 @@ watch(
                     @update:selectedPlanChanged="handlePlanSelected"
                     :plan="item"
                     :quoteType="quoteType"
-                    :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
-                :uuid="quote.uuid"
+                    :has-child-lead="
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
+                    :uuid="quote.uuid"
                   />
 
                   <x-button
@@ -3385,24 +3414,35 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
-      :paymentCode = "record.code"
+      :paymentCode="record.code"
       :quoteType="quoteType"
       :payments="payments"
-    />    
+    />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Car"
-			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
-			:quoteRequest="paymentEntityModel"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      quoteType="Car"
+      :payments="payments"
+      :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
+			:paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'CPD' ||
+            item.code === 'CPDR' ||
+            item.code === 'CDPDR',
+        )
+      "
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -3512,7 +3552,10 @@ watch(
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="my-2 flex justify-end">
+          <div
+            v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
+            class="my-2 flex justify-end"
+          >
             <x-button
               class="mr-2"
               v-if="
@@ -3621,7 +3664,7 @@ watch(
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}}
+            {{ documentType.text }} {{ documentType.is_required ? '*' : '' }}
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
@@ -4018,7 +4061,7 @@ watch(
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
-/>
+  />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

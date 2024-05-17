@@ -8,6 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteIssuanceStatusEnum;
@@ -15,6 +16,7 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Services\SplitPaymentService;
@@ -83,12 +85,14 @@ class HandleInertiaRequests extends Middleware
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'vat' => ApplicationStorageEnums::VAT,
             'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
+            'sendUpdateLogStatusEnum' => SendUpdateLogStatusEnum::asArray(),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'im_logo' => getIMLogo(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
+            'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
         ];
     }
 
