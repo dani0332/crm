@@ -268,7 +268,7 @@ const calculateCommission = () => {
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <x-form @submit="onUpdatebookPolicyDetails" :auto-focus="false">
+        <x-form @submit.prevent :auto-focus="false">
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -579,6 +579,7 @@ const calculateCommission = () => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
+
             <div
               v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
               class="flex justify-end"
@@ -612,7 +613,7 @@ const calculateCommission = () => {
                   color="emerald"
                   size="sm"
                   :loading="bpForm.processing"
-                  type="submit"
+                  @click.prevent="onUpdatebookPolicyDetails"
                 >
                   Update
                 </x-button>
@@ -697,7 +698,7 @@ const calculateCommission = () => {
                     color="emerald"
                     size="sm"
                     :loading="bpForm.processing"
-                    type="submit"
+                    @click.prevent="onUpdatebookPolicyDetails"
                   >
                     Update
                   </x-button>
