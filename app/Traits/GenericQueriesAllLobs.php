@@ -289,7 +289,7 @@ trait GenericQueriesAllLobs
     {
         $payment = $quoteModel->payments()->first();
         if ($payment && $quoteModel->price_with_vat != $payment->total_price) {
-            $difference = $initialDifference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
+            $difference = $initialDifference =(double) number_format($quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value), 2);
             if ($payment->system_adjusted_discount != null) {
                 $difference += $payment->system_adjusted_discount;
             }
