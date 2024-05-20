@@ -78,10 +78,17 @@ class AdvisorDistributionReportService extends BaseService
             ->join('tiers', 'tiers.id', 'personal_quotes.tier_id');
         }
 
-        if (auth()->user()->isAdvisor()) {
-            $query = $query->where('users.id', auth()->user()->id);
-        } else {
-            if (! auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement])) {
+        if (
+            !auth()->user()->hasAnyRole([
+                RolesEnum::LeadPool,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
+            if (auth()->user()->isAdvisor()) {
+                $query = $query->where('users.id', auth()->user()->id);
+            } else {
                 $userIds = $this->walkTree(auth()->user()->id, $request->lob);
                 $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
             }
