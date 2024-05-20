@@ -216,11 +216,17 @@ class QuoteDocumentService extends BaseService
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
 
-    public function getDocumentTypes($quoteTypeId)
+    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null)
     {
         $documentTypes = DocumentType::active()
             ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
             ->byQuoteTypeId($quoteTypeId)
+            ->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
+                return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
+            })
+            ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer) {
+                return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer);
+            })
             ->sortDocumentType()
             ->get();
 

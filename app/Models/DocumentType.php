@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -53,7 +54,7 @@ class DocumentType extends Model implements AuditableContract
     {
         $query->orderBy('is_required', 'desc')->orderBy('text', 'asc');
     }
-    
+
     public function scopeRequired($query)
     {
         $query->where('is_required', 1);
@@ -77,5 +78,21 @@ class DocumentType extends Model implements AuditableContract
     public function scopeSendToCustomer($query)
     {
         $query->whereNotIn('code', [DocumentTypeCode::CTIRBB])->where('send_to_customer', 1)->active();
+    }
+
+    public function scopeByBusinessTypeOfInsurance($query, $businessTypeOfInsurance)
+    {
+        return $query->where('business_type_of_insurance_id', $businessTypeOfInsurance);
+    }
+
+    public function scopeByBusinessTypeOfCustomer($query, $businessTypeOfCustomer)
+    {
+        if ($businessTypeOfCustomer == CustomerTypeEnum::Business || $businessTypeOfCustomer == CustomerTypeEnum::Entity) {
+            $businessTypeOfCustomer = DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER;
+        } elseif ($businessTypeOfCustomer == CustomerTypeEnum::Individual) {
+            $businessTypeOfCustomer = DocumentTypeCode::INDIVIDUAL_BUSINESS_TYPE_OF_CUSTOMER;
+        }
+
+        return $query->where('business_type_of_customer', $businessTypeOfCustomer);
     }
 }
