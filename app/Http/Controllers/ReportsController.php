@@ -402,7 +402,7 @@ class ReportsController extends Controller
             QuoteTypes::YACHT
         ];
         $products = Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteTypes)->where('is_active', 1)->get();
-        
+
         return inertia('Reports/StaleLeadsReport', [
             'reportData' => $data,
             'teams' => $team,

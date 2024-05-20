@@ -19,7 +19,7 @@ const teamOptions = computed(() => {
   }));
 });
 
-console.log(props.products);
+console.log(props.reportData);
 const lobs = computed(() => {
   return props.products.map(x => {
     return {
@@ -162,6 +162,10 @@ const commonHeaders = ref([
 ]);
 
 const tableHeader = ref([]);
+
+const tableData = computed(() => {
+  return props.reportData.data || [];
+});
 
 const onSubmit = isValid => {
   if (!isValid) return;
@@ -323,6 +327,7 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
+  tableHeader.value = [...commonHeaders.value];
   // changeLob();
   // fetchTeams();
   // onTeamChange(filters.team);
@@ -434,7 +439,7 @@ watch(
         value: 'total',
       },
     ]"
-    :items="props.reportData.data || []"
+    :items="tableData"
     border-cell
     :empty-message="'No Records Available'"
     :sort-by="'net_conversion'"
