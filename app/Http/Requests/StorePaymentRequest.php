@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\Payment;
 
 class StorePaymentRequest extends FormRequest
 {
@@ -63,6 +64,11 @@ class StorePaymentRequest extends FormRequest
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
             if (! $quoteModel) {
                 $validator->errors()->add('value', 'Quote Not Exists');
+            } else {
+                $paymentAlreadyExists = Payment::where('code', $quoteModel->code)->get();
+                if ($paymentAlreadyExists->count() > 0) {
+                    $validator->errors()->add('value', 'Payment Already Added');
+                }
             }
         });
     }
