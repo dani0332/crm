@@ -417,9 +417,11 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if($lob === quoteTypeCode::CORPLINE) {
-            if(!empty($filters->insurance_type) && $filters->insurance_type != '') {
-                $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
+            $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
+            if (!empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('business_quote_request.business_type_of_insurance_id', $filters->insurance_type);
+            } else {
+                $query->where('business_quote_request.business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
             }
         }
 
