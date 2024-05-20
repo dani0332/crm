@@ -19,7 +19,6 @@ const teamOptions = computed(() => {
   }));
 });
 
-console.log(props.reportData);
 const lobs = computed(() => {
   return props.products.map(x => {
     return {
@@ -161,7 +160,13 @@ const commonHeaders = ref([
   },
 ]);
 
-const tableHeader = ref([]);
+const tableHeader = ref(
+  filters.lob === 'Health'
+    ? [...healthHeaders.value]
+    : filters.lob === 'Corpline'
+    ? [...corplineHeaders.value]
+    : [...commonHeaders.value],
+);
 
 const tableData = computed(() => {
   return props.reportData.data || [];
@@ -290,6 +295,7 @@ const presetDates = [
 function changeLob() {
   if (filters.lob === 'Health') {
     tableHeader.value = [...commonHeaders.value, ...healthHeaders.value];
+    console.log(tableHeader.value);
   } else if (filters.lob === 'Corpline') {
     const commons = commonHeaders.value.filter(
       header =>
@@ -327,8 +333,7 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
-  tableHeader.value = [...commonHeaders.value];
-  // changeLob();
+  changeLob();
   // fetchTeams();
   // onTeamChange(filters.team);
 });
@@ -430,7 +435,7 @@ watch(
   </x-form>
   <DataTable
     v-model:server-options="serverOptions"
-    table-class-name="lining-nums mt-4"
+    table-class-name=" mt-4"
     :loading="loaders.table"
     :headers="[
       ...tableHeader,
