@@ -39,7 +39,16 @@ const filters = reactive({
   travel_coverage: '',
 });
 
-function onSubmit(isValid) {
+function onSubmit(isValid, isMounted = false) {
+
+  if (!filters.lob && isMounted === false) {
+    toast.error({
+      title: 'Please select LOB',
+      position: 'top',
+    });
+    return;
+  }
+
   if (isValid) {
     filters.page = 1;
     const payLoad = cleanFilters(filters);
@@ -148,6 +157,8 @@ onMounted(() => {
   if (params['sub_teams[]'] && params['sub_teams[]'].length > 0) {
     onSubTeamChange(params['sub_teams[]'], true);
   }
+
+  onSubmit(true, true);
 });
 
 const calculateTotalSum = (data, key) => {
@@ -529,6 +540,7 @@ const travelCoverageOptions = computed(() => {
         <x-select
             label="LOB"
             v-model="filters.lob"
+            placeholder="Select LOB"
             :options="quoteTypesOptions"
             size="sm"
             @update:model-value="onLobChange"
@@ -688,7 +700,7 @@ const travelCoverageOptions = computed(() => {
         <span class="font-bold"> {{ item.advisor_name }} </span>
       </template>
       <template #body-append>
-        <tr v-if="reportData.data.length > 0" class="total-row">
+        <tr v-if="reportData.length > 0 && reportData.data.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData.data, 'total_leads') }}

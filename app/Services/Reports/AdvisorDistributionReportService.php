@@ -32,7 +32,8 @@ class AdvisorDistributionReportService extends BaseService
 
     public function getReportData($request)
     {
-        $lob = $request->lob ?? '';
+        $lobs = $this->getLobByPermissions();
+        $lob = $request->lob ?? (count($lobs) == 1 ? reset($lobs) : '');
         if (empty($lob)) {
             return [];
         }
@@ -370,7 +371,7 @@ class AdvisorDistributionReportService extends BaseService
         $lobs = $this->getLobByPermissions();
 
         return [
-            'lob' => reset($lobs),
+            'lob' => count($lobs) == 1 ? reset($lobs) : '',
             'advisorAssignedDates' => $advisorAssignedDates,
             'isCommercial' => 'All',
         ];
