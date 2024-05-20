@@ -23,8 +23,6 @@ use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Enums\PermissionsEnum;
-use App\Enums\RolesEnum;
 
 class ReportsController extends Controller
 {
