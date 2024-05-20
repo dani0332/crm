@@ -21,6 +21,7 @@ const advisorOptions = ref([]);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const tableHeader = ref([]);
 const canShowFooterColumn = ref([]);
+const toast = useToast();
 
 const params = useUrlSearchParams('history');
 const filters = reactive({
