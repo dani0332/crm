@@ -758,12 +758,17 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
-              <div class="font-bold">
-                <label
-                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+              <div>
+                <x-tooltip position="left">
+                  <label
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                  MAIN CLASS OF INSURANCE
+                    LINE OF BUSINESS
                   </label>
+                  <template #tooltip>
+                    Signifies the specific category or type of insurance coverage associated with this booking. It helps categorize the booking by its primary insurance focus, allowing for better organization and classification of insurance transactions.
+                  </template>
+                </x-tooltip>
               </div>
               <div>
                 <span>{{ quoteType ?? 'N/A' }}</span>
@@ -1158,11 +1163,16 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <label
-                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
-                  >
-                    MAIN CLASS OF INSURANCE
-                  </label>
+                  <x-tooltip position="left">
+                    <label
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      LINE OF BUSINESS
+                    </label>
+                    <template #tooltip>
+                      Signifies the specific category or type of insurance coverage associated with this booking. It helps categorize the booking by its primary insurance focus, allowing for better organization and classification of insurance transactions.
+                    </template>
+                  </x-tooltip>
                 </div>
                 <div>
                   <span>{{ quoteType ?? 'N/A' }}</span>
