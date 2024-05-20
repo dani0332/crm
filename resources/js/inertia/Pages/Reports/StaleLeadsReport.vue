@@ -10,6 +10,15 @@ const loaders = reactive({
   table: false,
 });
 
+const validProdcuts = reactive([
+  'Health',
+  'Corpline',
+  'Home',
+  'Pet',
+  'Yacht',
+  'Cycle',
+]);
+
 const advisorOptions = ref([]);
 
 const teamOptions = computed(() => {
@@ -20,12 +29,18 @@ const teamOptions = computed(() => {
 });
 
 const lobs = computed(() => {
-  return props.products.map(x => {
-    return {
-      value: x,
-      label: x,
-    };
-  });
+  return props.products
+    .filter(x => {
+      if (validProdcuts.includes(x)) {
+        return x;
+      }
+    })
+    .map(item => {
+      return {
+        value: item,
+        label: item,
+      };
+    });
 });
 
 const selectedLob = ref(props.products[0]);
