@@ -63,11 +63,11 @@ class StorePaymentRequest extends FormRequest
         $validator->after(function ($validator) {
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
             if (! $quoteModel) {
-                $validator->errors()->add('value', 'Quote Not Exists');
+                $validator->errors()->add('quote', 'Quote Not Exists');
             } else {
                 $paymentAlreadyExists = Payment::where('code', $quoteModel->code)->get();
                 if ($paymentAlreadyExists->count() > 0) {
-                    $validator->errors()->add('value', 'Payment Already Added');
+                    $validator->errors()->add('payment', 'Payment Already Added');
                 }
             }
         });
