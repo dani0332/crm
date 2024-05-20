@@ -51,7 +51,7 @@ class AdvisorDistributionReportService extends BaseService
             ->groupBy('users.email')
             ->orderBy('users.name');
 
-        if(in_array($lob, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
+        if(in_array($lob, [quoteTypeCode::Car])) {
             $query = $query->select(
                 array_merge(
                     $selectColumns,
