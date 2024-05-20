@@ -193,7 +193,7 @@ watch(
   () => userForm.products,
   () => {
     loadTeamsByProduct();
-    loadManagerByTeam()
+    loadManagerByTeam();
   },
   { deep: true },
 );
@@ -206,6 +206,9 @@ watch(
   { deep: true },
 );
 
+const removeLob = e => {
+  userForm.additionalTeams = [...e];
+};
 </script>
 <template>
   <Head :title="isEdit ? 'Edit Users' : 'Create Users'" />
@@ -333,6 +336,7 @@ watch(
           class="w-full"
           v-model="userForm.additionalTeams"
           placeholder="Select teams "
+          @update:modelValue="removeLob"
         />
       </x-field>
       <x-field label="PERMISSIONS" v-if="hasRole(rolesEnum.Admin)">
