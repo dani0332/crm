@@ -32,9 +32,81 @@ class AdvisorDistributionReportService extends BaseService
 
     public function getReportData($request)
     {
-        $lob = $request->lob ?? quoteTypeCode::Car;
-        $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
-        $lobId = QuoteTypeRepository::where('code', $lob)->first();
+        $lob = $request->lob ?? '';
+        if (empty($lob)) {
+            return [];
+        }
+
+        if ($lob === quoteTypeCode::Car) {
+            $query = $this->getCarQuoteQuery();
+            $query = $this->applyFiltersForCar($query, $request->all());
+        } else {
+            $query = $this->getPersonsalQuoteQuery($lob);
+            $query = $this->applyFilters($query, $request->all());
+        }
+
+        return $query->paginate(15)
+            ->withQueryString();
+    }
+
+    private function getCarQuoteQuery()
+    {
+        $query = CarQuote::query()
+            ->select(
+                DB::raw('count(DISTINCT car_quote_request.id) as total_leads'),
+                'users.name as advisor_name',
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 0' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_0_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 1' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_1_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 2' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_2_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 3' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_3_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 4' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_4_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 5' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_5_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 6 (non ecom)' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_6_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 6 (Ecom)' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_6_lead_count_e"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier L' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_l_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier H' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_h_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_r_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier TR (Ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_tr_lead_count_e"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier TR (Non ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_tr_lead_count"),
+                DB::raw('CAST(SUM(tiers.cost_per_lead) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as total_lead_cost'),
+            )
+            ->filterBySegment()
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', 'user_team.team_id')
+            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('users.is_active', true)
+            ->groupBy('users.email')
+            ->orderBy('users.name');
+
+        if (
+            !auth()->user()->hasAnyRole([
+                RolesEnum::LeadPool,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
+            if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+                $query = $query->where('users.id', auth()->user()->id);
+            } else {
+                $userIds = $this->walkTree(auth()->user()->id);
+                $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+            }
+        }
+
+        return $query;
+    }
+
+    private function getPersonsalQuoteQuery($lob)
+    {
+        $lobFiltered = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
+        $lobId = QuoteTypeRepository::where('code', $lobFiltered)->first();
 
         $selectColumns = [
             DB::raw('count(DISTINCT personal_quotes.id) as total_leads'),
@@ -51,7 +123,7 @@ class AdvisorDistributionReportService extends BaseService
             ->groupBy('users.email')
             ->orderBy('users.name');
 
-        if(in_array($lob, [quoteTypeCode::Car])) {
+        if (in_array($lob, [quoteTypeCode::Car])) {
             $query = $query->select(
                 array_merge(
                     $selectColumns,
@@ -73,9 +145,9 @@ class AdvisorDistributionReportService extends BaseService
                     ]
                 )
             )
-            ->join('user_team', 'user_team.user_id', 'users.id')
-            ->join('teams', 'teams.id', 'user_team.team_id')
-            ->join('tiers', 'tiers.id', 'personal_quotes.tier_id');
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', 'user_team.team_id')
+                ->join('tiers', 'tiers.id', 'personal_quotes.tier_id');
         }
 
         if (
@@ -89,15 +161,12 @@ class AdvisorDistributionReportService extends BaseService
             if (auth()->user()->isAdvisor()) {
                 $query = $query->where('users.id', auth()->user()->id);
             } else {
-                $userIds = $this->walkTree(auth()->user()->id, $request->lob);
+                $userIds = $this->walkTree(auth()->user()->id, $lob);
                 $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
             }
         }
 
-        $query = $this->applyFilters($query, $request->all());
-
-        return $query->paginate(15)
-            ->withQueryString();
+        return $query;
     }
 
     public function getFiltersByLob()
@@ -305,6 +374,69 @@ class AdvisorDistributionReportService extends BaseService
             'advisorAssignedDates' => $advisorAssignedDates,
             'isCommercial' => 'All',
         ];
+    }
+
+    private function applyFiltersForCar($query, $filters)
+    {
+        $filters = (object) $filters;
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = !isset($filters->page);
+
+        $startDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
+            ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+
+        $endDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+        $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+
+        if (isset($filters->tiers) && count($filters->tiers) > 0) {
+            $query->whereIn('car_quote_request.tier_id', $filters->tiers);
+        }
+        if (isset($filters->teams) && count($filters->teams) > 0) {
+            $value = $filters->teams;
+            $query->whereIn('users.id', function ($query) use ($value) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $value);
+            });
+        }
+
+        if ((isset($filters->sub_teams) && count($filters->sub_teams) > 0)) {
+            $value = $filters->sub_teams;
+            $query->whereIn('users.id', function ($query) use ($value) {
+
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->whereIn('sub_team_id', $value);
+            });
+        }
+
+        if (isset($filters->advisors) && count($filters->advisors) > 0) {
+            $query->whereIn('car_quote_request.advisor_id', $filters->advisors);
+        }
+
+        if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
+            $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
+            $query->where('car_model.is_commercial', '=', $filters->isCommercial);
+        }
+
+        if (isset($filters->leadSources) && count($filters->leadSources) > 0) {
+            $query->whereIn('car_quote_request.source', $filters->leadSources);
+        }
+
+        if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
+            $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+        }
+
+        return $query;
     }
 
     public function applyFilters($query, $filters)
