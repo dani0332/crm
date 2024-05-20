@@ -458,9 +458,10 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
                     'TaxAmount1' => $request->vatOnCommission,
-                    'DocumentTotalBeforeTax' => $request->commission,
-                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat,
+                    'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
+                    'Terms' => 'SPLIT'.count($splitPayments),
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
@@ -471,11 +472,7 @@ class SagePayloadFactory
                             'ExtendedAmountWithoutTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                         ],
                     ],
-                    'InvoicePaymentSchedules' => [
-                        [
-                            'DueDate' => $request->paymentDueDate ? Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format) : null,
-                        ],
-                    ],
+                    'InvoicePaymentSchedules' => [],
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
             ],
@@ -629,7 +626,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' => $sageRequestType,
+            'sage_request_type' => $sageRequestType ?? null,
             'entry_type' => SageEnum::SCT_STRAIGHT,
         ];
     }
@@ -662,7 +659,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => $sageRequestType,
+            'sage_request_type' => $sageRequestType ?? null,
             'entry_type' => $entryType,
         ];
     }
@@ -697,7 +694,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARInvoiceBatches'.'('.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' => $sageRequestType,
+            'sage_request_type' => $sageRequestType ?? null,
             'entry_type' => $entryType,
         ];
     }
@@ -790,7 +787,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARPostInvoices'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => $sageRequestType,
+            'sage_request_type' => $sageRequestType ?? null,
             'entry_type' => $entryType,
         ];
     }
