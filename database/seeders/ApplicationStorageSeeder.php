@@ -112,7 +112,7 @@ class ApplicationStorageSeeder extends Seeder
             ]);
         }
 
-        if (!ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED)->exists()) {
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED)->exists()) {
             ApplicationStorage::insert([
                 'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED,
                 'value' => true,
@@ -122,7 +122,7 @@ class ApplicationStorageSeeder extends Seeder
             ]);
         }
 
-        if (!ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS)->exists()) {
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS)->exists()) {
             ApplicationStorage::insert([
                 'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS,
                 'value' => 30,

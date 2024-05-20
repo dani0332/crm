@@ -2,12 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use App\Models\QuoteSync;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use App\Enums\ApplicationStorageEnums;
 
 class QuoteSyncCleanupCommand extends Command
 {
@@ -29,7 +29,7 @@ class QuoteSyncCleanupCommand extends Command
     {
         info('QuoteSyncJob cleanup Started');
         $isQuoteSyncCleanupEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED)->first();
-        
+
         if (! $isQuoteSyncCleanupEnabled || $isQuoteSyncCleanupEnabled->value == 0) {
             info('QuoteSyncJob cleanup is disabled');
 
@@ -45,7 +45,7 @@ class QuoteSyncCleanupCommand extends Command
                 ->take(3000)
                 ->delete();
 
-            info('QuoteSyncJob cleanup date: ' . $cleanupDate->toDateTimeString() . ' - ' . $deletedEntries . ' entries deleted from quote sync table');
+            info('QuoteSyncJob cleanup date: '.$cleanupDate->toDateTimeString().' - '.$deletedEntries.' entries deleted from quote sync table');
         });
     }
 }
