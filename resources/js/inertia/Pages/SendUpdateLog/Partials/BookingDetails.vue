@@ -710,7 +710,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INVOICE DESCRIPTION
                   </label>
@@ -728,7 +728,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     BOOKING DATE
                   </label>
@@ -746,7 +746,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TRANSACTION PAYMENT STATUS
                   </label>
@@ -763,7 +763,11 @@ const onCancel = () => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div class="font-bold">
-                <span>MAIN CLASS OF INSURANCE</span>
+                <label
+                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                  >
+                  MAIN CLASS OF INSURANCE
+                  </label>
               </div>
               <div>
                 <span>{{ quoteType ?? 'N/A' }}</span>
@@ -773,7 +777,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INSURER INVOICE DATE
                   </label>
@@ -791,7 +795,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     SUB CLASS
                   </label>
@@ -807,7 +811,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INSURER TAX INVOICE NUMBER
                   </label>
@@ -826,7 +830,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     BROKER INVOICE NUMBER
                   </label>
@@ -843,7 +847,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INSURER COMMISSION INVOICE NUMBER
                   </label>
@@ -863,7 +867,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     DISCOUNT
                   </label>
@@ -881,7 +885,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     PRICE (VAT APPLICABLE)
                   </label>
@@ -900,7 +904,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     COMMISSION (%)
                   </label>
@@ -917,7 +921,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     PRICE (VAT NOT APPLICABLE)
                   </label>
@@ -935,7 +939,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     VAT ON COMMISSION
                   </label>
@@ -952,7 +956,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     COMMISSION VAT APPLICABLE
                   </label>
@@ -972,7 +976,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TOTAL COMMISSION
                   </label>
@@ -991,7 +995,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     COMMISSION (VAT NOT APPLICABLE)
                   </label>
@@ -1009,7 +1013,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TOTAL VAT AMOUNT
                   </label>
@@ -1031,7 +1035,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TOTAL PRICE
                   </label>
@@ -1100,8 +1104,8 @@ const onCancel = () => {
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
                   <x-tooltip position="left">
-                    <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    <label 
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INVOICE DESCRIPTION
                     </label>
@@ -1121,7 +1125,7 @@ const onCancel = () => {
                 <div class="font-bold">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       BOOKING DATE
                     </label>
@@ -1139,7 +1143,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TRANSACTION PAYMENT STATUS
                     </label>
@@ -1157,8 +1161,12 @@ const onCancel = () => {
                 </div>
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
-                <div class="font-bold">
-                  <span>MAIN CLASS OF INSURANCE</span>
+                <div>
+                  <label
+                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                  >
+                    MAIN CLASS OF INSURANCE
+                  </label>
                 </div>
                 <div>
                   <span>{{ quoteType ?? 'N/A' }}</span>
@@ -1168,7 +1176,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INSURER INVOICE DATE
                     </label>
@@ -1195,7 +1203,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       SUB CLASS
                     </label>
@@ -1211,7 +1219,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INSURER TAX INVOICE NUMBER
                     </label>
@@ -1239,7 +1247,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       BROKER INVOICE NUMBER
                     </label>
@@ -1258,7 +1266,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INSURER COMMISSION INVOICE NUMBER
                     </label>
@@ -1287,7 +1295,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       DISCOUNT
                     </label>
@@ -1305,7 +1313,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       PRICE (VAT APPLICABLE)
                     </label>
@@ -1334,7 +1342,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       COMMISSION (%)
                     </label>
@@ -1354,7 +1362,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       PRICE (VAT NOT APPLICABLE)
                     </label>
@@ -1374,7 +1382,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       VAT ON COMMISSION
                     </label>
@@ -1393,7 +1401,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="pt-1 text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="pt-1 font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       COMMISSION VAT APPLICABLE
                     </label>
@@ -1423,7 +1431,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TOTAL COMMISSION
                     </label>
@@ -1443,7 +1451,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       COMMISSION (VAT NOT APPLICABLE)
                     </label>
@@ -1463,7 +1471,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TOTAL VAT AMOUNT
                     </label>
@@ -1487,7 +1495,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TOTAL PRICE
                     </label>
