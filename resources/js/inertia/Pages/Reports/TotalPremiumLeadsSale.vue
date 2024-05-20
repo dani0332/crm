@@ -26,6 +26,8 @@ const quoteTypesOptions = computed(() => {
   }));
 });
 
+const teamOptions = ref([]);
+
 const params = useUrlSearchParams('history');
 const tableHeader = [
   {
@@ -89,8 +91,15 @@ const fetchTeamUsers = () => {
   })
 }
 
+const fetchTeamsAgainstQuoteType = () => {
+  axios.post('/get-teams-by-product', {quote_type_id: filters.quote_type_id}).then(response => {
+    teamOptions.value = response.data.teams;
+  })
+}
+
 onMounted(() => {
   setQueryStringFilters();
+  fetchTeamsAgainstQuoteType();
 });
 </script>
 
@@ -121,16 +130,16 @@ onMounted(() => {
           :rules="[isRequired]"
           placeholder="Search by Quote Type"
           :options="quoteTypesOptions"
+          @update:modelValue="fetchTeamsAgainstQuoteType"
         />
         <ComboBox
           v-model="filters.teams"
           label="Teams"
           placeholder="Search by Teams"
-          :options="Object.keys(filterOptions.teams).map(key => ({
-              value: key,
-              label: filterOptions.teams[key],
-            }))
-          "
+          :options="teamOptions.map(team  => ({
+            value: team.id,
+            label: team.name,
+          }))"
           @update:modelValue="fetchTeamUsers"
         />
 
