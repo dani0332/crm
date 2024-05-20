@@ -165,7 +165,7 @@ const setTableHeader = () => {
     ];
     canShowFooterColumn.value = false;
 
-    if([quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Bike].includes(filters.lob)) {
+    if([quoteTypeCodeEnum.Car].includes(filters.lob)) {
 
         headers.push(
         {
