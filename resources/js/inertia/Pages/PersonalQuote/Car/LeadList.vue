@@ -235,6 +235,7 @@ const teamUsers = ref([]);
 const loader = reactive({
   table: false,
   export: false,
+  advisorTeamOptions: false,
 });
 
 const quotesSelected = ref([]);
@@ -335,10 +336,14 @@ function setQueryStringFilters() {
 }
 
 const fetchTeamUsers = () => {
+    loader.advisorTeamOptions = true;
   axios
     .post('/get-users-by-team', { team_filter: filters.teams })
     .then(response => {
       teamUsers.value = response.data;
+    })
+    .finally(() => {
+      loader.advisorTeamOptions = false;
     });
 };
 
@@ -557,6 +562,7 @@ onMounted(() => {
               label: user.name,
             }))
           "
+          :loading="loader.advisorTeamOptions"
           deselect-all
         />
         <x-select
