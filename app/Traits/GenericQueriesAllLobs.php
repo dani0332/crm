@@ -312,10 +312,12 @@ trait GenericQueriesAllLobs
                     $payment->discount_type = null;
                 }
             }
+            $priceWithVat = round($quoteModel->price_with_vat, 2);
+            $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
             // If status is partially paid & total price is less than price with vat then set status to partially paid
             if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
-            } elseif($quoteModel->price_with_vat <= ($payment->captured_amount + $payment->discount_value)){
+            } elseif($priceWithVat <= $captureAndDiscount){
                 $payment->payment_status_id = PaymentStatusEnum::PAID;
             }
             // total price is actual price without discount
@@ -363,8 +365,8 @@ trait GenericQueriesAllLobs
     {
         if ($payment && !$payment->isEmpty()) {
             $payment = $payment->first();
-            $paymentTotalPrice = $payment->total_price;
-            $sumOfSplitPayment = $payment->paymentSplits()->sum('payment_amount') + $payment->discount_value ;
+            $paymentTotalPrice = round($payment->total_price, 2);
+            $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
             return !($sumOfSplitPayment >= $paymentTotalPrice);
         }
         return true;
