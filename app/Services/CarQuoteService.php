@@ -185,7 +185,7 @@ class CarQuoteService extends BaseService
                 'cqr.enquiry_count',
                 'cqr.aml_status_id',
                 'amlstatus.text as aml_status_text',
-                'team.name as team_name'
+                DB::raw('GROUP_CONCAT(team.name) as team_name')
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -220,7 +220,10 @@ class CarQuoteService extends BaseService
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
                 $join->on('qvc.user_id', 'cqr.advisor_id');
-            })->leftJoin('teams as team', 'team.id', '=', 'u.team_id');
+            })
+            ->leftJoin('user_team as ut', 'u.id', '=', 'ut.user_id')
+            ->leftJoin('teams as team', 'team.id', '=', 'ut.team_id')
+            ->groupBy('cqr.id');
 
         $this->exportQuery = DB::table('car_quote_request as cqr')
             ->select(
@@ -930,7 +933,7 @@ class CarQuoteService extends BaseService
             // $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
      }
         if($request->teams){
-            $this->query->whereIn('u.team_id',$request->teams);
+            $this->query->whereIn('team.id',$request->teams);
         }
 
         foreach ($searchProperties as $item) {
