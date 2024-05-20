@@ -548,7 +548,7 @@ onMounted(() => {
         <ComboBox
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.advisor_id"
-          label="Advisor"
+          label="Advisors (select teams first)"
           name="advisor_id"
           placeholder="Please select Advisor"
           :options="
@@ -569,6 +569,7 @@ onMounted(() => {
           class="w-full"
         />
         <ComboBox
+          v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.teams"
           label="Teams"
           placeholder="Search by Teams"
@@ -576,6 +577,7 @@ onMounted(() => {
           @update:modelValue="fetchTeamUsers"
         />
         <DatePicker
+          v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.transaction_approved_dates"
           label="Transaction Approved Date"
           class="w-full"
