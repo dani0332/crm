@@ -57,19 +57,24 @@ const loader = reactive({
   export: false,
 });
 
-const tableHeader = [
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'FIRST NAME', value: 'first_name' },
-  { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status' },
-  { text: 'ADVISOR', value: 'advisor' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'NATIONALITY', value: 'nationality' },
-  { text: 'SOURCE', value: 'source' },
-  { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PRICE', value: 'premium' },
-];
+const tableHeader = reactive([
+  { text: 'Ref-ID', value: 'code', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  { text: 'ADVISOR', value: 'advisor', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+  },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  { text: 'NATIONALITY', value: 'nationality', is_active: true },
+  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  { text: 'PRICE', value: 'premium', is_active: true },
+]);
 
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -207,7 +212,7 @@ onMounted(() => {
     <Head title="Life List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
-      <div class="space-x-3">
+      <div class="space-x-3 flex">
         <Link href="/quotes/life/cards">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
@@ -392,7 +397,7 @@ onMounted(() => {
           :href="route('life-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
-          {{ code }}
+          <span>{{ code }}</span>
         </Link>
       </template>
       <template #item-advisor="{ advisor }">

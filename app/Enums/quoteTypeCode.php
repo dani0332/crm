@@ -20,7 +20,7 @@ class quoteTypeCode extends Enum
     const Car_Revival = 'CarRevival';
     const RetailMedical = 'Retail Medical';
     const EBP = 'Entry-Level';
-    const CORPLINE = 'Corpline';
+    const CORPLINE = 'CorpLine';
     const GM = 'GM';
     const RM = 'RM';
     const GroupMedical = 'Group Medical';

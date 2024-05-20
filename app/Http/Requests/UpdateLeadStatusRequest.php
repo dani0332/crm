@@ -129,6 +129,10 @@ class UpdateLeadStatusRequest extends FormRequest
                 $validator->errors()->add('value', 'Lead not found please try again.');
             }
 
+            if ($quoteObject->quote_status_id == QuoteStatusEnum::Lost) {
+                $validator->errors()->add('value', 'The lead is marked as '.quoteStatusCode::LOST.' and cannot be changed.');
+            }
+
             $fetchLastAMLCheck = KycLog::withTrashed()->where([
                 'quote_request_id' => request()->leadId,
                 'quote_type_id' => $quoteTypesIds[request()->modelType] ?? '',

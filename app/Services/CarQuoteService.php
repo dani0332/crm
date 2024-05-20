@@ -571,7 +571,7 @@ class CarQuoteService extends BaseService
     {
         return CarQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
             $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents','payments.paymentSplits.verifiedByUser'])->first();
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser'])->first();
     }
 
     public function fillModelProperties()
@@ -819,7 +819,7 @@ class CarQuoteService extends BaseService
 
     private function parseDate($date, $isStartOfDay)
     {
-        if ($date != '') {
+        if ($date && $date != '') {
             if ($isStartOfDay) {
                 return Carbon::parse($date)->startOfDay()->toDateTimeString();
             } else {

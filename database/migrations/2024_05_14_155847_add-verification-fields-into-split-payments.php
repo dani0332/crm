@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
         Schema::table('payment_splits', function (Blueprint $table) {
 
             if (! Schema::hasColumn('payment_splits', 'verified_by')) {
@@ -21,7 +21,7 @@ return new class extends Migration
 
             if (! Schema::hasColumn('payment_splits', 'verified_at')) {
                 $table->dateTime('verified_at')->nullable()->default(null);
-                
+
             }
         });
 
