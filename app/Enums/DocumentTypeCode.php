@@ -31,4 +31,16 @@ class DocumentTypeCode extends Enum
     const YPD = 'YPD';
     const CTIRBB = 'CTIRBB'; // Tax Invoice Raised By Buyer
     const TI = 'TI'; // Tax Invoice
+    const CPD_RECEIPT = 'CPDR';
+    const BPD_RECEIPT = 'BPDR';
+    const TPD_RECEIPT = 'TPDR';
+    const HPD_RECEIPT = 'HPDR';
+    const LPD_RECEIPT = 'LPDR';
+    const HOMPD_RECEIPT = 'HOMPDR';
+    const CYCPD_RECEIPT = 'CYCPDR';
+    const CLPD_RECEIPT = 'CLPDR';
+    const GMQPD_RECEIPT = 'GMQPDR';
+    const PPD_RECEIPT = 'PPDR';
+    const YPD_RECEIPT = 'YPDR';
+    
 }
