@@ -619,7 +619,7 @@ class SendUpdateLogService
 
     public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
     {
-        $categoryCode = $sendUpdateLog->category->code;
+        $categoryCode = $sendUpdateLog->category?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 

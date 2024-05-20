@@ -133,7 +133,7 @@ class SageApiService
         if ($customer) {
             $response = '';
             $customer->data = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
-            $sageLogArray = $quote->sageLog->keyBy('step')->toArray();
+            $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
             $customerPayload = [
                 'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
                 'payload' => [],
@@ -333,7 +333,7 @@ class SageApiService
 
     private function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
     {
-        $sageLogArray = $quote->sageLog->whereNotIn('entry_type', [
+        $sageLogArray = $quote->sageApiLogs->whereNotIn('entry_type', [
             SageEnum::SRT_GET_AR_INVOICE,
             SageEnum::SRT_GET_AP_INVOICE,
             SageEnum::SCT_REVERSAL,
@@ -347,7 +347,7 @@ class SageApiService
 
             case SageEnum::SUT_REVE_CORR:
                 $extras['sageLogArray'] = $sageLogArray;
-                $sageRevCorrLogs = $quote->sageLog->whereIn('entry_type', [
+                $sageRevCorrLogs = $quote->sageApiLogs->whereIn('entry_type', [
                     SageEnum::SRT_GET_AR_INVOICE,
                     SageEnum::SRT_GET_AP_INVOICE,
                     SageEnum::SCT_REVERSAL,
