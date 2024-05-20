@@ -1731,15 +1731,15 @@ const handlePlanSelected = plan => {
             >
               Duplicate Lead
             </x-button>
-            <!-- <x-button
-              v-if="hasAnyRole([rolesEnum.LeadPool])"
+            <x-button
+              v-if="hasAnyRole([rolesEnum.LeadPool]) && leadStatusForm.leadStatus != quoteStatusEnum.IMRenewal"
               class="mr-2"
               size="sm"
               color="#ff5e00"
               @click.prevent="openSendOCBConfirmNB"
             >
               Send NB OCB To Customer
-            </x-button> -->
+            </x-button>
           </template>
           <Link :href="route('car.index')">
             <x-button size="sm" tag="div">Car List</x-button>
