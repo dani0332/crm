@@ -134,16 +134,16 @@ const updateComputedPlanDetails = () => {
 
   if ( (page.props.record.plan_id && !page.props.record.prefill_plan_id) ||  (planSelectedAt > prefillPlanSelectedAt) ) {
 
-      console.log('plan selected at is greater than prefill plan selected at :' , "PRICE", page.props.record.premium, "PLAN", page.props.record.plan_id_text, "PROVIDER",  page.props.record.car_plan_provider_id_text);    
+      console.log('plan selected at is greater than prefill plan selected at :' , "PRICE", page.props.record.premium, "PLAN", page.props.record.plan_id_text, "PROVIDER",  page.props.record.car_plan_provider_id_text);
       computedPlanDetails.premium = page.props.record.premium,
       computedPlanDetails.planName = page.props.record.plan_id_text,
       computedPlanDetails.providerName = page.props.record.car_plan_provider_id_text
   } else
-  {   
+  {
       console.log('plan selected at is less than prefill plan selected at');
       computedPlanDetails.premium = '',
       computedPlanDetails.planName = page.props.record.prefill_plan_id_text,
-      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text   
+      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text
   }
 };
 
@@ -335,7 +335,7 @@ watch(availablePlansTable, (newPlans) =>  {
   console.log('plan selected at - inside watch availablePlans - ');
   let planSelectedAt = new Date(page.props.record.plan_selected_at);
   let prefillPlanSelectedAt = new Date(page.props.record.prefill_plan_selected_at);
-  
+
   console.log('plan selected at - prefillPlanId - ' , prefillPlanId.value, " : plan SelectedAT: ", planSelectedAt, " : prefillPlanSelectedAt ", prefillPlanSelectedAt);
 
   //find selected plan from available plans and calculate prefilled plan premium
@@ -347,7 +347,7 @@ watch(availablePlansTable, (newPlans) =>  {
       );
 
     computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
-  }  
+  }
   else
   {
     console.log('plan selected at - prefillPlanSelectedAt is less than planSelectedAt' );
@@ -1571,7 +1571,7 @@ const linkEntity = () => {
     });
 };
 
-const handlePlanSelected = plan => {  
+const handlePlanSelected = plan => {
   selectedProviderPlan.value.id = plan.id
   selectedProviderPlan.value.planName = plan.planName
   selectedProviderPlan.value.providerName = plan.providerName
@@ -1579,8 +1579,8 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','paymentEntityModel'],        
-  });  
+    only: ['payments','paymentEntityModel'],
+  });
 };
 </script>
 
@@ -1604,7 +1604,7 @@ const handlePlanSelected = plan => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">          
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
             <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
@@ -1731,7 +1731,7 @@ const handlePlanSelected = plan => {
             >
               Duplicate Lead
             </x-button>
-            <x-button
+            <!-- <x-button
               v-if="hasAnyRole([rolesEnum.LeadPool])"
               class="mr-2"
               size="sm"
@@ -1739,7 +1739,7 @@ const handlePlanSelected = plan => {
               @click.prevent="openSendOCBConfirmNB"
             >
               Send NB OCB To Customer
-            </x-button>
+            </x-button> -->
           </template>
           <Link :href="route('car.index')">
             <x-button size="sm" tag="div">Car List</x-button>
@@ -2574,7 +2574,7 @@ const handlePlanSelected = plan => {
 			:quoteType="quoteType"
 			:quote="record"
 		/> -->
-	
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
@@ -3211,10 +3211,10 @@ const handlePlanSelected = plan => {
       :quoteId="record.id"
       :paymentCode = "record.code"
       :quoteType="quoteType"
-      :payments="payments"  
-    />    
+      :payments="payments"
+    />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Car"
 			:payments="payments"
