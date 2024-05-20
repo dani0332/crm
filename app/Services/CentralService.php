@@ -11,21 +11,38 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
+use App\Enums\TeamTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
+use App\Models\Activities;
+use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
+use App\Models\CycleQuote;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\PetQuote;
+use App\Models\QuoteBatches;
 use App\Models\QuoteStatusLog;
+use App\Models\Team;
+use App\Models\TravelQuote;
+use App\Models\User;
+use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Log;
 
 class CentralService
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, TeamHierarchyTrait;
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
@@ -114,8 +131,8 @@ class CentralService
                 }
 
                 $response = in_array(ucfirst($lob), newUi()) ?
-                    ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
-                    Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
+                ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
+                Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
@@ -146,7 +163,8 @@ class CentralService
     {
         $leadsIds = $request->assigned_lead_id;
         $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $quoteBatch = QuoteBatches::latest()->first();
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
         if (str_starts_with($leadsIds, ',')) {
             $leadsIds = substr($leadsIds, 1);
@@ -154,22 +172,22 @@ class CentralService
 
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
-            ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
-            ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
+        ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
+        ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
 
         if (! class_exists($model['parent'])) {
             vAbort('Something went wrong');
         }
 
-        return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes) {
+        return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes, $quoteBatch) {
             foreach ($leadsIds as $leadId) {
-
                 $getQuoteLead = $model['parent']::findOrfail($leadId);
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
+                $getQuoteLead->quote_batch_id = $quoteBatch->id;
                 $getQuoteLead->save();
 
                 $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
-                    'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
+                'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
 
                 $model['child']::updateOrCreate(
                     [$parentFieldName => $getQuoteLead->id],
@@ -189,6 +207,7 @@ class CentralService
                 return app(TravelQuoteService::class)->sortedPlansList($id);
             case quoteTypeCode::Health:
                 $listQuotePlans = [];
+
                 $quotePlans = app(HealthQuoteService::class)->getQuotePlans($id);
                 if (isset($quotePlans->message) && $quotePlans->message != '') {
                     $listQuotePlans = [];
@@ -237,7 +256,6 @@ class CentralService
     public function savePlanDetails($quoteType, $code, $data)
     {
         return DB::transaction(function () use ($quoteType, $code, $data) {
-
             $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
             $repository = getRepositoryObject($quoteType);
 
@@ -257,7 +275,6 @@ class CentralService
             $this->updateQuotePayment($quote, $data->price_with_vat);
 
             return true;
-
         });
     }
 
@@ -312,12 +329,12 @@ class CentralService
 
         return $response;
     }
+
     //check if aml cleared from log
     public function amlClearedFromLog($quoteId, $quoteType)
     {
         $quoteType = strtolower($quoteType);
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
-
         $isAmlClearedForPayment = false;
         $quoteStatusLog = QuoteStatusLog::where('quote_request_id', $quoteId)
             ->where('quote_type_id', $quoteTypeId)
@@ -337,5 +354,166 @@ class CentralService
         }
 
         return $isAmlClearedForPayment;
+    }
+
+    public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId, $previousStatusIdChanged = false)
+    {
+        $quoteDetails['quote_type_id'] = $quoteTypeId;
+        $quoteTypeDetails = [
+            CarQuote::class => [
+                'eligible_for_automate' => false,
+            ],
+            HomeQuote::class => [
+                'eligible_for_automate' => true,
+                'quote_type_id' => QuoteTypeId::Home,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::HOME_RENEWALS])->first()->id,
+            ],
+            HealthQuote::class => [
+                'eligible_for_automate' => true,
+                'quote_type_id' => QuoteTypeId::Health,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
+            ],
+            LifeQuote::class => [
+                'eligible_for_automate' => false,
+            ],
+            BusinessQuote::class => [
+                'eligible_for_automate' => true,
+                'quote_type_id' => QuoteTypeId::Business,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CORPLINE_RENEWALS])->first()->id,
+            ],
+            TravelQuote::class => [
+                'eligible_for_automate' => false,
+            ],
+            PetQuote::class => [
+                'quote_type_id' => QuoteTypeId::Pet,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::PET_RENEWALS])->first()->id,
+            ],
+            CycleQuote::class => [
+                'quote_type_id' => QuoteTypeId::Cycle,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CYCLE_RENEWALS])->first()->id,
+            ],
+            YachtQuote::class => [
+                'quote_type_id' => QuoteTypeId::Yacht,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::YACHT_RENEWALS])->first()->id,
+            ],
+        ];
+
+        $quoteTypeDetail = null;
+
+        switch ($quoteDetails->quote_type_id) {
+            case QuoteTypeId::Car:
+                $quoteTypeDetail = $quoteTypeDetails[CarQuote::class];
+                break;
+            case QuoteTypeId::Home:
+                $quoteTypeDetail = $quoteTypeDetails[HomeQuote::class];
+                break;
+            case QuoteTypeId::Health:
+                $quoteTypeDetail = $quoteTypeDetails[HealthQuote::class];
+                break;
+            case QuoteTypeId::Life:
+                $quoteTypeDetail = $quoteTypeDetails[LifeQuote::class];
+                break;
+            case QuoteTypeId::Business:
+                $quoteTypeDetail = $quoteTypeDetails[BusinessQuote::class];
+                break;
+            case QuoteTypeId::Travel:
+                $quoteTypeDetail = $quoteTypeDetails[TravelQuote::class];
+                break;
+            case QuoteTypeId::Pet:
+                $quoteTypeDetail = $quoteTypeDetails[PetQuote::class];
+                break;
+            case QuoteTypeId::Yacht:
+                $quoteTypeDetail = $quoteTypeDetails[YachtQuote::class];
+                break;
+            case QuoteTypeId::Cycle:
+                $quoteTypeDetail = $quoteTypeDetails[CycleQuote::class];
+                break;
+            default:
+                $quoteTypeDetail = null;
+                break;
+        }
+
+        $advisorDetails = User::with('usersroles', 'teams')->where('id', $quoteDetails->advisor_id)->first();
+
+        $lastActivity = Activities::where(
+            'quote_request_id',
+            $quoteDetails->id,
+        )->orderBy('created_at', 'desc')->first();
+
+        $lastActivityDueDateIsGreater = false;
+
+        if ($lastActivity) {
+            // Check if the due date is greater than today's date
+            if (Carbon::parse($lastActivity->due_date)->greaterThan(now()->format('d-m-Y'))) {
+                $lastActivityDueDateIsGreater = true;
+            }
+
+            // If the status ID has changed, update all activities' status for the current quote
+            if ($previousStatusIdChanged || ! $lastActivity->status) {
+                Activities::where('quote_request_id', $quoteDetails->id)->update(['status' => 1]);
+                $lastActivityDueDateIsGreater = false;
+            }
+
+            // Check if the activity is cold or its due date is not greater than today's date
+            if ($lastActivity->is_cold || Carbon::parse($lastActivity->due_date)->lessThanOrEqualTo(now()->format('d-m-Y'))) {
+                Activities::where('quote_request_id', $quoteDetails->id)->update(['status' => 1]);
+            }
+        }
+
+        // ->where('due_date', '<', now())
+
+        $scheduledActivitiesIDs = Activities::where([
+            'quote_request_id' => $quoteDetails->id,
+            'status' => true,
+        ])
+            ->orderBy('created_at', 'desc')->pluck('activity_schedule_id')
+            ->unique()->filter(function ($filter) {
+                return ! is_null($filter);
+            })->toArray();
+
+        $getActivitySchedule = null;
+
+        if ($advisorDetails) {
+            $getActivitySchedule = ActivitySchedule::where([
+                'quote_type_id' => $quoteTypeId,
+                'quote_status_id' => $quoteDetails->quote_status_id,
+            ])
+                ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
+                ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
+                ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
+                    $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
+                })
+                ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail) {
+                    $renewalTeamID = $quoteTypeDetail['renewal_team'];
+
+                    $query->where('team_id', $renewalTeamID ?? null);
+                })
+                ->orderBy('sorting_order')
+                ->first();
+        }
+
+        if ($getActivitySchedule && $quoteDetails->advisor_id && ! $lastActivityDueDateIsGreater) {
+            $activity = Activities::create([
+                'title' => $getActivitySchedule->name,
+                'description' => $getActivitySchedule->description,
+                'quote_request_id' => $quoteDetails->id,
+                'quote_type_id' => $quoteTypeId,
+                'status' => 0,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'assignee_id' => $quoteDetails->advisor_id ?? auth()->user()->id,
+                'uuid' => generateUuid(),
+                // 'due_date' => addDaysExcludeWeekend($getActivitySchedule->due_days),
+                'due_date' => addMinutesExcludeWeekend($getActivitySchedule->due_days),
+                'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
+                'client_email' => $quoteDetails->email,
+                'quote_uuid' => $quoteDetails->uuid,
+                'activity_schedule_id' => $getActivitySchedule->id,
+            ]);
+
+            return $activity;
+        }
+
+        return false;
     }
 }
