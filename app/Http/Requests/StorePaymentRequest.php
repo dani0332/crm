@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\Payment;
 
 class StorePaymentRequest extends FormRequest
 {
