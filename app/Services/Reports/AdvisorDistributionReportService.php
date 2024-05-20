@@ -346,6 +346,10 @@ class AdvisorDistributionReportService extends BaseService
                     ->where('car_model.is_commercial', $filters->isCommercial);
                 });
             }
+
+            if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
+                $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+            }
         }
 
         if($lob === quoteTypeCode::Health) {
