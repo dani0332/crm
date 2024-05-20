@@ -16,8 +16,8 @@ use App\Models\PaymentSplits;
 use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\SageApiLogRepository;
-use App\Traits\GenericQueriesAllLobs;
 use App\Repositories\SendUpdateLogRepository;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
 
@@ -805,8 +805,12 @@ class SageApiService
 
         $sageRequest->customerId = $sageCustomerNumber;
 
-        if (! $sageRequest->insurerGlLiaiblityAccount) {
-            return ['status' => false, 'message' => 'Insurance Provider not found'];
+        if (! $sageRequest->insurerGlLiaiblityAccount && ! $sageRequest->sageVenderId) {
+            return ['status' => false, 'message' => 'Sage Vendor ID and GL Account for Insurance Provider not found.'];
+        } elseif (! $sageRequest->insurerGlLiaiblityAccount) {
+            return ['status' => false, 'message' => 'GL Account for Insurance Provider not found.'];
+        } elseif (! $sageRequest->sageVenderId) {
+            return ['status' => false, 'message' => 'Sage Vendor ID for Insurance Provider not found.'];
         }
 
         // frequency  is 'upfront'

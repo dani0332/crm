@@ -72,7 +72,7 @@ const insuranceProvidersOptions = computed(() => {
   }));
 });
 
-const roundDecimal = (value) => {
+const roundDecimal = value => {
   return value ? parseFloat(value.toFixed(2)) : '';
 };
 
@@ -82,7 +82,7 @@ const updatePriceWithVat = () => {
   const priceWithoutVat = parseFloat(planDetailsForm.price_without_vat);
 
   if (priceWithVat && priceWithoutVat) {
-    totalPrice = ((priceWithVat / 100) * 5) + priceWithVat + priceWithoutVat;
+    totalPrice = (priceWithVat / 100) * 5 + priceWithVat + priceWithoutVat;
   } else if (priceWithVat) {
     totalPrice = (priceWithVat / 100) * 5 + priceWithVat;
   } else if (priceWithoutVat) {
@@ -123,7 +123,7 @@ const onUpdate = () => {
   });
 };
 
-const onKeyPress = (event) => {
+const onKeyPress = event => {
   if (event.key === 'e' || event.key === 'E') {
     event.preventDefault();
   }
@@ -132,9 +132,10 @@ const onKeyPress = (event) => {
 const onCancel = () => {
   state.isEdit = false;
   planDetailsForm.price_with_vat = props.sendUpdateLog?.price_with_vat || null;
-  planDetailsForm.price_without_vat = props.sendUpdateLog?.price_without_vat || null;
+  planDetailsForm.price_without_vat =
+    props.sendUpdateLog?.price_without_vat || null;
   planDetailsForm.total_price = props.sendUpdateLog?.total_price || null;
-}
+};
 </script>
 
 <template>
@@ -254,7 +255,9 @@ const onCancel = () => {
                 <x-input
                   v-model="planDetailsForm.price_with_vat"
                   :rules="
-                    quoteType == quoteTypeCodeEnum.Life ? [] : [isRequired]
+                    quoteType == quoteTypeCodeEnum.Life
+                      ? []
+                      : [isRequired, amount]
                   "
                   :disabled="
                     !state.isEdit ||

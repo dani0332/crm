@@ -349,25 +349,23 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
+                <dt class="font-medium">ID</dt>
+                <dd>{{ quote.id }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
-                <div
-                  class="grid sm:grid-cols-2"
-                  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-                >
-                  <dt class="font-medium">ID</dt>
-                  <dd>{{ quote.id }}</dd>
-                </div>
-                <div>
-                  <x-tooltip position="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      Ref-ID
-                    </label>
-                    <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-                </div>
+                <x-tooltip position="bottom">
+                  <label
+                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                  >
+                    Ref-ID
+                  </label>
+                  <template #tooltip> Reference ID </template>
+                </x-tooltip>
                 <div>{{ quote.code }}</div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -402,7 +400,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
                 <dd>{{ quote?.pet_quote?.premium }}</dd>
@@ -500,7 +498,10 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                   </Link>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -508,7 +509,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </div>
                 <div>
@@ -560,7 +566,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -600,7 +606,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -643,7 +649,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -659,13 +665,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-              <dd class="break-words">
-                {{ customerProfileForm.company_name }}
-              </dd>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -899,22 +905,35 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
-            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="documentTypes.filter(item => item.code === 'PPD' || item.code === 'PPDR' || item.code === 'PDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :proformaPayment="
+        quote.payments.find(item => item.payment_methods_code === 'PPR')
+      "
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'PPD' ||
+            item.code === 'PPDR' ||
+            item.code === 'PDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <QuotePayments
       v-else
       :can="can"
@@ -935,7 +954,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :expanded="sectionExpanded"
     />
 
-<!-- <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" /> -->
+    <!-- <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" /> -->
 
     <EmbeddedProducts
       :data="embeddedProducts"

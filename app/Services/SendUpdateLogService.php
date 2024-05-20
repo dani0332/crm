@@ -29,6 +29,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
 {
@@ -382,11 +383,6 @@ class SendUpdateLogService
                 'quote_type_code' => $quoteTypeCode,
             ]);
         }
-        // Change quote status to Policy Cancelled and remove quote batch id to remove it from batches
-        $quoteObject->update([
-            // 'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-            'quote_batch_id' => null,
-        ]);
 
         return $childLeadDetails;
     }
@@ -499,23 +495,27 @@ class SendUpdateLogService
 
     public function getUpdateButtonStatus($sendUpdateLog): string
     {
-        $sendUpdateCode = $sendUpdateLog->category->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
-        // send update to customer button visibility validations.
-        if ($sendUpdateCode != SendUpdateLogStatusEnum::CPD && $requiredDocumentsCheck == count($requiredDocuments)) {
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
+            (
+                (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
+                in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
+                ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
+            )
+        ) {
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if ($sendUpdateCode != SendUpdateLogStatusEnum::CPU && $requiredDocumentsCheck == 0) {
-            return SendUpdateLogStatusEnum::SU;
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled) {
+            return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
-        return false;
+        return SendUpdateLogStatusEnum::SNBU;
     }
 
     public function getSendToCustomerValidation($sendUpdateId): string
@@ -660,7 +660,7 @@ class SendUpdateLogService
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
 
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
 
@@ -705,16 +705,23 @@ class SendUpdateLogService
                         $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                     }
                 }
+                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                        'quote_batch_id' => null,
+                    ]);
+                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
+                }
                 $sendUpdateLog->update([
                     'booking_date' => now(),
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
                 ]);
             }
 
-            \DB::commit();
+            DB::commit();
 
         } catch (\Exception $exception) {
-            \DB::rollBack();
+            DB::rollBack();
             info('Send update Lead impact Failed - Error : '.$exception->getMessage());
 
             return ['status' => false, 'message' => 'Update not booked'];

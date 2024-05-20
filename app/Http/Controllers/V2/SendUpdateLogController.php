@@ -67,7 +67,6 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = $this->sendUpdateLogService->createChildLead($quoteModel, $requestData, $quoteType->code);
-                (new AllocationService())->deductLeadAllocationCount($quoteModel, $requestData['quote_uuid']);
             }
 
             DB::commit();
@@ -286,7 +285,6 @@ class SendUpdateLogController extends Controller
                 case SendUpdateLogStatusEnum::CIR:
                     $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                         'quote_status_id' => QuoteStatusEnum::CancellationPending,
-                        'quote_batch_id' => null,
                     ]);
                     break;
             }
