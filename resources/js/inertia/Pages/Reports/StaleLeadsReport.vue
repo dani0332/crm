@@ -2,6 +2,8 @@
 const props = defineProps({
   reportData: Object,
   defaultFilters: Object,
+  teams: Array,
+  products: Array,
 });
 
 const loaders = reactive({
@@ -10,9 +12,24 @@ const loaders = reactive({
 
 const advisorOptions = ref([]);
 
-const teamOptions = ref([]);
+const teamOptions = computed(() => {
+  return props.teams.map(x => ({
+    value: x.id,
+    label: x.name,
+  }));
+});
 
-const selectedLob = ref('Health');
+console.log(props.products);
+const lobs = computed(() => {
+  return props.products.map(x => {
+    return {
+      value: x,
+      label: x,
+    };
+  });
+});
+
+const selectedLob = ref(props.products[0]);
 
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -24,7 +41,7 @@ const serverOptions = ref({
 
 const filters = reactive({
   date: null,
-  lob: 'Health',
+  lob: props.products[0],
   team: '',
   advisors: [],
   filter_by: null,
@@ -306,9 +323,9 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
-  changeLob();
-  fetchTeams();
-  onTeamChange(filters.team);
+  // changeLob();
+  // fetchTeams();
+  // onTeamChange(filters.team);
 });
 
 watch(
@@ -341,14 +358,7 @@ watch(
         <x-select
           v-model="filters.lob"
           placeholder="Search by Bussiness"
-          :options="[
-            { value: 'Health', label: 'Health' },
-            { value: 'Pet', label: 'Pet' },
-            { value: 'Cycle', label: 'Cycle' },
-            { value: 'Home', label: 'Home' },
-            { value: 'Corpline', label: 'Corpline' },
-            { value: 'Yacht', label: 'Yacht' },
-          ]"
+          :options="lobs"
           class="w-full"
           @update:modelValue="onLobChange"
         />
