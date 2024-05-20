@@ -12,6 +12,9 @@ const loaders = reactive({
   advisorOptions: false,
 });
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const quoteSegments = page.props.quoteSegments;
 const teamOptions = ref([]);
 const subteamOptions = ref([]);
 const advisorOptions = ref([]);
