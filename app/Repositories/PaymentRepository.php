@@ -561,10 +561,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
 
             }
-            /* Part of milestone 2
+            /* Part of milestone 2 */
             if (Auth::user()->hasRole(RolesEnum::BetaUser)) {
-                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
-            }*/
+                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);
+            }
         } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,
