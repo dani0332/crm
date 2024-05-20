@@ -1868,6 +1868,7 @@ const addPayment = isValid => {
       declined_reason: paymentMethodsForm.declined_reason,
       approved_document_model: approvedDocumentModel.value,
       declined_custom_reason: declinedCustomReason,
+      send_update_id: props.sendUpdate?.id || null,
     };
     paymentMethodsForm
       .transform(data => viewData)
@@ -4312,8 +4313,8 @@ watch(
                     stroke-linejoin="round"
                     stroke-width="2"
                     d="M15 19l-7-7 7-7"
-                  ></path></svg
-                >Previous
+                  ></path>
+                  </svg>Previous
               </div>
               <div
                 class="flex items-center space-x-2"

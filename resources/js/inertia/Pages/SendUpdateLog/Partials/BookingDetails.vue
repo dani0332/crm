@@ -445,7 +445,6 @@ const modals = reactive({
 });
 
 const confirmationCheck = ref(false);
-const confirmationCheckError = ref(false);
 const isStating = ref(false);
 
 const sendUpdateValidationURL =
@@ -554,13 +553,6 @@ function confirmationModalClose() {
 }
 
 function sendUpdate(prePaymentCheck = true) {
-  if (!confirmationCheck.value && prePaymentCheck) {
-    confirmationCheckError.value = true;
-    return false;
-  } else {
-    confirmationCheckError.value = false;
-  }
-
   loader.sendUpdate = true;
   axios
     .post('send-update', {
@@ -659,6 +651,10 @@ const onCancel = () => {
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
 };
+
+const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] = createReusableTemplate();
+const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -762,12 +758,17 @@ const onCancel = () => {
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
-              <div class="font-bold">
-                <label
-                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+              <div>
+                <x-tooltip position="left">
+                  <label
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                  MAIN CLASS OF INSURANCE
+                    LINE OF BUSINESS
                   </label>
+                  <template #tooltip>
+                    Signifies the specific category or type of insurance coverage associated with this booking. It helps categorize the booking by its primary insurance focus, allowing for better organization and classification of insurance transactions.
+                  </template>
+                </x-tooltip>
               </div>
               <div>
                 <span>{{ quoteType ?? 'N/A' }}</span>
@@ -1162,11 +1163,16 @@ const onCancel = () => {
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <label
-                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
-                  >
-                    MAIN CLASS OF INSURANCE
-                  </label>
+                  <x-tooltip position="left">
+                    <label
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      LINE OF BUSINESS
+                    </label>
+                    <template #tooltip>
+                      Signifies the specific category or type of insurance coverage associated with this booking. It helps categorize the booking by its primary insurance focus, allowing for better organization and classification of insurance transactions.
+                    </template>
+                  </x-tooltip>
                 </div>
                 <div>
                   <span>{{ quoteType ?? 'N/A' }}</span>
@@ -1555,11 +1561,29 @@ const onCancel = () => {
       </template>
     </Collapsible>
 
+    <sendUpdateCustConfirmBtnTemp>
+      <x-button
+        size="sm"
+        color="error"
+        @click.prevent="submitToCustomer"
+        :disabled="!modals.isConfirmed"
+        :loading="isLoading"
+      >
+        Confirm
+      </x-button>
+    </sendUpdateCustConfirmBtnTemp>
+
     <x-modal v-model="modals.sendConfirm" show-close backdrop>
-      <template #header> Send Policy </template>
-      <span v-if="isStating" class="text-red-500 text-sm font-semibold">{{
-        isStating
-      }}</span>
+      <template #header> Send Update </template>
+      <x-alert
+        color="orange"
+        light
+        type="error"
+        class="text-sm mb-4"
+        v-if="isStating"
+      >
+        {{ isStating }}
+      </x-alert>
       <x-checkbox
         v-model="modals.isConfirmed"
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
@@ -1574,90 +1598,83 @@ const onCancel = () => {
           >
             Cancel
           </x-button>
-
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="submitToCustomer"
-            :loading="isLoading"
-          >
-            Confirm
-          </x-button>
-        </div>
-        <div class="text-center space-x-4" v-if="isNotConfirmed">
-          <span class="text-red-500"
-            >Please select the checkbox to proceed.</span
-          >
+          <template v-if="!modals.isConfirmed">
+            <x-tooltip position="left">
+              <SendUpdateCustReuseBtnTemp />
+              <template #tooltip>
+                Please select the checkbox to proceed
+              </template>
+            </x-tooltip>
+          </template>
+          <SendUpdateCustReuseBtnTemp v-else />
         </div>
       </template>
     </x-modal>
 
     <x-modal v-model="modals.paymentConfirmation" backdrop>
-      <template #header>
-        <div class="flex justify-between gap-4 items-center">
-          <h3 class="font-semibold text-sm">
-            Arey you sure you want to continue?
-          </h3>
-        </div>
-      </template>
+      <template #header> Are you sure you want to continue? </template>
+      <div class="text-center">
+        <p class="font-semibold">{{ paymentConfirmationMessage.status }}</p>
+        <p>{{ paymentConfirmationMessage.message }}</p>
+      </div>
       <template #actions>
-        <div class="text-center space-x-4 mb-5">
-          <span class="font-semibold">{{
-            paymentConfirmationMessage.status
-          }}</span>
-          <p class="text-sm">{{ paymentConfirmationMessage.message }}</p>
-        </div>
         <div class="text-center space-x-4">
           <x-button
             size="sm"
+            ghost
+            @click.prevent="confirmationModalClose()"
+          >
+            Go Back
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
             :loading="loader.sendUpdate"
             @click.prevent="sendUpdate(false)"
           >
             Continue
           </x-button>
-
-          <x-button
-            size="sm"
-            color="orange"
-            @click.prevent="confirmationModalClose()"
-          >
-            Go Back
-          </x-button>
         </div>
       </template>
     </x-modal>
 
-    <x-modal v-model="modals.attestRecord" show-close backdrop>
-      <template #header>
-        <div class="flex justify-between gap-4 items-center">
-          <h3 class="font-semibold text-sm">Confirmation</h3>
-        </div>
-      </template>
-      <template #actions>
-        <div class="text-center space-x-4 mb-5">
-          <span
-            v-if="confirmationCheckError"
-            class="text-red-500 text-sm font-semibold"
-            >* Confirmation is required</span
-          >
-          <x-checkbox
-            v-model="confirmationCheck"
-            label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
-          />
-        </div>
-        <div class="text-center space-x-4">
-          <x-button size="sm" @click.prevent="confirmationModalClose()">
-            Cancel
-          </x-button>
+    <sendUpdateConfirmBtnTemp>
+      <x-button
+        size="sm"
+        color="error"
+        :disabled="!confirmationCheck"
+        @click.prevent="sendUpdate()"
+        :loading="loader.sendUpdate"
+      >
+        Confirm
+      </x-button>
+    </sendUpdateConfirmBtnTemp>
 
+    <x-modal v-model="modals.attestRecord" size="md" show-close backdrop>
+      <template #header> Send Update </template>
+      <x-checkbox
+        v-model="confirmationCheck"
+        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
+      />
+      <template #actions>
+        <div class="text-right space-x-4">
           <x-button
             size="sm"
-            color="orange"
-            :loading="loader.sendUpdate"
-            @click.prevent="sendUpdate()"
+            ghost
+            :disabled="isLoading"
+            @click.prevent="confirmationModalClose()"
           >
-            Confirm
+            Cancel
           </x-button>
+          <template v-if="!confirmationCheck">
+            <x-tooltip position="left">
+              <SendUpdateReuseBtnTemp />
+              <template #tooltip>
+                Please select the checkbox to proceed
+              </template>
+            </x-tooltip>
+          </template>
+          <SendUpdateReuseBtnTemp v-else />
         </div>
       </template>
     </x-modal>
