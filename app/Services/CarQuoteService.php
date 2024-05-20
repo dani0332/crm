@@ -932,7 +932,7 @@ class CarQuoteService extends BaseService
             $endDate = isset($request->transaction_approved_dates) ?
                 Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
-            // $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
+            $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
         }
         if ($request->teams) {
             $this->query->whereIn('team.id', $request->teams);
