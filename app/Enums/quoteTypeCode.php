@@ -15,10 +15,11 @@ class quoteTypeCode extends Enum
     const Yacht = 'Yacht';
     const Travel = 'Travel';
     const Pet = 'Pet';
-    const RM_NB = 'RM-NB';
-    const RM_SPEED = 'RM-SPEED';
+    const RM_NB = 'Best';
+    const RM_SPEED = 'Good';
+    const Car_Revival = 'CarRevival';
     const RetailMedical = 'Retail Medical';
-    const EBP = 'EBP';
+    const EBP = 'Entry-Level';
     const CORPLINE = 'Corpline';
     const GM = 'GM';
     const RM = 'RM';

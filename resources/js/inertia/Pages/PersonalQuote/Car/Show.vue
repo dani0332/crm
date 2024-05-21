@@ -90,6 +90,7 @@ defineProps({
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
+  clientInquiryLogs: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -2964,6 +2965,7 @@ watch(
                 isRenewal,
                 isDisabled,
                 puaPremium,
+                puaType
               }"
             >
               <p>{{ providerName }}</p>
@@ -2994,7 +2996,7 @@ watch(
                 </x-tag>
 
                 <x-tag
-                  v-if="puaPremium && puaPremium != null"
+                  v-if="puaPremium && puaPremium != null && puaType"
                   size="xs"
                   class="mt-0.5 text-[10px] text-white"
                   style="background-color: #e00000"
@@ -3010,7 +3012,7 @@ watch(
                         approval.
                       </span>
                     </template>
-                    PUA
+                    {{ puaType }}
                   </x-tooltip>
                 </x-tag>
               </div>
@@ -3329,11 +3331,11 @@ watch(
       :paymentCode = "record.code"
       :quoteType="quoteType"
     />
-
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Car"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -3958,8 +3960,7 @@ watch(
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
-  />
-
+/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

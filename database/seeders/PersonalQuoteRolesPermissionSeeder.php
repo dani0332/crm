@@ -18,28 +18,16 @@ class PersonalQuoteRolesPermissionSeeder extends Seeder
     public function run()
     {
         $roles = ['_ADVISOR', '_MANAGER'];
-        $lobs = [
-            QuoteTypes::BIKE->value,
-            QuoteTypes::CYCLE->value,
-            QuoteTypes::YACHT->value,
-            QuoteTypes::JETSKI->value,
-            QuoteTypes::LIFE->value,
-            QuoteTypes::PET->value,
-        ];
-
-        $permissions = ['-quotes-list', '-quotes-show', '-quotes-create', '-quotes-edit'];
+        $lobs = [QuoteTypes::BIKE->value, QuoteTypes::CYCLE->value, QuoteTypes::YACHT->value, QuoteTypes::JETSKI->value, QuoteTypes::LIFE->value, QuoteTypes::PET->value, QuoteTypes::CAR_REVIVAL->value];
+        $permissions = ['-quotes-list', '-quotes-show', '-quotes-create', '-quotes-edit', '-quotes-delete'];
 
         foreach ($lobs as $lob) {
-            $allowedPermissions = [];
-
-            foreach ($permissions as $permission) {
-                $insertedPermission = Permission::findOrCreate(strtolower($lob).$permission, 'web');
-                $allowedPermissions[] = $insertedPermission->id;
+            foreach ($roles as $role) {
+                Role::findOrCreate(strtoupper($lob).$role, 'web');
             }
 
-            foreach ($roles as $role) {
-                $role = Role::findOrCreate(strtoupper($lob).$role, 'web');
-                $role->givePermissionTo($allowedPermissions);
+            foreach ($permissions as $permission) {
+                Permission::findOrCreate(strtolower($lob).$permission, 'web');
             }
         }
 

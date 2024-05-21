@@ -38,20 +38,25 @@ class DatabaseSeeder extends Seeder
             // addReassignmentTime::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
+            //            AddNewDocumentTypesSeeder::class,
+            // UpdateCustomerToHealthAndTravelMemberDetails::class,
             GenericPermissionSeeder::class,
-            addSICWorkflow::class,
-            UpdateRenewalTemplateStorageSeeder::class,
-            AddLegacyPaymentsPermssion::class,
+            UpdateOldTeamNamesSeeder::class,
+            AddCapAdvisorPermissionSeeder::class,
+            UpdateLeadAllocationByQuoteId::class,
+            // AddLegacyPaymentsPermssion::class,
             ApplicationStorageSeeder::class,
+            /*addSICWorkflow::class,
+            UpdateRenewalTemplateStorageSeeder::class,
             addDubaiNowEmailGroup::class,
-            DubaiLeadSource::class,
+            DubaiLeadSource::class,*/
             // AddNewDocumentTypesSeeder::class,
             // EmbeddedProductRoleAndPermissionSeeder::class,
             // LstDocumentsSeeder::class,
             // SendPolicyApplicationStorageSeeder::class,
             // BookPolicyPermissionSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            PaymentMethodsAddSeeder::class,
+            /* PaymentMethodsAddSeeder::class,
             AddNewDocumentTypeSeeder::class,
             PaymentStatusAddSeeder::class,
             updateDocTypePayment::class,
@@ -61,7 +66,14 @@ class DatabaseSeeder extends Seeder
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
-            TotalPremiumReportPermissionSeeder::class,
+            TotalPremiumReportPermissionSeeder::class,*/
+
+            // dtt seeder
+            // AddDttFlagApplicationStorage::class,
+            // DttOCBNewBusinessSeeder::class,
+            // RevivalConversionReportPermissionSeeder::class,
+            // end
+            AddCrossLOBSeeder::class,
         ]);
     }
 }

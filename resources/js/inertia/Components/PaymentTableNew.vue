@@ -1,17 +1,22 @@
 <script setup>
+import moment from 'moment';
 import ToolTip from './../Components/ToolTip.vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+import NProgress from 'nprogress';
 const notification = useNotifications('toast');
 const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
 const paymentLookups = page.props.paymentLookups;
+const documentTypeEnum = page.props.documentTypeEnum;
+const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
 const props = defineProps({
   payments: Array,
   can: Object,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
+  proformaPayment: Object,
   paymentDocument: Object,
   quoteRequest: Object,
   paymentMethods: Array,
@@ -116,14 +121,20 @@ if (props.quoteType === 'Health') {
 const totalPrice = ref(initialAmount.value); // Initial total price
 const totalAmount = ref(initialAmount.value); // Initial total price
 
-const discountProofDocument = props.paymentDocument.find(item => item.text === "Discount Proof");
-const paymentProofDocument  = props.paymentDocument.find(item => item.text === "Payment Proof");
-const approveProofDocument  = props.paymentDocument.find(item => item.text === "Receipt");
+const discountProofDocument = props.paymentDocument.find(
+  item => item.text === 'Discount Proof',
+);
+const paymentProofDocument = props.paymentDocument.find(
+  item => item.text === 'Payment Proof',
+);
+const approveProofDocument = props.paymentDocument.find(
+  item => item.text === 'Receipt',
+);
 
 let initalPlanDetails = [];
 if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
-} else if(props.quoteType=='Business' || props.quoteType=='Home'){
+} else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
   initalPlanDetails = props.quoteRequest.insurance_provider_details;
 } else {
   initalPlanDetails = props.quoteRequest.insurance_provider;
@@ -135,21 +146,24 @@ const masterPaymentStatus = ref('NEW');
 
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
-  if (discount > 50 && paymentMethodsForm.discount_reason === 'refer_a_friend') {
+  if (
+    discount > 50 &&
+    paymentMethodsForm.discount_reason === 'refer_a_friend'
+  ) {
     totalAmount.value = totalPrice.value;
   } else {
-    totalAmount.value = totalPrice.value - discount;    
+    totalAmount.value = totalPrice.value - discount;
   }
-  calculatePaymentBreakup(false);  
-}
+  calculatePaymentBreakup(false);
+};
 
 const { copy, copied } = useClipboard();
-const onCopyPaymentLink = (paymentLink,paymentStatus) => {
-  if (paymentStatus==props.paymentStatusEnum.PAID){
+const onCopyPaymentLink = (paymentLink, paymentStatus) => {
+  if (paymentStatus == props.paymentStatusEnum.PAID) {
     notification.error({
-        title: 'Payment already \'Paid\', button deactivated for this transaction',
-        position: 'top',
-      });
+      title: "Payment already 'Paid', button deactivated for this transaction",
+      position: 'top',
+    });
   } else {
     copy(paymentLink);
     if (copied)
@@ -160,87 +174,94 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
   }
 };
 
-   
-  const openModal = () =>{
-    isGalleryModelOpen.value = true;
-  };
-  const nextFile = () => {
-    if (currentFileIndex.value < filesTest.value.length - 1) {
-      currentFileIndex.value++;
-      zoomLevel.value = 1;
-    }      
-  };
-
-  const zoomIn = () => {
-    zoomLevel.value = Math.min(zoomLevel.value + 0.25, 3); 
-  };
-
-  const zoomOut = () => {
-    zoomLevel.value = Math.max(zoomLevel.value - 0.25, 0.25); 
-  };
-
-  const openInnerModal = (fileId) => {
-    //filesTest.value = fileUploadModels.value.flat();
-    filesTest.value = [
-      ...fileUploadModels.value.flat(),
-      ...approvedDocumentModel.value.flat(),
-      ...discountDocumentModel.value.flat()
-    ];
-    currentFileIndex.value = filesTest.value.findIndex(item => item.id === fileId);
-    isGalleryModelOpen.value = true;
-    setTimeout(() => {
-      if (modal2Ref.value) {
-        modal2Ref.value.focus();
-      }
-    }, 0);
-  };
-
-  const previousFile = () => {
-    if (currentFileIndex.value > 0) {
-      currentFileIndex.value--;
-      zoomLevel.value = 1;
-    }      
-  };
-
-  const handleKeyDown = (event) => {
-    if (event.key === 'ArrowLeft' && hasPreviousFile) {
-      previousFile();
-    } else if (event.key === 'ArrowRight' && hasNextFile) {
-      nextFile();
-    }
-  } 
-
-  const currentFile = computed(() => {
-    return filesTest.value[currentFileIndex.value];
-  });
-
-  const closeInnerModal = () => {
+const openModal = () => {
+  isGalleryModelOpen.value = true;
+};
+const nextFile = () => {
+  if (currentFileIndex.value < filesTest.value.length - 1) {
+    currentFileIndex.value++;
     zoomLevel.value = 1;
-    isGalleryModelOpen.value = false;      
-  };
+  }
+};
 
-  const hasNextFile = computed(() => {
-    return currentFileIndex.value < filesTest.value.length - 1;
-  });
+const zoomIn = () => {
+  zoomLevel.value = Math.min(zoomLevel.value + 0.25, 3);
+};
 
-  const hasPreviousFile = computed(() => {
-    return currentFileIndex.value > 0;
-  });
+const zoomOut = () => {
+  zoomLevel.value = Math.max(zoomLevel.value - 0.25, 0.25);
+};
+
+const openInnerModal = fileId => {
+  //filesTest.value = fileUploadModels.value.flat();
+  filesTest.value = [
+    ...fileUploadModels.value.flat(),
+    ...approvedDocumentModel.value.flat(),
+    ...discountDocumentModel.value.flat(),
+  ];
+  currentFileIndex.value = filesTest.value.findIndex(
+    item => item.id === fileId,
+  );
+  isGalleryModelOpen.value = true;
+  setTimeout(() => {
+    if (modal2Ref.value) {
+      modal2Ref.value.focus();
+    }
+  }, 0);
+};
+
+const previousFile = () => {
+  if (currentFileIndex.value > 0) {
+    currentFileIndex.value--;
+    zoomLevel.value = 1;
+  }
+};
+
+const handleKeyDown = event => {
+  if (event.key === 'ArrowLeft' && hasPreviousFile) {
+    previousFile();
+  } else if (event.key === 'ArrowRight' && hasNextFile) {
+    nextFile();
+  }
+};
+
+const currentFile = computed(() => {
+  return filesTest.value[currentFileIndex.value];
+});
+
+const closeInnerModal = () => {
+  zoomLevel.value = 1;
+  isGalleryModelOpen.value = false;
+};
+
+const hasNextFile = computed(() => {
+  return currentFileIndex.value < filesTest.value.length - 1;
+});
+
+const hasPreviousFile = computed(() => {
+  return currentFileIndex.value > 0;
+});
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
   isBankReferenceRequird: v => {
-      if (paymentMethodsForm.collection_type === 'insurer'
-          && paymentMethodsModels.value[splitPaymentNo.value] === 'CHQ'
-          && paymentMethodsForm.credit_approval != '') {
-            return true;
-      } else {
-        return !!v || 'This field is required';
-      }
+    if (
+      paymentMethodsForm.collection_type === 'insurer' &&
+      paymentMethodsModels.value[splitPaymentNo.value] ===
+        page.props.paymentMethodsEnum?.Cheque &&
+      paymentMethodsForm.credit_approval != ''
+    ) {
       return true;
+    } else {
+      return !!v || 'This field is required';
+    }
+    return true;
   },
   reference: v => {
-    if (paymentMethodsForm.payment_method !== 'CC') {
+    if (
+      paymentMethodsForm.payment_method !==
+      page.props.paymentMethodsEnum?.CreditCard
+    ) {
       return !!v || 'This field is required';
     }
     return true;
@@ -265,7 +286,7 @@ const handleDeclinedChange = () => {
   isApproveClicked.value = false;
   isDeclineCustomReason.value = false;
   paymentMethodsForm.declined_reason = '';
-  return true;  
+  return true;
 };
 
 const calculateTotalSplitAmount = () => {
@@ -276,43 +297,43 @@ const calculateTotalSplitAmount = () => {
   return totalSplitAmount;
 };
 
-const validatePaymentOption = () => {  
+const validatePaymentOption = () => {
       var totalSplitAmount = 0;
       var issueFound = false;
       isPaymentCalculationError.value = false;
-      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
-        totalSplitAmount = (parseFloat(totalSplitAmount) + parseFloat(splitAmountModels.value[i]));       
+      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+        totalSplitAmount = (parseFloat(totalSplitAmount) + parseFloat(splitAmountModels.value[i]));
         const validationResult = rules.notEmptyOrZero(paymentMethodsModels.value[i]);
         isPaymentMetodNotSelected.value[i] = false;
-        if (validationResult !== true) {          
-          isPaymentMetodNotSelected.value[i] = true;        
+        if (validationResult !== true) {
+          isPaymentMetodNotSelected.value[i] = true;
           issueFound = true;
         }
       }
-      
+
       if(totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)){
         isPaymentCalculationError.value = true;
         issueFound = true;
       }
-            
+
       if(
-        (paymentMethodsForm.frequency === 'monthly' || paymentMethodsForm.frequency === 'quarterly' 
+        (paymentMethodsForm.frequency === 'monthly' || paymentMethodsForm.frequency === 'quarterly'
         || paymentMethodsForm.frequency === 'semi_annual' || paymentMethodsForm.frequency === 'custom')
         && paymentMethodsModels.value[1]=='IP' && paymentMethodsForm.collection_type === 'insurer'
         ){
           if ((fileUploadModels.value[1]===undefined || fileUploadModels.value[1].length===0)) {
             isDocumentNotUploaded.value[1] = true;
             issueFound = true;
-          }          
+          }
       } else {
-        for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+        for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
           isDocumentNotUploaded.value[i] = false;
           if ( (
-            paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ' 
-            || paymentMethodsModels.value[i]=='PDC' || paymentMethodsModels.value[i]=='IP' 
+            paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ'
+            || paymentMethodsModels.value[i]=='PDC' || paymentMethodsModels.value[i]=='IP'
             /*|| ( paymentMethodsForm.discount !== '' && i===1 && (paymentMethodsModels.value[i]=='CC' || paymentMethodsModels.value[i]=='CSH') )   */
-            ) 
-          && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)       
+            )
+          && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)
           ) {
             isDocumentNotUploaded.value[i] = true;
             issueFound = true;
@@ -325,27 +346,27 @@ const validatePaymentOption = () => {
       if(isDiscountEnabled.value === true && isCreditApprovalView.value === false) {
         isDiscountError.value = false;
         // Check if discount document uploaded
-        if (discountDocumentModel.value[0]===undefined 
+        if (discountDocumentModel.value[0]===undefined
           || discountDocumentModel.value[0].length===0 ) {
           isDiscountDocumentNotUploaded.value = true;
-          issueFound = true; 
-        } else {        
+          issueFound = true;
+        } else {
           isDiscountDocumentNotUploaded.value = false;
-        } 
-                
+        }
+
         if (discountValue.value === '' || parseFloat(discountValue.value)<=0) {
-          issueFound = true; 
+          issueFound = true;
           isDiscountError.value = true;
           discountError.value =  'This field is required';
         }
         const regex = /^\d+(\.\d{1,2})?$/;
         if (!regex.test(discountValue.value)) {
-          issueFound = true; 
+          issueFound = true;
           isDiscountError.value = true;
           discountError.value =  'Discount must be a valid number';
         }
         if (parseFloat(discountValue.value) > parseFloat(totalPrice.value)) {
-          issueFound = true; 
+          issueFound = true;
           isDiscountError.value = true;
           totalAmount.value = totalPrice.value;
           calculatePaymentBreakup();
@@ -354,26 +375,26 @@ const validatePaymentOption = () => {
         if(
         paymentMethodsForm.discount_reason === 'refer_a_friend' ||
         paymentMethodsForm.discount === 'incentive_offset' ||
-        paymentMethodsForm.discount === 'managerial_approval_discount'      
+        paymentMethodsForm.discount === 'managerial_approval_discount'
         ){
           isDiscountReasonEnabled.value = true;
-          if(paymentMethodsForm.discount_reason === ''){          
+          if(paymentMethodsForm.discount_reason === ''){
             issueFound = true;
             isDiscountReasonError.value = true;
           } else {
             isDiscountReasonError.value = false;
           }
-          
+
           // Check if the discount exceeds 50 and return an error message
           if (discountValue.value > 50 && paymentMethodsForm.discount_reason === 'refer_a_friend') {
-            issueFound = true; 
+            issueFound = true;
             isDiscountError.value = true;
             discountError.value =  'Discount should not exceed 50 AED';
           }
         } else if (paymentMethodsForm.discount === 'employee_discount' || paymentMethodsForm.discount === 'family_employee_discount') {
-          
+
           if( parseFloat(discountValue.value) > parseFloat(calculatedDiscount.value)) {
-            issueFound = true; 
+            issueFound = true;
             isDiscountError.value = true;
             discountError.value =  'Discount should not exceed '+calculatedDiscount.value+' AED';
           }
@@ -382,23 +403,29 @@ const validatePaymentOption = () => {
           isDiscountReasonEnabled.value = false;
           isDiscountReasonError.value = false;
         }
-      }      
+      }
     if(issueFound){
       return true;
     }
     return false;
   };
 
+const totalPayments = ref([{ value: '1', label: '1' }]);
 
-const totalPayments = ref([
-  { value: '1', label: '1'},
- ]);
+const paymentTypes = ref(
+  props.paymentMethods.filter(
+    item =>
+      ![
+        page.props.paymentMethodsEnum?.GMApproval,
+        page.props.paymentMethodsEnum?.CMOApproval,
+        page.props.paymentMethodsEnum?.COOApproval,
+        page.props.paymentMethodsEnum?.Credit,
+      ].includes(item.value),
+  ),
+);
+paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
 
- const paymentTypes = ref(props.paymentMethods.filter(item => !['CR_FAYAZ', 'CR_HITESH', 'CR_MAHESH', 'CR'].includes(item.value)));
- paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
- 
-
-const getPaymentTypeLabel = (code) => {
+const getPaymentTypeLabel = code => {
   const paymentType = paymentTypes.value.find(item => item.value === code);
   if (paymentType) {
     return paymentType.label;
@@ -419,7 +446,7 @@ const frequencyTypes = paymentLookups.paymentFrequencyTypes.map(item => ({
 // Define payment decline reasons
 const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
   value: item.id,  label: item.text,
-}));
+ }));
 declinedReasons.unshift({ value: '', label: 'Select Reason' });
 
 // Define payment approval reasons
@@ -444,129 +471,246 @@ const discountReasons = paymentLookups.paymentDiscountReasons.map(item => ({
 discountReasons.unshift({ value: '', label: 'Select a reason' });
 
 const handleDiscountReasonChange = () => {
-  isDiscountReasonError.value=false
-  isCustomDiscountReasonEnabled.value=false;
+  isDiscountReasonError.value = false;
+  isCustomDiscountReasonEnabled.value = false;
   if (paymentMethodsForm.discount_reason === 'refer_a_friend') {
     calculateTotalAmount();
   }
-  if (paymentMethodsForm.discount_reason === 'discount_custom_reason' ){
+  if (paymentMethodsForm.discount_reason === 'discount_custom_reason') {
     paymentMethodsForm.discount_custom_reason = '';
-    isCustomDiscountReasonEnabled.value=true;
+    isCustomDiscountReasonEnabled.value = true;
   }
-}
+};
 
 const handleDeclinedReasonChange = () => {
-  if (paymentMethodsForm.declined_reason !== ''){
+  if (paymentMethodsForm.declined_reason !== '') {
     isDeclinedReasonError.value = false;
-  }  
-  if(paymentMethodsForm.declined_reason === '6'){
+  }
+  if (paymentMethodsForm.declined_reason === '6') {
     isDeclineCustomReason.value = true;
-  }else{
+  } else {
     isDeclineCustomReason.value = false;
   }
 };
 
 const handleCancelChanges = () => {
-  isDeclineClicked.value=!isDeclineClicked.value;
-  isApproveClicked.value=false;
-  isDeclinedReasonError.value=false;
+  isDeclineClicked.value = !isDeclineClicked.value;
+  isApproveClicked.value = false;
+  isDeclinedReasonError.value = false;
 };
 
 const handleNoButtonChange = () => {
-  isApproveClicked.value = !isApproveClicked.value; 
+  isApproveClicked.value = !isApproveClicked.value;
   isApproveConfirm.value = !isApproveConfirm.value;
   paymentMethodsForm.collection_amount = '';
-  isDeclinedReasonError.value=false;
+  isDeclinedReasonError.value = false;
   isApprovePaymentError.value = false;
 };
 
-const handlePaymentOptions = (count) => {
+const isProformaPaymentRequest = computed(() => {
+  return (
+    paymentMethodsForm.payment_method ===
+    page.props.paymentMethodsEnum?.ProformaPaymentRequest
+  );
+});
+
+const handlePaymentOptions = count => {
   isPaymentMetodNotSelected.value[count] = false;
-  if( paymentMethodsModels.value[count] === 'CHQ' || paymentMethodsModels.value[count] === 'PDC' ) {
+  if (
+    paymentMethodsModels.value[count] ===
+      page.props.paymentMethodsEnum?.Cheque ||
+    paymentMethodsModels.value[count] ===
+      page.props.paymentMethodsEnum?.PostDatedCheque
+  ) {
     isCheckDetailsEnabled.value[count] = true;
   } else {
     isCheckDetailsEnabled.value[count] = false;
   }
-}
+};
 
 const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
-
-  paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IN_PL', 'PPR', 'CA', 'MP', 'PP'].includes(item.value));    
-  if (paymentMethodsForm.collection_type === 'insurer') {    
-    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CC', 'BT', 'CHQ', 'CSH'].includes(item.value));
-    paymentMethodsModels.value[1] = 'IP';
+  let excludedPaymentTypes = [
+    page.props.paymentMethodsEnum?.InsureNowPayLater,
+    page.props.paymentMethodsEnum?.CreditApproval,
+    page.props.paymentMethodsEnum?.MultiplePayment,
+    page.props.paymentMethodsEnum?.PartialPayment,
+  ];
+  if (paymentMethodsForm.frequency != 'upfront') {
+    /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
+    excludedPaymentTypes.push(
+      page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+    );
+  } else if (
+    can(permissionEnum.ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION) == false
+  ) {
+    /*Add Proforma Payment Request to excluded Payment Methods When dont have ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION permission */
+    excludedPaymentTypes.push(
+      page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+    );
+  }
+  paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+    item => !excludedPaymentTypes.includes(item.value),
+  );
+  if (paymentMethodsForm.collection_type === 'insurer') {
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+      item =>
+        ![
+          page.props.paymentMethodsEnum?.CreditCard,
+          page.props.paymentMethodsEnum?.BankTransfer,
+          page.props.paymentMethodsEnum?.Cheque,
+          page.props.paymentMethodsEnum?.Cash,
+        ].includes(item.value),
+    );
+    paymentMethodsModels.value[1] =
+      page.props.paymentMethodsEnum?.InsurerPayment;
   } else {
-    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IP'].includes(item.value));
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+      item =>
+        ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value),
+    );
     paymentMethodsModels.value[1] = '';
   }
 };
 
-const handlePaymentTypes = (count) => {
+const handlePaymentTypes = count => {
   var paymentTypesWithoutCheck = paymentTypesFiltered.value;
-  if (  count >= 2  && 
-        (
-          paymentMethodsForm.frequency === 'semi_annual' ||
-          paymentMethodsForm.frequency === 'quarterly' ||
-          paymentMethodsForm.frequency === 'monthly' ||
-          paymentMethodsForm.frequency === 'custom'
-        )
-    ){
-    paymentTypesWithoutCheck =  paymentTypesFiltered.value.filter(item => !['CHQ','CC'].includes(item.value));    
+  if (
+    count >= 2 &&
+    (paymentMethodsForm.frequency === 'semi_annual' ||
+      paymentMethodsForm.frequency === 'quarterly' ||
+      paymentMethodsForm.frequency === 'monthly' ||
+      paymentMethodsForm.frequency === 'custom')
+  ) {
+    paymentTypesWithoutCheck = paymentTypesFiltered.value.filter(
+      item =>
+        ![
+          page.props.paymentMethodsEnum?.Cheque,
+          page.props.paymentMethodsEnum?.CreditCard,
+        ].includes(item.value),
+    );
   }
 
-  if(paymentMethodsForm.frequency === 'upfront' || paymentMethodsForm.frequency === 'split_payments' ){
-    paymentTypesWithoutCheck =  paymentTypesWithoutCheck.filter(item => !['PDC'].includes(item.value));    
+  if (
+    paymentMethodsForm.frequency === 'upfront' ||
+    paymentMethodsForm.frequency === 'split_payments'
+  ) {
+    paymentTypesWithoutCheck = paymentTypesWithoutCheck.filter(
+      item =>
+        ![page.props.paymentMethodsEnum?.PostDatedCheque].includes(item.value),
+    );
   }
 
-  return paymentTypesWithoutCheck;  
-}
+  return paymentTypesWithoutCheck;
+};
 
 const handleApprovalReasonChange = () => {
-  if(paymentMethodsForm.credit_approval === 'other_reasons'){
+  if (paymentMethodsForm.credit_approval === 'other_reasons') {
     isCustomReasonEnabled.value = true;
-  }else{
+  } else {
     isCustomReasonEnabled.value = false;
   }
   //customize payment method based on collection type
-  if(paymentMethodsForm.credit_approval !== ''){
+  if (paymentMethodsForm.credit_approval !== '') {
     paymentTypesFiltered.value = paymentTypes.value;
-    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IN_PL', 'PPR', 'MP', 'PP'].includes(item.value));    
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+      item =>
+        ![
+          page.props.paymentMethodsEnum?.InsureNowPayLater,
+          page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+          page.props.paymentMethodsEnum?.MultiplePayment,
+          page.props.paymentMethodsEnum?.PartialPayment,
+        ].includes(item.value),
+    );
     if (paymentMethodsForm.collection_type === 'insurer') {
-      if (paymentMethodsForm.frequency === 'upfront' || paymentMethodsForm.frequency === 'split_payments' ){
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'CHQ','CSH','CC','BT'].includes(item.value));    
+      if (paymentMethodsForm.frequency === 'upfront') {
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is  UpFront*/
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+          item =>
+            ![
+              page.props.paymentMethodsEnum?.PostDatedCheque,
+              page.props.paymentMethodsEnum?.Cheque,
+              page.props.paymentMethodsEnum?.Cash,
+              page.props.paymentMethodsEnum?.CreditCard,
+              page.props.paymentMethodsEnum?.BankTransfer,
+            ].includes(item.value),
+        );
+      } else if (paymentMethodsForm.frequency === 'split_payments') {
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+          item =>
+            ![
+              page.props.paymentMethodsEnum?.PostDatedCheque,
+              page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+              page.props.paymentMethodsEnum?.Cheque,
+              page.props.paymentMethodsEnum?.Cash,
+              page.props.paymentMethodsEnum?.CreditCard,
+              page.props.paymentMethodsEnum?.BankTransfer,
+            ].includes(item.value),
+        );
       } else {
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CHQ','CSH','CC','BT'].includes(item.value));    
-      }      
-    } else {      
-      if (paymentMethodsForm.frequency === 'upfront' || paymentMethodsForm.frequency === 'split_payments' ){
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC','IP'].includes(item.value));    
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+          item =>
+            ![
+              page.props.paymentMethodsEnum?.Cheque,
+              page.props.paymentMethodsEnum?.Cash,
+              page.props.paymentMethodsEnum?.CreditCard,
+              page.props.paymentMethodsEnum?.BankTransfer,
+            ].includes(item.value),
+        );
+      }
+    } else {
+      if (paymentMethodsForm.frequency === 'upfront') {
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is upfront*/
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+          item =>
+            ![
+              page.props.paymentMethodsEnum?.PostDatedCheque,
+              page.props.paymentMethodsEnum?.InsurerPayment,
+            ].includes(item.value),
+        );
+      } else if (paymentMethodsForm.frequency === 'split_payments') {
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+          item =>
+            ![
+              page.props.paymentMethodsEnum?.PostDatedCheque,
+              page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+              page.props.paymentMethodsEnum?.InsurerPayment,
+            ].includes(item.value),
+        );
       } else {
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IP'].includes(item.value));
-      }    
-    } 
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+          item =>
+            ![page.props.paymentMethodsEnum?.InsurerPayment].includes(
+              item.value,
+            ),
+        );
+      }
+    }
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
-      if ( readOnlyPayments.value[i] === true ) {
+      if (readOnlyPayments.value[i] === true) {
         continue;
       }
-      paymentMethodsModels.value[i] = 'CA';
+      paymentMethodsModels.value[i] =
+        page.props.paymentMethodsEnum?.CreditApproval;
     }
   } else {
     if (isTotalPriceUpdated.value === false) {
       handleCollectionTypeChange();
-    }    
+    }
   }
 };
 
 const resetCreditApproval = () => {
   paymentMethodsForm.credit_approval = '';
-  isCustomReasonEnabled.value = false;  
+  isCustomReasonEnabled.value = false;
   handleApprovalReasonChange();
   handleFrequencyChange(false);
 };
 
-const resetDiscount = (callDiscountChang=true) => {
+const resetDiscount = (callDiscountChang = true) => {
   isDiscountEnabled.value = false;
   isDiscountReasonEnabled.value = false;
   paymentMethodsForm.discount = '';
@@ -575,109 +719,116 @@ const resetDiscount = (callDiscountChang=true) => {
   paymentMethodsForm.discount_reason = '';
   if (callDiscountChang) {
     handleDiscountChange();
-  }  
+  }
   handleDiscountReasonChange();
   calculateTotalAmount();
 };
 
-const handleDiscountChange = (editDiscountValue=0) => {
+const handleDiscountChange = (editDiscountValue = 0) => {
   isDiscountError.value = false;
   discountError.value = '';
-  if( paymentMethodsForm.status === 'create' ){
+  if (paymentMethodsForm.status === 'create') {
     discountValue.value = 0;
     paymentMethodsForm.discount_reason = '';
   }
-  if(resetDiscountReason.value === ''){
+  if (resetDiscountReason.value === '') {
     paymentMethodsForm.discount_reason = '';
   }
 
   isDiscountReasonEnabled.value = false;
-  if(paymentMethodsForm.discount === '' || paymentMethodsForm.discount === undefined ){
+  if (
+    paymentMethodsForm.discount === '' ||
+    paymentMethodsForm.discount === undefined
+  ) {
     resetDiscount(false);
-    isDiscountEnabled.value = false;    
-  }else{
-    isDiscountEnabled.value = true; 
-    isDiscountReasonEnabled.value = true;   
-  }  
-  if(    
-    paymentMethodsForm.discount === 'managerial_approval_discount'
-    ){
+    isDiscountEnabled.value = false;
+  } else {
+    isDiscountEnabled.value = true;
+    isDiscountReasonEnabled.value = true;
+  }
+  if (paymentMethodsForm.discount === 'managerial_approval_discount') {
     isDiscountReasonEnabled.value = true;
   } else {
     isDiscountReasonEnabled.value = false;
   }
 
-  if(paymentMethodsForm.discount === 'employee_discount'){    
-    if( props.quoteType === 'Health' ) {
-      discountValue.value = (totalPrice.value * (5 / 100)).toFixed(2); 
-    } else if( props.quoteType === 'Home' || props.quoteType === 'Travel' ) {
-      discountValue.value = (totalPrice.value * (15 / 100)).toFixed(2); 
+  if (paymentMethodsForm.discount === 'employee_discount') {
+    if (props.quoteType === 'Health') {
+      discountValue.value = (totalPrice.value * (5 / 100)).toFixed(2);
+    } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
+      discountValue.value = (totalPrice.value * (15 / 100)).toFixed(2);
     } else {
       discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); // for car
-    }    
+    }
   }
-  if(paymentMethodsForm.discount === 'family_employee_discount'){
-    if( props.quoteType === 'Health' ) {
-      discountValue.value = (totalPrice.value * (2.5 / 100)).toFixed(2); 
-    } else if( props.quoteType === 'Home' || props.quoteType === 'Travel' ) {
-      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); 
+  if (paymentMethodsForm.discount === 'family_employee_discount') {
+    if (props.quoteType === 'Health') {
+      discountValue.value = (totalPrice.value * (2.5 / 100)).toFixed(2);
+    } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
+      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2);
     } else {
       discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
-    }    
+    }
   }
-  if( paymentMethodsForm.discount === 'family_employee_discount' 
-      || paymentMethodsForm.discount === 'employee_discount' ) {
+  if (
+    paymentMethodsForm.discount === 'family_employee_discount' ||
+    paymentMethodsForm.discount === 'employee_discount'
+  ) {
     calculatedDiscount.value = discountValue.value;
-    if(editDiscountValue>0){
+    if (editDiscountValue > 0) {
       discountValue.value = editDiscountValue;
     }
   }
   calculateTotalAmount();
 };
 
-const notPaidDates = (serialNo) => {
-  if(readOnlyPayments.value[serialNo]!=undefined && readOnlyPayments.value[serialNo]===true) {
-    return  false;
+const notPaidDates = serialNo => {
+  if (
+    readOnlyPayments.value[serialNo] != undefined &&
+    readOnlyPayments.value[serialNo] === true
+  ) {
+    return false;
   }
   return true;
-}
+};
 
 const calculateDueDates = () => {
-  if ( notPaidDates(1) ) {
+  if (notPaidDates(1)) {
     dueDateModels.value[1] = paymentMethodsForm.collection_date;
   }
-  if(paymentMethodsForm.frequency === 'split_payments' || paymentMethodsForm.frequency === 'upfront'){
-     //dueDateModels.value[1] = new Date();
-    for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {       
-      if ( notPaidDates(i) ) {
+  if (
+    paymentMethodsForm.frequency === 'split_payments' ||
+    paymentMethodsForm.frequency === 'upfront'
+  ) {
+    //dueDateModels.value[1] = new Date();
+    for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+      if (notPaidDates(i)) {
         dueDateModels.value[i] = paymentMethodsForm.collection_date;
-      }    
+      }
     }
-  } else if(paymentMethodsForm.frequency === 'custom'){
-    for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
-        if(i>12) continue;
-        const currentDueDate = dueDateModels.value[i - 1];
-        const nextDueDate = new Date(currentDueDate);
-        // Set the month to the next month
-        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-        // Update the due date model
-        if ( notPaidDates(i) ) {
-          dueDateModels.value[i] = nextDueDate;
-        }
+  } else if (paymentMethodsForm.frequency === 'custom') {
+    for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
+      if(i>12) continue;const currentDueDate = dueDateModels.value[i - 1];
+      const nextDueDate = new Date(currentDueDate);
+      // Set the month to the next month
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+      // Update the due date model
+      if (notPaidDates(i)) {
+        dueDateModels.value[i] = nextDueDate;
+      }
     }
-  } else if(paymentMethodsForm.frequency === 'monthly'){
+  } else if (paymentMethodsForm.frequency === 'monthly') {
     dueDateModels.value[1] = paymentMethodsForm.collection_date;
-    for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
+    for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
       const nextDueDate = new Date(dueDateModels.value[i - 1]);
       nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-      nextDueDate.setDate(1);  // Set the day to 1st of the month
-      if ( notPaidDates(i) ) {
+      nextDueDate.setDate(1); // Set the day to 1st of the month
+      if (notPaidDates(i)) {
         dueDateModels.value[i] = nextDueDate;
-      }    
+      }
     }
-  } else if(paymentMethodsForm.frequency === 'quarterly'){
-    
-    if ( notPaidDates(1) ) {
+  } else if (paymentMethodsForm.frequency === 'quarterly') {
+    if (notPaidDates(1)) {
       dueDateModels.value[1] = paymentMethodsForm.collection_date;
     }
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
@@ -689,68 +840,76 @@ const calculateDueDates = () => {
       } else if (i === 4) {
         nextDueDate.setDate(nextDueDate.getDate() + 270);
       }
-      if ( notPaidDates(i) ) {
-          dueDateModels.value[i] = nextDueDate;
-      }      
+      if (notPaidDates(i)) {
+        dueDateModels.value[i] = nextDueDate;
+      }
     }
-
-  } else if(paymentMethodsForm.frequency === 'semi_annual'){
-    if ( notPaidDates(1) ) {
+  } else if (paymentMethodsForm.frequency === 'semi_annual') {
+    if (notPaidDates(1)) {
       dueDateModels.value[1] = paymentMethodsForm.collection_date;
-    }    
+    }
     const nextDueDate = new Date(dueDateModels.value[1]);
     nextDueDate.setDate(nextDueDate.getDate() + 180);
-    if ( notPaidDates(2) ) {
+    if (notPaidDates(2)) {
       dueDateModels.value[2] = nextDueDate;
-    }    
+    }
   }
-}
+};
 
-const calculatePaymentBreakup = (changeMethod = true) => {  
+const calculatePaymentBreakup = (changeMethod = true) => {
   isDocumentNotUploaded.value = [];
   isDowngradeFrequencyError.value = false;
-  var perInstallmentPrice = parseFloat(((totalAmount.value-paidAmountSum.value)/(paymentMethodsForm.payment_no-totalPaidAmount.value)).toFixed(2));
-  if ( paymentMethodsForm.status === 'edit') {
-    var trueValuesArray = readOnlyPayments.value.filter(function(value) {
+  var perInstallmentPrice = parseFloat(
+    (
+      (totalAmount.value - paidAmountSum.value) /
+      (paymentMethodsForm.payment_no - totalPaidAmount.value)
+    ).toFixed(2),
+  );
+  if (paymentMethodsForm.status === 'edit') {
+    var trueValuesArray = readOnlyPayments.value.filter(function (value) {
       return value === true;
     });
     // Get the count of true values
     var trueValuesCount = trueValuesArray.length;
-    if(paymentMethodsForm.payment_no <= trueValuesCount){ 
+    if (paymentMethodsForm.payment_no <= trueValuesCount) {
       paymentMethodsForm.payment_no = oldTotalPayments.value;
-      if(paymentMethodsForm.payment_no < trueValuesCount){ 
-        isDowngradeFrequencyError.value = true; 
+      if (paymentMethodsForm.payment_no < trueValuesCount) {
+        isDowngradeFrequencyError.value = true;
       }
       return;
-    }    
+    }
   }
-  for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
-    if(readOnlyPayments.value[i]!=undefined && readOnlyPayments.value[i]===true) {
+  for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+    if (
+      readOnlyPayments.value[i] != undefined &&
+      readOnlyPayments.value[i] === true
+    ) {
       continue;
     }
-    splitAmountModels.value[i] = perInstallmentPrice.toFixed(2);    
-    if(i>1 && changeMethod){
+    splitAmountModels.value[i] = perInstallmentPrice.toFixed(2);
+    if (i > 1 && changeMethod) {
       if (
-          paymentMethodsModels.value[i] !== undefined 
-          && paymentMethodsModels.value[i] !== null
-          && (paymentMethodsForm.frequency === 'split_payments' || paymentMethodsForm.frequency === 'custom')
-          ) {
+        paymentMethodsModels.value[i] !== undefined &&
+        paymentMethodsModels.value[i] !== null &&
+        (paymentMethodsForm.frequency === 'split_payments' ||
+          paymentMethodsForm.frequency === 'custom')
+      ) {
         paymentMethodsModels.value[i] = paymentMethodsModels.value[i];
       } else {
         paymentMethodsModels.value[i] = '';
       }
-    }    
+    }
   }
- calculateDueDates(); 
-}
+  calculateDueDates();
+};
 
-const  formatDate = (date) =>  {
-    const parsedDate = new Date(date);
-    const day = parsedDate.getDate().toString().padStart(2, '0');
-    const month = (parsedDate.getMonth() + 1).toString().padStart(2, '0');
-    const year = parsedDate.getFullYear();
-    return `${day}-${month}-${year}`;
-  }
+const formatDate = date => {
+  const parsedDate = new Date(date);
+  const day = parsedDate.getDate().toString().padStart(2, '0');
+  const month = (parsedDate.getMonth() + 1).toString().padStart(2, '0');
+  const year = parsedDate.getFullYear();
+  return `${day}-${month}-${year}`;
+};
 
 function formatString(input) {
   if (input === '' || input === undefined || input === null) {
@@ -765,85 +924,87 @@ function formatString(input) {
   return formattedString;
 }
 
-const formatAmount = (amount) => {
+const formatAmount = amount => {
   const parsedAmount = parseFloat(amount);
   if (isNaN(parsedAmount)) {
-    return "0.00";
-  }  
-  const formattedAmount = parsedAmount.toLocaleString("en-US", {
-    style: "decimal",
+    return '0.00';
+  }
+  const formattedAmount = parsedAmount.toLocaleString('en-US', {
+    style: 'decimal',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
   return formattedAmount;
-}
+};
 
-const handleFrequencyChange = (noPaymentUpdate=true) => {
-  
+const handleFrequencyChange = (noPaymentUpdate = true) => {
   var resetPaymentMethod = false;
-  totalPayments.value = []; 
-  if ( paymentMethodsForm.status === 'create' ) {
+  totalPayments.value = [];
+  if (paymentMethodsForm.status === 'create') {
     paymentMethodsForm.credit_approval = '';
   }
-  
-  isCustomReasonEnabled.value = false; 
+
+  isCustomReasonEnabled.value = false;
   handleApprovalReasonChange();
 
-  for (let i = 1; i <= 20; i++) { // Append 7 more values to totalPayments
+  for (let i = 1; i <= 20; i++) {
+    // Append 7 more values to totalPayments
     totalPayments.value.push({ value: i.toString(), label: i.toString() });
   }
   calculatePaymentBreakup();
   isPaymentNoEnabled.value = false;
   if (paymentMethodsForm.frequency === 'monthly') {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '12';    
+    paymentMethodsForm.payment_no = '12';
   } else if (paymentMethodsForm.frequency === 'quarterly') {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '4';    
+    paymentMethodsForm.payment_no = '4';
   } else if (paymentMethodsForm.frequency === 'semi_annual') {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '2';    
+    paymentMethodsForm.payment_no = '2';
   } else if (paymentMethodsForm.frequency === 'split_payments') {
     isPaymentNoEnabled.value = true;
-    if(noPaymentUpdate){
+    if (noPaymentUpdate) {
       paymentMethodsForm.payment_no = '2';
     }
     totalPayments.value.splice(-15);
-    totalPayments.value.splice(0, 1);     
+    totalPayments.value.splice(0, 1);
   } else if (paymentMethodsForm.frequency === 'custom') {
     isPaymentNoEnabled.value = true;
-    if(noPaymentUpdate){
+    if (noPaymentUpdate) {
       paymentMethodsForm.payment_no = '2';
     }
-    totalPayments.value.splice(0, 1);      
+    totalPayments.value.splice(0, 1);
   } else {
-    paymentMethodsForm.payment_no = '1';    
+    paymentMethodsForm.payment_no = '1';
   }
   calculatePaymentBreakup();
-    
-  if (paymentMethodsModels.value[1]==='CC' && resetPaymentMethod && readOnlyPayments.value[1]===undefined){
-    paymentMethodsModels.value[1] = 'BT';
-  }    
+  if (
+    paymentMethodsModels.value[1] ===
+      page.props.paymentMethodsEnum?.CreditCard &&
+    resetPaymentMethod
+  ) {
+    paymentMethodsModels.value[1] = page.props.paymentMethodsEnum?.BankTransfer;
+  }
 };
 
 // Define a computed property to determine if 'insurer' should be disabled
 const isCCDisabled = computed(() => {
   return;
   /*return (
-    paymentMethodsForm.frequency === 'monthly' || 
-    paymentMethodsForm.frequency === 'quarterly' || 
+    paymentMethodsForm.frequency === 'monthly' ||
+    paymentMethodsForm.frequency === 'quarterly' ||
     paymentMethodsForm.frequency === 'semi_annual'
-  
+
     );*/
 });
 
-const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
-
-  if (paymentStatus==props.paymentStatusEnum.PAID){
+const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
+  if (paymentStatus == props.paymentStatusEnum.PAID) {
     notification.error({
-        title: 'Payment already \'Paid\', button deactivated for this transaction',
-        position: 'top',
-      });
+      title: "Payment already 'Paid', button deactivated for this transaction",
+      position: 'top',
+    });
   } else {
     try {
       const response = await axios.post('/generate-payment-link-new', {
@@ -882,22 +1043,152 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
   }
 };
 
-const addPaymentModal = () => {
+const isProformaPaymentRequestExportable = (payment, documents) => {
+  if (!documents && !quoteDocuments) return true;
+  let proformaPaymentRequestDocuments = null;
+  if (documents) {
+    proformaPaymentRequestDocuments = documents.filter(
+      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
+    );
+  } else if (!proformaPaymentRequestDocuments) {
+    // For some LOBs, Documents are not available in the quote object, so we need to check the quoteDocuments object
+    proformaPaymentRequestDocuments = quoteDocuments.filter(
+      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
+    );
+  }
+  if (proformaPaymentRequestDocuments.length == 0) return true;
 
-  if ( props.payments.length>0 ) {
+  proformaPaymentRequestDocuments.sort((a, b) => b.id - a.id);
+  let latestProformaPaymentRequestDocument = proformaPaymentRequestDocuments[0];
+
+  let paymentUpdateAt = moment(payment.updated_at);
+  let latestProformaRequestDocumentCreatedAt = moment(
+    latestProformaPaymentRequestDocument.created_at,
+    'DD-MM-YYYY HH:mm:s',
+  ).format('YYYY-MM-DD HH:mm:ss');
+
+  return paymentUpdateAt.isAfter(latestProformaRequestDocumentCreatedAt);
+};
+
+const downloadProformaPayment = async () => {
+  let errorMsg = '';
+  if (
+    props.paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id
+  ) {
+    errorMsg =
+      props.paymentTooltipEnum
+        .PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+    notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+    return;
+  }
+  /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documents */
+  let exportProformaRequest = isProformaPaymentRequestExportable(
+    props.proformaPayment,
+    props.quoteRequest.documents,
+  );
+  if (!exportProformaRequest) {
+    notification.error({
+      title: 'Please update the Payment details for this Proforma Request.',
+      position: 'top',
+    });
+    return;
+  }
+  if (totalPrice.value < 0 && planDetail.value) {
+    errorMsg = 'Please update the Total Price in the Plan Details section.';
+    if (quoteTypesToCheck.includes(props.quoteType)) {
+      errorMsg = 'Please select a plan.';
+    }
+    notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+    return;
+  }
+  if (props.proformaPayment) {
+    try {
+      NProgress.start();
+      const response = await axios.get(
+        route('create.proforma.payment.request', [
+          props.quoteType,
+          props.quoteRequest.uuid,
+        ]),
+      );
+      NProgress.done();
+      if (response.data.success) {
+        if (response.data?.proforma_request) {
+          let proforma_request = response.data.proforma_request;
+          let proforma_request_id = proforma_request.id;
+          /* Create the link and download Proforma Request document*/
+          const a = document.createElement('a');
+          a.href = route('download.proforma.payment.request', [
+            proforma_request_id,
+          ]);
+          a.target = '_blank';
+          a.download = proforma_request.original_name;
+          document.body.appendChild(a);
+          await a.click();
+          /* Remove Link */
+          document.body.removeChild(a);
+
+          notification.success({
+            title: 'Proforma payment request has been saved',
+            position: 'top',
+          });
+          notification.success({
+            title: 'File exported',
+            position: 'top',
+          });
+          router.visit(location.href);
+        }
+      } else {
+        notification.error({
+          title: 'Proforma Payment Request Generation Failed',
+          position: 'top',
+        });
+      }
+    } catch (err) {
       notification.error({
-        title: 'Payment already added, click \'Edit\' for changes.',
+        title: err,
         position: 'top',
       });
-      return;   
+      notification.error({
+        title: 'Proforma Payment Request Generation Failed',
+        position: 'top',
+      });
+    }
+    return;
+  } else {
+    errorMsg = 'No Proforma Payment found';
+    notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+    return;
+  }
+};
+
+const showMessages = () => {
+  console.log('showMessages');
+};
+
+const addPaymentModal = () => {
+  if (props.payments.length > 0) {
+    notification.error({
+      title: "Payment already added, click 'Edit' for changes.",
+      position: 'top',
+    });
+    return;
   }
   paymentMethodsForm.reset();
   paymentMethodsForm.payment_method = 'CHQ';
-  paymentMethodsModels.value = []; 
-  splitAmountModels.value = []; 
-  dueDateModels.value = []; 
-  fileUploadModels.value = []; 
-  checkDetailModels.value = [];   
+  paymentMethodsModels.value = [];
+  splitAmountModels.value = [];
+  dueDateModels.value = [];
+  fileUploadModels.value = [];
+  checkDetailModels.value = [];
   isDiscountReasonEnabled.value = false;
   isDiscountEnabled.value = false;
   isPaymentCalculationError.value = false;
@@ -913,8 +1204,8 @@ const addPaymentModal = () => {
   if (totalPrice.value > 0 && planDetail.value) {
     totalAmount.value = totalPrice.value;
   } else {
-    let errorMsg = 'Please update the Total Price in the Plan Details section.'; 
-    if(quoteTypesToCheck.includes(props.quoteType)) {
+    let errorMsg = 'Please update the Total Price in the Plan Details section.';
+    if (quoteTypesToCheck.includes(props.quoteType)) {
       errorMsg = 'Please select a plan.';
     }
     notification.error({
@@ -924,41 +1215,53 @@ const addPaymentModal = () => {
     return;
   }
 
-  if( props.quoteType === 'Health' || props.quoteSubType === 'Group Medical' || 
-      props.quoteType === 'Life' || props.quoteType === 'Marine'){
+  if (
+    props.quoteType === 'Health' ||
+    props.quoteSubType === 'Group Medical' ||
+    props.quoteType === 'Life' ||
+    props.quoteType === 'Marine'
+  ) {
     paymentMethodsForm.collection_type = 'insurer';
   } else {
     paymentMethodsForm.collection_type = 'broker';
   }
-  
+
   paymentMethodsForm.amount = '';
   paymentMethodsForm.payment_reference = '';
   paymentMethodsForm.paymentCode = '';
 
   paymentMethodsForm.status = 'create';
   paymentMethodsForm.collection_date = new Date();
-  paymentMethodsForm
+  paymentMethodsForm;
   createPaymentModal.value = true;
-  
+
   paymentMethodsForm.frequency = 'upfront';
   paymentMethodsForm.discount = '';
   paymentMethodsForm.credit_approval = '';
   totalPayments.value = [];
   totalPayments.value.push({ value: '1', label: '1' });
-  paymentMethodsForm.payment_no = '1';  
+  paymentMethodsForm.payment_no = '1';
   handleCollectionTypeChange();
   calculatePaymentBreakup();
 };
 
-const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
-  
-  if( sr_no===0 && payment.payment_status.id === props.paymentStatusEnum.PAID && capture_approval===0 ) {
+const editPaymentModal = (
+  payment,
+  split_payment_id,
+  sr_no,
+  capture_approval,
+) => {
+  if (
+    sr_no === 0 &&
+    payment.payment_status.id === props.paymentStatusEnum.PAID &&
+    capture_approval === 0
+  ) {
     notification.error({
-          title: 'No further actions allowed to paid payments',
-          position: 'top',
-        });
+      title: 'No further actions allowed to paid payments',
+      position: 'top',
+    });
     return false;
-  };
+  }
   paymentMethodsForm.reset();
   splitPaymentNo.value = 0;
   isFieldReadonly.value = false;
@@ -983,7 +1286,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isApproveConfirm.value = false;
   isCreditApprovalView.value = false;
   isCreditCardView.value = false;
-  approveErrorMessage.value = "";
+  approveErrorMessage.value = '';
   isCreditPaymentInvalid.value = [];
   isCreditPaymentInvalidError.value = [];
   paymentMethodsForm.declined_custom_reason = '';
@@ -996,14 +1299,15 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isDiscountEnabled.value = false;
   isTotalPriceUpdated.value = false;
   isGalleryModelOpen.value = false;
-  authorizedPayments.value = []; 
-  if(sr_no>0){
+  authorizedPayments.value = [];
+  if (sr_no > 0) {
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
     isViewEnabled.value = true;
     paymentMethodsForm.splitPaymentId = split_payment_id;
     paymentMethodsForm.status = 'view';
     paymentMethodsForm.collection_amount = '';
+    paymentMethodsForm.payment_method = payment.payment_method.code;
     paymentMethodsForm.bank_reference_number = '';
     splitPaymentRecord.value = payment.payment_splits.find(item => item.sr_no === sr_no);
     paymentMethodsForm.system_adjusted_discount = payment.system_adjusted_discount;
@@ -1011,43 +1315,48 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
 
   //paymentMethodsForm.masterPaymentStatus = payment.
   masterPaymentStatus.value = payment.payment_status.text;
-  
+
   paymentMethodsForm.paymentCode = payment.code;
-  paymentMethodsForm.insurance_provider_id= payment.insurance_provider_id;
-  paymentMethodsForm.collection_type= payment.collection_type;  
-  paymentMethodsForm.payment_no= payment.total_payments;
+  paymentMethodsForm.insurance_provider_id = payment.insurance_provider_id;
+  paymentMethodsForm.collection_type = payment.collection_type;
+  paymentMethodsForm.payment_no = payment.total_payments;
   oldTotalPayments.value = payment.total_payments;
-  paymentMethodsForm.frequency= payment.frequency;
+  paymentMethodsForm.frequency = payment.frequency;
   showDiscountOptions.value = true;
-  paymentMethodsForm.discount_reason = payment.discount_reason !== null ? payment.discount_reason : '';
-  
-  if(payment.discount_reason !== null && payment.discount_type !== null) {
+  paymentMethodsForm.discount_reason =
+    payment.discount_reason !== null ? payment.discount_reason : '';
+
+  if (payment.discount_reason !== null && payment.discount_type !== null) {
     resetDiscountReason.value = payment.discount_reason;
-  } 
-  
+  }
+
   /*
   if (payment.discount_type=='' || payment.discount_type==null) {
     paymentMethodsForm.discount= payment.discount_type;
   } else {
-    paymentMethodsForm.discount= payment.discount_type;    
+    paymentMethodsForm.discount= payment.discount_type;
   }*/
- 
-  paymentMethodsForm.custom_reason= payment.custom_reason;  
-  paymentMethodsForm.discount_custom_reason= payment.discount_custom_reason;  
-  paymentMethodsForm.notes= payment.notes;
-  paymentMethodsForm.total_amount= payment.total_amount; // after discount calculation
-  paymentMethodsForm.total_price= payment.total_price;
-  paymentMethodsForm.collection_date= payment.collection_date;
+
+  paymentMethodsForm.custom_reason = payment.custom_reason;
+  paymentMethodsForm.discount_custom_reason = payment.discount_custom_reason;
+  paymentMethodsForm.notes = payment.notes;
+  paymentMethodsForm.total_amount = payment.total_amount; // after discount calculation
+  paymentMethodsForm.total_price = payment.total_price;
+  paymentMethodsForm.collection_date = payment.collection_date;
   discountValue.value = payment.discount_value; // discount amount
-  
-  if (paymentMethodsForm.status === 'view' || capture_approval>0 ) {
-    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : 'N/A';  
-    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : 'N/A';     
+
+  if (paymentMethodsForm.status === 'view' || capture_approval > 0) {
+    paymentMethodsForm.credit_approval =
+      payment.credit_approval !== null ? payment.credit_approval : 'N/A';
+    paymentMethodsForm.discount =
+      payment.discount_type !== null ? payment.discount_type : 'N/A';
   } else {
-    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : '';  
-    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : '';  
-  }   
-    
+    paymentMethodsForm.credit_approval =
+      payment.credit_approval !== null ? payment.credit_approval : '';
+    paymentMethodsForm.discount =
+      payment.discount_type !== null ? payment.discount_type : '';
+  }
+
   handleCollectionTypeChange();
   handleFrequencyChange(false);
   handleApprovalReasonChange();
@@ -1062,14 +1371,18 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     props.paymentStatusEnum.PARTIALLY_PAID,
     props.paymentStatusEnum.AUTHORISED,
     props.paymentStatusEnum.CAPTURED,
-    props.paymentStatusEnum.PARTIAL_CAPTURED
+    props.paymentStatusEnum.PARTIAL_CAPTURED,
   ];
 
-  for(let i=1; i<=payment.total_payments; i++){ 
-    if (paidStatusIds.includes(payment.payment_splits[i-1].payment_status_id)) {
+  for (let i = 1; i <= payment.total_payments; i++) {
+    if (
+      paidStatusIds.includes(payment.payment_splits[i - 1].payment_status_id)
+    ) {
       readOnlyPayments.value[i] = true;
       totalPaidAmount.value++;
-      paidAmountSum.value = parseFloat(paidAmountSum.value) + parseFloat(payment.payment_splits[i-1].payment_amount);
+      paidAmountSum.value =
+        parseFloat(paidAmountSum.value) +
+        parseFloat(payment.payment_splits[i - 1].payment_amount);
       isAnyPaid = true;
     } else {
       readOnlyPayments.value[i] = false;
@@ -1081,48 +1394,64 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     }
 
     fileUploadModels.value[i] = [];
-    paymentMethodsModels.value[i] = payment.payment_splits[i-1].payment_method.code;
-    splitAmountModels.value[i] = payment.payment_splits[i-1].payment_amount;
-    dueDateModels.value[i] = payment.payment_splits[i-1].due_date;
-    collectionAmountModels.value[i] = payment.payment_splits[i-1].collection_amount;
+    paymentMethodsModels.value[i] =
+      payment.payment_splits[i - 1].payment_method.code;
+    splitAmountModels.value[i] = payment.payment_splits[i - 1].payment_amount;
+    dueDateModels.value[i] = payment.payment_splits[i - 1].due_date;
+    collectionAmountModels.value[i] =
+      payment.payment_splits[i - 1].collection_amount;
 
-    if(payment.payment_splits[i-1].payment_method.code === 'CHQ' || payment.payment_splits[i-1].payment_method.code === 'PDC'){
+    if (
+      payment.payment_splits[i - 1].payment_method.code === 'CHQ' ||
+      payment.payment_splits[i - 1].payment_method.code === 'PDC'
+    ) {
       isCheckDetailsEnabled.value[i] = true;
-      checkDetailModels.value[i] = payment.payment_splits[i-1].check_detail;
+      checkDetailModels.value[i] = payment.payment_splits[i - 1].check_detail;
     }
-    if(payment.payment_splits[i-1].documents.length>0){
-       
-      for(let doc in payment.payment_splits[i-1].documents){
+    if (payment.payment_splits[i - 1].documents.length > 0) {
+      for (let doc in payment.payment_splits[i - 1].documents) {
         /*if (!fileUploadModels.value[i]) {
             fileUploadModels.value[i] = [];
           }
         fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); */
-        if(payment.payment_splits[i-1].documents[doc].payment_split_type === 'discount'){
+        if (
+          payment.payment_splits[i - 1].documents[doc].payment_split_type ===
+          'discount'
+        ) {
           if (!discountDocumentModel.value[0]) {
             discountDocumentModel.value[0] = [];
           }
-          discountDocumentModel.value[0].push(payment.payment_splits[i-1].documents[doc]);     
+          discountDocumentModel.value[0].push(
+            payment.payment_splits[i - 1].documents[doc],
+          );
         } else {
           if (!fileUploadModels.value[i]) {
             fileUploadModels.value[i] = [];
           }
-          fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); 
+          fileUploadModels.value[i].push(
+            payment.payment_splits[i - 1].documents[doc],
+          );
         }
       }
-     }
+    }
   }
 
   if (paymentMethodsForm.status == 'edit') {
     totalPrice.value = payment.total_price;
-    totalAmount.value = payment.total_price-payment.discount_value;
-    
-    if  ( isAnyPaid 
-          && (payment.total_price<=(payment.total_amount+payment.discount_value)) 
-        ) { //FOR EDIT
-      isFieldReadonly.value = true;    
-    } else if(payment.total_price>(payment.total_amount+payment.discount_value)) {    
-      isFieldReadonly.value = false;      
-      isTotalPriceUpdated.value = true;      
+    totalAmount.value = payment.total_price - payment.discount_value;
+
+    if (
+      isAnyPaid &&
+      payment.total_price <= payment.total_amount + payment.discount_value
+    ) {
+      //FOR EDIT
+      isFieldReadonly.value = true;
+    } else if (
+      payment.total_price >
+      payment.total_amount + payment.discount_value
+    ) {
+      isFieldReadonly.value = false;
+      isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
     }
@@ -1136,24 +1465,31 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     && payment.discount_value>0
     ){
       discountValue.value = payment.discount_value;
-      calculatedDiscount.value = payment.discount_value;  
+      calculatedDiscount.value = payment.discount_value;
+  }  //Assign plan for Travel
+  if (
+    props.quoteType === 'Travel' &&
+    (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
+  ) {
+    planDetail.value = payment.travel_plan;
+    planDetail.value['insurance_provider'] = payment.insurance_provider;
   }
 
    //Assign plan for Travel
    if (props.quoteType === 'Travel' && (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')) {
       planDetail.value =  payment.travel_plan;
-      planDetail.value['insurance_provider'] =  payment.insurance_provider;   
+      planDetail.value['insurance_provider'] =  payment.travel_plan.insurance_provider;   
     }
   
   if(capture_approval>0) {
     isApproveClicked.value = true;
-    if(capture_approval==1) {
+    if (capture_approval == 1) {
       isCreditCardView.value = true;
-    }    
-    for(let i=1; i<=payment.total_payments; i++){
+    }
+    for (let i = 1; i <= payment.total_payments; i++) {
       readOnlyPayments.value[i] = true;
     }
-    isFieldReadonly.value = true;    
+    isFieldReadonly.value = true;
     isCreditApprovalView.value = true;
   }
   createPaymentModal.value = true;
@@ -1168,32 +1504,42 @@ const paymentMethodsForm = useForm({
   status: 'create',
 });
 
-const validateViewPayment = (isValid) => {  
+const validateViewPayment = isValid => {
   let amountExceeded = false;
-  if (parseFloat(splitAmountModels.value[splitPaymentNo.value]) > parseFloat(paymentMethodsForm.collection_amount)) {
-    approveErrorMessage.value = "The entered amount is smaller than the total amount.";
+  if (
+    parseFloat(splitAmountModels.value[splitPaymentNo.value]) >
+    parseFloat(paymentMethodsForm.collection_amount)
+  ) {
+    approveErrorMessage.value =
+      'The entered amount is smaller than the total amount.';
     isApprovePaymentError.value = true;
     return true;
   }
 
-  if (parseFloat(paymentMethodsForm.collection_amount) > parseFloat(splitAmountModels.value[splitPaymentNo.value])) {
-    approveErrorMessage.value = "Collected amount exceeds total amount, do you still want to continue?";
+  if (
+    parseFloat(paymentMethodsForm.collection_amount) >
+    parseFloat(splitAmountModels.value[splitPaymentNo.value])
+  ) {
+    approveErrorMessage.value =
+      'Collected amount exceeds total amount, do you still want to continue?';
     isApprovePaymentError.value = true;
     amountExceeded = true;
     //return true;
   }
   // document validdation for insurer
-  if (paymentMethodsForm.collection_type==='insurer') {  
-    if (approvedDocumentModel.value[splitPaymentNo.value]===undefined 
-    || approvedDocumentModel.value[splitPaymentNo.value].length===0 ) {
-        isApprovedDocumentNotUploaded.value = true;
-        return true;
-      } else {        
-        isApprovedDocumentNotUploaded.value = false;
-      }      
+  if (paymentMethodsForm.collection_type === 'insurer') {
+    if (
+      approvedDocumentModel.value[splitPaymentNo.value] === undefined ||
+      approvedDocumentModel.value[splitPaymentNo.value].length === 0
+    ) {
+      isApprovedDocumentNotUploaded.value = true;
+      return true;
+    } else {
+      isApprovedDocumentNotUploaded.value = false;
+    }
   }
-  
-  if(isApproveConfirm.value === false && isValid) {
+
+  if (isApproveConfirm.value === false && isValid) {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
     }
@@ -1201,35 +1547,42 @@ const validateViewPayment = (isValid) => {
     return true;
   }
   return false;
-}
+};
 
-const validateCapturePayment = (isValid) => {
-  if(isApproveConfirm.value === false && isValid) {    
+const validateCapturePayment = isValid => {
+  if (isApproveConfirm.value === false && isValid) {
     let noError = true;
     let regex = /^\d+(\.\d{1,2})?$/;
     isCreditPaymentInvalid.value = [];
     if (isCreditCardView.value === true) {
-      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
         //isCreditPaymentInvalid.value[i] = false;
-        if (paymentMethodsModels.value[i] === 'CC'){
-
-          if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined || collectionAmountModels.value[i]===0){
+        if (paymentMethodsModels.value[i] === 'CC') {
+          if (
+            collectionAmountModels.value[i] === null ||
+            collectionAmountModels.value[i] === undefined
+          || collectionAmountModels.value[i]===0) {
             isCreditPaymentInvalid.value[i] = true;
-            isCreditPaymentInvalidError.value[i] = "This field is required";
-          }
-          
-          if (!(regex.test(collectionAmountModels.value[i]))) {
-            isCreditPaymentInvalid.value[i] = true;
-            isCreditPaymentInvalidError.value[i] = "Amount must be a valid number";
+            isCreditPaymentInvalidError.value[i] = 'This field is required';
           }
 
-          if (parseFloat(collectionAmountModels.value[i]) > parseFloat(splitAmountModels.value[i])) {          
+          if (!regex.test(collectionAmountModels.value[i])) {
             isCreditPaymentInvalid.value[i] = true;
-            isCreditPaymentInvalidError.value[i] = "Capture amount should not exceed total amount";                
+            isCreditPaymentInvalidError.value[i] =
+              'Amount must be a valid number';
+          }
+
+          if (
+            parseFloat(collectionAmountModels.value[i]) >
+            parseFloat(splitAmountModels.value[i])
+          ) {
+            isCreditPaymentInvalid.value[i] = true;
+            isCreditPaymentInvalidError.value[i] =
+              'Capture amount should not exceed total amount';
           }
         }
-      }      
-    }        
+      }
+    }
     if (isCreditPaymentInvalid.value.includes(true)) {
       return true;
     }
@@ -1237,35 +1590,40 @@ const validateCapturePayment = (isValid) => {
     return true;
   }
   return false;
-}
+};
 
-const addPayment = isValid => {  
-  if(isCreditApprovalView.value === true && isDeclineClicked.value === false){
+const addPayment = isValid => {
+  if (isCreditApprovalView.value === true && isDeclineClicked.value === false) {
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
-    if (validateViewPayment(isValid)) return;    
+    if (validateViewPayment(isValid)) return;
   } else if (paymentMethodsForm.status !== 'view') {
-    if (validatePaymentOption()) return;  
-  }  
-  if (!isValid) return;  
-
+    if (validatePaymentOption()) return;
+  }
+  if (!isValid) return;
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]?paymentMethodsModels.value[0]:paymentMethodsModels.value[1];
-  if(paymentMethodsForm.credit_approval!=='' && paymentMethodsForm.credit_approval!==null){
+  if (
+    paymentMethodsForm.credit_approval !== '' &&
+    paymentMethodsForm.credit_approval !== null
+  ) {
     mainPaymentMethod = 'CA';
-  } else if(paymentMethodsForm.frequency === 'custom' || paymentMethodsForm.frequency === 'monthly'
-    || paymentMethodsForm.frequency === 'quarterly' || paymentMethodsForm.frequency === 'semi_annual'
-   ){
+  } else if (
+    paymentMethodsForm.frequency === 'custom' ||
+    paymentMethodsForm.frequency === 'monthly' ||
+    paymentMethodsForm.frequency === 'quarterly' ||
+    paymentMethodsForm.frequency === 'semi_annual'
+  ) {
     mainPaymentMethod = 'PP';
-  } else if(paymentMethodsForm.frequency === 'split_payments'){
+  } else if (paymentMethodsForm.frequency === 'split_payments') {
     mainPaymentMethod = 'MP';
   }
-  
-  if(mainPaymentMethod==='' || mainPaymentMethod===null){
+
+  if (mainPaymentMethod==='' || mainPaymentMethod===null) {
     mainPaymentMethod = 'CSH';
   }
-  
-  let data = {    
+
+  let data = {
     code: paymentMethodsForm.payment_method,
     modelType: props.quoteType,
     quote_id: props.quoteRequest.id,
@@ -1273,7 +1631,7 @@ const addPayment = isValid => {
     captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
     new_payment_structure: true,
-    isInertia: true,   
+    isInertia: true,
   };
 
   data.payment = {
@@ -1290,9 +1648,9 @@ const addPayment = isValid => {
     collection_date: paymentMethodsForm.collection_date,
     notes: paymentMethodsForm.notes,
     total_amount: totalAmount.value, // after discount calculation
-    total_price: totalPrice.value, 
+    total_price: totalPrice.value,
     collection_date: paymentMethodsForm.collection_date,
-    discount_value: discountValue.value, // discount amount     
+    discount_value: discountValue.value, // discount amount
   };
 
   let splitPayments = [];
@@ -1305,8 +1663,8 @@ const addPayment = isValid => {
         due_date: dueDateModels.value[i],
         collection_amount: collectionAmountModels.value[i],
         document_detail: fileUploadModels.value[i],
-        check_detail: checkDetailModels.value[i],        
-      };    
+        check_detail: checkDetailModels.value[i],
+      };
       if (i === 1) {
         splitPayments[i]['discount_documents'] = discountDocumentModel.value;
       }
@@ -1314,54 +1672,66 @@ const addPayment = isValid => {
   }
   splitPayments = splitPayments.filter(item => item !== null);
   data.payment.payment_splits = splitPayments;
-  
-  let declinedCustomReason= paymentMethodsForm.declined_custom_reason;
-  if (paymentMethodsForm.status === 'view' || isCreditApprovalView.value === true) { 
-    if(isDeclineClicked.value === true && paymentMethodsForm.declined_reason === ''){
-      isDeclinedReasonError.value = true; return;
+
+  let declinedCustomReason = paymentMethodsForm.declined_custom_reason;
+  if (
+    paymentMethodsForm.status === 'view' ||
+    isCreditApprovalView.value === true
+  ) {
+    if (
+      isDeclineClicked.value === true &&
+      paymentMethodsForm.declined_reason === ''
+    ) {
+      isDeclinedReasonError.value = true;
+      return;
     } else {
       isDeclinedReasonError.value = false;
-    }    
-    if(paymentMethodsForm.declined_reason != '6' && isDeclineClicked.value===true){
-      declinedCustomReason = declinedReasons.find(reason => reason.value === paymentMethodsForm.declined_reason).label;
+    }
+    if (
+      paymentMethodsForm.declined_reason != '6' &&
+      isDeclineClicked.value === true
+    ) {
+      declinedCustomReason = declinedReasons.find(
+        reason => reason.value === paymentMethodsForm.declined_reason,
+      ).label;
     }
   }
 
-  if (isCreditApprovalView.value === true) {   
+  if (isCreditApprovalView.value === true) {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
       plan_id: planDetail.value.id,
       customer_id: props.quoteRequest.customer_id,
-      payment_code: paymentMethodsForm.paymentCode,      
-      collection_amount: collectionAmountModels.value,      
+      payment_code: paymentMethodsForm.paymentCode,
+      collection_amount: collectionAmountModels.value,
       is_declined: isDeclineClicked.value,
       is_capture: isCreditCardView.value,
       is_approved: isApproveClicked.value,
       declined_reason: paymentMethodsForm.declined_reason,
-      declined_custom_reason: declinedCustomReason,      
+      declined_custom_reason: declinedCustomReason,
     };
     paymentMethodsForm
       .transform(data => viewData)
-      .post('/payments/'+props.quoteType+'/split-payments-approve', {
+      .post('/payments/' + props.quoteType + '/split-payments-approve', {
         preserveScroll: true,
-        onSuccess: (res) => {
-          createPaymentModal.value = false;              
+        onSuccess: res => {
+          createPaymentModal.value = false;
           setTimeout(() => {
             location.reload();
           }, 500);
         },
-        onError: (res) => {
+        onError: res => {
           notification.error({
             title: res.error,
             position: 'top',
-          });         
+          });
         },
       });
     return;
   }
 
-  if (paymentMethodsForm.status === 'view') {   
+  if (paymentMethodsForm.status === 'view') {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -1374,16 +1744,16 @@ const addPayment = isValid => {
       is_approved: isApproveClicked.value,
       declined_reason: paymentMethodsForm.declined_reason,
       approved_document_model: approvedDocumentModel.value,
-      declined_custom_reason: declinedCustomReason,      
+      declined_custom_reason: declinedCustomReason,
     };
     paymentMethodsForm
       .transform(data => viewData)
-      .post('/payments/'+props.quoteType+'/split-update', {
+      .post('/payments/' + props.quoteType + '/split-update', {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
         },
-        onError: (res) => {          
+        onError: res => {
           notification.error({
             title: res.error,
             position: 'top',
@@ -1394,13 +1764,13 @@ const addPayment = isValid => {
   }
 
   if (paymentMethodsForm.status === 'edit') {
-    if(totalPaidAmount.value == paymentMethodsForm.payment_no) {
+    if (totalPaidAmount.value == paymentMethodsForm.payment_no) {
       notification.error({
-            title: 'No further actions allowed to paid payments',
-            position: 'top',
-          });
+        title: 'No further actions allowed to paid payments',
+        position: 'top',
+      });
       return false;
-    };
+    }
     let editData = {
       ...data,
       paymentCode: paymentMethodsForm.paymentCode,
@@ -1408,7 +1778,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => editData)
-      .post('/payments/'+props.quoteType+'/update-new', {
+      .post('/payments/' + props.quoteType + '/update-new', {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
@@ -1427,7 +1797,7 @@ const addPayment = isValid => {
   };
   paymentMethodsForm
     .transform(data => storeData)
-    .post('/payments/'+props.quoteType+'/store-new', {
+    .post('/payments/' + props.quoteType + '/store-new', {
       preserveScroll: true,
       onSuccess: () => {
         createPaymentModal.value = false;
@@ -1449,19 +1819,25 @@ const documentForm = useForm({
   file: null,
 });
 
-const deleteDocument = (docName,count) => {
+const deleteDocument = (docName, count) => {
   if (paymentMethodsForm.status == 'edit') {
-    if (fileUploadModels.value[count]){
-      fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
+    if (fileUploadModels.value[count]) {
+      fileUploadModels.value[count] = fileUploadModels.value[count].filter(
+        item => item.doc_name !== docName,
+      );
     }
-    if (approvedDocumentModel.value[count]){
-      approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);
+    if (approvedDocumentModel.value[count]) {
+      approvedDocumentModel.value[count] = approvedDocumentModel.value[
+        count
+      ].filter(item => item.doc_name !== docName);
     }
-    if (discountDocumentModel.value[count]){
-      discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
+    if (discountDocumentModel.value[count]) {
+      discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(
+        item => item.doc_name !== docName,
+      );
     }
     trashedFilesModal.value.push(docName);
-  } else {    
+  } else {
     router.post(
       `/documents/delete`,
       {
@@ -1471,15 +1847,22 @@ const deleteDocument = (docName,count) => {
       {
         preserveScroll: true,
         onFinish: () => {
-          if (fileUploadModels.value[count]){
-            fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
+          if (fileUploadModels.value[count]) {
+            fileUploadModels.value[count] = fileUploadModels.value[
+              count
+            ].filter(item => item.doc_name !== docName);
           }
-          if (approvedDocumentModel.value[count]){
-            approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);
+          if (approvedDocumentModel.value[count]) {
+            approvedDocumentModel.value[count] = approvedDocumentModel.value[
+              count
+            ].filter(item => item.doc_name !== docName);
           }
-          if (discountDocumentModel.value[count]){
-            discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
-          }        
+          if (discountDocumentModel.value[count]) {
+            discountDocumentModel.value[0] =
+              discountDocumentModel.value[0].filter(
+                item => item.doc_name !== docName,
+              );
+          }
         },
       },
     );
@@ -1493,14 +1876,13 @@ const uploadDocument = (doc, files, count) => {
     notification.error({
             title: 'Document upload failed, invalid file selected',
             position: 'top',
-          }); 
-    return;  
-  }
-  let url = '/quotes/'+props.quoteType+'/documents/store-multiple';
-  let splitPaymentDocType = null;  
-  if (count===0) { // documents for master discount
+          });return;}
+  let url = '/quotes/' + props.quoteType + '/documents/store-multiple';
+  let splitPaymentDocType = null;
+  if (count === 0) {
+    // documents for master discount
     splitPaymentDocType = 'discount';
-  }  
+  }
 
   if (!discountDocumentModel.value[0]) {
     discountDocumentModel.value[0] = [];
@@ -1516,16 +1898,22 @@ const uploadDocument = (doc, files, count) => {
 
   //let allUploadedDocuments = fileUploadModels.value.flat();
   let allUploadedDocuments = [
-      ...fileUploadModels.value.flat(),
-      ...discountDocumentModel.value.flat()
-    ];
-  
-  let duplicateFileNames = files.map((file) => file.file.name);
+    ...fileUploadModels.value.flat(),
+    ...discountDocumentModel.value.flat(),
+  ];
+
+  let duplicateFileNames = files.map(file => file.file.name);
   isFileError.value = false;
 
-  if (allUploadedDocuments && allUploadedDocuments.some((uploadedFile) => duplicateFileNames.includes(uploadedFile.original_name))) {
+  if (
+    allUploadedDocuments &&
+    allUploadedDocuments.some(uploadedFile =>
+      duplicateFileNames.includes(uploadedFile.original_name),
+    )
+  ) {
     isFileError.value = true;
-    fileErrorMessage.value = props.paymentTooltipEnum.PAYMENT_ADD_DUPLICATE_FILES;
+    fileErrorMessage.value =
+      props.paymentTooltipEnum.PAYMENT_ADD_DUPLICATE_FILES;
     return false;
   }
 
@@ -1552,14 +1940,17 @@ const uploadDocument = (doc, files, count) => {
           });
           reject(errors);
         },
-        onSuccess: (data) => {
+        onSuccess: data => {
           let quoteDocuments = [];
-          if (quoteTypesToCheck.includes(props.quoteType) || props.quoteType === 'Home' 
-          || props.quoteSubType === 'Corpline') {
-              quoteDocuments = data.props.quoteDocuments;
+          if (
+            quoteTypesToCheck.includes(props.quoteType) ||
+            props.quoteType === 'Home' ||
+            props.quoteSubType === 'Corpline'
+          ) {
+            quoteDocuments = data.props.quoteDocuments;
           } else {
-              quoteDocuments = data.props.quote.documents;
-          }          
+            quoteDocuments = data.props.quote.documents;
+          }
           //quoteDocuments = [...quoteDocuments].reverse();
           // Sort the array by the "id" property in descending order
           quoteDocuments.sort((a, b) => b.id - a.id);
@@ -1567,11 +1958,11 @@ const uploadDocument = (doc, files, count) => {
             isDiscountDocumentNotUploaded.value = false;
             for (let i = 0; i < files.length; i++) {
               discountDocumentModel.value[count].push(quoteDocuments[i]);
-            }          
+            }
             resolve(data);
             return;
           }
-          
+
           if (paymentMethodsForm.status === 'view') {
             isApprovedDocumentNotUploaded.value = false;
             for (let i = 0; i < files.length; i++) {
@@ -1585,7 +1976,7 @@ const uploadDocument = (doc, files, count) => {
             fileUploadModels.value[count].push(quoteDocuments[i]);
           }
           isDocumentNotUploaded.value[count] = false;
-         
+
           resolve(data);
         },
         onFinish: () => {
@@ -1595,61 +1986,83 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
-const getCaptureValidation = computed(() => {  
-  return (payment) => {
+const getCaptureValidation = computed(() => {
+  return payment => {
     //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
-    if ( props.payments.length>0 && (payment.total_price <= (payment.total_amount + payment.discount_value)) && 
-      (
-      ((props.isAmlClearedForPayment || props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32 || props.quoteRequest.quote_status_id === 15) 
-      && props.quoteRequest.kyc_decision === 'Complete'
-      )
-      || 
-      props.quoteType === 'Travel' //skip AML & KYC for travel
-      )
+    if (
+      props.payments.length > 0 &&(payment.total_price <= (payment.total_amount + payment.discount_value)) &&
+      (((props.isAmlClearedForPayment ||props.quoteRequest.quote_status_id === 6 ||
+        props.quoteRequest.quote_status_id === 32|| props.quoteRequest.quote_status_id === 15) &&
+        props.quoteRequest.kyc_decision === 'Complete') ||
+        props.quoteType === 'Travel') //skip AML & KYC for travel
     ) {
-      if(payment.is_approved===1){
+      if (payment.is_approved === 1) {
         return false;
       }
-      let paymentRecord = payment
-      if ( paymentRecord.frequency==='upfront' ){
-          let paymentSplitRec = paymentRecord.payment_splits[0];
-          if (paymentSplitRec.payment_method.code==='CC' ) {
-            if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.AUTHORISED) {
-              return true;
-            }
+      let paymentRecord = payment;
+      if (paymentRecord.frequency === 'upfront') {
+        let paymentSplitRec = paymentRecord.payment_splits[0];
+        if (
+          paymentSplitRec.payment_method.code === 'CC' ) {
+            if (
+          paymentSplitRec.payment_status_id ===
+            props.paymentStatusEnum.AUTHORISED
+        ) {
+          return true;}
             return false;
-          } else if (paymentSplitRec.payment_method.code==='IP' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.PENDING) {
-            return true;
-          } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED) {
-            return true;
-          } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
-            return true;
-          }         
-      } else if ( paymentRecord.frequency==='split_payments' ){
-        const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");      
+        } else if (
+          paymentSplitRec.payment_method.code === 'IP' &&
+          paymentSplitRec.payment_status_id === props.paymentStatusEnum.PENDING
+        ) {
+          return true;
+        } else if (
+          paymentSplitRec.payment_method.code === 'CA' &&
+          paymentSplitRec.payment_status_id ===
+            props.paymentStatusEnum.CREDIT_APPROVED
+        ) {
+          return true;
+        } else if (
+          paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID
+        ) {
+          return true;
+        }
+      } else if (paymentRecord.frequency === 'split_payments') {
+        const paymentMethodCC = paymentRecord.payment_splits.filter(
+          item => item.payment_method.code === 'CC',
+        );
         if (paymentMethodCC.length > 0) {
           let totalSplitPayments = paymentRecord.payment_splits.length;
-          let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
+          let paidPaymentStatus = paymentRecord.payment_splits.filter(item => (
+            item.payment_status_id===props.paymentStatusEnum.PAID || item.payment_status_id===props.paymentStatusEnum.PARTIALLY_PAID));
           let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORISED);
           if( totalSplitPayments == (ccPaymentStatus.length + paidPaymentStatus.length) ) {
             return true;
           }
         } else {
-          let ipPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "IP");
+          let ipPaymentStatus = paymentRecord.payment_splits.filter(
+            item => item.payment_method.code === 'IP',
+          );
           if (ipPaymentStatus.length > 0) {
-            let ipPending = ipPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.PENDING 
-              || item.payment_status_id===props.paymentStatusEnum.PAID);
-            if( ipPending.length===ipPaymentStatus.length ) {
+            let ipPending = ipPaymentStatus.filter(
+              item =>
+                item.payment_status_id === props.paymentStatusEnum.PENDING ||
+                item.payment_status_id === props.paymentStatusEnum.PAID,
+            );
+            if (ipPending.length === ipPaymentStatus.length) {
               return true;
-            } 
+            }
           } else {
             if(verifyCreditArroved(paymentRecord)) {
               return true;
             } else {
-              let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
-              if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
+              let paidPaymentStatus = paymentRecord.payment_splits.filter(
+                item => item.payment_status_id === props.paymentStatusEnum.PAID,
+              );
+              if (
+                paidPaymentStatus.length === paymentRecord.payment_splits.length
+              ) {
                 return true;
-              } 
+              }
             }
           }
         }
@@ -1660,49 +2073,53 @@ const getCaptureValidation = computed(() => {
             return true;
           }
         } else if (
-          (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
-          paymentRecord.payment_splits[0].payment_method.code==='PDC'
-          ) &&
-          paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PENDING) {
+          (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
+            paymentRecord.payment_splits[0].payment_method.code === 'PDC') &&
+          paymentRecord.payment_splits[0].payment_status_id ===
+            props.paymentStatusEnum.PENDING
+        ) {
           return true;
         } else if (
             paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
-            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED        
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED ||
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PARTIALLY_PAID      
           ){
           return true;
-        }        
+        }
       }
     }
     return false;
   };
 });
 //verify if all credit payments are approved
-const verifyCreditArroved = (paymentRecord) => {  
-  let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === 'CA');   
+const verifyCreditArroved = (paymentRecord) => {
+  let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === 'CA');
   if (caPaymentStatus.length > 0) {
     let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED);
     if( caApproved.length===caPaymentStatus.length ) {
       return true;
-    } 
-  }
-  return false; 
+    }
+      }
+    return false;
 }
 
-const alertCapture = (payment) => {  
+const alertCapture = payment => {
   let errorMsg = 'Pending payment';
-  if(payment.is_approved===1){
-    errorMsg = 'Transaction already approved';   
+  if (payment.is_approved === 1) {
+    errorMsg = 'Transaction already approved';
   }
   notification.error({
-      title: errorMsg,
-      position: 'top',
-    });
+    title: errorMsg,
+    position: 'top',
+  });
 };
 
-const getCaptureOption = computed(() => {  
-  return (payment) => {
-    if ( props.payments.length>0 ) {
-      const paymentMethodCC = payment.payment_splits.filter(item => item.payment_method.code === "CC");
+const getCaptureOption = computed(() => {
+  return payment => {
+    if (props.payments.length > 0) {
+      const paymentMethodCC = payment.payment_splits.filter(
+        item => item.payment_method.code === 'CC',
+      );
       if (paymentMethodCC.length > 0) {
         return 'capture';
       } else {
@@ -1715,25 +2132,27 @@ const getCaptureOption = computed(() => {
 
 const getPlanName = computed(() => {
   const plan = planDetail.value;
-  return (quoteTypesToCheck.includes(props.quoteType) && plan) ? plan.text : 'Not Available';
+  return quoteTypesToCheck.includes(props.quoteType) && plan
+    ? plan.text
+    : 'Not Available';
 });
 
 const providerName = computed(() => {
   const plan = planDetail.value;
-    if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
-      return plan ? plan.insurance_provider.text : 'Not Available';
-    } else {      
-      return plan ? plan.text : 'Not Available';
-    }  
+  if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
+    return plan ? plan.insurance_provider.text : 'Not Available';
+  } else {
+    return plan ? plan.text : 'Not Available';
+  }
 });
 
 const providerId = computed(() => {
-  const plan = planDetail.value;  
+  const plan = planDetail.value;
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   } else if (plan && plan.provider_id) {
     return plan.provider_id;
-  }  else if (plan && plan.id) {
+  } else if (plan && plan.id) {
     return plan.id;
   }
   return null;
@@ -1744,12 +2163,12 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
   if (newValue && oldValue) {
       // Get the date part without the time from the newValue and oldValue
       const newDate = new Date(newValue).toISOString().split('T')[0];
-      const oldDate = new Date(oldValue).toISOString().split('T')[0];      
+      const oldDate = new Date(oldValue).toISOString().split('T')[0];
       // Compare the dates
       if (newDate !== oldDate) {
           calculateDueDates();
       }
-  }  
+  }
 });
 
 watch(() => props.quoteRequest, (newValue, oldValue) => {
@@ -1806,11 +2225,11 @@ watch(
 );
 
 // verify if master payment is paid
-const isMasterPaymentPaid = computed(() => {  
+const isMasterPaymentPaid = computed(() => {
   if (props.payments[0].payment_status_id===props.paymentStatusEnum.PAID) {
     return true;
   }
-  return false;  
+  return false;
 });
  
 let is_lacking_payment = ref(page.props?.bookPolicyDetails?.isLackingOfPayment || false);
@@ -1825,52 +2244,101 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
-      <template v-if="payments.length>0">
-        <div class="flex justify-between items-center gap-2" style="margin-left:auto">
+      <div class="flex gap-2">
+        <templete
+          v-if="can(permissionEnum.ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON)"
+        >
+          <template
+            v-if="proformaPayment?.payment_status_id == paymentStatusEnum.PAID"
+          >
+            <x-button
+              v-if="proformaPayment"
+              size="sm"
+              color="primary"
+              target="_blank"
+              @click="downloadProformaPayment"
+            >
+              <span class="border-b border-dotted"
+                >Download Proforma Payment Request</span
+              >
+            </x-button>
+          </template>
+          <template v-else>
+            <x-tooltip position="right">
+              <x-button
+                v-if="proformaPayment"
+                size="sm"
+                color="primary"
+                target="_blank"
+                @click="downloadProformaPayment"
+              >
+                <span class="border-b border-dotted"
+                  >Download Proforma Payment Request</span
+                >
+              </x-button>
+              <template #tooltip>
+                <span>{{
+                  paymentTooltipEnum.PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT
+                }}</span>
+              </template>
+            </x-tooltip>
+          </template>
+        </templete>
+        <template v-if="payments.length > 0">
+          <div class="flex justify-between items-center gap-2" style="margin-left:auto">
           <UpdateTotalPrice
             v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15"
             :quoteId="quoteRequest.id"
             :paymentCode = "payments[0].code"
-            :quoteType="quoteType" 
+            :quoteType="quoteType"
             :totalPrice="payments[0].total_price"
-            :totalPaidPrice="payments[0].total_amount+payments[0].discount_value"   
+            :totalPaidPrice="payments[0].total_amount+payments[0].discount_value"
           />
           <x-button
               v-if="can(permissionEnum.PaymentsCreate)"
               size="sm"
               color="emerald"
-              @click="addPaymentModal"          
+              @click="addPaymentModal"
             >
               Add Manual Payment
             </x-button>
           </div>
-      </template>
-      <template v-else>
-        <x-tooltip>
-          <x-button
-            v-if="can(permissionEnum.PaymentsCreate)"
-            size="sm"
-            color="emerald"
-            @click="addPaymentModal"          
-          >
-          <span class="border-b border-dotted">Add Manual Payment</span>
-          </x-button>
-          <template #tooltip>
-              <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT }}</span>
-          </template>
-        </x-tooltip>  
-      </template>
+        </template>
+        <template v-else>
+          <x-tooltip>
+            <x-button
+              v-if="can(permissionEnum.PaymentsCreate)"
+              size="sm"
+              color="emerald"
+              @click="addPaymentModal"
+            >
+              <span class="border-b border-dotted">Add Manual Payment</span>
+            </x-button>
+            <template #tooltip>
+              <span>{{
+                paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
+              }}</span>
+            </template>
+          </x-tooltip>
+        </template>
+      </div>
     </div>
     <div class="vue3-easy-data-table tablefixed custom-height">
-      <div class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height">
+      <div
+        class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height"
+      >
         <table>
           <thead class="vue3-easy-data-table__header">
             <tr>
               <th class="relative group text-center">
                 <span class="border-b border-dotted">Payment No</span>
-                <div class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/2 right-full -translate-x-1/2 max-w-xs">
+                <div
+                  class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/2 right-full -translate-x-1/2 max-w-xs"
+                >
                   <div class="dark">
-                    <div class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs">
+                    <div
+                      class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs"
+                    >
                       <span data-v-d0063695="" class="custom-tooltip-content">
                         {{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_NO }}
                       </span>
@@ -1882,7 +2350,9 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 <x-tooltip>
                   <span class="border-b border-dotted">Payment Ref ID</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_REF_ID }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_REF_ID
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -1890,7 +2360,9 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 <x-tooltip>
                   <span class="border-b border-dotted">Collection Date</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTION_DATE }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTION_DATE
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -1898,7 +2370,9 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 <x-tooltip>
                   <span class="border-b border-dotted">Due Date</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DUE_DATE }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_DUE_DATE
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -1906,7 +2380,9 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 <x-tooltip>
                   <span class="border-b border-dotted">Payment Method</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_METHOD }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_METHOD
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -1914,7 +2390,9 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 <x-tooltip>
                   <span class="border-b border-dotted">Total Price</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_PRICE }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_PRICE
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -1922,7 +2400,9 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 <x-tooltip>
                   <span class="border-b border-dotted">Discount Value</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DISCOUNT_VALUE }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_DISCOUNT_VALUE
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -1930,7 +2410,9 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 <x-tooltip>
                   <span class="border-b border-dotted">Total Amount</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_AMOUNT }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_AMOUNT
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -1938,7 +2420,9 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 <x-tooltip>
                   <span class="border-b border-dotted">Collected Amount</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTED_AMOUNT }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTED_AMOUNT
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -1946,132 +2430,211 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 <x-tooltip>
                   <span class="border-b border-dotted">Payment Status</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_STATUS }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_STATUS
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
               <th class="inner-th-class">
                 <x-tooltip>
-                  <span class="border-b border-dotted">Payment Allocation Status</span>
+                  <span class="border-b border-dotted"
+                    >Payment Allocation Status</span
+                  >
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
-              <th style="min-width: 200px;">
+              <th style="min-width: 200px">
                 <x-tooltip>
                   <span class="border-b border-dotted">Action</span>
                   <template #tooltip>
-                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ACTION }}</span>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_ACTION
+                    }}</span>
                   </template>
                 </x-tooltip>
               </th>
             </tr>
-          </thead>         
-          
+          </thead>
+
           <tbody class="vue3-easy-data-table__body">
-
-            <template  v-for="(item,index) in payments" :key="item.code">
-              <template v-if="item.total_payments>0">
-              <tr>
-                <td class="text-center">
-                  <span
-                    class="expand-pointer"
-                    @click="isExpandedSplitPayments[index]=!isExpandedSplitPayments[index]"
+            <template v-for="(item, index) in payments" :key="item.code">
+              <template v-if="item.total_payments > 0">
+                <tr>
+                  <td class="text-center">
+                    <span
+                      class="expand-pointer"
+                      @click="
+                        isExpandedSplitPayments[index] =
+                          !isExpandedSplitPayments[index]
+                      "
+                    >
+                      {{ isExpandedSplitPayments[index] ? '&and;' : '&or;' }}
+                    </span>
+                  </td>
+                  <td>{{ item.code }}</td>
+                  <td>{{ formatDate(item.collection_date) }}</td>
+                  <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
+                  <td>{{ item.payment_method.name }}</td>
+                  <td>{{ formatAmount(item.total_price) }}</td>
+                  <td>{{ formatAmount(item.discount_value) }}</td>
+                  <td>{{ formatAmount(item.total_amount) }}</td>
+                  <td>{{ formatAmount(item.captured_amount) }}</td>
+                  <td>{{ formatString(item.payment_status.text) }}</td>
+                  <td>
+                    {{
+                      item.payment_allocation_status !== null
+                        ? formatString(item.payment_allocation_status)
+                        : ''
+                    }}
+                  </td>
+                  <td>
+                    <div class="flex gap-2">
+                      <template v-if="is_lacking_payment">
+                        <x-tooltip position="left" class="arrow-r">
+                          <x-badge size="xs" color="error" outlined offset-x="-8" offset-y="-10">
+                            <x-button 
+                              v-if="can(permissionEnum.PaymentsEdit)" 
+                              size="xs" 
+                              color="primary" 
+                              outlined 
+                              @click="editPaymentModal(item, 0, 0, 0)"
+                            >
+                              Edit
+                            </x-button> 
+                            <template #content>!</template>
+                          </x-badge>
+                          <template #tooltip>
+                            Action Needed: Please revise payment <br /> details to reflect plan changes.
+                          </template>
+                        </x-tooltip>
+                      </template>
+                      <template v-else>
+                        <x-button 
+                          v-if="can(permissionEnum.PaymentsEdit)" 
+                          size="xs" 
+                          color="primary" 
+                          outlined 
+                          @click="editPaymentModal(item, 0, 0, 0)"
+                        >
+                          Edit 
+                        </x-button> 
+                      </template>
+                      <template v-if="can(permissionEnum.ApprovePayments)">
+                        <x-button
+                          v-if="
+                            getCaptureOption(item) === 'capture' &&
+                            getCaptureValidation(item)
+                          "
+                          size="xs"
+                          color="orange"
+                          outlined
+                          @click="
+                            getCaptureValidation(item)
+                              ? editPaymentModal(item, 0, 0, 1)
+                              : alertCapture(item)
+                          "
+                        >
+                          Capture
+                        </x-button>
+                        <x-button
+                          v-if="
+                            getCaptureOption(item) === 'approve' &&
+                            getCaptureValidation(item)
+                          "
+                          size="xs"
+                          color="orange"
+                          outlined
+                          @click="
+                            getCaptureValidation(item)
+                              ? editPaymentModal(item, 0, 0, 2)
+                              : alertCapture(item)
+                          "
+                        >
+                          Approve
+                        </x-button>
+                      </template>
+                    </div>
+                  </td>
+                </tr>
+                <template v-if="isExpandedSplitPayments[index]">
+                  <tr
+                    v-for="splitPayment in item.payment_splits"
+                    :key="splitPayment.id"
                   >
-                    {{ isExpandedSplitPayments[index] ? '&and;' : '&or;' }}
-                  </span>
-                </td>
-                <td>{{ item.code }}</td>             
-                <td>{{ formatDate(item.collection_date) }}</td>
-                <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
-                <td>{{ item.payment_method.name }}</td>
-                <td>{{ formatAmount(item.total_price) }}</td>
-                <td>{{ formatAmount(item.discount_value) }}</td>
-                <td>{{ formatAmount(item.total_amount) }}</td>
-                <td>{{ formatAmount(item.captured_amount) }}</td>
-                <td>{{ formatString(item.payment_status.text) }}</td>
-                <td>{{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}</td>             
-                <td>
-                  <div class="flex gap-2">
-                    <template v-if="is_lacking_payment">
-                      <x-tooltip position="left" class="arrow-r">
-                        <x-badge size="xs" color="error" outlined offset-x="-8" offset-y="-10">
-                          <x-button 
-                            v-if="can(permissionEnum.PaymentsEdit)" 
-                            size="xs" 
-                            color="primary" 
-                            outlined 
-                            @click="editPaymentModal(item, 0, 0, 0)"
-                          >
-                            Edit
-                          </x-button> 
-                          <template #content>!</template>
-                        </x-badge>
-                        <template #tooltip>
-                          Action Needed: Please revise payment <br /> details to reflect plan changes.
-                        </template>
-                      </x-tooltip>
-                    </template>
-                    <template v-else>
-                      <x-button 
-                        v-if="can(permissionEnum.PaymentsEdit)" 
-                        size="xs" 
-                        color="primary" 
-                        outlined 
-                        @click="editPaymentModal(item, 0, 0, 0)"
+                    <td class="text-center">{{ splitPayment.sr_no }}</td>
+                    <td></td>
+                    <td>{{ formatDate(splitPayment.due_date) }}</td>
+                    <td>{{ formatDate(splitPayment.due_date) }}</td>
+                    <td>{{ splitPayment.payment_method.name }}</td>
+                    <td></td>
+                    <td></td>
+                    <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
+                    <td>
+                      {{
+                        splitPayment.collection_amount > 0
+                          ? formatAmount(splitPayment.collection_amount)
+                          : ''
+                      }}
+                    </td>
+                    <td>
+                      {{ formatString(splitPayment.payment_status.text) }}
+                    </td>
+                    <td>
+                      {{
+                        splitPayment.payment_allocation_status !== null
+                          ? formatString(splitPayment.payment_allocation_status)
+                          : ''
+                      }}
+                    </td>
+                    <td>
+                      <x-button
+                        size="xs"
+                        color="primary"
+                        @click="
+                          editPaymentModal(
+                            item,
+                            splitPayment.id,
+                            splitPayment.sr_no,
+                            0,
+                          )
+                        "
+                        outlined
+                        >View</x-button
                       >
-                        Edit 
-                      </x-button> 
-                    </template>
-                    <template v-if="can(permissionEnum.ApprovePayments)">
-                      <x-button 
-                        v-if="getCaptureOption(item) === 'capture' && getCaptureValidation(item)" 
-                        size="xs" 
-                        color="orange" 
-                        outlined 
-                        @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 1) : alertCapture(item)"
+                      <x-button
+                        v-if="splitPayment.payment_method.code == 'CC'"
+                        class="ml-2"
+                        size="xs"
+                        color="emerald"
+                        @click.prevent="
+                          generateCCLink(
+                            splitPayment.code,
+                            splitPayment.sr_no,
+                            splitPayment.payment_status_id,
+                          )
+                        "
+                        outlined
+                        >Copy Payment Link</x-button
                       >
-                        Capture
-                      </x-button>
-                      <x-button 
-                        v-if="getCaptureOption(item) === 'approve' && getCaptureValidation(item)" 
-                        size="xs" 
-                        color="orange" 
-                        outlined 
-                        @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 2) : alertCapture(item)"
-                      >
-                        Approve
-                      </x-button>
-                    </template>               
-                  </div>
-                </td>                 
-              </tr>
-              <template v-if="isExpandedSplitPayments[index]">
-              <tr v-for="splitPayment in item.payment_splits" :key="splitPayment.id">
-                <td class="text-center">{{ splitPayment.sr_no }}</td>
-                <td></td>
-                <td>{{ formatDate(splitPayment.due_date) }}</td>
-                <td>{{ formatDate(splitPayment.due_date) }}</td>
-                <td>{{ splitPayment.payment_method.name }}</td>
-                <td></td>
-                <td></td>
-                <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
-                <td>{{ (splitPayment.collection_amount>0) ? formatAmount(splitPayment.collection_amount):'' }}</td>
-                <td>{{ formatString(splitPayment.payment_status.text) }}</td>
-                <td>{{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}</td>
-                <td>
-                  <x-button size="xs" color="primary" @click="editPaymentModal(item,splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
-                  <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="generateCCLink(splitPayment.code,splitPayment.sr_no,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>                
-                </td>
-              </tr>
+                    </td>
+                  </tr></template
+                >
+              </template>
             </template>
-          </template>
-        </template>
-
           </tbody>
         </table>
-        <div v-if="!payments.length>0" data-v-32683533="" class="vue3-easy-data-table__message">No Available Data</div>
+        <div
+          v-if="!payments.length > 0"
+          data-v-32683533=""
+          class="vue3-easy-data-table__message"
+        >
+          No Available Data
+        </div>
       </div>
     </div>
 
@@ -2079,301 +2642,385 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
       <template #header>
         <span class=" ">
           <template v-if="isCreditCardView">Capture Transaction</template>
-          <template v-else-if="isCreditApprovalView">Approve Transaction</template>
+          <template v-else-if="isCreditApprovalView"
+            >Approve Transaction</template
+          >
           <template v-else-if="isViewEnabled">View Payment</template>
           <template v-else>
-          {{
-            paymentMethodsForm.status == 'create'
-              ? 'Add Manual Payment'
-              : 'Edit Payment'
-          }}
-                
-        </template>
+            {{
+              paymentMethodsForm.status == 'create'
+                ? 'Add Manual Payment'
+                : 'Edit Payment'
+            }}
+          </template>
         </span>
-      </template>      
+      </template>
       <x-form @submit="addPayment" :auto-focus="false">
-        <div class="w-full grid md:grid-cols-2 gap-3">          
+        <div class="w-full grid md:grid-cols-2 gap-3">
           <div>
             <ToolTip
-             title="COLLECTION DATE"
-            :tooltip="paymentTooltipEnum.COLLECTION_DATE"
-            :required="!isFieldReadonly"
-            />            
+              title="COLLECTION DATE"
+              :tooltip="paymentTooltipEnum.COLLECTION_DATE"
+              :required="!isFieldReadonly"
+            />
             <x-field class="w-full">
-                <span v-if="isFieldReadonly">
-                  {{ formatDate(paymentMethodsForm.collection_date)}}
-                </span>
-                <DatePicker
+              <span v-if="isFieldReadonly">
+                {{ formatDate(paymentMethodsForm.collection_date) }}
+              </span>
+              <DatePicker
                 v-if="!isFieldReadonly"
-                name="collection_date"                
+                name="collection_date"
                 v-model="paymentMethodsForm.collection_date"
-                :rules="[rules.isRequired]"                
+                :rules="[rules.isRequired]"
               />
             </x-field>
           </div>
           <div>
-          <x-tooltip>
-            <span class="border-b-2 border-dotted border-black text-sm">TOTAL PRICE</span>
-            <template #tooltip>
-               <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
-            </template>
-          </x-tooltip> 
-             <x-field class="w-full">
+            <x-tooltip>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >TOTAL PRICE</span
+              >
+              <template #tooltip>
+                <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
+              </template>
+            </x-tooltip>
+            <x-field class="w-full">
               <span v-if="isFieldReadonly">
                 {{ formatAmount(totalPrice) }}
-              </span>              
+              </span>
               <x-input
-                  v-if="!isFieldReadonly"
-                  class="w-full"
-                  :value="formatAmount(totalPrice)"
-                  :disabled="true"
-                />
-            </x-field>            
-        </div>
-          <div>
-            <ToolTip
-            title="COLLECTED BY"
-            :tooltip="paymentTooltipEnum.COLLECTED_BY"
-            :required="!isFieldReadonly"
-            />          
-          <x-field class="w-full">
-            <span v-if="isFieldReadonly">
-              {{  collectionTypes.find(item => item.value === paymentMethodsForm.collection_type).label }}
-            </span>
-            <select
                 v-if="!isFieldReadonly"
-                class="custom-select"
-                v-model="paymentMethodsForm.collection_type"                
-                :rules="[rules.isRequired]"
-                @change="handleCollectionTypeChange"
-                :disabled="isTotalPriceUpdated"
-                >
-                <template v-for="option in collectionTypes" :key="option.value">
-                    <option :value="option.value" :title="option.tooltip" >{{ option.label }}</option>                
-                </template>
-            </select>
+                class="w-full"
+                :value="formatAmount(totalPrice)"
+                :disabled="true"
+              />
             </x-field>
           </div>
           <div>
-          <x-tooltip>
-            <span class="border-b-2 border-dotted border-black text-sm">PROVIDER NAME</span>           
-            <template #tooltip>
-                <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>
-                <span v-else >{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
-            </template>    
-          </x-tooltip>
-          <x-field class="w-full">
+            <ToolTip
+              title="COLLECTED BY"
+              :tooltip="paymentTooltipEnum.COLLECTED_BY"
+              :required="!isFieldReadonly"
+            />
+            <x-field class="w-full">
+              <span v-if="isFieldReadonly">
+                {{
+                  collectionTypes.find(
+                    item => item.value === paymentMethodsForm.collection_type,
+                  ).label
+                }}
+              </span>
+              <select
+                v-if="!isFieldReadonly"
+                class="custom-select"
+                v-model="paymentMethodsForm.collection_type"
+                :rules="[rules.isRequired]"
+                @change="handleCollectionTypeChange"
+                :disabled="isTotalPriceUpdated"
+              >
+                <template v-for="option in collectionTypes" :key="option.value">
+                  <option :value="option.value" :title="option.tooltip">
+                    {{ option.label }}
+                  </option>
+                </template>
+              </select>
+            </x-field>
+          </div>
+          <div>
+            <x-tooltip>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >PROVIDER NAME</span
+              >
+              <template #tooltip>
+                <span v-if="isFieldReadonly">{{
+                  paymentTooltipEnum.PROVIDER_NAME_VIEW
+                }}</span>
+                <span v-else>{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
+              </template>
+            </x-tooltip>
+            <x-field class="w-full">
               <span v-if="isFieldReadonly">
                 {{ providerName }}
               </span>
               <x-input
-                  v-if="!isFieldReadonly"
-                  class="w-full"
-                  :value="providerName"
-                  :disabled="true"
-                />
+                v-if="!isFieldReadonly"
+                class="w-full"
+                :value="providerName"
+                :disabled="true"
+              />
             </x-field>
-          </div>  
+          </div>
 
           <div>
             <ToolTip
-             title="FREQUENCY"
-            :tooltip="paymentTooltipEnum.FREQUENCY"
-            :required="!isFieldReadonly"
-            />          
-           <x-field class="w-full">  
-              <span v-if="isFieldReadonly">                
-                {{ frequencyTypes.find(item => item.value === paymentMethodsForm.frequency).label }}  
-              </span>            
+              title="FREQUENCY"
+              :tooltip="paymentTooltipEnum.FREQUENCY"
+              :required="!isFieldReadonly"
+            />
+            <x-field class="w-full">
+              <span v-if="isFieldReadonly">
+                {{
+                  frequencyTypes.find(
+                    item => item.value === paymentMethodsForm.frequency,
+                  ).label
+                }}
+              </span>
               <select
-                  v-if="!isFieldReadonly"
-                  class="custom-select"
-                  v-model="paymentMethodsForm.frequency"
-                  :rules="[rules.isRequired]"
-                  @change="handleFrequencyChange"
-                  >
-                  <template v-for="option in frequencyTypes" :key="option.value">
-                      <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
-                  </template>
+                v-if="!isFieldReadonly"
+                class="custom-select"
+                v-model="paymentMethodsForm.frequency"
+                :rules="[rules.isRequired]"
+                @change="handleFrequencyChange"
+              >
+                <template v-for="option in frequencyTypes" :key="option.value">
+                  <option :value="option.value" :title="option.tooltip">
+                    {{ option.label }}
+                  </option>
+                </template>
               </select>
             </x-field>
           </div>
 
           <div>
-          <x-tooltip>
-            <span class="border-b-2 border-dotted border-black text-sm">PLAN NAME</span>
-            <template #tooltip>
-                <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PLAN_NAME_VIEW }}</span>
-                <span v-else >{{ paymentTooltipEnum.PLAN_NAME }}</span>
-            </template>            
-          </x-tooltip> 
-          <x-field class="w-full">
-              <span v-if="isFieldReadonly">                
+            <x-tooltip>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >PLAN NAME</span
+              >
+              <template #tooltip>
+                <span v-if="isFieldReadonly">{{
+                  paymentTooltipEnum.PLAN_NAME_VIEW
+                }}</span>
+                <span v-else>{{ paymentTooltipEnum.PLAN_NAME }}</span>
+              </template>
+            </x-tooltip>
+            <x-field class="w-full">
+              <span v-if="isFieldReadonly">
                 {{ getPlanName }}
               </span>
               <x-input
-                  v-if="!isFieldReadonly"
-                  class="w-full"
-                  :value="getPlanName"
-                  :disabled="true"
-                />
+                v-if="!isFieldReadonly"
+                class="w-full"
+                :value="getPlanName"
+                :disabled="true"
+              />
             </x-field>
-          </div> 
+          </div>
 
           <div>
             <ToolTip
-               title="PAYMENT NO"
+              title="PAYMENT NO"
               :tooltip="paymentTooltipEnum.PAYMENT_NO"
               :required="!isFieldReadonly"
-              />
-           <x-field class="w-full">
+            />
+            <x-field class="w-full">
               <span v-if="isFieldReadonly">
                 {{ paymentMethodsForm.payment_no }}
-              </span>              
+              </span>
               <select
-                  v-if="!isFieldReadonly"
-                  class="custom-select"
-                  v-model="paymentMethodsForm.payment_no"
-                  :rules="[rules.isRequired]"
-                  :disabled="!isPaymentNoEnabled"
-                  @change="calculatePaymentBreakup()"
-                  >
-                  <template v-for="option in totalPayments" :key="option.value">
-                      <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
-                  </template>
+                v-if="!isFieldReadonly"
+                class="custom-select"
+                v-model="paymentMethodsForm.payment_no"
+                :rules="[rules.isRequired]"
+                :disabled="!isPaymentNoEnabled"
+                @change="calculatePaymentBreakup()"
+              >
+                <template v-for="option in totalPayments" :key="option.value">
+                  <option :value="option.value" :title="option.tooltip">
+                    {{ option.label }}
+                  </option>
+                </template>
               </select>
             </x-field>
-           </div>
+          </div>
           <div>
-          <x-tooltip>
-            <span class="border-b-2 border-dotted border-black text-sm">PAYMENT STATUS</span>            
-            <template #tooltip>
+            <x-tooltip>
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >PAYMENT STATUS</span
+              >
+              <template #tooltip>
                 <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
-            </template>
-          </x-tooltip>
-          <x-field class="w-full">
+              </template>
+            </x-tooltip>
+            <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                {{ formatString(masterPaymentStatus) }}        
+                {{ formatString(masterPaymentStatus) }}
               </span>
               <x-input
-                  v-if="!isFieldReadonly"
-                  class="w-full"
-                  :value="formatString(masterPaymentStatus)"
-                  :disabled="true"
-                />
+                v-if="!isFieldReadonly"
+                class="w-full"
+                :value="formatString(masterPaymentStatus)"
+                :disabled="true"
+              />
             </x-field>
           </div>
 
           <div>
             <ToolTip
               title="CREDIT APPROVAL"
-              :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"              
+              :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"
             />
             <x-field class="w-full">
-              <span v-if="isFieldReadonly">                
-                {{  creditApprovalReasons.find(item => item.value === paymentMethodsForm.credit_approval)?.label || 'N/A' }}
+              <span v-if="isFieldReadonly">
+                {{
+                  creditApprovalReasons.find(
+                    item => item.value === paymentMethodsForm.credit_approval,
+                  )?.label || 'N/A'
+                }}
               </span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
-                <span v-if="paymentMethodsForm.credit_approval!=''" class="close-icon"  @mousedown.stop="resetCreditApproval()">
-                &#10006; 
-              </span>              
-              <select
+                <span
+                  v-if="paymentMethodsForm.credit_approval != ''"
+                  class="close-icon"
+                  @mousedown.stop="resetCreditApproval()"
+                >
+                  &#10006;
+                </span>
+                <select
                   class="custom-select"
                   v-model="paymentMethodsForm.credit_approval"
                   @change="handleApprovalReasonChange"
                   :disabled="isTotalPriceUpdated"
+                >
+                  <template
+                    v-for="option in creditApprovalReasons"
+                    :key="option.value"
                   >
-                  <template v-for="option in creditApprovalReasons" :key="option.value">
-                      <option :value="option.value" :title="option.tooltip">
-                        {{ option.label }}                        
-                      </option>                
+                    <option :value="option.value" :title="option.tooltip">
+                      {{ option.label }}
+                    </option>
                   </template>
-              </select>              
-            </div>
+                </select>
+              </div>
             </x-field>
-          </div>         
-          
-          <x-field v-if="isCustomReasonEnabled" label="CUSTOM REASON" required class="w-full">
-            <span v-if="isFieldReadonly">{{ paymentMethodsForm.custom_reason }}</span>
+          </div>
+
+          <x-field
+            v-if="isCustomReasonEnabled"
+            label="CUSTOM REASON"
+            required
+            class="w-full"
+          >
+            <span v-if="isFieldReadonly">{{
+              paymentMethodsForm.custom_reason
+            }}</span>
             <x-input
-                v-if="!isFieldReadonly"
-                class="w-full"
-                v-model="paymentMethodsForm.custom_reason"
-                :rules="[rules.isRequired]"                
-              />
-          </x-field>          
+              v-if="!isFieldReadonly"
+              class="w-full"
+              v-model="paymentMethodsForm.custom_reason"
+              :rules="[rules.isRequired]"
+            />
+          </x-field>
           <div v-if="showDiscountOptions">
             <x-tooltip>
-              <span class="border-b-2 border-dotted border-black text-sm">DISCOUNT APPLICABLE (DISCOUNT TYPE)</span> 
+              <span class="border-b-2 border-dotted border-black text-sm"
+                >DISCOUNT APPLICABLE (DISCOUNT TYPE)</span
+              >
               <template #tooltip>
-                  <span v-if="isFieldReadonly">{{ paymentTooltipEnum.DISCOUNT_APPLICABLE_VIEW }}</span>
-                  <span v-else >{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
+                <span v-if="isFieldReadonly">{{
+                  paymentTooltipEnum.DISCOUNT_APPLICABLE_VIEW
+                }}</span>
+                <span v-else>{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
               </template>
-            </x-tooltip>            
+            </x-tooltip>
             <x-field class="w-full">
-            <span v-if="isFieldReadonly">              
-              {{ discountTypeLabel }}          
-            </span>
+              <span v-if="isFieldReadonly">
+                {{ discountTypeLabel }}
+              </span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
-                <span v-if="paymentMethodsForm.discount!=''" class="close-icon"  @mousedown.stop="resetDiscount()">
-                &#10006; 
-                </span> 
-              <select
+                <span
+                  v-if="paymentMethodsForm.discount != ''"
+                  class="close-icon"
+                  @mousedown.stop="resetDiscount()"
+                >
+                  &#10006;
+                </span>
+                <select
                   class="custom-select"
                   v-model="paymentMethodsForm.discount"
                   @change="handleDiscountChange"
-                  >
+                >
                   <template v-for="option in discountTypes" :key="option.value">
-                      <option :value="option.value" :title="option.tooltip">
-                        {{ option.label }}                        
-                      </option>                
+                    <option :value="option.value" :title="option.tooltip">
+                      {{ option.label }}
+                    </option>
                   </template>
-              </select>
+                </select>
               </div>
-            </x-field>            
-          </div>
-          
-          <div v-if="isDiscountReasonEnabled" class="">
-            <ToolTip
-               title="DISCOUNT REASON"
-              :tooltip="(isFieldReadonly)? discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).tooltip: paymentTooltipEnum.DISCOUNT_REASON"
-              :required="!isFieldReadonly"
-            />          
-            <x-field class="w-full">
-              <span v-if="isFieldReadonly">                 
-                {{ discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).label }}
-              </span>
-              <select
-                  v-if="!isFieldReadonly"
-                  :class="{'custom-select-error': isDiscountReasonError}"
-                  class="custom-select"
-                  v-model="paymentMethodsForm.discount_reason"
-                  :rules="[rules.isRequired]"
-                  @change="handleDiscountReasonChange"                  
-                  >
-                  <template v-for="option in discountReasons" :key="option.value">
-                      <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
-                  </template>
-              </select>
-              <p v-if="isDiscountReasonError" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
             </x-field>
           </div>
-          <x-field v-if="isCustomDiscountReasonEnabled" label="CUSTOM DISCOUNT REASON" :required="!isFieldReadonly" class="w-full">
-            <span v-if="isFieldReadonly">{{ paymentMethodsForm.discount_custom_reason }}</span>
-            <x-input
-                v-if="!isFieldReadonly"
-                class="w-full"
-                v-model="paymentMethodsForm.discount_custom_reason"
-                :rules="[rules.isRequired]"                
-              />
-          </x-field>
-          <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'" class="">
+
+          <div v-if="isDiscountReasonEnabled" class="">
             <ToolTip
-               title="DISCOUNT PROOF"
-              :tooltip="(isFieldReadonly)? paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_VIEW: paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_TITLE"
+              title="DISCOUNT REASON"
+              :tooltip="
+                isFieldReadonly
+                  ? discountReasons.find(
+                      item => item.value === paymentMethodsForm.discount_reason,
+                    ).tooltip
+                  : paymentTooltipEnum.DISCOUNT_REASON
+              "
               :required="!isFieldReadonly"
-            />          
-            <x-field v-if="!isFieldReadonly" class="w-full">             
+            />
+            <x-field class="w-full">
+              <span v-if="isFieldReadonly">
+                {{
+                  discountReasons.find(
+                    item => item.value === paymentMethodsForm.discount_reason,
+                  ).label
+                }}
+              </span>
+              <select
+                v-if="!isFieldReadonly"
+                :class="{ 'custom-select-error': isDiscountReasonError }"
+                class="custom-select"
+                v-model="paymentMethodsForm.discount_reason"
+                :rules="[rules.isRequired]"
+                @change="handleDiscountReasonChange"
+              >
+                <template v-for="option in discountReasons" :key="option.value">
+                  <option :value="option.value" :title="option.tooltip">
+                    {{ option.label }}
+                  </option>
+                </template>
+              </select>
+              <p
+                v-if="isDiscountReasonError"
+                class="text-sm text-red-500 dark:text-red-400 mt-1"
+              >
+                This field is required
+              </p>
+            </x-field>
+          </div>
+          <x-field
+            v-if="isCustomDiscountReasonEnabled"
+            label="CUSTOM DISCOUNT REASON"
+            :required="!isFieldReadonly"
+            class="w-full"
+          >
+            <span v-if="isFieldReadonly">{{
+              paymentMethodsForm.discount_custom_reason
+            }}</span>
+            <x-input
+              v-if="!isFieldReadonly"
+              class="w-full"
+              v-model="paymentMethodsForm.discount_custom_reason"
+              :rules="[rules.isRequired]"
+            />
+          </x-field>
+          <div
+            v-if="isDiscountEnabled && paymentMethodsForm.discount != 'N/A'"
+            class=""
+          >
+            <ToolTip
+              title="DISCOUNT PROOF"
+              :tooltip="
+                isFieldReadonly
+                  ? paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_VIEW
+                  : paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_TITLE
+              "
+              :required="!isFieldReadonly"
+            />
+            <x-field v-if="!isFieldReadonly" class="w-full">
               <div class="relative group text-center">
                 <span>
                   <Dropzone
@@ -2384,12 +3031,16 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                     :max-files="discountProofDocument.max_files"
                     :max-size="discountProofDocument.max_size"
                     :loading="documentForm.processing"
-                    @change="uploadDocument(discountProofDocument, $event, 0)"                  
+                    @change="uploadDocument(discountProofDocument, $event, 0)"
                   />
                 </span>
-                <div class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/4 right-full -translate-x-1/2 max-w-xs">
+                <div
+                  class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/4 right-full -translate-x-1/2 max-w-xs"
+                >
                   <div class="dark">
-                    <div class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs">
+                    <div
+                      class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs"
+                    >
                       <span data-v-d0063695="" class="custom-tooltip-content">
                         {{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}
                       </span>
@@ -2397,92 +3048,143 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                   </div>
                 </div>
               </div>
-                <p v-if="isDiscountDocumentNotUploaded" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
+              <p
+                v-if="isDiscountDocumentNotUploaded"
+                class="text-sm text-red-500 dark:text-red-400 mt-1"
+              >
+                This field is required
+              </p>
             </x-field>
-            <div v-for="fileData in discountDocumentModel[0]" :key="fileData.id">
-              <span style="display: flex; align-items: center;">                        
-              <span 
+            <div
+              v-for="fileData in discountDocumentModel[0]"
+              :key="fileData.id"
+            >
+              <span style="display: flex; align-items: center">
+                <span
                   :key="fileData.id"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                  style="flex: 1; text-decoration: none; cursor: pointer;"
+                  style="flex: 1; text-decoration: none; cursor: pointer"
                   @click="openInnerModal(fileData.id)"
                 >
                   {{ fileData.original_name }}
-              </span>
+                </span>
                 <span
                   class="delete-pointer"
                   @click="deleteDocument(fileData.doc_name, 0)"
-                  v-if="!isFieldReadonly" 
+                  v-if="!isFieldReadonly"
                 >
-                &#10006; 
+                  &#10006;
                 </span>
               </span>
             </div>
           </div>
-            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'">             
-              <ToolTip
-                  title="DISCOUNT VALUE"
-                  :tooltip="paymentTooltipEnum.DISCOUNT_VALUE"
-                  class="w-3/6"
-                  :required="!isFieldReadonly"                
-                />                            
-              <x-field class="w-full">
-                <span v-if="isFieldReadonly">                  
-                  {{ formatAmount(discountValue) }}
-                </span>
-                <x-input
-                    v-if="!isFieldReadonly"                  
-                    class="w-full"
-                    :class="{'custom-select-error': isDiscountError}"
-                    v-model="discountValue"
-                    name="discount_value"                    
-                    @keyup="calculateTotalAmount()"                   
-                />                
-                <sup v-if="isDiscountError" class="text-sm text-red-500 dark:text-red-400">{{ discountError }}</sup>
-              </x-field>
-            </div>            
-            
-            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'">            
-              <ToolTip
-                title="TOTAL AMOUNT"
-                :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"                
+          <div v-if="isDiscountEnabled && paymentMethodsForm.discount != 'N/A'">
+            <ToolTip
+              title="DISCOUNT VALUE"
+              :tooltip="paymentTooltipEnum.DISCOUNT_VALUE"
+              class="w-3/6"
+              :required="!isFieldReadonly"
+            />
+            <x-field class="w-full">
+              <span v-if="isFieldReadonly">
+                {{ formatAmount(discountValue) }}
+              </span>
+              <x-input
+                v-if="!isFieldReadonly"
+                class="w-full"
+                :class="{ 'custom-select-error': isDiscountError }"
+                v-model="discountValue"
+                name="discount_value"
+                @keyup="calculateTotalAmount()"
               />
-              <x-field class="w-full">
-                <span v-if="isFieldReadonly">                  
-                  {{ formatAmount(totalAmount)}}            
-                </span>
-                <x-input
-                    v-if="!isFieldReadonly"
-                    class="w-full"
-                    :value="formatAmount(totalAmount)"
-                    :disabled="true"
-                  />
-              </x-field>
-            </div>          
+              <sup
+                v-if="isDiscountError"
+                class="text-sm text-red-500 dark:text-red-400"
+                >{{ discountError }}</sup
+              >
+            </x-field>
+          </div>
+
+          <div v-if="isDiscountEnabled && paymentMethodsForm.discount != 'N/A'">
+            <ToolTip
+              title="TOTAL AMOUNT"
+              :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"
+            />
+            <x-field class="w-full">
+              <span v-if="isFieldReadonly">
+                {{ formatAmount(totalAmount) }}
+              </span>
+              <x-input
+                v-if="!isFieldReadonly"
+                class="w-full"
+                :value="formatAmount(totalAmount)"
+                :disabled="true"
+              />
+            </x-field>
+          </div>
         </div>
         <x-divider class="mb-4 mt-10" />
-        
-        <div v-if="isDowngradeFrequencyError" class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500" role="alert">
-          <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-          </svg>
-          <div>
-            The system has detected a discrepancy. You cannot downgrade the frequency of the payment. Some payments are already paid.
-          </div>
-        </div>
-        
 
-        <div v-if="isPaymentCalculationError" class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500" role="alert">
-          <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+        <div
+          v-if="isDowngradeFrequencyError"
+          class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500"
+          role="alert"
+        >
+          <svg
+            class="flex-shrink-0 inline w-4 h-4 mr-3"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+            />
           </svg>
           <div>
-            The system has detected a discrepancy. Before you hit 'Add Manual Payment,' please check the each payment transaction. If you spot any discrepancies, make the necessary adjustments. Once everything lines up, you're good to proceed.	
+            The system has detected a discrepancy. You cannot downgrade the
+            frequency of the payment. Some payments are already paid.
           </div>
         </div>
-        <div v-if="isFileError" class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500" role="alert">
-          <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+
+        <div
+          v-if="isPaymentCalculationError"
+          class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500"
+          role="alert"
+        >
+          <svg
+            class="flex-shrink-0 inline w-4 h-4 mr-3"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+            />
+          </svg>
+          <div>
+            The system has detected a discrepancy. Before you hit 'Add Manual
+            Payment,' please check the each payment transaction. If you spot any
+            discrepancies, make the necessary adjustments. Once everything lines
+            up, you're good to proceed.
+          </div>
+        </div>
+        <div
+          v-if="isFileError"
+          class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500"
+          role="alert"
+        >
+          <svg
+            class="flex-shrink-0 inline w-4 h-4 mr-3"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+            />
           </svg>
           <div>
             {{ fileErrorMessage }}
@@ -2490,146 +3192,210 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
         </div>
 
         <div class="w-full grid">
-          <!-- Header -->          
+          <!-- Header -->
           <div class="mb-3">
             <h3>Payment Schedule</h3>
           </div>
           <div class="flex w-full">
             <div class="w-1/6 px-2 text-center">
               <span class="relative group text-sm">
-                <span class="border-b-2 border-dotted border-black text-sm">PAYMENT NO</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
-                  <div class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/2 right-full -translate-x-1/2 max-w-xs">
+                <span class="border-b-2 border-dotted border-black text-sm"
+                  >PAYMENT NO</span
+                >
+                <sup
+                  v-if="!isViewEnabled && !isCreditApprovalView"
+                  class="text-red-500"
+                  >*</sup
+                >
+                <div
+                  class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/2 right-full -translate-x-1/2 max-w-xs"
+                >
                   <div class="dark">
-                    <div class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border  border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs">
-                      <span data-v-d0063695="" >
+                    <div
+                      class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs"
+                    >
+                      <span data-v-d0063695="">
                         {{ paymentTooltipEnum.PAYMENT_NO_2 }}
                       </span>
                     </div>
                   </div>
-              </div>
+                </div>
               </span>
             </div>
             <div class="w-1/5 px-2">
               <x-tooltip>
-                <span class="text-sm  ">
-                  <span class="border-b-2 border-dotted border-black text-sm">PAYMENT METHOD</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
+                <span class="text-sm">
+                  <span class="border-b-2 border-dotted border-black text-sm"
+                    >PAYMENT METHOD</span
+                  >
+                  <sup
+                    v-if="!isViewEnabled && !isCreditApprovalView"
+                    class="text-red-500"
+                    >*</sup
+                  >
                 </span>
                 <template #tooltip>
-                  <span v-if="isFieldReadonly" >{{ paymentTooltipEnum.PAYMENT_METHOD_VIEW }}</span>
-                  <span v-else >{{ paymentTooltipEnum.PAYMENT_METHOD }}</span>
+                  <span v-if="isFieldReadonly">{{
+                    paymentTooltipEnum.PAYMENT_METHOD_VIEW
+                  }}</span>
+                  <span v-else>{{ paymentTooltipEnum.PAYMENT_METHOD }}</span>
                 </template>
               </x-tooltip>
             </div>
             <div class="w-1/5 px-2">
               <x-tooltip>
-                <span class="text-sm  ">
-                  <span class="border-b-2 border-dotted border-black text-sm">TOTAL AMOUNT</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
+                <span class="text-sm">
+                  <span class="border-b-2 border-dotted border-black text-sm"
+                    >TOTAL AMOUNT</span
+                  >
+                  <sup
+                    v-if="!isViewEnabled && !isCreditApprovalView"
+                    class="text-red-500"
+                    >*</sup
+                  >
                 </span>
                 <template #tooltip>
-                  <span v-if="isFieldReadonly" >{{ paymentTooltipEnum.TOTAL_AMOUNT_SPLIT_VIEW }}</span>
-                  <span v-else >{{ paymentTooltipEnum.TOTAL_AMOUNT }}</span>                  
+                  <span v-if="isFieldReadonly">{{
+                    paymentTooltipEnum.TOTAL_AMOUNT_SPLIT_VIEW
+                  }}</span>
+                  <span v-else>{{ paymentTooltipEnum.TOTAL_AMOUNT }}</span>
                 </template>
               </x-tooltip>
             </div>
             <div class="w-1/5 px-2">
-              
               <x-tooltip v-if="isCreditApprovalView">
                 <span v-if="isCreditCardView" class="text-sm">
-                  <span class="border-b-2 border-dotted border-black text-sm">CAPTURE AMOUNT</span> <sup class="text-red-500">*</sup>
+                  <span class="border-b-2 border-dotted border-black text-sm"
+                    >CAPTURE AMOUNT</span
+                  >
+                  <sup class="text-red-500">*</sup>
                 </span>
                 <span v-else class="text-sm">
-                  <span class="border-b-2 border-dotted border-black text-sm">COLLECTED AMOUNT</span> 
+                  <span class="border-b-2 border-dotted border-black text-sm"
+                    >COLLECTED AMOUNT</span
+                  >
                 </span>
                 <template #tooltip>
-                  <span v-if="isCreditCardView">{{ paymentTooltipEnum.CAPTURE_AMOUNT }}</span>
-                  <span v-else >{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT }}</span>                                 
+                  <span v-if="isCreditCardView">{{
+                    paymentTooltipEnum.CAPTURE_AMOUNT
+                  }}</span>
+                  <span v-else>{{
+                    paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT
+                  }}</span>
                 </template>
               </x-tooltip>
-              
-              <x-tooltip v-else >
+
+              <x-tooltip v-else>
                 <span class="text-sm">
-                  <span class="border-b-2 border-dotted border-black text-sm">DUE DATE</span> <sup v-if="!isViewEnabled" class="text-red-500">*</sup>
+                  <span class="border-b-2 border-dotted border-black text-sm"
+                    >DUE DATE</span
+                  >
+                  <sup v-if="!isViewEnabled" class="text-red-500">*</sup>
                 </span>
                 <template #tooltip>
-                  <span v-if="isFieldReadonly" >{{ paymentTooltipEnum.DUE_DATE_VIEW }}</span>
-                  <span v-else >{{ paymentTooltipEnum.DUE_DATE }}</span>
+                  <span v-if="isFieldReadonly">{{
+                    paymentTooltipEnum.DUE_DATE_VIEW
+                  }}</span>
+                  <span v-else>{{ paymentTooltipEnum.DUE_DATE }}</span>
                 </template>
               </x-tooltip>
             </div>
             <div class="w-1/5 px-2">
               <x-tooltip>
-                <span class="text-sm  ">
-                  <span class="border-b-2 border-dotted border-black text-sm">DOCUMENTS</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
+                <span class="text-sm">
+                  <span class="border-b-2 border-dotted border-black text-sm"
+                    >DOCUMENTS</span
+                  >
+                  <sup
+                    v-if="!isViewEnabled && !isCreditApprovalView"
+                    class="text-red-500"
+                    >*</sup
+                  >
                 </span>
                 <template #tooltip>
-                  <span v-if="isFieldReadonly" >{{ paymentTooltipEnum.DOCUMENTS_VIEW }}</span>
-                  <span v-else >{{ paymentTooltipEnum.DOCUMENTS }}</span>
+                  <span v-if="isFieldReadonly">{{
+                    paymentTooltipEnum.DOCUMENTS_VIEW
+                  }}</span>
+                  <span v-else>{{ paymentTooltipEnum.DOCUMENTS }}</span>
                 </template>
               </x-tooltip>
             </div>
           </div>
-          
+
           <!-- Fields -->
 
           <template v-if="isViewEnabled">
-            <div class="flex w-full custombreak" >
+            <div class="flex w-full custombreak">
               <div class="w-1/6 px-2 text-center">{{ splitPaymentNo }}</div>
 
               <div class="w-1/5 px-2">
-                  {{ getPaymentTypeLabel(paymentMethodsModels[splitPaymentNo]) }}
-                  <p>{{ checkDetailModels[splitPaymentNo] }}</p>                    
+                {{ getPaymentTypeLabel(paymentMethodsModels[splitPaymentNo]) }}
+                <p>{{ checkDetailModels[splitPaymentNo] }}</p>
               </div>
 
               <div class="w-1/5 px-2">
-                {{ formatAmount(splitAmountModels[splitPaymentNo]) }}                
+                {{ formatAmount(splitAmountModels[splitPaymentNo]) }}
               </div>
 
               <div class="w-1/5 px-2">
-                {{ formatDate(dueDateModels[splitPaymentNo]) }}                  
+                {{ formatDate(dueDateModels[splitPaymentNo]) }}
               </div>
 
               <div class="w-1/5 px-2">
-                <div v-for="fileData in fileUploadModels[splitPaymentNo]" :key="fileData.id">
-                  <span style="display: flex; align-items: center;">
-                    <span 
-                          :key="fileData.id"
-                          class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                          style="flex: 1; text-decoration: none; cursor: pointer;"
-                          @click="openInnerModal(fileData.id)"
-                        >
-                          {{ fileData.original_name }}
-                      </span>
+                <div
+                  v-for="fileData in fileUploadModels[splitPaymentNo]"
+                  :key="fileData.id"
+                >
+                  <span style="display: flex; align-items: center">
+                    <span
+                      :key="fileData.id"
+                      class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                      style="flex: 1; text-decoration: none; cursor: pointer"
+                      @click="openInnerModal(fileData.id)"
+                    >
+                      {{ fileData.original_name }}
+                    </span>
                   </span>
                 </div>
               </div>
             </div>
-            
-            <div class="flex w-full custombreak pt-5" >
+
+            <div class="flex w-full custombreak pt-5">
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">                
-                <x-tooltip>
-                  <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT STATUS INFO</span>
-                  </span>
-                  <template #tooltip>
-                    <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_PAYMENT_STATUS }}</span>
-                  </template>
-                </x-tooltip>
-              </div>              
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT GATEWAY</span>
+                  <span class="text-sm">
+                    <span class="border-b-2 border-dotted border-black text-sm"
+                      >CC PAYMENT STATUS INFO</span
+                    >
                   </span>
                   <template #tooltip>
-                    <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_GATEWAY }}</span>
+                    <span>{{
+                      paymentTooltipEnum.PAYMENT_VIEW_CC_PAYMENT_STATUS
+                    }}</span>
                   </template>
-                </x-tooltip>                
+                </x-tooltip>
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">DIGITAL WALLET</span>
+                  <span class="text-sm">
+                    <span class="border-b-2 border-dotted border-black text-sm"
+                      >CC PAYMENT GATEWAY</span
+                    >
+                  </span>
+                  <template #tooltip>
+                    <span>{{
+                      paymentTooltipEnum.PAYMENT_VIEW_CC_GATEWAY
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </div>
+              <div class="w-1/5 px-2">
+                <x-tooltip>
+                  <span class="text-sm">
+                    <span class="border-b-2 border-dotted border-black text-sm"
+                      >DIGITAL WALLET</span
+                    >
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_WALLET }}</span>
@@ -2638,28 +3404,58 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">SAGE RECIEPT ID</span>
+                  <span class="text-sm">
+                    <span class="border-b-2 border-dotted border-black text-sm"
+                      >SAGE RECIEPT ID</span
+                    >
                   </span>
                   <template #tooltip>
-                    <span>{{ paymentTooltipEnum.PAYMENT_VIEW_SAGE_RECIPT }}</span>
+                    <span>{{
+                      paymentTooltipEnum.PAYMENT_VIEW_SAGE_RECIPT
+                    }}</span>
                   </template>
-                </x-tooltip>                
+                </x-tooltip>
               </div>
             </div>
-            <div class="flex w-full custombreak pt-1 pb-5" >
+            <div class="flex w-full custombreak pt-1 pb-5">
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ (splitPaymentRecord.cc_payment_status_info !== null) ? splitPaymentRecord.cc_payment_status_info : 'N/A' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_gateway !== null ? splitPaymentRecord.cc_payment_gateway : 'N/A' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.digital_wallet !== null ? splitPaymentRecord.digital_wallet : 'N/A' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.sage_reciept_id !== null ? splitPaymentRecord.sage_reciept_id : 'N/A' }}</div>
-            </div> 
-            <div class="flex w-full custombreak" >
-              <div class="w-1/6 px-2 text-center"></div>              
+              <div class="w-1/5 px-2">
+                {{
+                  splitPaymentRecord.cc_payment_status_info !== null
+                    ? splitPaymentRecord.cc_payment_status_info
+                    : 'N/A'
+                }}
+              </div>
+              <div class="w-1/5 px-2">
+                {{
+                  splitPaymentRecord.cc_payment_gateway !== null
+                    ? splitPaymentRecord.cc_payment_gateway
+                    : 'N/A'
+                }}
+              </div>
+              <div class="w-1/5 px-2">
+                {{
+                  splitPaymentRecord.digital_wallet !== null
+                    ? splitPaymentRecord.digital_wallet
+                    : 'N/A'
+                }}
+              </div>
+              <div class="w-1/5 px-2">
+                {{
+                  splitPaymentRecord.sage_reciept_id !== null
+                    ? splitPaymentRecord.sage_reciept_id
+                    : 'N/A'
+                }}
+              </div>
+            </div>
+            <div class="flex w-full custombreak">
+              <div class="w-1/6 px-2 text-center"></div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT ID</span>
+                  <span class="text-sm">
+                    <span class="border-b-2 border-dotted border-black text-sm"
+                      >CC PAYMENT ID</span
+                    >
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_ID }}</span>
@@ -2667,297 +3463,420 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 </x-tooltip>
               </div>
             </div>
-            <div class="flex w-full custombreak pb-5" >
+            <div class="flex w-full custombreak pb-5">
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.reference !== null ? splitPaymentRecord.reference : 'N/A' }}</div>              
-            </div> 
-            <div class="flex w-full custombreak" >
-              <div class="w-1/6 px-2 text-center"></div>              
+              <div class="w-1/5 px-2">
+                {{
+                  splitPaymentRecord.reference !== null
+                    ? splitPaymentRecord.reference
+                    : 'N/A'
+                }}
+              </div>
+            </div>
+            <div class="flex w-full custombreak">
+              <div class="w-1/6 px-2 text-center"></div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">PAYMENT STATUS</span>
+                  <span class="text-sm">
+                    <span class="border-b-2 border-dotted border-black text-sm"
+                      >PAYMENT STATUS</span
+                    >
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_STATUS }}</span>
                   </template>
-                </x-tooltip>                  
+                </x-tooltip>
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">PAYMENT ALLOCATION STATUS</span>
+                  <span class="text-sm">
+                    <span class="border-b-2 border-dotted border-black text-sm"
+                      >PAYMENT ALLOCATION STATUS</span
+                    >
                   </span>
                   <template #tooltip>
-                    <span>{{ paymentTooltipEnum.PAYMENT_VIEW_ALLO_STATUS }}</span>
+                    <span>{{
+                      paymentTooltipEnum.PAYMENT_VIEW_ALLO_STATUS
+                    }}</span>
                   </template>
-                </x-tooltip>                
+                </x-tooltip>
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">COLLECTED AMOUNT</span>
+                  <span class="text-sm">
+                    <span class="border-b-2 border-dotted border-black text-sm"
+                      >COLLECTED AMOUNT</span
+                    >
                   </span>
                   <template #tooltip>
-                    <span>{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT }}</span>
+                    <span>{{
+                      paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT
+                    }}</span>
                   </template>
-                </x-tooltip>               
+                </x-tooltip>
               </div>
             </div>
 
-            <div class="flex w-full custombreak pb-5" >
+            <div class="flex w-full custombreak pb-5">
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ formatString(splitPaymentRecord.payment_status.text) }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_allocation_status !== null ? formatString(splitPaymentRecord.payment_allocation_status) : 'N/A' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.collection_amount !== null ? formatAmount(splitPaymentRecord.collection_amount) : '0.00' }}</div>
-            </div>            
-
+              <div class="w-1/5 px-2">
+                {{ formatString(splitPaymentRecord.payment_status.text) }}
+              </div>
+              <div class="w-1/5 px-2">
+                {{
+                  splitPaymentRecord.payment_allocation_status !== null
+                    ? formatString(splitPaymentRecord.payment_allocation_status)
+                    : 'N/A'
+                }}
+              </div>
+              <div class="w-1/5 px-2">
+                {{
+                  splitPaymentRecord.collection_amount !== null
+                    ? formatAmount(splitPaymentRecord.collection_amount)
+                    : '0.00'
+                }}
+              </div>
+            </div>
           </template>
-            <template v-else>              
-              <div v-for="count in parseInt(paymentMethodsForm.payment_no)" :key="count" class="mb-2">
-                <div class="flex w-full custombreak" >
-                  <div class="w-1/6 px-2 text-center">{{ count }}</div>
-                  <div class="w-1/5 px-2">
-                    <template v-if="readOnlyPayments[count]">
-                      {{ getPaymentTypeLabel(paymentMethodsModels[count]) }}
-                      <p>{{ checkDetailModels[count] }}</p>
-                    </template>
-                    <template v-else >
-                      <select
-                        :class="{'custom-select-error': isPaymentMetodNotSelected[count]}"
-                        class="w-full custom-select"
-                        v-model="paymentMethodsModels[count]"
-                        @change="handlePaymentOptions(count)"
+          <template v-else>
+            <div
+              v-for="count in parseInt(paymentMethodsForm.payment_no)"
+              :key="count"
+              class="mb-2"
+            >
+              <div class="flex w-full custombreak">
+                <div class="w-1/6 px-2 text-center">{{ count }}</div>
+                <div class="w-1/5 px-2">
+                  <template v-if="readOnlyPayments[count]">
+                    {{ getPaymentTypeLabel(paymentMethodsModels[count]) }}
+                    <p>{{ checkDetailModels[count] }}</p>
+                  </template>
+                  <template v-else>
+                    <select
+                      :class="{
+                        'custom-select-error': isPaymentMetodNotSelected[count],
+                      }"
+                      class="w-full custom-select"
+                      v-model="paymentMethodsModels[count]"
+                      @change="handlePaymentOptions(count)"
+                    >
+                      <!-- Use the title attribute to set the tooltip text -->
+                      <option
+                        v-for="option in handlePaymentTypes(count)"
+                        :key="option.value"
+                        :value="option.value"
+                        :title="option.tooltip"
+                        :disabled="option.value === 'CC' && isCCDisabled"
                       >
-                        <!-- Use the title attribute to set the tooltip text -->
-                        <option
-                          v-for="option in handlePaymentTypes(count)"
-                          :key="option.value"
-                          :value="option.value"
-                          :title="option.tooltip"
-                          :disabled="option.value === 'CC' && isCCDisabled"
-                        >{{ option.label }}</option>
-                      </select>
-                      <p v-if="isPaymentMetodNotSelected[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
-                       <x-tooltip>
-                            <x-input
-                            class="w-full mt-2"
-                            v-if = "isCheckDetailsEnabled[count] && (paymentMethodsModels[count] === 'CHQ' || paymentMethodsModels[count] === 'PDC')"
-                            v-model="checkDetailModels[count]"
-                            placeholder="Cheque Number"
-                            :rules="[rules.isRequired]"      
-                          />
-                        <template #tooltip>
-                            <span>{{ paymentTooltipEnum.CHECK_DETAILS }}</span>
-                        </template>
-                      </x-tooltip>
-                    </template>
-                  </div>
-                  <div class="w-1/5 px-2">                    
-                    <template v-if="readOnlyPayments[count]">
-                      {{ formatAmount(splitAmountModels[count]) }}
-                    </template>
-                    <template v-else >
+                        {{ option.label }}
+                      </option>
+                    </select>
+                    <p
+                      v-if="isPaymentMetodNotSelected[count]"
+                      class="text-sm text-red-500 dark:text-red-400 mt-1"
+                    >
+                      This field is required
+                    </p>
+                    <x-tooltip>
                       <x-input
-                        v-model="splitAmountModels[count]"
-                        class="w-full"
-                        :rules="[rules.isRequired]"              
-                      />
-                    </template> 
-                  </div>
-                  <div class="w-1/5 px-2" v-if="isCreditApprovalView">
-                    <template v-if="readOnlyPayments[count] && !isCreditCardView">
-                      {{ formatAmount(collectionAmountModels[count]) }}
-                    </template>
-                    <template v-else >                      
-                      <x-input
-                        v-if="paymentMethodsModels[count]==='CC' && authorizedPayments[count]"
-                        v-model="collectionAmountModels[count]"
-                        class="w-full"
-                        :class="{'custom-select-error': isCreditPaymentInvalid[count]}"                                           
-                      />
-                      <span v-else >{{ formatAmount(collectionAmountModels[count]) }}</span>
-                      <sup v-if="isCreditPaymentInvalid[count]" class="text-sm text-red-500 dark:text-red-400">{{  isCreditPaymentInvalidError[count] }}</sup>
-                    </template> 
-                  </div>
-                  <div class="w-1/5 px-2" v-else>
-                    <template v-if="readOnlyPayments[count]">
-                      {{ formatDate(dueDateModels[count]) }}
-                    </template>
-                    <template v-else >
-                      <DatePicker
-                        v-model="dueDateModels[count]"
-                        class="w-full"
+                        class="w-full mt-2"
+                        v-if="
+                          isCheckDetailsEnabled[count] &&
+                          (paymentMethodsModels[count] === 'CHQ' ||
+                            paymentMethodsModels[count] === 'PDC')
+                        "
+                        v-model="checkDetailModels[count]"
+                        placeholder="Cheque Number"
                         :rules="[rules.isRequired]"
-                        placeholder="dd-mm-yyyy"            
-                      /> 
-                    </template> 
-                  </div>
-                  <div class="w-1/5 px-2 mb-2">
-                    <x-tooltip v-if="!readOnlyPayments[count]">
-                          <Dropzone
-                          :id="paymentProofDocument.id"
-                          :multiple="true"
-                          :customDisplay="true"
-                          :accept="paymentProofDocument.accepted_files"
-                          :max-files="paymentProofDocument.max_files"
-                          :max-size="paymentProofDocument.max_size"
-                          :loading="documentForm.processing"
-                          @change="uploadDocument(paymentProofDocument, $event, count)"                          
-                        />
+                      />
                       <template #tooltip>
-                        <span>{{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}</span>
+                        <span>{{ paymentTooltipEnum.CHECK_DETAILS }}</span>
                       </template>
-                    </x-tooltip>                   
-                    <p v-if="isDocumentNotUploaded[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
-                    <div v-for="fileData in fileUploadModels[count]" :key="fileData.id">
-                      <span style="display: flex; align-items: center;">                        
-                      <span 
-                          :key="fileData.id"
-                          class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                          style="flex: 1; text-decoration: none; cursor: pointer;"
-                          @click="openInnerModal(fileData.id)"
-                        >
-                          {{ fileData.original_name }}
+                    </x-tooltip>
+                  </template>
+                </div>
+                <div class="w-1/5 px-2">
+                  <template v-if="readOnlyPayments[count]">
+                    {{ formatAmount(splitAmountModels[count]) }}
+                  </template>
+                  <template v-else>
+                    <x-input
+                      v-model="splitAmountModels[count]"
+                      class="w-full"
+                      :rules="[rules.isRequired]"
+                    />
+                  </template>
+                </div>
+                <div class="w-1/5 px-2" v-if="isCreditApprovalView">
+                  <template v-if="readOnlyPayments[count] && !isCreditCardView">
+                    {{ formatAmount(collectionAmountModels[count]) }}
+                  </template>
+                  <template v-else>
+                    <x-input
+                      v-if="paymentMethodsModels[count] === 'CC'&& authorizedPayments[count]"
+                      v-model="collectionAmountModels[count]"
+                      class="w-full"
+                      :class="{
+                        'custom-select-error': isCreditPaymentInvalid[count],
+                      }"
+                    />
+                    <span v-else>{{
+                      formatAmount(collectionAmountModels[count])
+                    }}</span>
+                    <sup
+                      v-if="isCreditPaymentInvalid[count]"
+                      class="text-sm text-red-500 dark:text-red-400"
+                      >{{ isCreditPaymentInvalidError[count] }}</sup
+                    >
+                  </template>
+                </div>
+                <div class="w-1/5 px-2" v-else>
+                  <template v-if="readOnlyPayments[count]">
+                    {{ formatDate(dueDateModels[count]) }}
+                  </template>
+                  <template v-else>
+                    <DatePicker
+                      v-model="dueDateModels[count]"
+                      class="w-full"
+                      :rules="[rules.isRequired]"placeholder="dd-mm-yyyy"
+                    />
+                  </template>
+                </div>
+                <div class="w-1/5 px-2 mb-2">
+                  <x-tooltip v-if="!readOnlyPayments[count]">
+                    <Dropzone
+                      :id="paymentProofDocument.id"
+                      :multiple="true"
+                      :customDisplay="true"
+                      :accept="paymentProofDocument.accepted_files"
+                      :max-files="paymentProofDocument.max_files"
+                      :max-size="paymentProofDocument.max_size"
+                      :loading="documentForm.processing"
+                      @change="
+                        uploadDocument(paymentProofDocument, $event, count)
+                      "
+                    />
+                    <template #tooltip>
+                      <span>{{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}</span>
+                    </template>
+                  </x-tooltip>
+                  <p
+                    v-if="isDocumentNotUploaded[count]"
+                    class="text-sm text-red-500 dark:text-red-400 mt-1"
+                  >
+                    This field is required
+                  </p>
+                  <div
+                    v-for="fileData in fileUploadModels[count]"
+                    :key="fileData.id"
+                  >
+                    <span style="display: flex; align-items: center">
+                      <span
+                        :key="fileData.id"
+                        class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                        style="flex: 1; text-decoration: none; cursor: pointer"
+                        @click="openInnerModal(fileData.id)"
+                      >
+                        {{ fileData.original_name }}
                       </span>
-                        <span
-                          class="delete-pointer"
-                          @click="deleteDocument(fileData.doc_name, count)"
-                          v-if = "!readOnlyPayments[count]"
-                        >
+                      <span
+                        class="delete-pointer"
+                        @click="deleteDocument(fileData.doc_name, count)"
+                        v-if="!readOnlyPayments[count]"
+                      >
                         <x-tooltip>
-                          &#10006;                
+                          &#10006;
                           <template #tooltip>
-                              <span>{{ paymentTooltipEnum.DOCUMENT_DELETE_ICON }}</span>
+                            <span>{{
+                              paymentTooltipEnum.DOCUMENT_DELETE_ICON
+                            }}</span>
                           </template>
                         </x-tooltip>
-                        </span>
                       </span>
-                    </div>
+                    </span>
                   </div>
                 </div>
               </div>
-            </template>          
-      </div>
-  
-      <x-divider class="mb-4 mt-1" />
-
-      <div v-if="isViewEnabled" class="p-1 mb-2">
-        <h3>Notes</h3>
-      </div>
-      
-      <div class="w-full grid">
-        <x-field>
-          <label v-if="!isViewEnabled">Notes</label>
-          <p v-if="(isFieldReadonly && isViewEnabled) || isCreditApprovalView">{{ paymentMethodsForm.notes }}</p>
-          <x-input
-            v-if="!isViewEnabled && !isCreditApprovalView"
-            class="w-full"
-            v-model="paymentMethodsForm.notes"       
-          />
-        </x-field>
-      </div>
-      <template v-if="(isViewEnabled || isCreditApprovalView) && isDeclineClicked">
-        <div class="p-1 mb-2">
-          <h3 class="text-white">PAYMENT DECLINE</h3>
+            </div>
+          </template>
         </div>
-        <x-divider class="mb-4 mt-1" />        
-        <div class="flex w-full" >
-              <div class="px-2">
-                
-                <x-field label="DECLINE REASON" required>
-                    <select
-                      :class="{'custom-select-error': isDeclinedReasonError}"                  
-                      class="custom-select"
-                      v-model="paymentMethodsForm.declined_reason"
-                      :rules="[rules.isRequired]"
-                      @change="handleDeclinedReasonChange"
-                      >
-                      <template v-for="option in declinedReasons" :key="option.value">
-                          <option :value="option.value">{{ option.label }}</option>                
-                      </template>
-                  </select>
-                  <p v-if="isDeclinedReasonError" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
-                </x-field>
-              </div>
-              <div v-if="isDeclineCustomReason" class="px-2">                
-                <x-field label="CUSTOM REASON" required>
+
+        <x-divider class="mb-4 mt-1" />
+
+        <div v-if="isViewEnabled" class="p-1 mb-2">
+          <h3>Notes</h3>
+        </div>
+
+        <div class="w-full grid">
+          <x-field>
+            <label v-if="!isViewEnabled">Notes</label>
+            <p
+              v-if="(isFieldReadonly && isViewEnabled) || isCreditApprovalView"
+            >
+              {{ paymentMethodsForm.notes }}
+            </p>
+            <x-input
+              v-if="!isViewEnabled && !isCreditApprovalView"
+              class="w-full"
+              v-model="paymentMethodsForm.notes"
+            />
+          </x-field>
+        </div>
+        <template
+          v-if="(isViewEnabled || isCreditApprovalView) && isDeclineClicked"
+        >
+          <div class="p-1 mb-2">
+            <h3 class="text-white">PAYMENT DECLINE</h3>
+          </div>
+          <x-divider class="mb-4 mt-1" />
+          <div class="flex w-full">
+            <div class="px-2">
+              <x-field label="DECLINE REASON" required>
+                <select
+                  :class="{ 'custom-select-error': isDeclinedReasonError }"
+                  class="custom-select"
+                  v-model="paymentMethodsForm.declined_reason"
+                  :rules="[rules.isRequired]"
+                  @change="handleDeclinedReasonChange"
+                >
+                  <template
+                    v-for="option in declinedReasons"
+                    :key="option.value"
+                  >
+                    <option :value="option.value">{{ option.label }}</option>
+                  </template>
+                </select>
+                <p
+                  v-if="isDeclinedReasonError"
+                  class="text-sm text-red-500 dark:text-red-400 mt-1"
+                >
+                  This field is required
+                </p>
+              </x-field>
+            </div>
+            <div v-if="isDeclineCustomReason" class="px-2">
+              <x-field label="CUSTOM REASON" required>
                 <x-input
                   class="w-full"
                   v-model="paymentMethodsForm.declined_custom_reason"
-                  :rules="[rules.isRequired]"         
+                  :rules="[rules.isRequired]"
                 />
               </x-field>
-              </div>              
-        </div>
-      </template>
-
-      <template v-if="isViewEnabled && isApproveClicked && paymentMethodsModels[splitPaymentNo]!='CC'">
-        <x-divider class="mb-4 mt-1" />
-        <div class="w-1/2 px-2 p-1 mb-2">
-          <x-tooltip class="tooltip-display">
-          <h3  class="font-bold">Payment Verification</h3>
-          <template #tooltip>
-              <span>{{ paymentTooltipEnum.PAYMENT_VIEW_VERIFICATION_HEADER }}</span>
-          </template>
-        </x-tooltip>
-        </div>
-        <div v-if="isApprovePaymentError" class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500" role="alert">
-          <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-          </svg>
-          <div>
-            {{  approveErrorMessage }}
+            </div>
           </div>
-        </div>               
-        <div class="flex w-full" >
-              <div class="w-1/2 px-2">                
-                
-                <div>
+        </template>
+
+        <template
+          v-if="
+            isViewEnabled &&
+            isApproveClicked &&
+            paymentMethodsModels[splitPaymentNo] != 'CC'
+          "
+        >
+          <x-divider class="mb-4 mt-1" />
+          <div class="w-1/2 px-2 p-1 mb-2">
+            <x-tooltip class="tooltip-display">
+              <h3 class="font-bold">Payment Verification</h3>
+              <template #tooltip>
+                <span>{{
+                  paymentTooltipEnum.PAYMENT_VIEW_VERIFICATION_HEADER
+                }}</span>
+              </template>
+            </x-tooltip>
+          </div>
+          <div
+            v-if="isApprovePaymentError"
+            class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500"
+            role="alert"
+          >
+            <svg
+              class="flex-shrink-0 inline w-4 h-4 mr-3"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+              />
+            </svg>
+            <div>
+              {{ approveErrorMessage }}
+            </div>
+          </div>
+          <div class="flex w-full">
+            <div class="w-1/2 px-2">
+              <div>
                 <x-tooltip class="tooltip-display">
-                    <span class="border-b-2 border-dotted border-black text-sm">COLLECTED AMOUNT <sup class="text-red-500">*</sup></span>       
-                    <template #tooltip>
-                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_AMOUNT }}</span>
+                  <span class="border-b-2 border-dotted border-black text-sm"
+                    >COLLECTED AMOUNT <sup class="text-red-500">*</sup></span
+                  >
+                  <template #tooltip>
+                    <span>{{
+                      paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_AMOUNT
+                    }}</span>
                   </template>
                 </x-tooltip>
                 <x-field class="w-full">
-                    <x-input
-                      class="w-full"
-                      v-model="paymentMethodsForm.collection_amount"
-                      :rules="[rules.isRequired,rules.amount]"                      
-                    />
-                  </x-field>
-                </div> 
-              </div>
-              <div class="w-1/2 px-2" v-if="paymentMethodsModels[splitPaymentNo]=='BT' || paymentMethodsModels[splitPaymentNo]=='CHQ'">                
-                <x-tooltip>
-                  <span class="border-b-2 border-dotted border-black text-sm">BANK REFERENCE NUMBER 
-                    <sup v-if="!(paymentMethodsForm.collection_type === 'insurer'
-                      && paymentMethodsModels[splitPaymentNo] === 'CHQ'
-                      && paymentMethodsForm.credit_approval != ''
-                      )" class="text-red-500">*</sup>
-                  
-                  </span>   
-                  <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE }}</span>
-                </template>
-                </x-tooltip>
-                <x-field>
                   <x-input
                     class="w-full"
-                    v-model="paymentMethodsForm.bank_reference_number"
-                    :rules="[rules.isBankReferenceRequird]"      
+                    v-model="paymentMethodsForm.collection_amount"
+                    :rules="[rules.isRequired, rules.amount]"
                   />
                 </x-field>
               </div>
-              <div class="w-1/3 px-2">
-                <x-tooltip>
-                  <span class="border-b-2 border-dotted border-black text-sm">DOCUMENT <sup v-if="paymentMethodsForm.collection_type==='insurer'" class="text-red-500">*</sup></span>
+            </div>
+            <div
+              class="w-1/2 px-2"
+              v-if="
+                paymentMethodsModels[splitPaymentNo] == 'BT' ||
+                paymentMethodsModels[splitPaymentNo] == 'CHQ'
+              "
+            >
+              <x-tooltip>
+                <span class="border-b-2 border-dotted border-black text-sm"
+                  >BANK REFERENCE NUMBER
+                  <sup
+                    v-if="
+                      !(
+                        paymentMethodsForm.collection_type === 'insurer' &&
+                        paymentMethodsModels[splitPaymentNo] === 'CHQ' &&
+                        paymentMethodsForm.credit_approval != ''
+                      )
+                    "
+                    class="text-red-500"
+                    >*</sup
+                  >
+                </span>
                 <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
+                  <span>{{
+                    paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE
+                  }}</span>
                 </template>
-                </x-tooltip>
-                <x-field>
+              </x-tooltip>
+              <x-field>
+                <x-input
+                  class="w-full"
+                  v-model="paymentMethodsForm.bank_reference_number"
+                  :rules="[rules.isBankReferenceRequird]"
+                />
+              </x-field>
+            </div>
+            <div class="w-1/3 px-2">
+              <x-tooltip>
+                <span class="border-b-2 border-dotted border-black text-sm"
+                  >DOCUMENT
+                  <sup
+                    v-if="paymentMethodsForm.collection_type === 'insurer'"
+                    class="text-red-500"
+                    >*</sup
+                  ></span
+                >
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
+                </template>
+              </x-tooltip>
+              <x-field>
                 <Dropzone
                   :id="approveProofDocument.id"
                   :customDisplay="true"
@@ -2966,95 +3885,180 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                   :max-files="approveProofDocument.max_files"
                   :max-size="approveProofDocument.max_size"
                   :loading="documentForm.processing"
-                  @change="uploadDocument(approveProofDocument, $event, splitPaymentNo)"                  
+                  @change="
+                    uploadDocument(approveProofDocument, $event, splitPaymentNo)
+                  "
                 />
-                <p v-if="isApprovedDocumentNotUploaded" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
-                </x-field>
-                <div v-for="fileData in approvedDocumentModel[splitPaymentNo]" :key="fileData.id">
-                  <span style="display: flex; align-items: center;">                        
-                  <span 
-                      :key="fileData.id"
-                      class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                      style="flex: 1; text-decoration: none; cursor: pointer;"
-                      @click="openInnerModal(fileData.id)"
-                    >
-                      {{ fileData.original_name }}
+                <p
+                  v-if="isApprovedDocumentNotUploaded"
+                  class="text-sm text-red-500 dark:text-red-400 mt-1"
+                >
+                  This field is required
+                </p>
+              </x-field>
+              <div
+                v-for="fileData in approvedDocumentModel[splitPaymentNo]"
+                :key="fileData.id"
+              >
+                <span style="display: flex; align-items: center">
+                  <span
+                    :key="fileData.id"
+                    class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                    style="flex: 1; text-decoration: none; cursor: pointer"
+                    @click="openInnerModal(fileData.id)"
+                  >
+                    {{ fileData.original_name }}
                   </span>
-                    <span
-                      class="delete-pointer"
-                      @click="deleteDocument(fileData.doc_name, splitPaymentNo)"
-                      v-if = "!readOnlyPayments[splitPaymentNo]"
-                    >
-                    &#10006; 
-                    </span>
+                  <span
+                    class="delete-pointer"
+                    @click="deleteDocument(fileData.doc_name, splitPaymentNo)"
+                    v-if="!readOnlyPayments[splitPaymentNo]"
+                  >
+                    &#10006;
                   </span>
-                </div>
+                </span>
               </div>
-        </div>
-      </template>
+            </div>
+          </div>
+        </template>
 
-      <x-divider class="mb-4 mt-1" />     
-      
-      <template  v-if="isViewEnabled || isCreditApprovalView">
+        <x-divider class="mb-4 mt-1" />
+
+        <template v-if="isViewEnabled || isCreditApprovalView">
           <template v-if="isApproveConfirm">
-            <div class="w-full text-right" v-if="isViewEnabled">Do you wish to proceed with payment confirmation?</div>
+            <div class="w-full text-right" v-if="isViewEnabled">
+              Do you wish to proceed with payment confirmation?
+            </div>
             <div class="w-full text-right" v-if="isCreditApprovalView">Would you like to continue with the approval?</div>
             <div class="w-full flex justify-end">
               <div class="mr-4">
-                <x-button size="sm" @click="handleNoButtonChange" tabindex="0" class="focus:outline-black">
+                <x-button
+                  size="sm"
+                  @click="handleNoButtonChange"
+                  tabindex="0"
+                  class="focus:outline-black"
+                >
                   No
                 </x-button>
               </div>
               <div>
-                <x-button class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0"
-                :loading = "paymentMethodsForm.processing"
+                <x-button
+                  class="mr-2 focus:outline-black"
+                  size="sm"
+                  color="#ff5e00"
+                  type="submit"
+                  tabindex="0"
+                  :loading="paymentMethodsForm.processing"
                 >
                   Yes
                 </x-button>
               </div>
             </div>
-          </template>          
-          <template v-else-if="isCreditApprovalView || (paymentMethodsModels[splitPaymentNo]!=='CA' && paymentMethodsModels[splitPaymentNo]!=='CC')" >
-            <div v-if="isCreditApprovalView || (splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID && can(permissionEnum.ApprovePayments))" class="w-full flex justify-end">
+          </template>
+          <template
+            v-else-if="
+              isCreditApprovalView ||
+              (paymentMethodsModels[splitPaymentNo] !== 'CA' &&
+                paymentMethodsModels[splitPaymentNo] !== 'CC')
+            "
+          >
+            <div
+              v-if="
+                isCreditApprovalView ||
+                (splitPaymentRecord.payment_status_id !=
+                  paymentStatusEnum.PAID &&
+                  can(permissionEnum.ApprovePayments))
+              "
+              class="w-full flex justify-end"
+            >
               <div v-if="isDeclineClicked" class="mr-4">
-                <x-button size="sm" @click="handleCancelChanges" tabindex="0" class="focus:outline-black">
+                <x-button
+                  size="sm"
+                  @click="handleCancelChanges"
+                  tabindex="0"
+                  class="focus:outline-black"
+                >
                   Cancel
                 </x-button>
-              </div>            
-              <div v-if="(!isApproveClicked && !isDeclineClicked) || (isCreditApprovalView && !isDeclineClicked)" class="mr-4">
-                <x-button size="sm"  @click="handleDeclinedChange" tabindex="0" class="focus:outline-black">
+              </div>
+              <div
+                v-if="
+                  (!isApproveClicked && !isDeclineClicked) ||
+                  (isCreditApprovalView && !isDeclineClicked)
+                "
+                class="mr-4"
+              >
+                <x-button
+                  v-if="!isProformaPaymentRequest"
+                  size="sm"
+                  @click="handleDeclinedChange"
+                  tabindex="0"
+                  class="focus:outline-black"
+                >
                   Decline
                 </x-button>
               </div>
               <div v-if="!isApproveClicked && isDeclineClicked" class="mr-4">
-                <x-button size="sm"  type="submit" tabindex="0" class="focus:outline-black" 
-                :loading = "paymentMethodsForm.processing"
+                <x-button
+                  size="sm"
+                  type="submit"
+                  tabindex="0"
+                  class="focus:outline-black"
+                  :loading="paymentMethodsForm.processing"
                 >
                   Decline
                 </x-button>
               </div>
-              <div v-if="!isDeclineClicked && (paymentMethodsModels[splitPaymentNo]!='CC' || isCreditApprovalView)">
-                <x-button v-if="!isApproveClicked && isViewEnabled" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked" tabindex="0">
+              <div
+                v-if="
+                  !isDeclineClicked &&
+                  (paymentMethodsModels[splitPaymentNo] != 'CC' ||
+                    isCreditApprovalView)
+                "
+              >
+                <x-button
+                  v-if="
+                    !isApproveClicked &&
+                    isViewEnabled &&
+                    !isProformaPaymentRequest
+                  "
+                  class="mr-2 focus:outline-black"
+                  size="sm"
+                  color="#ff5e00"
+                  @click="isApproveClicked = !isApproveClicked"
+                  tabindex="0"
+                >
                   Approve
                 </x-button>
-                <x-button v-if="isApproveClicked || (isCreditApprovalView && !isDeclineClicked)" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0"
-                :loading = "paymentMethodsForm.processing"
+                <x-button
+                  v-if="
+                    isApproveClicked ||
+                    (isCreditApprovalView && !isDeclineClicked)
+                  "
+                  class="mr-2 focus:outline-black"
+                  size="sm"
+                  color="#ff5e00"
+                  type="submit"
+                  tabindex="0"
+                  :loading="paymentMethodsForm.processing"
                 >
                   <template v-if="isCreditApprovalView && isCreditCardView">
-                  Capture
+                    Capture
                   </template>
-                  <template v-else>
-                  Approve
-                  </template>
+                  <template v-else> Approve </template>
                 </x-button>
               </div>
             </div>
-          </template>        
-      </template>
-      <template v-else>        
-        <div class="w-full md:col-span-4 flex justify-end"> 
+          </template>
+        </template>
+        <template v-else>
+          <div class="w-full md:col-span-4 flex justify-end">
             <div v-if="paymentMethodsForm.status == 'edit'" class="mr-4">
-              <x-button @click="createPaymentModal=!createPaymentModal" tabindex="0" class="focus:outline-black">
+              <x-button
+                @click="createPaymentModal = !createPaymentModal"
+                tabindex="0"
+                class="focus:outline-black"
+              >
                 Cancel
               </x-button>
             </div>
@@ -3064,83 +4068,196 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 paymentMethodsForm.status == 'edit'
               "
             >
-              <x-button color="emerald" type="submit" tabindex="0" class="focus:outline-black" :loading = "paymentMethodsForm.processing">
-                {{ paymentMethodsForm.status == 'create' ? 'Add Manual Payment' : 'Update' }}          
+              <x-button
+                color="emerald"
+                type="submit"
+                tabindex="0"
+                class="focus:outline-black"
+                :loading="paymentMethodsForm.processing"
+              >
+                {{
+                  paymentMethodsForm.status == 'create'
+                    ? 'Add Manual Payment'
+                    : 'Update'
+                }}
               </x-button>
-            </div>          
-        </div>
-      </template>
+            </div>
+          </div>
+        </template>
       </x-form>
-    
-      <div class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center" v-if="isGalleryModelOpen">
-        <div class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg" tabindex="0" ref="modal2Ref" @keydown="handleKeyDown">        
+
+      <div
+        class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center"
+        v-if="isGalleryModelOpen"
+      >
+        <div
+          class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+          tabindex="0"
+          ref="modal2Ref"
+          @keydown="handleKeyDown"
+        >
           <div class="modal-header text-base text-white bg-gray-800">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
                 {{ currentFile.original_name }}
-              </div>          
-              <div class="flex items-center space-x-2" >
-                <span @click="closeInnerModal" class="text-gray-300 font-bold cursor-pointer pr-1" >
+              </div>
+              <div class="flex items-center space-x-2">
+                <span
+                  @click="closeInnerModal"
+                  class="text-gray-300 font-bold cursor-pointer pr-1"
+                >
                   <!-- SVG for Close Modal -->
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" tabindex="0" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    tabindex="0"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    class="w-4 h-4"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    ></path>
                   </svg>
                 </span>
               </div>
             </div>
-            <div class="flex items-center justify-between">              
-              <div class="flex items-center space-x-2 cursor-pointer" @click="previousFile" :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }">
+            <div class="flex items-center justify-between">
+              <div
+                class="flex items-center space-x-2 cursor-pointer"
+                @click="previousFile"
+                :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }"
+              >
                 <!-- SVG for Previous -->
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 text-gray-300">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>Previous                
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  class="w-6 h-6 text-gray-300"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 19l-7-7 7-7"
+                  ></path></svg
+                >Previous
               </div>
-              <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type != 'application/pdf'">
-                <div class="flex items-center space-x-2 cursor-pointer" @click="zoomOut">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-6 w-6 text-gray-300">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+              <div
+                class="flex items-center space-x-2"
+                v-if="currentFile.doc_mime_type != 'application/pdf'"
+              >
+                <div
+                  class="flex items-center space-x-2 cursor-pointer"
+                  @click="zoomOut"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    class="h-6 w-6 text-gray-300"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M20 12H4"
+                    />
                   </svg>
                 </div>
                 <div class="flex flex-initial w-24 justify-center">
-                  <span class="text-gray-300 font-bold">{{ zoomLevel * 100 }}%</span>
+                  <span class="text-gray-300 font-bold"
+                    >{{ zoomLevel * 100 }}%</span
+                  >
                 </div>
-                <div class="flex items-center space-x-2 cursor-pointer" @click="zoomIn">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-6 w-6 text-gray-300">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                <div
+                  class="flex items-center space-x-2 cursor-pointer"
+                  @click="zoomIn"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    class="h-6 w-6 text-gray-300"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
                   </svg>
                 </div>
               </div>
-              <div class="flex items-center space-x-2 cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
+              <div
+                class="flex items-center space-x-2 cursor-pointer"
+                @click="nextFile"
+                :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }"
+              >
                 <!-- SVG for Next -->
                 Next
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 text-gray-300">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>                
-              </div>            
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  class="w-6 h-6 text-gray-300"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  ></path>
+                </svg>
+              </div>
             </div>
           </div>
           <div class="modal-body w-full h-full mt-2">
-            <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="flex items-center justify-center">
+            <div
+              v-if="
+                currentFile.doc_mime_type === 'image/jpeg' ||
+                currentFile.doc_mime_type === 'image/png'
+              "
+              class="flex items-center justify-center"
+            >
               <div class="overflow-auto items-center justify-center">
-                <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" class="max-w-full max-h-full" />
+                <img
+                  :src="storageUrl + currentFile.doc_url"
+                  :style="{ transform: `scale(${zoomLevel})` }"
+                  class="max-w-full max-h-full"
+                />
               </div>
             </div>
-            <div v-else-if="currentFile.doc_mime_type === 'application/pdf'" class="w-full h-80vh">
-              <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" class="w-full h-full" />
-            </div>     
+            <div
+              v-else-if="currentFile.doc_mime_type === 'application/pdf'"
+              class="w-full h-80vh"
+            >
+              <embed
+                :src="storageUrl + currentFile.doc_url"
+                type="application/pdf"
+                class="w-full h-full"
+              />
+            </div>
           </div>
         </div>
       </div>
-    </x-modal>    
+    </x-modal>
   </div>
 </template>
 <style scoped>
 .h-80vh {
   height: 85vh;
-} 
+}
 .tooltip-display {
   display: inherit;
-} 
+}
 /* Modal overlay */
 .modal-overlay {
   position: fixed;
@@ -3158,7 +4275,7 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 100%;
-  height: 100%; 
+  height: 100%;
   background-color: hsl(0, 4%, 9%);
   border-radius: 4px;
   padding: 5px;
@@ -3167,7 +4284,6 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
 /* Modal header */
 .modal-header {
   background-color: hsl(0, 4%, 9%);
-  
 }
 /* Modal body */
 .modal-body {
@@ -3184,8 +4300,8 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
   background-color: #fff;
   color: #333;
   font-size: 16px;
-  width: 100%;  
-  height: 38px;  
+  width: 100%;
+  height: 38px;
 }
 .custom-select-error {
   border: 2px solid red; /* Add a red border for the error state */
@@ -3201,7 +4317,7 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
   margin-left: calc(100% - 39px);
   cursor: pointer;
   color: #333; /* Customize the close icon color */
-  font-size: 1.rem;
+  font-size: 1rem;
   font-weight: normal;
 }
 .delete-pointer {
@@ -3210,10 +4326,10 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
   font-weight: bold;
 }
 .expand-pointer {
-    cursor: pointer;
-    font-size: 20px;
-    font-weight: bold;
-    color: #1d83bc;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  color: #1d83bc;
 }
 .custom-tooltip-content {
   max-width: 200px; /* Adjust the max-width as needed */
@@ -3222,8 +4338,8 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
   position: relative;
   font-size: 12px;
   text-transform: none;
-  }
+}
 .custom-height {
-    min-height: 160px;
-  }
+  min-height: 160px;
+}
 </style>

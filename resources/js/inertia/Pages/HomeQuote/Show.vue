@@ -1088,7 +1088,7 @@ watch(
                 class="w-full"
                 :disabled="quote.quote_status_id == 15"
               />
-	      
+
 	        <x-field label="Transaction Type">
             <x-input
               type="text"
@@ -1126,12 +1126,13 @@ watch(
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="payments"     
-    />    
+      :payments="payments"
+    />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'HOMPD' || item.code === 'HOMPDR' || item.code === 'HOMDPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -1151,7 +1152,6 @@ watch(
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -1178,7 +1178,7 @@ watch(
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
     />
-    
+
     <BookPolicy
       v-if="
         canAny([
