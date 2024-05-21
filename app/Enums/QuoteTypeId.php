@@ -37,10 +37,4 @@ final class QuoteTypeId extends Enum
 
         return $retval;
     }
-
-    public static function getQuoteTypeName($product_id)
-    {
-        // Get the name corresponding to the product_id from the enum
-        return QuoteTypeId::getKey($product_id) ?? 'Unknown';
-    }
 }
