@@ -71,6 +71,7 @@ class LegacyPolicyController extends Controller
     public function getPolicyByPolicyNumber($policyNumber)
     {
         $policy = InslyDetailRepository::getBy('policy_no', $policyNumber);
+
         return redirect()->route('legacy-policy.show', ['legacy_policy' => $policy->_id]);
     }
 }
