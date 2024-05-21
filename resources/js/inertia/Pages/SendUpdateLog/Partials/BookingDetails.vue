@@ -360,31 +360,21 @@ function reverseValue(value) {
 }
 
 function updateReversalEntries(response) {
+  reversalEntry.transaction_payment_status = response.transaction_payment_status || '';
+  reversalEntry.invoice_date = response.insurer_invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = response.insurer_tax_number;
   reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
-  reversalEntry.transaction_payment_status =
-    response.transaction_payment_status || '';
-  reversalEntry.invoice_date = response.insurer_invoice_date || '';
-  reversalEntry.insurer_commission_invoice_number =
-    response.insurer_commission_invoice_number || '';
+  reversalEntry.insurer_commission_invoice_number = response.insurer_commmission_invoice_number || '';
   reversalEntry.discount = reverseValue(response.discount_value) || '';
-  reversalEntry.commission_percentage =
-    reverseValue(response.commission_percentage) || '';
-  reversalEntry.commission_vat_not_applicable =
-    reverseValue(response.commission_vat_not_applicable) || '';
-  reversalEntry.vat_on_commission = reverseValue(response.commission_vat) || '';
-  reversalEntry.commission_vat_applicable =
-    reverseValue(response.commission_vat_applicable) || '';
+  reversalEntry.price_vat_applicable = reverseValue(response.send_update_log.price_vat_applicable) || '';
+  reversalEntry.commission_percentage = reverseValue(response.send_update_log.commission_percentage) || '';
+  reversalEntry.price_vat_not_applicable = reverseValue(response.send_update_log.price_vat_not_applicable) || '';
+  reversalEntry.vat_on_commission = reverseValue(response.send_update_log.vat_on_commission) || '';
+  reversalEntry.commission_vat_applicable = reverseValue(response.commission_vat_applicable) || '';
   reversalEntry.total_commission = reverseValue(response.commission) || '';
-  reversalEntry.total_price = reverseValue(response.total_price);
-
-  // fields missing from response.
-  /*reversalEntry.total_vat_amount = '';
-  reversalEntry.price_vat_applicable = '';
-  reversalEntry.price_vat_not_applicable = '';
-  Object.keys(reversalEntry).forEach(key => {
-    reversalEntry[key] = response[key] || '';
-  });*/
+  reversalEntry.commission_vat_not_applicable = reverseValue(response.commission_vat_not_applicable) || '';
+  reversalEntry.total_vat_amount = (response.send_update_log.total_vat_amount) || '';
+  reversalEntry.total_price = reverseValue(response.send_update_log.total_price);
 }
 
 onMounted(() => {
