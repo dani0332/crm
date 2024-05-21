@@ -221,7 +221,6 @@ const calculateCommission = () => {
       bookingDetailsForm.commission_percentage = convertToNegative(
         (total_commission / total_price) * 100,
       );
-      console.log(bookingDetailsForm.commission_percentage);
     } else {
       notification.error({
         title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -613,7 +612,6 @@ const submitToCustomer = () => {
   axios
     .post(url, data)
     .then(response => {
-      console.log(response);
       if (response.status == 200) {
         notification.success({
           title: 'Update Sent to the Customer',
