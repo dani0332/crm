@@ -301,26 +301,25 @@ class ReportService extends BaseService
 
         // Initialize the query builder
         $totalPremiumQuery = DB::table('car_quote_request as cqr')
-                    ->select(
-                        DB::raw('"CAR" as quote_type_name'),
-                        DB::raw('DATE(cqr.transaction_approved_at) as transaction_date'),
-                        DB::raw('COALESCE(SUM(cqr.premium), 0) as total_premium'),
-                        'u.name as advisor_name'
-                    )
-                    ->join('users as u', 'cqr.advisor_id', '=', 'u.id')
-                    ->whereNotNull('cqr.advisor_id')
-                    ->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate])
-                    ->groupBy(DB::raw('DATE(cqr.transaction_approved_at)'))
-                    ->orderBy(DB::raw('DATE(cqr.transaction_approved_at)'));
+            ->select(
+                DB::raw('"CAR" as quote_type_name'),
+                DB::raw('DATE(cqr.transaction_approved_at) as transaction_date'),
+                DB::raw('COALESCE(SUM(cqr.premium), 0) as total_premium'),
+                'u.name as advisor_name'
+            )
+            ->join('users as u', 'cqr.advisor_id', '=', 'u.id')
+            ->whereNotNull('cqr.advisor_id')
+            ->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate])
+            ->groupBy(DB::raw('DATE(cqr.transaction_approved_at)'))
+            ->orderBy(DB::raw('DATE(cqr.transaction_approved_at)'));
 
-
-                    // Apply team filter
+        // Apply team filter
         if (isset($request->teams) && count($request->teams) > 0) {
             $totalPremiumQuery->whereIn('cqr.advisor_id', function ($teamsSubQuery) use ($request) {
                 $teamsSubQuery->select('ut.user_id')
-                        ->from('user_team as ut')
-                        ->join('teams as t', 'ut.team_id', '=', 't.id')
-                        ->whereIn('t.id', $request->teams);
+                    ->from('user_team as ut')
+                    ->join('teams as t', 'ut.team_id', '=', 't.id')
+                    ->whereIn('t.id', $request->teams);
             });
         }
 
