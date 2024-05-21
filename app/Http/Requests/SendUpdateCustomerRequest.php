@@ -42,8 +42,8 @@ class SendUpdateCustomerRequest extends FormRequest
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
             $this->sendUpdateDocuemnts = $this->sendUpdate?->documents()->pluck('document_type_code');
-            $category = $this->sendUpdate->category->code;
-            $option = $this->sendUpdate->option->code;
+            $category = $this->sendUpdate?->category?->code;
+            $option = $this->sendUpdate?->option?->code;
 
             if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER) {
                 return $validator->errors()->add('error', 'Already sent to customer.');
