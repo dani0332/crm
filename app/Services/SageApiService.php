@@ -311,7 +311,6 @@ class SageApiService
                     'price_with_vat' => $payment->total_amount,
                 ];
             }
-
             $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quoteDetails, $payment, $splitPayments);
             $sageRequestPayload->customerId = $sageCustomerNumber;
 
