@@ -292,7 +292,7 @@ const saveBookingDetail = isValid => {
         position: 'top',
       });
       state.isEdit = false;
-      router.reload({ preserveState: true });
+      location.reload();
     },
     onError: errors => {
       Object.keys(errors).forEach(function (key) {
@@ -617,8 +617,8 @@ const submitToCustomer = () => {
           title: 'Update Sent to the Customer',
           position: 'top',
         });
-        location.reload();
-        modals.sendConfirm = false;
+        router.reload({ preserveState: true });
+        modals.sendConfirm = isLoading.value = false;
       }
     })
     .catch(err => {
