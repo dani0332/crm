@@ -90,6 +90,7 @@ use App\Services\TierService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
@@ -123,7 +124,7 @@ class CRUDController extends Controller
     protected $emailDataService;
     protected $allocationService;
 
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, TeamHierarchyTrait;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -324,6 +325,8 @@ class CRUDController extends Controller
             $createdAtEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
             $genericRequestEnum = GenericRequestEnum::asArray();
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
+            $productTeam = $this->getProductByName(quoteTypeCode::Car);
+            $teams = $this->getTeamsByProductId($productTeam->id);
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -339,6 +342,7 @@ class CRUDController extends Controller
                 'yesterdayManualCount' => $yesterdayManualCount,
                 'genericRequestEnum' => $genericRequestEnum,
                 'isBetaUser' => $isBetaUser,
+                'teams' => $teams,
             ]);
         }
 
@@ -568,9 +572,11 @@ class CRUDController extends Controller
             $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
         }
         $advisors = [];
-        if (! (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+        if (
+            ! (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
             strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
-            $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)) {
+                $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)
+        ) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } elseif (strtolower($this->genericModel->modelType) == 'business') {
             $advisors = $this->crudService->getRMAndBusinessAdvisors();
