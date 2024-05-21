@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypeShortCode;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
@@ -32,7 +33,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use App\Enums\QuoteTypeShortCode;
 
 trait PersonalQuoteSyncTrait
 {
@@ -305,14 +305,14 @@ trait PersonalQuoteSyncTrait
             foreach ($requiredFields as $column => $detail) {
                 if (! array_key_exists($column, $personalQuoteKeys) || empty($personalQuoteKeys[$column])) {
 
-                    if($column === 'code') {
+                    if ($column === 'code') {
                         $shortCode = QuoteTypeShortCode::getName($quote->quote_type_id);
                         $value = "{$shortCode}-{$quote->uuid}";
                     } else {
                         $type = $detail['type_name'];
                         $value = $this->generateDefaultValue($type);
                     }
-                    
+
                     $quote->$column = $value;
                     Log::warning("Column not found in source quote, table: {$table} - identifier: {$identifier} - column: {$column}, setting default value: {$value}");
                 }
