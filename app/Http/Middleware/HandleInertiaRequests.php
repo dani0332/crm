@@ -10,6 +10,7 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Services\LeadsCountService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
@@ -72,6 +73,7 @@ class HandleInertiaRequests extends Middleware
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
+            'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
@@ -145,6 +147,8 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::MANAGEMENT_REPORT), 'Management Report', route('management-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::STALE_LEADS_REPORT), 'Stale Leads Report', route('stale-leads-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::PIPELINE_REPORT), 'Pipeline Report', route('pipeline-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT), 'Total Premium Report', route('total-premium-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }

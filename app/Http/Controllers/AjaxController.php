@@ -202,7 +202,7 @@ class AjaxController extends Controller
     public function uploadKycIndividualDocument($quoteType, KycIndividualDocRequest $request)
     {
         try {
-            $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+            $quote = $this->getQuoteObjectBy($quoteType, $request->quote_uuid, 'uuid');
 
             $data = $request->validated();
             $data['nationality_text'] = Nationality::where('id', $data['nationality_id'])->value('text');
@@ -287,7 +287,7 @@ class AjaxController extends Controller
     public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
     {
         try {
-            $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+            $quote = $this->getQuoteObjectBy($quoteType, $request->quote_uuid, 'uuid');
             if (! isset($quote->quoteRequestEntityMapping)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }

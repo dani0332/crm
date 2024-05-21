@@ -104,6 +104,47 @@ class GenericPermissionSeeder extends Seeder
             $role->givePermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS);
         }
 
+        $permissions = [
+            PermissionsEnum::SAVE_QUOTE_NOTES,
+            PermissionsEnum::UPDATE_QUOTE_NOTES,
+            PermissionsEnum::DELETE_QUOTE_NOTES,
+        ];
+
+        foreach ($permissions as $permissionName) {
+            $permission = Permission::where('name', $permissionName)->first();
+
+            if (! $permission) {
+                Permission::create([
+                    'name' => $permissionName,
+                    'guard_name' => 'web',
+                ]);
+            }
+        }
+
+        $rolesForManageQuote = [
+            RolesEnum::Admin,
+            RolesEnum::HealthManager,
+            RolesEnum::HealthAdvisor,
+            RolesEnum::HomeManager,
+            RolesEnum::HomeAdvisor,
+            RolesEnum::PetManager,
+            RolesEnum::PetAdvisor,
+            RolesEnum::CycleManager,
+            RolesEnum::CycleAdvisor,
+            RolesEnum::YachtManager,
+            RolesEnum::YachtAdvisor,
+            RolesEnum::CorplineManager,
+            RolesEnum::CorpLineAdvisor,
+        ];
+
+        foreach ($rolesForManageQuote as $roleName) {
+            $role = Role::findOrCreate($roleName, 'web');
+
+            foreach ($permissions as $permissionName) {
+                $role->givePermissionTo($permissionName);
+            }
+        }
+
         $this->generateSegmentFilterPermission();
         $this->embeddedProductSeeds();
         $this->advisorConversionReportSeeds();

@@ -246,8 +246,17 @@ final class PermissionsEnum extends Enum
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
+    public const LEAD_CARD_SEARCH = 'lead-card-search';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
+    public const STALE_LEADS_REPORT = 'stale-leads-report-view';
+    public const PIPELINE_REPORT = 'pipeline-report-view';
+    public const PET_CARD_VIEW = 'pet-quotes-card';
+    public const HEALTH_CARD_VIEW = 'health-cards';
+    public const HOME_CARD_VIEW = 'home-cardView';
+    public const YACHT_CARD_VIEW = 'yacht-quotes-card';
+    public const CYCLE_CARD_VIEW = 'cycle-quotes-card';
+    public const CORPLINE_CARD_VIEW = 'business-cards';
     public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
     public const MANAGEMENT_REPORT = 'management-report';
     public const SEGMENT_FILTER = 'segment-filter';
@@ -255,6 +264,9 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_ADD = 'plan-details-add';
     public const AVAILABLE_PLANS_SELECT_BUTTON = 'available-plans-select-button';
     public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
+    public const SAVE_QUOTE_NOTES = 'save-quote-notes';
+    public const UPDATE_QUOTE_NOTES = 'update-quote-notes';
+    public const DELETE_QUOTE_NOTES = 'delete-quote-notes';
     public const TOTAL_PREMIUM_LEADS_SALES_REPORT = 'total-premium-leads-sales-report';
     public const LEGACY_INSTALLMENTS = 'legacy-installments';
     public const LEGACY_INVOICES = 'legacy-invoices';
