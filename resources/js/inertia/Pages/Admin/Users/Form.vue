@@ -203,10 +203,6 @@ watch(
   },
   { deep: true },
 );
-
-const removeLob = e => {
-  userForm.additionalTeams = [...e];
-};
 </script>
 <template>
   <Head :title="isEdit ? 'Edit Users' : 'Create Users'" />
@@ -324,18 +320,17 @@ const removeLob = e => {
         ></x-select>
       </x-field>
       <x-field label="LOB VISIBILITY">
-        <x-select
+        <ComboBox
           :multiple="true"
+          v-model="userForm.additionalTeams"
           :options="
-            props.products.map(item => ({
-              value: item.id,
-              label: item.name,
+            props.products.map(x => ({
+              value: x.id,
+              label: x.name,
             }))
           "
           class="w-full"
-          v-model="userForm.additionalTeams"
-          placeholder="Select teams "
-          @update:modelValue="removeLob"
+          autocomplete
         />
       </x-field>
       <x-field label="PERMISSIONS" v-if="hasRole(rolesEnum.Admin)">

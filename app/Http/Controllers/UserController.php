@@ -162,7 +162,7 @@ class UserController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(User $user)
-    {
+    {   
         $user['new_created_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
         $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
 
@@ -294,12 +294,14 @@ class UserController extends Controller
             }
         }
 
-        if (! empty($request->additionalTeams) && isset($request->additionalTeams)) {
+        if (! empty($request->additionalTeams) && isset($request->additionalTeams)) { 
             if (count((array) $request->additionalTeams) > 1) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
             } else {
                 $user->additional_team_ids = $request->additionalTeams[0];
             }
+        }else {
+            $user->additional_team_ids = null;
         }
 
         if (! empty($request->sub_team_id) && $request->sub_team_id != '0') {
