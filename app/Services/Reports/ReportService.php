@@ -291,7 +291,7 @@ class ReportService extends BaseService
 
     public function totalPremiumReport($request)
     {
-        $query = DB::table('personal_quotes');
+        $query = DB::table('car_quote_request');
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $freshLoad = ! isset($request->page);
@@ -302,16 +302,10 @@ class ReportService extends BaseService
         $endDate = isset($request->transaction_approved_dates) ?
         Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
-        $query->whereBetween('personal_quotes.transaction_approved_at', [$startDate, $endDate]);
-
-        if (! empty($request->quote_type_id)) {
-            $query->where('personal_quotes.quote_type_id', $request->quote_type_id);
-        } else {
-            $query->whereIn('personal_quotes.quote_type_id', [QuoteTypes::CAR->id()]);
-        }
+        $query->whereBetween('car_quote_request.transaction_approved_at', [$startDate, $endDate]);
 
         if (isset($request->teams) && $request->filled('teams')) {
-            $query->whereIn('users.id', function ($query) use ($request) {
+            $query->whereIn('car_quote_request.advisor_id', function ($query) use ($request) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -324,13 +318,14 @@ class ReportService extends BaseService
             });
         }
 
-        $records = $query->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-            ->join('users', 'personal_quotes.advisor_id', '=', 'users.id')
-            ->select('quote_type.code as quote_type_name', DB::raw('DATE(personal_quotes.transaction_approved_at) as transaction_date'), DB::raw('COALESCE(SUM(personal_quotes.premium), 0) as total_premium'))
-            ->groupBy(DB::raw('DATE(personal_quotes.transaction_approved_at)'))
-            ->orderBy(DB::raw('DATE(personal_quotes.transaction_approved_at)'))
-            ->get();
+        $records = $query->join('users', 'car_quote_request.advisor_id', '=', 'users.id')
+                ->select(DB::raw('"CAR" as quote_type_name'), // Here we alias a static value 'CAR'
+                    DB::raw('DATE(car_quote_request.transaction_approved_at) as transaction_date'),
+                    DB::raw('COALESCE(SUM(car_quote_request.premium), 0) as total_premium'))
+                    ->whereNotNull('car_quote_request.advisor_id')
+            ->groupBy(DB::raw('DATE(car_quote_request.transaction_approved_at)'))
+            ->orderBy(DB::raw('DATE(car_quote_request.transaction_approved_at)'));
 
-        return $records;
+        return $records->get();
     }
 }

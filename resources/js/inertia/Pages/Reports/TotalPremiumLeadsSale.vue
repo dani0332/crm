@@ -131,6 +131,7 @@ onMounted(() => {
           placeholder="Search by Quote Type"
           :options="quoteTypesOptions"
           @update:modelValue="fetchTeamsAgainstQuoteType"
+          disabled
         />
         <ComboBox
           v-model="filters.teams"
@@ -153,7 +154,6 @@ onMounted(() => {
         }))"
         deselect-all
       />
-        
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
