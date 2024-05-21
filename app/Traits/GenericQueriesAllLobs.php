@@ -228,7 +228,6 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['sendPolicyType'] = null;
         $bookPolicyDetails['text'] = '';
         $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payments);
-        // dd($bookPolicyDetails['isLackingOfPayment']);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
@@ -322,18 +321,7 @@ trait GenericQueriesAllLobs
             }
             // total price is actual price without discount
             $payment->total_price = $quoteModel->price_with_vat;
-            // total total_amount is after subtracting from discount
-            // $payment->total_amount = $payment->discount_value ? ($quoteModel->price_with_vat - $payment->discount_value) : $quoteModel->price_with_vat;
             $payment->save();
-
-            // $splitPayment= $payment->paymentSplits()->first();
-            // // If payment frequency is upfront then update payment split amount && if not then set isSplitPayment to true
-            // if ($payment->frequency == 'upfront' &&  $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
-            //     $splitPayment->payment_amount = $payment->total_amount;
-            //     $splitPayment->save();
-            // } else if($payment->frequency != 'upfront') {
-            //     $isPaymentModificationAllowed = true;
-            // }
         } 
         return $this->isLackingPayment($quoteModel->payments);
     }

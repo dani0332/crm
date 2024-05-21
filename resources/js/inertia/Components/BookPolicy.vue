@@ -773,9 +773,9 @@ const showInsufficientPaymentAlert = () => {
         Please be aware that your current action involves sending the policy to
         the customer only.
       </x-alert>
-      <div class="multilabel-checkbox">
+      <div class="flex items-center" >
         <x-checkbox v-model="modals.isConfirmed" />
-          <div class="multiline-label">
+          <div class="ml-2">
             <p>I confirm and attest that all the information is correct.</p>
             <p>I confirm I am in compliance with the COC.</p>
           </div>
@@ -830,12 +830,3 @@ const showInsufficientPaymentAlert = () => {
     </x-modal>
   </div>
 </template>
-<style scoped>
-.multilabel-checkbox {
-  display: flex;
-  align-items: center;
-}
-.multiline-label {
-  margin-left: 10px;
-}
-</style>
