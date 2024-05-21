@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\HealthQuote;
 use App\Traits\CentralTrait;
@@ -14,10 +15,29 @@ class HealthQuoteRepository extends BaseRepository
     {
         return HealthQuote::class;
     }
-    public function fetchGetData()
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc')->Paginate();
+        $request = request();
+
+        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
+        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
+
+        $query = $this->with([
+            'advisor',
+            'nationality',
+            'insuranceProvider',
+        ])
+            ->when(\auth()->user()->hasRole(RolesEnum::HealthAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            })
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy($sort_by, $sort_type);
+
+        if ($forTotalLeadsCount) {
+            return $query->count();
+        }
+
+        return ($forExport) ? $query->get() : $query->Paginate();
     }
 
     public function fetchExport()

@@ -568,8 +568,13 @@ onMounted(() => {
           >
             Export
           </x-button>
-          <x-tooltip v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)" position="right">
-            <x-button tag="div" size="sm" color="emerald" class="mr-3"> Export </x-button>
+          <x-tooltip
+            v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)"
+            position="right"
+          >
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
             <template #tooltip>
               <span class="font-medium">
                 Created dates are required to export data.
@@ -580,7 +585,9 @@ onMounted(() => {
             v-if="canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)"
             size="sm"
             color="emerald"
-            :href="`/car/leads-export-plan/${genericRequestEnum.EXPORT_PLAN_DETAIL}?${objToUrl(filters)}`"
+            :href="`/car/leads-export-plan/${
+              genericRequestEnum.EXPORT_PLAN_DETAIL
+            }?${objToUrl(filters)}`"
             class="justify-self-start mr-3"
           >
             Extract leads and plan detail
@@ -609,17 +616,19 @@ onMounted(() => {
               <span class="font-medium">
                 Created dates are required to export data.
               </span>
-                </template>
-            </x-tooltip>
-            <x-button
-                v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
-                size="sm"
-                color="emerald"
-                :href="`/car/export-makes-model/${genericRequestEnum.EXPORT_MAKES_MODELS}?${objToUrl(filters)}`"
-                class="justify-self-start mr-3"
-            >
-                Extract makes models trims
-            </x-button>
+            </template>
+          </x-tooltip>
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
+            size="sm"
+            color="emerald"
+            :href="`/car/export-makes-model/${
+              genericRequestEnum.EXPORT_MAKES_MODELS
+            }?${objToUrl(filters)}`"
+            class="justify-self-start mr-3"
+          >
+            Extract makes models trims
+          </x-button>
         </div>
         <div class="flex justify-self-end gap-3">
           <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
@@ -660,6 +669,7 @@ onMounted(() => {
           {{ code }}
         </Link>
       </template>
+
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
