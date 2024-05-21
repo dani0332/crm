@@ -259,12 +259,11 @@ class SagePayloadFactory
     public static function createARInvoicePremAndComm($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = [])
     {
         // Payload creation logic for default scenario
-        $taxClass = 1;
+        $taxClass = 2;
         if ($request->commissionIncludingVat > 0) {
             $taxClass = 1;
-        } else {
-            $taxClass = 2;
         }
+
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $commissionDescription = 'C.'.$request->invoiceDescription;
         $premiumWithDiscount = $request->totalAmount + $request->discount;
@@ -310,7 +309,7 @@ class SagePayloadFactory
                     'TaxClass1' => $taxClass,
                     'TaxAmount1' => $request->vatOnCommission,
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
-                    'DocumentTotalIncludingTax' => $request->commission,
+                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
@@ -318,7 +317,7 @@ class SagePayloadFactory
                             'TaxClass1' => $taxClass,
                             'TaxAmount1' => $request->vatOnCommission,
                             'RevenueAccount' => '60010',
-                            'ExtendedAmountWithTIP' => $request->commission,
+                            'ExtendedAmountWithTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                             'ExtendedAmountWithoutTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                         ],
                     ],
@@ -409,11 +408,9 @@ class SagePayloadFactory
     public static function createARInvoiceSplitPayments($request, $splitPayments)
     {
         // Payload creation logic for default scenario
-        $taxClass = 1;
+        $taxClass = 2;
         if ($request->commissionIncludingVat > 0) {
             $taxClass = 1;
-        } else {
-            $taxClass = 2;
         }
 
         $entryType = SageEnum::SCT_STRAIGHT;
