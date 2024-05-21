@@ -290,41 +290,46 @@ class ReportService extends BaseService
 
     public function totalPremiumReport($request)
     {
-        $query = DB::table('car_quote_request');
+        // Set date range filter
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-        $freshLoad = ! isset($request->page);
-        $startDate = isset($request->transaction_approved_dates) ?
-        Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) :
-            ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+        $startDate = $endDate = Carbon::now();
 
-        $endDate = isset($request->transaction_approved_dates) ?
-        Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+        if (isset($request->transaction_approved_dates)) {
+            $startDate = Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
+        }
 
-        $query->whereBetween('car_quote_request.transaction_approved_at', [$startDate, $endDate]);
+        // Initialize the query builder
+        $totalPremiumQuery = DB::table('car_quote_request as cqr')
+                    ->select(
+                        DB::raw('"CAR" as quote_type_name'),
+                        DB::raw('DATE(cqr.transaction_approved_at) as transaction_date'),
+                        DB::raw('COALESCE(SUM(cqr.premium), 0) as total_premium'),
+                        'u.name as advisor_name'
+                    )
+                    ->join('users as u', 'cqr.advisor_id', '=', 'u.id')
+                    ->whereNotNull('cqr.advisor_id')
+                    ->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate])
+                    ->groupBy(DB::raw('DATE(cqr.transaction_approved_at)'))
+                    ->orderBy(DB::raw('DATE(cqr.transaction_approved_at)'));
 
-        if (isset($request->teams) && $request->filled('teams')) {
-            $query->whereIn('car_quote_request.advisor_id', function ($query) use ($request) {
-                $query->distinct()
-                    ->select('users.id')
-                    ->from('users')
-                    ->join('user_team', 'user_team.user_id', 'users.id')
-                    ->join('teams', 'teams.id', 'user_team.team_id')
-                    ->whereIn('teams.id', $request->teams);
-                if (isset($request->userIds) && $request->filled('userIds')) {
-                    $query->whereIn('users.id', $request->userIds);
-                }
+
+                    // Apply team filter
+        if (isset($request->teams) && count($request->teams) > 0) {
+            $totalPremiumQuery->whereIn('cqr.advisor_id', function ($teamsSubQuery) use ($request) {
+                $teamsSubQuery->select('ut.user_id')
+                        ->from('user_team as ut')
+                        ->join('teams as t', 'ut.team_id', '=', 't.id')
+                        ->whereIn('t.id', $request->teams);
             });
         }
 
-        $records = $query->join('users', 'car_quote_request.advisor_id', '=', 'users.id')
-            ->select(DB::raw('"CAR" as quote_type_name'), // Here we alias a static value 'CAR'
-                DB::raw('DATE(car_quote_request.transaction_approved_at) as transaction_date'),
-                DB::raw('COALESCE(SUM(car_quote_request.premium), 0) as total_premium'))
-            ->whereNotNull('car_quote_request.advisor_id')
-            ->groupBy(DB::raw('DATE(car_quote_request.transaction_approved_at)'))
-            ->orderBy(DB::raw('DATE(car_quote_request.transaction_approved_at)'));
+        // Apply userIds filter
+        if (isset($request->userIds) && count($request->userIds) > 0) {
+            $totalPremiumQuery->whereIn('cqr.advisor_id', $request->userIds);
+        }
 
-        return $records->get();
+        // Execute the query and return the result
+        return $totalPremiumQuery->get();
     }
 }
