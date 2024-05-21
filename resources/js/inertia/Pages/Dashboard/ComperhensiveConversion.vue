@@ -37,6 +37,7 @@ const filters = reactive({
   isCommercial: 'All',
   insurance_type: '',
   insurance_for: '',
+  segment_filter: 'all',
 });
 
 const cleanFilters = filters => {

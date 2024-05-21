@@ -272,34 +272,9 @@ class PetQuoteService extends BaseService
             }
         }
 
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-            $isAdmin = Auth::user()->hasRole('ADMIN');
-            if ($isAdmin || $isManagerORDeputy == '1') {
-                if ($column == 6) {
-                    $column = 'pqr.created_at';
-                }
-                if ($column == 7) {
-                    $column = 'pqr.updated_at';
-                }
-                if ($column == 8) {
-                    $column = 'pqrd.next_followup_date';
-                }
-            } else {
-                if ($column == 5) {
-                    $column = 'pqr.created_at';
-                }
-                if ($column == 6) {
-                    $column = 'pqr.updated_at';
-                }
-                if ($column == 7) {
-                    $column = 'pqrd.next_followup_date';
-                }
-            }
-
-            return $this->query->orderBy($column, $direction);
+        // sortBy filter
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
         } else {
             return $this->query->orderBy('pqr.created_at', 'DESC');
         }

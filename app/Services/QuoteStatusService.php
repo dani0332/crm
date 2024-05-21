@@ -21,7 +21,7 @@ class QuoteStatusService
 
         if (checkPersonalQuotes($quoteType->code) && (! $checkAMlService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
             $quoteRequestId = $checkAMlService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
-            $checkAMlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id]);
+            $checkAMlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id, 'quote_status_date' => now()]);
         }
 
         if (! empty($request)) {
