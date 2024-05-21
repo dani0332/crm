@@ -55,7 +55,7 @@ const dateToYMD = date => {
       return date.split(' ')[0]; // Return only the date part
     }
     const [year, month, day] = date.split('-');
-    return `${year}-${month}-${day}`;3
+    return `${year}-${month}-${day}`;
   }
   return '';
 };
