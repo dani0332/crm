@@ -1371,6 +1371,9 @@ const validateViewPayment = isValid => {
     isApproveConfirmed.value = true;
     return true;
   }
+  if (isApproveNotChecked.value === true) {
+    return true;
+  }
   return false;
 };
 
@@ -3380,9 +3383,9 @@ const isVerifiedEnabled = computed(() => {
                     </x-tooltip>
                   </div>
 
-                  <div class="w-1/5 px-2">
+                  <div class="w-1/5 px-2" v-if="isVerifiedEnabled">
                   <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">VERIFIED AT</span>
+                    <span class="text-sm">VERIFIED AT</span>
                   </span>
                 </div>
                 </div>
@@ -3408,19 +3411,19 @@ const isVerifiedEnabled = computed(() => {
                         : '0.00'
                     }}
                   </div>
-                  <div class="w-1/5 px-2">{{ splitPaymentRecord.verified_at !== null ? formatDate(splitPaymentRecord.verified_at,true) : 'N/A' }}</div>
+                  <div class="w-1/5 px-2" v-if="isVerifiedEnabled">{{ splitPaymentRecord.verified_at !== null ? formatDate(splitPaymentRecord.verified_at,true) : 'N/A' }}</div>
 
                 </div>
 
-                <div class="flex w-full custombreak" >
+                <div class="flex w-full custombreak" v-if="isVerifiedEnabled" >
                   <div class="w-1/6 px-2 text-center"></div>              
                   <div class="w-1/5 px-2">
                     <span class="text-sm  ">
-                      <span class="border-b-2 border-dotted border-black text-sm">VERIFIED BY</span>
+                      <span class="text-sm">VERIFIED BY</span>
                     </span>
                   </div>
                 </div>
-                <div class="flex w-full custombreak pb-5" >
+                <div class="flex w-full custombreak pb-5" v-if="isVerifiedEnabled" >
                   <div class="w-1/6 px-2 text-center"></div>
                   <div class="w-1/5 px-2">{{ splitPaymentRecord.verified_by !== null ? splitPaymentRecord.verified_by_user.name : 'N/A' }}</div>              
                 </div>  
@@ -3605,10 +3608,6 @@ const isVerifiedEnabled = computed(() => {
             <div v-if="isViewEnabled" class="p-1 mb-2">
               <h3>Notes</h3>
             </div>
-            <div class="flex items-center justify-center" v-if="splitPaymentRecord.verified_by !== null && paymentMethodsForm.status == 'view'">        
-              <p class="text-lg font-bold text-blue-400 mr-2">Payment has been verified</p><img style="width:30px;height:30px;" src="/images/payment_verified.jpg">
-            </div>
-
             <div class="w-full grid">
               <x-field>
                 <label v-if="!isViewEnabled">Notes</label>
@@ -3625,6 +3624,9 @@ const isVerifiedEnabled = computed(() => {
                   v-model="paymentMethodsForm.notes"
                 />
               </x-field>
+            </div>
+            <div class="flex items-center justify-center" v-if="splitPaymentRecord.verified_by !== null && paymentMethodsForm.status == 'view'">        
+              <p class="text-lg font-bold text-blue-400 mr-2">Payment has been verified</p><img style="width:30px;height:30px;" src="/images/payment_verified.jpg" />
             </div>
             <template
               v-if="(isViewEnabled || isCreditApprovalView) && isDeclineClicked"
@@ -4021,7 +4023,7 @@ const isVerifiedEnabled = computed(() => {
                 <div class="w-full h-full mt-2 flex flex-col items-center"> 
                 <div class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start">
                     <div class="flex items-center text-center mr-2 mt-4">
-                        <input type="checkbox" @click="isApproveNotChecked = !isApproveNotChecked" class="h-6 w-6 mr-2 border border-gray-300 rounded checked:bg-blue-500 checked:border-transparent focus:ring-blue-400">
+                        <input type="checkbox" @click="isApproveNotChecked = !isApproveNotChecked" class="h-6 w-6 mr-2 border border-gray-300 rounded checked:bg-blue-500 checked:border-transparent focus:ring-blue-400" />
                     </div>
                     <div class="text-left">
                       <span v-if="paymentMethodsForm.collection_type==='insurer'">I certify that all details provided, including the official receipt or payment confirmation, are correct and in compliance with our conduct standards.</span>
@@ -4031,11 +4033,9 @@ const isVerifiedEnabled = computed(() => {
                 <x-tooltip v-if="isApproveNotChecked">
                   <x-button
                     size="lg"
-                    type="submit"
                     color="orange"
                     class="px-4 py-2 mt-4"
-                    :disabled="isApproveNotChecked"
-                    :loading = "paymentMethodsForm.processing"
+                    :disabled="isApproveNotChecked" 
                   >
                   <span>Confirm</span></x-button>
                   <template #tooltip>
