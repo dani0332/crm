@@ -306,10 +306,6 @@ const sendPolicyConfirmationHeading = computed(() => {
   }
 });
 
-// const isUpfrontOrSplitPayments = () => {
-//   return getPayment()?.frequency == 'upfront' || getPayment()?.frequency == 'split_payments';
-// }
-
 const showInsufficientPaymentAlert = () => {
   const paymentId = getPayment().payment_status_id ?? 0;
   if (insufficientPaymentStatuses.includes(paymentId)) {
