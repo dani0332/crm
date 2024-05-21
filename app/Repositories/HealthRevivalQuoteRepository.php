@@ -62,4 +62,24 @@ class HealthRevivalQuoteRepository extends BaseRepository
 
         return $result;
     }
+
+    public function fetchGetBy($column, $value)
+    {
+        $quote = HealthQuote::with([
+            'paymentStatus',
+            'quoteStatus',
+            'advisor',
+            'salaryBand',
+            'memberCategory',
+            'currentProvider',
+            'healthLeadType',
+            'healthQuoteRequestDetail.lostReason',
+        ])
+            ->where([
+                $column => $value,
+                // 'source' => LeadSourceEnum::REVIVAL,
+            ])->firstOrFail();
+
+        return $quote;
+    }
 }

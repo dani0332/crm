@@ -2,7 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\HealthTeamType;
+use App\Enums\LookupsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Models\Emirate;
+use App\Models\Nationality;
+use App\Models\User;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\HealthRevivalQuoteRepository;
+use App\Repositories\LookupRepository;
+use App\Services\ActivitiesService;
+use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\CustomerService;
+use App\Services\DropdownSourceService;
+use App\Services\HealthQuoteService;
+use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 
 class HealthRevivalQuoteController extends Controller
 {
@@ -18,6 +39,131 @@ class HealthRevivalQuoteController extends Controller
             'quotes' => $quotes,
             'formOptions' => $formOptions,
         ]);
-        // dd('Health Revival Quote Controller');
+    }
+
+    public function show($id)
+    {
+
+        $quoteType = quoteTypeCode::Health;
+
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
+
+        $record = app(CRUDService::class)->getEntity($quoteType, $id);
+
+        $ecomDetails = app(HealthQuoteService::class)->getEcomDetails($record);
+        $listQuotePlans = [];
+        $quotePlans = app(HealthQuoteService::class)->getQuotePlans($id);
+        if (isset($quotePlans->message) && $quotePlans->message != '') {
+            $listQuotePlans = [];
+        } else {
+            if (gettype($quotePlans) != 'string') {
+                $listQuotePlans = $quotePlans->quote->plans;
+            } else {
+                $listQuotePlans = [];
+            }
+        }
+        $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
+
+        $memberCategories = app(LookupService::class)->getMemberCategories();
+        $formOptions = HealthRevivalQuoteRepository::getFormOptions();
+        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', $quoteTypeId);
+
+        $leadStatuses = app(HealthQuoteService::class)->statusesToDisplay($leadStatuses, $record);
+        $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
+
+        $paymentEntityModel = app(HealthQuoteService::class)->getEntityPlain($record->id);
+        $payments = $paymentEntityModel->payments;
+        $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+
+        $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUpload(QuoteTypeId::Health);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $documentTypes = collect($documentTypes)->groupBy('category');
+
+        $paymentMethods = app(LookupService::class)->getPaymentMethods();
+
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
+        $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocuments($quoteType, $record->id);
+        $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
+            $quoteDocument->created_by_name = isset($quoteDocument->createdBy->name) ? $quoteDocument->createdBy->name : null;
+
+            return $quoteDocument;
+        });
+
+        $activitiesData = app(ActivitiesService::class)->getActivityByLeadId($record->id, strtolower($quoteType));
+        $activities = [];
+        foreach ($activitiesData as $activity) {
+            $updatedActivity = [
+                'id' => $activity->id,
+                'uuid' => $activity->uuid,
+                'title' => $activity->title,
+                'description' => $activity->description,
+                'quote_request_id' => $activity->quote_request_id,
+                'quote_type_id' => $activity->quote_type_id,
+                'quote_uuid' => $activity->quote_uuid,
+                'client_name' => $activity->client_name,
+                'due_date' => $activity->due_date,
+                'assignee' => User::where('id', $activity->assignee_id)->first()->name,
+                'assignee_id' => $activity->assignee_id,
+                'status' => $activity->status,
+            ];
+            array_push($activities, $updatedActivity);
+        }
+        $advisors = [];
+
+        if (
+            $record->health_team_type == HealthTeamType::EBP ||
+            $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED
+        ) {
+            $advisors = app(CRUDService::class)->getEBPAndRMAdvisors();
+        } else {
+            $advisors = app(CRUDService::class)->getAdvisorsByModelType(strtolower($quoteType));
+        }
+
+
+        return inertia('HealthRevivalQuote/Show', [
+            'quote' => $record,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'genderOptions' => app(CRUDService::class)->getGenderOptions(),
+            'leadStatuses' => array_values($leadStatuses->toArray()),
+            'membersDetail' => $membersDetails,
+            'memberCategories' => $memberCategories,
+            'nationalities' => $nationalities,
+            'memberRelations' => $memberRelations,
+            'quoteType' => QuoteTypes::HEALTH,
+            'customerAdditionalContactsData' => $customerAdditionalContacts,
+            'ecomDetails' => $ecomDetails,
+            'payments' => $payments,
+            'paymentMethods' => $paymentMethods,
+            'documentTypes' => $documentTypes,
+            'quoteRequest' => $paymentEntityModel,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'storageUrl' => storageUrl(),
+            'isAmlClearedForPayment' => $isAmlClearedForPayment,
+            'emirates' => Emirate::where('is_active', 1)->select('id', 'text')->get(),
+            'salaryBands' => app(LookupService::class)->getSalaryBands(),
+            'genderOptions' => app(CRUDService::class)->getGenderOptions(),
+            'quoteDocuments' => array_values($quoteDocuments->toArray()),
+            'activities' => $activities,
+            'advisors' => $advisors,
+        ]);
+    }
+
+    public function edit($uuid)
+    {
+        $formOptionsData = HealthRevivalQuoteRepository::getFormOptions(false);
+        $quote = HealthRevivalQuoteRepository::getBy('uuid', $uuid);
+
+        return inertia(
+            'CarRevivalQuote/Form',
+            [
+                'form_options' => $formOptionsData,
+                'quote' => $quote,
+            ]
+        );
     }
 }

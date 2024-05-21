@@ -167,6 +167,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
             // health revival
             Route::get('health-revival', [HealthRevivalQuoteController::class, 'index'])->name('healthrevival-quotes-list');
+            Route::get('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'show'])->name('healthrevival-quotes-show');
         });
 
         if (in_array(quoteTypeCode::Life, newUi())) {
