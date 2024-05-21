@@ -183,7 +183,7 @@ class CarQuoteService extends BaseService
                 //'cqr.prefill_plan_selected_at',
                 //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
-                'cqr.aml_status_id',
+                //'cqr.aml_status_id',
                 DB::raw('GROUP_CONCAT(team.name) as team_name')
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
