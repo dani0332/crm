@@ -1816,8 +1816,6 @@ const isMasterPaymentPaid = computed(() => {
 let is_lacking_payment = ref(page.props?.bookPolicyDetails?.isLackingOfPayment || false);
 
 watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
-  console.clear()
-  console.log('isLackingOfPayment', newVal);
   is_lacking_payment.value = newVal || false;
 });
 
