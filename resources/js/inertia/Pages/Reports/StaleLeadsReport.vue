@@ -12,7 +12,7 @@ const loaders = reactive({
 
 const validProdcuts = reactive([
   'Health',
-  'Corpline',
+  'CorpLine',
   'Home',
   'Pet',
   'Yacht',
@@ -21,13 +21,28 @@ const validProdcuts = reactive([
 
 const advisorOptions = ref([]);
 
-const teamOptions = computed(() => {
-  return props.teams.map(x => ({
-    value: x.id,
-    label: x.name,
-  }));
-});
+// const teamOptions = computed(() => {
+//   return props.teams.map(x => ({
+//     value: x.id,
+//     label: x.name,
+//   }));
+// });
 
+const teams = ref(
+  props.teams.map(x => ({
+    value: x.id,
+    lable: x.name,
+  })),
+);
+const teamOptions = computed({
+  get() {
+    return teams.value;
+  },
+
+  set(newValue) {
+    teams.value = newValue;
+  },
+});
 const lobs = computed(() => {
   return props.products
     .filter(x => {
@@ -43,7 +58,7 @@ const lobs = computed(() => {
     });
 });
 
-const selectedLob = ref(props.products[0]);
+const selectedLob = ref(lobs.value[0].value);
 
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -55,7 +70,7 @@ const serverOptions = ref({
 
 const filters = reactive({
   date: null,
-  lob: props.products[0],
+  lob: selectedLob.value,
   team: '',
   advisors: [],
   filter_by: null,
@@ -175,13 +190,15 @@ const commonHeaders = ref([
   },
 ]);
 
-const tableHeader = ref(
-  filters.lob === 'Health'
-    ? [...healthHeaders.value]
-    : filters.lob === 'Corpline'
-    ? [...corplineHeaders.value]
-    : [...commonHeaders.value],
-);
+const tableHeader = ref([]);
+
+const computedHeaders = computed(() => {
+  tableHeader.value.push({
+    text: 'TOTAL',
+    value: 'total',
+  });
+  return tableHeader.value;
+});
 
 const tableData = computed(() => {
   return props.reportData.data || [];
@@ -193,7 +210,6 @@ const onSubmit = isValid => {
 
   const filtersCleaned = cleanObj(filters);
 
-  tableHeader.value = [];
   router.visit(route('stale-leads-report'), {
     method: 'get',
     data: {
@@ -233,12 +249,18 @@ const fetchTeams = async () => {
     })
     .then(res => {
       if (res.data.teams) {
-        teamOptions.value = Object.entries(res.data.teams).map(
-          ([key, value]) => ({
-            value: key,
-            label: value,
-          }),
-        );
+        teamOptions.value = Object.values(res.data.teams)
+          .filter(x => {
+            if (props.teams.some(item => item.name == x)) return x;
+          })
+          .map(newTeam => ({
+            value: newTeam,
+            label: newTeam,
+          }));
+        // teamOptions.value = Object.entries(teams).map(([key, value]) => ({
+        //   value: key,
+        //   label: value,
+        // }));
       }
     })
     .finally(() => {
@@ -310,8 +332,7 @@ const presetDates = [
 function changeLob() {
   if (filters.lob === 'Health') {
     tableHeader.value = [...commonHeaders.value, ...healthHeaders.value];
-    console.log(tableHeader.value);
-  } else if (filters.lob === 'Corpline') {
+  } else if (filters.lob === 'CorpLine') {
     const commons = commonHeaders.value.filter(
       header =>
         header.value !== 'in_negotiation' && header.value !== 'payment_pending',
@@ -452,13 +473,7 @@ watch(
     v-model:server-options="serverOptions"
     table-class-name=" mt-4"
     :loading="loaders.table"
-    :headers="[
-      ...tableHeader,
-      {
-        text: 'TOTAL',
-        value: 'total',
-      },
-    ]"
+    :headers="computedHeaders"
     :items="tableData"
     border-cell
     :empty-message="'No Records Available'"
