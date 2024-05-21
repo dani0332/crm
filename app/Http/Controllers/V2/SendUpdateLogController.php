@@ -116,7 +116,7 @@ class SendUpdateLogController extends Controller
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
         if ($quoteType == quoteTypeCode::Car) {
-            if (in_array($sendUpdateLog->option->code, [SendUpdateLogStatusEnum::CAR_AOC, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
+            if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::CAR_AOC, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
                 $additionalField = $this->sendUpdateLogService->getAdditionalOptionsForCar($sendUpdateLog);
             }
         }
@@ -129,8 +129,8 @@ class SendUpdateLogController extends Controller
             $quote->load('plan.insuranceProvider');
         }
 
-        $categoryCode = $sendUpdateLog->category->code;
-        $optionCode = $sendUpdateLog->option->code ?? null;
+        $categoryCode = $sendUpdateLog->category?->code;
+        $optionCode = $sendUpdateLog->option?->code ?? null;
         $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
         $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
