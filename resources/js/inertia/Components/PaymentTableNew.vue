@@ -1320,12 +1320,9 @@ const addPaymentModal = () => {
     return;
   }
 
-  if (
-    props.quoteType === 'Health' ||
-    props.quoteSubType === 'Group Medical' ||
-    props.quoteType === 'Life' ||
-    props.quoteType === 'Marine'
-  ) {
+  const quoteCollectedBy = ['Group Medical', 'Health', 'Life', 'Marine', 'Pet', 'Cycle', 'Yacht'];
+
+  if (quoteCollectedBy.includes(props.quoteType)) {
     paymentMethodsForm.collection_type = 'insurer';
   } else {
     paymentMethodsForm.collection_type = 'broker';
