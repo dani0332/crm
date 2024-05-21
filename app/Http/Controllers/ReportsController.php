@@ -28,7 +28,7 @@ class ReportsController extends Controller
         $this->middleware(
             'permission:'.PermissionsEnum::DATA_EXTRACTION,
             [
-                'only' => 'exportSaleManagementReport'
+                'only' => 'exportSaleManagementReport',
             ]
         );
     }
