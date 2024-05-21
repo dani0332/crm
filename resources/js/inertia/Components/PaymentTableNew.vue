@@ -6,6 +6,7 @@ const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
 const paymentLookups = page.props.paymentLookups;
+const vatValue = page.props.vatValue;
 const can = permission => useCan(permission);
 const props = defineProps({
   payments: Array,
@@ -217,6 +218,12 @@ const handleKeyDown = event => {
 
 const currentFile = computed(() => {
   return filesTest.value[currentFileIndex.value];
+});
+
+// Define a computed property to calculate the initial total price without VAT
+const initialTotalPriceWithoutVat = computed(() => {
+  const vatRate = vatValue ? vatValue / 100 : 0;
+  return (totalPrice.value / (1 + vatRate));
 });
 
 const closeInnerModal = () => {
@@ -694,20 +701,20 @@ const handleDiscountChange = (editDiscountValue = 0) => {
 
   if (paymentMethodsForm.discount === 'employee_discount') {
     if (props.quoteType === 'Health') {
-      discountValue.value = (totalPrice.value * (5 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (5 / 100)).toFixed(2);
     } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
-      discountValue.value = (totalPrice.value * (15 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (15 / 100)).toFixed(2);
     } else {
-      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); // for car
+      discountValue.value = (initialTotalPriceWithoutVat.value * (12.5 / 100)).toFixed(2); // for car
     }
   }
   if (paymentMethodsForm.discount === 'family_employee_discount') {
     if (props.quoteType === 'Health') {
-      discountValue.value = (totalPrice.value * (2.5 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (2.5 / 100)).toFixed(2);
     } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
-      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (12.5 / 100)).toFixed(2);
     } else {
-      discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
+      discountValue.value = (initialTotalPriceWithoutVat.value * (7.5 / 100)).toFixed(2); // for car
     }
   }
   if (

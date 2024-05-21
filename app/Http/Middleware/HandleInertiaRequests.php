@@ -10,13 +10,16 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\ApplicationStorageEnums;
 use App\Services\LeadsCountService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
+use App\Services\ApplicationStorageService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
+
 
 class HandleInertiaRequests extends Middleware
 {
@@ -47,9 +50,11 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $permissions = $roles = [];
+        $vatValue = 0;
         if (auth()->user()) {
             $permissions = auth()->user()->getAllPermissions()->pluck('name')->toArray();
             $roles = auth()->user()->getRoleNames()->toArray();
+            $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         }
 
         return [
@@ -77,6 +82,7 @@ class HandleInertiaRequests extends Middleware
             'im_logo' => getIMLogo(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
+            'vatValue' => $vatValue,
         ];
     }
 
