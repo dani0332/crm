@@ -123,7 +123,6 @@ class HealthRevivalQuoteController extends Controller
             $advisors = app(CRUDService::class)->getAdvisorsByModelType(strtolower($quoteType));
         }
 
-
         return inertia('HealthRevivalQuote/Show', [
             'quote' => $record,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
