@@ -1105,7 +1105,7 @@ watch(
       :quoteType="page.props.quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
-    />  
+    />
 
     <!-- Payments -->
     <MigratePayment
@@ -1113,13 +1113,14 @@ watch(
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="page.props.quoteType"
-      :payments="payments"    
-    />    
-    <PaymentTableNew 
+      :payments="payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="payments"
       :paymentDocument="documentTypeCodes.filter(item => ['CLPD', 'CLPDR', 'CLDPDR'].includes(item.code))"
+      :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -1128,7 +1129,7 @@ watch(
       quoteSubType="Corpline"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -1320,8 +1321,8 @@ watch(
           </div>
         </template>
       </x-modal>
-    </div> 
-    
+    </div>
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>

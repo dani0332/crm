@@ -1711,7 +1711,7 @@ watch(
         </template>
       </Collapsible>
     </div>
-    
+
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
@@ -2163,10 +2163,12 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-              Travel plans for {{ travelers.length - aboveAgeMembers }} member
-              age 0-64
-            </h6>
+              <div>
+                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
+                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                  age 0-64
+                </h6>
+              </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2226,8 +2228,8 @@ watch(
             </p>
           </div>
           <div v-else>
-            <!-- for future use  v-model:items-selected="selectedPlans" -->
             <DataTable
+                v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
@@ -2309,6 +2311,7 @@ watch(
             </div>
             <div>
               <DataTable
+                  v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed compact"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
@@ -2394,6 +2397,7 @@ watch(
 			quoteType="Travel"
 			:payments="payments"
       :paymentDocument="documentTypeCodes.filter(item => ['TPD', 'TPDR', 'TDPDR'].includes(item.code))"
+      :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -2633,6 +2637,14 @@ watch(
         </template>
       </Collapsible>
     </div>
+    
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
 
     <AuditLogs
       :type="'App\\Models\\TravelQuote'"

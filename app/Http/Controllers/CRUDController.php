@@ -4,62 +4,69 @@ namespace App\Http\Controllers;
 
 use DataTables;
 use Carbon\Carbon;
-use App\Models\Tier;
-use App\Models\User;
-use App\Facades\Capi;
-use App\Models\CarMake;
-use App\Models\Emirate;
-use App\Models\Payment;
-use App\Enums\RolesEnum;
-use App\Enums\TiersEnum;
-use App\Models\CarQuote;
-use App\Enums\QuoteTypes;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarPlanAddonsCode;
+use App\Enums\CarPlanExclusionsCode;
+use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\HealthPlanTypeEnum;
+use App\Enums\HealthTeamType;
+use App\Enums\HomePossessionType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypeId;
-use App\Models\Nationality;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TiersEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Facades\Capi;
+use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\StorePaymentRequest;
+use App\Http\Requests\UpdateLeadStatusRequest;
+use App\Http\Requests\UpdatePolicyDetailRequest;
+use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\SendOCBIntroEmailJob;
+use App\Jobs\SyncSIBContactJob;
+use App\Models\ApplicationStorage;
+use App\Models\CarMake;
+use App\Models\CarQuote;
+use App\Models\Emirate;
 use App\Models\GenericModel;
+use App\Models\HealthPlanType;
+use App\Models\Nationality;
+use App\Models\Payment;
+use App\Models\PaymentStatusLog;
+use App\Models\QuoteDocument;
+use App\Models\Tier;
+use App\Models\User;
 use App\Services\AMLService;
 use Illuminate\Http\Request;
-use App\Enums\HealthTeamType;
-use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentTooltip;
-use App\Models\QuoteDocument;
 use App\Services\CRUDService;
 use App\Services\TeamService;
 use App\Services\TierService;
 use App\Services\UserService;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\TravelQuoteEnum;
-use App\Models\HealthPlanType;
-use App\Enums\CustomerTypeEnum;
-use App\Jobs\SyncSIBContactJob;
 use App\Services\LookupService;
-use App\Enums\CarPlanAddonsCode;
-use App\Enums\PaymentStatusEnum;
-use App\Jobs\CarRenewalEmailJob;
-use App\Models\PaymentStatusLog;
 use App\Services\CentralService;
-use App\Enums\GenericRequestEnum;
-use App\Enums\HomePossessionType;
-use App\Enums\PaymentMethodsEnum;
 use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\CustomerService;
 use App\Services\PetQuoteService;
-use App\Enums\CarPlanFeaturesCode;
-use App\Jobs\SendOCBIntroEmailJob;
-use App\Models\ApplicationStorage;
 use App\Services\EmailDataService;
 use App\Services\HomeQuoteService;
 use App\Services\LifeQuoteService;
 use App\Services\ActivitiesService;
 use App\Services\AllocationService;
 use Illuminate\Support\Facades\Log;
-use App\Enums\CarPlanExclusionsCode;
 use App\Models\PolicyIssuanceStatus;
 use App\Repositories\UserRepository;
 use App\Services\EmailStatusService;
@@ -69,8 +76,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Repositories\AuditRepository;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\SendUpdateLogStatusEnum;
 use App\Repositories\LookupRepository;
 use App\Services\BusinessQuoteService;
 use App\Services\QuoteDocumentService;
@@ -78,19 +83,14 @@ use App\Services\DropdownSourceService;
 use App\Services\LeadAllocationService;
 use Illuminate\Support\Facades\Redirect;
 use App\Services\NotesForCustomerService;
-use App\Http\Requests\StorePaymentRequest;
 use App\Services\SendEmailCustomerService;
 use App\Repositories\NationalityRepository;
 use App\Services\ApplicationStorageService;
-use App\Http\Requests\ExportPlansPdfRequest;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
-use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Repositories\InsuranceProviderRepository;
-
 class CRUDController extends Controller
 {
     protected $genericModel;
@@ -219,7 +219,6 @@ class CRUDController extends Controller
             $isManualAllocationAllowed = Auth::user()->isAdmin() ? true : $isManager;
         }
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
-
         $tiers = Tier::where('is_active', 1)->get();
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->isRenewalUser();
@@ -612,6 +611,11 @@ class CRUDController extends Controller
         $tiers = $this->lookupService->getTierR();
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+
+        if (in_array($this->genericModel->modelType, [quoteTypeCode::Health, quoteTypeCode::Car])) {
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
+        }
+
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
@@ -627,7 +631,7 @@ class CRUDController extends Controller
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $carMakeText = $record->car_make_id_text ?? '';
             $carModelText = $record->car_model_id_text ?? '';
-            $this->carQuoteService->addOrUpdateQuoteViewCount($record);
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Car);
 
             foreach ($payments as $payment) {
                 $payment->payment_status_text = $payment->paymentStatus->text;
@@ -713,7 +717,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bookPolicyDetails', 'listQuotePlans', 'documentTypeCodes', 'isAmlClearedForPayment'
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bookPolicyDetails', 'listQuotePlans', 'documentTypeCodes', 'isAmlClearedForPayment', 'clientInquiryLogs'
             ]));
         }
 
@@ -856,6 +860,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Health);
             $listQuotePlans = [];
             $quotePlans = $this->healthQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
@@ -964,6 +969,7 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
+                'planTypes' => HealthPlanTypeEnum::withLabels(),
                 'lostReasons' => $lostReasons,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
@@ -1005,6 +1011,7 @@ class CRUDController extends Controller
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'documentTypeCodes' => $documentTypeCodes,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
+                'clientInquiryLogs' => $clientInquiryLogs,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1478,6 +1485,10 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
 
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
+        }
+
         return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 
@@ -1652,6 +1663,16 @@ class CRUDController extends Controller
             'policy_issuance_status_id' => $request->quote_policy_issuance_status ?? null,
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
+
+        if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
+            $quoteModel->update([
+                'quote_status_id' => QuoteStatusEnum::PolicyPending,
+            ]);
+        }
+        // store policy issuer
+        $payment = $quoteModel->payments->first();
+        $payment->policy_issuer_id = auth()->id();
+        $payment->save();
 
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
@@ -1863,11 +1884,6 @@ class CRUDController extends Controller
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'is_renewal_tier_email_sent' => 0,
         ]);
-    }
-
-    public function cancelPayment(Request $request)
-    {
-        return $this->crudService->cancelPayment($request);
     }
 
     public function toggleEmbeddedProduct(Request $request)

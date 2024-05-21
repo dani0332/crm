@@ -860,13 +860,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
-    />    
+      :quoteType="quoteType"
+    />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
       :paymentDocument="documentTypeCodes.filter(item => ['PPD', 'PPDR', 'PDPDR'].includes(item.code))"
+      :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -895,6 +896,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
       quoteType="Pet"
     />
+
+<!-- <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" /> -->
 
     <EmbeddedProducts
       :data="embeddedProducts"

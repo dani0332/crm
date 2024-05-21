@@ -1089,7 +1089,7 @@ watch(
                 class="w-full"
                 :disabled="quote.quote_status_id == 15"
               />
-	      
+
 	        <x-field label="Transaction Type">
             <x-input
               type="text"
@@ -1127,13 +1127,14 @@ watch(
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="payments"     
-    />    
+      :payments="payments"
+    />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
       :paymentDocument="page.props.documentTypeCodes.filter(item => ['HOMPD', 'HOMPDR', 'HOMDPDR'].includes(item.code))"
+      :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -1151,7 +1152,6 @@ watch(
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -1176,7 +1176,7 @@ watch(
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
     />
-    
+
     <BookPolicy
       v-if="
         canAny([

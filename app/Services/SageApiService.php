@@ -3,17 +3,20 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Factories\SagePayloadFactory;
+use App\Models\BusinessInsuranceType;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\User;
+use App\Repositories\SendUpdateLogRepository;
 use App\Traits\SageLoggable;
-use Illuminate\Support\Facades\Auth;
+use App\Traits\TeamHierarchyTrait;
 
 class SageApiService
 {
-    use SageLoggable;
+    use SageLoggable, TeamHierarchyTrait;
 
     protected $sageLogin;
     protected $sagePassword;
@@ -29,12 +32,27 @@ class SageApiService
 
     public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits)
     {
+        $firstChildPayment = $paymentSplits->first();
+        $insuredFullName = $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name;
+        $latestEndorsementCode = '';
+        if ($quote->personal_quote_id) {
+            $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
+            $latestEndorsementCode = $latestEndorsement->code;
+        }
+
+        $businessTypeOfInsuranceCode = '';
+        if ($quote->business_type_of_insurance_id) {
+            $businessTypeOfInsurance = BusinessInsuranceType::find($quote->business_type_of_insurance_id);
+            $businessTypeOfInsuranceCode = $businessTypeOfInsurance->code;
+        }
+
         $sageRequest = new \stdClass();
 
         // $sageRequest->discount = 2;
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
         $sageRequest->bookingDate = date('Y-m-d', strtotime($quote['policy_booking_date']));
+        $sageRequest->policyBookingDate = date('Ymd', strtotime($quote['policy_booking_date']));
         $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
         $sageRequest->insurerInvoiceDate = date('Y-m-d', strtotime($payment->insurer_invoice_date));
 
@@ -44,32 +62,51 @@ class SageApiService
 
         $sageRequest->mainClassInsurance = $modelType;
         $sageRequest->policyNumber = $quote->policy_number;
-
-        $sageRequest->policyIssuer = Auth::user()->name;
+        $sageRequest->policyIssuer = $payment->policyIssuer?->name ?? '';
         $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
-        $sageRequest->subClass = '';
+        $sageRequest->subClass = $businessTypeOfInsuranceCode;
+        $sageRequest->ccCode = $firstChildPayment->cc_payment_id ?? '';
+        $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
+        $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
+        $sageRequest->endorsementNumber = $latestEndorsementCode;
+        $sageRequest->insured = $insuredFullName;
+        $sageRequest->policyHolder = $insuredFullName;
+        $sageRequest->premiumCollectedBy = ucfirst($payment->collection_type);
 
         $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
         // $sageRequest->invoicePaymentStatus = 'paid';
         $advisorName = '';
+        $managerName = '';
         if (! empty($quote->advisor_id)) {
-
-            $advisorName = User::where('id', $quote->advisor_id)->value('name');
+            $advisor = User::where('id', $quote->advisor_id)->first();
+            $advisorName = $advisor->name;
+            $managerName = implode(',', getManagersByUser($advisor->id)->pluck('name')->toArray());
         }
         $sageRequest->advisorName = $advisorName;
+        $sageRequest->manager = $managerName;
+
+        //calculate vat
+        $sageRequest->vatOnPremium = $quote->vat ?: ($quote->price_with_vat ? (floatval($quote->price_with_vat) - floatval($quote->price_vat_applicable)) : 0);
+
         $sageRequest->premiumWithoutTax = floatval($quote->price_without_vat);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
         $sageRequest->vatOnCommission = floatval($payment->commission_vat);
+        $sageRequest->totalAmount = floatval($payment->total_amount);
         $sageRequest->commission = floatval($payment->commission);
         $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
         $sageRequest->commissionWithOutVat = floatval($payment->commission_vat_not_applicable);
+        $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
 
         $sageRequest->insurerPremiumNumber = (string) $payment['insurer_tax_number'];
         $sageRequest->insurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
         if (count($paymentSplits) == 1) {
             $sageRequest->sage_reciept_id = $paymentSplits[0]['sage_reciept_id'];
-            $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'];
+            $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'] + $sageRequest->discount;
         }
+
+        //Insurer GL Account and Vendor Number
+        $sageRequest->insurerGlLiaiblityAccount = $payment->insuranceProvider?->gl_liaiblity_account;
+        $sageRequest->sageVenderId = $payment->insuranceProvider?->sage_vendor_id;
 
         return $sageRequest;
     }
@@ -169,7 +206,6 @@ class SageApiService
 
     public function postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data)
     {
-
         // payload
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
 
@@ -191,8 +227,11 @@ class SageApiService
 
         $sageRequest->customerId = $sageCustomerNumber;
 
-        // frequency  is 'upfront'
+        if (! $sageRequest->insurerGlLiaiblityAccount) {
+            return ['status' => false, 'message' => 'Insurance Provider not found'];
+        }
 
+        // frequency  is 'upfront'
         if ($payment->frequency == 'upfront') {
 
             /* createARInvoicePremAndComm */
@@ -296,7 +335,8 @@ class SageApiService
                 return $returnMessage;
             }
             foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
-                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $paymentSplits[$key]['collection_amount'];
+                // add discount amount to amount due for the first child payment in sage for balancing the amount
+                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $paymentSplits[$key]['collection_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0);
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
             }
             //3
