@@ -43,7 +43,7 @@ class DatabaseSeeder extends Seeder
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             GenericPermissionSeeder::class,
-            UpdateOldTeamNamesSeeder::class,
+            // UpdateOldTeamNamesSeeder::class,
             // AddCapAdvisorPermissionSeeder::class,
             // UpdateLeadAllocationByQuoteId::class,
             // AddLegacyPaymentsPermssion::class,
@@ -70,7 +70,7 @@ class DatabaseSeeder extends Seeder
             // DttOCBNewBusinessSeeder::class,
             // RevivalConversionReportPermissionSeeder::class,
             // end
-            AddCrossLOBSeeder::class,
+            // AddCrossLOBSeeder::class,
         ]);
     }
 }

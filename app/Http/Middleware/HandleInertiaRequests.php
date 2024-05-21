@@ -208,7 +208,6 @@ class HandleInertiaRequests extends Middleware
                             auth()->user()->can(PermissionsEnum::CAR_REVIVAL_QUOTE_LIST),
                             'Revival Quotes',
                             '/quotes/revival',
-
                             fn ($s) => $s->attributes(['icon' => 'car'])
                         ),
                 )
@@ -408,7 +407,6 @@ class HandleInertiaRequests extends Middleware
 
         if (
             auth()->user()->hasAnyPermission([
-                PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR,
                 PermissionsEnum::EMBEDDED_PRODUCT_ADMIN,
             ])
         ) {
