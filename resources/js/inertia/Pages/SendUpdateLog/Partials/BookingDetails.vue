@@ -221,7 +221,6 @@ const calculateCommission = () => {
       bookingDetailsForm.commission_percentage = convertToNegative(
         (total_commission / total_price) * 100,
       );
-      console.log(bookingDetailsForm.commission_percentage);
     } else {
       notification.error({
         title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -293,7 +292,7 @@ const saveBookingDetail = isValid => {
         position: 'top',
       });
       state.isEdit = false;
-      router.reload({ preserveState: true });
+      location.reload();
     },
     onError: errors => {
       Object.keys(errors).forEach(function (key) {
@@ -613,14 +612,13 @@ const submitToCustomer = () => {
   axios
     .post(url, data)
     .then(response => {
-      console.log(response);
       if (response.status == 200) {
         notification.success({
           title: 'Update Sent to the Customer',
           position: 'top',
         });
-        location.reload();
-        modals.sendConfirm = false;
+        router.reload({ preserveState: true });
+        modals.sendConfirm = isLoading.value = false;
       }
     })
     .catch(err => {
