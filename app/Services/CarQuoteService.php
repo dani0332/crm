@@ -12,13 +12,13 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\QuoteBatches;
-use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -39,15 +39,18 @@ class CarQuoteService extends BaseService
     protected $leadAllocationService;
     protected $sendEmailCustomerService;
     protected $applicationStorageService;
+    protected $activityService;
+
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->activityService = $activityService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
@@ -816,7 +819,7 @@ class CarQuoteService extends BaseService
 
     private function parseDate($date, $isStartOfDay)
     {
-        if ($date != '') {
+        if ($date && $date != '') {
             if ($isStartOfDay) {
                 return Carbon::parse($date)->startOfDay()->toDateTimeString();
             } else {
@@ -1448,6 +1451,7 @@ class CarQuoteService extends BaseService
     public function processManualLeadAssignment($request): array
     {
         $userId = (int) $request->assigned_to_id_new;
+        $quoteType = $request->modelType;
 
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -1474,33 +1478,15 @@ class CarQuoteService extends BaseService
 
             info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType); // update new and previous (if applicable) advisor counts in lead allocation table
 
-            $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
-
+            $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Car, $userId);
             $lead->auto_assigned = false;
 
             $lead->save();
         }
 
         return [];
-    }
-
-    private function updateExistingQuoteViewCount($userId, $leadId)
-    {
-        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->first();
-        if ($quoteViewCount) {
-            $quoteViewCount->user_id = $userId;
-            $quoteViewCount->visit_count = 0;
-            $quoteViewCount->save();
-        } else {
-            QuoteViewCount::create([
-                'quote_id' => $leadId,
-                'quote_type_id' => 1,
-                'user_id' => $userId,
-                'visit_count' => 1,
-            ]);
-        }
     }
 
     public function updateTierAndCost($lead)
@@ -1639,29 +1625,6 @@ class CarQuoteService extends BaseService
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
 
-    public function addOrUpdateQuoteViewCount($record)
-    {
-        if ($record->advisor_id != null && $record->advisor_id == Auth::user()->id) {
-            // Search for an existing record with the same quote_id and user_id
-            $quoteViewCount = QuoteViewCount::where('quote_id', $record->id)
-                ->where('user_id', Auth::user()->id)
-                ->first();
-
-            if ($quoteViewCount) {
-                // If the record exists, increment its visit_count
-                $quoteViewCount->increment('visit_count');
-            } else {
-                // If the record does not exist, create a new one
-                QuoteViewCount::create([
-                    'quote_id' => $record->id,
-                    'quote_type_id' => 1,
-                    'user_id' => Auth::user()->id,
-                    'visit_count' => 1,
-                ]);
-            }
-        }
-    }
-
     private function deleteValuationAPI($oldValue, $currentValue, $quoteUuId)
     {
         if ($oldValue == $currentValue) {
@@ -1754,7 +1717,7 @@ class CarQuoteService extends BaseService
         return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
     }
 
-    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteType = null)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
@@ -1763,13 +1726,16 @@ class CarQuoteService extends BaseService
 
         info('Previous assignment type is : '.$previousAssignmentType);
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
+
         //Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
         // Get the allocation record for the new advisor
-        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
+        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor only if its different from previous advisor
+
         if ($newAdvisorId !== $previousAdvisorId) {
             // Update allocation counts for the new advisor (if applicable)
             $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
@@ -1777,7 +1743,7 @@ class CarQuoteService extends BaseService
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
-            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
+            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);

@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\CarRevivalLeadsCreationJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
@@ -54,29 +55,41 @@ class Dtt extends Command
 
             return false;
         }
+        $dttInProgress = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS);
+        if ($dttInProgress == true) {
+            info('DTT already in progress');
+
+            return false;
+        }
+
         $dateOne = Carbon::now()->subMonths(11)->toDateString();
-        $dateTwo = Carbon::now()->subYear(1)->subMonths(11)->toDateString();
 
         $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
+
+        $excludeSources = [LeadSourceEnum::AFIA_RENEWAL, LeadSourceEnum::AFIA_ENQUIRY, LeadSourceEnum::AQEED_LEAD, LeadSourceEnum::AQEED_RENEWALS, LeadSourceEnum::AQEED_REVIVAL, LeadSourceEnum::ARABIC_ADVISORY, LeadSourceEnum::ARABIC_CALL_DESK, LeadSourceEnum::ARABIC_TELE_MARKETING, LeadSourceEnum::ASD,
+            LeadSourceEnum::BDM, LeadSourceEnum::CALL_DESK, LeadSourceEnum::CALL_DESK_WHATSAPP, LeadSourceEnum::CAR_FORM, LeadSourceEnum::CAR_INSURANCE_AE, LeadSourceEnum::CAR_VAULT_AFFINITY_MOTOR, LeadSourceEnum::CORPOLINE_NB, LeadSourceEnum::CROSS_SELL, LeadSourceEnum::DUBAI_NOW,
+            LeadSourceEnum::ECOM, LeadSourceEnum::ENQUIRY_FROM_RECEPTION, LeadSourceEnum::EXISTING_CLIENT_NEW_BUSINESS, LeadSourceEnum::HOME_INSURANCEMARKET_AE, LeadSourceEnum::IM_PRIO, LeadSourceEnum::IMCRM, LeadSourceEnum::MEDICAL_LIFE_INSURANCEMARKET_AE, LeadSourceEnum::MOBILE,
+            LeadSourceEnum::MOTOR_INQUIRY_INSURANCEMARKET_AE, LeadSourceEnum::MOTOR_INQUIRY_PROTECTMYCAR, LeadSourceEnum::MOTOR_INQUIRY_ZOOM, LeadSourceEnum::PERSONAL_CONTACT, LeadSourceEnum::POSTMAN, LeadSourceEnum::RECYCLED, LeadSourceEnum::REFERRAL, LeadSourceEnum::REFERRAL_FROM_EXISTING_CLIENT,
+            LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVED_LEADS_INSURANCEMARKET_AE, LeadSourceEnum::TEST, LeadSourceEnum::TEST_POSTMAN, LeadSourceEnum::TIER_L_FUTUREDATELEADS, LeadSourceEnum::TIER_L_QUALFIED, LeadSourceEnum::TM_FACEBOOK, LeadSourceEnum::TM_OFFSHORE,
+            LeadSourceEnum::TM_ORGANIC, LeadSourceEnum::TM_RENEWALS, LeadSourceEnum::TM_SP_RENEWAL, LeadSourceEnum::TM_WHATSAPP, LeadSourceEnum::TPL_COMP, LeadSourceEnum::TPL_Renewal, LeadSourceEnum::TPL_RENEWALS, LeadSourceEnum::TRAVEL_INSURANCEMARKET_AE, LeadSourceEnum::WALK_IN_CLIENT, LeadSourceEnum::WEB,
+        ];
 
         $jobs = [];
         $logPrefix = 'CarRevivalLeadsCreationJob -';
         $leads = CarQuote::where('is_revived', '=', false)
-            ->where(function ($q) use ($dateOne, $dateTwo) {
-                $q->whereDate('created_at', '=', $dateOne);
-                $q->orWhereDate('created_at', '=', $dateTwo);
-            })
+            ->whereDate('created_at', '=', $dateOne)
 
             ->whereNotNull(['email'])
             ->where(function ($q) use ($datethirtyDaysBefore) {
                 $q->where('source', '!=', LeadSourceEnum::REVIVAL)
                     ->where('created_at', '<=', $datethirtyDaysBefore);
             })
-            ->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->whereNotIn('source', $excludeSources)
             ->whereNull('renewal_batch')
             ->whereNull('previous_quote_policy_number')
 
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
+
             ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
 
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
@@ -86,13 +99,13 @@ class Dtt extends Command
 
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
-            info($logPrefix.'isTierR - '.! $isTierR);
             if (! $isTierR) {
                 $jobs[] = new CarRevivalLeadsCreationJob($carLead);
             }
         }
 
         if ($jobs != null && count($jobs)) {
+            ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS)->update(['value' => true]);
             Haystack::build()
                 ->addJobs($jobs)
 
@@ -103,13 +116,14 @@ class Dtt extends Command
                     info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
+                    ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REVIVAL_IN_PROGRESS)->update(['value' => false]);
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(2)
+                ->withDelay(30)
                 ->dispatch();
         } else {
-            info('------No lead Found------');
+            info($logPrefix.'------No lead Found------');
         }
     }
 }

@@ -506,7 +506,7 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
-            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
@@ -608,13 +608,13 @@ class SendEmailCustomerService extends BaseService
                 ->timeout(20)
                 ->retry(3, 90000)
                 ->post($this->url, $body);
-            info('sendDttEmail ---- Request Sent');
 
             $responseCode = $response->status();
             $response = json_decode(json_encode($responseCode.' '.$response->body()), true);
 
             if ($responseCode == 201) {
                 $isEmailSent = 1;
+                info('sendDttEmail - Email Sent - Ref-ID: '.$emailData->uuid);
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
@@ -683,7 +683,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
-            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,

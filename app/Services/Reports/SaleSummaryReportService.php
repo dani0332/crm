@@ -30,7 +30,7 @@ class SaleSummaryReportService extends ManagementReport
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->join('payment_splits as ps', 'personal_quotes.code', '=', 'ps.code')
+            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->selectRaw("
             (CAST(SUM(CASE WHEN personal_quotes.policy_issuance_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_policies,
             (CAST(SUM(CASE WHEN sul.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_endorsements,

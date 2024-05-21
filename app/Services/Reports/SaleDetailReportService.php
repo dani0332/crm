@@ -52,7 +52,7 @@ class SaleDetailReportService extends ManagementReport
                 'pi.name as policy_issuer',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->join('payment_splits as ps', 'personal_quotes.code', '=', 'ps.code')
+            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
