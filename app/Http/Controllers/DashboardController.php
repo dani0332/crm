@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Team;
@@ -521,5 +522,16 @@ class DashboardController extends Controller
     public function getUsersBySubTeam(Request $request)
     {
         return $this->getUsersBySubTeamIds($request->sub_team_filter);
+    }
+
+    public function getTeamsByProduct(Request $request)
+    {
+        $productName = QuoteTypes::getName($request->quote_type_id);
+
+        $product = $this->getProductByName($productName);
+
+        $teams = $this->getTeamsByProductId($product->id);
+
+        return response()->json(['teams' => $teams], 200);
     }
 }
