@@ -524,7 +524,7 @@ class DashboardController extends Controller
         return $this->getUsersBySubTeamIds($request->sub_team_filter);
     }
 
-    public function getTeamsByProduct(Request $request) 
+    public function getTeamsByProduct(Request $request)
     {
         $productName = QuoteTypes::getName($request->quote_type_id);
 
@@ -533,5 +533,5 @@ class DashboardController extends Controller
         $teams = $this->getTeamsByProductId($product->id);
 
         return response()->json(['teams' => $teams], 200);
-    } 
+    }
 }

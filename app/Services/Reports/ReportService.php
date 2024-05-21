@@ -7,7 +7,6 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
@@ -319,10 +318,10 @@ class ReportService extends BaseService
         }
 
         $records = $query->join('users', 'car_quote_request.advisor_id', '=', 'users.id')
-                ->select(DB::raw('"CAR" as quote_type_name'), // Here we alias a static value 'CAR'
-                    DB::raw('DATE(car_quote_request.transaction_approved_at) as transaction_date'),
-                    DB::raw('COALESCE(SUM(car_quote_request.premium), 0) as total_premium'))
-                    ->whereNotNull('car_quote_request.advisor_id')
+            ->select(DB::raw('"CAR" as quote_type_name'), // Here we alias a static value 'CAR'
+                DB::raw('DATE(car_quote_request.transaction_approved_at) as transaction_date'),
+                DB::raw('COALESCE(SUM(car_quote_request.premium), 0) as total_premium'))
+            ->whereNotNull('car_quote_request.advisor_id')
             ->groupBy(DB::raw('DATE(car_quote_request.transaction_approved_at)'))
             ->orderBy(DB::raw('DATE(car_quote_request.transaction_approved_at)'));
 
