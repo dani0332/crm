@@ -503,6 +503,10 @@ const paymentItems = computed(() => {
   });
 });
 
+const isRenewalUpload = computed(() => {
+    return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
+});
+
 const leadStatusOptions = computed(() => {
   const isLeadPool = hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool]);
   const isPA = hasAnyRole([rolesEnum.Admin, rolesEnum.PA]);
@@ -1745,7 +1749,7 @@ const handlePlanSelected = plan => {
               Duplicate Lead
             </x-button>
             <x-button
-              v-if="hasAnyRole([rolesEnum.LeadPool])"
+              v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
               class="mr-2"
               size="sm"
               color="#ff5e00"
@@ -3222,7 +3226,7 @@ const handlePlanSelected = plan => {
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
-      :paymentCode="record.code"
+      :paymentCode = "record.code"
       :quoteType="quoteType"
       :payments="payments"
     />
