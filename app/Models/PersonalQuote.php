@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -35,6 +37,8 @@ class PersonalQuote extends Model implements AuditableContract
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'is_cold' => FilterTypes::EXACT,
+        'stale_at' => FilterTypes::NULL_CHECK,
     ];
 
     /**
@@ -250,8 +254,50 @@ class PersonalQuote extends Model implements AuditableContract
             ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski]);
     }
 
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
+            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet]);
+    }
+
+    public function notes()
+    {
+        return $this->morphMany(QuoteNote::class, 'quote_noteable');
+    }
+
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
+
+    public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeCode)
+    {
+        self::applySegmentFilter($query, $segmentFilter, $quoteTypeCode);
+    }
+
+    public static function applySegmentFilter($query, $segmentFilter, $quoteTypeCode)
+    {
+        $user = auth()->user();
+        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
+            $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($quoteTypeCode) {
+                $query->whereIn('personal_quotes.uuid', function ($query) use ($quoteTypeCode) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                        ->where('quote_type.code', $quoteTypeCode);
+                });
+            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($quoteTypeCode) {
+                $query->whereNotIn('personal_quotes.uuid', function ($query) use ($quoteTypeCode) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                        ->where('quote_type.code', $quoteTypeCode);
+                });
+            });
+        }
     }
 }
