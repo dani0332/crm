@@ -15,7 +15,7 @@ class EmbeddedProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR.'|'.PermissionsEnum::EMBEDDED_PRODUCT_ADMIN);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_ADMIN);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_ADMIN, ['only' => ['cancelPayment']]);
     }
 
