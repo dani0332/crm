@@ -800,3 +800,10 @@ if (! function_exists('getManagersByUser')) {
     }
 
 }
+
+if (! function_exists('roundNumberTo2Decimal')) {
+    function roundNumberTo2Decimal($number)
+    {
+        return round($number, 2);
+    }
+}
