@@ -300,18 +300,28 @@ trait GenericQueriesAllLobs
     private function transactionPaymentStatus($payment, $quote)
     {
         if (! $payment) {
-            return [
-                'status' => TransactionPaymentStatusEnum::UNPAID_TEXT,
-                'tooltip' => ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID,
-            ];
+            return $this->getUnpaidStatus();
         }
 
         $totalAmount = $payment->captured_amount + $payment->discount_value;
 
-        if ($payment->captured_amount == 0) {
+        return $this->getPaymentStatus($payment->captured_amount, $totalAmount, $quote->price_with_vat);
+    }
+
+    private function getUnpaidStatus()
+    {
+        return [
+            'status' => TransactionPaymentStatusEnum::UNPAID_TEXT,
+            'tooltip' => ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID,
+        ];
+    }
+
+    private function getPaymentStatus($capturedAmount, $totalAmount, $priceWithVat)
+    {
+        if ($capturedAmount == 0) {
             $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID;
-        } elseif ($totalAmount >= $quote->price_with_vat) {
+        } elseif ($totalAmount >= $priceWithVat) {
             $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PAID;
         } else {
