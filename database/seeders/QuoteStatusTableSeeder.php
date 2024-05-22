@@ -21,7 +21,7 @@ class QuoteStatusTableSeeder extends Seeder
         $newQuoteStatuses = [
             ['id' => QuoteStatusEnum::CancellationPending, 'code' => 'CancellationPending', 'text' => 'Cancellation Pending', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
             ['id' => QuoteStatusEnum::PolicyCancelled, 'code' => 'PolicyCancelled', 'text' => 'Policy Cancelled', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
-            ['id' => QuoteStatusEnum::Allocated, 'code' => 'Allocated', 'text' => 'Allocated', 'mapped_with' => [QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
+            ['id' => QuoteStatusEnum::Allocated, 'code' => 'Allocated', 'text' => 'Allocated', 'mapped_with' => [QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht]],
             ['id' => QuoteStatusEnum::RenewalTermsReceived, 'code' => 'RenewalTermsReceived', 'text' => 'Renewal Terms Received', 'mapped_with' => [QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
             ['id' => QuoteStatusEnum::ProposalFormRequested, 'code' => 'ProposalFormRequested', 'text' => 'Proposal Form Requested', 'mapped_with' => [QuoteTypeId::Business]],
             ['id' => QuoteStatusEnum::ProposalFormReceived, 'code' => 'ProposalFormReceived', 'text' => 'Proposal Form Received', 'mapped_with' => [QuoteTypeId::Business]],
@@ -31,7 +31,7 @@ class QuoteStatusTableSeeder extends Seeder
             ['id' => QuoteStatusEnum::FinalizingTerms, 'code' => 'FinalizingTerms', 'text' => 'Finalizing Terms', 'mapped_with' => [QuoteTypeId::Business]],
             ['id' => QuoteStatusEnum::QuotedByUW, 'code' => 'QuotedByUW', 'text' => 'Quote by UW', 'mapped_with' => [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
             ['id' => QuoteStatusEnum::SentForTransactionApproval, 'code' => 'SentForTransactionApproval', 'text' => 'Sent for Transaction Approval', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
-            ['id' => QuoteStatusEnum::RenewalTermsSent, 'code' => 'RenewalTermsSent', 'text' => 'Renewal Terms Sent', 'mapped_with' => [QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
+            ['id' => QuoteStatusEnum::RenewalTermsSent, 'code' => 'RenewalTermsSent', 'text' => 'Renewal Terms Sent', 'mapped_with' => [QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht]],
         ];
 
         foreach ($newQuoteStatuses as $quoteStatus) {
