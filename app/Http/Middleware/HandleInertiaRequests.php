@@ -405,7 +405,7 @@ class HandleInertiaRequests extends Middleware
 
         if (
             auth()->user()->hasAnyPermission([
-                PermissionsEnum::EMBEDDED_PRODUCT_ADMIN,
+                PermissionsEnum::EMBEDDED_PRODUCT_CONFIG,
             ])
         ) {
             $nav = $nav->add('Embedded Products', '', function (Section $section) {

@@ -241,8 +241,9 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
-    public const EMBEDDED_PRODUCT_ADVISOR = 'embedded-product-view';
-    public const EMBEDDED_PRODUCT_ADMIN = 'embedded-product-payment-cancel';
+    public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
+    public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
+    public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
