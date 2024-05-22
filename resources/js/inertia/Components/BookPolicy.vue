@@ -209,8 +209,28 @@ const submitPolicy = () => {
 };
 
 const calculateCommission = () => {
-  if (bpForm.commission_vat_applicable > 0) {
-    if (Number(props.quote?.price_without_vat > 0)) {
+  if (
+    bpForm.commission_vat_applicable > 0 &&
+    bpForm.commission_vat_not_applicable > 0
+  ) {
+    if (Number(bpForm.commission_vat_applicable) > 0) {
+      bpForm.vat_on_commission = (
+        bpForm.commission_vat_applicable * page.props.vat
+      ).toFixed(2);
+    }
+
+    bpForm.total_commission =
+      Number(bpForm.commission_vat_not_applicable) +
+      Number(bpForm.commission_vat_applicable);
+
+    bpForm.commission_percentage = (
+      (bpForm.total_commission /
+        (Number(props.quote?.price_vat_not_applicable) +
+          Number(props.quote?.price_without_vat))) *
+      100
+    ).toFixed(2);
+  } else if (bpForm.commission_vat_applicable > 0) {
+    if (Number(props.quote?.price_without_vat) > 0) {
       bpForm.commission_percentage = (
         (bpForm.commission_vat_applicable / props.quote?.price_without_vat) *
         100
@@ -550,9 +570,9 @@ const calculateCommission = () => {
                     class="w-full"
                     :disabled="
                       !bp.isEditing ||
-                      (props.quoteType == quoteTypeCodeEnum.Life &&
-                        props.quoteType != quoteTypeCodeEnum.Business &&
-                        props.quoteType != quoteTypeCodeEnum.Health)
+                      (page.props.quoteType == quoteTypeCodeEnum.Life &&
+                        page.props.quoteType != quoteTypeCodeEnum.Business &&
+                        page.props.quoteType != quoteTypeCodeEnum.Health)
                     "
                   />
                 </dd>
