@@ -178,7 +178,6 @@ class AjaxController extends Controller
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
-
     }
 
     public function commercialCarModelBasedOnCarMakeId(Request $request)
@@ -197,12 +196,10 @@ class AjaxController extends Controller
         } else {
             return response()->json([]);
         }
-
     }
 
     public function uploadKycIndividualDocument($quoteType, KycIndividualDocRequest $request)
     {
-
         try {
             $quote = $this->getQuoteObjectBy($quoteType, $request->quote_uuid, 'uuid');
 
@@ -292,7 +289,6 @@ class AjaxController extends Controller
 
     public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
     {
-        dd('found');
         try {
             $quote = $this->getQuoteObjectBy($quoteType, $request->quote_uuid, 'uuid');
             if (! isset($quote->quoteRequestEntityMapping)) {
