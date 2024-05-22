@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -346,7 +347,7 @@ class CentralController extends Controller
 
     private function firstSplitAllocationStatus($payment, $paymentSplit, $quote)
     {
-        if ($payment->frequency == 'upfront') {
+        if ($payment->frequency == PaymentFrequency::UPFRONT) {
             $paymentSplit->payment_allocation_status = $payment->payment_allocation_status;
         } else {
             if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
@@ -397,12 +398,12 @@ class CentralController extends Controller
     {
         if ($payment) {
             $this->updatePaymentAllocationStatus($payment, $quote);
-            if (in_array($payment->frequency, ['upfront', 'semi_annual', 'quarterly', 'monthly', 'custom'])) {
+            if (in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SEMI_ANNUAL, PaymentFrequency::QUARTERLY, PaymentFrequency::MONTHLY, PaymentFrequency::CUSTOM])) {
                 $paymentSplit = $paymentSplits->first();
                 $this->firstSplitAllocationStatus($payment, $paymentSplit, $quote);
             }
 
-            if ($payment->frequency == 'split_payments') {
+            if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $this->updatePaymentSplitAllocationStatus($paymentSplits, $quote);
             }
         }
