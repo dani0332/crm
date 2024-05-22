@@ -331,7 +331,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @can(PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR)
+                @can(PermissionsEnum::EMBEDDED_PRODUCT_CONFIG)
                 <ul class="nav side-menu">
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
