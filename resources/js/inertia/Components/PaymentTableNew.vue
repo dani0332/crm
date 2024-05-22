@@ -1449,7 +1449,7 @@ const applyPermissions = () => {
   frequencyTypes.value = paymentLookups.paymentFrequencyTypes.map(item => ({
     value: item.code,  label: item.text,  tooltip: item.description,
   }));
-  if (paymentMethodsForm.status === 'create') {
+  if (paymentMethodsForm.status === 'create' && paymentMethodsForm.frequency === '') {
       paymentMethodsForm.frequency = '';      
   }
   //PAYMENTS-DISCOUNT-ADD
@@ -1465,7 +1465,7 @@ const applyPermissions = () => {
       const hasPermissionToTermFrequencies = can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD);
       if (!hasPermissionToBroker) {
         frequencyTypes.value = frequencyTypes.value.filter(item => item.value !== 'upfront' && item.value !== 'split_payments');
-      } else if (paymentMethodsForm.status === 'create') {
+      } else if (paymentMethodsForm.status === 'create' && paymentMethodsForm.frequency === '') {
           paymentMethodsForm.frequency = 'upfront';
       }
       
@@ -1497,7 +1497,7 @@ const applyPermissions = () => {
         item.value !== 'semi_annual'
       );
     }
-    if (paymentMethodsForm.status === 'create') {
+    if (paymentMethodsForm.status === 'create'  && paymentMethodsForm.frequency === '') {
       paymentMethodsForm.frequency = 'upfront';
     }
     // Set verification allowed if the payment is in view mode and the user has the permission
