@@ -1454,7 +1454,7 @@ const applyPermissions = () => {
   }
   //PAYMENTS-DISCOUNT-ADD
   can(permissionEnum.PAYMENTS_DISCOUNT_ADD) ? isDiscountAllowed.value = true : isDiscountAllowed.value = false; 
-    
+  
   //PAYMENTS-CREDIT-APPROVAL-ADD
   can(permissionEnum.PAYMENTS_CREDIT_APPROVAL_ADD) ? isCreditApprovalAllowed.value = true : isCreditApprovalAllowed.value = false; 
   
@@ -2307,15 +2307,16 @@ const isMasterPaymentPaid = computed(() => {
               </span>              
             </x-field>
           </div>
-          <x-field v-if="isCustomReasonEnabled" label="CUSTOM REASON" required class="w-full">
-            <span v-if="isFieldReadonly">{{ paymentMethodsForm.custom_reason }}</span>
-            <x-input
-                v-if="!isFieldReadonly"
+          <x-field v-if="isCustomReasonEnabled && isCreditApprovalAllowed && !isFieldReadonly" label="CUSTOM REASON" required class="w-full">
+              <x-input                
                 class="w-full"
                 v-model="paymentMethodsForm.custom_reason"
                 :rules="[rules.isRequired]"                
               />
           </x-field>          
+          <x-field v-if="isCustomReasonEnabled && isFieldReadonly" label="CUSTOM REASON" class="w-full">
+            <span v-if="isFieldReadonly">{{ paymentMethodsForm.custom_reason }}</span>            
+          </x-field>
           <div v-if="showDiscountOptions && isDiscountAllowed && !isFieldReadonly">
             <x-tooltip>
               <span class="border-b-2 border-dotted border-black text-sm">DISCOUNT APPLICABLE (DISCOUNT TYPE)</span> 
