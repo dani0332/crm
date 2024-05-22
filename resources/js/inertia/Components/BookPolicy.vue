@@ -41,7 +41,7 @@ const dateToYMD = date => {
       return date.split(' ')[0]; // Return only the date part
     }
     const [year, month, day] = date.split('-');
-    return `${year}-${month}-${day}`;3
+    return `${year}-${month}-${day}`;
   }
   return '';
 };
@@ -91,7 +91,6 @@ const currentDateTime = computed(() => {
   const seconds = `0${d.getSeconds()}`.slice(-2);
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 });
-
 
 const bpForm = useForm({
   booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
