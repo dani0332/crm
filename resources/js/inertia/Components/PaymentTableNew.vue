@@ -1,7 +1,7 @@
 <script setup>
 import moment from 'moment';
 import ToolTip from './../Components/ToolTip.vue';
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import NProgress from 'nprogress';
 const notification = useNotifications('toast');
@@ -1320,7 +1320,7 @@ const addPaymentModal = () => {
     return;
   }
 
-  const quoteCollectedBy = ['Group Medical', 'Health', 'Life', 'Marine', 'Pet', 'Cycle', 'Yacht'];
+  const quoteCollectedBy = ['Business', 'Health', 'Life', 'Marine', 'Pet', 'Cycle', 'Yacht'];
 
   if (quoteCollectedBy.includes(props.quoteType)) {
     paymentMethodsForm.collection_type = 'insurer';
