@@ -8,9 +8,13 @@ use Carbon\Carbon;
 
 trait FilterCriteria
 {
-    public function scopeFilter($query, $paginate = true)
+    public function scopeFilter($query, $paginate = true, $forTotalLeadsCount = false)
     {
-        $filters = request()->all();
+
+        $filters = $forTotalLeadsCount ? request()->merge([
+            'created_at_start' => date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')),
+            'created_at_end' => now()->format(config('constants.DATE_FORMAT_ONLY')),
+        ])->all() : request()->all();
 
         if (count($filters) && isset($this->filterables) && count($this->filterables)) {
             foreach ($this->filterables as $key => $operator) {
