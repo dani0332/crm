@@ -174,7 +174,6 @@ const modals = reactive({
 });
 
 const confirmSendPolicy = () => {
-  const paymentId = getPayment().payment_status_id ?? 0;
   if (page.props.bookPolicyDetails.isInsufficientPayment){
       modals.sendPolicyPopup = true;
   } else {
@@ -269,7 +268,6 @@ const calculateCommission = () => {
   }
 };
 const sendPolicyConfirmation = () => {
-  const paymentId = getPayment().payment_status_id ?? 0;
   if (page.props.bookPolicyDetails.isInsufficientPayment){
     isAllowToSendPolicy.value = true;
   }
@@ -282,7 +280,6 @@ const getPayment = () => {
 }
 
 const showInsufficientPaymentAlert = () => {
-  const paymentId = getPayment().payment_status_id ?? 0;
   if (page.props.bookPolicyDetails.isInsufficientPayment) {
     notification.error({
       title: 'Insufficient payment',
