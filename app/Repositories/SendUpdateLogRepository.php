@@ -208,7 +208,6 @@ class SendUpdateLogRepository extends BaseRepository
                 'expiry_date' => $data['expiry_date'],
                 'insurer_quote_number' => $data['insurer_quote_number'] ?? null,
                 'issuance_status_id' => $data['issuance_status_id'] ?? null,
-                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
                 'is_policy_filled' => SendUpdateLogStatusEnum::POLICY_FILLED,
             ]);
         } catch (\Exception $ex) {
