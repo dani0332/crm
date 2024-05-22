@@ -41,7 +41,6 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
-use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -285,7 +284,7 @@ class AMLController extends Controller
 
                 if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)) {
-                    app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
                 }
 
                 $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];

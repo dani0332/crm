@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Factories\ManagementReportServiceFactory;
 use App\Models\RenewalBatch;
 use App\Models\Team;
@@ -20,6 +22,7 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ReportsController extends Controller
 {
@@ -386,8 +389,24 @@ class ReportsController extends Controller
     {
         $data = $reportService->getStaleLeadsReport($request, true)->simplePaginate(15)->appends(request()->query());
 
+        $team = auth()->user()->teams()->get();
+        $productIds = DB::table('user_products')->where('user_id', auth()->user()->id)->get()->pluck('product_id');
+        $quoteTypes = [
+            QuoteTypes::HEALTH,
+            QuoteTypes::HOME,
+            QuoteTypes::PET,
+            QuoteTypes::CORPLINE,
+            QuoteTypes::CYCLE,
+            QuoteTypes::YACHT,
+        ];
+
+        $products = Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->get();
+
         return inertia('Reports/StaleLeadsReport', [
-            'reportData' => $data, ]);
+            'reportData' => $data,
+            'teams' => $team,
+            'products' => $products->pluck('name')->toArray(),
+        ]);
     }
 
     public function renderSaleManagementReport(Request $request)
