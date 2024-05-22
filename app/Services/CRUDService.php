@@ -260,7 +260,6 @@ class CRUDService extends BaseService
             }
 
             if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home), strtolower(quoteTypeCode::Business)])) {
-                // $entity->activities()->where('status', 0)->update(['status' => 1]);
                 $entity->quote_status_date = now();
                 if ($entity->stale_at) {
                     $entity->stale_at = null;
