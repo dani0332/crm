@@ -25,7 +25,7 @@ use App\Models\SanctionListDownloads;
 use App\Models\TravelQuote;
 use App\Models\UAEAMLListUploads;
 use App\Models\YachtQuote;
-use App\Services\CheckAmlService;
+use App\Services\AMLService;
 use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
@@ -36,7 +36,6 @@ use Illuminate\Http\Request;
 
 class AMLController extends Controller
 {
-    protected $checkAmlService;
     protected $quoteStatusService;
     protected $sanctionListService;
     use GenericQueriesAllLobs;
@@ -46,10 +45,9 @@ class AMLController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function __construct(CheckAmlService $checkAmlService, QuoteStatusService $quoteStatusService, SanctionListService $sanctionListService)
+    public function __construct(QuoteStatusService $quoteStatusService, SanctionListService $sanctionListService)
     {
         $this->middleware('permission:aml-list', ['only' => ['index']]);
-        $this->checkAmlService = $checkAmlService;
         $this->quoteStatusService = $quoteStatusService;
         $this->sanctionListService = $sanctionListService;
     }
@@ -77,7 +75,7 @@ class AMLController extends Controller
                     QuoteTypes::JETSKI->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
-                        $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
+                        $quoteRequestTable = app(AMLService::class)->isDataMigrated($request->quoteType, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
                     } else {
                         if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail', 'id'])) {
                             $searchType = match ($request->searchType) {
@@ -90,7 +88,7 @@ class AMLController extends Controller
                                 $request->searchType == 'id' ? AML::where($searchType, $request->searchField)->firstOrFail()->created_at :
                                 PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
 
-                            $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $createdDate) ? 'personal_quotes' : strtolower($quoteTypeCode).'_quote_request';
+                            $quoteRequestTable = app(AMLService::class)->isDataMigrated($request->quoteType, '', $createdDate) ? 'personal_quotes' : strtolower($quoteTypeCode).'_quote_request';
                         }
                     }
                 }
@@ -347,7 +345,7 @@ class AMLController extends Controller
                 $businessCoverTypeText = BusinessCoverType::where('id', '=', $quoteRequest->business_cover_type_id)->value('text');
                 $businessCommuModeText = CommunicationMode::where('id', '=', $quoteRequest->communication_mode_id)->value('text');
             } elseif ($quoteTypeCode == quoteTypeCode::Pet) {
-                if ($this->checkAmlService->isDataMigrated(QuoteTypes::PET->id(), $quoteRequestId)) {
+                if (app(AMLService::class)->isDataMigrated(QuoteTypes::PET->id(), $quoteRequestId)) {
                     $quoteRequest = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())
                         ->select([
                             'personal_quotes.*',
@@ -543,7 +541,7 @@ class AMLController extends Controller
             $quotePaID = $updateQuoteStatusResp[3];
             $clientFullName = $updateQuoteStatusResp[4];
             if (Auth::user()->hasRole(RolesEnum::COMPLIANCE)) {
-                $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
 
             return redirect()->back()->with('success', 'Quote Status is set to '.$quoteStatusText.'');
@@ -558,10 +556,9 @@ class AMLController extends Controller
             'last_name' => 'required|max:200',
             'company_name' => 'max:300',
         ]);
-
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-        if (checkPersonalQuotes($quoteTypeCode) && (! $this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId))) {
-            $quoteId = $this->checkAmlService->getPersonalQuoteId($quoteTypeId, $quoteId);
+        if (checkPersonalQuotes($quoteTypeCode) && (! app(AMLService::class)->isDataMigrated($quoteTypeId, $quoteId))) {
+            $quoteId = app(AMLService::class)->getPersonalQuoteId($quoteTypeId, $quoteId);
         }
         $updateQuote = $this->getQuoteObject($quoteTypeCode, $quoteId);
 
@@ -575,7 +572,7 @@ class AMLController extends Controller
             // Check current user role is pa/AML > If yes > update pa_id - current_user_id
             if (Auth::user()->hasRole(RolesEnum::AML) || Auth::user()->hasRole(RolesEnum::PA)) {
                 if (checkPersonalQuotes($quoteTypeCode)) {
-                    $this->checkAmlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, $this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId));
+                    app(AMLService::class)->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, app(AMLService::class)->isDataMigrated($quoteTypeId, $quoteId));
                 } else {
                     $quoteUpdate->pa_id = Auth::user()->id;
                 }
@@ -589,7 +586,7 @@ class AMLController extends Controller
             $companyName = null;
         }
 
-        $this->checkAmlService->checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, true, $yob, $companyName);
+        app(AMLService::class)->checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, true, $yob, $companyName);
 
         return redirect()->back()->with('success', 'Quote is updated');
     }
