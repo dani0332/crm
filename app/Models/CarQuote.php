@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
@@ -337,6 +338,19 @@ class CarQuote extends BaseModel
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_type.code', quoteTypeCode::Car);
                 });
+            })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
+                $query->whereNotIn("{$alias}.uuid", function ($query) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                        ->where('quote_type.code', quoteTypeCode::Car);
+                })->whereIn("{$alias}.source", [
+                    LeadSourceEnum::REVIVAL,
+                    LeadSourceEnum::REVIVAL_REPLIED,
+                    LeadSourceEnum::REVIVAL_PAID,
+                ]);
             });
         }
     }
@@ -513,6 +527,12 @@ class CarQuote extends BaseModel
     public function quoteRequestEntityMapping()
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Car);
     }
 

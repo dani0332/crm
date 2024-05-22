@@ -1,9 +1,9 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   genderOptions: Object,
   assignedGMType: String,
@@ -29,7 +29,10 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
+  noteDocumentType: Object,
   storageUrl: String,
+  quoteNotes: Object,
+  cdnPath: String,
   vatPercentage: Number,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
@@ -44,11 +47,22 @@ const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 
+const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
+const compareDueDate = useCompareDueDate;
+
 const { copy, copied } = useClipboard();
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
+
+const disableStatusSection = computed(() => {
+  return props.quote?.quote_status_id == props.enums?.quoteStatusEnum?.Lost ||
+    props.quote?.quote_status_id ==
+      props.enums?.quoteStatusEnum?.TransactionApproved
+    ? true
+    : false;
+});
 
 const dateToYMD = date => {
   if (date) {
@@ -131,40 +145,67 @@ const leadStatusForm = useForm({
   lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
+const loaders = ref({
+  leadStatus: false,
+});
+
 const onLeadStatus = () => {
-  let data = {
-    modelType: 'Business',
-    leadId: leadStatusForm.leadId,
-    quote_uuid: leadStatusForm.quote_uuid,
-    assigned_to_user_id: leadStatusForm.assigned_to_user_id,
-    leadStatus: leadStatusForm.leadStatus,
-    notes: leadStatusForm.notes,
-    trans_code: leadStatusForm.trans_code,
-    lostReason: leadStatusForm.lostReason,
-  };
-  axios
-    .post(
-      route('updateLeadStatus', {
-        QuoteUId: page.props.quote.id,
-        modelType: 'Bussiness',
-      }),
-      data,
-    )
-    .then(res => {
-      notification.success({
-        title: 'Lead Status Updated',
-        position: 'top',
-      });
-    })
-    .catch(err => {
-      const flash_messages = err.response.data.errors.value;
-      Object.keys(flash_messages).forEach(function (key) {
-        notification.error({
-          title: flash_messages[key],
-          position: 'top',
-        });
-      });
-    });
+  loaders.value.leadStatus = true;
+  console.log(leadStatusForm.processing);
+  leadStatusForm.post(
+    route('updateLeadStatus', {
+      modelType: 'Business',
+      QuoteUId: page.props.quote.id,
+    }),
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        loaders.value.leadStatus = false;
+      },
+      onError: errors => {
+        loaders.value.leadStatus = false;
+        notification.error({ title: errors.value, position: 'top' });
+      },
+    },
+  );
+
+  // loaders.value.leadStatus = true;
+  // let data = {
+  //   modelType: 'Business',
+  //   leadId: leadStatusForm.leadId,
+  //   quote_uuid: leadStatusForm.quote_uuid,
+  //   assigned_to_user_id: leadStatusForm.assigned_to_user_id,
+  //   leadStatus: leadStatusForm.leadStatus,
+  //   notes: leadStatusForm.notes,
+  //   trans_code: leadStatusForm.trans_code,
+  //   lostReason: leadStatusForm.lostReason,
+  // };
+  // axios
+  //   .post(
+  //     route('updateLeadStatus', {
+  //       QuoteUId: page.props.quote.id,
+  //       modelType: 'Business',
+  //     }),
+  //     data,
+  //   )
+  //   .then(res => {
+  //     console.log(res);
+  //     notification.success({
+  //       title: 'Lead Status Updated',
+  //       position: 'top',
+  //     });
+  //     loaders.value.leadStatus = false;
+  //   })
+  //   .catch(err => {
+  //     const flash_messages = err.response.data.errors.value;
+  //     Object.keys(flash_messages).forEach(function (key) {
+  //       notification.error({
+  //         title: flash_messages[key],
+  //         position: 'top',
+  //       });
+  //     });
+  //     loaders.value.leadStatus = false;
+  //   });
 };
 
 // Lead History
@@ -206,6 +247,7 @@ const advisorOptions = computed(() => {
 
 const activityTable = [
   { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
@@ -540,9 +582,65 @@ const linkEntity = () => {
 <template>
   <div>
     <Head title="Business Quote Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Business Quote Detail</h2>
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Business Quote Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          modelType="Business"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <x-button
+          v-if="isDuplicateAllowed"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
+          Duplicate Lead
+        </x-button>
+
+        <Link :href="route('business.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div">
+            Business Quote List
+          </x-button>
+        </Link>
+
+        <Link
+          v-if="permissions.canEditQuote == true"
+          :href="route('business.edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Business Quote Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </div>
       <div class="flex gap-2">
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteDocuments"
+          modelType="Business"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
         <Link
           v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
@@ -574,7 +672,7 @@ const linkEntity = () => {
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
-    </div>
+    </div> -->
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -965,7 +1063,80 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <Collapsible expanded class="p-4 rounded shadow mb-6 bg-white">
+      <template #header>
+        <div>
+          <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+        </div>
+      </template>
+
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <div class="flex flex-col gap-4">
+              <x-select
+                v-model="leadStatusForm.leadStatus"
+                label="STATUS"
+                :options="leadStatusOptions"
+                :disabled="disableStatusSection"
+                placeholder="Lead Status"
+                class="w-full"
+              />
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                label="NOTES"
+                placeholder="Lead Notes"
+                class="w-full"
+                :disabled="disableStatusSection"
+              />
+            </div>
+          </div>
+          <div class="w-full md:w-2/3">
+            <x-input
+              v-if="
+                leadStatusForm.leadStatus ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
+              :disabled="disableStatusSection"
+              v-model="leadStatusForm.trans_code"
+              label="TRANSAPP CODE"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+            <x-select
+              v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+              v-model="leadStatusForm.lostReason"
+              label="LOST REASON"
+              :options="
+                lostReasons?.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <x-button
+            class="mt-4"
+            color="emerald"
+            size="sm"
+            :loading="loaders.leadStatus"
+            @click.prevent="onLeadStatus"
+            :disabled="disableStatusSection"
+          >
+            Change Status
+          </x-button>
+        </div>
+      </template>
+    </Collapsible>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
@@ -977,10 +1148,7 @@ const linkEntity = () => {
               v-model="leadStatusForm.leadStatus"
               label="STATUS"
               :options="leadStatusOptions"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
+              :disabled="disableStatusSection"
               placeholder="Lead Status"
               class="w-full"
             />
@@ -990,14 +1158,23 @@ const linkEntity = () => {
               label="NOTES"
               placeholder="Lead Notes"
               class="w-full"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
+              :disabled="disableStatusSection"
             />
           </div>
         </div>
         <div class="w-full md:w-2/3">
+          <x-input
+            v-if="
+              leadStatusForm.leadStatus ==
+              enums.quoteStatusEnum.TransactionApproved
+            "
+            :disabled="disableStatusSection"
+            v-model="leadStatusForm.trans_code"
+            label="TRANSAPP CODE"
+            placeholder="TransApp Code is required"
+            class="w-full"
+            :error="leadStatusForm.errors.trans_code"
+          />
           <x-select
             v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
             v-model="leadStatusForm.lostReason"
@@ -1030,14 +1207,12 @@ const linkEntity = () => {
           size="sm"
           :loading="leadStatusForm.processing"
           @click.prevent="onLeadStatus"
-          :disabled="
-            quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-          "
+          :disabled="disableStatusSection"
         >
           Change Status
         </x-button>
       </div>
-    </div>
+    </div> -->
 
     <PlanDetails
       :insuranceProviders="insuranceProvidersAll"
@@ -1050,23 +1225,36 @@ const linkEntity = () => {
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="page.props.quoteType"
       :payments="payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="page.props.quoteType"
-			:payments="payments"
-			:paymentDocument="documentTypes && documentTypes.filter && documentTypes.filter(item => item.code === 'CLPD' || item.code === 'CLPDR' || item.code === 'CLDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="page.props.quoteType"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes &&
+        documentTypes.filter &&
+        documentTypes.filter(
+          item =>
+            item.code === 'CLPD' ||
+            item.code === 'CLPDR' ||
+            item.code === 'CLDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       quoteSubType="Corpline"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -1080,13 +1268,164 @@ const linkEntity = () => {
 
     <QuoteDocuments
       :document-types="documentTypes"
-      :quote-documents="page.props.quoteDocuments || []"
+      :quote-documents="page.props.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Lead Activities
+        <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="my-4" />
+        <div class="flex justify-end items-center mb-4">
+          <x-button size="sm" color="orange" @click.prevent="addActivity">
+            Add Activity
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="compact"
+          :headers="activityTable"
+          :items="activities"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="activities.length < 15"
+        >
+          <template #item-code="{ code }">
+            {{ code }}
+          </template>
+          <template #item-due_date="{ due_date, is_cold }">
+            <template v-if="is_cold">
+              <x-tooltip align="right" position="top">
+                <p :class="is_cold ? 'bg-error-300 rounded p-1' : ''">
+                  {{ due_date }}
+                </p>
+                <template #tooltip>
+                  <span>Pending overdue Task, please complete immediately</span>
+                </template>
+              </x-tooltip>
+            </template>
+            <span v-else>{{ due_date }}</span>
+          </template>
+          <template #item-status="{ status, id }">
+            <x-checkbox
+              color="emerald"
+              size="xl"
+              :modelValue="status === 1"
+              :disabled="status === 1"
+              @change="onActivityStatusUpdate(id)"
+            />
+          </template>
+          <template #item-action="item">
+            <div class="space-x-4">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                :disabled="item.status === 1"
+                @click.prevent="activityEdit(item)"
+              >
+                Edit
+              </x-button>
+              <x-button
+                size="xs"
+                color="error"
+                :disabled="item.status === 1"
+                outlined
+                @click.prevent="activityDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+        <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+          <template #header>
+            {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+          </template>
+
+          <x-form @submit="onActivitySubmit" :auto-focus="false">
+            <div class="grid gap-4">
+              <x-input
+                v-model="activityForm.title"
+                label="Title"
+                :rules="[isRequired]"
+                class="w-full"
+              />
+
+              <x-textarea
+                v-model="activityForm.description"
+                label="Description"
+                :adjust-to-text="false"
+                class="w-full"
+              />
+
+              <x-select
+                v-model="activityForm.assignee_id"
+                label="Assignee"
+                :options="advisorOptions"
+                :rules="[isRequired]"
+                placeholder="Select Assignee"
+                class="w-full"
+              />
+
+              <DatePicker
+                :format="format"
+                v-model="activityForm.due_date"
+                label="Due Date"
+                :rules="[isRequired]"
+                class="w-full"
+                withTime
+                :min-date="new Date()"
+              />
+            </div>
+
+            <div class="text-right space-x-4 mt-12">
+              <x-button size="sm" @click.prevent="modals.activity = false">
+                Cancel
+              </x-button>
+
+              <x-button
+                size="sm"
+                color="emerald"
+                :loading="activityForm.processing"
+                type="submit"
+              >
+                {{ activityActionEdit ? 'Update' : 'Save' }}
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+        <x-modal v-model="modals.activityConfirm" show-close backdrop>
+          <template #header> Delete Activity </template>
+          <p>Are you sure you want to delete this activity?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.activityConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="error"
+                :loading="activityForm.processing"
+                @click.prevent="activityDeleteConfirmed"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </x-modal>
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Lead Activities
@@ -1219,8 +1558,56 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div>
+    </div> -->
 
+    <PlanDetails
+      :insuranceProviders="insuranceProvidersAll"
+      :quote="quote"
+      :quoteType="page.props.quoteType"
+    />
+
+    <!-- Payments -->
+    <PaymentTable
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
+
+    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div v-if="historyData === null" class="text-center py-3">
+          <x-button
+            size="sm"
+            color="primary"
+            outlined
+            @click.prevent="onLoadHistoryData"
+            :loading="historyLoading"
+          >
+            Load History Data
+          </x-button>
+        </div>
+
+        <DataTable
+          v-else
+          table-class-name="compact"
+          :headers="historyDataTable"
+          :items="historyData || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="historyData.length < 15"
+        />
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
+    </div> 
+    
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
@@ -1247,7 +1634,7 @@ const linkEntity = () => {
         :rows-per-page="15"
         :hide-footer="historyData.length < 15"
       />
-    </div>
+    </div> -->
 
     <AuditLogs
       :type="'App\\Models\\BusinessQuote'"

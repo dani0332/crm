@@ -11,6 +11,7 @@ use App\Facades\Capi;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
+use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
@@ -30,7 +31,11 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     use Dispatchable, InteractsWithQueue, Queueable, Stackable;
     use GenericQueriesAllLobs;
 
+    public $tries = 3;
+    public $timeout = 90;
+    public $backoff = 300;
     private $lead = null;
+
     /**
      * Create a new job instance.
      *
@@ -48,6 +53,12 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
+        $this->lead->refresh();
+        if ($this->lead->is_revived) {
+            info('CarRevivalLeadsCreationJob - '.$this->lead->uuid.' - Lead Already Revived');
+
+            return false;
+        }
         try {
             $dataArr = [
                 'firstName' => $this->lead->first_name,
@@ -79,6 +90,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'source' => LeadSourceEnum::REVIVAL,
                 'isEmailSkip' => true,
                 'referenceUrl' => config('constants.APP_URL'),
+                'sicFlowEnabled' => false,
             ];
 
             info('carRevivalParentLead -'.$this->lead->uuid.'- capiPayload - '.json_encode($dataArr));
@@ -98,18 +110,14 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 info('carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- quotePlansCount '.$quotePlansCount);
 
                 if ($quotePlansCount == 0) {
-
                     $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_ZERO_PLAN;
                 } elseif ($quotePlansCount == 1) {
-
                     $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_SINGLE_PLAN;
                 } else {
-
                     $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_MULTIPLE_PLANS;
                 }
                 $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
-                info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'-emailTemplateId '.json_encode($emailTemplateId));
                 $previousAdvisor = null;
                 if (! empty($carQuote->previous_advisor_id)) {
                     $previousAdvisor = app(UserService::class)->getUserById($carQuote->previous_advisor_id);
@@ -135,20 +143,21 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $emailData->advisorName = $advisor[0];
                 $emailData->advisorEmail = $advisor[1];
+                $emailData->tag = 'dtt-initial-email';
 
-                info('carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- emailData '.json_encode($emailData));
+                $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
 
-                $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData, 'car-quote-one-click-buy-batch');
-
-                info('carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- emailResponse '.json_encode($response));
                 if ($response == 201) {
-
                     info('carRevivalParentLead -'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'- emailSent -- '.$emailData->customerEmail);
+
+                    // Get the latest quote batch and assign it to the lead.
+                    $quoteBatch = QuoteBatches::latest()->first();
 
                     DttRevival::create([
                         'quote_type_id' => QuoteTypes::CAR->id(),
                         'quote_id' => $carQuote->id,
                         'uuid' => $capiResponse->quoteUID,
+                        'revival_quote_batch_id' => $quoteBatch->id,
                         'email_sent' => true,
                     ]);
 
@@ -161,7 +170,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     info('carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'emailIsNotSent - '.$emailData->customerEmail);
                 }
             } else {
-
                 info('carRevivalParentLead -'.$this->lead->uuid.'- capiResponseError - '.json_encode($capiResponse));
             }
         } catch (\Exception $exception) {

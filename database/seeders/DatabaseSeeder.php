@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
+            QuoteStatusTableSeeder::class,
             // RenewalsPermissionSeeder::class,
             // addCarQuoteSearchPermission::class,
             // QuoteStatusTableSeeder::class,
@@ -40,13 +41,22 @@ class DatabaseSeeder extends Seeder
             // GenericPermissionSeeder::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
+            LostReasonsTableSeeder::class,
+            AddGenericRolePermissionSeeder::class,
+            addDubaiNowEmailGroup::class,
+            DubaiLeadSource::class,
+            ActivitySchedulesSeeder::class,
+            DocumentTypeSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             GenericPermissionSeeder::class,
-            AddLegacyPaymentsPermssion::class,
+            // UpdateOldTeamNamesSeeder::class,
+            // AddCapAdvisorPermissionSeeder::class,
+            // UpdateLeadAllocationByQuoteId::class,
+            // AddLegacyPaymentsPermssion::class,
+            ApplicationStorageSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
-            ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,*/
             // AddNewDocumentTypesSeeder::class,
@@ -63,10 +73,11 @@ class DatabaseSeeder extends Seeder
             TotalPremiumReportPermissionSeeder::class,*/
 
             // dtt seeder
-            AddDttFlagApplicationStorage::class,
-            DttOCBNewBusinessSeeder::class,
-            RevivalConversionReportPermissionSeeder::class,
+            // AddDttFlagApplicationStorage::class,
+            // DttOCBNewBusinessSeeder::class,
+            // RevivalConversionReportPermissionSeeder::class,
             // end
+            // AddCrossLOBSeeder::class,
         ]);
     }
 }

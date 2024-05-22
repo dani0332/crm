@@ -1,16 +1,27 @@
 <script setup>
-import OnlineStatusToggle from "../Components/OnlineStatusToggle.vue";
+import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
+const bannerInfo = computed(() => {
+  let { quote_route, total_count } = page.props.totalQuotesCount;
+
+  return {
+    total_count: total_count,
+    quote_route: quote_route,
+  };
+});
 
 router.on('navigate', () => {
   openSidebar.value = false;
 });
 
+const params = useUrlSearchParams('history');
+
 const onLogout = () => {
+  saveQueryParams();
   axios.post('/logout').then(() => {
     window.location.href = '/login';
   });
@@ -215,7 +226,7 @@ const onLogout = () => {
         class="flex-col gap-y-6 w-screen flex-1 h-full transition-all lg:pl-[var(--sidebar-width)]"
       >
         <header
-          class="sticky top-0 z-20 flex h-16 w-full shrink-0 items-center border-b bg-white"
+          class="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center border-b bg-white"
         >
           <div
             class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
@@ -247,7 +258,7 @@ const onLogout = () => {
             </div>
 
             <div class="flex gap-3 items-center">
-                <OnlineStatusToggle
+               <OnlineStatusToggle
                     :user="user"
                 />
               <!-- <UserStatus /> -->
@@ -311,6 +322,19 @@ const onLogout = () => {
           </div>
         </header>
         <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
+          <div
+            v-if="bannerInfo.total_count > 0"
+            class="w-full h-10 rounded bg-error-50 border border-error-500 mb-3 flex items-center justify-center text-sm max-[500px]:h-auto"
+          >
+            <span class="text-red-600"
+              >You have
+              <Link :href="bannerInfo.quote_route" class="underline">{{
+                bannerInfo.total_count
+              }}</Link>
+              stale leads, follow up with client and update the lead status
+              accordingly</span
+            >
+          </div>
           <slot />
         </div>
       </article>
