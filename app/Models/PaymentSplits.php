@@ -69,4 +69,9 @@ class PaymentSplits extends Model implements Auditable
             return $value;
         }
     }
+
+    public function verifiedByUser()
+    {
+        return $this->belongsTo(User::class, 'verified_by', 'id');
+    }
 }
