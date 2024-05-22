@@ -712,10 +712,17 @@ class SendUpdateLogService
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
-                $sendUpdateLog->update([
+
+                $sendUpdateData = [
                     'booking_date' => now(),
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
-                ]);
+                ];
+
+                if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                    $sendUpdateData['transaction_payment_status'] = SendUpdateLogStatusEnum::UNPAID;
+                }
+
+                $sendUpdateLog->update($sendUpdateData);
             }
 
             DB::commit();
