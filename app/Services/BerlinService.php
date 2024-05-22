@@ -105,6 +105,7 @@ class BerlinService extends BaseService
 
         if (! $customer) {
             $customer = $this->customerService->getCustomerById($customerId);
+            $customer->code = null;
         }
 
         if (! $customer) {

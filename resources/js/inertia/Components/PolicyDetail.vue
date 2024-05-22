@@ -1,4 +1,6 @@
 <script setup>
+import moment from 'moment';
+
 const page = usePage();
 
 const props = defineProps({
@@ -51,7 +53,7 @@ const policyIssuanceStatusOptions = computed(() => {
       label: item.text,
     };
   });
-  
+
  });
 
 const planQuoteInsurerNumber = computed(() => {
@@ -190,6 +192,34 @@ const showInsufficientPaymentAlert = () => {
 onBeforeMount(() => {
   caculateVatAmount();
 });
+
+watch(
+  () => policyDetailsForm.quote_policy_start_date,
+  quote_policy_start_date => {
+    let isCarQuote = props.modelType === quoteTypeCodeEnum.Car.toLowerCase();
+
+    let isHealthOrBusinessQuote =
+      props.modelType === quoteTypeCodeEnum.Health.toLowerCase() ||
+      props.modelType === quoteTypeCodeEnum.GroupMedical.toLowerCase() ||
+      props.modelType === quoteTypeCodeEnum.Business.toLowerCase(); // model type is ""Business"" when visiting the business quote page so added this condition
+
+    if (isCarQuote) {
+      //for Car quote, add 13 months to start date to calculate expiry date.
+      policyDetailsForm.quote_policy_expiry_date = moment(
+        quote_policy_start_date,
+      )
+        .add(13, 'months')
+        .subtract(1, 'days');
+    } else if (isHealthOrBusinessQuote) {
+      // For Health and Business quote, add 12 months to start date to calculate expiry date
+      policyDetailsForm.quote_policy_expiry_date = moment(
+        quote_policy_start_date,
+      )
+        .add(12, 'months')
+        .subtract(1, 'days');
+    }
+  },
+);
 </script>
 
 <template>

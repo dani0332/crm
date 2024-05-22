@@ -149,6 +149,11 @@ class LifeQuoteRepository extends BaseRepository
         ];
     }
 
+    public function fetchGetDuplicateEntityByCode($code)
+    {
+        return $this->where('parent_duplicate_quote_id', $code)->first();
+    }
+
     public function fetchExportData()
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])

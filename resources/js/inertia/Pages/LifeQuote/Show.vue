@@ -27,7 +27,6 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
-  insuranceProviders: Object,
   vatPercentage: Number,
   payments: Array,
   paymentTooltipEnum: Object,
@@ -1150,13 +1149,14 @@ watch(
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="payments"    
-    />    
+      :payments="payments"
+    />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"

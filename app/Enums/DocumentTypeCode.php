@@ -29,6 +29,6 @@ class DocumentTypeCode extends Enum
     const GMQPD = 'GMQPD';
     const PPD = 'PPD';
     const YPD = 'YPD';
-    const CTIRBB= 'CTIRBB'; // Tax Invoice Raised By Buyer
+    const CTIRBB = 'CTIRBB'; // Tax Invoice Raised By Buyer
     const TI = 'TI'; // Tax Invoice
 }

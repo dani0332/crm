@@ -1,6 +1,6 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
@@ -1088,7 +1088,7 @@ watch(
       :quoteType="page.props.quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
-    />  
+    />
 
     <!-- Payments -->
     <MigratePayment
@@ -1096,12 +1096,13 @@ watch(
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="page.props.quoteType"
-      :payments="payments"    
-    />    
-    <PaymentTableNew 
+      :payments="payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes && documentTypes.filter && documentTypes.filter(item => item.code === 'CLPD' || item.code === 'CLPDR' || item.code === 'CLDPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
@@ -1111,7 +1112,7 @@ watch(
       quoteSubType="Corpline"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -1303,8 +1304,8 @@ watch(
           </div>
         </template>
       </x-modal>
-    </div> 
-    
+    </div>
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
