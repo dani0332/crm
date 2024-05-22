@@ -221,7 +221,6 @@ const calculateCommission = () => {
       bookingDetailsForm.commission_percentage = convertToNegative(
         (total_commission / total_price) * 100,
       );
-      console.log(bookingDetailsForm.commission_percentage);
     } else {
       notification.error({
         title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -293,7 +292,7 @@ const saveBookingDetail = isValid => {
         position: 'top',
       });
       state.isEdit = false;
-      router.reload({ preserveState: true });
+      location.reload();
     },
     onError: errors => {
       Object.keys(errors).forEach(function (key) {
@@ -361,31 +360,21 @@ function reverseValue(value) {
 }
 
 function updateReversalEntries(response) {
-  reversalEntry.insurer_tax_invoice_number = response.insurer_tax_number;
-  reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
-  reversalEntry.transaction_payment_status =
-    response.transaction_payment_status || '';
+  reversalEntry.transaction_payment_status = '';
   reversalEntry.invoice_date = response.insurer_invoice_date || '';
-  reversalEntry.insurer_commission_invoice_number =
-    response.insurer_commission_invoice_number || '';
-  reversalEntry.discount = reverseValue(response.discount_value) || '';
-  reversalEntry.commission_percentage =
-    reverseValue(response.commission_percentage) || '';
-  reversalEntry.commission_vat_not_applicable =
-    reverseValue(response.commission_vat_not_applicable) || '';
-  reversalEntry.vat_on_commission = reverseValue(response.commission_vat) || '';
-  reversalEntry.commission_vat_applicable =
-    reverseValue(response.commission_vat_applicable) || '';
-  reversalEntry.total_commission = reverseValue(response.commission) || '';
-  reversalEntry.total_price = reverseValue(response.total_price);
-
-  // fields missing from response.
-  /*reversalEntry.total_vat_amount = '';
-  reversalEntry.price_vat_applicable = '';
-  reversalEntry.price_vat_not_applicable = '';
-  Object.keys(reversalEntry).forEach(key => {
-    reversalEntry[key] = response[key] || '';
-  });*/
+  reversalEntry.insurer_tax_invoice_number = (response.insurer_tax_number !== '') ? response.insurer_tax_number + '-REV' : '';
+  reversalEntry.broker_invoice_number = (response.broker_invoice_number !== '') ? response.broker_invoice_number + '-REV' : '';
+  reversalEntry.insurer_commission_invoice_number = (response.insurer_commmission_invoice_number !== '') ? response.insurer_commmission_invoice_number + '-REV' : '';
+  reversalEntry.discount = response.discount_value || '';
+  reversalEntry.price_vat_applicable = response.send_update_log?.price_vat_applicable || '';
+  reversalEntry.commission_percentage = ((response.commmission_percentage !== null) ? response.commmission_percentage : response.send_update_log?.commission_percentage) ?? '';
+  reversalEntry.price_vat_not_applicable = response.send_update_log?.price_vat_not_applicable || '';
+  reversalEntry.vat_on_commission = ((response.commission_vat !== null) ? response.commission_vat : response.send_update_log?.vat_on_commission) ?? '';
+  reversalEntry.commission_vat_applicable = response.commission_vat_applicable || '';
+  reversalEntry.total_commission = response.commission || '';
+  reversalEntry.commission_vat_not_applicable = response.commission_vat_not_applicable || '';
+  reversalEntry.total_vat_amount = ((response.total_amount !== null) ? response.total_amount : response.send_update_log?.total_vat_amount) ?? '';
+  reversalEntry.total_price = ((response.total_price !== null && response.total_price > 0) ? response.total_price : response.send_update_log?.total_price) ?? '' ;
 }
 
 onMounted(() => {
@@ -399,27 +388,18 @@ onMounted(() => {
 
 const onUpdateReversal = () => {
   state.reversalSectionEdit = !state.reversalSectionEdit;
-  bookingDetailsForm.insurer_tax_invoice_number =
-    reversalEntry.insurer_tax_invoice_number;
-  bookingDetailsForm.broker_invoice_number =
-    reversalEntry.broker_invoice_number || '';
-  bookingDetailsForm.transaction_payment_status =
-    reversalEntry.transaction_payment_status || '';
+  bookingDetailsForm.transaction_payment_status = '';
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
-  bookingDetailsForm.insurer_commission_invoice_number =
-    reversalEntry.insurer_commission_invoice_number || '';
-  bookingDetailsForm.discount = reverseValue(reversalEntry.discount) || '';
-  bookingDetailsForm.commission_percentage =
-    reverseValue(reversalEntry.commission_percentage) || '';
-  bookingDetailsForm.commission_vat_not_applicable =
-    reverseValue(reversalEntry.commission_vat_not_applicable) || '';
-  bookingDetailsForm.vat_on_commission =
-    reverseValue(reversalEntry.vat_on_commission) || '';
-  bookingDetailsForm.commission_vat_applicable =
-    convertToNumber(reversalEntry.commission_vat_applicable) || '';
-  bookingDetailsForm.total_commission =
-    reverseValue(reversalEntry.total_commission) || '';
-  bookingDetailsForm.total_price = reverseValue(reversalEntry.total_price);
+  bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
+  bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
+  bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
+  bookingDetailsForm.discount = reversalEntry.discount || '';
+  bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || '';
+  bookingDetailsForm.vat_on_commission = reversalEntry.vat_on_commission || '';
+  bookingDetailsForm.commission_vat_applicable = reversalEntry.commission_vat_applicable || '';
+  bookingDetailsForm.total_commission = reversalEntry.total_commission || '';
+  bookingDetailsForm.commission_vat_not_applicable = reversalEntry.commission_vat_not_applicable || '';
+  bookingDetailsForm.total_price = reversalEntry.total_price;
 };
 
 function convertToNumber(value) {
@@ -445,14 +425,19 @@ const modals = reactive({
 });
 
 const confirmationCheck = ref(false);
-const confirmationCheckError = ref(false);
 const isStating = ref(false);
 
-const sendUpdateValidationURL =
-  props.updateBtn === sendUpdateStatusEnum.SU
+const sendUpdateValidationURL = computed(() => {
+  return (props.updateBtn === sendUpdateStatusEnum.SU || props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER)
     ? 'send-update'
     : 'send-update-customer-validation';
+});
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
+
+onMounted(() => {
+  console.log('working');
+  console.log(sendUpdateValidationURL.value);
+});
 
 const loader = reactive({
   sendUpdateSectionBtn: false,
@@ -462,7 +447,7 @@ const loader = reactive({
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
   axios
-    .post(sendUpdateValidationURL, {
+    .post(sendUpdateValidationURL.value, {
       quoteType: props.quoteType,
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
@@ -480,6 +465,7 @@ const sendUpdateValidation = () => {
           modals.sendConfirm = true;
           isStating.value = response.data.message;
         }
+        loader.sendUpdateSectionBtn = false;
       }
     })
     .catch(function (errors) {
@@ -554,13 +540,6 @@ function confirmationModalClose() {
 }
 
 function sendUpdate(prePaymentCheck = true) {
-  if (!confirmationCheck.value && prePaymentCheck) {
-    confirmationCheckError.value = true;
-    return false;
-  } else {
-    confirmationCheckError.value = false;
-  }
-
   loader.sendUpdate = true;
   axios
     .post('send-update', {
@@ -621,14 +600,13 @@ const submitToCustomer = () => {
   axios
     .post(url, data)
     .then(response => {
-      console.log(response);
       if (response.status == 200) {
         notification.success({
           title: 'Update Sent to the Customer',
           position: 'top',
         });
-        location.reload();
-        modals.sendConfirm = false;
+        router.reload({ preserveState: true });
+        modals.sendConfirm = isLoading.value = false;
       }
     })
     .catch(err => {
@@ -659,6 +637,10 @@ const onCancel = () => {
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
 };
+
+const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] = createReusableTemplate();
+const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -710,7 +692,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INVOICE DESCRIPTION
                   </label>
@@ -728,7 +710,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     BOOKING DATE
                   </label>
@@ -746,7 +728,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TRANSACTION PAYMENT STATUS
                   </label>
@@ -758,12 +740,21 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.transaction_payment_status ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.transaction_payment_status !== '') ? reversalEntry.transaction_payment_status : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
-              <div class="font-bold">
-                <span>MAIN CLASS OF INSURANCE</span>
+              <div>
+                <x-tooltip position="left">
+                  <label
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    LINE OF BUSINESS
+                  </label>
+                  <template #tooltip>
+                    Signifies the specific category or type of insurance coverage associated with this booking. It helps categorize the booking by its primary insurance focus, allowing for better organization and classification of insurance transactions.
+                  </template>
+                </x-tooltip>
               </div>
               <div>
                 <span>{{ quoteType ?? 'N/A' }}</span>
@@ -773,7 +764,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INSURER INVOICE DATE
                   </label>
@@ -791,7 +782,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     SUB CLASS
                   </label>
@@ -807,7 +798,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INSURER TAX INVOICE NUMBER
                   </label>
@@ -826,7 +817,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     BROKER INVOICE NUMBER
                   </label>
@@ -843,7 +834,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INSURER COMMISSION INVOICE NUMBER
                   </label>
@@ -863,7 +854,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     DISCOUNT
                   </label>
@@ -874,14 +865,14 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.discount ?? 'N/A' }}</span>
+                <span>{{ reverseValue(reversalEntry.discount) ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     PRICE (VAT APPLICABLE)
                   </label>
@@ -893,14 +884,14 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.price_vat_applicable ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.price_vat_applicable !== '') ? reverseValue(reversalEntry.price_vat_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     COMMISSION (%)
                   </label>
@@ -910,14 +901,14 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.commission_percentage ?? 'N/A' }}</span>
+                <span>{{ reverseValue(reversalEntry.commission_percentage) ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     PRICE (VAT NOT APPLICABLE)
                   </label>
@@ -928,14 +919,14 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.price_vat_not_applicable ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.price_vat_not_applicable !== '') ? reverseValue(reversalEntry.price_vat_not_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     VAT ON COMMISSION
                   </label>
@@ -945,14 +936,14 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.vat_on_commission ?? 'N/A'}}</span>
+                <span>{{ reverseValue(reversalEntry.vat_on_commission) ?? 'N/A'}}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     COMMISSION VAT APPLICABLE
                   </label>
@@ -965,14 +956,14 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.commission_vat_applicable ?? 'N/A' }}</span>
+                <span>{{ reverseValue(reversalEntry.commission_vat_applicable) ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TOTAL COMMISSION
                   </label>
@@ -983,7 +974,7 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.total_commission ?? 'N/A' }}</span>
+                <span>{{ reverseValue(reversalEntry.total_commission) ?? 'N/A' }}</span>
               </div>
             </div>
 
@@ -991,7 +982,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     COMMISSION (VAT NOT APPLICABLE)
                   </label>
@@ -1002,14 +993,14 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.commission_vat_not_applicable ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.commission_vat_not_applicable !== '') ? reverseValue(reversalEntry.commission_vat_not_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TOTAL VAT AMOUNT
                   </label>
@@ -1020,7 +1011,7 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.total_vat_amount ?? 'N/A' }}</span>
+                <span>{{ reverseValue(reversalEntry.total_vat_amount) ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2">
@@ -1031,7 +1022,7 @@ const onCancel = () => {
               <div>
                 <x-tooltip position="left">
                   <label
-                    class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TOTAL PRICE
                   </label>
@@ -1043,7 +1034,7 @@ const onCancel = () => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.total_price ?? 'N/A' }}</span>
+                <span>{{ reverseValue(reversalEntry.total_price) ?? 'N/A' }}</span>
               </div>
             </div>
           </div>
@@ -1100,8 +1091,8 @@ const onCancel = () => {
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
                   <x-tooltip position="left">
-                    <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    <label 
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INVOICE DESCRIPTION
                     </label>
@@ -1121,7 +1112,7 @@ const onCancel = () => {
                 <div class="font-bold">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       BOOKING DATE
                     </label>
@@ -1139,7 +1130,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TRANSACTION PAYMENT STATUS
                     </label>
@@ -1157,8 +1148,17 @@ const onCancel = () => {
                 </div>
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
-                <div class="font-bold">
-                  <span>MAIN CLASS OF INSURANCE</span>
+                <div>
+                  <x-tooltip position="left">
+                    <label
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      LINE OF BUSINESS
+                    </label>
+                    <template #tooltip>
+                      Signifies the specific category or type of insurance coverage associated with this booking. It helps categorize the booking by its primary insurance focus, allowing for better organization and classification of insurance transactions.
+                    </template>
+                  </x-tooltip>
                 </div>
                 <div>
                   <span>{{ quoteType ?? 'N/A' }}</span>
@@ -1168,7 +1168,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INSURER INVOICE DATE
                     </label>
@@ -1195,7 +1195,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       SUB CLASS
                     </label>
@@ -1211,7 +1211,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INSURER TAX INVOICE NUMBER
                     </label>
@@ -1223,7 +1223,11 @@ const onCancel = () => {
                   </x-tooltip>
                 </div>
                 <div>
+                  <template v-if="isCPD">
+                    {{ bookingDetailsForm.insurer_tax_invoice_number !== '' ? bookingDetailsForm.insurer_tax_invoice_number : 'N/A'}}
+                  </template>
                   <x-input
+                    v-else
                     maxlength="60"
                     v-model="bookingDetailsForm.insurer_tax_invoice_number"
                     class="!mb-0 w-full"
@@ -1239,7 +1243,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       BROKER INVOICE NUMBER
                     </label>
@@ -1258,7 +1262,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INSURER COMMISSION INVOICE NUMBER
                     </label>
@@ -1269,7 +1273,11 @@ const onCancel = () => {
                   </x-tooltip>
                 </div>
                 <div>
+                  <template v-if="isCPD">
+                    {{ bookingDetailsForm.insurer_commission_invoice_number !== '' ? bookingDetailsForm.insurer_commission_invoice_number : 'N/A'}}
+                  </template>
                   <x-input
+                    v-else
                     maxlength="60"
                     v-model="
                       bookingDetailsForm.insurer_commission_invoice_number
@@ -1287,7 +1295,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       DISCOUNT
                     </label>
@@ -1305,7 +1313,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       PRICE (VAT APPLICABLE)
                     </label>
@@ -1334,7 +1342,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       COMMISSION (%)
                     </label>
@@ -1354,7 +1362,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       PRICE (VAT NOT APPLICABLE)
                     </label>
@@ -1374,7 +1382,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       VAT ON COMMISSION
                     </label>
@@ -1393,7 +1401,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="pt-1 text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="pt-1 font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       COMMISSION VAT APPLICABLE
                     </label>
@@ -1423,7 +1431,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TOTAL COMMISSION
                     </label>
@@ -1443,7 +1451,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       COMMISSION (VAT NOT APPLICABLE)
                     </label>
@@ -1455,7 +1463,7 @@ const onCancel = () => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.commission_vat_not_applicable !== '0.00' ? bookingDetailsForm.commission_vat_not_applicable : 'N/A'
+                    bookingDetailsForm.commission_vat_not_applicable !== '' ? bookingDetailsForm.commission_vat_not_applicable : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1463,7 +1471,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TOTAL VAT AMOUNT
                     </label>
@@ -1487,7 +1495,7 @@ const onCancel = () => {
                 <div>
                   <x-tooltip position="left">
                     <label
-                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TOTAL PRICE
                     </label>
@@ -1547,11 +1555,29 @@ const onCancel = () => {
       </template>
     </Collapsible>
 
+    <sendUpdateCustConfirmBtnTemp>
+      <x-button
+        size="sm"
+        color="error"
+        @click.prevent="submitToCustomer"
+        :disabled="!modals.isConfirmed"
+        :loading="isLoading"
+      >
+        Confirm
+      </x-button>
+    </sendUpdateCustConfirmBtnTemp>
+
     <x-modal v-model="modals.sendConfirm" show-close backdrop>
-      <template #header> Send Policy </template>
-      <span v-if="isStating" class="text-red-500 text-sm font-semibold">{{
-        isStating
-      }}</span>
+      <template #header> Send Update </template>
+      <x-alert
+        color="orange"
+        light
+        type="error"
+        class="text-sm mb-4"
+        v-if="isStating"
+      >
+        {{ isStating }}
+      </x-alert>
       <x-checkbox
         v-model="modals.isConfirmed"
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
@@ -1566,90 +1592,83 @@ const onCancel = () => {
           >
             Cancel
           </x-button>
-
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="submitToCustomer"
-            :loading="isLoading"
-          >
-            Confirm
-          </x-button>
-        </div>
-        <div class="text-center space-x-4" v-if="isNotConfirmed">
-          <span class="text-red-500"
-            >Please select the checkbox to proceed.</span
-          >
+          <template v-if="!modals.isConfirmed">
+            <x-tooltip position="left">
+              <SendUpdateCustReuseBtnTemp />
+              <template #tooltip>
+                Please select the checkbox to proceed
+              </template>
+            </x-tooltip>
+          </template>
+          <SendUpdateCustReuseBtnTemp v-else />
         </div>
       </template>
     </x-modal>
 
     <x-modal v-model="modals.paymentConfirmation" backdrop>
-      <template #header>
-        <div class="flex justify-between gap-4 items-center">
-          <h3 class="font-semibold text-sm">
-            Arey you sure you want to continue?
-          </h3>
-        </div>
-      </template>
+      <template #header> Are you sure you want to continue? </template>
+      <div class="text-center">
+        <p class="font-semibold">{{ paymentConfirmationMessage.status }}</p>
+        <p>{{ paymentConfirmationMessage.message }}</p>
+      </div>
       <template #actions>
-        <div class="text-center space-x-4 mb-5">
-          <span class="font-semibold">{{
-            paymentConfirmationMessage.status
-          }}</span>
-          <p class="text-sm">{{ paymentConfirmationMessage.message }}</p>
-        </div>
         <div class="text-center space-x-4">
           <x-button
             size="sm"
+            ghost
+            @click.prevent="confirmationModalClose()"
+          >
+            Go Back
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
             :loading="loader.sendUpdate"
             @click.prevent="sendUpdate(false)"
           >
             Continue
           </x-button>
-
-          <x-button
-            size="sm"
-            color="orange"
-            @click.prevent="confirmationModalClose()"
-          >
-            Go Back
-          </x-button>
         </div>
       </template>
     </x-modal>
 
-    <x-modal v-model="modals.attestRecord" show-close backdrop>
-      <template #header>
-        <div class="flex justify-between gap-4 items-center">
-          <h3 class="font-semibold text-sm">Confirmation</h3>
-        </div>
-      </template>
-      <template #actions>
-        <div class="text-center space-x-4 mb-5">
-          <span
-            v-if="confirmationCheckError"
-            class="text-red-500 text-sm font-semibold"
-            >* Confirmation is required</span
-          >
-          <x-checkbox
-            v-model="confirmationCheck"
-            label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
-          />
-        </div>
-        <div class="text-center space-x-4">
-          <x-button size="sm" @click.prevent="confirmationModalClose()">
-            Cancel
-          </x-button>
+    <sendUpdateConfirmBtnTemp>
+      <x-button
+        size="sm"
+        color="error"
+        :disabled="!confirmationCheck"
+        @click.prevent="sendUpdate()"
+        :loading="loader.sendUpdate"
+      >
+        Confirm
+      </x-button>
+    </sendUpdateConfirmBtnTemp>
 
+    <x-modal v-model="modals.attestRecord" size="md" show-close backdrop>
+      <template #header> Send Update </template>
+      <x-checkbox
+        v-model="confirmationCheck"
+        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
+      />
+      <template #actions>
+        <div class="text-right space-x-4">
           <x-button
             size="sm"
-            color="orange"
-            :loading="loader.sendUpdate"
-            @click.prevent="sendUpdate()"
+            ghost
+            :disabled="isLoading"
+            @click.prevent="confirmationModalClose()"
           >
-            Confirm
+            Cancel
           </x-button>
+          <template v-if="!confirmationCheck">
+            <x-tooltip position="left">
+              <SendUpdateReuseBtnTemp />
+              <template #tooltip>
+                Please select the checkbox to proceed
+              </template>
+            </x-tooltip>
+          </template>
+          <SendUpdateReuseBtnTemp v-else />
         </div>
       </template>
     </x-modal>

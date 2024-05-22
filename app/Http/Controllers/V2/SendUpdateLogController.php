@@ -34,6 +34,7 @@ use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Payment;
 
 class SendUpdateLogController extends Controller
 {
@@ -116,7 +117,7 @@ class SendUpdateLogController extends Controller
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
         if ($quoteType == quoteTypeCode::Car) {
-            if (in_array($sendUpdateLog->option->code, [SendUpdateLogStatusEnum::CAR_AOC, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
+            if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::CAR_AOC, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
                 $additionalField = $this->sendUpdateLogService->getAdditionalOptionsForCar($sendUpdateLog);
             }
         }
@@ -129,8 +130,8 @@ class SendUpdateLogController extends Controller
             $quote->load('plan.insuranceProvider');
         }
 
-        $categoryCode = $sendUpdateLog->category->code;
-        $optionCode = $sendUpdateLog->option->code ?? null;
+        $categoryCode = $sendUpdateLog->category?->code;
+        $optionCode = $sendUpdateLog->option?->code ?? null;
         $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
         $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
@@ -401,9 +402,12 @@ class SendUpdateLogController extends Controller
         $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
+            $payment = Payment::where('send_update_log_id', $sendUpdate->id)->first();
             // Add insuficient Payment Validations here
             $insufficientPaymentCheck = false;
-
+            if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
+                $insufficientPaymentCheck = true;
+            }
             return response()->json([
                 'insufficientPaymentCheck' => $insufficientPaymentCheck,
                 'parentPaymentStatus' => $sendUpdate->payments->first()?->payment_status_id ?? null,

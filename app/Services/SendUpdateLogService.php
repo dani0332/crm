@@ -474,7 +474,7 @@ class SendUpdateLogService
             $quoteServiceFile = app(getServiceObject($quoteType));
             $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
             if (! is_null($payments)) {
-                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'sendUpdateLog']);
             }
         }
 
@@ -525,7 +525,7 @@ class SendUpdateLogService
         $sendUpdateToCustomerValidation = in_array($sendUpdate->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]);
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdate);
 
-        if ($sendUpdateToCustomerValidation && ! in_array(DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, $uploadedDocuments)) {
+        if ($sendUpdateToCustomerValidation) {
             return 'Please note your current action will only send the update to the customer.';
         }
 
@@ -588,7 +588,7 @@ class SendUpdateLogService
     {
         $payments = $sendUpdateLog->payments;
         if ($payments) {
-            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod']);
+            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser']);
         }
 
         return $payments;
@@ -619,7 +619,7 @@ class SendUpdateLogService
 
     public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
     {
-        $categoryCode = $sendUpdateLog->category->code;
+        $categoryCode = $sendUpdateLog->category?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
@@ -712,10 +712,17 @@ class SendUpdateLogService
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
-                $sendUpdateLog->update([
+
+                $sendUpdateData = [
                     'booking_date' => now(),
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
-                ]);
+                ];
+
+                if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                    $sendUpdateData['transaction_payment_status'] = SendUpdateLogStatusEnum::UNPAID;
+                }
+
+                $sendUpdateLog->update($sendUpdateData);
             }
 
             DB::commit();
