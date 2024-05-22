@@ -2067,9 +2067,9 @@ const uploadDocument = (doc, files, count) => {
         onSuccess: data => {
           let quoteDocuments = [];
           if (
-            quoteTypesToCheck.includes(props.quoteType) ||
+            (quoteTypesToCheck.includes(props.quoteType) ||
             props.quoteType === 'Home' ||
-            props.quoteSubType === 'Corpline'
+            props.quoteSubType === 'Corpline') || props.sendUpdate
           ) {
             quoteDocuments = data.props.quoteDocuments;
           } else {
