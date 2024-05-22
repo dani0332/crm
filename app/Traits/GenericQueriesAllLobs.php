@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
@@ -291,8 +292,18 @@ trait GenericQueriesAllLobs
     public function updatePriceAndDiscount($quoteModel)
     {
         $payment = $quoteModel->payments()->first();
-        if ($payment && $quoteModel->price_with_vat != $payment->total_price) {
-            $difference = $initialDifference =(double) number_format($quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value), 2);
+        $priceWithVat = $quoteModel->price_with_vat;
+        $paymentTotalPrice= $payment->total_price;
+        
+        if ($payment && $priceWithVat != $paymentTotalPrice) {
+            $capturedAmount = $payment->captured_amount;
+            $discountValue = $payment->discount_value;
+
+            $totalPaymentAmount = $capturedAmount + $discountValue;
+            $initialDifference = $priceWithVat - $totalPaymentAmount;
+
+            $difference = (double) number_format($initialDifference, 2);
+            
             if ($payment->system_adjusted_discount != null) {
                 $difference += $payment->system_adjusted_discount;
             }
@@ -304,14 +315,14 @@ trait GenericQueriesAllLobs
                     $payment->discount_value += $initialDifference;
                 } else {
                     $payment->discount_value = $difference;
-                    $payment->discount_type = 'system_adjusted_discount';
+                    $payment->discount_type = DiscountTypeEnum::SYSTEM_ADJUSTED_DISCOUNT;
                 }
             }
             // Case 2 if difference is greater than 0.99 and system adjusted discount is greater than 0 then subtract system adjusted discount from discount value
             else if(($difference > 0.99 || $difference == 0) && $payment->system_adjusted_discount > 0) {
                 $payment->discount_value -= $payment->system_adjusted_discount;
                 $payment->system_adjusted_discount = 0;
-                if ($payment->discount_type == 'system_adjusted_discount'){
+                if ($payment->discount_type == DiscountTypeEnum::SYSTEM_ADJUSTED_DISCOUNT){
                     $payment->discount_type = null;
                 }
             }

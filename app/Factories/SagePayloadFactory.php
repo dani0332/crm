@@ -683,24 +683,24 @@ class SagePayloadFactory
         return [$receiptData, $prePaymentData];
     }
 
-    public static function createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment)
+    public static function createAppliedReceiptsAdjustments($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
     {
-        $data = [];
+        $receiptsAndAdjustmentsData = [];
 
-        if ($isPosAllSplitPayment) {
-            foreach ($splitPayments as $key => $item) {
-                [$receiptData, $prePaymentData] = self::createReceiptData($item, $sage_customer_number, $payment, $key + 1);
-                $data[] = $receiptData;
-                $data[] = $prePaymentData;
+        if ($isPaymentsSplit) {
+            foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
+                [$singleReceiptData, $singlePrePaymentData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                $receiptsAndAdjustmentsData[] = $singleReceiptData;
+                $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
             }
         } else {
-            $item = $splitPayments[0];
-            [$receiptData, $prePaymentData] = self::createReceiptData($item, $sage_customer_number, $payment);
-            $data[] = $receiptData;
-            $data[] = $prePaymentData;
+            $firstSplitPaymentRecord = $splitPaymentRecords[0];
+            [$singleReceiptData, $singlePrePaymentData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            $receiptsAndAdjustmentsData[] = $singleReceiptData;
+            $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
         }
 
-        return $data;
+        return $receiptsAndAdjustmentsData;
     }
 
     // Payment code mapping

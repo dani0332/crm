@@ -165,7 +165,7 @@ const onUpdatebookPolicyDetails = isValid => {
   }
 };
 
-const isAllowToSendPolicy = ref(false);
+const isAllowedToSendPolicy = ref(false);
 
 const modals = reactive({
   sendPolicyConfirm: false,
@@ -188,7 +188,7 @@ const submitPolicy = () => {
     send_policy_type: props.bookPolicyDetails.sendPolicyType,
     model_type: props?.quoteType,
     quote_id: props?.quote?.id,
-    is_send_policy: isAllowToSendPolicy.value,
+    is_send_policy: isAllowedToSendPolicy.value,
     transaction_payment_status: bpForm.transaction_payment_status,
     modelType: props.modelType,
   };
@@ -269,7 +269,7 @@ const calculateCommission = () => {
 };
 const sendPolicyConfirmation = () => {
   if (page.props.bookPolicyDetails.isInsufficientPayment){
-    isAllowToSendPolicy.value = true;
+    isAllowedToSendPolicy.value = true;
   }
   modals.sendPolicyPopup = false;
   modals.sendPolicyConfirm = true;
