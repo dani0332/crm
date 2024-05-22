@@ -340,14 +340,12 @@ const fetchTeamUsers = () => {
     axios
     .post('/get-users-by-team', { team_filter: filters.teams })
     .then(response => {
-        console.log('teamUsers', response.data);
         if(response.data.length > 0 && (hasRole(rolesEnum.CarAdvisor) || hasRole(rolesEnum.Admin))) {
             response.data.push({
                 id: -1,
                 name: 'UnAssigned',
             });
         }
-        console.log(response.data);
       teamUsers.value = response.data;
     })
     .finally(() => {
