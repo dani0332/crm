@@ -370,7 +370,7 @@ function setQueryStringFilters() {
 onMounted(() => {
   setQueryStringFilters();
   changeLob();
-  // fetchTeams();
+  fetchTeams();
   // onTeamChange(filters.team);
 });
 
