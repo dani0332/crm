@@ -25,12 +25,12 @@ class LeadsCountService
         ];
 
         $cardViewRoute = [
-            QuoteTypes::HEALTH->name => route('health.cards') ?? '',
-            QuoteTypes::HOME->name => route('home-cardView') ?? '',
-            QuoteTypes::PET->name => route('pet-quotes-card') ?? '',
-            QuoteTypes::YACHT->name => route('yacht-quotes-card') ?? '',
-            QuoteTypes::CYCLE->name => route('cycle-quotes-card') ?? '',
-            QuoteTypes::CORPLINE->name => route('business.cards') ?? '',
+            QuoteTypes::HEALTH->name => route('health.cards', ['is_stale' => true]) ?? '',
+            QuoteTypes::HOME->name => route('home-cardView', ['is_stale' => true]) ?? '',
+            QuoteTypes::PET->name => route('pet-quotes-card', ['is_stale' => true]) ?? '',
+            QuoteTypes::YACHT->name => route('yacht-quotes-card', ['is_stale' => true]) ?? '',
+            QuoteTypes::CYCLE->name => route('cycle-quotes-card', ['is_stale' => true]) ?? '',
+            QuoteTypes::CORPLINE->name => route('business.cards', ['is_stale' => true]) ?? '',
         ];
 
         foreach ($quoteTypes as $quoteType) {
