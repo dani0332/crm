@@ -30,21 +30,6 @@ const props = defineProps({
   },
 });
 
-
-const paymentStatusEnum = page.props.paymentStatusEnum;
-const insufficientPaymentStatuses = [
-  paymentStatusEnum.PARTIALLY_PAID,
-  paymentStatusEnum.PENDING,
-  paymentStatusEnum.NEW,
-  paymentStatusEnum.OVERDUE,
-  paymentStatusEnum.CREDIT_APPROVED,
-];
-
-const insufficientPaymentStatusesHeading = [
-  paymentStatusEnum.PENDING,
-  paymentStatusEnum.NEW,
-  paymentStatusEnum.OVERDUE
-];
 const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const dateToYMD = date => {
@@ -152,7 +137,6 @@ watch(() => page.props.bookPolicyDetails.isLackingOfPayment, (newVal) => {
   is_lacking_payment.value = newVal || false;
 });
 
-
 const onUpdatebookPolicyDetails = isValid => {
   showInsufficientPaymentAlert();
   if (isValid) {
@@ -191,7 +175,7 @@ const modals = reactive({
 
 const confirmSendPolicy = () => {
   const paymentId = getPayment().payment_status_id ?? 0;
-  if (insufficientPaymentStatuses.includes(paymentId)){
+  if (page.props.bookPolicyDetails.isInsufficientPayment){
       modals.sendPolicyPopup = true;
   } else {
       modals.sendPolicyConfirm = true;
@@ -286,7 +270,7 @@ const calculateCommission = () => {
 };
 const sendPolicyConfirmation = () => {
   const paymentId = getPayment().payment_status_id ?? 0;
-  if (insufficientPaymentStatuses.includes(paymentId)){
+  if (page.props.bookPolicyDetails.isInsufficientPayment){
     isAllowToSendPolicy.value = true;
   }
   modals.sendPolicyPopup = false;
@@ -297,21 +281,9 @@ const getPayment = () => {
   return page.props?.payments[0] ?? null;
 }
 
-const sendPolicyConfirmationHeading = computed(() => {
-  const paymentId = getPayment().payment_status_id ?? 0;
- 
-  if(paymentId == paymentStatusEnum.PARTIAL_CAPTURED){ 
-      return 'Insufficient payment received';
-  } else if (insufficientPaymentStatusesHeading.includes(paymentId)) {
-      return 'Payment not yet completed';
-  } else if (paymentId == paymentStatusEnum.CREDIT_APPROVED){
-      return "Pending payment under 'Credit approval'";
-  }
-});
-
 const showInsufficientPaymentAlert = () => {
   const paymentId = getPayment().payment_status_id ?? 0;
-  if (insufficientPaymentStatuses.includes(paymentId)) {
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
     notification.error({
       title: 'Insufficient payment',
       position: 'top',
@@ -828,8 +800,8 @@ const showInsufficientPaymentAlert = () => {
     <x-modal v-model="modals.sendPolicyPopup" show-close backdrop>
       <template #header>  Are you sure you want to continue? </template>
        <div class="text-center">
-          <p class="font-semibold pt-3">{{  sendPolicyConfirmationHeading  }}</p>
-          <p>Unpaid policies breach our Code of Conduct and will be escalated to management. Do you still want to continue?</p>
+          <p class="font-semibold pt-3">{{  props.bookPolicyDetails.paymentStatusHeading  }}</p>
+          <p>{{  props.bookPolicyDetails.paymentStatusDescription  }}</p>
        </div>
       <template #actions>
         <div class="text-center space-x-4">

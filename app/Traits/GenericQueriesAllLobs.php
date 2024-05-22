@@ -228,6 +228,10 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['sendPolicyType'] = null;
         $bookPolicyDetails['text'] = '';
         $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payments);
+        @[$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription]= $this->checkForInsufficientPayment($payments);
+        $bookPolicyDetails['isInsufficientPayment'] = $isInsufficientPayment;
+        $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
+        $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
@@ -358,5 +362,49 @@ trait GenericQueriesAllLobs
             return !($sumOfSplitPayment >= $paymentTotalPrice);
         }
         return true;
+    }
+
+    private function checkForInsufficientPayment($paymentRecords){
+        $paymentStatusHeading = '';
+        $paymentStatusDescription = '';
+        $isInsufficientPayment = false;
+
+        if ($paymentRecords && !$paymentRecords->isEmpty()) {
+            $firstPaymentRecord = $paymentRecords->first();
+            $paymentStatusId = $firstPaymentRecord->payment_status_id;
+
+            $insufficientPaymentStatuses = [
+                PaymentStatusEnum::PARTIALLY_PAID,
+                PaymentStatusEnum::PENDING,
+                PaymentStatusEnum::NEW,
+                PaymentStatusEnum::OVERDUE,
+                PaymentStatusEnum::CREDIT_APPROVED,
+            ];
+
+            $insufficientPaymentStatusesHeading = [
+                PaymentStatusEnum::PENDING,
+                PaymentStatusEnum::NEW,
+                PaymentStatusEnum::OVERDUE
+            ];
+
+            if (in_array($firstPaymentRecord->payment_status_id, $insufficientPaymentStatuses)) {
+                switch ($paymentStatusId) {
+                    case PaymentStatusEnum::PARTIALLY_PAID:
+                        $paymentStatusHeading = 'Insufficient payment received';
+                        break;
+                    case PaymentStatusEnum::CREDIT_APPROVED:
+                        $paymentStatusHeading = "Pending payment under 'Credit approval'";
+                        break;
+                    default:
+                        if (in_array($paymentStatusId, $insufficientPaymentStatusesHeading)) {
+                            $paymentStatusHeading = 'Payment not yet completed';
+                        }
+                        break;
+                }
+                $paymentStatusDescription = 'Unpaid policies breach our Code of Conduct and will be escalated to management. Do you still want to continue?';
+                $isInsufficientPayment = true;
+            }
+        }
+        return [$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription];
     }
 }
