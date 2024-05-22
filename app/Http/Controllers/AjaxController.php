@@ -10,7 +10,6 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Http\Requests\KycEntityDocRequest;
 use App\Http\Requests\KycIndividualDocRequest;
 use App\Models\CarMake;
