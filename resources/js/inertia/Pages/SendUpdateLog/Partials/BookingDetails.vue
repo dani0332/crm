@@ -427,11 +427,17 @@ const modals = reactive({
 const confirmationCheck = ref(false);
 const isStating = ref(false);
 
-const sendUpdateValidationURL =
-  props.updateBtn === sendUpdateStatusEnum.SU
+const sendUpdateValidationURL = computed(() => {
+  return (props.updateBtn === sendUpdateStatusEnum.SU || props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER)
     ? 'send-update'
     : 'send-update-customer-validation';
+});
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
+
+onMounted(() => {
+  console.log('working');
+  console.log(sendUpdateValidationURL.value);
+});
 
 const loader = reactive({
   sendUpdateSectionBtn: false,
@@ -441,7 +447,7 @@ const loader = reactive({
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
   axios
-    .post(sendUpdateValidationURL, {
+    .post(sendUpdateValidationURL.value, {
       quoteType: props.quoteType,
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
@@ -459,6 +465,7 @@ const sendUpdateValidation = () => {
           modals.sendConfirm = true;
           isStating.value = response.data.message;
         }
+        loader.sendUpdateSectionBtn = false;
       }
     })
     .catch(function (errors) {
