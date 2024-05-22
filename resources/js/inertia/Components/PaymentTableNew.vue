@@ -417,9 +417,9 @@ const collectionTypes = paymentLookups.paymentCollectionTypes.map(item => ({
 }));
 
 // Define frequency types
-const frequencyTypes = paymentLookups.paymentFrequencyTypes.map(item => ({
+const frequencyTypes = ref(paymentLookups.paymentFrequencyTypes.map(item => ({
   value: item.code,  label: item.text,  tooltip: item.description,
-}));
+})));
 
 // Define payment decline reasons
 const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
