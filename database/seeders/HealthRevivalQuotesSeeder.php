@@ -18,7 +18,7 @@ class HealthRevivalQuotesSeeder extends Seeder
     {
         // revival section permission
 
-        $healthRevivalPermissions = [PermissionsEnum::HEALTH_REVIVAL_QUOTE_LIST, PermissionsEnum::HEALTH_REVIVAL_QUOTES_EDIT, PermissionsEnum::HEALTH_REVIVAL_QUOTES_SHOW];
+        $healthRevivalPermissions = [PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST, PermissionsEnum::HEALTH_REVIVAL_QUOTES_EDIT, PermissionsEnum::HEALTH_REVIVAL_QUOTES_SHOW];
 
         foreach ($healthRevivalPermissions as $item) {
 

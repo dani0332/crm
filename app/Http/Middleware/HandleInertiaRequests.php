@@ -220,7 +220,7 @@ class HandleInertiaRequests extends Middleware
                 )
                 ->addIf(
                     auth()->user()->hasAnyPermission(
-                        PermissionsEnum::HEALTH_REVIVAL_QUOTE_LIST,
+                        PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST,
                     ),
                     'Health Revival',
                     '/quotes/health-revival',
