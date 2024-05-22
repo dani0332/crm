@@ -14,8 +14,9 @@ class QuoteStatusService
 {
     use GenericQueriesAllLobs;
 
-    public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request, AMLService $AMLService)
+    public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [])
     {
+        $AMLService = new AMLService();
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
 
