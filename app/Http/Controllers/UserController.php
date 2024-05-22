@@ -300,6 +300,8 @@ class UserController extends Controller
             } else {
                 $user->additional_team_ids = $request->additionalTeams[0];
             }
+        } else {
+            $user->additional_team_ids = null;
         }
 
         if (! empty($request->sub_team_id) && $request->sub_team_id != '0') {

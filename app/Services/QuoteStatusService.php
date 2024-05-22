@@ -13,15 +13,16 @@ use Carbon\Carbon;
 class QuoteStatusService
 {
     use GenericQueriesAllLobs;
+
     public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [])
     {
-        $checkAMlService = new CheckAmlService();
+        $AMLService = new AMLService();
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
 
-        if (checkPersonalQuotes($quoteType->code) && (! $checkAMlService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
-            $quoteRequestId = $checkAMlService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
-            $checkAMlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id, 'quote_status_date' => now()]);
+        if (checkPersonalQuotes($quoteType->code) && (! $AMLService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
+            $quoteRequestId = $AMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
+            $AMLService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id, 'quote_status_date' => now()]);
         }
 
         if (! empty($request)) {
