@@ -289,7 +289,7 @@ watch(
     <Head title="Business Quote List" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Lead List</h2>
+        <h2 class="text-xl font-semibold">CorpLine List</h2>
         <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
