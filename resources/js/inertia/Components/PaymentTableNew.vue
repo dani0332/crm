@@ -12,6 +12,7 @@ const documentTypeEnum = page.props.documentTypeEnum;
 const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+const paymentAllocationStatus = page.props.paymentAllocationStatus;
 
 const props = defineProps({
   payments: Array,
@@ -2195,17 +2196,21 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   }
   planDetail.value = initalPlanDetails;
 });
+
 const paymentAllocationStatusTooltip= payment_allocation_status  => {
+  // First convert to upper case as some of the values are in lower case & some of without space 
   payment_allocation_status = formatString(payment_allocation_status);
-  if(payment_allocation_status == 'Not Allocated'){
+  // Then converting to accordingly to match with the enum values
+  payment_allocation_status = payment_allocation_status.replace(/ /g, "_").toLowerCase();
+  if(payment_allocation_status ==  paymentAllocationStatusEnum.NOT_ALLOCATED){
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED;
   }
-  else if(payment_allocation_status == 'Partially Allocated'){
+  else if(payment_allocation_status == paymentAllocationStatusEnum.PARTIALLY_ALLOCATED){
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED;
   }
-  else if(payment_allocation_status == 'Fully Allocated'){
+  else if(payment_allocation_status == paymentAllocationStatusEnum.FULLY_ALLOCATED){  
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED;
-  } else if (payment_allocation_status == 'Unpaid') {
+  } else if (payment_allocation_status == paymentAllocationStatusEnum.UNPAID) {
     return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
   }
   return '';

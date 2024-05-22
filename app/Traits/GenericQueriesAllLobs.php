@@ -11,6 +11,7 @@ use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Repositories\DocumentTypeRepository;
@@ -300,7 +301,7 @@ trait GenericQueriesAllLobs
     {
         if (! $payment) {
             return [
-                'status' => PaymentStatusEnum::UNPAID_TEXT,
+                'status' => TransactionPaymentStatusEnum::UNPAID_TEXT,
                 'tooltip' => ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID,
             ];
         }
@@ -308,13 +309,13 @@ trait GenericQueriesAllLobs
         $totalAmount = $payment->captured_amount + $payment->discount_value;
 
         if ($payment->captured_amount == 0) {
-            $paymentStatus = PaymentStatusEnum::UNPAID_TEXT;
+            $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID;
         } elseif ($totalAmount >= $quote->price_with_vat) {
-            $paymentStatus = PaymentStatusEnum::FULLY_PAID_TEXT;
+            $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PAID;
         } else {
-            $paymentStatus = PaymentStatusEnum::PARTIALLY_PAID_TEXT;
+            $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
         }
 
