@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
@@ -408,6 +409,7 @@ class ReportService extends BaseService
 
         return $query;
     }
+
     public function getDefaultFiltersForTotalPremium()
     {
         $loginUserId = auth()->user()->id;
