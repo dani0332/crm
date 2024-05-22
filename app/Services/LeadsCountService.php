@@ -70,7 +70,6 @@ class LeadsCountService
             $response['quotes_count'][$allowedQuoteType]['quote_route'] = $cardViewRoute[strtoupper($allowedQuoteType)];
             $totalCount = $quoteCount;
 
-
             if ($allowedLOBs > 1 || auth()->user()->isManagerOrDeputy()) {
                 $response['is_multiple_lobs_allowed'] = true;
                 $response['total_count'] = $totalCount;
