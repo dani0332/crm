@@ -1687,11 +1687,12 @@ class CRUDController extends Controller
         $payment->save();
 
         // update status policy issued of req fulfilled
-        // Manage payment total price update
-        $this->updatePriceAndDiscount($quoteModel);
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
+        $this->updatePriceAndDiscount($quoteModel);
 
-        return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
+        return redirect()->back()->with([
+            'success' => 'Quote Policy Detail has been updated.'
+        ]);
     }
 
     public function manualPlanToggle(Request $request)

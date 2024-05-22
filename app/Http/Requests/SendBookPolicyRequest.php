@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -64,14 +65,20 @@ class SendBookPolicyRequest extends FormRequest
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                             $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
                         }
-                        if ((! in_array($payment->frequency, ['upfront', 'split_payments']) && in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]))) {
-                            if (! empty($splits)) {
-                                if (empty($splits[0]->sage_reciept_id)) {
+                     
+                        $isPaymentNotUpfrontOrSplit = !in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+                        $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+                        $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
+                        if ($isPaymentUpfrontOrSplitAndPaidOrCaptured) {
+                            if (!empty($splits)) {
+                                $isSageReceiptIdEmpty = empty($splits[0]->sage_reciept_id);
+                                if ($isSageReceiptIdEmpty) {
                                     $validator->errors()->add('value', 'Payment sage reciept id can not be null');
                                 }
                             }
                         }
-                        if (strtolower($payment->invoicePaymentStatus) == 'paid' && in_array($payment->frequency, ['split_payments', 'paid'])) {
+
+                        if (strtolower($payment->invoicePaymentStatus) == PaymentFrequency::PAID && in_array($payment->frequency, [PaymentFrequency::SPLIT_PAYMENTS, PaymentFrequency::PAID])) {
                             if (! empty($splits)) {
                                 foreach ($splits as $item) {
                                     if (empty($item->sage_reciept_id)) {

@@ -411,7 +411,6 @@ class CentralController extends Controller
     private function handleInsufficientPayment($request, $payment)
     {
         if ($request->is_send_policy && $payment) {
-            // $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
             $payment->transaction_payment_status = $request->transaction_payment_status;
             $payment->save();
         }

@@ -32,7 +32,6 @@ const props = defineProps({
 
 const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
-
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -117,6 +116,12 @@ const bpForm = useForm({
   transaction_payment_status_tool_tip: page.props.bookPolicyDetails.paymentStatusTooltip
 });
 
+let is_lacking_payment = ref(page.props.bookPolicyDetails.isLackingOfPayment || false);
+
+watch(() => page.props.bookPolicyDetails.isLackingOfPayment, (newVal) => {
+  is_lacking_payment.value = newVal || false;
+});
+
 const onUpdatebookPolicyDetails = isValid => {
   showInsufficientPaymentAlert();
   if (isValid) {
@@ -145,7 +150,7 @@ const onUpdatebookPolicyDetails = isValid => {
   }
 };
 
-const isAllowToSendPolicy = ref(false);
+const isAllowedToSendPolicy = ref(false);
 
 const modals = reactive({
   sendPolicyConfirm: false,
@@ -154,7 +159,7 @@ const modals = reactive({
 });
 
 const confirmSendPolicy = () => {
-  if (isPending() || isPartiallyPaid() || isCreditApproved()) {
+  if (page.props.bookPolicyDetails.isInsufficientPayment){
       modals.sendPolicyPopup = true;
   } else {
       modals.sendPolicyConfirm = true;
@@ -168,7 +173,7 @@ const submitPolicy = () => {
     send_policy_type: props.bookPolicyDetails.sendPolicyType,
     model_type: props?.quoteType,
     quote_id: props?.quote?.id,
-    is_send_policy: isAllowToSendPolicy.value,
+    is_send_policy: isAllowedToSendPolicy.value,
     transaction_payment_status: bpForm.transaction_payment_status,
     modelType: props.modelType,
   };
@@ -257,29 +262,19 @@ watch(() => page.props.bookPolicyDetails.transactionPaymentStatus, (newValue, ol
 });
 
 const sendPolicyConfirmation = () => {
-  if (isPartiallyPaid() || isPending() || isCreditApproved()){
-    isAllowToSendPolicy.value = true;
+  if (page.props.bookPolicyDetails.isInsufficientPayment){
+    isAllowedToSendPolicy.value = true;
   }
   modals.sendPolicyPopup = false;
   modals.sendPolicyConfirm = true;
 }
-const isUpfrontOrSplitPayments = () => {
-  return getPayment()?.frequency == 'upfront' || getPayment()?.frequency == 'split_payments';
-}
-const isPartiallyPaid = () => {
-  return getPayment()?.payment_status?.text == 'PARTIALLY_PAID';
-}
-const isPending = () => {
-  return getPayment()?.payment_status?.text == 'PENDING';
-}
-const isCreditApproved = () => {
-  return getPayment()?.payment_status?.text == 'CREDIT_APPROVED';
-}
+
 const getPayment = () => {
   return page.props?.payments[0] ?? null;
 }
+
 const showInsufficientPaymentAlert = () => {
-  if (isUpfrontOrSplitPayments() && isPartiallyPaid()) {
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
     notification.error({
       title: 'Insufficient payment',
       position: 'top',
@@ -287,15 +282,8 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 }
-const sendPolicyConfirmationHeading = computed(() => {
-    if(isPartiallyPaid()) {
-        return 'Insufficient payment received';
-    } else if (isPending()) {
-        return 'Payment not yet completed';
-    } else if (isCreditApproved()){
-        return "Pending payment under 'Credit approval'";
-    }
-});
+
+
 </script>
 
 <template>
@@ -618,17 +606,39 @@ const sendPolicyConfirmationHeading = computed(() => {
                 >
                   Edit
                 </x-button>
-                <x-button
-                  size="sm"
-                  color="orange"
-                  class="mt-4"
-                  @click.prevent="confirmSendPolicy"
-                  :disabled="bp.isEditing"
-                  v-if="props.bookPolicyDetails?.sendButton"
-                >
-                  {{ props.bookPolicyDetails?.text }}
-                </x-button></template
-              >
+                <template v-if="is_lacking_payment">
+                  <x-tooltip>
+                    <x-button
+                      size="sm"
+                      color="orange"
+                      class="mt-4"
+                      @click.prevent="confirmSendPolicy"
+                      :disabled="bp.isEditing || is_lacking_payment"
+                      v-if="props.bookPolicyDetails?.sendButton"
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content"> 
+                        Action Needed: Please revise payment details to reflect plan changes.
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <x-button
+                    size="sm"
+                    color="orange"
+                    class="mt-4"
+                    @click.prevent="confirmSendPolicy"
+                    :disabled="bp.isEditing || is_lacking_payment"
+                    v-if="props.bookPolicyDetails?.sendButton"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+                </template>
+
+               </template>
 
               <template
                 v-else-if="
@@ -753,9 +763,9 @@ const sendPolicyConfirmationHeading = computed(() => {
         Please be aware that your current action involves sending the policy to
         the customer only.
       </x-alert>
-      <div class="multilabel-checkbox">
+      <div class="flex items-center" >
         <x-checkbox v-model="modals.isConfirmed" />
-          <div class="multiline-label">
+          <div class="ml-2">
             <p>I confirm and attest that all the information is correct.</p>
             <p>I confirm I am in compliance with the COC.</p>
           </div>
@@ -786,8 +796,8 @@ const sendPolicyConfirmationHeading = computed(() => {
     <x-modal v-model="modals.sendPolicyPopup" show-close backdrop>
       <template #header>  Are you sure you want to continue? </template>
        <div class="text-center">
-          <p class="font-semibold pt-3">{{  sendPolicyConfirmationHeading  }}</p>
-          <p>Unpaid policies breach our Code of Conduct and will be escalated to management. Do you still want to continue?</p>
+          <p class="font-semibold pt-3">{{  props.bookPolicyDetails.paymentStatusHeading  }}</p>
+          <p>{{  props.bookPolicyDetails.paymentStatusDescription  }}</p>
        </div>
       <template #actions>
         <div class="text-center space-x-4">
@@ -810,12 +820,3 @@ const sendPolicyConfirmationHeading = computed(() => {
     </x-modal>
   </div>
 </template>
-<style scoped>
-.multilabel-checkbox {
-  display: flex;
-  align-items: center;
-}
-.multiline-label {
-  margin-left: 10px;
-}
-</style>

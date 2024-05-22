@@ -2605,6 +2605,7 @@ watch(
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :bookPolicyDetails="bookPolicyDetails"
 		/>
     <PaymentTable
       v-else

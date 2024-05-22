@@ -22,6 +22,7 @@ const props = defineProps({
     default: true,
   },
 });
+const paymentStatusEnum = page.props.paymentStatusEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -142,11 +143,17 @@ const rules = {
 };
 
 const onUpdatePolicyDetails = isValid => {
-  showInsufficientPaymentAlert();
   if (!isValid) return;
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
-    onSuccess: () => {
+    onSuccess: () => { 
+      if (page.props?.bookPolicyDetails?.isLackingOfPayment){
+        notification.error({
+          title: 'Action Needed: Please revise payment details to reflect plan changes.',
+          position: 'top',
+          timeout: 10000
+        });
+      }
       policyDetailsState.isEditing = false;
     },
     onError: errors => {
@@ -166,29 +173,6 @@ const onUpdatePolicyDetails = isValid => {
     },
   });
 };
-
-const getPayment = () => {
-  return page.props?.payments[0] ?? null;
-}
-
-const isUpfrontOrSplitPayments = () => {
-  return getPayment()?.frequency == 'upfront' || getPayment()?.frequency == 'split_payments';
-}
-
-const isPartiallyPaid = () => {
-  return getPayment()?.payment_status?.text == 'PARTIALLY_PAID';
-}
-
-const showInsufficientPaymentAlert = () => {
-  if (isUpfrontOrSplitPayments() && isPartiallyPaid()) {
-    notification.error({
-      title: 'Insufficient payment',
-      position: 'top',
-      timeout: 30000
-    });
-  }
-}
-
 onBeforeMount(() => {
   caculateVatAmount();
 });
