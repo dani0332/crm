@@ -366,15 +366,15 @@ function updateReversalEntries(response) {
   reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
   reversalEntry.insurer_commission_invoice_number = response.insurer_commmission_invoice_number || '';
   reversalEntry.discount = reverseValue(response.discount_value) || '';
-  reversalEntry.price_vat_applicable = reverseValue(response.send_update_log.price_vat_applicable) || '';
-  reversalEntry.commission_percentage = reverseValue(response.send_update_log.commission_percentage) || '';
-  reversalEntry.price_vat_not_applicable = reverseValue(response.send_update_log.price_vat_not_applicable) || '';
-  reversalEntry.vat_on_commission = reverseValue(response.send_update_log.vat_on_commission) || '';
+  reversalEntry.price_vat_applicable = reverseValue(response.send_update_log?.price_vat_applicable) || '';
+  reversalEntry.commission_percentage = ((response.commmission_percentage !== null) ? reverseValue(response.commmission_percentage) : reverseValue(response.send_update_log?.commission_percentage)) ?? '';
+  reversalEntry.price_vat_not_applicable = reverseValue(response.send_update_log?.price_vat_not_applicable) || '';
+  reversalEntry.vat_on_commission = ((response.commission_vat !== null) ? reverseValue(response.commission_vat) : reverseValue(response.send_update_log?.vat_on_commission)) ?? '';
   reversalEntry.commission_vat_applicable = reverseValue(response.commission_vat_applicable) || '';
   reversalEntry.total_commission = reverseValue(response.commission) || '';
   reversalEntry.commission_vat_not_applicable = reverseValue(response.commission_vat_not_applicable) || '';
-  reversalEntry.total_vat_amount = (response.send_update_log.total_vat_amount) || '';
-  reversalEntry.total_price = reverseValue(response.send_update_log.total_price);
+  reversalEntry.total_vat_amount = ((response.total_amount !== null) ? reverseValue(response.total_amount) : (response.send_update_log?.total_vat_amount)) ?? '';
+  reversalEntry.total_price = ((response.total_price !== null && response.total_price > 0) ? reverseValue(response.total_price) : reverseValue(response.send_update_log?.total_price)) ?? '' ;
 }
 
 onMounted(() => {
@@ -742,7 +742,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.transaction_payment_status ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.transaction_payment_status !== '') ? reversalEntry.transaction_payment_status : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -886,7 +886,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.price_vat_applicable ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.price_vat_applicable !== '') ? reversalEntry.price_vat_applicable : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -921,7 +921,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.price_vat_not_applicable ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.price_vat_not_applicable !== '') ? reversalEntry.price_vat_not_applicable : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -995,7 +995,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.commission_vat_not_applicable ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.commission_vat_not_applicable !== '') ? reversalEntry.commission_vat_not_applicable : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
