@@ -294,7 +294,7 @@ const findOption = (item, key) => {
         </div>
       </template>
       <template #body>
-        <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="mt-4 flex justify-end">
+        <div class="mt-4 flex justify-end">
           <x-button
             v-if="can(permissionsEnum.SEND_UPDATE_CREATE)"
             size="sm"
