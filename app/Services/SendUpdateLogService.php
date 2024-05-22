@@ -525,7 +525,7 @@ class SendUpdateLogService
         $sendUpdateToCustomerValidation = in_array($sendUpdate->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]);
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdate);
 
-        if ($sendUpdateToCustomerValidation && ! in_array(DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, $uploadedDocuments)) {
+        if ($sendUpdateToCustomerValidation) {
             return 'Please note your current action will only send the update to the customer.';
         }
 

@@ -362,9 +362,9 @@ function reverseValue(value) {
 function updateReversalEntries(response) {
   reversalEntry.transaction_payment_status = response.transaction_payment_status || '';
   reversalEntry.invoice_date = response.insurer_invoice_date || '';
-  reversalEntry.insurer_tax_invoice_number = response.insurer_tax_number;
-  reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
-  reversalEntry.insurer_commission_invoice_number = response.insurer_commmission_invoice_number || '';
+  reversalEntry.insurer_tax_invoice_number = (response.insurer_tax_number !== '') ? response.insurer_tax_number + '-REV' : '';
+  reversalEntry.broker_invoice_number = (response.broker_invoice_number !== '') ? response.broker_invoice_number + '-REV' : '';
+  reversalEntry.insurer_commission_invoice_number = (response.insurer_commmission_invoice_number !== '') ? response.insurer_commmission_invoice_number + '-REV' : '';
   reversalEntry.discount = reverseValue(response.discount_value) || '';
   reversalEntry.price_vat_applicable = reverseValue(response.send_update_log?.price_vat_applicable) || '';
   reversalEntry.commission_percentage = ((response.commmission_percentage !== null) ? reverseValue(response.commmission_percentage) : reverseValue(response.send_update_log?.commission_percentage)) ?? '';
@@ -388,26 +388,17 @@ onMounted(() => {
 
 const onUpdateReversal = () => {
   state.reversalSectionEdit = !state.reversalSectionEdit;
-  bookingDetailsForm.insurer_tax_invoice_number =
-    reversalEntry.insurer_tax_invoice_number;
-  bookingDetailsForm.broker_invoice_number =
-    reversalEntry.broker_invoice_number || '';
-  bookingDetailsForm.transaction_payment_status =
-    reversalEntry.transaction_payment_status || '';
+  bookingDetailsForm.transaction_payment_status = reversalEntry.transaction_payment_status || '';
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
-  bookingDetailsForm.insurer_commission_invoice_number =
-    reversalEntry.insurer_commission_invoice_number || '';
+  bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
+  bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
+  bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.discount = reverseValue(reversalEntry.discount) || '';
-  bookingDetailsForm.commission_percentage =
-    reverseValue(reversalEntry.commission_percentage) || '';
-  bookingDetailsForm.commission_vat_not_applicable =
-    reverseValue(reversalEntry.commission_vat_not_applicable) || '';
-  bookingDetailsForm.vat_on_commission =
-    reverseValue(reversalEntry.vat_on_commission) || '';
-  bookingDetailsForm.commission_vat_applicable =
-    convertToNumber(reversalEntry.commission_vat_applicable) || '';
-  bookingDetailsForm.total_commission =
-    reverseValue(reversalEntry.total_commission) || '';
+  bookingDetailsForm.commission_percentage = reverseValue(reversalEntry.commission_percentage) || '';
+  bookingDetailsForm.vat_on_commission = reverseValue(reversalEntry.vat_on_commission) || '';
+  bookingDetailsForm.commission_vat_applicable = convertToNumber(reversalEntry.commission_vat_applicable) || '';
+  bookingDetailsForm.total_commission = reverseValue(reversalEntry.total_commission) || '';
+  bookingDetailsForm.commission_vat_not_applicable = reverseValue(reversalEntry.commission_vat_not_applicable) || '';
   bookingDetailsForm.total_price = reverseValue(reversalEntry.total_price);
 };
 
@@ -1225,7 +1216,11 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                   </x-tooltip>
                 </div>
                 <div>
+                  <template v-if="isCPD">
+                    {{ bookingDetailsForm.insurer_tax_invoice_number !== '' ? bookingDetailsForm.insurer_tax_invoice_number : 'N/A'}}
+                  </template>
                   <x-input
+                    v-else
                     maxlength="60"
                     v-model="bookingDetailsForm.insurer_tax_invoice_number"
                     class="!mb-0 w-full"
@@ -1271,7 +1266,11 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                   </x-tooltip>
                 </div>
                 <div>
+                  <template v-if="isCPD">
+                    {{ bookingDetailsForm.insurer_commission_invoice_number !== '' ? bookingDetailsForm.insurer_commission_invoice_number : 'N/A'}}
+                  </template>
                   <x-input
+                    v-else
                     maxlength="60"
                     v-model="
                       bookingDetailsForm.insurer_commission_invoice_number
