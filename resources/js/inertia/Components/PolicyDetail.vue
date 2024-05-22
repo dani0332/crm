@@ -12,12 +12,17 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  payments: {
+    type: Array,
+    default: [],
+  },
   expanded: {
     required: false,
     type: Boolean,
     default: true,
   },
 });
+const paymentStatusEnum = page.props.paymentStatusEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -141,7 +146,14 @@ const onUpdatePolicyDetails = isValid => {
   if (!isValid) return;
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
-    onSuccess: () => {
+    onSuccess: () => { 
+      if (page.props?.bookPolicyDetails?.isLackingOfPayment){
+        notification.error({
+          title: 'Action Needed: Please revise payment details to reflect plan changes.',
+          position: 'top',
+          timeout: 10000
+        });
+      }
       policyDetailsState.isEditing = false;
     },
     onError: errors => {

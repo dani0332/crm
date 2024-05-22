@@ -1127,6 +1127,7 @@ watch(
 			:storageUrl="storageUrl"
       quoteSubType="Corpline"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :bookPolicyDetails="bookPolicyDetails"
 		/>
 
     <PaymentTable

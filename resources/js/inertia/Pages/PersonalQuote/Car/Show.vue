@@ -99,7 +99,6 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
-console.log(page.props);
 
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
@@ -3344,6 +3343,7 @@ watch(
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :bookPolicyDetails="bookPolicyDetails"
 		/>
     <PaymentTable
       v-else
@@ -3443,6 +3443,7 @@ watch(
       v-if="isQuoteDocumentEnabled"
       :record="record"
       :modelType="quoteType"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">

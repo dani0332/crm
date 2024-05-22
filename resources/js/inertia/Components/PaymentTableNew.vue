@@ -34,6 +34,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  bookPolicyDetails: {
+    type: Array,
+    default: [],
+  },
 });
 
 const createPaymentModal = ref(false);
@@ -113,6 +117,7 @@ if (props.quoteType === 'Health') {
     ? props.quoteRequest.premium
     : props.quoteRequest.price_with_vat;
 }
+
 const totalPrice = ref(initialAmount.value); // Initial total price
 const totalAmount = ref(initialAmount.value); // Initial total price
 
@@ -1304,10 +1309,9 @@ const editPaymentModal = (
     paymentMethodsForm.collection_amount = '';
     paymentMethodsForm.payment_method = payment.payment_method.code;
     paymentMethodsForm.bank_reference_number = '';
-    splitPaymentRecord.value = payment.payment_splits.find(
-      item => item.sr_no === sr_no,
-    );
-  }
+    splitPaymentRecord.value = payment.payment_splits.find(item => item.sr_no === sr_no);
+    paymentMethodsForm.system_adjusted_discount = payment.system_adjusted_discount;
+  } 
 
   //paymentMethodsForm.masterPaymentStatus = payment.
   masterPaymentStatus.value = payment.payment_status.text;
@@ -1452,7 +1456,11 @@ const editPaymentModal = (
       isFieldReadonly.value = false;
     }
   }
-if(
+  if (paymentMethodsForm.status == 'view'){
+    totalPrice.value = payment.total_price;
+    totalAmount.value = payment.total_price-payment.discount_value;
+    }
+  if(
     (payment.discount_type==='family_employee_discount' || payment.discount_type==='employee_discount')
     && payment.discount_value>0
     ){
@@ -2186,6 +2194,27 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   planDetail.value = initalPlanDetails;
 });
 
+const discountTypeLabel = computed(() => {
+  let systemAplliedDiscount = '';
+  if (paymentMethodsForm.status === 'view' && 
+      (paymentMethodsForm.discount === 'system_adjusted_discount' || 
+      paymentMethodsForm.system_adjusted_discount > 0))
+  {
+    systemAplliedDiscount = 'System adjusted discount';
+  }
+  let discountType = discountTypes.find(item => item.value === paymentMethodsForm.discount);
+  if (discountType) {
+    if (systemAplliedDiscount !== '') {
+      return discountType.label+' + '+systemAplliedDiscount;
+    } else {
+      return discountType.label;
+    }    
+  } else if (systemAplliedDiscount !== '') {
+    return systemAplliedDiscount;
+  } else {
+    return 'N/A';
+  }  
+});
 // Watch for Ecommerce Price changes
 watch(
   () => props.eCommercePrice,
@@ -2201,6 +2230,12 @@ const isMasterPaymentPaid = computed(() => {
     return true;
   }
   return false;
+});
+ 
+let is_lacking_payment = ref(page.props?.bookPolicyDetails?.isLackingOfPayment || false);
+
+watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
+  is_lacking_payment.value = newVal || false;
 });
 
 </script>
@@ -2459,15 +2494,36 @@ const isMasterPaymentPaid = computed(() => {
                   </td>
                   <td>
                     <div class="flex gap-2">
-                      <x-button
-                        v-if="can(permissionEnum.PaymentsEdit)"
-                        size="xs"
-                        color="primary"
-                        outlined
-                        @click="editPaymentModal(item, 0, 0, 0)"
-                      >
-                        Edit
-                      </x-button>
+                      <template v-if="is_lacking_payment">
+                        <x-tooltip position="left" class="arrow-r">
+                          <x-badge size="xs" color="error" outlined offset-x="-8" offset-y="-10">
+                            <x-button 
+                              v-if="can(permissionEnum.PaymentsEdit)" 
+                              size="xs" 
+                              color="primary" 
+                              outlined 
+                              @click="editPaymentModal(item, 0, 0, 0)"
+                            >
+                              Edit
+                            </x-button> 
+                            <template #content>!</template>
+                          </x-badge>
+                          <template #tooltip>
+                            Action Needed: Please revise payment <br /> details to reflect plan changes.
+                          </template>
+                        </x-tooltip>
+                      </template>
+                      <template v-else>
+                        <x-button 
+                          v-if="can(permissionEnum.PaymentsEdit)" 
+                          size="xs" 
+                          color="primary" 
+                          outlined 
+                          @click="editPaymentModal(item, 0, 0, 0)"
+                        >
+                          Edit 
+                        </x-button> 
+                      </template>
                       <template v-if="can(permissionEnum.ApprovePayments)">
                         <x-button
                           v-if="
@@ -2868,11 +2924,7 @@ const isMasterPaymentPaid = computed(() => {
             </x-tooltip>
             <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                {{
-                  discountTypes.find(
-                    item => item.value === paymentMethodsForm.discount,
-                  )?.label || 'N/A'
-                }}
+                {{ discountTypeLabel }}
               </span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span
