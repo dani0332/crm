@@ -6,6 +6,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteStatusLog;
@@ -38,6 +39,10 @@ class SendUpdateLogRepository extends BaseRepository
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
 
+            if (! empty($personalQuote->insurance_provider_id)) {
+                $insuranceProvider = InsuranceProviderRepository::getById($personalQuote->insurance_provider_id);
+            }
+
             $res = $this->create([
                 'personal_quote_id' => $data['personal_quote_id'],
                 'quote_uuid' => $data['quote_uuid'],
@@ -47,15 +52,16 @@ class SendUpdateLogRepository extends BaseRepository
                 'status' => $data['status'],
                 'uuid' => $uuid,
                 'code' => $code,
+                'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : '',
+                'insurance_provider_id' => $personalQuote->insurance_provider_id ?? null,
             ]);
             // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
-            $quoteType = QuoteTypeRepository::getById($data['quote_type_id'])->code;
+            $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
             if ($res->category->code == SendUpdateLogStatusEnum::CPD || ($res->category->code == SendUpdateLogStatusEnum::EF && $res->option->code == SendUpdateLogStatusEnum::PPE)) {
 
                 if (checkPersonalQuotes($quoteType)) {
-                    $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-                    $realQuote = $repository::getBy('uuid', $res->quote_uuid);
+                    $realQuote = $personalQuote;
                 } else {
                     $quoteServiceFile = app(getServiceObject($quoteType));
                     $realQuote = $quoteServiceFile->getEntity($res->quote_uuid);
@@ -68,8 +74,8 @@ class SendUpdateLogRepository extends BaseRepository
                     $res->plan_id = $quoteModel->plan->id ?? null;
                     $res->plan_name = $quoteModel->plan->text ?? null;
                 } else {
-                    $res->insurance_provider_id = $realQuote->insuranceProvider->id ?? null;
-                    $res->provider_name = $realQuote->insuranceProvider->text ?? null;
+                    $res->insurance_provider_id = $realQuote->insuranceProvider->id ?? $realQuote->insurance_provider_id ?? null;
+                    $res->provider_name = $realQuote->insuranceProvider->text ?? $realQuote->insurance_provider_text ?? null;
                 }
 
                 $res->save();

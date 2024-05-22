@@ -1,7 +1,7 @@
 <script setup>
 import moment from 'moment';
 import ToolTip from './../Components/ToolTip.vue';
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import NProgress from 'nprogress';
 const notification = useNotifications('toast');
@@ -1320,12 +1320,9 @@ const addPaymentModal = () => {
     return;
   }
 
-  if (
-    props.quoteType === 'Health' ||
-    props.quoteSubType === 'Group Medical' ||
-    props.quoteType === 'Life' ||
-    props.quoteType === 'Marine'
-  ) {
+  const quoteCollectedBy = ['Business', 'Health', 'Life', 'Marine', 'Pet', 'Cycle', 'Yacht'];
+
+  if (quoteCollectedBy.includes(props.quoteType)) {
     paymentMethodsForm.collection_type = 'insurer';
   } else {
     paymentMethodsForm.collection_type = 'broker';
@@ -2070,9 +2067,9 @@ const uploadDocument = (doc, files, count) => {
         onSuccess: data => {
           let quoteDocuments = [];
           if (
-            quoteTypesToCheck.includes(props.quoteType) ||
+            (quoteTypesToCheck.includes(props.quoteType) ||
             props.quoteType === 'Home' ||
-            props.quoteSubType === 'Corpline'
+            props.quoteSubType === 'Corpline') || props.sendUpdate
           ) {
             quoteDocuments = data.props.quoteDocuments;
           } else {
@@ -2113,18 +2110,44 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
+// copied from test. 
+const validateAccessForSendUpdate = ref(false);
+if (props.sendUpdate) {
+  const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
+  const allowedPaymentStatus = [
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.PENDING,
+  ];
+
+  if (
+    props.payments.length > 0 &&
+    paymentsDetails.collection_type == 'insurer'
+  ) {
+    validateAccessForSendUpdate.value =
+      allowedPaymentStatus.includes(paymentsDetails.payment_status_id) &&
+      paymentsDetails.credit_approval !== null;
+  } else if (
+    props.payments.length > 0 &&
+    paymentsDetails.collection_type == 'broker'
+  ) {
+    validateAccessForSendUpdate.value =
+      paymentsDetails.payment_status_id == props.paymentStatusEnum.PAID;
+  }
+}
+
 const getCaptureValidation = computed(() => {
   return payment => {
     //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
     if (
-      props.payments.length > 0 &&
-      payment.total_price <= payment.total_amount + payment.discount_value &&
-      (((props.isAmlClearedForPayment ||
-        props.quoteRequest.quote_status_id === 6 ||
-        props.quoteRequest.quote_status_id === 32 ||
-        props.quoteRequest.quote_status_id === 15) &&
-        props.quoteRequest.kyc_decision === 'Complete') ||
-        props.quoteType === 'Travel') //skip AML & KYC for travel
+      (props.payments.length > 0 &&
+        payment.total_price === payment.total_amount + payment.discount_value &&
+        (((props.quoteRequest.quote_status_id === 6 ||
+          props.quoteRequest.quote_status_id === 32 ||
+          props.quoteRequest.quote_status_id === 15) &&
+          props.quoteRequest.kyc_decision === 'Complete') ||
+          props.quoteType === 'Travel')) || //skip AML & KYC for travel
+      validateAccessForSendUpdate
     ) {
       if (payment.is_approved === 1) {
         return false;
@@ -2162,10 +2185,19 @@ const getCaptureValidation = computed(() => {
         );
         if (paymentMethodCC.length > 0) {
           let totalSplitPayments = paymentRecord.payment_splits.length;
-          let paidPaymentStatus = paymentRecord.payment_splits.filter(item => (
-            item.payment_status_id===props.paymentStatusEnum.PAID || item.payment_status_id===props.paymentStatusEnum.PARTIALLY_PAID));
-          let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORISED);
-          if( totalSplitPayments == (ccPaymentStatus.length + paidPaymentStatus.length) ) {
+          let paidPaymentStatus = paymentRecord.payment_splits.filter(
+            item =>
+              item.payment_status_id === props.paymentStatusEnum.PAID ||
+              item.payment_status_id === props.paymentStatusEnum.PARTIALLY_PAID,
+          );
+          let ccPaymentStatus = paymentMethodCC.filter(
+            item =>
+              item.payment_status_id === props.paymentStatusEnum.AUTHORISED,
+          );
+          if (
+            totalSplitPayments ==
+            ccPaymentStatus.length + paidPaymentStatus.length
+          ) {
             return true;
           }
         } else {
@@ -2212,10 +2244,11 @@ const getCaptureValidation = computed(() => {
         ) {
           return true;
         } else if (
-            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
-            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED ||
-            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PARTIALLY_PAID      
-          ){
+          paymentRecord.payment_splits[0].payment_status_id ===
+            props.paymentStatusEnum.PAID ||
+          paymentRecord.payment_splits[0].payment_status_id ===
+            props.paymentStatusEnum.AUTHORISED
+        ) {
           return true;
         }
       }

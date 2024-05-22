@@ -107,7 +107,7 @@ class SageApiService
         $sageRequest->totalAmount = floatval($payment->total_amount);
         $sageRequest->commission = floatval($payment->commission);
         $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
-        $sageRequest->commissionWithOutVat = floatval($payment->commission_vat_not_applicable);
+        $sageRequest->commissionWithOutVat = $payment->commission_vat_not_applicable ? floatval($payment->commission_vat_not_applicable) : floatval($payment->commission_without_vat);
         $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
 
         $sageRequest->insurerPremiumNumber = (string) $payment['insurer_tax_number'];
@@ -311,7 +311,6 @@ class SageApiService
                     'price_with_vat' => $payment->total_amount,
                 ];
             }
-
             $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quoteDetails, $payment, $splitPayments);
             $sageRequestPayload->customerId = $sageCustomerNumber;
 
@@ -922,6 +921,17 @@ class SageApiService
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $paymentSplits[$key]['collection_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0);
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
             }
+            /* Add Vat on commission to the first Installment of commission */
+            $vatOnCommission = floatval($payment->commission_vat);
+            $commission = floatval($payment->commission);
+            $commissionWithoutVat = ($commission - $vatOnCommission);
+            $commissionSplit = $commissionWithoutVat > 0 ?  $commissionWithoutVat/ count($paymentSplits) : 0;
+
+            foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
+                // Add Vat on commission to the first installment of commission in sage for balancing the amount
+                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $commissionSplit + ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1 ? $vatOnCommission : 0);
+                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+            }
             //3
             $isLiveApiCallStep3 = true;
             if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == 'success') {
@@ -936,6 +946,7 @@ class SageApiService
             $postedResponse['endPoint'] = $url;
             $postedResponse['payload'] = $postedResponse;
             if (isset($postedResponse['error'])) {
+                dd('ali2' , $postedResponse['error']);
                 $this->logSageApiCall($postedResponse, $postedResponse, $quote, 3, 16, 'fail');
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making ar2 split paymets patch to sage';
