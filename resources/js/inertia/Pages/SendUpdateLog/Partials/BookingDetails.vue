@@ -30,7 +30,7 @@ const props = defineProps({
     default: () => {},
   },
   payments: {
-    type: Array,
+    type: Object,
     required: true,
     default: () => [],
   },
@@ -137,6 +137,14 @@ const transactionPaymentStatus = computed(() => {
   }
 });
 
+function isNotZero(value) {
+  if (value === 0 || value === '0.00' || value === null || value === undefined) {
+    return false;
+  }
+
+  return value;
+}
+
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.selectedCategory.subCategory.slug,
@@ -155,7 +163,7 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.insurer_tax_number ||
     '',
   discount:
-    props.bookingDetails?.discount ||
+    isNotZero(props.bookingDetails?.discount) ||
     props?.payments[0]?.discount_value ||
     '0.00',
   insurer_commission_invoice_number:
@@ -331,7 +339,14 @@ const reversalEntry = reactive({
   total_price: null,
 });
 
+const loader = reactive({
+  sendUpdateSectionBtn: false,
+  sendUpdate: false,
+  selectInvoice: false,
+});
+
 const selectedInvoice = () => {
+  loader.selectInvoice = true;
   let url = route('send-update-logs.get-reversal-entries');
   let data = {
     quoteType: props.quoteType,
@@ -346,6 +361,9 @@ const selectedInvoice = () => {
     })
     .catch(error => {
       // handle the error
+    })
+    .finally(() => {
+      loader.selectInvoice = false;
     });
 };
 
@@ -433,16 +451,6 @@ const sendUpdateValidationURL = computed(() => {
     : 'send-update-customer-validation';
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
-
-onMounted(() => {
-  console.log('working');
-  console.log(sendUpdateValidationURL.value);
-});
-
-const loader = reactive({
-  sendUpdateSectionBtn: false,
-  sendUpdate: false,
-});
 
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
@@ -1053,16 +1061,16 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
               size="sm"
               color="orange"
               @click="state.reversalSectionEdit = false"
-              :loading="bookingDetailsForm.processing"
-              :disabled="bookingDetailsForm.processing"
+              :loading="loader.selectInvoice"
+              :disabled="loader.selectInvoice"
             >
               Cancel
             </x-button>
             <x-button
               size="sm"
               color="primary"
-              :loading="bookingDetailsForm.processing"
-              :disabled="bookingDetailsForm.processing"
+              :loading="loader.selectInvoice"
+              :disabled="loader.selectInvoice"
               @click="onUpdateReversal"
             >
               Update
@@ -1327,6 +1335,8 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 <div>
                   <x-input
                     type="number"
+                    min="0"
+                    add step="any"
                     v-model="bookingDetailsForm.price_vat_applicable"
                     @change="calculateCommission"
                     class="!mb-0 w-full"
@@ -1416,6 +1426,8 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 <div>
                   <x-input
                     type="number"
+                    min="0"
+                    add step="any"
                     v-model="bookingDetailsForm.commission_vat_applicable"
                     @change="calculateCommission"
                     class="!mb-0 w-full"

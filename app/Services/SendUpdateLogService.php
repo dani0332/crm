@@ -458,7 +458,7 @@ class SendUpdateLogService
         }
 
         return [
-            'broker_invoice_number' => $insuranceProviderCode.$insuranceProviderLeadCount,
+            'broker_invoice_number' => $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount),
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
             'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
@@ -713,16 +713,11 @@ class SendUpdateLogService
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
 
-                $sendUpdateData = [
+                $sendUpdateLog->update([
                     'booking_date' => now(),
+                    'transaction_payment_status' => SendUpdateLogStatusEnum::UNPAID, // Intially this will uppdate only for CPD, but there is task that's why update payment status for all.
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
-                ];
-
-                if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-                    $sendUpdateData['transaction_payment_status'] = SendUpdateLogStatusEnum::UNPAID;
-                }
-
-                $sendUpdateLog->update($sendUpdateData);
+                ]);
             }
 
             DB::commit();
