@@ -364,7 +364,7 @@
 @php
     use App\Enums\PaymentCollectionTypeEnum;
     use App\Enums\PaymentMethodsEnum;
-    use App\Enums\PaymentStatusEnum;
+    use App\Enums\PaymentStatusEnum;use App\Enums\QuoteTypes;
 
     $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
 
@@ -372,22 +372,32 @@
 
     $quoteType = $quote->quoteType;
     $insuranceProvider = $quote->insuranceProvider;
-
-    $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
-
     $advisor = $quote->advisor;
-
-    $proformaPaymentRequest = $quote->payments()->where('payment_methods_code', PaymentMethodsEnum::ProformaPaymentRequest)->first();
-
-    $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->created_at)->format($dateFormat);
-
+    $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->collection_date)->format($dateFormat);
     $customer = $quote->customer;
     $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
     $customerDetail =  $customer->detail;
+    $vat = 0;
 
-    $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
-    $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
-    $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+    if($isRequestFromSendUpdateLogPage){
+        $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
+        $subTotal =  $sendUpdateLog->price_with_vat ?? $sendUpdateLog->price_without_vat;
+        $totalAmount =  $proformaPaymentRequest->total_price;
+        $vat =  $sendUpdateLog->price_with_vat ? $totalAmount - $subTotal : 0; // if price with vat then vat = total - subTotal else 0
+    }else{
+        $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
+        if(explode('-', $quote->code)[0] == QuoteTypes::CAR->name){
+            $carQuoteDetails = $quote->carQuoteRequestDetail;
+            $subTotal =  $carQuoteDetails->actual_premium;
+            $vat =  $carQuoteDetails->premium_vat;
+            $totalAmount =  $subTotal + $vat;
+        }else{
+            $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
+            $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
+            $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+        }
+    }
+
 
 @endphp
 
@@ -478,7 +488,7 @@
     </table>
     <table class="tbl-footer">
         <tr>
-            <td colspan="2" class="text-center"><h4>InsuranceMarket.ae™  is the registered trademark of AFIA Insurance
+            <td colspan="2" class="text-center"><h4>InsuranceMarket.ae™ is the registered trademark of AFIA Insurance
                     Brokerage Services LLC</h4></td>
         </tr>
         <tr>
@@ -552,7 +562,7 @@
             <tr>
 
                 <td class="customer">
-                    {{ $customerName }}
+                    {{ $customerName }} </br> {{ $quote->address }}
                 </td>
 
                 <th class="date">
@@ -608,7 +618,7 @@
                     {{ $quoteType?->text }} <br /> {{ $insuranceProvider?->text }}
                 </td>
                 <td>
-                    {{ $totalAmount }}
+                    {{ number_format($subTotal, 2 , '.', '') }}
                 </td>
             </tr>
 

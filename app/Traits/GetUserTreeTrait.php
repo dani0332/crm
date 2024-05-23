@@ -19,6 +19,14 @@ trait GetUserTreeTrait
      * @param [type] $productType
      * @return void
      */
+    public function associateAdvisorsWithManager($userId, $productType = null)
+    {
+        if (! empty($userId)) {
+            return DB::table('user_manager')->where('manager_id', $userId)->get()->pluck('user_id');
+        }
+
+        return [];
+    }
     public function walkTree($userId, $productType = null) // product
     {
         $childUserIds = [$userId];

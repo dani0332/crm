@@ -15,6 +15,9 @@ class SendUpdateLog extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $guarded = [];
+    protected $casts = [
+        'car_addons' => 'json',
+    ];
 
     public function quoteType(): BelongsTo
     {

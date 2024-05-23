@@ -205,8 +205,8 @@ class TravelQuoteService extends BaseService
             }
         }
 
-        if (! Auth::user()->hasRole(RolesEnum::Admin) && ! Auth::user()->hasRole(RolesEnum::CallDesk)) {
-            $travelQuote['advisorId'] = Auth::user()->id;
+        if (! auth()->user()->hasRole(RolesEnum::Admin) && ! auth()->user()->hasRole(RolesEnum::CallDesk)) {
+            $travelQuote['advisorId'] = auth()->user()->id;
         }
 
         if ($request->uuid != null) {
