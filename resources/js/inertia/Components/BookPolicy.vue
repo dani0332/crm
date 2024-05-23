@@ -602,7 +602,11 @@ const calculateCommission = () => {
             </div>
 
             <div
-              v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
+              v-if="
+                props.quote.quote_status_id !=
+                  page.props.quoteStatusEnum.PolicyCancelled ||
+                page.props.linkedQuoteDetails.childLeadsCount == 0
+              "
               class="flex justify-end"
             >
               <template

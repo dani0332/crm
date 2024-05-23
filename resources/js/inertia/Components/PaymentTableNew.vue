@@ -1320,7 +1320,15 @@ const addPaymentModal = () => {
     return;
   }
 
-  const quoteCollectedBy = ['Business', 'Health', 'Life', 'Marine', 'Pet', 'Cycle', 'Yacht'];
+  const quoteCollectedBy = [
+    'Business',
+    'Health',
+    'Life',
+    'Marine',
+    'Pet',
+    'Cycle',
+    'Yacht',
+  ];
 
   if (quoteCollectedBy.includes(props.quoteType)) {
     paymentMethodsForm.collection_type = 'insurer';
@@ -1582,13 +1590,17 @@ const editPaymentModal = (
     planDetail.value['insurance_provider'] = payment.insurance_provider;
   }
 
-   //Assign plan for Travel
-   if (props.quoteType === 'Travel' && (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')) {
-      planDetail.value =  payment.travel_plan;
-      planDetail.value['insurance_provider'] =  payment.travel_plan.insurance_provider;   
-    }
-  
-  if(capture_approval>0) {
+  //Assign plan for Travel
+  if (
+    props.quoteType === 'Travel' &&
+    (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
+  ) {
+    planDetail.value = payment.travel_plan;
+    planDetail.value['insurance_provider'] =
+      payment.travel_plan.insurance_provider;
+  }
+
+  if (capture_approval > 0) {
     isApproveClicked.value = true;
     if (capture_approval == 1) {
       isCreditCardView.value = true;
@@ -2067,9 +2079,10 @@ const uploadDocument = (doc, files, count) => {
         onSuccess: data => {
           let quoteDocuments = [];
           if (
-            (quoteTypesToCheck.includes(props.quoteType) ||
+            quoteTypesToCheck.includes(props.quoteType) ||
             props.quoteType === 'Home' ||
-            props.quoteSubType === 'Corpline') || props.sendUpdate
+            props.quoteSubType === 'Corpline' ||
+            props.sendUpdate
           ) {
             quoteDocuments = data.props.quoteDocuments;
           } else {
@@ -2110,7 +2123,7 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
-// copied from test. 
+// copied from test.
 const validateAccessForSendUpdate = ref(false);
 if (props.sendUpdate) {
   const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
@@ -2484,6 +2497,8 @@ watch(
         <div
           v-if="
             !page.props.linkedQuoteDetails ||
+            props.quoteRequest.quote_status_id !=
+              page.props.quoteStatusEnum.PolicyCancelled ||
             page.props.linkedQuoteDetails?.childLeadsCount == 0
           "
         >
@@ -2780,6 +2795,8 @@ watch(
                       <div
                         v-if="
                           !page.props.linkedQuoteDetails ||
+                          props.quote.quote_status_id !=
+                            page.props.quoteStatusEnum.PolicyCancelled ||
                           page.props.linkedQuoteDetails?.childLeadsCount == 0
                         "
                       >
@@ -4346,8 +4363,8 @@ watch(
                     stroke-linejoin="round"
                     stroke-width="2"
                     d="M15 19l-7-7 7-7"
-                  ></path>
-                  </svg>Previous
+                  ></path></svg
+                >Previous
               </div>
               <div
                 class="flex items-center space-x-2"
