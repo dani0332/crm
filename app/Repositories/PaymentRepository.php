@@ -672,4 +672,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         return $this->where('code', 'LIKE', "%$quoteCode%")->count();
     }
+
+    public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)
+    {
+        return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
+    }
+   
 }

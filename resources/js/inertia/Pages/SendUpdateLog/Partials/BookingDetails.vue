@@ -556,6 +556,7 @@ function sendUpdate(prePaymentCheck = true) {
       sendUpdateId: props.sendUpdateLog.id,
       quoteRefId: props.realQuote.id,
       paymentValidated: true,
+      reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
     })
     .then(response => {
       loader.sendUpdate = false;
