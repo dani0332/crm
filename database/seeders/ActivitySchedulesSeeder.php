@@ -74,42 +74,31 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -118,42 +107,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -162,42 +141,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -206,42 +175,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::RenewalTermsReceived => [
                                         'activities' => [
-                                            // ['name' => 'Email Renewal Terms', 'due_days' => 2],
+                                            ['name' => 'Email Renewal Terms', 'due_days' => 2],
 
-                                            ['name' => 'Email Renewal Terms', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 2],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 2],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 2],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -254,42 +213,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -298,42 +247,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -342,42 +281,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -390,42 +319,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -434,42 +353,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -478,42 +387,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -522,41 +421,32 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::RenewalTermsReceived => [
                                         'activities' => [
-                                            // ['name' => 'Email Renewal Terms', 'due_days' => 2],
-                                            ['name' => 'Email Renewal Terms', 'due_days' => 1],
+                                            ['name' => 'Email Renewal Terms', 'due_days' => 2],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 2],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 2],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 2],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 2],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 2],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '1st Call Follow-up', 'due_days' => 3],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
                                         'activities' => [
-                                            // ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Call Follow-up', 'due_days' => 3],
-                                            // ['name' => '3rd Call Follow-up', 'due_days' => 5],
-
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Call Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Call Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Call Follow-up', 'due_days' => 3],
+                                            ['name' => '3rd Call Follow-up', 'due_days' => 5],
+
                                         ],
                                     ],
                                 ],
@@ -574,51 +464,39 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::ProposalFormRequested => [
                                         'activities' => [
-                                            // ['name' => '1st Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
-                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
-
                                             ['name' => '1st Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            ['name' => '3rd Follow-up', 'due_days' => 2],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::AdditionalInformationRequested => [
                                         'activities' => [
-                                            // ['name' => 'Additional Information 1st Follow-up', 'due_days' => 1],
-                                            // ['name' => 'Additional Information 2nd Follow-up', 'due_days' => 2],
-
                                             ['name' => 'Additional Information 1st Follow-up', 'due_days' => 1],
-                                            ['name' => 'Additional Information 2nd Follow-up', 'due_days' => 1],
+                                            ['name' => 'Additional Information 2nd Follow-up', 'due_days' => 2],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::QuoteRequested => [
                                         'activities' => [
-                                            // ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
-                                            // ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
+                                            ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
+                                            ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
 
-                                            ['name' => 'Follow-up Quotes 1', 'due_days' => 1],
-                                            ['name' => 'Follow-up Quotes 2', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
-                                            // ['name' => '1st Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
-                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
-
                                             ['name' => '1st Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            ['name' => '3rd Follow-up', 'due_days' => 2],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::FinalizingTerms => [
                                         'activities' => [
-                                            // ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
-                                            // ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
 
-                                            ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 1],
-                                            ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                 ],
@@ -627,57 +505,42 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Reminder', 'due_days' => 1],
-                                            // ['name' => '2nd Reminder', 'due_days' => 2],
-                                            // ['name' => '3rd Reminder', 'due_days' => 4],
-                                            // ['name' => '4th Reminder', 'due_days' => 13],
-
                                             ['name' => '1st Reminder', 'due_days' => 1],
-                                            ['name' => '2nd Reminder', 'due_days' => 1],
-                                            ['name' => '3rd Reminder', 'due_days' => 1],
-                                            ['name' => '4th Reminder', 'due_days' => 1],
+                                            ['name' => '2nd Reminder', 'due_days' => 2],
+                                            ['name' => '3rd Reminder', 'due_days' => 4],
+                                            ['name' => '4th Reminder', 'due_days' => 13],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::PendingRenewalInformation => [
                                         'activities' => [
-                                            // ['name' => 'Pending Renewal Information Reminder 1', 'due_days' => 2],
-                                            // ['name' => 'Pending Renewal Information Reminder 2', 'due_days' => 2],
-                                            // ['name' => 'Pending Renewal Information Reminder 3', 'due_days' => 2],
+                                            ['name' => 'Pending Renewal Information Reminder 1', 'due_days' => 2],
+                                            ['name' => 'Pending Renewal Information Reminder 2', 'due_days' => 2],
+                                            ['name' => 'Pending Renewal Information Reminder 3', 'due_days' => 2],
 
-                                            ['name' => 'Pending Renewal Information Reminder 1', 'due_days' => 1],
-                                            ['name' => 'Pending Renewal Information Reminder 2', 'due_days' => 1],
-                                            ['name' => 'Pending Renewal Information Reminder 3', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::QuoteRequested => [
                                         'activities' => [
-                                            // ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
-                                            // ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
+                                            ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
+                                            ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
 
-                                            ['name' => 'Follow-up Quotes 1', 'due_days' => 1],
-                                            ['name' => 'Follow-up Quotes 2', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
-                                            // ['name' => '1st Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
-                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
-
                                             ['name' => '1st Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            ['name' => '3rd Follow-up', 'due_days' => 2],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::FinalizingTerms => [
                                         'activities' => [
-                                            // ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
-                                            // ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
-                                            // ['name' => 'Finalizing Terms 3rd Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 3rd Follow-up', 'due_days' => 2],
 
-                                            ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 1],
-                                            ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 1],
-                                            ['name' => 'Finalizing Terms 3rd Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                 ],
@@ -690,51 +553,39 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::ProposalFormRequested => [
                                         'activities' => [
-                                            // ['name' => '1st Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
-                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
-
                                             ['name' => '1st Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            ['name' => '3rd Follow-up', 'due_days' => 2],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::AdditionalInformationRequested => [
                                         'activities' => [
-                                            // ['name' => 'Additional Information 1st Follow-up', 'due_days' => 1],
-                                            // ['name' => 'Additional Information 2nd Follow-up', 'due_days' => 2],
-
                                             ['name' => 'Additional Information 1st Follow-up', 'due_days' => 1],
-                                            ['name' => 'Additional Information 2nd Follow-up', 'due_days' => 1],
+                                            ['name' => 'Additional Information 2nd Follow-up', 'due_days' => 2],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::QuoteRequested => [
                                         'activities' => [
-                                            // ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
-                                            // ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
+                                            ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
+                                            ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
 
-                                            ['name' => 'Follow-up Quotes 1', 'due_days' => 1],
-                                            ['name' => 'Follow-up Quotes 2', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
-                                            // ['name' => '1st Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
-                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
-
                                             ['name' => '1st Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            ['name' => '3rd Follow-up', 'due_days' => 2],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::FinalizingTerms => [
                                         'activities' => [
-                                            // ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
-                                            // ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
 
-                                            ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 1],
-                                            ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                 ],
@@ -743,57 +594,42 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
-                                            // ['name' => '1st Reminder', 'due_days' => 1],
-                                            // ['name' => '2nd Reminder', 'due_days' => 2],
-                                            // ['name' => '3rd Reminder', 'due_days' => 4],
-                                            // ['name' => '4th Reminder', 'due_days' => 13],
-
                                             ['name' => '1st Reminder', 'due_days' => 1],
-                                            ['name' => '2nd Reminder', 'due_days' => 1],
-                                            ['name' => '3rd Reminder', 'due_days' => 1],
-                                            ['name' => '4th Reminder', 'due_days' => 1],
+                                            ['name' => '2nd Reminder', 'due_days' => 2],
+                                            ['name' => '3rd Reminder', 'due_days' => 4],
+                                            ['name' => '4th Reminder', 'due_days' => 13],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::PendingRenewalInformation => [
                                         'activities' => [
-                                            // ['name' => 'Pending Renewal Information Reminder 1', 'due_days' => 2],
-                                            // ['name' => 'Pending Renewal Information Reminder 2', 'due_days' => 2],
-                                            // ['name' => 'Pending Renewal Information Reminder 3', 'due_days' => 2],
+                                            ['name' => 'Pending Renewal Information Reminder 1', 'due_days' => 2],
+                                            ['name' => 'Pending Renewal Information Reminder 2', 'due_days' => 2],
+                                            ['name' => 'Pending Renewal Information Reminder 3', 'due_days' => 2],
 
-                                            ['name' => 'Pending Renewal Information Reminder 1', 'due_days' => 1],
-                                            ['name' => 'Pending Renewal Information Reminder 2', 'due_days' => 1],
-                                            ['name' => 'Pending Renewal Information Reminder 3', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::QuoteRequested => [
                                         'activities' => [
-                                            // ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
-                                            // ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
+                                            ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
+                                            ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
 
-                                            ['name' => 'Follow-up Quotes 1', 'due_days' => 1],
-                                            ['name' => 'Follow-up Quotes 2', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
-                                            // ['name' => '1st Follow-up', 'due_days' => 1],
-                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
-                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
-
                                             ['name' => '1st Follow-up', 'due_days' => 1],
-                                            ['name' => '2nd Follow-up', 'due_days' => 1],
-                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            ['name' => '3rd Follow-up', 'due_days' => 2],
+
                                         ],
                                     ],
                                     QuoteStatusEnum::FinalizingTerms => [
                                         'activities' => [
-                                            // ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
-                                            // ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
-                                            // ['name' => 'Finalizing Terms 3rd Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
+                                            ['name' => 'Finalizing Terms 3rd Follow-up', 'due_days' => 2],
 
-                                            ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 1],
-                                            ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 1],
-                                            ['name' => 'Finalizing Terms 3rd Follow-up', 'due_days' => 1],
                                         ],
                                     ],
                                 ],

@@ -95,7 +95,6 @@ class AutomateActivitiesCommand extends Command
                 $activityQuery->where('due_date', '<', Carbon::now());
                 $activityQuery->where('status', false);
             })->with(['activities' => function ($activities) {
-                // $activities->where('due_date', '<', now());
                 $activities->where('due_date', '<', Carbon::now());
                 $activities->where('status', false);
             }])
@@ -120,7 +119,6 @@ class AutomateActivitiesCommand extends Command
                     $activityQuery->where('status', true);
                 })
                     ->with(['activities' => function ($activities) {
-                        // $activities->where('due_date', '<', now());
                         $activities->where('due_date', '<', Carbon::now());
                         $activities->where('status', true);
                         $activities->orderBy('created_at', 'desc')->get();
@@ -177,8 +175,7 @@ class AutomateActivitiesCommand extends Command
                                         'updated_at' => now(),
                                         'assignee_id' => $quoteDetail->advisor_id,
                                         'uuid' => generateUuid(),
-                                        // 'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->created_at ?? now()),
-                                        'due_date' => addMinutesExcludeWeekend($activitySchedules->due_days, now()),
+                                        'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->created_at ?? now()),
                                         'client_name' => $quoteDetail->first_name.' '.$quoteDetail->last_name,
                                         'client_email' => $quoteDetail->email,
                                         'quote_uuid' => $quoteDetail->uuid,
