@@ -133,6 +133,9 @@ export const useDaysSinceStale = payload =>
       return stale_days + ' day';
     } else
       return stale_days + ' days';
+  } else
+  {
+    return false
   }
 };
 
