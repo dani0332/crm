@@ -300,7 +300,9 @@ class ReportService extends BaseService
 
         // Re-index the filtered array to ensure consistent indexing
         $filteredProductsName = array_values($filteredProductsName);
-
+        if ($filteredProductsName == null) {
+            return abort(404);
+        }
         $lob = $request->lob ?? $filteredProductsName[0];
         $start = $request->date[0] ?? Carbon::now()->subDays(90)->format('Y-m-d H:i:s');
         $end = $request->date[1] ?? Carbon::now()->format('Y-m-d H:i:s');
