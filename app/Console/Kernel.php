@@ -80,7 +80,7 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        $schedule->command('Dtt')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('04:20');
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('16:30');
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('11:45');
     }
 
