@@ -339,7 +339,14 @@ const reversalEntry = reactive({
   total_price: null,
 });
 
+const loader = reactive({
+  sendUpdateSectionBtn: false,
+  sendUpdate: false,
+  selectInvoice: false,
+});
+
 const selectedInvoice = () => {
+  loader.selectInvoice = true;
   let url = route('send-update-logs.get-reversal-entries');
   let data = {
     quoteType: props.quoteType,
@@ -354,6 +361,9 @@ const selectedInvoice = () => {
     })
     .catch(error => {
       // handle the error
+    })
+    .finally(() => {
+      loader.selectInvoice = false;
     });
 };
 
@@ -441,11 +451,6 @@ const sendUpdateValidationURL = computed(() => {
     : 'send-update-customer-validation';
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
-
-const loader = reactive({
-  sendUpdateSectionBtn: false,
-  sendUpdate: false,
-});
 
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
@@ -1056,16 +1061,16 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
               size="sm"
               color="orange"
               @click="state.reversalSectionEdit = false"
-              :loading="bookingDetailsForm.processing"
-              :disabled="bookingDetailsForm.processing"
+              :loading="loader.selectInvoice"
+              :disabled="loader.selectInvoice"
             >
               Cancel
             </x-button>
             <x-button
               size="sm"
               color="primary"
-              :loading="bookingDetailsForm.processing"
-              :disabled="bookingDetailsForm.processing"
+              :loading="loader.selectInvoice"
+              :disabled="loader.selectInvoice"
               @click="onUpdateReversal"
             >
               Update
