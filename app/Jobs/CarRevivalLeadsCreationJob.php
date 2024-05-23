@@ -53,6 +53,13 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
+        $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ENABLED)->value('value');
+        if ($dttEnabled == 0) {
+            info('Dtt is not enabled from cms');
+
+            return false;
+        }
+
         $this->lead->refresh();
         if ($this->lead->is_revived) {
             info('CarRevivalLeadsCreationJob - '.$this->lead->uuid.' - Lead Already Revived');
