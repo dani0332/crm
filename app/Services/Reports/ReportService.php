@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamTypeEnum;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
@@ -273,7 +274,34 @@ class ReportService extends BaseService
 
     public function getStaleLeadsReport($request, $includeStale = false)
     {
-        $lob = $request->lob ?? QuoteTypes::HEALTH->value;
+        $productIds = DB::table('user_products')->where('user_id', auth()->user()->id)->get()->pluck('product_id');
+        $products = Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->get();
+
+        $quoteTypes = [
+            QuoteTypes::HOME,
+            QuoteTypes::HEALTH,
+            QuoteTypes::YACHT,
+            QuoteTypes::PET,
+            QuoteTypes::CYCLE,
+            QuoteTypes::CORPLINE,
+        ];
+        
+        $productsName = $products->pluck('name')->toArray();
+
+        // Extract the 'value' properties from the QuoteTypes enumeration
+        $quoteTypeValues = array_map(function($quoteType) {
+            return $quoteType->value;
+        }, $quoteTypes);
+        
+        // Filter $productsName to include only those present in $quoteTypeValues
+        $filteredProductsName = array_filter($productsName, function($name) use ($quoteTypeValues) {
+            return in_array($name, $quoteTypeValues);
+        });
+        
+        // Re-index the filtered array to ensure consistent indexing
+        $filteredProductsName = array_values($filteredProductsName);
+
+        $lob = $request->lob ?? $filteredProductsName[0];
         $start = $request->date[0] ?? Carbon::now()->subDays(30)->format('Y-m-d H:i:s');
         $end = $request->date[1] ?? Carbon::now()->format('Y-m-d H:i:s');
 
