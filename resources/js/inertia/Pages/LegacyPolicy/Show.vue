@@ -13,6 +13,7 @@ const props = defineProps({
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
+const notification = useNotifications('toast');
 const moveToImcrmModal = ref(false);
 const can = permission => useCan(permission);
 const itemCount = ref(false);
@@ -73,11 +74,13 @@ const submitLead = policy => {
     }
     // Add any additional logic for submitting the lead here
   } else {
-    console.log('No document selected. Cannot submit lead.');
+    notification.warning({
+      title: 'Select Lead or Check Radio Button to proceed!',
+      position: 'top',
+    });
   }
 };
 
-const notification = useNotifications('toast');
 const single = ref(true);
 const lobLink = ref('');
 const lobCode = ref('');
