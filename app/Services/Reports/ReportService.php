@@ -285,19 +285,19 @@ class ReportService extends BaseService
             QuoteTypes::CYCLE,
             QuoteTypes::CORPLINE,
         ];
-        
+
         $productsName = $products->pluck('name')->toArray();
 
         // Extract the 'value' properties from the QuoteTypes enumeration
-        $quoteTypeValues = array_map(function($quoteType) {
+        $quoteTypeValues = array_map(function ($quoteType) {
             return $quoteType->value;
         }, $quoteTypes);
-        
+
         // Filter $productsName to include only those present in $quoteTypeValues
-        $filteredProductsName = array_filter($productsName, function($name) use ($quoteTypeValues) {
+        $filteredProductsName = array_filter($productsName, function ($name) use ($quoteTypeValues) {
             return in_array($name, $quoteTypeValues);
         });
-        
+
         // Re-index the filtered array to ensure consistent indexing
         $filteredProductsName = array_values($filteredProductsName);
 

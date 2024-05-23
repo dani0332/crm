@@ -378,8 +378,8 @@ class CRUDService extends BaseService
                 $this->updatePaymentStatus($entity);
             }
 
-            $quoteTypeId = constant(QuoteTypeId::class . '::' . $request->modelType);
-            
+            $quoteTypeId = constant(QuoteTypeId::class.'::'.$request->modelType);
+
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $entity->id,
