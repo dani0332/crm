@@ -22,7 +22,8 @@ class TransactionReportService extends ManagementReport
 
         $query = PersonalQuote::query()
             ->select(
-                'personal_quotes.policy_number',
+                'personal_quotes.policy_number', 'personal_quotes.code', 'personal_quotes.uuid',
+                'bqr.uuid', 'bqr.code', 'btoi.text',
                 DB::raw('CONCAT(p.reference, " ", p.tax_invoice_number) as transactions'),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
@@ -41,7 +42,6 @@ class TransactionReportService extends ManagementReport
                 DB::raw('UPPER(p.collection_type) as collects'),
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
-                DB::raw("'sub_type_line_of_business' as sub_type_line_of_business"),
                 DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
                 'u.name as advisor',
                 'pi.name as policy_issuer',
@@ -64,7 +64,7 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
-            ->leftJoin('business_quote_request as bqr', 'bqr.code', '=', 'personal_quotes.code')
+            ->leftJoin('business_quote_request as bqr', 'bqr.uuid', '=', 'personal_quotes.uuid')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'bqr.business_type_of_insurance_id');
 
         $this->applyFilters($query, $request);
