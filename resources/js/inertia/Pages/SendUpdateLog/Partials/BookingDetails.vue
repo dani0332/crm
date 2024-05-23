@@ -30,7 +30,7 @@ const props = defineProps({
     default: () => {},
   },
   payments: {
-    type: Array,
+    type: Object,
     required: true,
     default: () => [],
   },
@@ -137,6 +137,14 @@ const transactionPaymentStatus = computed(() => {
   }
 });
 
+function isNotZero(value) {
+  if (value === 0 || value === '0.00' || value === null || value === undefined) {
+    return false;
+  }
+
+  return value;
+}
+
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.selectedCategory.subCategory.slug,
@@ -155,7 +163,7 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.insurer_tax_number ||
     '',
   discount:
-    props.bookingDetails?.discount ||
+    isNotZero(props.bookingDetails?.discount) ||
     props?.payments[0]?.discount_value ||
     '0.00',
   insurer_commission_invoice_number:
@@ -433,11 +441,6 @@ const sendUpdateValidationURL = computed(() => {
     : 'send-update-customer-validation';
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
-
-onMounted(() => {
-  console.log('working');
-  console.log(sendUpdateValidationURL.value);
-});
 
 const loader = reactive({
   sendUpdateSectionBtn: false,
