@@ -5,11 +5,13 @@ namespace App\Traits;
 use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Repositories\DocumentTypeRepository;
@@ -217,17 +219,23 @@ trait GenericQueriesAllLobs
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
-        if ($payments->first()) {
+        $payment = $payments->first();
+        if ($payment) {
             $insurance_provider_id = $payments[0]['insurance_provider_id'];
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
+
+        $bookPolicyDetails = [];           
         $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
         $bookPolicyDetails['invoiceDescription'] = $insuranceProviderCode.'-'.$quoteType.'-'.$record->policy_number;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
         $bookPolicyDetails['sendPolicyType'] = null;
         $bookPolicyDetails['text'] = '';
+        @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record);
+        $bookPolicyDetails['transactionPaymentStatus'] = $transactionPaymentStatus;
+        $bookPolicyDetails['paymentStatusTooltip'] = $paymentStatusTooltip;
         $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payments);
         @[$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription]= $this->checkForInsufficientPayment($payments);
         $bookPolicyDetails['isInsufficientPayment'] = $isInsufficientPayment;
@@ -287,6 +295,41 @@ trait GenericQueriesAllLobs
                 }
             }
         }
+    }
+
+    private function transactionPaymentStatus($payment, $quote)
+    {
+        if (! $payment) {
+            return $this->getUnpaidStatus();
+        }
+
+        $totalAmount = $payment->captured_amount + $payment->discount_value;
+
+        return $this->getPaymentStatus($payment->captured_amount, $totalAmount, $quote->price_with_vat);
+    }
+
+    private function getUnpaidStatus()
+    {
+        return [
+            'status' => TransactionPaymentStatusEnum::UNPAID_TEXT,
+            'tooltip' => ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID,
+        ];
+    }
+
+    private function getPaymentStatus($capturedAmount, $totalAmount, $priceWithVat)
+    {
+        if ($capturedAmount == 0) {
+            $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
+            $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID;
+        } elseif ($totalAmount >= $priceWithVat) {
+            $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
+            $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PAID;
+        } else {
+            $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+            $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
+        }
+
+        return [$paymentStatus, $paymentStatusTooltip];
     }
 
     public function updatePriceAndDiscount($quoteModel): bool

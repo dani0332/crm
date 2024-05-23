@@ -132,39 +132,25 @@ const leadStatusOptions = computed(() => {
   }));
 });
 
+
+
 const onLeadStatus = () => {
-  let data = {
-    modelType: 'Business',
-    leadId: leadStatusForm.leadId,
-    quote_uuid: leadStatusForm.quote_uuid,
-    assigned_to_user_id: leadStatusForm.assigned_to_user_id,
-    leadStatus: leadStatusForm.leadStatus,
-    notes: leadStatusForm.notes,
-    trans_code: leadStatusForm.trans_code,
-    lostReason: leadStatusForm.lostReason,
-  };
-  axios
-    .post(
-      route('updateLeadStatus', {
-        QuoteUId: page.props.quote.id,
-        modelType: 'Business',
-      }),
-      data,
-    )
-    .then(res => {
-      notification.success({
-        title: 'Lead Status Updated',
-        position: 'top',
-      });
-    })
-    .catch(err => {
-      const flash_messages = err.response.data.errors.value;
-      Object.keys(flash_messages).forEach(function (key) {
+  leadStatusForm
+    .post(`/quotes/Bussiness/${page.props.quote.id}/update-lead-status`, {
+      preserveScroll: true,
+      onError: errors => {
+        console.log(errors);
         notification.error({
-          title: flash_messages[key],
+          title: errors.value,
           position: 'top',
         });
-      });
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Lead Status Updated',
+          position: 'top',
+        });
+      },
     });
 };
 

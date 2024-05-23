@@ -11,6 +11,9 @@ const paymentLookups = page.props.paymentLookups;
 const documentTypeEnum = page.props.documentTypeEnum;
 const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+const paymentAllocationStatus = page.props.paymentAllocationStatus;
+
 const props = defineProps({
   payments: Array,
   can: Object,
@@ -2194,6 +2197,25 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   planDetail.value = initalPlanDetails;
 });
 
+const paymentAllocationStatusTooltip = payment_allocation_status => {
+  // First convert to upper case as some of the values are in lower case & some of without space 
+  payment_allocation_status = formatString(payment_allocation_status);
+  // Then converting to accordingly to match with the enum values
+  payment_allocation_status = payment_allocation_status.replace(/ /g, "_").toLowerCase();
+  if(payment_allocation_status ==  paymentAllocationStatus.NOT_ALLOCATED){
+    return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED;
+  }
+  else if(payment_allocation_status == paymentAllocationStatus.PARTIALLY_ALLOCATED){
+    return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED;
+  }
+  else if(payment_allocation_status == paymentAllocationStatus.FULLY_ALLOCATED){  
+    return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED;
+  } else if (payment_allocation_status == paymentAllocationStatus.UNPAID) {
+    return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
+  }
+  return '';
+}
+
 const discountTypeLabel = computed(() => {
   let systemAplliedDiscount = '';
   if (paymentMethodsForm.status === 'view' && 
@@ -2324,9 +2346,7 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
       </div>
     </div>
     <div class="vue3-easy-data-table tablefixed custom-height">
-      <div
-        class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height"
-      >
+      <div class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div">
         <table>
           <thead class="vue3-easy-data-table__header">
             <tr>
@@ -2485,13 +2505,18 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                   <td>{{ formatAmount(item.total_amount) }}</td>
                   <td>{{ formatAmount(item.captured_amount) }}</td>
                   <td>{{ formatString(item.payment_status.text) }}</td>
-                  <td>
-                    {{
-                      item.payment_allocation_status !== null
-                        ? formatString(item.payment_allocation_status)
-                        : ''
-                    }}
-                  </td>
+                 <td>  
+                  <x-tooltip position="left">
+                    <span class="border-b border-dotted border-black ">
+                     {{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}
+                    </span>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ paymentAllocationStatusTooltip(item.payment_allocation_status) }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td> 
                   <td>
                     <div class="flex gap-2">
                       <template v-if="is_lacking_payment">
@@ -2585,11 +2610,16 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                       {{ formatString(splitPayment.payment_status.text) }}
                     </td>
                     <td>
-                      {{
-                        splitPayment.payment_allocation_status !== null
-                          ? formatString(splitPayment.payment_allocation_status)
-                          : ''
-                      }}
+                      <x-tooltip position="top">
+                        <span class="border-b border-dotted border-black ">
+                          {{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}
+                        </span>
+                        <template #tooltip>
+                          <span class="custom-tooltip-content">
+                            {{ paymentAllocationStatusTooltip(splitPayment.payment_allocation_status) }}
+                          </span>
+                        </template>
+                      </x-tooltip>
                     </td>
                     <td>
                       <x-button
@@ -4340,6 +4370,13 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
   text-transform: none;
 }
 .custom-height {
-  min-height: 160px;
+  min-height: 185px;
+}
+.manage-payment-table-parent-div{
+  overflow-y: hidden;
+}
+.manage-payment-table-parent-div::-webkit-scrollbar {
+  width: 6px;
+  background-color: #C1C1C1;
 }
 </style>

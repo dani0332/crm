@@ -79,6 +79,7 @@ const currentDate = computed(() => {
   const day = `0${d.getDate()}`.slice(-2);
   return `${day}-${month}-${year}`;
 });
+
 const currentDateTime = computed(() => {
   const d = new Date();
   const year = d.getFullYear();
@@ -89,28 +90,11 @@ const currentDateTime = computed(() => {
   const seconds = `0${d.getSeconds()}`.slice(-2);
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 });
-const transactionPaymentStatus = computed(() => {
-  if (Number(page.props?.payments[0]?.captured_amount) === 0) {
-    return 'Not Paid';
-  }
-  if (
-    Number(page.props?.payments[0]?.total_price) >
-    Number(page.props?.payments[0]?.captured_amount)
-  ) {
-    return 'Partially Paid';
-  }
-  if (
-    Number(page.props?.payments[0]?.captured_amount) >=
-    Number(page.props?.payments[0]?.total_price)
-  ) {
-    return 'Paid';
-  }
-});
+
 const bpForm = useForm({
-  booking_date:
-    dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
-    currentDateTime.value,
-  transaction_payment_status: transactionPaymentStatus.value,
+  booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
+  currentDateTime.value,
+  transaction_payment_status: page.props.bookPolicyDetails.transactionPaymentStatus,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
   invoice_description: page.props.bookPolicyDetails.invoiceDescription || '',
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
@@ -129,6 +113,7 @@ const bpForm = useForm({
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
   modelType: props.modelType,
+  transaction_payment_status_tool_tip: page.props.bookPolicyDetails.paymentStatusTooltip
 });
 
 let is_lacking_payment = ref(page.props.bookPolicyDetails.isLackingOfPayment || false);
@@ -267,6 +252,15 @@ const calculateCommission = () => {
     bpForm.total_commission = '';
   }
 };
+
+// Watch for changes in paymentMethodsForm.collection_date
+watch(() => page.props.bookPolicyDetails.transactionPaymentStatus, (newValue, oldValue) => {
+  if (newValue && oldValue) {
+    bpForm.transaction_payment_status_tool_tip= props.bookPolicyDetails.paymentStatusTooltip;
+    bpForm.transaction_payment_status= props.bookPolicyDetails.transactionPaymentStatus;
+  }  
+});
+
 const sendPolicyConfirmation = () => {
   if (page.props.bookPolicyDetails.isInsufficientPayment){
     isAllowedToSendPolicy.value = true;
@@ -347,18 +341,23 @@ const showInsufficientPaymentAlert = () => {
                 <dd>{{ props?.quoteType }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">
-                    <x-tooltip>
-                      Transaction Payment Status
-
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                </dt>
-                <dd>{{ bpForm.transaction_payment_status }}</dd>
+                <x-tooltip>
+                  Transaction Payment Status
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
+                    }}</span>
+                  </template>
+                </x-tooltip>
+                <template v-if="props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked">
+                   <x-tooltip position="center">
+                    <dd class="border-b border-dotted border-black"> {{ bpForm.transaction_payment_status }}</dd>
+                    <template #tooltip> {{ bpForm.transaction_payment_status_tool_tip }}</template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <dd>N/A</dd>
+                </template>
               </div>
               <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">
