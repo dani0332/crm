@@ -218,13 +218,14 @@ const calculateCommission = () => {
         bpForm.commission_vat_applicable * page.props.vat
       ).toFixed(2);
     }
-
-    bpForm.total_commission =
+    let totalCommissionWithoutVat =
       Number(bpForm.commission_vat_not_applicable) +
       Number(bpForm.commission_vat_applicable);
+    bpForm.total_commission =
+      totalCommissionWithoutVat + Number(bpForm.vat_on_commission);
 
     bpForm.commission_percentage = (
-      (bpForm.total_commission /
+      (totalCommissionWithoutVat /
         (Number(props.quote?.price_vat_not_applicable) +
           Number(props.quote?.price_without_vat))) *
       100
