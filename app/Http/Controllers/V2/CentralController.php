@@ -274,7 +274,8 @@ class CentralController extends Controller
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
             ]);
-            $this->straightforwardPayments($payment, $paymentSplits, $quote);
+
+            (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
 
             $this->handleInSufficientPayment($request, $payment);
 
@@ -324,102 +325,7 @@ class CentralController extends Controller
 
         return back()->with('success', $successMessage);
     }
-
-    private function updatePaymentAllocationStatus($payment, $quote)
-    {
-        $payment->payment_allocation_status = $this->calculatePaymentAllocationStatus($payment, $quote);
-        $payment->save();
-    }
-    
-    private function calculatePaymentAllocationStatus($payment, $quote)
-    {
-        if (in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW])) {
-            return null;
-        }
-    
-        $totalAmount = $payment->captured_amount + $payment->discount_value;
-        $priceWithVat = $quote->price_with_vat;
-    
-        if ($payment->captured_amount <= 0) {
-            return PaymentAllocationStatus::UNPAID;
-        }
-    
-        if ($totalAmount <= $priceWithVat) {
-            return PaymentAllocationStatus::FULLY_ALLOCATED;
-        }
-    
-        return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
-    }
-    
-    private function firstSplitAllocationStatus($payment, $paymentSplit, $quote)
-    {
-        $paymentSplit->payment_allocation_status = $this->calculateSplitAllocationStatus($payment, $paymentSplit, $quote);
-        $paymentSplit->save();
-    }
-    
-    private function calculateSplitAllocationStatus($payment, $paymentSplit, $quote)
-    {
-        if ($payment->frequency == PaymentFrequency::UPFRONT) {
-            return $payment->payment_allocation_status;
-        }
-    
-        if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
-            return PaymentAllocationStatus::NOT_ALLOCATED;
-        }
-    
-        if ($paymentSplit->collection_amount <= 0) {
-            return PaymentAllocationStatus::UNPAID;
-        }
-    
-        if ($paymentSplit->collection_amount <= $quote->price_with_vat) {
-            return PaymentAllocationStatus::FULLY_ALLOCATED;
-        }
-    
-        return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
-    }
-    
-    private function updatePaymentSplitAllocationStatus($paymentSplits, $quote)
-    {
-        $collectedAmount = 0;
-        foreach ($paymentSplits as $paymentSplit) {
-            $collectedAmount += $paymentSplit->collection_amount;
-            $paymentSplit->payment_allocation_status = $this->calculateSplitAllocationStatusWithCollectedAmount($paymentSplit, $quote, $collectedAmount);
-            $paymentSplit->save();
-        }
-    }
-    
-    private function calculateSplitAllocationStatusWithCollectedAmount($paymentSplit, $quote, $collectedAmount)
-    {
-        if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
-            return PaymentAllocationStatus::NOT_ALLOCATED;
-        }
-    
-        if ($paymentSplit->collection_amount <= 0) {
-            return PaymentAllocationStatus::UNPAID;
-        }
-    
-        if ($collectedAmount <= $quote->price_with_vat) {
-            return PaymentAllocationStatus::FULLY_ALLOCATED;
-        }
-    
-        return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
-    }
-
-    public function straightforwardPayments($payment, $paymentSplits, $quote)
-    {
-        if ($payment) {
-            $this->updatePaymentAllocationStatus($payment, $quote);
-            if (in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SEMI_ANNUAL, PaymentFrequency::QUARTERLY, PaymentFrequency::MONTHLY, PaymentFrequency::CUSTOM])) {
-                $paymentSplit = $paymentSplits->first();
-                $this->firstSplitAllocationStatus($payment, $paymentSplit, $quote);
-            }
-
-            if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                $this->updatePaymentSplitAllocationStatus($paymentSplits, $quote);
-            }
-        }
-    }
-    
+  
     private function handleInsufficientPayment($request, $payment)
     {
         if ($request->is_send_policy && $payment) {
@@ -461,17 +367,5 @@ class CentralController extends Controller
     public function generatePaymentLink(GeneratePaymentLinkRequest $request)
     {
         return (new SplitPaymentService())->generateSplitPaymentLink($request);
-    }
-
-    // This method is used to update payment allocation status when lead status is updated
-
-    public function updatePaymentAllocation($modelType, $quote_uuid)
-    {
-        $quote = $this->getQuoteObject($modelType, $quote_uuid);
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
-            $payment = Payment::where('code', $quote->code)->first();
-            $paymentSplits = PaymentSplits::where('code', $quote->code)->get();
-            $this->straightforwardPayments($payment, $paymentSplits, $quote);
-        }
     }
 }

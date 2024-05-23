@@ -1492,7 +1492,7 @@ class CRUDController extends Controller
             info('Courtesy Email CAPI Response - : '.json_encode($response));
         }
         // Update payment allocation status
-        app(CentralController::class)->updatePaymentAllocation($request->modelType, $request->quote_uuid);
+        app(CentralService::class)->updatePaymentAllocation($request->modelType, $request->quote_uuid);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
