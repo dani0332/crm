@@ -75,7 +75,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
+  { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   { text: 'POLICY NO', value: 'policy_no', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   {

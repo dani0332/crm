@@ -115,7 +115,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
+  { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   {
     text: 'NUMBER OF EMPLOYEES',
     value: 'number_of_employees',
