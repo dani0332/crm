@@ -132,10 +132,7 @@ class CarQuoteRepository extends BaseRepository
 
             $previousStatusId = $quote->quote_status_id;
 
-            $quote->update([
-                'quote_status_id' => $data['quote_status_id'],
-                'quote_status_date' => now(),
-            ]);
+            $quote->update(['quote_status_id' => $data['quote_status_id']]);
 
             QuoteStatusLog::create([
                 'quote_type_id' => QuoteTypeId::Car,

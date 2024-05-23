@@ -77,6 +77,7 @@ class RenewalsUploadService
     use GenericQueriesAllLobs;
 
     protected $renewalsAddonService;
+    protected $checkAMLService;
     protected $capiRequestService;
     protected $insuranceProviderService;
     protected $carQuoteService;
@@ -88,6 +89,7 @@ class RenewalsUploadService
 
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
+        CheckAmlService $checkAMLService,
         CapiRequestService $capiRequestService,
         InsuranceProviderService $insuranceProviderService,
         CarQuoteService $carQuoteService,
@@ -98,6 +100,7 @@ class RenewalsUploadService
         HealthQuoteService $healthQuoteService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
+        $this->checkAMLService = $checkAMLService;
         $this->capiRequestService = $capiRequestService;
         $this->insuranceProviderService = $insuranceProviderService;
         $this->carQuoteService = $carQuoteService;
@@ -455,7 +458,7 @@ class RenewalsUploadService
 
             if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (! $aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first())) {
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
-                app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+                $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
             }
 
@@ -857,7 +860,7 @@ class RenewalsUploadService
 
         if ($quote) {
             info($logPrefix.' AML check started for UUID: '.$quote->uuid);
-            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
         }
 
@@ -897,7 +900,7 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
         if ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first()) {
             info($logPrefix.' AML process Started for quote uuid: '.$quote->uuid.' quote_id: '.$renewalQuoteProcess->quote_id);
-            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML process completed for quote uuid: '.$quote->uuid);
 
             return true;
@@ -1075,7 +1078,7 @@ class RenewalsUploadService
 
         if ($quote && $isNameChanged) {
             info($logPrefix.' AML check started for UUID: '.$quote->uuid);
-            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
         }
 

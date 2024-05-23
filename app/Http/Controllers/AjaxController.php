@@ -177,6 +177,7 @@ class AjaxController extends Controller
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
+
     }
 
     public function commercialCarModelBasedOnCarMakeId(Request $request)
@@ -195,6 +196,7 @@ class AjaxController extends Controller
         } else {
             return response()->json([]);
         }
+
     }
 
     public function uploadKycIndividualDocument($quoteType, KycIndividualDocRequest $request)

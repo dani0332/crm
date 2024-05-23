@@ -11,20 +11,20 @@ use BenSampo\Enum\Enum;
  */
 final class PaymentStatusEnum extends Enum
 {
-    public const PENDING = 1;
-    public const CANCELLED = 3;
-    public const AUTHORISED = 4;
-    public const DECLINED = 5;
-    public const CAPTURED = 6;
-    public const REFUNDED = 7;
-    public const STARTED = 8;
-    public const FAILED = 9;
-    public const PAID = 10;
-    public const DRAFT = 11;
-    public const PARTIAL_CAPTURED = 12;
-    public const DISPUTED = 13;
-    public const NEW = 14;
-    public const OVERDUE = 15;
-    public const CREDIT_APPROVED = 16;
-    public const PARTIALLY_PAID = 17;
+    const PENDING = 1;
+    const CANCELLED = 3;
+    const AUTHORISED = 4;
+    const DECLINED = 5;
+    const CAPTURED = 6;
+    const REFUNDED = 7;
+    const STARTED = 8;
+    const FAILED = 9;
+    const PAID = 10;
+    const DRAFT = 11;
+    const PARTIAL_CAPTURED = 12;
+    const DISPUTED = 13;
+    const NEW = 14;
+    const OVERDUE = 15;
+    const CREDIT_APPROVED = 16;
+    const PARTIALLY_PAID = 17;
 }

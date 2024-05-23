@@ -14,7 +14,6 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            QuoteStatusTableSeeder::class,
             // RenewalsPermissionSeeder::class,
             // addCarQuoteSearchPermission::class,
             // QuoteStatusTableSeeder::class,
@@ -41,12 +40,6 @@ class DatabaseSeeder extends Seeder
             // GenericPermissionSeeder::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
-            LostReasonsTableSeeder::class,
-            AddGenericRolePermissionSeeder::class,
-            addDubaiNowEmailGroup::class,
-            DubaiLeadSource::class,
-            ActivitySchedulesSeeder::class,
-            DocumentTypeSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             GenericPermissionSeeder::class,

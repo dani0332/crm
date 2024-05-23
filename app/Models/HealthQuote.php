@@ -18,7 +18,6 @@ class HealthQuote extends Model implements AuditableContract
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'health_quote_request';
-    protected $fillable = [];
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
@@ -28,7 +27,6 @@ class HealthQuote extends Model implements AuditableContract
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'mobile_no' => FilterTypes::EXACT,
-        'created_at' => FilterTypes::DATE_BETWEEN,
     ];
     protected $guarded = [];
 
@@ -142,7 +140,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function lostReason()
     {
-        return $this->belongsTo(LostReasons::class, 'lost_reason_id');
+        return $this->belongsTo(LostReason::class, 'lost_reason_id');
     }
 
     public function healthLeadType()
@@ -159,17 +157,6 @@ class HealthQuote extends Model implements AuditableContract
     public function customerMembers()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
-    }
-
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Activities::class, 'quote_request_id')
-            ->where('quote_type_id', QuoteTypeId::Health);
-    }
-
-    public function notes()
-    {
-        return $this->morphMany(QuoteNote::class, 'quote_noteable');
     }
 
     public function duplicateInquiryLog(): MorphMany

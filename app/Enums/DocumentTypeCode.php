@@ -12,7 +12,6 @@ use BenSampo\Enum\Enum;
 class DocumentTypeCode extends Enum
 {
     const KYCDOC = 'KYCDOC';
-    const OD = 'OD';
     const CPD = 'CPD';
     const BPD = 'BPD';
     const TPD = 'TPD';

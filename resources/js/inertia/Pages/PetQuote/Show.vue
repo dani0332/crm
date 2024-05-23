@@ -1,21 +1,20 @@
 <script setup>
-import MemberDetails from '../../Components/MemberDetails.vue';
-import MigratePayment from '../../Components/MigratePayment.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import PlanDetails from '../../Components/PlanDetails.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import MemberDetails from '../../Components/MemberDetails.vue';
+import PlanDetails from '../../Components/PlanDetails.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
 
-const props = defineProps({
+defineProps({
   quote: Object,
   documentTypes: Object,
-  noteDocumentType: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
   insuranceProviders: Object,
@@ -39,9 +38,6 @@ const props = defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
-  quoteRequest: Object,
-  quoteDocuments: Object,
-  cdnPath: String,
   vatPercentage: Number,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
@@ -54,10 +50,6 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-
-const countDays = computed(() =>
-  useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
-);
 
 const historyLoading = ref(false);
 
@@ -263,61 +255,9 @@ const linkEntity = () => {
 <template>
   <div>
     <Head title="Pet Quotes" />
-    <StickyHeader>
-      <template v-slot:header>
-        <h2 class="text-xl font-semibold">Pet Detail</h2>
-        <p
-          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="countDays !== false"
-        >
-          Stale for {{ countDays }}
-        </p>
-      </template>
-      <template #default>
-        <LeadNotes
-          :documentType="noteDocumentType"
-          :notes="quoteDocuments"
-          :modelType="quoteType"
-          :quote="quote"
-          :cdn="cdnPath"
-        />
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-          Duplicate Lead
-        </x-button>
-        <Link
-          v-if="can(permissionsEnum.PetQuotesEdit)"
-          :href="route('pet-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-
-        <Link
-          v-if="can(permissionsEnum.PetQuotesList)"
-          :href="route('pet-quotes-list')"
-          preserve-scroll
-        >
-          <x-button size="sm" color="primary" tag="div"> Pet Quotes </x-button>
-        </Link>
-      </template>
-    </StickyHeader>
-    <!-- <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <div class="flex items-center space-x-2">
-        <h2 class="text-xl font-semibold">Pet Detail</h2>
-        <p
-          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="countDays !== false"
-        >
-          Stale for {{ countDays }} days
-        </p>
-      </div>
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Pet Detail</h2>
       <div class="flex gap-2">
-        <LeadNotes
-          :documentType="noteDocumentType"
-          :notes="quoteDocuments"
-          :modelType="quoteType"
-          :quote="quote"
-          :cdn="cdnPath"
-        />
         <Link
           v-if="quote.quote_detail?.insly_id"
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
@@ -346,49 +286,47 @@ const linkEntity = () => {
         </Link>
       </div>
 
-    
-    </div> -->
-
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-field label="LOBs" required>
-            <x-select
-              v-model="leadDuplicateForm.lob_team"
-              :options="
-                duplicateAllowedLobs.map(lob => ({
-                  value: lob,
-                  label: lob,
-                }))
-              "
-              :rules="[isRequired]"
-              placeholder="Select LOB For Duplication"
-              class="w-full"
-              multiple
-            />
-          </x-field>
-          <x-field label="Reason" required>
-            <x-select
-              v-model="leadDuplicateForm.lob_team_sub_selection"
-              :rules="[isRequired]"
-              class="w-full"
-              :options="[
-                { value: 'new_enquiry', label: 'New enquiry' },
-                { value: 'record_only', label: 'Record purposes only' },
-              ]"
-            />
-          </x-field>
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
-        </div>
-      </x-form>
-    </x-modal>
+      <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
+        <template #header> Duplicate Lead </template>
+        <x-form @submit="onCreateDuplicate" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-field label="LOBs" required>
+              <x-select
+                v-model="leadDuplicateForm.lob_team"
+                :options="
+                  duplicateAllowedLobs.map(lob => ({
+                    value: lob,
+                    label: lob,
+                  }))
+                "
+                :rules="[isRequired]"
+                placeholder="Select LOB For Duplication"
+                class="w-full"
+                multiple
+              />
+            </x-field>
+            <x-field label="Reason" required>
+              <x-select
+                v-model="leadDuplicateForm.lob_team_sub_selection"
+                :rules="[isRequired]"
+                class="w-full"
+                :options="[
+                  { value: 'new_enquiry', label: 'New enquiry' },
+                  { value: 'record_only', label: 'Record purposes only' },
+                ]"
+              />
+            </x-field>
+            <x-button
+              color="orange"
+              type="submit"
+              :loading="leadDuplicateForm.processing"
+            >
+              Create Duplicate
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
@@ -856,7 +794,7 @@ const linkEntity = () => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
-    />
+    />  
 
     <QuoteStatus
       :quote="quote"
@@ -875,33 +813,22 @@ const linkEntity = () => {
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode="quote.code"
+      :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="quote.payments"
-    />
-    <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
-      :payments="quote.payments"
-      :paymentDocument="
-        documentTypes.filter(
-          item =>
-            item.code === 'PPD' ||
-            item.code === 'PPDR' ||
-            item.code === 'PDPDR',
-        )
-      "
-      :quoteRequest="quote"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
+      :payments="quote.payments"   
+    />    
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="quote.payments"
+			:paymentDocument="documentTypes.filter(item => item.code === 'PPD' || item.code === 'PPDR' || item.code === 'PDPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-    />
+		/>
     <QuotePayments
       v-else
       :can="can"
@@ -923,6 +850,8 @@ const linkEntity = () => {
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
+    
+
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -933,10 +862,6 @@ const linkEntity = () => {
 
     <LeadHistory :quote="quote" />
 
-    <AuditLogs
-      :quote-type="quoteType"
-      :id="$page.props.quote.id"
-      :quoteCode="$page.props.quote.code"
-    />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
   </div>
 </template>
