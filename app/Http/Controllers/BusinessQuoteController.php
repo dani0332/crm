@@ -412,7 +412,6 @@ class BusinessQuoteController extends Controller
             $totalLeads += $item['data']['total_leads'];
         }
 
-        // dd($quotes);
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
