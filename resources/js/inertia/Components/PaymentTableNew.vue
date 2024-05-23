@@ -2795,7 +2795,7 @@ watch(
                       <div
                         v-if="
                           !page.props.linkedQuoteDetails ||
-                          props.quote.quote_status_id !=
+                          props.quoteRequest.quote_status_id !=
                             page.props.quoteStatusEnum.PolicyCancelled ||
                           page.props.linkedQuoteDetails?.childLeadsCount == 0
                         "
