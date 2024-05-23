@@ -654,7 +654,6 @@ if (! function_exists('addDaysExcludeWeekend')) {
     }
 }
 
-
 if (! function_exists('getIMLogo')) {
     function getIMLogo($isPDF = false)
     {
