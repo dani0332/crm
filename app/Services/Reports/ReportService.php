@@ -346,8 +346,8 @@ class ReportService extends BaseService
                         '
                     ),
                 )
-                ->leftJoin('users AS u', 'q.advisor_id', '=', 'u.id')
-                ->leftJoin('user_team AS ut', 'u.id', '=', 'ut.user_id')
+                ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
+                ->leftJoin('user_team AS ut', 'ut.user_id', '=', 'u.id')
                 ->where('q.quote_type_id', $personalQuoteType)
                 ->whereNotNull('q.advisor_id')
                 ->whereIn('q.advisor_id', $userIds)
