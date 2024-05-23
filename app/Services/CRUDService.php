@@ -378,10 +378,8 @@ class CRUDService extends BaseService
                 $this->updatePaymentStatus($entity);
             }
 
-            $quoteTypeId = constant(QuoteTypeId::class . '::' . $request->modelType);
-            
             QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
+                'quote_type_id' => collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType)),
                 'quote_request_id' => $entity->id,
                 'current_quote_status_id' => $request->leadStatus,
                 'previous_quote_status_id' => $previousQuoteStatus,
@@ -404,10 +402,11 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-
             if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
-                auth()->user()->hasAnyPermission(PermissionsEnum::HEALTH_QUOTES_ACCESS,
-                    PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)
+                auth()->user()->hasAnyPermission(
+                    PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                    PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS
+                )
             ) {
                 $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
                 $query->whereIn('ut.team_id', $authUserTeamsId);
@@ -609,7 +608,8 @@ class CRUDService extends BaseService
                         'amount' => $amount,
                         'created_by' => auth()->user()->email,
                         'is_manager_approved' => 1,
-                    ]);
+                    ]
+                );
                 $data = [
                     'uuid' => $quoteModel->uuid,
                     'type_id' => $quoteTypeId,
@@ -618,7 +618,6 @@ class CRUDService extends BaseService
                 $processResponse = $this->processCapturePayment($data);
 
                 return response($processResponse, 200);
-
             } else {
                 return response(['Payment not exist'], 403);
             }
@@ -626,6 +625,7 @@ class CRUDService extends BaseService
 
         return response(['Transaction does not exist'], 403);
     }
+
     public function processCapturePayment($data)
     {
         $planData = [

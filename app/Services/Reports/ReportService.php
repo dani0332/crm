@@ -285,19 +285,19 @@ class ReportService extends BaseService
             QuoteTypes::CYCLE,
             QuoteTypes::CORPLINE,
         ];
-        
+
         $productsName = $products->pluck('name')->toArray();
 
         // Extract the 'value' properties from the QuoteTypes enumeration
-        $quoteTypeValues = array_map(function($quoteType) {
+        $quoteTypeValues = array_map(function ($quoteType) {
             return $quoteType->value;
         }, $quoteTypes);
-        
+
         // Filter $productsName to include only those present in $quoteTypeValues
-        $filteredProductsName = array_filter($productsName, function($name) use ($quoteTypeValues) {
+        $filteredProductsName = array_filter($productsName, function ($name) use ($quoteTypeValues) {
             return in_array($name, $quoteTypeValues);
         });
-        
+
         // Re-index the filtered array to ensure consistent indexing
         $filteredProductsName = array_values($filteredProductsName);
 
@@ -484,7 +484,7 @@ class ReportService extends BaseService
             ->orderBy(DB::raw('DATE(cqr.transaction_approved_at)'));
 
         // Apply team filter
-        if (isset($request->teams) && count($request->teams) > 0) {
+        if ((isset($request->teams) && is_array($request->team)) && count($request->teams) > 0) {
             $totalPremiumQuery->whereIn('cqr.advisor_id', function ($teamsSubQuery) use ($request) {
                 $teamsSubQuery->select('ut.user_id')
                     ->from('user_team as ut')

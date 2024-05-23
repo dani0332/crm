@@ -215,9 +215,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
-        if($modelType == HealthQuote::class){
+        if ($modelType == HealthQuote::class) {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
-        }else {
+        } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
         }
         $result['leads_list'] = $modelQuery->paginate(10);
@@ -227,9 +227,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     } else {
 
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
-        if($modelType == HealthQuote::class){
+        if ($modelType == HealthQuote::class) {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
-        }else {
+        } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
         }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
@@ -815,6 +815,22 @@ if (! function_exists('getMyAlfredCampaign')) {
 
             return null;
         });
+    }
+}
+
+if (! function_exists('isMyAlfredCampaignEnabled')) {
+    function isMyAlfredCampaignEnabled($campaignId): bool
+    {
+        $campaign = getMyAlfredCampaign($campaignId);
+        if (! $campaign) {
+            return false;
+        }
+
+        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
+            return today()->between($campaign->data->startDate, $campaign->data->endDate);
+        }
+
+        return false;
     }
 }
 
