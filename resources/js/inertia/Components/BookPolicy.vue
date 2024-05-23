@@ -614,7 +614,9 @@ const calculateCommission = () => {
                   props.quote.quote_status_id ==
                     page.props.quoteStatusEnum.TransactionApproved ||
                   props.quote.quote_status_id ==
-                    page.props.quoteStatusEnum.PolicyIssued
+                    page.props.quoteStatusEnum.PolicyIssued ||
+                  props.quote.quote_status_id ==
+                    page.props.quoteStatusEnum.CancellationPending
                 "
               >
                 <x-button
