@@ -183,6 +183,8 @@ class CarQuoteService extends BaseService
                 //'cqr.prefill_plan_selected_at',
                 //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
+                //'cqr.aml_status_id',
+                DB::raw('GROUP_CONCAT(team.name) as team_name')
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -217,7 +219,10 @@ class CarQuoteService extends BaseService
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
                 $join->on('qvc.user_id', 'cqr.advisor_id');
-            });
+            })
+            ->leftJoin('user_team as ut', 'u.id', '=', 'ut.user_id')
+            ->leftJoin('teams as team', 'team.id', '=', 'ut.team_id')
+            ->groupBy('cqr.id');
 
         $this->exportQuery = DB::table('car_quote_request as cqr')
             ->select(
@@ -507,8 +512,10 @@ class CarQuoteService extends BaseService
                 $access['carAdvisorCanEditPaymentCancelledRefund'] = true;
             }
 
-            if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
-                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
                 $access['carAdvisorCanEdit'] = true;
                 $access['carAdvisorCanEditInsurer'] = true;
             }
@@ -520,8 +527,10 @@ class CarQuoteService extends BaseService
                 $access['carManagerCanEditInsurer'] = true;
             }
 
-            if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
-                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
                 $access['carManagerCanEdit'] = true;
                 $access['carManagerCanEditInsurer'] = true;
             }
@@ -912,6 +921,22 @@ class CarQuoteService extends BaseService
         if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
             CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr');
         }
+        if ($request->transaction_approved_dates) {
+
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+            $freshLoad = ! isset($request->page);
+            $startDate = isset($request->transaction_approved_dates) ?
+                Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+
+            $endDate = isset($request->transaction_approved_dates) ?
+                Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+            $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
+        }
+        if ($request->teams) {
+            $this->query->whereIn('team.id', $request->teams);
+        }
 
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
@@ -1072,6 +1097,7 @@ class CarQuoteService extends BaseService
             )
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('teams as team', 'u.team_id', '=', 'team.id')
             ->orderBy('advisor_id', 'ASC');
 
         if (! empty($CDBID)) {

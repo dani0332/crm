@@ -657,19 +657,11 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-        if(res.data.normalPlans[0].id){
-            availablePlansTable.data = res.data.normalPlans;
-            availableSeniorPlansTable.data = res.data.seniorPlans;
+      availablePlansTable.data = res.data.normalPlans;
+      availableSeniorPlansTable.data = res.data.seniorPlans;
 
-            normalPlansIds.ids = res.data.normalPlans.map(plan => plan.id);
-            seniorPlansIds.ids = res.data.seniorPlans.map(plan => plan.id);
-        }
-      else{
-            availablePlansTable.data = [];
-            availableSeniorPlansTable.data = [];
-            normalPlansIds.ids = [];
-            seniorPlansIds.ids = [];
-        }
+      normalPlansIds.ids = res.data.normalPlans.map(plan => plan.id);
+      seniorPlansIds.ids = res.data.seniorPlans.map(plan => plan.id);
     })
     .catch(err => {
       console.log(err);

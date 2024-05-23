@@ -1,7 +1,7 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
-defineProps({
+const props = defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
@@ -73,10 +73,10 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
+  { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'TYPE OF PET', value: 'type_of_pet', is_active: true },
   { text: 'BREED OF PET', value: 'breed_of_pet1', is_active: true },
@@ -492,10 +492,14 @@ watch(
           :href="route('pet-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
-          <span>{{ code }}</span>
+          <span>{{ code }} </span>
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
         <span v-else>{{ code }}</span>
+      </template>
+
+      <template #item-price_with_vat="{ price_with_vat }">
+        <span>{{ price_with_vat }}</span>
       </template>
 
       <template #item-advisor="{ advisor }">

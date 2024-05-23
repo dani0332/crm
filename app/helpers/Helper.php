@@ -204,18 +204,22 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 
     if ($modelType == HealthQuote::class && auth()->user()->isCarAdvisor() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
         $result['total_leads'] = $modelQuery->count();
-        $result['total_premium'] = $modelQuery->sum('price_with_vat');
+        $result['total_premium'] = $modelQuery->sum('premium');
         $result['leads_list'] = $modelQuery->paginate(10);
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif ($modelType == HealthQuote::class && auth()->user()->isCarManager() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
         $ids = app(HealthQuoteService::class)->walkTree(auth()->user()->id);
         $result['total_leads'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->count();
-        $result['total_premium'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->sum('price_with_vat');
+        $result['total_premium'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->sum('premium');
         $result['leads_list'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->paginate(10);
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
-        $result['total_premium'] = $modelQuery->sum('price_with_vat');
+        if ($modelType == HealthQuote::class) {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('premium');
+        } else {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
+        }
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
@@ -223,7 +227,11 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     } else {
 
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
-        $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        if ($modelType == HealthQuote::class) {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
+        } else {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
@@ -807,6 +815,38 @@ if (! function_exists('getMyAlfredCampaign')) {
 
             return null;
         });
+    }
+}
+
+if (! function_exists('isMyAlfredCampaignEnabled')) {
+    function isMyAlfredCampaignEnabled($campaignId): bool
+    {
+        $campaign = getMyAlfredCampaign($campaignId);
+        if (! $campaign) {
+            return false;
+        }
+
+        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
+            return today()->between($campaign->data->startDate, $campaign->data->endDate);
+        }
+
+        return false;
+    }
+}
+
+if (! function_exists('isMyAlfredCampaignEnabled')) {
+    function isMyAlfredCampaignEnabled($campaignId): bool
+    {
+        $campaign = getMyAlfredCampaign($campaignId);
+        if (! $campaign) {
+            return false;
+        }
+
+        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
+            return today()->between($campaign->data->startDate, $campaign->data->endDate);
+        }
+
+        return false;
     }
 }
 
