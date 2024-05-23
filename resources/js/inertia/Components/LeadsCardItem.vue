@@ -242,7 +242,11 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
           </template>
         </x-tooltip>
         <p class="text-xs">
-          {{ Number(price_with_vat).toLocaleString() }}
+          {{
+            premium && quoteType == 'Health'
+              ? Number(premium).toLocaleString()
+              : Number(price_with_vat).toLocaleString()
+          }}
         </p>
       </div>
 
