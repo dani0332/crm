@@ -22,6 +22,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
@@ -180,12 +181,12 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 info('carRevivalParentLead -'.$this->lead->uuid.'- capiResponseError - '.json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
-            info('DTT Exception : '.$exception->getMessage());
+            Log::error('DTT Exception CarRevivalLeadsCreationJob - '.$this->lead->id.' - Exception:'.$exception->getMessage());
         }
     }
 
     public function failed(Throwable $exception)
     {
-        info('CarRevivalLeadsCreationJob - : '.$this->lead->id.' Error: '.$exception->getMessage());
+        Log::error('CarRevivalLeadsCreationJob - : '.$this->lead->id.' Error: '.$exception->getMessage());
     }
 }
