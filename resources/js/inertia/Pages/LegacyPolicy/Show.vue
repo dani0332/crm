@@ -71,9 +71,6 @@ const submitLead = policy => {
       moveToImcrm(policy.policy?.policy_no, false);
       moveToImcrmModal.value = false;
     }
-
-    console.log('Link URL:', selectedLead.value.link);
-    console.log('Selected Document:', selectedLead.value.code);
     // Add any additional logic for submitting the lead here
   } else {
     console.log('No document selected. Cannot submit lead.');
@@ -276,7 +273,6 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
       validateAll: validateAll,
       isInertia: true,
     });
-    console.log(response);
     if (response?.data.status == 201) {
       notification.success({
         title: response.data.message,
