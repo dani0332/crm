@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -12,6 +13,7 @@ use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Team;
 use App\Models\Tier;
+use App\Services\ComprehensiveConversionDashboardService;
 use App\Services\DashboardService;
 use App\Services\TierService;
 use App\Traits\TeamHierarchyTrait;
@@ -30,6 +32,9 @@ class DashboardController extends Controller
     {
         $this->dashboardService = $dashboardService;
         $this->tierService = $tierService;
+
+        $comprehensiveDashboardPermissions = implode('|', PermissionsEnum::getComprehensiveDashboardPermissions());
+        $this->middleware(['permission:'.$comprehensiveDashboardPermissions], ['only' => ['renderComprehensiveDashboard']]);
     }
 
     /**
@@ -340,24 +345,24 @@ class DashboardController extends Controller
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
-        if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
-            $records->whereIn('tiers.id', $request->tier_filter);
+        if (isset($request->tiers) && $request->tiers != 'undefined') {
+            $records->whereIn('tiers.id', $request->tiers);
         } else {
             $records->whereIn('tiers.id', $compTiers);
         }
 
-        if (isset($request->team_filter) && $request->team_filter != 'undefined') {
+        if (isset($request->teams) && $request->teams != 'undefined') {
             $records->whereIn('users.id', function ($query) use ($request) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', 'user_team.team_id')
-                    ->whereIn('teams.id', $request->team_filter);
+                    ->whereIn('teams.id', $request->teams);
             });
 
-            if (isset($request->sub_team_filter) && $request->sub_team_filter != 'undefined') {
-                $records->whereIn('users.sub_team_id', $request->sub_team_filter);
+            if (isset($request->sub_teams) && $request->sub_teams != 'undefined') {
+                $records->whereIn('users.sub_team_id', $request->sub_teams);
             }
         } else {
             $organicTeam = Team::where('name', 'Organic')->first();
@@ -371,13 +376,17 @@ class DashboardController extends Controller
             });
         }
 
-        if (isset($request->userFilter) && $request->userFilter != 'null') {
-            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
+        if (isset($request->advisors) && $request->advisors != 'null') {
+            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->advisors, gettype($request->advisors) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
 
         if (isset($request->isCommercial) && $request->isCommercial != 'All') {
             $commecialValue = $request->isCommercial == 'true' ? true : false;
             $records->where('car_model.is_commercial', '=', $commecialValue);
+        }
+
+        if (isset($request->segment_filter) && $request->segment_filter != 'all') {
+            $records = $records->filterBySegment($request->segment_filter, quoteTypeCode::Car);
         }
 
         $labels = [];
@@ -407,6 +416,11 @@ class DashboardController extends Controller
             $labels[] = $record['batch_name'].'-('.$record['start_date'].' to '.$record['end_date'].')';
         }
 
+        if (empty($data)) {
+            $data[] = ['0.00'];
+            $labels = [' '];
+        }
+
         return isset($request->tier_filter) || isset($request->userFilter) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 
@@ -421,22 +435,22 @@ class DashboardController extends Controller
         return (count($userTeams) > 0 && count($teamsByProduct) > 0) ? array_intersect($userTeams, $teamsByProduct) : [];
     }
 
-    public function renderComprehensiveDashboard(Request $request)
+    public function renderComprehensiveDashboard(Request $request, ComprehensiveConversionDashboardService $comprehensiveConversionDashboardService)
     {
+        $lob = $request->lob ?? quoteTypeCode::Car;
+        if ($lob === quoteTypeCode::Car) {
+            $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request);
+        } else {
+            $comprehensiveDashboardStats = $comprehensiveConversionDashboardService->getReportData($request);
+        }
 
-        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
-        $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
-        $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
-        $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-        $teams = $teams->filter(function ($item) use ($commonTeams) {
-            return in_array($item->id, $commonTeams);
-        });
 
         return inertia('Dashboard/ComperhensiveConversion', [
-            'comprehensiveDashboardStats' => $comprehensiveDashboardStats,
-            'teams' => $teams,
-            'tiers' => $tiers,
+            'reportData' => $comprehensiveDashboardStats,
+            'filtersByLob' => $comprehensiveConversionDashboardService->getFiltersByLob(),
+            'filterOptions' => $comprehensiveConversionDashboardService->getFilterOptions(),
+            'defaultFilters' => $comprehensiveConversionDashboardService->getDefaultFilters(),
         ]);
     }
 

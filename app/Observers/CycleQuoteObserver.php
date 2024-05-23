@@ -4,12 +4,9 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\CycleQuote;
-use App\Traits\PersonalQuoteSyncTrait;
 
 class CycleQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
-
     /**
      * Handle the CycleQuote "updated" event.
      */
@@ -25,7 +22,5 @@ class CycleQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $cycleQuote->transaction_approved_at];
         }
-
-        $this->syncQuote($cycleQuote, $dirty);
     }
 }
