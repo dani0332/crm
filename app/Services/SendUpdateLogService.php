@@ -458,7 +458,7 @@ class SendUpdateLogService
         }
 
         return [
-            'broker_invoice_number' => $insuranceProviderCode.$insuranceProviderLeadCount,
+            'broker_invoice_number' => $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount),
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
             'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
