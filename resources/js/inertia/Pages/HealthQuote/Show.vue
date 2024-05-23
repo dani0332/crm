@@ -70,7 +70,7 @@ const compareDueDate = useCompareDueDate;
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 
-const showPlans = ref(props.hashCollapsibleStatuses);
+const showPlans = ref(!props.hashCollapsibleStatuses);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
