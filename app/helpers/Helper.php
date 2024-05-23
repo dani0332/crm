@@ -216,9 +216,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
         if ($modelType == HealthQuote::class) {
-            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('premium');
         } else {
-            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
         }
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
