@@ -1330,6 +1330,8 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 <div>
                   <x-input
                     type="number"
+                    min="0"
+                    add step="any"
                     v-model="bookingDetailsForm.price_vat_applicable"
                     @change="calculateCommission"
                     class="!mb-0 w-full"
@@ -1419,6 +1421,8 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 <div>
                   <x-input
                     type="number"
+                    min="0"
+                    add step="any"
                     v-model="bookingDetailsForm.commission_vat_applicable"
                     @change="calculateCommission"
                     class="!mb-0 w-full"
