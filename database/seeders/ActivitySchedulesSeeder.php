@@ -91,7 +91,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -100,7 +99,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -112,7 +110,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -120,7 +117,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 2],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                         
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
@@ -129,7 +125,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -138,7 +133,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -150,7 +144,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -158,7 +151,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 2],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
@@ -167,7 +159,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -176,7 +167,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -187,7 +177,6 @@ class ActivitySchedulesSeeder extends Seeder
                                         'activities' => [
                                             ['name' => 'Email Renewal Terms', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
@@ -196,7 +185,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 2],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 2],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -205,7 +193,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -214,7 +201,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -230,7 +216,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -238,7 +223,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 2],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
@@ -247,7 +231,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -256,7 +239,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -268,7 +250,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -276,7 +257,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 2],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
@@ -285,7 +265,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -294,7 +273,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -306,7 +284,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -314,7 +291,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 2],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
@@ -323,7 +299,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -332,7 +307,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -348,7 +322,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -356,7 +329,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 2],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
@@ -365,7 +337,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -374,7 +345,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -386,7 +356,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -394,7 +363,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 2],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
@@ -403,7 +371,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -412,7 +379,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -424,7 +390,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 1],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                            
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -432,7 +397,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '1st Call Follow-up', 'due_days' => 2],
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::ApplicationPending => [
@@ -441,7 +405,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                            
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -450,7 +413,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -460,7 +422,7 @@ class ActivitySchedulesSeeder extends Seeder
                                     QuoteStatusEnum::RenewalTermsReceived => [
                                         'activities' => [
                                             ['name' => 'Email Renewal Terms', 'due_days' => 2],
-                                            
+
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
@@ -469,7 +431,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 2],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 2],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::InNegotiation => [
@@ -478,7 +439,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 3],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::PaymentPending => [
@@ -487,7 +447,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Call Follow-up', 'due_days' => 3],
                                             ['name' => '3rd Call Follow-up', 'due_days' => 5],
 
-                                          
                                         ],
                                     ],
                                 ],
@@ -509,7 +468,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Follow-up', 'due_days' => 2],
                                             ['name' => '3rd Follow-up', 'due_days' => 2],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::AdditionalInformationRequested => [
@@ -517,7 +475,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Additional Information 1st Follow-up', 'due_days' => 1],
                                             ['name' => 'Additional Information 2nd Follow-up', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::QuoteRequested => [
@@ -525,7 +482,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
                                             ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
@@ -534,7 +490,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Follow-up', 'due_days' => 2],
                                             ['name' => '3rd Follow-up', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::FinalizingTerms => [
@@ -542,7 +497,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
                                             ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
 
-                                            
                                         ],
                                     ],
                                 ],
@@ -556,7 +510,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '3rd Reminder', 'due_days' => 4],
                                             ['name' => '4th Reminder', 'due_days' => 13],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::PendingRenewalInformation => [
@@ -565,7 +518,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Pending Renewal Information Reminder 2', 'due_days' => 2],
                                             ['name' => 'Pending Renewal Information Reminder 3', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::QuoteRequested => [
@@ -573,7 +525,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
                                             ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
 
-                                            
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
@@ -582,7 +533,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Follow-up', 'due_days' => 2],
                                             ['name' => '3rd Follow-up', 'due_days' => 2],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::FinalizingTerms => [
@@ -591,7 +541,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
                                             ['name' => 'Finalizing Terms 3rd Follow-up', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                 ],
@@ -608,7 +557,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Follow-up', 'due_days' => 2],
                                             ['name' => '3rd Follow-up', 'due_days' => 2],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::AdditionalInformationRequested => [
@@ -616,7 +564,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Additional Information 1st Follow-up', 'due_days' => 1],
                                             ['name' => 'Additional Information 2nd Follow-up', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::QuoteRequested => [
@@ -624,7 +571,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
                                             ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
 
-                                        
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
@@ -633,7 +579,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Follow-up', 'due_days' => 2],
                                             ['name' => '3rd Follow-up', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::FinalizingTerms => [
@@ -641,7 +586,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Finalizing Terms 1st Follow-up', 'due_days' => 2],
                                             ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
 
-                                            
                                         ],
                                     ],
                                 ],
@@ -655,7 +599,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '3rd Reminder', 'due_days' => 4],
                                             ['name' => '4th Reminder', 'due_days' => 13],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::PendingRenewalInformation => [
@@ -664,7 +607,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Pending Renewal Information Reminder 2', 'due_days' => 2],
                                             ['name' => 'Pending Renewal Information Reminder 3', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                     QuoteStatusEnum::QuoteRequested => [
@@ -672,7 +614,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
                                             ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
 
-                                            
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
@@ -681,7 +622,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => '2nd Follow-up', 'due_days' => 2],
                                             ['name' => '3rd Follow-up', 'due_days' => 2],
 
-                                          
                                         ],
                                     ],
                                     QuoteStatusEnum::FinalizingTerms => [
@@ -690,7 +630,6 @@ class ActivitySchedulesSeeder extends Seeder
                                             ['name' => 'Finalizing Terms 2nd Follow-up', 'due_days' => 2],
                                             ['name' => 'Finalizing Terms 3rd Follow-up', 'due_days' => 2],
 
-                                           
                                         ],
                                     ],
                                 ],

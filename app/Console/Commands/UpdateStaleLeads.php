@@ -67,7 +67,7 @@ class UpdateStaleLeads extends Command
 
             info('------------------- Update Stale Leads Command - Updating - '.now().' : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
-            ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))->endOfDay())
+                ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))->endOfDay())
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
                     $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
                 })
@@ -87,7 +87,7 @@ class UpdateStaleLeads extends Command
             info('------------------- Updating Lost Status on Stale Leads for: '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::with('activities')
                 ->whereNotNull('stale_at')
-            ->where('stale_at', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->endOfDay())
+                ->where('stale_at', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->endOfDay())
                 ->chunkById(1000, function ($staleLeads) use ($eligibleQuoteType, $lostReasonId) {
                     foreach ($staleLeads as $staleLead) {
 
