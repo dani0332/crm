@@ -412,9 +412,16 @@ const getPaymentTypeLabel = (code) => {
 };
 
 // Define payment collection types
-const collectionTypes = paymentLookups.paymentCollectionTypes.map(item => ({
-  value: item.code,  label: item.text,  tooltip: item.description,
-}));
+const collectionTypes = computed(() => {  
+  if( paymentMethodsForm.status != 'view' && !isBrokerHavePermission()) {   
+      return paymentLookups.paymentCollectionTypes .filter(item => item.code !== 'broker').map(item => ({
+        value: item.code,  label: item.text,  tooltip: item.description,
+      }));
+  }  
+  return paymentLookups.paymentCollectionTypes.map(item => ({
+    value: item.code,  label: item.text,  tooltip: item.description,
+  }));
+});
 
 // Define frequency types
 const frequencyTypes = ref(paymentLookups.paymentFrequencyTypes.map(item => ({
@@ -885,6 +892,15 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
     }
   }
 };
+// Function to verify if the broker has permission to add payment
+const isBrokerHavePermission = () => {
+  const hasPermissionToBroker = can(permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD);
+  const hasPermissionToTermFrequencies = can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD);      
+  if(!hasPermissionToBroker && !hasPermissionToTermFrequencies){
+    return false;
+  }
+  return true;
+};
 
 const addPaymentModal = () => {
 
@@ -929,9 +945,9 @@ const addPaymentModal = () => {
   }
 
   if( props.quoteType === 'Health' || props.quoteSubType === 'Group Medical' || 
-      props.quoteType === 'Life' || props.quoteType === 'Marine'){
+      props.quoteType === 'Life' || props.quoteType === 'Marine' || !isBrokerHavePermission() ){
     paymentMethodsForm.collection_type = 'insurer';
-  } else {
+  } else {    
     paymentMethodsForm.collection_type = 'broker';
   }
   
