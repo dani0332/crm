@@ -230,7 +230,12 @@ const filters = reactive({
   transaction_approved_dates: page.props.transaction_approved_dates || '',
 });
 
-const teamUsers = ref([]);
+const teamUsers = hasRole(rolesEnum.LeadPool) || hasRole(rolesEnum.Admin) ? ref([
+{
+    id: -1,
+    name: 'UnAssigned',
+}
+]) :  ref([]);
 
 const loader = reactive({
   table: false,
