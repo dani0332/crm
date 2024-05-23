@@ -2108,29 +2108,21 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
-// copied from test. 
+// Payment's approve or capture button logic enhancements only for Send update
+// Payment status is 'Authorised', 'Paid', 'Pending' (when collected by insurer} and 'Credit approved' - Approve or Capture button should be available
 const validateAccessForSendUpdate = ref(false);
-if (props.sendUpdate) {
+if (props.sendUpdate) { 
   const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
   const allowedPaymentStatus = [
     props.paymentStatusEnum.AUTHORISED,
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PENDING,
-  ];
+  ]; 
 
-  if (
-    props.payments.length > 0 &&
-    paymentsDetails.collection_type == 'insurer'
-  ) {
-    validateAccessForSendUpdate.value =
-      allowedPaymentStatus.includes(paymentsDetails.payment_status_id) &&
-      paymentsDetails.credit_approval !== null;
-  } else if (
-    props.payments.length > 0 &&
-    paymentsDetails.collection_type == 'broker'
-  ) {
-    validateAccessForSendUpdate.value =
-      paymentsDetails.payment_status_id == props.paymentStatusEnum.PAID;
+  if (props.payments.length > 0 && paymentsDetails.collection_type == 'insurer') {
+    validateAccessForSendUpdate.value = allowedPaymentStatus.includes(paymentsDetails.payment_status_id) && paymentsDetails.credit_approval !== null;
+  } else if(props.payments.length > 0 && paymentsDetails.collection_type == 'broker') {
+    validateAccessForSendUpdate.value = paymentsDetails.payment_status_id == props.paymentStatusEnum.PAID;
   }
 }
 
@@ -2433,23 +2425,7 @@ watch(
   },
 );
 
-// Payment's approve or capture button logic enhancements only for Send update
-// Payment status is 'Authorised', 'Paid', 'Pending' (when collected by insurer} and 'Credit approved' - Approve or Capture button should be available
-const validateAccessForSendUpdate = ref(false);
-if (props.sendUpdate) { 
-  const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
-  const allowedPaymentStatus = [
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.PAID,
-    props.paymentStatusEnum.PENDING,
-  ]; 
 
-  if (props.payments.length > 0 && paymentsDetails.collection_type == 'insurer') {
-    validateAccessForSendUpdate.value = allowedPaymentStatus.includes(paymentsDetails.payment_status_id) && paymentsDetails.credit_approval !== null;
-  } else if(props.payments.length > 0 && paymentsDetails.collection_type == 'broker') {
-    validateAccessForSendUpdate.value = paymentsDetails.payment_status_id == props.paymentStatusEnum.PAID;
-  }
-}
 
 </script>
 
