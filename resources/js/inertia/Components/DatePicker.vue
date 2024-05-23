@@ -109,7 +109,7 @@ const onlyCurentYear = () => {
     text-input
     :month-picker="monthPicker"
   >
-    <template #dp-input="{ value, onClear, onInput, onBlur }">
+    <template #dp-input="{ value, onClear, onInput, onBlur, onEnter }">
       <x-input
         type="text"
         :value="value"
@@ -123,6 +123,7 @@ const onlyCurentYear = () => {
         :error="props.customError ? props.customError : ''"
         @update:modelValue="onInput"
         @blur="onBlur"
+        @keydown.enter.prevent="onEnter"
         :readonly="props.onlySelect"
       />
       <div
