@@ -434,11 +434,6 @@ const sendUpdateValidationURL = computed(() => {
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
 
-onMounted(() => {
-  console.log('working');
-  console.log(sendUpdateValidationURL.value);
-});
-
 const loader = reactive({
   sendUpdateSectionBtn: false,
   sendUpdate: false,
@@ -548,6 +543,7 @@ function sendUpdate(prePaymentCheck = true) {
       sendUpdateId: props.sendUpdateLog.id,
       quoteRefId: props.realQuote.id,
       paymentValidated: true,
+      reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
     })
     .then(response => {
       loader.sendUpdate = false;
