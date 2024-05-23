@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -16,16 +17,22 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
+use App\Events\LeadsCount;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
+use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
+use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\LostReasonRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
@@ -71,12 +78,19 @@ class BusinessQuoteController extends Controller
     public function index(Request $request)
     {
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
+            return $value['id'] != QuoteStatusEnum::Lost;
+        })->values();
+
         $gridData = $this->businessQuoteService->getGridData($this->genericModel, $request);
+        $count = $gridData->count();
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+        $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed'));
+        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount'));
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -122,9 +136,12 @@ class BusinessQuoteController extends Controller
     public function store(StoreBusinessQuoteRequest $request)
     {
         $record = $this->businessQuoteService->saveBusinessQuote($request);
+
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
         } else {
+
+            event(new LeadsCount(BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true)));
             if (! isset($record->quoteUID)) {
                 return redirect('quotes/business')->with('success', 'Lead has been stored');
             } else {
@@ -223,6 +240,8 @@ class BusinessQuoteController extends Controller
         $idDocumentType = $this->lookupService->getEntityDocumentTypes();
         $issuancePlace = $this->lookupService->getIssuancePlaces();
         $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+        $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
+        $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('CorpLineQuote/Show', [
@@ -247,7 +266,7 @@ class BusinessQuoteController extends Controller
             'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
-            'quoteDocuments' => array_values($quoteDocuments->toArray()),
+            'documents' => fn () => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
@@ -289,6 +308,8 @@ class BusinessQuoteController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
+            'noteDocumentType' => $noteDocumentType,
+            'quoteNotes' => $quoteNotes,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
@@ -346,20 +367,61 @@ class BusinessQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
-        $quotes = [];
-        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
-        $leadStatuses = $leadStatuses->filter(function ($item) {
-            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::QUALIFIED || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::MISSING_DOCUMENTS || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING;
-        })->toArray();
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::NewLead, $request)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::Allocated, $request)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::FollowedUp, $request)],
+            ['id' => QuoteStatusEnum::ProposalFormRequested, 'title' => quoteStatusCode::PROPOSAL_FORM_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::ProposalFormRequested, $request)],
+            ['id' => QuoteStatusEnum::ProposalFormReceived, 'title' => quoteStatusCode::PROPOSAL_FORM_RECEIVED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::ProposalFormReceived, $request)],
+            ['id' => QuoteStatusEnum::PendingRenewalInformation, 'title' => quoteStatusCode::PENDING_RENEWAL_INFORMATION, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PendingRenewalInformation, $request)],
+            ['id' => QuoteStatusEnum::AdditionalInformationRequested, 'title' => quoteStatusCode::ADDITIONAL_INFORMATION_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::AdditionalInformationRequested, $request)],
+            ['id' => QuoteStatusEnum::QuoteRequested, 'title' => quoteStatusCode::QUOTE_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::QuoteRequested, $request)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::FinalizingTerms, 'title' => quoteStatusCode::FINALIZING_TERMS, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::FinalizingTerms, $request)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PolicyIssued, $request)],
+        ];
 
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-            return $item;
-        }, $leadStatuses);
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        if (array_intersect([TeamNameEnum::CORPLINE_TEAM], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::Allocated,
+                QuoteStatusEnum::FollowedUp,
+                QuoteStatusEnum::PendingRenewalInformation,
+            ])->values()->toArray();
+        } elseif (array_intersect([TeamNameEnum::CORPLINE_RENEWALS], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::NewLead,
+                QuoteStatusEnum::ProposalFormRequested,
+                QuoteStatusEnum::ProposalFormReceived,
+                QuoteStatusEnum::AdditionalInformationRequested,
+            ])->values()->toArray();
+        }
+
+        $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::CORPLINE);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Corpline);
+        $insuranceTypeOptions = app(DropdownSourceService::class)->getDropdownSource('business_type_of_insurance_id', QuoteTypeId::Corpline);
+
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
 
         return inertia('CorpLineQuote/Cards', [
-            'quotes' => array_values($leadStatuses),
+            'quotes' => $quotes,
+            'quoteStatusEnum' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
+            'insuranceTypeOptions' => $insuranceTypeOptions,
+            'quoteTypeId' => QuoteTypes::BUSINESS->id(),
+            'quoteType' => QuoteTypes::BUSINESS->value,
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true),
         ]);
     }
 }

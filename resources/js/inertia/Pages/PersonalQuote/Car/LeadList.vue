@@ -654,7 +654,9 @@ onMounted(() => {
             "
             size="sm"
             color="emerald"
-            :href="`/car/leads-export-plan/${genericRequestEnum.EXPORT_PLAN_DETAIL}?${objToUrl(filters)}`"
+            :href="`/car/leads-export-plan/${
+              genericRequestEnum.EXPORT_PLAN_DETAIL
+            }?${objToUrl(filters)}`"
             class="justify-self-start mr-3"
           >
             Extract leads and plan detail
@@ -752,6 +754,7 @@ onMounted(() => {
           {{ code }}
         </Link>
       </template>
+
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
