@@ -495,7 +495,7 @@ watch(
           :href="route('home.show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
-          <span>{{ code }} {{ price_with_vat }}</span>
+          <span>{{ code }}</span>
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
       </template>

@@ -505,7 +505,7 @@ class ReportService extends BaseService
             ->orderBy(DB::raw('DATE(cqr.transaction_approved_at)'));
 
         // Apply team filter
-        if ((isset($request->teams) && is_array($request->team)) && count($request->teams) > 0) {
+        if ((isset($request->teams)) && count($request->teams) > 0) {
             $totalPremiumQuery->whereIn('cqr.advisor_id', function ($teamsSubQuery) use ($request) {
                 $teamsSubQuery->select('ut.user_id')
                     ->from('user_team as ut')
@@ -519,7 +519,14 @@ class ReportService extends BaseService
             $totalPremiumQuery->whereIn('cqr.advisor_id', $request->userIds);
         }
 
+        $startTime = microtime(true);
+        $result = $totalPremiumQuery->get();
+        $endTime = microtime(true);
+
+        info('totalPremiumQuery took '.number_format($endTime - $startTime, 4).' seconds to run');
+
+        //dd($totalPremiumQuery->toSql(), $totalPremiumQuery->getBindings());
         // Execute the query and return the result
-        return $totalPremiumQuery->get();
+        return $result;
     }
 }
