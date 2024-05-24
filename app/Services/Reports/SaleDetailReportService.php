@@ -45,12 +45,14 @@ class SaleDetailReportService extends ManagementReport
                 'personal_quotes.vat',
                 'personal_quotes.price_vat_not_applicable',
                 'p.discount_value as discount',
-                DB::raw('FORMAT(((personal_quotes.price_vat_applicable + personal_quotes.price_vat_not_applicable + personal_quotes.vat) - p.discount_value),2) as total_price'),
+                DB::raw('FORMAT(((
+                    IFNULL( personal_quotes.price_vat_applicable , 0 ) +
+                    IFNULL( personal_quotes.price_vat_not_applicable , 0 )  +
+                    IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )),2) as total_price'),
                 DB::raw('FORMAT(p.commission_vat_applicable,2) as commission_vat_applicable'),
                 DB::raw('FORMAT(p.commission_vat,2) as commission_vat'),
                 DB::raw('FORMAT(p.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
-                DB::raw('FORMAT((commission_vat_applicable + commission_vat),2) as total_commission'),
-                DB::raw('UPPER(p.collection_type) as collects'),
+                DB::raw('FORMAT(( IFNULL( commission_vat_applicable , 0 ) + IFNULL( commission_vat , 0 )),2) as total_commission'),                DB::raw('UPPER(p.collection_type) as collects'),
                 'tax_invoice_number as insurer_tax_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
