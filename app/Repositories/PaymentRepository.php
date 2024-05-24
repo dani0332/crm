@@ -112,8 +112,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
             // Count will be iterative for each payment added through the send update or Child lead
-            $paymentCount = $this->getPaymentsCountByLeadCode($quoteModel->code);
-            $paymentInformation['code'] = ($paymentCount > 0) ? $quoteModel->code.'-'.$paymentCount : $quoteModel->code;
+            $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+            $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
+            $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
 
             if ($request->send_update_id) {
                 // it will make $quoteModel as SendUpdateLog model.
