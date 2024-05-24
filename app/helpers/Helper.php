@@ -801,8 +801,8 @@ if (! function_exists('getManagersByUser')) {
 
 }
 
-if (! function_exists('roundNumberTo2Decimal')) {
-    function roundNumberTo2Decimal($number)
+if (! function_exists('roundNumber')) {
+    function roundNumber($number)
     {
         return round($number, 2);
     }
