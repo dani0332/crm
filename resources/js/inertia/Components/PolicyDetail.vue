@@ -18,6 +18,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  payments: {
+    type: Array,
+    default: [],
+  },
   expanded: {
     required: false,
     type: Boolean,
@@ -27,8 +31,6 @@ const props = defineProps({
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
-const hasRole = role => useHasRole(role);
-const rolesEnum = page.props.rolesEnum;
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -171,6 +173,13 @@ const onUpdatePolicyDetails = isValid => {
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
     onSuccess: () => {
+      if (page.props?.bookPolicyDetails?.isLackingOfPayment){
+        notification.error({
+          title: 'Action Needed: Please revise payment details to reflect plan changes.',
+          position: 'top',
+          timeout: 10000
+        });
+      }
       policyDetailsState.isEditing = false;
     },
     onError: errors => {

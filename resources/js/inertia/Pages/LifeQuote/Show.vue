@@ -1222,7 +1222,8 @@ watch(
       "
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-    />
+      :bookPolicyDetails="bookPolicyDetails"
+		/>
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -1236,8 +1237,11 @@ watch(
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <QuoteDocuments

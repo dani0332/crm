@@ -810,6 +810,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :bookPolicyDetails="bookPolicyDetails"
 		/>
 
     <QuotePayments

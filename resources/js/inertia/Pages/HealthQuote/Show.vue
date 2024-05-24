@@ -3030,29 +3030,31 @@ watch(
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Health"
-			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="
-      documentTypes.QUOTE.filter(
-        item =>
-          item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR',
-      )
-    "
-    :quoteRequest="quoteRequest"
-    :paymentStatusEnum="paymentStatusEnum"
-    :paymentTooltipEnum="paymentTooltipEnum"
-    :paymentMethods="
-      paymentMethods.map(pm => {
-        return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-      })
-    "
-    :storageUrl="storageUrl"
-    :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
-    :isAmlClearedForPayment="isAmlClearedForPayment"
-  />
-
+      v-if="isNewPaymentStructure"
+      quoteType="Health"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes.QUOTE.filter(
+          item =>
+            item.code === 'HPD' ||
+            item.code === 'HPDR' ||
+            item.code === 'HDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+      :bookPolicyDetails="bookPolicyDetails"
+    />
+    
   <PaymentTable
     v-else
     :payments="payments"

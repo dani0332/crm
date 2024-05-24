@@ -933,7 +933,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-    />
+      :bookPolicyDetails="bookPolicyDetails"
+		/>
     <QuotePayments
       v-else
       :can="can"
@@ -968,8 +969,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="pet"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <QuoteDocuments

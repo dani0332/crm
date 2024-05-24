@@ -928,7 +928,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-    />
+      :bookPolicyDetails="bookPolicyDetails"
+		/>
 
     <QuotePayments
       v-else

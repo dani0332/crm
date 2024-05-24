@@ -13,6 +13,9 @@ const paymentLookups = page.props.paymentLookups;
 const documentTypeEnum = page.props.documentTypeEnum;
 const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+const paymentAllocationStatus = page.props.paymentAllocationStatus;
+
 const props = defineProps({
   payments: Array,
   can: Object,
@@ -47,6 +50,10 @@ const props = defineProps({
   isAmlClearedForPayment: {
     type: Boolean,
     default: false,
+  },
+  bookPolicyDetails: {
+    type: Array,
+    default: [],
   },
 });
 
@@ -129,6 +136,7 @@ if (props.sendUpdate) {
     ? props.quoteRequest.premium
     : props.quoteRequest.price_with_vat;
 }
+
 const totalPrice = ref(initialAmount.value); // Initial total price
 const totalAmount = ref(initialAmount.value); // Initial total price
 
@@ -1416,9 +1424,8 @@ const editPaymentModal = (
     paymentMethodsForm.collection_amount = '';
     paymentMethodsForm.payment_method = payment.payment_method.code;
     paymentMethodsForm.bank_reference_number = '';
-    splitPaymentRecord.value = payment.payment_splits.find(
-      item => item.sr_no === sr_no,
-    );
+    splitPaymentRecord.value = payment.payment_splits.find(item => item.sr_no === sr_no);
+    paymentMethodsForm.system_adjusted_discount = payment.system_adjusted_discount;
   }
 
   //paymentMethodsForm.masterPaymentStatus = payment.
@@ -1567,17 +1574,17 @@ const editPaymentModal = (
       isFieldReadonly.value = false;
     }
   }
-
-  if (
-    (payment.discount_type === 'family_employee_discount' ||
-      payment.discount_type === 'employee_discount') &&
-    payment.discount_value > 0
-  ) {
-    discountValue.value = payment.discount_value;
-    calculatedDiscount.value = payment.discount_value;
-  }
-
-  //Assign plan for Travel
+  if (paymentMethodsForm.status == 'view'){
+    totalPrice.value = payment.total_price;
+    totalAmount.value = payment.total_price-payment.discount_value;
+    }
+  if(
+    (payment.discount_type==='family_employee_discount' || payment.discount_type==='employee_discount')
+    && payment.discount_value>0
+    ){
+      discountValue.value = payment.discount_value;
+      calculatedDiscount.value = payment.discount_value;
+  }  //Assign plan for Travel
   if (
     props.quoteType === 'Travel' &&
     (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
@@ -2123,13 +2130,13 @@ const uploadDocument = (doc, files, count) => {
 
 // copied from test.
 const validateAccessForSendUpdate = ref(false);
-if (props.sendUpdate) { 
+if (props.sendUpdate) {
   const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
   const allowedPaymentStatus = [
     props.paymentStatusEnum.AUTHORISED,
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PENDING,
-  ]; 
+  ];
 
   if (props.payments.length > 0 && paymentsDetails.collection_type == 'insurer') {
     validateAccessForSendUpdate.value = allowedPaymentStatus.includes(paymentsDetails.payment_status_id) && paymentsDetails.credit_approval !== null;
@@ -2141,9 +2148,9 @@ if (props.sendUpdate) {
 const getCaptureValidation = computed(() => {
   return payment => {
     // 6:AML Screening Cleared, 32:Transaction Declined, 15:Transaction Approved
-    if ( props.payments.length > 0 && (payment.total_price === (payment.total_amount + payment.discount_value)) && ((( 
-      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared || 
-      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined || 
+    if ( props.payments.length > 0 && (payment.total_price === (payment.total_amount + payment.discount_value)) && (((
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined ||
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved
     ) && props.quoteRequest.kyc_decision === 'Complete' ) ||
       props.quoteType === 'Travel' || //skip AML & KYC for travel
@@ -2402,6 +2409,46 @@ watch(
   },
 );
 
+const paymentAllocationStatusTooltip = payment_allocation_status => {
+  // First convert to upper case as some of the values are in lower case & some of without space
+  payment_allocation_status = formatString(payment_allocation_status);
+  // Then converting to accordingly to match with the enum values
+  payment_allocation_status = payment_allocation_status.replace(/ /g, "_").toLowerCase();
+  if(payment_allocation_status ==  paymentAllocationStatus.NOT_ALLOCATED){
+    return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED;
+  }
+  else if(payment_allocation_status == paymentAllocationStatus.PARTIALLY_ALLOCATED){
+    return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED;
+  }
+  else if(payment_allocation_status == paymentAllocationStatus.FULLY_ALLOCATED){
+    return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED;
+  } else if (payment_allocation_status == paymentAllocationStatus.UNPAID) {
+    return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
+  }
+  return '';
+}
+
+const discountTypeLabel = computed(() => {
+  let systemAplliedDiscount = '';
+  if (paymentMethodsForm.status === 'view' &&
+      (paymentMethodsForm.discount === 'system_adjusted_discount' ||
+      paymentMethodsForm.system_adjusted_discount > 0))
+  {
+    systemAplliedDiscount = 'System adjusted discount';
+  }
+  let discountType = discountTypes.find(item => item.value === paymentMethodsForm.discount);
+  if (discountType) {
+    if (systemAplliedDiscount !== '') {
+      return discountType.label+' + '+systemAplliedDiscount;
+    } else {
+      return discountType.label;
+    }
+  } else if (systemAplliedDiscount !== '') {
+    return systemAplliedDiscount;
+  } else {
+    return 'N/A';
+  }
+});
 // Watch for Ecommerce Price changes
 watch(
   () => props.eCommercePrice,
@@ -2437,6 +2484,12 @@ watch(
 );
 
 
+
+let is_lacking_payment = ref(page.props?.bookPolicyDetails?.isLackingOfPayment || false);
+
+watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
+  is_lacking_payment.value = newVal || false;
+});
 
 </script>
 
@@ -2535,9 +2588,7 @@ watch(
       </div>
     </div>
     <div class="vue3-easy-data-table tablefixed custom-height">
-      <div
-        class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height"
-      >
+      <div class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div">
         <table>
           <thead class="vue3-easy-data-table__header">
             <tr>
@@ -2696,24 +2747,50 @@ watch(
                   <td>{{ formatAmount(item.total_amount) }}</td>
                   <td>{{ formatAmount(item.captured_amount) }}</td>
                   <td>{{ formatString(item.payment_status.text) }}</td>
-                  <td>
-                    {{
-                      item.payment_allocation_status !== null
-                        ? formatString(item.payment_allocation_status)
-                        : ''
-                    }}
-                  </td>
+                 <td>
+                  <x-tooltip position="left">
+                    <span class="border-b border-dotted border-black ">
+                     {{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}
+                    </span>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ paymentAllocationStatusTooltip(item.payment_allocation_status) }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
                   <td>
                     <div class="flex gap-2">
-                      <x-button
-                        v-if="can(permissionEnum.PaymentsEdit)"
-                        size="xs"
-                        color="primary"
-                        outlined
-                        @click="editPaymentModal(item, 0, 0, 0)"
-                      >
-                        Edit
-                      </x-button>
+                      <template v-if="is_lacking_payment">
+                        <x-tooltip position="left" class="arrow-r">
+                          <x-badge size="xs" color="error" outlined offset-x="-8" offset-y="-10">
+                            <x-button
+                              v-if="can(permissionEnum.PaymentsEdit)"
+                              size="xs"
+                              color="primary"
+                              outlined
+                              @click="editPaymentModal(item, 0, 0, 0)"
+                            >
+                              Edit
+                            </x-button>
+                            <template #content>!</template>
+                          </x-badge>
+                          <template #tooltip>
+                            Action Needed: Please revise payment <br /> details to reflect plan changes.
+                          </template>
+                        </x-tooltip>
+                      </template>
+                      <template v-else>
+                        <x-button
+                          v-if="can(permissionEnum.PaymentsEdit)"
+                          size="xs"
+                          color="primary"
+                          outlined
+                          @click="editPaymentModal(item, 0, 0, 0)"
+                        >
+                          Edit
+                        </x-button>
+                      </template>
                       <template v-if="can(permissionEnum.ApprovePayments)">
                         <x-button
                           v-if="
@@ -2775,11 +2852,16 @@ watch(
                       {{ formatString(splitPayment.payment_status.text) }}
                     </td>
                     <td>
-                      {{
-                        splitPayment.payment_allocation_status !== null
-                          ? formatString(splitPayment.payment_allocation_status)
-                          : ''
-                      }}
+                      <x-tooltip position="top">
+                        <span class="border-b border-dotted border-black ">
+                          {{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}
+                        </span>
+                        <template #tooltip>
+                          <span class="custom-tooltip-content">
+                            {{ paymentAllocationStatusTooltip(splitPayment.payment_allocation_status) }}
+                          </span>
+                        </template>
+                      </x-tooltip>
                     </td>
                     <td>
                       <div
@@ -3123,11 +3205,7 @@ watch(
             </x-tooltip>
             <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                {{
-                  discountTypes.find(
-                    item => item.value === paymentMethodsForm.discount,
-                  )?.label || 'N/A'
-                }}
+                {{ discountTypeLabel }}
               </span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span
@@ -4549,6 +4627,13 @@ watch(
   text-transform: none;
 }
 .custom-height {
-  min-height: 160px;
+  min-height: 185px;
+}
+.manage-payment-table-parent-div{
+  overflow-y: hidden;
+}
+.manage-payment-table-parent-div::-webkit-scrollbar {
+  width: 6px;
+  background-color: #C1C1C1;
 }
 </style>

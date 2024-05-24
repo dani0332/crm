@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -93,6 +94,7 @@ class HandleInertiaRequests extends Middleware
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
+            'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
         ];
     }
 

@@ -2405,6 +2405,7 @@ watch(
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="travel"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2659,6 +2660,7 @@ watch(
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :bookPolicyDetails="bookPolicyDetails"
 		/>
     <PaymentTable
       v-else

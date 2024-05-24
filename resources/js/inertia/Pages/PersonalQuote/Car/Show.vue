@@ -99,6 +99,7 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
+
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
   id: page.props.record.plan_id,
@@ -3479,7 +3480,8 @@ watch(
       "
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-    />
+      :bookPolicyDetails="bookPolicyDetails"
+		/>
     <PaymentTable
       v-else
       :payments="payments"
@@ -3579,6 +3581,7 @@ watch(
       :record="record"
       :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">

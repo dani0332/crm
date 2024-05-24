@@ -4,6 +4,9 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -278,6 +281,10 @@ class CentralController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
             ]);
 
+            (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
+
+            $this->handleInSufficientPayment($request, $payment);
+
             return response()->json(['message' => $response['message']], 200);
         }
     }
@@ -330,6 +337,14 @@ class CentralController extends Controller
         return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId));
     }
 
+    private function handleInsufficientPayment($request, $payment)
+    {
+        if ($request->is_send_policy && $payment) {
+            $payment->transaction_payment_status = $request->transaction_payment_status;
+            $payment->save();
+        }
+    }
+
     // Update total price
     public function updateTotalPrice(UpdateTotalPriceRequest $request)
     {
@@ -365,5 +380,4 @@ class CentralController extends Controller
     {
         return (new SplitPaymentService())->generateSplitPaymentLink($request);
     }
-
 }
