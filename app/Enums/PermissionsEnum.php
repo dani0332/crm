@@ -280,4 +280,6 @@ final class PermissionsEnum extends Enum
     public const SEND_POLICY_TO_CUSTOMER_BUTTON = 'send-policy-to-customer-button';
     public const SEND_AND_BOOK_POLICY_BUTTON = 'send-and-book-policy-button';
     public const BOOK_POLICY_BUTTON = 'book-policy-button';
+    public const SEND_AND_BOOK_UPDATE_BUTTON = 'send-and-book-update-button';
+    public const BOOK_UPDATE_BUTTON = 'book-update-button';
 }

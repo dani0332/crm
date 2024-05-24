@@ -428,13 +428,6 @@ function convertToNumber(value) {
   return -parseFloat(value.toString().replace(/,/g, ''));
 }
 
-const sendUpdateButton = computed(() => {
-  return (
-    props.updateBtn &&
-    can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON)
-  );
-});
-
 const modals = reactive({
   sendConfirm: false,
   isConfirmed: false,
@@ -444,6 +437,18 @@ const modals = reactive({
 
 const confirmationCheck = ref(false);
 const isStating = ref(false);
+
+const sendUpdatePermissionCheck = computed(() => {
+  if (props.updateBtn === sendUpdateStatusEnum.SU) {
+    return ! can(page.props.permissionsEnum.BOOK_UPDATE_BUTTON);
+  } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
+    return ! can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
+  } else if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
+    return ! can(page.props.permissionsEnum.SEND_AND_BOOK_UPDATE_BUTTON);
+  }
+
+  return true;
+});
 
 const sendUpdateValidationURL = computed(() => {
   return (props.updateBtn === sendUpdateStatusEnum.SU || props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER)
@@ -1536,9 +1541,10 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
               <x-button
                 size="sm"
                 color="orange"
-                v-if="sendUpdateButton"
+                v-if="props.updateBtn"
                 :loading="loader.sendUpdateSectionBtn"
                 @click="sendUpdateValidation"
+                :disabled="sendUpdatePermissionCheck"
               >
                 {{ props.updateBtn }}
               </x-button>
