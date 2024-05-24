@@ -26,7 +26,8 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
                 DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
-                'personal_quotes.source',
+                'personal_quotes.source', 'personal_quotes.code', 'personal_quotes.uuid',
+                'bqr.uuid', 'bqr.code', 'btoi.text',
                 't.name as team',
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
@@ -62,7 +63,7 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
             ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id')
-            ->leftJoin('business_quote_request as bqr', 'bqr.code', '=', 'personal_quotes.code')
+            ->leftJoin('business_quote_request as bqr', 'bqr.uuid', '=', 'personal_quotes.uuid')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'bqr.business_type_of_insurance_id');
 
         $this->applyFilters($query, $request);
