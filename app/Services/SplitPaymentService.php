@@ -409,27 +409,27 @@ class SplitPaymentService
                 $data['type_of_insurance'] = $modelType.' Insurance';
             }
 
-            $documentType = DocumentTypeCode::CPD; // default car
+            $documentType = DocumentTypeCode::CPD_RECEIPT; // default car
             if ($modelType == QuoteTypes::HOME->value) {
-                $documentType = DocumentTypeCode::HOMPD;
+                $documentType = DocumentTypeCode::HOMPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::HEALTH->value) {
-                $documentType = DocumentTypeCode::HPD;
+                $documentType = DocumentTypeCode::HPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::LIFE->value) {
-                $documentType = DocumentTypeCode::LPD;
+                $documentType = DocumentTypeCode::LPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::BUSINESS->value) {
-                $documentType = DocumentTypeCode::CLPD;
+                $documentType = DocumentTypeCode::CLPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::BIKE->value) {
-                $documentType = DocumentTypeCode::BPD;
+                $documentType = DocumentTypeCode::BPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::YACHT->value) {
-                $documentType = DocumentTypeCode::YPD;
+                $documentType = DocumentTypeCode::YPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::TRAVEL->value) {
-                $documentType = DocumentTypeCode::TPD;
+                $documentType = DocumentTypeCode::TPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::PET->value) {
-                $documentType = DocumentTypeCode::PPD;
+                $documentType = DocumentTypeCode::PPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::CYCLE->value) {
-                $documentType = DocumentTypeCode::CYCPD;
+                $documentType = DocumentTypeCode::CYCPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::GROUP_MEDICAL->value) {
-                $documentType = DocumentTypeCode::GMQPD;
+                $documentType = DocumentTypeCode::GMQPD_RECEIPT;
             }
 
             $data['document_type_code'] = $documentType;
