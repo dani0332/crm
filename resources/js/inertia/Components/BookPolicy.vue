@@ -275,6 +275,23 @@ const calculateCommission = () => {
     bpForm.total_commission = '';
   }
 };
+
+const disableCommissionVatNotApplicable = computed(() => {
+  return (
+    !bp.isEditing ||
+    (page.props.quoteType != quoteTypeCodeEnum.Life &&
+      page.props.quoteType != quoteTypeCodeEnum.Business &&
+      page.props.quoteType != quoteTypeCodeEnum.Health)
+  );
+});
+const disableCommissionVatApplicable = computed(() => {
+  return (
+    !bp.isEditing ||
+    (page.props.quoteType == quoteTypeCodeEnum.Life &&
+      page.props.quoteType != quoteTypeCodeEnum.Business &&
+      page.props.quoteType != quoteTypeCodeEnum.Health)
+  );
+});
 </script>
 
 <template>
@@ -522,12 +539,7 @@ const calculateCommission = () => {
                     @change="calculateCommission"
                     placeholder="Commission VAT NOT APPLICABLE"
                     class="w-full"
-                    :disabled="
-                      !bp.isEditing ||
-                      (page.props.quoteType != quoteTypeCodeEnum.Life &&
-                        page.props.quoteType != quoteTypeCodeEnum.Business &&
-                        page.props.quoteType != quoteTypeCodeEnum.Health)
-                    "
+                    :disabled="disableCommissionVatNotApplicable"
                   />
                 </dd>
               </div>
@@ -569,12 +581,7 @@ const calculateCommission = () => {
                     @change="calculateCommission"
                     placeholder="Commission VAT APPLICABLE"
                     class="w-full"
-                    :disabled="
-                      !bp.isEditing ||
-                      (page.props.quoteType == quoteTypeCodeEnum.Life &&
-                        page.props.quoteType != quoteTypeCodeEnum.Business &&
-                        page.props.quoteType != quoteTypeCodeEnum.Health)
-                    "
+                    :disabled="disableCommissionVatApplicable"
                   />
                 </dd>
               </div>
