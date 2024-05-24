@@ -34,6 +34,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -145,6 +146,8 @@ class BusinessQuoteController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
+
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BUSINESS->value, $record);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
@@ -231,21 +234,33 @@ class BusinessQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::BUSINESS->id(), $record->id);
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($record);
 
         if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
-            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        }
+            $removeOptions = [
+                // Endorsement Financial.
+                SendUpdateLogStatusEnum::MAOM,
+                SendUpdateLogStatusEnum::MDOM,
+                SendUpdateLogStatusEnum::MD,
+                SendUpdateLogStatusEnum::MSC,
+                SendUpdateLogStatusEnum::MPC,
+                SendUpdateLogStatusEnum::PU,
+                SendUpdateLogStatusEnum::SC,
+                // Endorsement non Financial.
+                SendUpdateLogStatusEnum::EIU,
+                SendUpdateLogStatusEnum::MSCNFI,
+                SendUpdateLogStatusEnum::QR,
+                SendUpdateLogStatusEnum::RFAML,
+                SendUpdateLogStatusEnum::RFCOC,
+                SendUpdateLogStatusEnum::RFCOI,
+                SendUpdateLogStatusEnum::RFEC,
+                SendUpdateLogStatusEnum::RFSOA,
+                SendUpdateLogStatusEnum::RFTI,
+                SendUpdateLogStatusEnum::RFTC,
+                SendUpdateLogStatusEnum::WOWPA,
+            ];
 
-        $sendUpdateOptions = [];
-        $sendUpdateLogs = [];
-        $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::BUSINESS->id(), $record->id);
-
-        if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
@@ -320,6 +335,7 @@ class BusinessQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
             'record' => $record,
             'bookPolicyDetails' => $bookPolicyDetails,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),

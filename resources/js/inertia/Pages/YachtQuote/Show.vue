@@ -41,6 +41,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  linkedQuoteDetails: Object,
   record: Object,
   permissions: Object,
   enums: Object,
@@ -218,6 +219,8 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 </script>
 
 <template>
@@ -338,14 +341,51 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
-                      Parent Ref-ID
+                      PARENT REF-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote.parent_duplicate_quote_id }}</div>
+                <div>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </div>
               </div>
-
+              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </div>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
@@ -784,25 +824,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
-    />
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      modelType="Yacht"
-      :expanded="sectionExpanded"
-    />
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="Yacht"
       :expanded="sectionExpanded"
     />
 
@@ -833,10 +867,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
+      :quote_type_id="page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
     />
+
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"

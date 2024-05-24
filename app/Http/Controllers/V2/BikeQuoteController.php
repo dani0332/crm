@@ -33,6 +33,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -105,6 +106,7 @@ class BikeQuoteController extends Controller
     {
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BIKE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->active()->get();
@@ -137,7 +139,7 @@ class BikeQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::BIKE->id(), $quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BIKE->id());
@@ -187,6 +189,7 @@ class BikeQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
             'record' => $quote,
         ]);
     }

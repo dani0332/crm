@@ -2,32 +2,32 @@
 
 namespace App\Services;
 
-use Log;
-use Carbon\Carbon;
-use App\Facades\Ken;
-use App\Facades\Capi;
-use App\Models\Payment;
-use App\Models\CarQuote;
-use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeId;
-use App\Models\HealthQuote;
-use App\Models\TravelQuote;
-use App\Enums\quoteTypeCode;
-use App\Enums\LeadSourceEnum;
-use App\Models\PersonalQuote;
-use App\Enums\QuoteStatusEnum;
-use App\Models\QuoteStatusLog;
-use App\Enums\PaymentFrequency;
-use App\Enums\PaymentStatusEnum;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
-use App\Models\ApplicationStorage;
-use Illuminate\Support\Facades\DB;
-use App\Models\PersonalQuoteDetail;
-use App\Traits\GenericQueriesAllLobs;
-use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Facades\Capi;
+use App\Facades\Ken;
+use App\Models\ApplicationStorage;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\Payment;
+use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteStatusLog;
+use App\Models\TravelQuote;
 use App\Repositories\PersonalQuoteRepository;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Log;
 
 class CentralService
 {
@@ -363,6 +363,20 @@ class CentralService
         return $isAmlClearedForPayment;
     }
 
+    public function getQuoteWiseProviderPlans($quoteType, $providerId): object
+    {
+        $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
+
+        return $planModel::where('provider_id', $providerId)->get();
+    }
+
+    public function getPlanById($quoteType, $planId)
+    {
+        $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
+
+        return $planModel::find($planId);
+    }
+
     // This method is used to update payment allocation status when lead status is updated
     public function updatePaymentAllocation($modelType, $quote_uuid)
     {
@@ -402,7 +416,7 @@ class CentralService
         switch (true) {
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
                 return null;
-            case ($payment->frequency == PaymentFrequency::UPFRONT && $paymentSplit != null):
+            case $payment->frequency == PaymentFrequency::UPFRONT && $paymentSplit != null:
                 return $payment->payment_allocation_status;
             case $paymentSplit && in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED]):
                 return PaymentAllocationStatus::NOT_ALLOCATED;
@@ -420,7 +434,7 @@ class CentralService
         $paymentSplit->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote, $paymentSplit);
         $paymentSplit->save();
     }
-    
+
     private function updatePaymentSplitAllocationStatus($paymentSplits, $quote)
     {
         $collectedAmount = 0;
@@ -436,16 +450,16 @@ class CentralService
         if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
             return PaymentAllocationStatus::NOT_ALLOCATED;
         }
-    
+
         if ($paymentSplit->collection_amount <= 0) {
             return PaymentAllocationStatus::UNPAID;
         }
-    
+
         if ($collectedAmount <= $quote->price_with_vat) {
             return PaymentAllocationStatus::FULLY_ALLOCATED;
         }
-    
+
         return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
     }
-    
+
 }

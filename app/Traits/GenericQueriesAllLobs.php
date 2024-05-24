@@ -5,9 +5,8 @@ namespace App\Traits;
 use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\ProductionProcessTooltipEnum;
-use App\Enums\QuoteDocumentsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
+use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -226,7 +225,7 @@ trait GenericQueriesAllLobs
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
 
-        $bookPolicyDetails = [];           
+        $bookPolicyDetails = [];
         $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
         $bookPolicyDetails['invoiceDescription'] = $insuranceProviderCode.'-'.$quoteType.'-'.$record->policy_number;
         $bookPolicyDetails['sendButton'] = false;
@@ -237,7 +236,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['transactionPaymentStatus'] = $transactionPaymentStatus;
         $bookPolicyDetails['paymentStatusTooltip'] = $paymentStatusTooltip;
         $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payments);
-        @[$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription]= $this->checkForInsufficientPayment($payments);
+        @[$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription] = $this->checkForInsufficientPayment($payments);
         $bookPolicyDetails['isInsufficientPayment'] = $isInsufficientPayment;
         $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
@@ -336,7 +335,7 @@ trait GenericQueriesAllLobs
     {
         $payment = $quoteModel->payments()->first();
         $priceWithVat = $quoteModel->price_with_vat;
-        $paymentTotalPrice= $payment->total_price;
+        $paymentTotalPrice = $payment->total_price;
 
         if ($payment && $priceWithVat != $paymentTotalPrice) {
 
@@ -348,6 +347,7 @@ trait GenericQueriesAllLobs
             $payment->total_price = $quoteModel->price_with_vat;
             $payment->save();
         }
+
         return $this->isLackingPayment($quoteModel->payments);
     }
 
@@ -376,21 +376,24 @@ trait GenericQueriesAllLobs
 
     private function isLackingPayment($payment)
     {
-        if ($payment && !$payment->isEmpty()) {
+        if ($payment && ! $payment->isEmpty()) {
             $payment = $payment->first();
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
-            return !($sumOfSplitPayment >= $paymentTotalPrice);
+
+            return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
+
         return true;
     }
 
-    private function checkForInsufficientPayment($paymentRecords){
+    private function checkForInsufficientPayment($paymentRecords)
+    {
         $paymentStatusHeading = '';
         $paymentStatusDescription = '';
         $isInsufficientPayment = false;
 
-        if ($paymentRecords && !$paymentRecords->isEmpty()) {
+        if ($paymentRecords && ! $paymentRecords->isEmpty()) {
             $firstPaymentRecord = $paymentRecords->first();
             $paymentStatusId = $firstPaymentRecord->payment_status_id;
 
@@ -405,7 +408,7 @@ trait GenericQueriesAllLobs
             $insufficientPaymentStatusesHeading = [
                 PaymentStatusEnum::PENDING,
                 PaymentStatusEnum::NEW,
-                PaymentStatusEnum::OVERDUE
+                PaymentStatusEnum::OVERDUE,
             ];
 
             if (in_array($firstPaymentRecord->payment_status_id, $insufficientPaymentStatuses)) {
@@ -426,15 +429,10 @@ trait GenericQueriesAllLobs
                 $isInsufficientPayment = true;
             }
         }
+
         return [$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription];
     }
 
-    /**
-     * @param $quoteModel
-     * @param mixed $payment
-     * @param mixed $difference
-     * @return void
-     */
     public function setPaymentStatusAsPerPrice($quoteModel, mixed $payment, mixed $difference): void
     {
         $priceWithVat = round($quoteModel->price_with_vat, 2);
@@ -448,8 +446,6 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * @param mixed $payment
-     * @param mixed $priceWithVat
      * @return float|mixed
      */
     public function handleSmallAmountDifference(mixed $payment, mixed $priceWithVat): mixed
@@ -460,7 +456,7 @@ trait GenericQueriesAllLobs
         $totalPaymentAmount = $capturedAmount + $discountValue;
         $initialDifference = $priceWithVat - $totalPaymentAmount;
 
-        $difference = (double)number_format($initialDifference, 2);
+        $difference = (float) number_format($initialDifference, 2);
 
         if ($payment->system_adjusted_discount != null) {
             $difference += $payment->system_adjusted_discount;
@@ -476,13 +472,14 @@ trait GenericQueriesAllLobs
                 $payment->discount_type = DiscountTypeEnum::SYSTEM_ADJUSTED_DISCOUNT;
             }
         } // Case 2 if difference is greater than 0.99 and system adjusted discount is greater than 0 then subtract system adjusted discount from discount value
-        else if (($difference > 0.99 || $difference == 0) && $payment->system_adjusted_discount > 0) {
+        elseif (($difference > 0.99 || $difference == 0) && $payment->system_adjusted_discount > 0) {
             $payment->discount_value -= $payment->system_adjusted_discount;
             $payment->system_adjusted_discount = 0;
             if ($payment->discount_type == DiscountTypeEnum::SYSTEM_ADJUSTED_DISCOUNT) {
                 $payment->discount_type = null;
             }
         }
+
         return $difference;
     }
 }

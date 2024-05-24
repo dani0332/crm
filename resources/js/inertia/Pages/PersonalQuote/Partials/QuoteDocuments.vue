@@ -1,7 +1,8 @@
 <script setup>
 import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+import {computed} from "vue";
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
@@ -11,10 +12,31 @@ defineProps({
     type: Boolean,
     required: false,
     default: true
-  }
+  },
+  extras: {
+    type: Object,
+    required: false,
+    default: () => ({}),
+  },
+  selectedCategory: {
+    type: Object,
+    required: true,
+  },
+  updateBtn: {
+    type: String,
+    required: false,
+  },
 });
 
 const page = usePage();
+const notification = useNotifications('toast');
+const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
+
+const rowsPerPage = props.extras?.pageType === 'send-update-log' ? 10 : 15;
+const isSendUpdatePage =
+  props.extras?.pageType === 'send-update-log' ? true : false;
+const isUploading = ref(false);
+const memberTabs = ref('quote-documents');
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -59,7 +81,7 @@ const confirmDeleteDoc = () => {
     `/documents/delete`,
     {
       docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
+      quoteId: isSendUpdatePage ? props.extras.sendLogId : page.props.quote.id,
     },
     {
       preserveScroll: true,
@@ -80,18 +102,17 @@ const modals = reactive({
   docConfirm: false,
 });
 
-const isUploading = ref(false);
-const notification = useNotifications('toast');
-
 const docForm = useForm({
   quote_id: usePage().props.quote.id || null,
   quote_uuid: usePage().props.quote.code || null,
   quote_type_id: null,
   document_type_code: null,
   file: null,
+  is_send_update: isSendUpdatePage,
+  send_update_id: props.extras.sendLogId || null,
 });
 
-const uploadFile = (doc, filesWithInfo) => {
+const uploadFile = (doc, filesWithInfo, memberId) => {
     let url = '/personal-quotes/' + docForm.quote_id + '/documents';
     const { files, rejectReason} = filesWithInfo;
     if (files.length == 0) {
@@ -110,6 +131,7 @@ const uploadFile = (doc, filesWithInfo) => {
       document_type_code: doc.code,
       folder_path: doc.folder_path,
       file: files[0].file,
+      member_detail_id: memberId || null,
     }))
     .post(url, {
       preserveScroll: true,
@@ -125,6 +147,41 @@ const uploadFile = (doc, filesWithInfo) => {
       onFinish: () => {
         isUploading.value = false;
       },
+    });
+};
+
+const isEN = computed(() => {
+  return isSendUpdatePage && props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.EN;
+});
+
+const isCPU = computed(() => {
+  return isSendUpdatePage && props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPU;
+});
+
+const sendUpdateButton = computed(() => {
+  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
+});
+const sendUpdateValidation = () => {
+  axios
+    .post('send-update-validation', {
+      quoteType: props.quoteType,
+      quoteUuid: props.realQuote.uuid,
+      sendUpdateId: props.sendUpdateLog.id,
+    })
+    .then(response => {
+      if (response.status == 200) {
+        modals.sendConfirm = true;
+        isStating.value = response.data.message;
+      }
+    })
+    .catch(function (errors) {
+      let responseError = errors.response.data.errors.error;
+      Object.keys(responseError).forEach(function (key) {
+        notification.error({
+          title: responseError[key],
+          position: 'top',
+        });
+      });
     });
 };
 </script>
@@ -175,7 +232,7 @@ const uploadFile = (doc, filesWithInfo) => {
           {{ item.original_name }}
         </a>
       </template>
-      <template #item-action="{ doc_name }">
+      <template #item-action="{ doc_name }" v-if="!isSendUpdatePage">
         <div>
           <x-button
             size="xs"
@@ -188,6 +245,17 @@ const uploadFile = (doc, filesWithInfo) => {
         </div>
       </template>
         </DataTable>
+        <div class="flex gap-2 mb-4 justify-end">
+          <x-button
+              size="sm"
+              color="orange"
+              class="mt-5"
+              v-if="sendUpdateButton"
+              @click="sendUpdateValidation"
+          >
+            {{ props.updateBtn }}
+          </x-button>
+        </div>
       </template>
     </Collapsible>
 
@@ -206,7 +274,7 @@ const uploadFile = (doc, filesWithInfo) => {
 
       <div
         v-for="documentType in documentTypes"
-        :key="documentType.id"
+        :key="documentType.id" 
         class="grid md:grid-cols-2 gap-2 my-4 border-b"
       >
         <div class="flex flex-col gap-1">
@@ -224,7 +292,7 @@ const uploadFile = (doc, filesWithInfo) => {
             :max-files="documentType.max_files"
             :max-size="documentType.max_size"
             :loading="docForm.processing"
-            @change="uploadFile(documentType, $event)"
+            @change="uploadFile(documentType, $event)" 
           />
           <a
             v-for="quoteDocument in quoteDocuments.filter(

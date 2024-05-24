@@ -259,4 +259,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
+    }
 }

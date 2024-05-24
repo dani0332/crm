@@ -135,7 +135,7 @@ const totalLeads = reactive({
 
 function calculateGrossConversion(item) {
   if (item) {
-    const totalLeadsCount = item.total_leads;
+    const totalLeadsCount = item.total_leads - item.cancelled_leads;
     const manualCreated = item.manual_created;
     const saleLeads = item.sale_leads;
     const createdSaleLeads = item.created_sale_leads;
@@ -159,7 +159,7 @@ function calculateTotalNetConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads);
+    totalLeads += (Number(row.total_leads) - Number(row.cancelled_leads));
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
@@ -179,7 +179,7 @@ function calculateTotalGrossConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads);
+    totalLeads += (Number(row.total_leads) - Number(row.cancelled_leads));
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
@@ -192,7 +192,7 @@ function calculateTotalGrossConversion(data) {
 }
 
 function calculateNetConversion(row) {
-  const totalLeads = row.total_leads;
+  const totalLeads = row.total_leads - row.cancelled_leads;
   const manualCreated = row.manual_created;
   const badLeads = row.bad_leads;
   const manualCreatedBadLeads = row.manual_created_bad_leads;

@@ -20,7 +20,7 @@ class PersonalQuoteController extends Controller
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
     {
-        app(PersonalQuoteRepository::class)->updateStatus($quoteType, $quoteId, $request->validated());
+        app(PersonalQuoteRepository::class)->updateStatuses($quoteType, $quoteId, $request->validated());
 
         // Update payment allocation status when lead status changes when lead status as Policy Issue
         app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
@@ -30,7 +30,7 @@ class PersonalQuoteController extends Controller
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
-        PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->validated());
+        PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->all());
 
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->folder_path, $quoteId);

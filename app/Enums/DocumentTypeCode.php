@@ -12,6 +12,21 @@ use BenSampo\Enum\Enum;
 class DocumentTypeCode extends Enum
 {
     const KYCDOC = 'KYCDOC';
+    const SEND_UPDATE_POLICY_SCHEDULE = 'SUPS'; // Send Update Policy Schedule
+    const SEND_UPDATE_POLICY_CERTIFICATE = 'SUPC'; // Send Update Policy Certificate
+    const SEND_UPDATE_ECARD = 'SUECARD'; // Send Update E-Card
+    const SEND_UPDATE_TAX_INVOICE = 'SUTAXINV'; // Send Update Tax Invoice
+    const SEND_UPDATE_TAX_INVOICE_RAISED_BUYER = 'SUTAXINVRB'; // Send Update Tax Invoice Raised Buyer
+    const SEND_UPDATE_RECEIPT = 'SURECEIPT'; // Send Update Receipt
+    const SEND_UPDATE_ADDITIONAL_EMAIL_ATTACHEMENTS = 'SUAEA'; // Send Update Additional Email Attachments
+    const SEND_UPDATE_GARAGE_LIST = 'SUGL'; // Send Update Garage List
+    const SEND_UPDATE_POLICY_HANDBOOK = 'SUPHBOOK'; // Send Update Policy Handbook
+    const SEND_UPDATE_NETWORK_LIST = 'SUNL'; // Send Update Network List -- TODO:: need to be created.
+    const SEND_UPDATE_SIGNED_MED_APP_FORM = 'SUSMAFORM'; // Send Update Network List -- TODO:: need to be created.
+    const SEND_UPDATE_APP_COPY = 'SUAPCOPY'; // Send Update Network List -- TODO:: need to be created.
+    const SEND_UPDATE_PAYMENT_PROOF = 'SUPP'; // Payment Proof
+    const SEND_UPDATE_CUSTOMER_DOCUMENTS = 'SUCD'; // Customer documents
+    const SEND_UPDATE_UW_EMAIL_CORRESPONDENCE = 'SUUWEC'; // UW email Correspondence
     const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
 
     // This is the same as the one in the database and we are using this as a text not it's code
@@ -31,6 +46,7 @@ class DocumentTypeCode extends Enum
     const YPD = 'YPD';
     const CTIRBB = 'CTIRBB'; // Tax Invoice Raised By Buyer
     const TI = 'TI'; // Tax Invoice
+    const PPR = 'PPR'; // Proforma Payment Request
     const CPD_RECEIPT = 'CPDR';
     const BPD_RECEIPT = 'BPDR';
     const TPD_RECEIPT = 'TPDR';
@@ -42,5 +58,4 @@ class DocumentTypeCode extends Enum
     const GMQPD_RECEIPT = 'GMQPDR';
     const PPD_RECEIPT = 'PPDR';
     const YPD_RECEIPT = 'YPDR';
-    
 }

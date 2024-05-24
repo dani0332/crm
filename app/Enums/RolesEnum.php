@@ -106,4 +106,5 @@ final class RolesEnum extends Enum
     public const EpAdmin = 'EP_ADMIN';
     public const ServiceExecutive = 'SERVICE_EXECUTIVE';
     public const Production = 'PRODUCTION';
+    public const OperationExecutive = 'OPERATION_EXECUTIVE';
 }

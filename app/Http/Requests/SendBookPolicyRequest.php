@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
@@ -42,6 +44,11 @@ class SendBookPolicyRequest extends FormRequest
     {
 
         if (request()->send_policy_type == 'sage') {
+            if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
+                return response()->json(['errors' => [
+                    'message' => 'You are not authorized to perform this action',
+                ]], 403);
+            }
             $validator->after(function ($validator) {
                 //check for quote records if exists
                 $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
@@ -65,12 +72,12 @@ class SendBookPolicyRequest extends FormRequest
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                             $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
                         }
-                     
-                        $isPaymentNotUpfrontOrSplit = !in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+
+                        $isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
                         $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
                         $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
                         if ($isPaymentUpfrontOrSplitAndPaidOrCaptured) {
-                            if (!empty($splits)) {
+                            if (! empty($splits)) {
                                 $isSageReceiptIdEmpty = empty($splits[0]->sage_reciept_id);
                                 if ($isSageReceiptIdEmpty) {
                                     $validator->errors()->add('value', 'Payment sage reciept id can not be null');
@@ -97,6 +104,19 @@ class SendBookPolicyRequest extends FormRequest
                         }
                     } else {
                         $validator->errors()->add('value', 'Payment Not found');
+                    }
+
+                    // Check parent Lead Status not in Cancellation Pending state.
+                    $parentQuoteCode = count(explode('-', $quote->code)) > 2 ? $quote->parent_duplicate_quote_id : false;
+                    if ($parentQuoteCode) {
+                        $parentQuote = $this->getQuoteObjectBy(request()->model_type, $parentQuoteCode, 'code');
+                        if ($parentQuote) {
+                            if ($parentQuote->quote_status_id == QuoteStatusEnum::CancellationPending) {
+                                $validator->errors()->add('value', 'Cancellation for '.$parentQuoteCode.' is still pending');
+                            }
+                        } else {
+                            $validator->errors()->add('value', 'Parent Quote Not found');
+                        }
                     }
                 } else {
                     $validator->errors()->add('value', 'Quote Not found');

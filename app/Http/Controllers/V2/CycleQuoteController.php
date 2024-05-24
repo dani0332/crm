@@ -33,6 +33,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -117,6 +118,7 @@ class CycleQuoteController extends Controller
     {
         $quote = CycleQuoteRepository::getBy('uuid', $uuid);
 
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::CYCLE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
 
         $quote->load('documents.createdBy:id,name,email');
@@ -156,7 +158,7 @@ class CycleQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::CYCLE->id(), $quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::CYCLE->id());
@@ -203,6 +205,7 @@ class CycleQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
         ]);
     }
 }

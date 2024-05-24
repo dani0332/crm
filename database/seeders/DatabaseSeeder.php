@@ -26,7 +26,6 @@ class DatabaseSeeder extends Seeder
             // CommercialMakeModelKeywordsPermissionsSeeder::class,
             // FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
             // SlabsTableSeeder::class,
-            // AddPersonalLobsProducts::class,
             // addTeamThresholdViewPermission::class,
             // PetBikeMigrationSeeder::class
             // InsurerQuoteTypeMappingSeeder::class,
@@ -66,7 +65,13 @@ class DatabaseSeeder extends Seeder
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
+            TotalPremiumReportPermissionSeeder::class,
+            InsuranceProviderNameSeeder::class,
+            QuoteStatusMapSeeder::class,
+            SendUpdateDocumentTypesSeeder::class,
+            InslyRoles::class,
             TotalPremiumReportPermissionSeeder::class,*/
+            InslyPermissions::class,
 
             // dtt seeder
             // AddDttFlagApplicationStorage::class,

@@ -68,7 +68,7 @@ class HomeQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'profile_photo_path']);
     }
 
     public function customer()
@@ -104,5 +104,10 @@ class HomeQuote extends Model implements AuditableContract
     public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 }

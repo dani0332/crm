@@ -34,6 +34,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -96,7 +97,7 @@ class YachtQuoteController extends Controller
     public function show($uuid)
     {
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
-
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy:id,name,email');
@@ -132,18 +133,7 @@ class YachtQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::YACHT->id(), $quote->id);
-
-        if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = $lookupService->getSendUpdateOptions(QuoteTypes::YACHT->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
-            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        }
-
-        $sendUpdateOptions = [];
-        $sendUpdateLogs = [];
-        $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::YACHT->id(), $quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $lookupService->getSendUpdateOptions(QuoteTypes::YACHT->id());
@@ -160,6 +150,7 @@ class YachtQuoteController extends Controller
             'quote' => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
+            'quoteTypeId' => QuoteTypes::YACHT->id(),
             'advisors' => $advisors,
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
@@ -185,6 +176,7 @@ class YachtQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
             'record' => $quote,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,

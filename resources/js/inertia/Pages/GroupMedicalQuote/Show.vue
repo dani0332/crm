@@ -29,6 +29,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  linkedQuoteDetails: Object,
   record: Object,
   permissions: Object,
   enums: Object,
@@ -347,6 +348,9 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, page.props.quote.business_type_of_insurance_id);
+
 watch(
   () => page.props.quote.quote_status_id,
   (newValue, oldValue) => {
@@ -549,14 +553,51 @@ watch(
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
-                      Parent Ref-ID
+                      PARENT REF-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote.parent_duplicate_quote_id }}</div>
+                <div>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </div>
               </div>
-
+              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </div>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL IMPORT CODE</dt>
                 <dd>{{ quote.renewal_import_code }}</dd>
@@ -821,38 +862,7 @@ watch(
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      modelType="Business"
-      :expanded="sectionExpanded"
-    />
-
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
-      :quote="quote"
-      :insly-id="quoteDetails?.insly_id"
-      :expanded="sectionExpanded"
-    />
-
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="Business"
-      modelType="Group Medical"
-      :bookPolicyDetails="bookPolicyDetails"
-      :payments="payments"
-      :expanded="sectionExpanded"
-    />
-
+    
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -973,6 +983,37 @@ watch(
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
 		/>
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="Business"
+      :expanded="sectionExpanded"
+    />
+
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quote.documents || []"
+      :storageUrl="storageUrl"
+      :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
+      :expanded="sectionExpanded"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Business"
+      modelType="Group Medical"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
+    />
 
     <SendUpdates
       v-if="hasPolicyIssuedStatus"

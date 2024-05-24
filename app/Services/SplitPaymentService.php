@@ -15,6 +15,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
@@ -117,7 +118,7 @@ class SplitPaymentService
             // make ready to post to sage,cannot use log data as it changes on each call
             $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
             $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
-       
+
             if ($readyToPostResponse !== '') {
                 $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
                 $returnMessage['response'] = 'Error while making ready to post to sage';
@@ -362,7 +363,7 @@ class SplitPaymentService
         }
     }
 
-    public function createReciept($modelType, $quoteId, $splitPayment)
+    public function createReciept($modelType, $quoteId, $splitPayment, $send_update_id = null)
     {
         try {
             $quote = $this->getQuoteObject($modelType, $quoteId);
@@ -434,6 +435,9 @@ class SplitPaymentService
 
             $data['document_type_code'] = $documentType;
             $data['quote_uuid'] = $quote->uuid;
+            if ($send_update_id) {
+                $quote = SendUpdateLog::find($send_update_id);
+            }
 
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');

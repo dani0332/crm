@@ -59,6 +59,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
+  linkedQuoteDetails: Object,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -1216,6 +1217,8 @@ const handleSelectionChange = (tableType, selectedItems) => {
     }
   }
 };
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 
 watch(
   () => page.props.quote.quote_status_id,
@@ -1324,15 +1327,14 @@ watch(
                     <template #tooltip> Reference ID </template>
                   </x-tooltip>
                 </dt>
-
-                <dt v-else-if="field.title == 'Parent Ref-ID'">
+                <dt v-else-if="field.title == 'Ref-ID'">
                   <x-tooltip position="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
                       {{ field.title }}
                     </label>
-                    <template #tooltip> Parent Reference ID </template>
+                    <template #tooltip> Reference ID </template>
                   </x-tooltip>
                 </dt>
                 <div
@@ -1347,6 +1349,59 @@ watch(
                 </div>
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
                 <dd>{{ field?.value }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      PARENT REF-ID
+                    </label>
+                    <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+                </dt>
+                <dt>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </dt>
+              </div>
+
+              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium">
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </dt>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -2769,7 +2824,6 @@ watch(
         </template>
       </x-modal>
     </div>
-    <div class="p-4 rounded shadow mb-6 bg-warning"></div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">

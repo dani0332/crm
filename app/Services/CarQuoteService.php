@@ -577,9 +577,22 @@ class CarQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return CarQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        return CarQuote::where('id', $id)->with([
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                // This condition added to get the latest payment first for fetching Booking Details accordingly
+                $payment->orderBy('created_at', 'desc');
+            },
+        ])->first();
     }
 
     public function fillModelProperties()
