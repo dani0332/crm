@@ -32,8 +32,10 @@ const props = defineProps({
 
 const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
-
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -652,7 +654,11 @@ const showActionButtons = computed(() => {
                   Update
                 </x-button>
                 <x-button
-                  v-if="!bp.isEditing && props.bookPolicyDetails?.editButton"
+                  v-if="
+                    !bp.isEditing &&
+                    props.bookPolicyDetails?.editButton &&
+                    can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                  "
                   class="mt-4 mr-2"
                   color="emerald"
                   size="sm"
@@ -666,7 +672,13 @@ const showActionButtons = computed(() => {
                   class="mt-4"
                   @click.prevent="confirmSendPolicy"
                   :disabled="bp.isEditing"
-                  v-if="props.bookPolicyDetails?.sendButton"
+                  v-if="
+                    props.bookPolicyDetails?.sendButton &&
+                    canAny([
+                      permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON,
+                      permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON,
+                    ])
+                  "
                 >
                   {{ props.bookPolicyDetails?.text }}
                 </x-button></template
@@ -737,7 +749,11 @@ const showActionButtons = computed(() => {
                     Update
                   </x-button>
                   <div
-                    v-if="!bp.isEditing && props.bookPolicyDetails?.editButton"
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
                   >
                     <x-button
                       class="mt-4 mr-2"
@@ -750,13 +766,20 @@ const showActionButtons = computed(() => {
                     </x-button>
                   </div>
 
-                  <template v-if="props.bookPolicyDetails?.editButton">
+                  <template
+                    v-if="
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_BUTTON)
+                    "
+                  >
                     <x-button
                       size="sm"
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        !props.bookPolicyDetails?.editButton || bp.isEditing
+                        !props.bookPolicyDetails?.editButton ||
+                        bp.isEditing ||
+                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
                       "
                       @click.prevent="confirmSendPolicy"
                     >
@@ -769,7 +792,10 @@ const showActionButtons = computed(() => {
                         size="sm"
                         class="mt-4 mr-2"
                         color="orange"
-                        :disabled="!props.bookPolicyDetails?.editButton"
+                        :disabled="
+                          !props.bookPolicyDetails?.editButton ||
+                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                        "
                       >
                         Sending Policy To Customer
                       </x-button>

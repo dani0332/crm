@@ -1172,7 +1172,7 @@ const downloadProformaPayment = async () => {
     return;
   }
   if (props.proformaPayment) {
-    let isSendUpdateLogRoute = route().current() == 'send-update-logs.show';
+    let isSendUpdateLogRoute = route().current() == 'send-update.show';
     try {
       NProgress.start();
       const response = await axios.get(
@@ -1261,7 +1261,6 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = () => {
-  console.log(planDetail);
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.total_price) {
       notification.error({

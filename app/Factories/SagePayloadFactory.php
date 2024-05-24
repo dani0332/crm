@@ -258,7 +258,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createARInvoicePremAndComm($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = [])
+    public static function createARInvoicePremAndComm($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
     {
         // Payload creation logic for default scenario
         $taxClass = 2;
@@ -677,7 +677,7 @@ class SagePayloadFactory
 
         ];
 
-        if (isset($extras['sage_request_type'])) {
+        if (isset($extras['sage_request_type']) && !in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
             $sageRequestType = $sageRequestTypes[$extras['sage_request_type']];
         }
 
@@ -771,7 +771,7 @@ class SagePayloadFactory
             SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_POST_AR_DISC_INV,
         ];
 
-        if (isset($extras['sage_request_type'])) {
+        if (isset($extras['sage_request_type']) && !in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION])) {
             $sageRequestType = $sageRequestTypes[$extras['sage_request_type']];
         }
 
