@@ -161,7 +161,7 @@ const onCancel = () => {
 const onUpdateLog = (isValid) => {
   if (!isValid) return;
   sendUpdateForm.patch(
-    route('send-update-logs.update', { id: props.sendUpdateLog.id }),
+    route('send-update.update', { id: props.sendUpdateLog.id }),
     {
       preserverScroll: true,
       onSuccess: ({ props }) => {
@@ -383,6 +383,7 @@ const onKeyPress = (event) => {
                       :options="additionalFieldOptions"
                       size="xs"
                       :disabled="!state.edit"
+                      :class="{ 'pointer-events-none': !state.edit }"
                       multiple
                     />
                 </dd>
@@ -532,6 +533,7 @@ const onKeyPress = (event) => {
       :real-quote="props.realQuote"
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"
+      :payments="props.payments"
     />
 
     <AuditLogs

@@ -70,8 +70,8 @@ class DatabaseSeeder extends Seeder
             QuoteStatusMapSeeder::class,
             SendUpdateDocumentTypesSeeder::class,
             InslyRoles::class,
-            InslyPermissions::class,
             TotalPremiumReportPermissionSeeder::class,*/
+            InslyPermissions::class,
 
             // dtt seeder
             // AddDttFlagApplicationStorage::class,

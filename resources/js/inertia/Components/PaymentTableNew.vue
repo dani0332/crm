@@ -1168,7 +1168,7 @@ const downloadProformaPayment = async () => {
     return;
   }
   if (props.proformaPayment) {
-    let isSendUpdateLogRoute = route().current() == 'send-update-logs.show';
+    let isSendUpdateLogRoute = route().current() == 'send-update.show';
     try {
       NProgress.start();
       const response = await axios.get(
@@ -1257,7 +1257,6 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = () => {
-  console.log(planDetail);
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.total_price) {
       notification.error({
@@ -2108,8 +2107,6 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
-// Payment's approve or capture button logic enhancements only for Send update
-// Payment status is 'Authorised', 'Paid', 'Pending' (when collected by insurer} and 'Credit approved' - Approve or Capture button should be available
 const validateAccessForSendUpdate = ref(false);
 if (props.sendUpdate) { 
   const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
@@ -2130,13 +2127,12 @@ const getCaptureValidation = computed(() => {
   return payment => {
     // 6:AML Screening Cleared, 32:Transaction Declined, 15:Transaction Approved
     if ( props.payments.length > 0 && (payment.total_price === (payment.total_amount + payment.discount_value)) && ((( 
-      props.isAmlClearedForPayment || 
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared || 
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined || 
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved
     ) && props.quoteRequest.kyc_decision === 'Complete' ) ||
       props.quoteType === 'Travel' || //skip AML & KYC for travel
-      validateAccessForSendUpdate
+      validateAccessForSendUpdate.value
     )) {
       if (payment.is_approved === 1) {
         return false;

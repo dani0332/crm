@@ -18,23 +18,21 @@ use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;
-use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Services\AllocationService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\Payment;
 
 class SendUpdateLogController extends Controller
 {
@@ -42,11 +40,6 @@ class SendUpdateLogController extends Controller
     private object $quoteDocumentService;
 
     use GenericQueriesAllLobs;
-
-    public function __construct()
-    {
-        $this->sendUpdateLogService = app(SendUpdateLogService::class);
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -61,13 +54,17 @@ class SendUpdateLogController extends Controller
             $categoryCode = $requestData['childCategory']['slug'];
 
             $response = SendUpdateLogRepository::create($requestData);
-            abort_if(! empty($response->message), 400, $response->message);
+            if ($response->message) {
+                DB::rollBack();
+
+                return redirect()->back()->with('error', $response->message);
+            }
 
             $this->updateQuoteLeadStatus($requestData, 'create');
             if ($categoryCode == SendUpdateLogStatusEnum::CIR) {
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
-                $childLeadResponse = $this->sendUpdateLogService->createChildLead($quoteModel, $requestData, $quoteType->code);
+                $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
             }
 
             DB::commit();
@@ -98,7 +95,7 @@ class SendUpdateLogController extends Controller
             }
         }
 
-        return redirect(route('send-update-logs.show', [
+        return redirect(route('send-update.show', [
             'uuid' => $response->uuid,
             'quoteUuid' => $requestData['quote_uuid'],
             'refURL' => $requestData['refURL'],
@@ -111,6 +108,7 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        $this->sendUpdateLogService = app(SendUpdateLogService::class);
         if ($this->sendUpdateLogService->checkSendUpdatePermission($sendUpdateLog->category->code)) {
             return redirect()->back()->with('error', 'You don\'t have permission to this. ');
         }
@@ -135,7 +133,6 @@ class SendUpdateLogController extends Controller
         $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
         $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
-        $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
 
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -207,7 +204,6 @@ class SendUpdateLogController extends Controller
             'quote' => $quote,
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
-            'issuanceStatuses' => $issuanceStatuses,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
@@ -340,14 +336,14 @@ class SendUpdateLogController extends Controller
 
     public function getReversalEntries(Request $request)
     {
-        $reversalEntries = $this->sendUpdateLogService->getReversalEntries($request->input());
+        $reversalEntries = app(SendUpdateLogService::class)->getReversalEntries($request->input());
 
         return response()->json($reversalEntries);
     }
 
     public function sendUpdateCustomerValidation(SendUpdateCustomerRequest $sendUpdateCustomerRequest)
     {
-        $message = $this->sendUpdateLogService->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
+        $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
 
         return response()->json([
             'message' => $message,
@@ -410,11 +406,14 @@ class SendUpdateLogController extends Controller
             if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
                 $insufficientPaymentCheck = true;
             }
+
             return response()->json([
                 'insufficientPaymentCheck' => $insufficientPaymentCheck,
                 'parentPaymentStatus' => $sendUpdate->payments->first()?->payment_status_id ?? null,
             ], 200);
         }
+
+        $this->sendUpdateLogService = app(SendUpdateLogService::class);
 
         // Calling Sage for necessary Documents
         $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($sendUpdate);

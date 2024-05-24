@@ -103,7 +103,7 @@ const onUpdate = () => {
     planDetailsForm.total_price = null;
     return;
   }
-  planDetailsForm.post(route('send-update-logs.save-price-details'), {
+  planDetailsForm.post(route('send-update.save-price-details'), {
     preserverScroll: true,
     onSuccess: ({ props }) => {
       notification.success({

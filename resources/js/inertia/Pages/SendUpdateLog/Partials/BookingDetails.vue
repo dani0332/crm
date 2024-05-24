@@ -30,7 +30,7 @@ const props = defineProps({
     default: () => {},
   },
   payments: {
-    type: Array,
+    type: Object,
     required: true,
     default: () => [],
   },
@@ -137,6 +137,14 @@ const transactionPaymentStatus = computed(() => {
   }
 });
 
+function isNotZero(value) {
+  if (value === 0 || value === '0.00' || value === null || value === undefined) {
+    return false;
+  }
+
+  return value;
+}
+
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.selectedCategory.subCategory.slug,
@@ -155,7 +163,7 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.insurer_tax_number ||
     '',
   discount:
-    props.bookingDetails?.discount ||
+    isNotZero(props.bookingDetails?.discount) ||
     props?.payments[0]?.discount_value ||
     '0.00',
   insurer_commission_invoice_number:
@@ -284,7 +292,7 @@ const saveBookingDetail = isValid => {
     /* alert('payment condition will goes here. ');
     return; */
   }
-  bookingDetailsForm.post(route('send-update-logs.save-booking-details'), {
+  bookingDetailsForm.post(route('send-update.save-booking-details'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -331,8 +339,15 @@ const reversalEntry = reactive({
   total_price: null,
 });
 
+const loader = reactive({
+  sendUpdateSectionBtn: false,
+  sendUpdate: false,
+  selectInvoice: false,
+});
+
 const selectedInvoice = () => {
-  let url = route('send-update-logs.get-reversal-entries');
+  loader.selectInvoice = true;
+  let url = route('send-update.get-reversal-entries');
   let data = {
     quoteType: props.quoteType,
     quoteUuid: props.realQuote.uuid,
@@ -346,6 +361,9 @@ const selectedInvoice = () => {
     })
     .catch(error => {
       // handle the error
+    })
+    .finally(() => {
+      loader.selectInvoice = false;
     });
 };
 
@@ -410,13 +428,6 @@ function convertToNumber(value) {
   return -parseFloat(value.toString().replace(/,/g, ''));
 }
 
-const sendUpdateButton = computed(() => {
-  return (
-    props.updateBtn &&
-    can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON)
-  );
-});
-
 const modals = reactive({
   sendConfirm: false,
   isConfirmed: false,
@@ -427,22 +438,24 @@ const modals = reactive({
 const confirmationCheck = ref(false);
 const isStating = ref(false);
 
+const sendUpdatePermissionCheck = computed(() => {
+  if (props.updateBtn === sendUpdateStatusEnum.SU) {
+    return ! can(page.props.permissionsEnum.BOOK_UPDATE_BUTTON);
+  } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
+    return ! can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
+  } else if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
+    return ! can(page.props.permissionsEnum.SEND_AND_BOOK_UPDATE_BUTTON);
+  }
+
+  return true;
+});
+
 const sendUpdateValidationURL = computed(() => {
   return (props.updateBtn === sendUpdateStatusEnum.SU || props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER)
     ? 'send-update'
     : 'send-update-customer-validation';
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
-
-onMounted(() => {
-  console.log('working');
-  console.log(sendUpdateValidationURL.value);
-});
-
-const loader = reactive({
-  sendUpdateSectionBtn: false,
-  sendUpdate: false,
-});
 
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
@@ -548,6 +561,7 @@ function sendUpdate(prePaymentCheck = true) {
       sendUpdateId: props.sendUpdateLog.id,
       quoteRefId: props.realQuote.id,
       paymentValidated: true,
+      reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
     })
     .then(response => {
       loader.sendUpdate = false;
@@ -1053,16 +1067,16 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
               size="sm"
               color="orange"
               @click="state.reversalSectionEdit = false"
-              :loading="bookingDetailsForm.processing"
-              :disabled="bookingDetailsForm.processing"
+              :loading="loader.selectInvoice"
+              :disabled="loader.selectInvoice"
             >
               Cancel
             </x-button>
             <x-button
               size="sm"
               color="primary"
-              :loading="bookingDetailsForm.processing"
-              :disabled="bookingDetailsForm.processing"
+              :loading="loader.selectInvoice"
+              :disabled="loader.selectInvoice"
               @click="onUpdateReversal"
             >
               Update
@@ -1327,6 +1341,8 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 <div>
                   <x-input
                     type="number"
+                    min="0"
+                    add step="any"
                     v-model="bookingDetailsForm.price_vat_applicable"
                     @change="calculateCommission"
                     class="!mb-0 w-full"
@@ -1416,6 +1432,8 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 <div>
                   <x-input
                     type="number"
+                    min="0"
+                    add step="any"
                     v-model="bookingDetailsForm.commission_vat_applicable"
                     @change="calculateCommission"
                     class="!mb-0 w-full"
@@ -1523,9 +1541,10 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
               <x-button
                 size="sm"
                 color="orange"
-                v-if="sendUpdateButton"
+                v-if="props.updateBtn"
                 :loading="loader.sendUpdateSectionBtn"
                 @click="sendUpdateValidation"
+                :disabled="sendUpdatePermissionCheck"
               >
                 {{ props.updateBtn }}
               </x-button>

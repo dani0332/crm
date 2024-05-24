@@ -43,4 +43,9 @@ class SendUpdateLog extends Model implements AuditableContract
     {
         return $this->hasMany(Payment::class);
     }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
 }

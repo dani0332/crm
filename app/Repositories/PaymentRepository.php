@@ -110,14 +110,16 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_by' => $request->user()->id,
             ];
 
-            $count = $quoteModel->payments->count();
-            if ($request->send_update_id) { // it will check if the payment is added from send update.
-                $paymentInformation['send_update_log_id'] = $request->send_update_id;
-                $paymentInformation['code'] = app(SendUpdateLogService::class)->getPaymentCode($quoteModel->code);
+            // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
+            // Count will be iterative for each payment added through the send update or Child lead
+            $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+            $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
+            $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
+
+            if ($request->send_update_id) {
                 // it will make $quoteModel as SendUpdateLog model.
+                $paymentInformation['send_update_log_id'] = $request->send_update_id;
                 $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
-            } else {
-                $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
             }
 
             if ($masterPayment->reference) {
@@ -687,8 +689,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
     }
 
-    public function fetchGetPaymentsByQuoteCode($quoteCode)
+    public function getPaymentsCountByLeadCode($quoteCode)
     {
-        return $this->where('code', 'LIKE', "%$quoteCode%")->count();
+        return $this->where('code', 'LIKE', "%{$quoteCode}%")->count();
     }
+
+    public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)
+    {
+        return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
+    }
+   
 }

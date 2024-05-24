@@ -458,7 +458,7 @@ class SendUpdateLogService
         }
 
         return [
-            'broker_invoice_number' => $insuranceProviderCode.$insuranceProviderLeadCount,
+            'broker_invoice_number' => $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount),
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
             'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
@@ -598,6 +598,11 @@ class SendUpdateLogService
     {
         // Update Payment Details
         $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+
+        // For those send update type where payment not required.
+        if (!$payment)
+            return true;
+
         $sendUpdatePaymentDetails = [
             'policy_expiry_date' => $sendUpdateLog->expiry_date,
             'invoice_description' => $sendUpdateLog->invoice_description,
@@ -630,6 +635,7 @@ class SendUpdateLogService
                     'send_update_type' => SageEnum::SUT_NORMAL,
                     'category' => $categoryCode,
                     'option' => $sendUpdateLog->option->code,
+                    'send_update_log' => $sendUpdateLog,
                 ]
             );
 
@@ -643,6 +649,7 @@ class SendUpdateLogService
                     'send_update_type' => SageEnum::SUT_REVE_CORR,
                     'category' => $categoryCode,
                     'send_update_log' => $sendUpdateLog,
+                    'reverse_invoice' => $sendUpdateRequest->reversalInvoice,
                 ]
             );
 
@@ -713,9 +720,19 @@ class SendUpdateLogService
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
 
+                $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+
+                if ($payment->captured_amount < 1) {
+                    $status = SendUpdateLogStatusEnum::UNPAID;
+                } elseif (($payment->captured_amount + $payment->discount_value) < $payment->total_price) {
+                    $status = SendUpdateLogStatusEnum::PARTIALLY_PAID;
+                } elseif (($payment->captured_amount + $payment->discount_value) >= $payment->total_price) {
+                    $status = SendUpdateLogStatusEnum::FULL_PAID;
+                }
+
                 $sendUpdateLog->update([
                     'booking_date' => now(),
-                    'transaction_payment_status' => SendUpdateLogStatusEnum::UNPAID, // Intially this will uppdate only for CPD, but there is task that's why update payment status for all.
+                    'transaction_payment_status' => $status ?? '',
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
                 ]);
             }
@@ -730,17 +747,6 @@ class SendUpdateLogService
         }
 
         return ['status' => true, 'message' => 'Update booked'];
-    }
-
-    public function getPaymentCode($quoteCode): string
-    {
-        $countPayments = PaymentRepository::getPaymentsByQuoteCode($quoteCode);
-
-        if ($countPayments < 2) {
-            return $quoteCode.'-1';
-        }
-
-        return $quoteCode.'-'.$countPayments;
     }
 
     public function checkSendUpdatePermission($sendUpdateType): bool

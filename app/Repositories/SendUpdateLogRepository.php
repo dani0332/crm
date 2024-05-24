@@ -12,10 +12,12 @@ use App\Models\CarQuote;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
 {
+    use PersonalQuoteSyncTrait;
     public function model()
     {
         return SendUpdateLog::class;
@@ -36,6 +38,12 @@ class SendUpdateLogRepository extends BaseRepository
                 'quote_type_id' => $data['quote_type_id'],
                 'uuid' => $data['quote_uuid'],
             ])->first();
+
+            if (! $personalQuote) {
+                return (object) [
+                    'message' => 'Quote sync pending, please try again later. ',
+                ];
+            }
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
 

@@ -152,7 +152,7 @@ const authenticatedSendUpdateOptions = computed(() => {
 });
 
 // const fetchLogs = () => {
-//   axios.get(route('send-update-logs.get-by-id', { id: props.reportableId }))
+//   axios.get(route('send-update.get-by-id', { id: props.reportableId }))
 //     .then(res => sendUpdatesTable.data = res.data.logs)
 //     .catch(err => console.log('err', err))
 // }
@@ -246,7 +246,7 @@ const onAddUpdate = autoSubmit => {
         ref_id: props.reportable.id,
       };
     })
-    .post(route('send-update-logs.store'), {
+    .post(route('send-update.store'), {
       onSuccess: () => {
         modals.step = 'step1';
         form.parentCategory = null;
@@ -369,7 +369,7 @@ const findOption = (item, key) => {
           <template #item-code="{ code, uuid }">
             <Link
               :href="
-                route('send-update-logs.show', {
+                route('send-update.show', {
                   uuid: uuid,
                   refURL: $page.url,
                 })
