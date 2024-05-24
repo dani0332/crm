@@ -118,7 +118,7 @@ class SplitPaymentService
             // make ready to post to sage,cannot use log data as it changes on each call
             $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
             $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
-       
+
             if ($readyToPostResponse !== '') {
                 $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
                 $returnMessage['response'] = 'Error while making ready to post to sage';
