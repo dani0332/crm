@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\EnvEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
