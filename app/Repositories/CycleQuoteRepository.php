@@ -78,7 +78,9 @@ class CycleQuoteRepository extends BaseRepository
             ->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            return 0;
+            // return $query->count();
         }
 
         return ($forExport) ? $query->get() : $query;

@@ -109,7 +109,9 @@ class PetQuoteRepository extends BaseRepository
             ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            return 0;
+            // return $query->count();
         }
 
         return ($forExport) ? $query->get() : $query;
@@ -189,7 +191,7 @@ class PetQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+            ['advisor', 'nationality', 'insuranceProvider']
+        )->orderBy('created_at', 'desc');
     }
-
 }
