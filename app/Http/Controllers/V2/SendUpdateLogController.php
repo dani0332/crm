@@ -60,7 +60,11 @@ class SendUpdateLogController extends Controller
             $categoryCode = $requestData['childCategory']['slug'];
 
             $response = SendUpdateLogRepository::create($requestData);
-            abort_if(! empty($response->message), 400, $response->message);
+            if ($response->message) {
+                DB::rollBack();
+
+                return redirect()->back()->with('error', $response->message);
+            }
 
             $this->updateQuoteLeadStatus($requestData, 'create');
             if ($categoryCode == SendUpdateLogStatusEnum::CIR) {
