@@ -76,8 +76,8 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->hourly()->onOneServer()->withoutOverlapping(1);
-        $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->everyTenMinutes()->onOneServer()->withoutOverlapping(1);
+        // $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('09:00');
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('11:45');
