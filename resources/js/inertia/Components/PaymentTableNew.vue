@@ -1260,7 +1260,6 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = () => {
-  console.log(planDetail);
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.total_price) {
       notification.error({
