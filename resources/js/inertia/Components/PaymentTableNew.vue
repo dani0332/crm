@@ -2109,7 +2109,6 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
-// copied from test. 
 const validateAccessForSendUpdate = ref(false);
 if (props.sendUpdate) {
   const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
@@ -2146,7 +2145,7 @@ const getCaptureValidation = computed(() => {
           props.quoteRequest.quote_status_id === 15) &&
           props.quoteRequest.kyc_decision === 'Complete') ||
           props.quoteType === 'Travel')) || //skip AML & KYC for travel
-      validateAccessForSendUpdate
+          validateAccessForSendUpdate.value
     ) {
       if (payment.is_approved === 1) {
         return false;
