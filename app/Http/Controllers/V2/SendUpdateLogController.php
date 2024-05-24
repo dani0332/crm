@@ -198,6 +198,8 @@ class SendUpdateLogController extends Controller
         }
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType, $quote);
 
+        $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteType' => $quoteType,
