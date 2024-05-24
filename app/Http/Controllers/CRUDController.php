@@ -32,7 +32,6 @@ use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Events\LeadsCount;
 use App\Facades\Capi;
-use App\Http\Controllers\V2\CentralController;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -762,7 +761,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'bookPolicyDetails', 'listQuotePlans', 'isAmlClearedForPayment', 'clientInquiryLogs'
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'bookPolicyDetails', 'listQuotePlans', 'isAmlClearedForPayment', 'clientInquiryLogs',
             ]));
         }
 
@@ -1731,7 +1730,7 @@ class CRUDController extends Controller
         $this->updatePriceAndDiscount($quoteModel);
 
         return redirect()->back()->with([
-            'success' => 'Quote Policy Detail has been updated.'
+            'success' => 'Quote Policy Detail has been updated.',
         ]);
     }
 

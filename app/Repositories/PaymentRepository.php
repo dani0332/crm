@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -10,7 +11,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
-use App\Enums\CollectionTypeEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
@@ -387,7 +387,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $paymentSplit->save();
                             $parentPayment = $paymentSplit->payment;
                             /* Part of milestone 2 */
-                            if ($parentPayment->collection_type==CollectionTypeEnum::BROKER && Auth::user()->hasRole(RolesEnum::BetaUser)) {
+                            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER && Auth::user()->hasRole(RolesEnum::BetaUser)) {
                                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
                             }
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
@@ -551,7 +551,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             }
             /* Part of milestone 2*/
-            if ( $masterPayment->collection_type==CollectionTypeEnum::BROKER && Auth::user()->hasRole(RolesEnum::BetaUser)) {
+            if ($masterPayment->collection_type == CollectionTypeEnum::BROKER && Auth::user()->hasRole(RolesEnum::BetaUser)) {
                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
             }
         } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {

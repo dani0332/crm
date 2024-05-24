@@ -2,11 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Enums\PermissionsEnum;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Payment;
-
+use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePaymentRequest extends FormRequest
 {
@@ -59,13 +57,13 @@ class UpdatePaymentRequest extends FormRequest
         $validator->after(function ($validator) {
 
             $payment = Payment::where('code', request()->paymentCode)->first();
-           // echo  $payment->discount_value; exit;
+            // echo  $payment->discount_value; exit;
             // check if the user is authorized to apply discount
-            if( request()->input('payment.discount_value')>0 && $payment->discount_value!=request()->input('payment.discount_value') && auth()->user()->cannot(PermissionsEnum::PAYMENTS_DISCOUNT_ADD)) {
+            if (request()->input('payment.discount_value') > 0 && $payment->discount_value != request()->input('payment.discount_value') && auth()->user()->cannot(PermissionsEnum::PAYMENTS_DISCOUNT_ADD)) {
                 $validator->errors()->add('value', 'Not Authorized to Add Discount');
             }
             // check if the user is authorized to apply credit approval
-            if( request()->input('payment.credit_approval')!='' && $payment->credit_approval!=request()->input('payment.credit_approval') && auth()->user()->cannot(PermissionsEnum::PAYMENTS_CREDIT_APPROVAL_ADD)) {
+            if (request()->input('payment.credit_approval') != '' && $payment->credit_approval != request()->input('payment.credit_approval') && auth()->user()->cannot(PermissionsEnum::PAYMENTS_CREDIT_APPROVAL_ADD)) {
                 $validator->errors()->add('value', 'Not Authorized to Add Credit Approval');
             }
 

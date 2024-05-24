@@ -9,8 +9,8 @@ use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use finfo;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class SendEmailCustomerService extends BaseService
