@@ -1472,14 +1472,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
-watch(
-  () => page.props.ecomDetails,
-  value => {
-    selectedProviderPlan.value.premium = value.priceWithVAT;
-  },
-  { deep: true },
-);
-
 const selectedProviderPlan = ref({
     id: page.props.quote.plan_id,
     planName: page.props.quote.health_plan_name_text,
@@ -1499,10 +1491,6 @@ const handlePlanSelected = plan => {
         only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
     });
 };
-
-const getDetailPageRoute = (uuid, quote_type_id) =>
-    useGetShowPageRoute(uuid, quote_type_id, null);
-
 watch(
     () => page.props.ecomDetails,
     value => {
