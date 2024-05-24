@@ -408,6 +408,7 @@ class SendEmailCustomerService extends BaseService
 
     public function sendMyAlfredWelcomeEmail($emailData, $tag, $source = '')
     {
+        $isEmailSent = 0;
         try {
             $appEnv = config('constants.APP_ENV');
             //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler

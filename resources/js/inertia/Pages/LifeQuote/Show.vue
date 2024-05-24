@@ -1,10 +1,11 @@
 <script setup>
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MemberDetails from "../../Components/MemberDetails.vue";
+import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
+const page = usePage();
 defineProps({
   quote: Object,
   record: Object,
@@ -43,6 +44,7 @@ defineProps({
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
+const leadSource = page.props.leadSource;
 const hasRole = role => useHasRole(role);
 
 const modals = reactive({
@@ -73,7 +75,6 @@ const emiratesOptions = computed(() => {
   }));
 });
 
-const page = usePage();
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
@@ -494,6 +495,59 @@ watch(
 <template>
   <div>
     <Head title="Life Quotes" />
+
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Life Detail</h2>
+      <div class="flex gap-2">
+        <Link
+          v-if="quote.life_quote_request_detail?.insly_id"
+          :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          class="ml-2"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link
+          v-if="can(permissionsEnum.LifeQuotesList)"
+          :href="route('life-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div"> Life Quotes </x-button>
+        </Link>
+        <Link
+          v-if="can(permissionsEnum.LifeQuotesEdit)"
+          :href="route('life-quotes-edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div>
 
     <x-modal v-model="modalsDuplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -1144,10 +1198,10 @@ watch(
       :expanded="sectionExpanded"
     />
 
-<MigratePayment
+    <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
       :payments="payments"
     />

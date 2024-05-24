@@ -57,11 +57,10 @@ const policyIssuanceStatusOptions = computed(() => {
 
  });
 
-const planQuoteInsurerNumber = computed(() => {
-  let obj = page.props?.listQuotePlans?.filter(
-    item => item.id == page.props.record.plan_id,
-  );
-
+ const planQuoteInsurerNumber = computed(() => {
+  let quotePlanList = page.props?.listQuotePlans;
+  if (!quotePlanList || typeof quotePlanList === 'string') return null;
+  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
   return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
 });
 
@@ -146,7 +145,7 @@ const onUpdatePolicyDetails = isValid => {
   if (!isValid) return;
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
-    onSuccess: () => { 
+    onSuccess: () => {
       if (page.props?.bookPolicyDetails?.isLackingOfPayment){
         notification.error({
           title: 'Action Needed: Please revise payment details to reflect plan changes.',

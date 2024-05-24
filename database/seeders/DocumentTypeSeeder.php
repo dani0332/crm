@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\DocumentType;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class DocumentTypeSeeder extends Seeder
 {
@@ -15,86 +14,19 @@ class DocumentTypeSeeder extends Seeder
      */
     public function run()
     {
-        $documentTypesCount = DocumentType::all()->count();
-        if ($documentTypesCount == 0) {
-            DB::table('document_types')->insert([[
-                'code' => 'CPC',
-                'text' => 'Policy Certificate',
-                'max_files' => 1,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => true,
-                'sort_order' => 1,
-                'is_required' => 1,
-            ], [
-                'code' => 'CTI',
-                'text' => 'Tax Invoice',
-                'max_files' => 1,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => true,
-                'sort_order' => 2,
-                'is_required' => 1,
-            ], [
-                'code' => 'CTIRBB',
-                'text' => 'Tax Invoice Raise by Buyer',
-                'max_files' => 2,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 3,
-                'is_required' => 1,
-            ], [
-                'code' => 'CEID',
-                'text' => 'Emirates ID',
-                'max_files' => 20,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 4,
-                'is_required' => 1,
-            ], [
-                'code' => 'TR',
-                'text' => 'Receipt',
-                'max_files' => 20,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 5,
-                'is_required' => 1,
-            ], [
-                'code' => 'TAD',
-                'text' => 'Additional Documents',
-                'max_files' => 20,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 6,
-                'is_required' => 0,
-            ], [
-                'code' => 'TAEA',
-                'text' => 'Additional Email Attachments',
-                'max_files' => 20,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 7,
-                'is_required' => 0,
-            ]]);
+
+        $newDocumentTypes = [
+            ['code' => 'OD', 'text' => 'Other Documents', 'folder_path' => 'quote_notes', 'accepted_files' => '.pdf,.xlsm,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png', 'max_files' => 20, 'max_size' => 10],
+        ];
+
+        foreach ($newDocumentTypes as $newDocumentType) {
+            DocumentType::firstOrCreate(['code' => $newDocumentType['code']], [
+                'text' => $newDocumentType['text'],
+                'max_files' => $newDocumentType['max_files'],
+                'max_size' => $newDocumentType['max_size'],
+                'folder_path' => $newDocumentType['folder_path'],
+                'accepted_files' => $newDocumentType['accepted_files'],
+            ]);
         }
     }
 }

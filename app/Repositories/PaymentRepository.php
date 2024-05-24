@@ -430,11 +430,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $quoteModel->save();
                     // Berlin Service - Extend Customer Subscription on Shaji request
                     $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
-                    if ($customerData) {
-                        $quoteOptions = QuoteTypeId::getOptions();
-                        $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
-                        info('Transaction Approved responseExtend: '.$responseExtend);
-                    }
+                    // if ($customerData) {
+                    //     $quoteOptions = QuoteTypeId::getOptions();
+                    //     $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
+                    //     info('Transaction Approved responseExtend: '.$responseExtend);
+                    // }
                     //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
 
                     // send EP documents

@@ -1,4 +1,12 @@
 <script setup>
+import { onMounted } from 'vue';
+
+const props = defineProps({
+  quoteStatusEnum: Object,
+  quoteTypeId: String,
+  lostReasons: Object,
+    quoteType: String,
+});
 const page = usePage();
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -11,6 +19,10 @@ const quotes = reactive({
   pages: {},
   queries: {},
 });
+
+provide('quoteStatusEnum', props.quoteStatusEnum);
+provide('quoteTypeId', props.quoteTypeId);
+provide('lostReasons', props.lostReasons);
 
 const onLoadMore = id => {
   quotes.loader = true;
@@ -103,6 +115,11 @@ const onSearch = id => {
       quotes.searching = false;
     });
 };
+
+
+onMounted(() => {
+  console.log(quotes.data);
+});
 </script>
 
 <template>
@@ -125,7 +142,18 @@ const onSearch = id => {
       v-if="quotes.data.length > 0"
       class="flex w-full h-[85vh] space-x-4 overflow-auto"
     >
-      <div
+      <LeadsCard
+        class="flex flex-col flex-shrink-0 w-64 bg-gray-200 border border-gray-300"
+        v-for="quote in quotes.data"
+        :key="quote.id"
+        :quote="quote"
+        :quotes="quotes"
+        :quoteType="quoteType"
+        :quoteTypeId="quoteTypeId"
+        :lostReasons="props.lostReasons"
+        :quoteStatusEnum="props.quoteStatusEnum"
+      />
+      <!-- <div
         v-for="quote in quotes.data"
         :key="quote.id"
         class="flex flex-col flex-shrink-0 w-64 bg-gray-200 border border-gray-300"
@@ -227,7 +255,7 @@ const onSearch = id => {
             </x-button>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>

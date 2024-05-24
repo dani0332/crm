@@ -1,5 +1,5 @@
 <script setup>
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -18,6 +18,7 @@ const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -92,16 +93,16 @@ const docForm = useForm({
 });
 
 const uploadFile = (doc, filesWithInfo) => {
-    let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-    const { files, rejectReason} = filesWithInfo;
-    if (files.length == 0) {
-        notification.error({
-            title: 'File upload failed',
-            position: 'top',
-        });
-        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-        return false
-    };
+  let url = '/personal-quotes/' + docForm.quote_id + '/documents';
+  const { files, rejectReason } = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -156,7 +157,7 @@ const uploadFile = (doc, filesWithInfo) => {
             Upload Documents
           </x-button>
         </div>
-        
+
       <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"

@@ -48,6 +48,14 @@ label {
   @apply overflow-x-auto;
 }
 
+
+.overflow-hidden-table   {
+  overflow: unset !important;
+}
+
+.overflow-hidden-table .vue3-easy-data-table__main  {
+  overflow: unset !important;
+}
 /* Scrollbar styles */
 .vue3-easy-data-table__main::-webkit-scrollbar {
   @apply h-1.5 bg-transparent cursor-pointer;
@@ -117,6 +125,10 @@ label {
 }
 .vue3-easy-data-table__body.row-alternation tr {
   @apply even:bg-slate-50;
+}
+
+.text-wrap .vue3-easy-data-table__header tr th {
+    text-wrap: wrap;
 }
 
 /* table head sort icons */
@@ -484,4 +496,16 @@ border-primary animate-spin;
 
 .large-tip .arrow-t .x-popover-container::after {
     left: 63%;
+}
+
+@media (max-width: 1250px) {
+  .comprehensive-conversion-container {
+    height: auto !important;
+  }
+}
+
+@media (max-width: 1250px) {
+  .comprehensive-conversion-container {
+    height: auto !important;
+  }
 }

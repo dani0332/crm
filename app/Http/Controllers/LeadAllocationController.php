@@ -2,20 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Events\UserStatusChanged;
-use App\Http\Requests\LeadAllocationRequest;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
 use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
-use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\CarAllocationService;
 use App\Services\CRUDService;
@@ -251,85 +248,6 @@ class LeadAllocationController extends Controller
     public function getTierUsers($tierId)
     {
         return $this->leadAllocationService->getTierUsersWithLeadAllocationRecord($tierId);
-    }
-
-    public function showAllocations(Request $request)
-    {
-        if (Gate::allows(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT, auth()->user())) {
-            $quoteTypesByUser = $this->getQuoteTypesByUser(auth()->user()->id);
-            $quoteTypes = QuoteTypeRepository::GetList();
-            $data = $this->leadAllocationService->getAllocationLeads(collect($quoteTypesByUser)->pluck('id')->all());
-
-            return inertia('LeadAllocation/AdvisorsLeadCaps', [
-                'quoteTypes' => $quoteTypes,
-                'allocationsLeads' => $data,
-                'advisors' => $this->getHealthAndMotorAdvisorsList(),
-            ]);
-        } else {
-            abort(403, 'Unauthorized action.');
-        }
-    }
-
-    public function storeAllocation(LeadAllocationRequest $request)
-    {
-        $allocationRequest = (object) $request->validated();
-        $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($request->userId, $request->quoteTypeId);
-        if (! empty($isLead)) {
-            return back()->with('error', 'Advisor already has an assigned capacity value for this quote type.');
-        }
-        $this->leadAllocationService->createLeadAllocationRecord($request->userId, $allocationRequest);
-
-        return redirect(route('allocations.index'))->with('message', 'Advisor capacity assigned successfully');
-    }
-
-    public function getHealthAndMotorAdvisorsList()
-    {
-        $healthAdvisors = $this->crudService->getAdvisorsByModelType(QuoteTypes::HEALTH->value);
-        $motorAdvisors = $this->crudService->getAdvisorsByModelType(QuoteTypes::CAR->value);
-
-        return collect([$healthAdvisors, $motorAdvisors])->collapse()->unique()->values()->all();
-    }
-
-    public function createAllocation(Request $request)
-    {
-        return inertia('LeadAllocation/CreateAdvisorsLeadCaps', [
-            'advisors' => $this->getHealthAndMotorAdvisorsList(),
-        ]);
-    }
-
-    public function updateCapsAllocation(Request $request)
-    {
-        if (isset($request->items)) {
-            foreach ($request->items as $item) {
-                if ($item['userId'] && $item['maxCap']) {
-                    $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $item['userId'])->first();
-                    $leadAllocationObj->max_capacity = (int) $item['maxCap'];
-                    $leadAllocationObj->save();
-                    info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
-                }
-            }
-
-            return redirect(route('allocations.index'))->with('message', 'Advisor capacity assigned successfully');
-        } else {
-            return redirect(route('allocations.index'))->with('info', 'Please select at least one item.');
-        }
-
-    }
-
-    public function getQuoteTypesByUser($userId)
-    {
-        $user = $this->getUserProducts($userId);
-        $quoteTypesNames = collect($user)->pluck('name');
-        $quoteTypes = QuoteTypeRepository::GetList();
-
-        return collect($quoteTypes)->whereIn('code', $quoteTypesNames)->values();
-    }
-
-    public function getAdvisorByQuoteType($userId)
-    {
-        $quoteTypes = $this->getQuoteTypesByUser($userId);
-
-        return response()->json(['quoteTypes' => $quoteTypes]);
     }
 
 }

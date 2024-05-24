@@ -17,6 +17,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useNotifications('toast');
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
     value: status.id,
@@ -40,9 +41,10 @@ const onLeadStatus = () => {
       preserveScroll: true,
 
       onError: errors => {
-          notification.error({ title: errors.value, position: 'top' });
+        notification.error({ title: errors.value, position: 'top' });
       },
       onSuccess: () => {
+        router.reload({ only: ['quote'] });
         notification.success({
           title: 'Quote status is updated',
           position: 'top',
@@ -58,8 +60,9 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.TransactionApproved
+    (props.quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+      props.quote.quote_status_id == quoteStatusEnum.Lost) ??
+    false
   );
 });
 watch(
@@ -117,8 +120,8 @@ watch(
               />
             </x-field>
             <x-field label="Lost Reason" required v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost">
-              <x-select            
-                v-model="quoteStatusForm.lost_reason_id"            
+              <x-select
+                v-model="quoteStatusForm.lost_reason_id"
                 :options="
                   lostReasons?.map(item => ({
                     value: item.id,

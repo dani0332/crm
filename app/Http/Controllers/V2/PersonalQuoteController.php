@@ -20,12 +20,16 @@ class PersonalQuoteController extends Controller
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
     {
-        app(PersonalQuoteRepository::class)->updateStatus($quoteType, $quoteId, $request->validated());
+        $response = app(PersonalQuoteRepository::class)->updateStatuses($quoteType, $quoteId, $request->validated());
 
         // Update payment allocation status when lead status changes when lead status as Policy Issue
         app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
 
-        return back()->with('message', 'Status updated successfully');
+        if (! $response['activity_created']) {
+            return back()->with('message', 'Status updated successfully');
+        }
+
+        return back()->with('message', 'Status updated successfully & Activity has been created');
     }
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)

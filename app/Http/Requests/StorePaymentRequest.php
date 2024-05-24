@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Enums\PermissionsEnum;
@@ -64,7 +65,12 @@ class StorePaymentRequest extends FormRequest
         $validator->after(function ($validator) {
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
             if (! $quoteModel) {
-                $validator->errors()->add('value', 'Quote Not Exists');
+                $validator->errors()->add('quote', 'Quote Not Exists');
+            } else {
+                $paymentAlreadyExists = Payment::where('code', $quoteModel->code)->get();
+                if ($paymentAlreadyExists->count() > 0) {
+                    $validator->errors()->add('payment', 'Payment Already Added');
+                }
             }
             // check if the user is authorized to apply discount
             if( request()->input('payment.discount_value')>0 && auth()->user()->cannot(PermissionsEnum::PAYMENTS_DISCOUNT_ADD)) {

@@ -64,7 +64,6 @@ final class ApplicationStorageEnums extends Enum
     public const DTT_ENABLED = 'DTT_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
-    public const DTT_REVIVAL_IN_PROGRESS = 'DTT_REVIVAL_IN_PROGRESS';
     public const ENABLE_PLAN_MODIFY_VALIDATION = 'ENABLE_PLAN_MODIFY_VALIDATION';
     public const EP_MDX_V2_FROM = 'EP_MDX_V2_FROM';
     public const ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE = 'ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE';
@@ -82,4 +81,6 @@ final class ApplicationStorageEnums extends Enum
     public const GROUP_MEDICAL_BOOK_POLICY_TEMPLATE = 'GROUP_MEDICAL_BOOK_POLICY_TEMPLATE';
     public const CORPLINE_BOOK_POLICY_TEMPLATE = 'CORPLINE_BOOK_POLICY_TEMPLATE';
     public const VAT = 0.05;
+    public const QUOTE_SYNC_CLEANUP_ENABLED = 'QUOTE_SYNC_CLEANUP_ENABLED';
+    public const QUOTE_SYNC_CLEANUP_DAYS = 'QUOTE_SYNC_CLEANUP_DAYS';
 }
