@@ -2,14 +2,22 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\QuoteSegmentEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Models\PolicyIssuanceStatus;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
@@ -62,8 +70,10 @@ class HandleInertiaRequests extends Middleware
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'documentTypeEnum' => DocumentTypeEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+            'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
@@ -72,9 +82,15 @@ class HandleInertiaRequests extends Middleware
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
+            'vat' => ApplicationStorageEnums::VAT,
+            'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'im_logo' => getIMLogo(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
+            'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
+            'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
+            'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
         ];
     }
 
@@ -175,6 +191,12 @@ class HandleInertiaRequests extends Middleware
                         'Car',
                         url('car-lead-allocation'),
                         fn ($s) => $s->attributes(['icon' => 'car'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT),
+                        'Advisors Capacity',
+                        route('allocations.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }

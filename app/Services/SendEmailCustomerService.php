@@ -10,6 +10,7 @@ use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use finfo;
 use Illuminate\Support\Facades\Log;
 
 class SendEmailCustomerService extends BaseService
@@ -506,7 +507,7 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
-            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
@@ -683,7 +684,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
-            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
@@ -810,6 +811,84 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+        }
+    }
+
+    public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
+    {
+        try {
+
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $documents = $emailData->quoteDocuments;
+
+            if (! empty($documents)) {
+                foreach ($documents as $item) {
+
+                    $path = $item->doc_url;
+                    $pwDoc = $path !== '' ? $websiteURL.$path : '';
+                    if (! empty($path)) {
+
+                        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+
+                        $file = file_get_contents($pwDoc);
+                        $mimeType = $fileInfo->buffer($file);
+
+                        $ext = mimeContentType(null, $mimeType);
+                        $name = $item->document_type_text.'.'.$ext;
+                        // info('Mime type ========' . $name);
+                        $attachments[] = [
+                            'Content' => base64_encode(file_get_contents($pwDoc)),
+                            'Name' => $name,
+                            'ContentType' => $mimeType,
+                        ];
+                    }
+                }
+            }
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => config('constants.SENDINBLUE_KEY'),
+                'Content-Type' => 'application/json',
+            ];
+
+            $body = json_encode([
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->clientFullName,
+                ]],
+                'templateId' => (int) $emailData->emailTemplateId,
+                'params' => [
+                    'clientFullName' => $emailData->clientFullName,
+                    'carQuoteId' => $emailData->code,
+                    'currentInsurer' => $emailData->currentInsurer,
+                    'renewalDueDate' => $emailData->renewalDueDate,
+                    'policyNumber' => $emailData->policy_number,
+                    'advisor' => (object) [
+                        'name' => $emailData->advisorName,
+                        'email' => $emailData->advisorEmail,
+                    ],
+                ],
+                'tags' => [
+                    $tag,
+                ],
+                'attachment' => isset($attachments) ? $attachments : null,
+            ], JSON_UNESCAPED_SLASHES);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                config('constants.SIB_URL'),
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 20,
+                ]
+            );
+
+            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $responseCode = $clientRequest->getStatusCode();
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
             Log::error($responseDetail);
         }
 

@@ -75,7 +75,7 @@ class LifeQuoteService extends BaseService
                 'lqr.renewal_expiry_date',
                 'lqr.device',
                 DB::raw('DATE_FORMAT(lqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
-                DB::raw('DATE_FORMAT(lqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
+                'lqr.policy_start_date',
                 'lqr.previous_quote_policy_premium',
                 'lqr.customer_id',
                 'lqr.parent_duplicate_quote_id',

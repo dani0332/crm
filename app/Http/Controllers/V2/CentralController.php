@@ -4,6 +4,10 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -17,12 +21,14 @@ use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
 use App\Http\Requests\StorePaymentRequest;
@@ -30,11 +36,16 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
+use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
+use App\Services\ActivitiesService;
 use App\Services\CentralService;
+use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -173,7 +184,6 @@ class CentralController extends Controller
                 'quote_type_id' => $customerProfileRequest->quote_type_id,
                 'quote_request_id' => $customerProfileRequest->quote_request_id,
             ], ['entity_id' => $entity->id, 'entity_type_code' => $customerProfileRequest->entity_type_code]);
-
         }
 
         return redirect()->back();
@@ -197,6 +207,81 @@ class CentralController extends Controller
         return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
     }
 
+    public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
+    {
+        $validatedData = $bookPolicyRequest->validated();
+
+        $paymentInformation = [
+            'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
+            'transaction_payment_status' => $validatedData['transaction_payment_status'],
+            'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
+            'broker_invoice_number' => $validatedData['broker_invoice_number'],
+            'insurer_invoice_date' => $validatedData['invoice_date'],
+            'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
+            'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
+            'commmission_percentage' => $validatedData['commission_percentage'],
+            'commission_vat' => $validatedData['vat_on_commission'],
+            'commission' => $validatedData['total_commission'],
+            'invoice_description' => $validatedData['invoice_description'],
+        ];
+        $payment = Payment::where('code', $validatedData['payment_code'])->first();
+        if (! $payment) {
+            return back()->with('message', 'Payment record not found');
+        }
+        $payment->update($paymentInformation);
+        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
+        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
+
+        return redirect()->back()->with('success', 'Booking Status has been updated.');
+    }
+
+    public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
+    {
+        $request = (object) $sendBookPolicyRequest->validated();
+        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+
+        if ($request->send_policy_type == 'customer') {
+            // dispath job to send email
+            dispatch(new SendBookPolicyDocumentsJob($request));
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+            ]);
+
+            return response()->json(['message' => 'Policy sent to customer'], 200);
+        }
+        if ($request->send_policy_type == 'sage') {
+            $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
+            $payment = Payment::where('code', $quote['code'])->first();
+            $paymentSplits = PaymentSplits::where('code', $quote['code'])->get();
+            $data['quoteTypeId'] = $quoteTypeId;
+            $data['id'] = $quote->id;
+
+            $sageService = new SageApiService();
+            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
+
+            if ($response['status'] === false) {
+                return response()->json(['errors' => [
+                    'message' => $response['message'],
+                ]], 500);
+            }
+
+            if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+                // dispath job to send email
+                dispatch(new SendBookPolicyDocumentsJob($request));
+            }
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            ]);
+
+            (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
+
+            $this->handleInSufficientPayment($request, $payment);
+
+            return response()->json(['message' => $response['message']], 200);
+        }
+    }
     public function loadAvailablePlans($type, $id)
     {
         return (new CentralService())->loadAvailablePlans($type, $id);
@@ -240,6 +325,14 @@ class CentralController extends Controller
 
         return back()->with('success', $successMessage);
     }
+  
+    private function handleInsufficientPayment($request, $payment)
+    {
+        if ($request->is_send_policy && $payment) {
+            $payment->transaction_payment_status = $request->transaction_payment_status;
+            $payment->save();
+        }
+    }
 
     // Update total price
     public function updateTotalPrice(UpdateTotalPriceRequest $request)
@@ -275,5 +368,4 @@ class CentralController extends Controller
     {
         return (new SplitPaymentService())->generateSplitPaymentLink($request);
     }
-
 }

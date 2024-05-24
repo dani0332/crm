@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentTypeCode;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -46,5 +47,30 @@ class DocumentType extends Model implements AuditableContract
     public function scopeActive($query)
     {
         $query->where('is_active', 1);
+    }
+
+    public function scopeRequired($query)
+    {
+        $query->where('is_required', 1);
+    }
+
+    public function scopeIssuingDocument($query)
+    {
+        $query->where('category', DocumentTypeCode::ISSUING_DOCUMENTS);
+    }
+
+    public function scopeTaxDocument($query)
+    {
+        $query->whereIn('code', [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB])->issuingDocument()->active();
+    }
+
+    public function scopeRequiredForSendPolicy($query)
+    {
+        return $query->where('is_required_for_send_policy', 1)->required()->active()->issuingDocument();
+    }
+
+    public function scopeSendToCustomer($query)
+    {
+        $query->whereNotIn('code', [DocumentTypeCode::CTIRBB])->where('send_to_customer', 1)->active();
     }
 }

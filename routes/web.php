@@ -8,9 +8,12 @@ use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
+use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
+use App\Http\Controllers\CarRepairCoverageController;
+use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\ClaimsStatusController;
@@ -71,6 +74,7 @@ use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -158,11 +162,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::group(['prefix' => 'quotes/'], function () {
-            Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('revival-quotes-list');
-            Route::get('revival/{uuid}/edit', [CarRevivalQuoteController::class, 'edit'])->name('revival-quotes-edit');
-            Route::put('revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('revival-quotes-update');
+            Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
+            Route::get('revival/{uuid}/edit', [CarRevivalQuoteController::class, 'edit'])->name('carrevival-quotes-edit');
+            Route::put('revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('carrevival-quotes-update');
 
-            Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('revival-quotes-show');
+            Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
         });
 
         if (in_array(quoteTypeCode::Life, newUi())) {
@@ -267,8 +271,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
-    Route::post('/lead-allocation/update-availability', [LeadAllocationController::class, 'updateAvailability']);
-    Route::post('/lead-allocation/update-cap', [LeadAllocationController::class, 'updateCaps']);
+
+    Route::get('/allocations', [LeadAllocationController::class, 'showAllocations'])->name('allocations.index');
+    Route::post('/store-allocation', [LeadAllocationController::class, 'storeAllocation'])->name('allocation.store');
+    Route::get('/create-allocation', [LeadAllocationController::class, 'createAllocation'])->name('allocation.create');
+    Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
+    Route::get('/advisor-by-quotetype/{user_id}', [LeadAllocationController::class, 'getAdvisorByQuoteType'])->name('allocations.advisor-quotestype');
+
+    Route::post('/lead-allocation/{quoteType}/update-availability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/{quoteType}/update-cap', [LeadAllocationController::class, 'updateCaps']);
     Route::post('/lead-allocation/toggle-reset-cap', [LeadAllocationController::class, 'updateResetCapSwitch']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
@@ -282,6 +293,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('quotes/{quoteType}/{quoteUuId}/send-policy-documents', [QuoteDocumentController::class, 'sendPolicyDocument']);
     Route::get('quotes/{quoteType}/{quoteId}/documents/{documentTypeCode}/get-uploaded', [QuoteDocumentController::class, 'getQuoteDocumentsUploaded']);
     Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
+    Route::get('quotes/{quoteType}/{quote}/proforma-payment-request', [QuoteDocumentController::class, 'createProformaPaymentRequest'])->name('create.proforma.payment.request');
+    Route::get('proforma-payment-request/{quote_document}/download', [QuoteDocumentController::class, 'downloadProformaPaymentRequest'])->name('download.proforma.payment.request');
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
@@ -336,7 +349,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
-
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
@@ -484,6 +496,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         //        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
 
+    Route::controller(SendUpdateLogController::class)->prefix('send-update-logs')->name('send-update-logs.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{uuid}', 'show')->name('show');
+        Route::patch('/update/{id}', 'update')->name('update');
+        Route::post('/save-details', 'savePriceDetails')->name('save-price-details');
+        Route::post('/save-policy-details', 'savePolicyDetails')->name('save-policy-details');
+    });
+    // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
+
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {
             Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
@@ -550,6 +572,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/health-plan-notify-agent', [HealthQuoteController::class, 'healthPlanNotifyAgent']);
 
     Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
+    //bookpolicy routes
+    Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy');
+    Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy');
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);

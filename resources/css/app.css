@@ -103,6 +103,14 @@ label {
 .tablefixed .vue3-easy-data-table__body tr td {
   @apply whitespace-nowrap;
 }
+
+.table-fixed-width {
+  @apply md:overflow-visible sm:overflow-x-auto
+}
+
+.table-fixed-width .vue3-easy-data-table__main{
+  @apply md:overflow-visible sm:overflow-x-auto
+}
 /* Table body tr */
 .vue3-easy-data-table__body tr {
   @apply hover:bg-primary-50 transition;

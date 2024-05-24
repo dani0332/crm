@@ -152,6 +152,12 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
     }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');

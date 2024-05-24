@@ -49,14 +49,16 @@ class SagePayloadFactory
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $request->customerId,
-                    'ReceiptTransactionType' => 'Prepayment',
+                    'ReceiptTransactionType' => 'ApplyDocument',
+                    'DocumentType' => 'Prepayment',
                     'DocumentNumber' => $request->sage_reciept_id,
                     'AppliedReceiptsAdjustments' => [
                         [
                             'BatchType' => 'CA',
                             'CustomerNumber' => $request->customerId,
-                            'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
-                            'ReceiptTransactionType' => 'Prepayment',
+                            'DocumentNumber' => (string) $request->insurerPremiumNumber,
+                            'ReceiptTransactionType' => 'ApplyDocument',
+                            'CustomerReceiptAmount' => $request->premiumWithTax,
                         ],
                     ],
                 ],
@@ -71,30 +73,30 @@ class SagePayloadFactory
 
     public static function createAPInvoicePrem($request)
     {
-
+        $premiumDescription = 'P.'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
-                    'VendorNumber' => 'IP002', // use vender api to create vender in sage
+                    'VendorNumber' => $request->sageVenderId, // use vender api to create vender in sage
 
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
-                    'InvoiceDescription' => $request->invoiceDescription,
+                    'DocumentNumber' => $request->insurerPremiumNumber,
+                    'InvoiceDescription' => $premiumDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED', // alway will be AED discussed with denber
                     'DueDate' => $request->paymentDueDate,
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => $request->premiumWithoutTax,
-                    'DocumentTotalIncludingTax' => $request->premiumWithTax,
-                    'PostingDate' => '2023-05-04T00:00:00Z',
+                    'DocumentTotalBeforeTaxes' => $request->totalAmount,
+                    'DocumentTotalIncludingTax' => $request->totalAmount,
+                    'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
-                            'DistributionDescription' => $request->invoiceDescription,
-                            'TaxClass1' => 1,
-                            'GLAccount' => '55020',
-                            'DistributedAmount' => $request->premiumWithoutTax,
-                            'DistributedAmountBeforeTaxes' => $request->premiumWithTax,
+                            'DistributionDescription' => $premiumDescription,
+                            'TaxClass1' => 5,
+                            'GLAccount' => $request->insurerGlLiaiblityAccount,
+                            'DistributedAmount' => $request->totalAmount,
+                            'DistributedAmountBeforeTaxes' => $request->totalAmount,
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -116,12 +118,13 @@ class SagePayloadFactory
     public static function createARInvoiceDis($request)
     {
         // Payload creation logic for CreditNote scenario
+        $description = 'D.'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber.'-DIS',
-                    'InvoiceDescription' => $request->invoiceDescription,
+                    'DocumentNumber' => $request->insurerPremiumNumber.'-DIS',
+                    'InvoiceDescription' => $description,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'DocumentType' => 'CreditNote',
                     'CurrencyCode' => 'AED',
@@ -134,7 +137,7 @@ class SagePayloadFactory
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
-                            'Description' => $request->invoiceDescription,
+                            'Description' => $description,
                             'TaxClass1' => 5,
                             'RevenueAccount' => '70010',
                             'ExtendedAmountWithTIP' => $request->discount,
@@ -166,28 +169,31 @@ class SagePayloadFactory
         } else {
             $taxClass = 2;
         }
+        $premiumDescription = 'P.'.$request->invoiceDescription;
+        $commissionDescription = 'C.'.$request->invoiceDescription;
+        $premiumWithDiscount = $request->totalAmount + $request->discount;
         $payLoad = [
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
-                    'InvoiceDescription' => $request->invoiceDescription.'-PREM',
-                    'DocumentDate' => '2023-04-26T00:00:00Z',
+                    'DocumentNumber' => $request->insurerPremiumNumber,
+                    'InvoiceDescription' => $premiumDescription,
+                    'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTax' => $request->premiumWithoutTax,
-                    'DocumentTotalIncludingTax' => $request->premiumWithTax,
+                    'DocumentTotalBeforeTax' => $premiumWithDiscount,
+                    'DocumentTotalIncludingTax' => $premiumWithDiscount,
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
-                            'Description' => $request->invoiceDescription,
+                            'Description' => $premiumDescription,
                             'TaxClass1' => 5,
-                            'RevenueAccount' => '55020',
-                            'ExtendedAmountWithTIP' => $request->premiumWithTax,
-                            'ExtendedAmountWithoutTIP' => $request->premiumWithoutTax,
+                            'RevenueAccount' => $request->insurerGlLiaiblityAccount,
+                            'ExtendedAmountWithTIP' => $premiumWithDiscount,
+                            'ExtendedAmountWithoutTIP' => $premiumWithDiscount,
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -199,25 +205,25 @@ class SagePayloadFactory
                 ],
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerTaxInvoiceNumber,
-                    'InvoiceDescription' => $request->invoiceDescription.'-COM',
+                    'DocumentNumber' => $request->insurerCommissionNumber,
+                    'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
                     'TaxAmount1' => $request->vatOnCommission,
-                    'DocumentTotalBeforeTax' => $request->commission,
-                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat,
+                    'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                    'DocumentTotalIncludingTax' => $request->commission,
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
-                            'Description' => $request->invoiceDescription,
+                            'Description' => $commissionDescription,
                             'TaxClass1' => $taxClass,
                             'TaxAmount1' => $request->vatOnCommission,
                             'RevenueAccount' => '60010',
-                            'ExtendedAmountWithTIP' => $request->commissionIncludingVat,
-                            'ExtendedAmountWithoutTIP' => $request->commission,
+                            'ExtendedAmountWithTIP' => $request->commission,
+                            'ExtendedAmountWithoutTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -235,7 +241,98 @@ class SagePayloadFactory
             'payload' => $payLoad,
         ];
     }
+    public static function createARInvoiceSplitPayments($request, $splitPayments)
+    {
+        // Payload creation logic for default scenario
+        $taxClass = 1;
+        if ($request->commissionIncludingVat > 0) {
+            $taxClass = 1;
+        } else {
+            $taxClass = 2;
+        }
+        $premiumDescription = 'P.'.$request->invoiceDescription;
+        $commissionDescription = 'C.'.$request->invoiceDescription;
+        $payLoad = [
+            'Invoices' => [
+                [
+                    'CustomerNumber' => $request->customerId,
+                    'DocumentNumber' => $request->insurerPremiumNumber,
+                    'InvoiceDescription' => $premiumDescription,
+                    'DocumentDate' => $request->insurerInvoiceDate,
+                    'CurrencyCode' => 'AED',
+                    'DueDate' => $request->paymentDueDate ?? null,
+                    'TaxGroup' => 'VAT',
+                    'TaxClass1' => 5,
+                    'TaxAmount1' => 0.000,
+                    'DocumentTotalBeforeTax' => $request->premiumWithTax,
+                    'DocumentTotalIncludingTax' => $request->premiumWithTax,
+                    'PostingDate' => $request->bookingDate,
+                    'Terms' => 'SPLIT'.count($splitPayments),
+                    'InvoiceDetails' => [
+                        [
+                            'Description' => $premiumDescription,
+                            'TaxClass1' => 5,
+                            'RevenueAccount' => $request->insurerGlLiaiblityAccount,
+                            'ExtendedAmountWithTIP' => $request->premiumWithTax,
+                            'ExtendedAmountWithoutTIP' => $request->premiumWithTax,
+                        ],
+                    ],
 
+                    'InvoicePaymentSchedules' => self::createPaymentSchedules($splitPayments),
+                    'InvoiceOptionalFields' => self::createOptionalFields($request),
+                ],
+                [
+                    'CustomerNumber' => $request->customerId,
+                    'DocumentNumber' => $request->insurerCommissionNumber,
+                    'InvoiceDescription' => $commissionDescription,
+                    'DocumentDate' => $request->insurerInvoiceDate,
+                    'CurrencyCode' => 'AED',
+                    'DueDate' => $request->paymentDueDate ?? null,
+                    'TaxGroup' => 'VAT',
+                    'TaxClass1' => $taxClass,
+                    'TaxAmount1' => $request->vatOnCommission,
+                    'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                    'PostingDate' => $request->bookingDate,
+                    'InvoiceDetails' => [
+                        [
+                            'Description' => $commissionDescription,
+                            'TaxClass1' => $taxClass,
+                            'TaxAmount1' => $request->vatOnCommission,
+                            'RevenueAccount' => '60010',
+                            'ExtendedAmountWithTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                            'ExtendedAmountWithoutTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                        ],
+                    ],
+                    'InvoicePaymentSchedules' => [
+                        [
+                            'DueDate' => $request->paymentDueDate ?? null,
+                        ],
+                    ],
+                    'InvoiceOptionalFields' => self::createOptionalFields($request),
+                ],
+            ],
+        ];
+
+        return [
+            'endPoint' => 'AR/ARInvoiceBatches',
+            'payload' => $payLoad,
+        ];
+    }
+
+    public static function createPaymentSchedules($splitPayments)
+    {
+        $data = [];
+        foreach ($splitPayments as $key => $item) {
+            $temp['EntryNumber'] = 1;
+            $temp['PaymentNumber'] = $key + 1;
+            $temp['DueDate'] = date('Y-m-d', strtotime($item->due_date));
+            $temp['AmountDue'] = $item->collection_amount === null ? 0 : $item->collection_amount;
+            $data[] = $temp;
+        }
+
+        return $data;
+    }
     public static function createCustomerPayload($customer)
     {
         $data = $customer->data;
@@ -290,7 +387,7 @@ class SagePayloadFactory
                     'BatchType' => 'CA',
                     'CustomerNumber' => $request->sage_customer_number,
                     'BankReceiptAmount' => floatval($request->collection_amount),
-                    'CheckReceiptNumber' => '123456',
+                    'CheckReceiptNumber' => $request->checkDetails,
                     'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code),
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [
@@ -350,7 +447,7 @@ class SagePayloadFactory
         ];
 
         return [
-            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=CA,BatchNumber='.$batchNumber.')',
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
         ];
     }
@@ -371,7 +468,7 @@ class SagePayloadFactory
         $val = "('".$sign."')";
 
         return [
-            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.$val,
+            'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
         ];
     }
@@ -460,11 +557,11 @@ class SagePayloadFactory
         $optionalArray = [
             [
                 'OptionalField' => 'CCCODE',
-                'Value' => 'sample cc code',
+                'Value' => $request->ccCode,
             ],
             [
                 'OptionalField' => 'ENDORSEMENT',
-                'Value' => 'sample endorsement number',
+                'Value' => $request->endorsementNumber,
             ],
             [
                 'OptionalField' => 'EXPIRY',
@@ -472,11 +569,11 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'INCEPTION',
-                'Value' => '20230505',
+                'Value' => $request->policyBookingDate,
             ],
             [
                 'OptionalField' => 'INSURED',
-                'Value' => 'sample insured',
+                'Value' => $request->insured,
             ],
             [
                 'OptionalField' => 'MAINCLASS',
@@ -484,11 +581,11 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'MANAGER',
-                'Value' => 'sample manager',
+                'Value' => $request->manager,
             ],
             [
                 'OptionalField' => 'PDC',
-                'Value' => '0',
+                'Value' => $request->isPostDatedCheck,
             ],
             [
                 'OptionalField' => 'POLICY',
@@ -496,7 +593,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'POLICYHOLDER',
-                'Value' => 'sample policy holder',
+                'Value' => $request->policyHolder,
             ],
             [
                 'OptionalField' => 'POLICYISSUER',
@@ -508,7 +605,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'PREMIUMVAT',
-                'Value' => '0.000',
+                'Value' => $request->vatOnPremium,
             ],
             [
                 'OptionalField' => 'REQUESTTYPE',
@@ -528,11 +625,11 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'COLLECTS',
-                'Value' => '',
+                'Value' => $request->premiumCollectedBy,
             ],
             [
                 'OptionalField' => 'COMMRATE',
-                'Value' => '',
+                'Value' => $request->commissionPercentage,
             ],
             [
                 'OptionalField' => 'STATE',
@@ -541,6 +638,69 @@ class SagePayloadFactory
         ];
 
         return $optionalArray;
+    }
+
+    public static function arSplitPrepaymentPayload($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
+    {
+        $payLoad = [
+            'BatchRecordType' => 'CA',
+            'ReceiptsAdjustments' => [
+                [
+                    'BatchType' => 'CA',
+                    'CustomerNumber' => $sage_customer_number,
+                    'ReceiptTransactionType' => 'Receipt',
+                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
+                ],
+            ],
+        ];
+
+        return [
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+            'payload' => $payLoad,
+        ];
+    }
+
+    private static function createReceiptData($item, $sage_customer_number, $payment, $paymentNumber = 1)
+    {
+        $receiptData = [
+            'BatchType' => 'CA',
+            'CustomerNumber' => $sage_customer_number,
+            'DocumentNumber' => $payment->insurer_tax_number,
+            'PaymentNumber' => $paymentNumber,
+            'ReceiptTransactionType' => 'Receipt',
+            'CustomerReceiptAmount' => floatval($item->payment_amount),
+        ];
+
+        $prePaymentData = [
+            'BatchType' => 'CA',
+            'CustomerNumber' => $sage_customer_number,
+            'DocumentNumber' => $item->sage_reciept_id,
+            'PaymentNumber' => 1,
+            'ReceiptTransactionType' => 'Receipt',
+            'CustomerReceiptAmount' => -$item->payment_amount,
+        ];
+
+        return [$receiptData, $prePaymentData];
+    }
+
+    public static function createAppliedReceiptsAdjustments($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
+    {
+        $receiptsAndAdjustmentsData = [];
+
+        if ($isPaymentsSplit) {
+            foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
+                [$singleReceiptData, $singlePrePaymentData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                $receiptsAndAdjustmentsData[] = $singleReceiptData;
+                $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+            }
+        } else {
+            $firstSplitPaymentRecord = $splitPaymentRecords[0];
+            [$singleReceiptData, $singlePrePaymentData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            $receiptsAndAdjustmentsData[] = $singleReceiptData;
+            $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+        }
+
+        return $receiptsAndAdjustmentsData;
     }
 
     // Payment code mapping

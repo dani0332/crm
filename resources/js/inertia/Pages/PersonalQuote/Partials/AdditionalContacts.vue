@@ -5,6 +5,11 @@ const notification = useNotifications('toast');
 defineProps({
   quote: Object,
   quoteType: String,
+  expanded: {
+    type: Boolean,
+    required: false,
+    default: true
+  }
 });
 
 const modals = reactive({
@@ -194,51 +199,60 @@ const additionalContact = computed(() => {
 </script>
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Customer Additional Contacts
-        <x-tag size="sm">{{
-            additionalContact.length > 0 ? additionalContact.length : 0
-        }}</x-tag>
-      </h3>
-      <x-button size="sm" color="orange" @click="addContactModal">
-        Add Additional Contacts
-      </x-button>
-    </div>
-
-    <DataTable
-      table-class-name="compact"
-      :headers="additionalContactTable"
-      :items="additionalContact ?? []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-key="{ key }">
-        <span v-if="key === 'email'"> Email Address </span>
-        <span v-else> Mobile Number </span>
-      </template>
-      <template #item-action="item">
-        <div class="space-x-4">
-          <x-button
-            size="xs"
-            color="emerald"
-            outlined
-            @click.prevent="additionalContactPrimary(item)"
-          >
-            Make Primary
-          </x-button>
-          <x-button
-            size="xs"
-            color="error"
-            outlined
-            @click.prevent="additionalContactDelete(item.id)"
-          >
-            Delete
-          </x-button>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex flex-wrap gap-3 justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Customer Additional Contacts
+            <x-tag size="sm">{{
+                additionalContact.length > 0 ? additionalContact.length : 0
+            }}</x-tag>
+          </h3>
         </div>
       </template>
-    </DataTable>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="mb-4 flex justify-end">
+          <x-button size="sm" color="orange" @click="addContactModal">
+            Add Additional Contacts
+          </x-button>
+        </div>
+
+        <DataTable
+          table-class-name="compact"
+          :headers="additionalContactTable"
+          :items="additionalContact ?? []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-key="{ key }">
+            <span v-if="key === 'email'"> Email Address </span>
+            <span v-else> Mobile Number </span>
+          </template>
+          <template #item-action="item">
+            <div class="space-x-4">
+              <x-button
+                size="xs"
+                color="emerald"
+                outlined
+                @click.prevent="additionalContactPrimary(item)"
+              >
+                Make Primary
+              </x-button>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="additionalContactDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+      </template>
+    </Collapsible>
 
     <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
       <template #header> Add Additional Contacts </template>
@@ -344,32 +358,32 @@ const additionalContact = computed(() => {
       </template>
     </x-modal>
 
-      <x-modal v-model="modals.customerAlreadyPrimaryConfirm" show-close backdrop>
-          <template #header> Alert: Primary Contact Update </template>
-          <p>You are about to set this "email" as the primary contact for this lead.
-              This action will add this lead to the list of other existing leads associated with the same email.
-          </p>
-          <br>
-          <p>Are you sure you want to continue?</p>
-          <template #actions>
-              <div class="text-right space-x-4">
-                  <x-button
-                      size="sm"
-                      ghost
-                      @click.prevent="modals.customerAlreadyPrimaryConfirm = false"
-                  >
-                      Cancel
-                  </x-button>
-                  <x-button
-                      size="sm"
-                      color="emerald"
-                      @click.prevent="additionalContactPrimaryConfirmed"
-                      :loading="contactLoader"
-                  >
-                      Continue
-                  </x-button>
-              </div>
-          </template>
-      </x-modal>
+    <x-modal v-model="modals.customerAlreadyPrimaryConfirm" show-close backdrop>
+        <template #header> Alert: Primary Contact Update </template>
+        <p>You are about to set this "email" as the primary contact for this lead.
+            This action will add this lead to the list of other existing leads associated with the same email.
+        </p>
+        <br>
+        <p>Are you sure you want to continue?</p>
+        <template #actions>
+            <div class="text-right space-x-4">
+                <x-button
+                    size="sm"
+                    ghost
+                    @click.prevent="modals.customerAlreadyPrimaryConfirm = false"
+                >
+                    Cancel
+                </x-button>
+                <x-button
+                    size="sm"
+                    color="emerald"
+                    @click.prevent="additionalContactPrimaryConfirmed"
+                    :loading="contactLoader"
+                >
+                    Continue
+                </x-button>
+            </div>
+        </template>
+    </x-modal>
   </div>
 </template>

@@ -343,6 +343,7 @@ class CRUDService extends BaseService
                     CammyJob::dispatch($entity, 'unsub');
                 }
             }
+            $quoteTypeId = constant(QuoteTypeId::class.'::'.$request->modelType);
 
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
@@ -360,7 +361,7 @@ class CRUDService extends BaseService
             }
 
             QuoteStatusLog::create([
-                'quote_type_id' => QuoteTypeId::Car,
+                'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $entity->id,
                 'current_quote_status_id' => $request->leadStatus,
                 'previous_quote_status_id' => $previousQuoteStatus,
@@ -747,6 +748,17 @@ class CRUDService extends BaseService
                 }
             }
         }
+    }
+
+    public function hasAtleastOneStatusPolicyIssued($quoteTypeId, $recordId)
+    {
+        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $recordId)
+            ->where(function ($query) {
+                $query->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyIssued);
+            })
+            ->first() !== null;
     }
 
     public function getInquiryLogs($modelType, $uuid)
