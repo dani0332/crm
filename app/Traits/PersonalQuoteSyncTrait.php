@@ -142,7 +142,7 @@ trait PersonalQuoteSyncTrait
             $newValues = json_decode($entry->updated_fields, true);
             $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $newValues, $entry->quote_uuid, $entry->quote_type_id);
             $this->upsertPersonalQuoteDetail($personalQuote, $newValues);
-            $entry->update(['is_synced' => true, , 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
+            $entry->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
             info('Entry for quote: ' . $personalQuote->id . ' saved in personal quotes table');
         }
 
