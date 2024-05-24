@@ -81,12 +81,11 @@ class QuoteSyncUpdateCommand extends Command
             } catch (Exception $e) {
                 DB::rollBack();
 
-                $error = $e->getMessage() . ' --- ' . $e->getTraceAsString();
-                info('QuoteSyncJob Error syncing entry: ' . $entry->quote_uuid . ' - ' . $error);
-                $entry->update([
-                    'status' => QuoteSyncStatus::FAILED,
-                    'error' => $error,
-                ]);
+                $error = 'QuoteSyncJob Error syncing entry: ' . $entry->quote_uuid . ' - ' . $e->getMessage();
+                info($error . ' --- ' . $e->getTraceAsString());
+
+                QuoteSync::where('id', $entry->id)
+                    ->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
             }
         }
     }
