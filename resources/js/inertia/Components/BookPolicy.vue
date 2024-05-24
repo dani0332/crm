@@ -275,7 +275,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Booking Date
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Booking Date</label
+                    >
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.BOOKING_DATE
@@ -288,7 +291,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Invoice Description
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Invoice Description</label
+                    >
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.INVOICE_DESCRIPTION
@@ -301,7 +307,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Line of Business
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Line of Business</label
+                    >
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.LINE_OF_BUSINESS
@@ -314,7 +323,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Transaction Payment Status
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Transaction Payment Status</label
+                    >
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
@@ -328,7 +340,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Sub Type
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Sub Type</label
+                    >
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
@@ -340,9 +355,12 @@ const calculateCommission = () => {
                 <dd></dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">
+                <dt class="font-mediumuppercase">
                   <x-tooltip>
-                    Insurer Invoice Date
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Insurer Invoice Date</label
+                    >
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
@@ -365,7 +383,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Broker Invoice No
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Broker Invoice No</label
+                    >
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
@@ -379,7 +400,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Insurer Tax Invoice No
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Insurer Tax Invoice No</label
+                    >
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.INSURER_TAX_INVOICE_NUMBER
@@ -400,7 +424,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Discount Value
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Discount Value</label
+                    >
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.DISCOUNT_VALUE
@@ -413,7 +440,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Insurer Commission Tax Invoice No
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Insurer Commission Tax Invoice No</label
+                    >
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">
@@ -437,7 +467,11 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Commission(%)
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                    >
+                      Commission(%)</label
+                    >
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.COMMISSION_PERCENTAGE
@@ -450,7 +484,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Commission (VAT NOT APPLICABLE)
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Commission (VAT NOT APPLICABLE)</label
+                    >
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
@@ -474,7 +511,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    VAT on Commission
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >VAT on Commission</label
+                    >
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
@@ -488,7 +528,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Commission (VAT APPLICABLE)
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Commission (VAT APPLICABLE)</label
+                    >
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
@@ -513,7 +556,10 @@ const calculateCommission = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   <x-tooltip>
-                    Total Commission
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Total Commission</label
+                    >
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{

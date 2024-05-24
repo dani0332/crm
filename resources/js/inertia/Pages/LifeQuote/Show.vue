@@ -1,6 +1,6 @@
 <script setup>
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MemberDetails from "../../Components/MemberDetails.vue";
+import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
@@ -577,7 +577,7 @@ watch(
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -692,7 +692,10 @@ watch(
                   </Link>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -700,7 +703,12 @@ watch(
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </div>
                 <div>
@@ -752,7 +760,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -792,7 +800,7 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -848,7 +856,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -864,13 +872,13 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-              <dd class="break-words">
-                {{ customerProfileForm.company_name }}
-              </dd>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -1083,9 +1091,7 @@ watch(
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Status
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           </div>
         </template>
         <template #body>
@@ -1114,49 +1120,49 @@ watch(
               </div>
             </div>
             <div class="w-full md:w-2/3">
-          <div class="flex flex-col gap-4">
-              <x-field
-                label="TransApp Code"
-                v-if="
-                  leadStatusForm.leadStatus ==
-                  page.props.quoteStatusEnum.TransactionApproved
-                "
-              >
-                <x-input
-                  v-model="leadStatusForm.trans_code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-              </x-field>
-              <x-field
-                label="Lost Reason"
-                v-if="
-                  leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
-                "
-              >
-                <x-select
-                  v-model="leadStatusForm.lostReason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
+              <div class="flex flex-col gap-4">
+                <x-field
+                  label="TransApp Code"
+                  v-if="
+                    leadStatusForm.leadStatus ==
+                    page.props.quoteStatusEnum.TransactionApproved
                   "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                />
-              </x-field>
-            <x-field label="Transaction Type">
-              <x-input
-                type="text"
-                :value="quote.transaction_type_text"
-                class="w-full"
-                :disabled="true"
-              />
-            </x-field>
-          </div>
+                >
+                  <x-input
+                    v-model="leadStatusForm.trans_code"
+                    placeholder="TransApp Code is required"
+                    class="w-full"
+                    :error="leadStatusForm.errors.trans_code"
+                  />
+                </x-field>
+                <x-field
+                  label="Lost Reason"
+                  v-if="
+                    leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
+                  "
+                >
+                  <x-select
+                    v-model="leadStatusForm.lostReason"
+                    :options="
+                      lostReasons?.map(item => ({
+                        value: item.id,
+                        label: item.text,
+                      }))
+                    "
+                    placeholder="Lost Reason is required"
+                    class="w-full"
+                    :error="leadStatusForm.errors.lostReason"
+                  />
+                </x-field>
+                <x-field label="Transaction Type">
+                  <x-input
+                    type="text"
+                    :value="quote.transaction_type_text"
+                    class="w-full"
+                    :disabled="true"
+                  />
+                </x-field>
+              </div>
             </div>
           </div>
           <div class="flex justify-end">
@@ -1183,27 +1189,40 @@ watch(
       :expanded="sectionExpanded"
     />
 
-<MigratePayment
+    <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
       :payments="payments"
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :proformaPayment="
+        payments.find(item => item.payment_methods_code === 'PPR')
+      "
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'LPD' ||
+            item.code === 'LPDR' ||
+            item.code === 'LDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -1233,8 +1252,8 @@ watch(
     <BookPolicy
       v-if="
         canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
       :quote="record"
@@ -1399,9 +1418,7 @@ watch(
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead History
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
           </div>
         </template>
         <template #body>
@@ -1431,6 +1448,11 @@ watch(
         </template>
       </Collapsible>
     </div>
-    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
+    <AuditLogs
+      :type="'App\\Models\\LifeQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
   </div>
 </template>

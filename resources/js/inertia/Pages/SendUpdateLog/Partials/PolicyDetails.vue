@@ -32,6 +32,19 @@ const state = reactive({
 const page = usePage();
 const notification = useToast();
 
+const dateToYMD = date => {
+  if (date) {
+    // Check if date is already in YMD format
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
+    const [day, month, year] = date.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+}
+
 const issuanceStatus = page.props.issuanceStatuses;
 
 const issuanceStatusOptions = computed(() => {
@@ -87,6 +100,14 @@ const providerName = computed(() => {
   return provider ? provider.text : null;
 });
 
+const filledExpiryDate = computed(() => {
+  if (! isEndorsementFinancial.value) {
+    return props.sendUpdateLog?.expiry_date || dateToYMD(props.quote?.renewal_expiry_date) || null;
+  }
+
+  return null;
+});
+
 const policyDetailsForm = useForm({
 	first_name: props.sendUpdateLog?.first_name || props.quote?.first_name || null,
 	last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,
@@ -97,7 +118,7 @@ const policyDetailsForm = useForm({
 	policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
 	issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
 	start_date: props.sendUpdateLog?.start_date || props.quote?.policy_start_date || null,
-	expiry_date: props.sendUpdateLog?.expiry_date || props.quote?.renewal_expiry_date || null,
+	expiry_date: filledExpiryDate.value,
 	insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null,
 	issuance_status_id: props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null,
 	id: props.sendUpdateLog.id,
@@ -186,7 +207,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    First Name
+                    FIRST NAME
                   </label>
                   <template #tooltip>
                     This field captures the policyholder's first name, representing the primary contact person associated with the policy.
@@ -211,7 +232,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Last Name
+                    LAST NAME
                   </label>
                   <template #tooltip>
                     Records the policyholder's surname or family name.
@@ -236,7 +257,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Provider Name
+                    PROVIDER NAME
                   </label>
                   <template #tooltip>
                     Name of the insurance company responsible for the coverage.
@@ -263,7 +284,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Plan Name
+                    PLAN NAME
                   </label>
                   <template #tooltip>
                     Identifies the specific coverage or insurance plan offered by the provider.
@@ -290,7 +311,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Policy Number
+                    POLICY NUMBER
                   </label>
                   <template #tooltip>
                     The unique Insurance policy number for the chosen insurance plan offered by the provider.
@@ -316,7 +337,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Issuance Date
+                    ISSUANCE DATE
                   </label>
                   <template #tooltip>
                     Signifies the date when the insurance policy was officially issued.
@@ -343,7 +364,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Start Date
+                    START DATE
                   </label>
                   <template #tooltip>
                     Indicates the commencement date of the insurance coverage, marking when the policy becomes effective.
@@ -370,7 +391,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Expiry Date
+                    EXPIRY DATE
                   </label>
                   <template #tooltip>
                     This field records the date when the insurance coverage is set to expire, marking the end of the policy's validity.
@@ -395,7 +416,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Insurer Quote Number
+                    INSURER QUOTE NUMBER
                   </label>
                   <template #tooltip>
                     Refers to the unique identifier associated with the initial quote provided by the insurer.
@@ -421,7 +442,7 @@ const isMobile = computed(() => {
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Issuance Status
+                    ISSUANCE STATUS
                   </label>
                   <template #tooltip>
                     Indicates the current state or progress of policy issuance, tracking whether it's pending, approved, or completed.

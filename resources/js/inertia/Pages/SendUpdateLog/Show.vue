@@ -31,14 +31,20 @@ const props = defineProps({
   paymentMethods: Object,
   quoteRequest: Object,
   isPolicyDetailsEnabled: Boolean,
+  additionalField: {
+    type: Object,
+    default: [],
+  },
 });
 
 const page = usePage();
 const notification = useToast();
 
+const { isRequired } = useRules();
+
 const state = reactive({
   edit: false,
-  redirectURL: ''
+  redirectURL: '',
 });
 
 const selectedCategory = computed(() => {
@@ -46,33 +52,39 @@ const selectedCategory = computed(() => {
   for (let mainCategory of props.sendUpdateOptions) {
     for (let subCategory of mainCategory.childs || []) {
       if (subCategory.id === props.sendUpdateLog.category_id) {
-        category = {...mainCategory};
+        category = { ...mainCategory };
         delete category.childs;
 
-        category.subCategory = {...subCategory};
+        category.subCategory = { ...subCategory };
         delete category.subCategory.childs;
 
         if (subCategory.childs?.length) {
           for (let option of subCategory.childs || []) {
             if (option.id === props.sendUpdateLog.option_id) {
-              category.subCategory.option = {...option};
+              category.subCategory.option = { ...option };
             }
           }
           category.subCategory.options = [...subCategory.childs];
         } else {
           category.subCategory.option = null;
           category.subCategory.options = [];
-        }        
+        }
       }
     }
   }
 
   return category;
-})
+});
 
 // as per the link 'Transaction Type' column -> https://docs.google.com/spreadsheets/d/1TE7RfMpEtL7kenl8s1DUVKRvP_DbUvCJ82XyCFYJ7Rw/edit#gid=803033517
 const transactionType = computed(() => {
-  if (['CI', 'CIR', 'CPD'].includes(selectedCategory?.value?.subCategory.slug)) {
+  if (
+    [
+      page.props.sendUpdateLogStatusEnum.CI,
+      page.props.sendUpdateLogStatusEnum.CIR,
+      page.props.sendUpdateLogStatusEnum.CPD,
+    ].includes(selectedCategory?.value?.subCategory.slug)
+  ) {
     return 'Endorsement';
   }
 
@@ -83,16 +95,21 @@ const updateLogOptions = computed(() => {
   return selectedCategory?.value?.subCategory.options.map(child => ({
     value: child.id,
     label: child.title,
-    slug: child.slug
+    slug: child.slug,
   }));
 });
 
 const isUpdateBooked = computed(() => {
   return (
     props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED &&
-    ['EF', 'CI', 'CIR', 'CPD'].includes(selectedCategory?.value?.subCategory.slug)
+    [
+      page.props.sendUpdateLogStatusEnum.EF,
+      page.props.sendUpdateLogStatusEnum.CI,
+      page.props.sendUpdateLogStatusEnum.CIR,
+      page.props.sendUpdateLogStatusEnum.CPD,
+    ].includes(selectedCategory?.value?.subCategory.slug)
   );
-})
+});
 
 const changeReasonOptions = computed(() => {
   return [];
@@ -109,12 +126,17 @@ const sendUpdateForm = useForm({
   childCategory: selectedCategory?.value?.subCategory,
   status: props.sendUpdateLog?.status || '',
   quote_uuid: props.realQuote.uuid,
+  car_addons: props.sendUpdateLog?.car_addons || null,
+  emirates_registration: props.sendUpdateLog?.emirates_registration || null,
+  seating_capacity: props.sendUpdateLog?.seating_capacity || null,
 });
 
 onMounted(() => {
-  const params = new URLSearchParams(decodeURIComponent(page.url.split('?')[1]));
+  const params = new URLSearchParams(
+    decodeURIComponent(page.url.split('?')[1]),
+  );
   state.redirectURL = params.get('refURL');
-})
+});
 
 const onEdit = () => {
   if (isUpdateBooked.value) {
@@ -123,17 +145,21 @@ const onEdit = () => {
       position: 'top',
     });
   } else {
-    state.edit = true
+    state.edit = true;
   }
-}
+};
 
 const onCancel = () => {
   state.edit = false;
   sendUpdateForm.notes = props.sendUpdateLog?.notes || '';
   sendUpdateForm.option_id = props.sendUpdateLog?.option_id || null;
-}
+  sendUpdateForm.car_addons = props.sendUpdateLog?.car_addons || null;
+  sendUpdateForm.emirates_registration = props.sendUpdateLog?.emirates_registration || null;
+  sendUpdateForm.seating_capacity = props.sendUpdateLog?.seating_capacity || null;
+};
 
-const onUpdateLog = () => {
+const onUpdateLog = (isValid) => {
+  if (!isValid) return;
   sendUpdateForm.patch(
     route('send-update-logs.update', { id: props.sendUpdateLog.id }),
     {
@@ -179,25 +205,43 @@ const isBookingDetailsVisible = computed(() => {
     props.sendUpdateStatusEnum.EF,
     props.sendUpdateStatusEnum.CI,
     props.sendUpdateStatusEnum.CIR,
-    props.sendUpdateStatusEnum.CPD
+    props.sendUpdateStatusEnum.CPD,
   ];
 
-  return validSlugs.includes(selectedCategory?.value?.subCategory.slug)
+  return validSlugs.includes(selectedCategory?.value?.subCategory.slug);
 });
+
+const additionalFieldOptions = computed(() => {
+  if (props.additionalField) {
+    return props.additionalField.map(additional => ({
+      value: additional.id,
+      label: additional.text,
+    }));
+  }
+});
+
+const onKeyPress = (event) => {
+  if (event.key === 'e' || event.key === 'E') {
+    event.preventDefault();
+  }
+};
 </script>
 
 <template>
   <Head>
-    <title>Send Update {{ selectedCategory.subCategory.title }} </title>
+    <title>Send Update {{ selectedCategory.subCategory.title }}</title>
   </Head>
   <div>
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex gap-2 w-100 flex-grow justify-between">
+      <x-form @submit="onUpdateLog">
+        <div class="flex gap-2 w-100 flex-grow justify-between">
         <h3 class="text-lg font-semibold text-primary-800 capitalize">
           {{ selectedCategory.subCategory.title }}
         </h3>
         <Link :href="state.redirectURL">
-          <x-button color="primary" size="sm" class="mr-5">Go back to lead</x-button>
+          <x-button color="primary" size="sm" class="mr-5"
+            >Go back to lead</x-button
+          >
         </Link>
       </div>
       <x-divider class="my-4" />
@@ -207,12 +251,13 @@ const isBookingDetailsVisible = computed(() => {
             <dt>
               <x-tooltip position="left">
                 <label
-                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                 >
                   SU ref ID
                 </label>
                 <template #tooltip>
-                  A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.
+                  A unique reference identifier assigned to each "Send Update"
+                  request, allowing for easy tracking and reference.
                 </template>
               </x-tooltip>
             </dt>
@@ -229,16 +274,23 @@ const isBookingDetailsVisible = computed(() => {
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <template v-if="selectedCategory.subCategory.slug !== 'EN' && selectedCategory.subCategory.slug !== 'CPU'">
+            <template
+              v-if="
+                selectedCategory.subCategory.slug !== 'EN' &&
+                selectedCategory.subCategory.slug !== 'CPU'
+              "
+            >
               <dt>
                 <x-tooltip position="left">
                   <label
-                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Transaction Type
                   </label>
                   <template #tooltip>
-                    Refers to category of the financial transaction associated with the policy. It helps classify the specific type of transaction being recorded or processed within the system.
+                    Refers to category of the financial transaction associated
+                    with the policy. It helps classify the specific type of
+                    transaction being recorded or processed within the system.
                   </template>
                 </x-tooltip>
               </dt>
@@ -249,28 +301,42 @@ const isBookingDetailsVisible = computed(() => {
             <dt>
               <x-tooltip position="left">
                 <label
-                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                 >
                   Status
                 </label>
                 <template #tooltip>
-                  The current status of the ""Send Update"" request, indicating whether it is pending, transaction approved, or declined, among other possible states.
+                  The current status of the ""Send Update"" request, indicating
+                  whether it is pending, transaction approved, or declined,
+                  among other possible states.
                 </template>
               </x-tooltip>
             </dt>
             <dd>{{ sendUpdateLog.status }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <template v-if="selectedCategory.subCategory.slug !== 'CI' && selectedCategory.subCategory.slug !== 'CIR' && selectedCategory.subCategory.slug !== 'CPU' && selectedCategory.subCategory.slug !== 'CPD'">
+            <template
+              v-if="
+                selectedCategory.subCategory.slug !==
+                  page.props.sendUpdateLogStatusEnum.CI &&
+                selectedCategory.subCategory.slug !==
+                  page.props.sendUpdateLogStatusEnum.CIR &&
+                selectedCategory.subCategory.slug !==
+                  page.props.sendUpdateLogStatusEnum.CPU &&
+                selectedCategory.subCategory.slug !==
+                  page.props.sendUpdateLogStatusEnum.CPD
+                "
+            >
               <dt>
                 <x-tooltip position="left">
                   <label
-                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Sub Type
                   </label>
                   <template #tooltip>
-                    A further classification of the "Send Update" request, providing additional context or details.
+                    A further classification of the "Send Update" request,
+                    providing additional context or details.
                   </template>
                 </x-tooltip>
               </dt>
@@ -283,7 +349,12 @@ const isBookingDetailsVisible = computed(() => {
                 />
               </dd>
             </template>
-            <template v-else-if="selectedCategory.subCategory.slug !== 'CPU' && selectedCategory.subCategory.slug !== 'CPD'">
+            <template
+              v-else-if="
+                selectedCategory.subCategory.slug !== 'CPU' &&
+                selectedCategory.subCategory.slug !== 'CPD'
+                "
+            >
               <!-- <dt class="font-bold text-right mr-10">Reason</dt>
               <dd>
                 <x-select
@@ -295,17 +366,72 @@ const isBookingDetailsVisible = computed(() => {
               </dd> -->
             </template>
           </div>
-        </dl>
+        <div class="grid sm:grid-cols-2">
+              <template v-if="props.additionalField && selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.AOC">
+                <dt>
+                  <label
+                      class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                  >
+                    ADDONS
+                  </label>
+                </dt>
+                <dd>
+                  <x-select
+                      :rules="[isRequired]"
+                      v-model="sendUpdateForm.car_addons"
+                      placeholder="Select Addons"
+                      :options="additionalFieldOptions"
+                      size="xs"
+                      :disabled="!state.edit"
+                      :class="{ 'pointer-events-none': !state.edit }"
+                      multiple
+                    />
+                </dd>
+              </template>
+              <template v-else-if="props.additionalField && (selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.COE || selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.COE_NFI)">
+                <dt>
+                  <label
+                      class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                  >
+                    EMIRATE OF REGISTRATION
+                  </label>
+                </dt>
+                <dd>
+                  <x-select
+                      :rules="[isRequired]"
+                      v-model="sendUpdateForm.emirates_registration"
+                      placeholder="Select Emirate of Registration"
+                      :options="additionalFieldOptions"
+                      size="xs"
+                      :disabled="!state.edit"
+                    />
+                </dd>
+              </template>
+              <template v-else-if="props.additionalField && (selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.CISC || selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.CISC_NFI)">
+                <dt>
+                  <label
+                      class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                  >
+                    SEATING CAPACITY
+                  </label>
+                </dt>
+                <dd>
+                  <x-input
+                    :rules="[isRequired]"
+                    placeholder="Enter Seating Capacity"
+                    v-model="sendUpdateForm.seating_capacity"
+                    size="xs"
+                    :disabled="!state.edit"
+                    type="number"
+                    @keypress="onKeyPress"
+                  />
+                </dd>
+              </template>
+            </div>
+          </dl>
       </div>
       <div class="flex justify-end">
-        <x-button 
-          size="sm" 
-          @click="onEdit" 
-          v-if="!state.edit"
-        >
-          Edit
-        </x-button
-        >
+        <x-button size="sm" @click="onEdit" v-if="!state.edit"> Edit </x-button>
         <template v-else>
           <x-button
             size="sm"
@@ -319,13 +445,16 @@ const isBookingDetailsVisible = computed(() => {
           <x-button
             size="sm"
             color="primary"
-            @click="onUpdateLog"
-            :loading="sendUpdateForm.processing"
-            :disabled="sendUpdateForm.processing"
-            >Update</x-button
-          >
-        </template>
-      </div>
+            type="submit"
+              :loading="sendUpdateForm.processing"
+              :disabled="sendUpdateForm.processing"
+              >
+              Update
+            </x-button
+            >
+          </template>
+        </div>
+      </x-form>
     </div>
 
     <!-- Indicative additional price & Plan details comp -->
@@ -339,22 +468,30 @@ const isBookingDetailsVisible = computed(() => {
     />
 
     <PaymentTableNew
-        v-if="props.isPaymentVisible"
-        :quoteType="props.quoteType"
-        :payments="props.payments || []"
-        :paymentDocument="props.paymentDocumentTypes"
-        :quoteRequest="props.quoteRequest"
-        :paymentStatusEnum="props.paymentStatusEnum"
-        :paymentTooltipEnum="props.paymentTooltipEnum"
-        :paymentMethods="
-          props.paymentMethods.map(pm => {
-            return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-          })
-        "
-        :storageUrl="props.storageUrl"
-        :send-update="sendUpdateLog"
-        :send-update-status-enum="page.props.sendUpdateStatusEnum"
-        :insuranceProviders="props.insuranceProviders"
+      v-if="props.isPaymentVisible"
+      :quoteType="props.quoteType"
+      :payments="props.payments || []"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :paymentDocument="props.paymentDocumentTypes"
+      :quoteRequest="props.quoteRequest"
+      :paymentStatusEnum="props.paymentStatusEnum"
+      :paymentTooltipEnum="props.paymentTooltipEnum"
+      :paymentMethods="
+        props.paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="props.storageUrl"
+      :send-update="sendUpdateLog"
+      :send-update-status-enum="page.props.sendUpdateStatusEnum"
+      :insuranceProviders="props.insuranceProviders"
+      :quoteDocuments="props.quoteDocuments"
     />
 
     <LazyPolicyDetails
@@ -377,7 +514,7 @@ const isBookingDetailsVisible = computed(() => {
         pageType: 'send-update-log',
         quoteType: props.quoteType,
         sendLogId: props.sendUpdateLog.id,
-        members: memberDataDocs(props.membersDetail)
+        members: memberDataDocs(props.membersDetail),
       }"
       :selectedCategory="selectedCategory"
       :update-btn="props.updateBtn"
@@ -396,6 +533,7 @@ const isBookingDetailsVisible = computed(() => {
       :real-quote="props.realQuote"
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"
+      :payments="props.payments"
     />
 
     <AuditLogs

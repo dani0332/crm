@@ -18,6 +18,7 @@ use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
@@ -27,7 +28,6 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Services\AllocationService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
@@ -67,7 +67,6 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = $this->sendUpdateLogService->createChildLead($quoteModel, $requestData, $quoteType->code);
-                (new AllocationService())->deductLeadAllocationCount($quoteModel, $requestData['quote_uuid']);
             }
 
             DB::commit();
@@ -111,11 +110,16 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
-        if ($this->sendUpdateLogService->checkSendUpdatePermission(explode('-', $sendUpdateLog->code)[0])) {
+        if ($this->sendUpdateLogService->checkSendUpdatePermission($sendUpdateLog->category->code)) {
             return redirect()->back()->with('error', 'You don\'t have permission to this. ');
         }
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
+        if ($quoteType == quoteTypeCode::Car) {
+            if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::CAR_AOC, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
+                $additionalField = $this->sendUpdateLogService->getAdditionalOptionsForCar($sendUpdateLog);
+            }
+        }
 
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
 
@@ -125,8 +129,8 @@ class SendUpdateLogController extends Controller
             $quote->load('plan.insuranceProvider');
         }
 
-        $categoryCode = $sendUpdateLog->category->code;
-        $optionCode = $sendUpdateLog->option->code ?? null;
+        $categoryCode = $sendUpdateLog->category?->code;
+        $optionCode = $sendUpdateLog->option?->code ?? null;
         $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
         $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
@@ -194,6 +198,7 @@ class SendUpdateLogController extends Controller
         } else {
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         }
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType, $quote);
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
@@ -223,6 +228,8 @@ class SendUpdateLogController extends Controller
             'paymentMethods' => $filteredPaymentMethods,
             'quoteRequest' => $paymentEntityModel ?? $realQuote,
             'isPolicyDetailsEnabled' => $this->sendUpdateLogService->isPolicyDetailsVisible($categoryCode, $optionCode),
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'additionalField' => $additionalField ?? [],
         ]);
     }
 
@@ -277,8 +284,7 @@ class SendUpdateLogController extends Controller
                 case SendUpdateLogStatusEnum::CI:
                 case SendUpdateLogStatusEnum::CIR:
                     $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-                        'quote_batch_id' => null,
+                        'quote_status_id' => QuoteStatusEnum::CancellationPending,
                     ]);
                     break;
             }
@@ -395,8 +401,12 @@ class SendUpdateLogController extends Controller
         $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
+            $payment = Payment::where('send_update_log_id', $sendUpdate->id)->first();
             // Add insuficient Payment Validations here
             $insufficientPaymentCheck = false;
+            if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
+                $insufficientPaymentCheck = true;
+            }
 
             return response()->json([
                 'insufficientPaymentCheck' => $insufficientPaymentCheck,

@@ -15,6 +15,9 @@ class SendUpdateLog extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $guarded = [];
+    protected $casts = [
+        'car_addons' => 'json',
+    ];
 
     public function quoteType(): BelongsTo
     {
@@ -39,5 +42,10 @@ class SendUpdateLog extends Model implements AuditableContract
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
     }
 }

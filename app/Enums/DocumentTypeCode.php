@@ -46,4 +46,5 @@ class DocumentTypeCode extends Enum
     const YPD = 'YPD';
     const CTIRBB = 'CTIRBB'; // Tax Invoice Raised By Buyer
     const TI = 'TI'; // Tax Invoice
+    const PPR = 'PPR'; // Proforma Payment Request
 }

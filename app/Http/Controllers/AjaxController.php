@@ -345,7 +345,6 @@ class AjaxController extends Controller
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];
-                $quote->company_name = $data['company_name'];
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
 

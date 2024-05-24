@@ -1,7 +1,12 @@
 <script setup>
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
 import DocumentListing from './Partials/DocumentListing.vue';
-import { formatDate } from '../../Composables/utilities.js';
+import {
+  formatDate,
+  maskEmail,
+  maskPhone,
+} from '../../Composables/utilities.js';
+
 const props = defineProps({
   policy: Object,
 });
@@ -13,48 +18,19 @@ const can = permission => useCan(permission);
 const itemCount = ref(false);
 
 const maskedEmail = computed(() => {
-  let email = props.policy?.customer?.email;
-  if (email) {
-    // Split the email address into local part and domain part
-    const [localPart, domainPart] = email.split('@');
-
-    //   // Mask the local part (characters before '@')
-    let maskedLocalPart = localPart
-      .split('')
-      .map((char, index) => (index < localPart.length / 2 ? char : '*'))
-      .join('');
-
-    //   // Combine the masked local part with the domain part
-    let data = `${maskedLocalPart}` + '@' + `${domainPart}`;
-
-    return data;
-  }
-  return '';
-});
-const maskedMobileNumber = computed(() => {
-  let mobile_no = props.policy?.customer?.mobile_phone;
-  if (mobile_no) {
-    let masked = mobile_no
-      .split('')
-      .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
-      .join('');
-
-    return masked;
+  let emails = props.policy?.customer?.email;
+  if (emails) {
+    return maskEmail(emails);
   }
   return '';
 });
 
-const maskedPhoneNumber = computed(() => {
-  let mobile_no = props.policy?.customer?.phone;
-  if (mobile_no) {
-    let masked = mobile_no
-      .split('')
-      .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
-      .join('');
-    return masked;
+const maskedMobileNumber = phone => {
+  if (phone) {
+    return maskPhone(phone);
   }
   return '';
-});
+};
 
 const getS3TempUrl = async file => {
   try {
@@ -482,11 +458,15 @@ const dateFormat = date => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Mobile Number</dt>
-            <dd>{{ maskedMobileNumber }}</dd>
+            <dd>
+              {{ maskedMobileNumber(policy?.customer?.mobile_phone) }}
+            </dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Phone Number</dt>
-            <dd>{{ maskedPhoneNumber }}</dd>
+            <dd>
+              {{ maskedMobileNumber(policy?.customer?.phone) }}
+            </dd>
           </div>
           <div v-for="profile_data in kycDetails">
             <div class="grid sm:grid-cols-2">
@@ -576,31 +556,33 @@ const dateFormat = date => {
           <template #item-due_date="{ due_date }">
             {{ dateFormat(due_date) }}
           </template>
-          <template #item-tax="{ tax }"> {{ tax }} AED </template>
-          <template #item-comm="{ comm }"> {{ comm }}% </template>
+          <template #item-tax="{ tax }"> {{ tax.toFixed(2) }} AED </template>
+          <template #item-comm="{ comm }"> {{ comm.toFixed(2) }}% </template>
           <template #item-commission_sum="{ commission_sum }">
-            {{ commission_sum }} AED
+            {{ commission_sum.toFixed(2) }} AED
           </template>
           <template #item-discount="{ discount }">
-            {{ discount }} AED
+            {{ discount.toFixed(2) }} AED
           </template>
           <template #item-gross_premium="{ gross_premium }">
-            {{ gross_premium }} AED
+            {{ gross_premium.toFixed(2) }} AED
           </template>
           <template #item-customer_payable="{ customer_payable }">
-            {{ customer_payable }} AED
+            {{ customer_payable.toFixed(2) }} AED
           </template>
         </DataTable>
         <!-- Display the total customer payable outside the DataTable -->
         <table>
           <tr>
             <th>Total Gross Premium:</th>
-            <td class="custom-table">{{ calculateGrossPremium }} AED</td>
+            <td class="custom-table">
+              {{ calculateGrossPremium.toFixed(2) }} AED
+            </td>
             <th>Total Tax:</th>
-            <td class="custom-table">{{ calculateTax }} AED</td>
+            <td class="custom-table">{{ calculateTax.toFixed(2) }} AED</td>
             <th>Total Customer Payable:</th>
             <td class="custom-table">
-              {{ calculateTotalCustomerPayable }} AED
+              {{ calculateTotalCustomerPayable.toFixed(2) }} AED
             </td>
           </tr>
         </table>

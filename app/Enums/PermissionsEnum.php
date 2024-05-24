@@ -218,7 +218,9 @@ final class PermissionsEnum extends Enum
     public const CarQuoteSearch = 'car-quotes-search';
     public const UtmLeadsSalesReport = 'utm-leads-sales-report';
     public const TeamThresholdView = 'team-allocation-threshold-view';
-    public const CarRevivalQuoteList = 'carrevival-quotes-list';
+    public const CAR_REVIVAL_QUOTE_LIST = 'carrevival-quotes-list';
+    public const CAR_REVIVAL_QUOTES_EDIT = 'carrevival-quotes-edit';
+    public const CAR_REVIVAL_QUOTES_SHOW = 'carrevival-quotes-show';
     public const ViewTeamsFilters = 'view-teams-filters';
     public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
@@ -237,9 +239,10 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_LIST = 'renewal-batches-list';
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
+    public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
-    public const EMBEDDED_PRODUCT_ADVISOR = 'embedded-product-advisor';
-    public const EMBEDDED_PRODUCT_ADMIN = 'embedded-product-admin';
+    public const EMBEDDED_PRODUCT_ADVISOR = 'embedded-product-view';
+    public const EMBEDDED_PRODUCT_ADMIN = 'embedded-product-payment-cancel';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const EmbeddedProductView = 'embedded-product-view';
     public const SEND_UPDATE_CREATE = 'send-update-create';
@@ -250,6 +253,8 @@ final class PermissionsEnum extends Enum
     public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
+    public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
+    public const MANAGEMENT_REPORT = 'management-report';
     public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'proforma-payment-request-add';
     public const ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON = 'proforma-create';
     public const SEGMENT_FILTER = 'segment-filter';
