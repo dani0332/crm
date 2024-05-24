@@ -2,6 +2,7 @@
 defineProps({
   logs: Object,
   quote_types: Object,
+  quote_sync_status: Object,
 });
 
 const dateFormat = date =>
@@ -33,6 +34,7 @@ const tableHeader = [
   { text: 'Quote Type', value: 'quote_type_id', sortable: true },
   { text: 'UUID', value: 'quote_uuid' },
   { text: 'Is Synced', value: 'is_synced', sortable: true },
+  { text: 'Status', value: 'status' },
   { text: 'Synced At', value: 'synced_at', sortable: true },
   { text: 'Created At', value: 'created_at', sortable: true },
   { text: 'Fields', value: 'updated_fields' },
@@ -118,6 +120,16 @@ const quoteTypesOptions = computed(() => {
   ];
 });
 
+const quoteSyncStatusOptions = computed(() => {
+  return [
+    { value: '', label: 'Select Status' },
+    ...Object.keys(page.props.quote_sync_status).map(id => ({
+      label: page.props.quote_sync_status[id],
+      value: id,
+    })),
+  ];
+});
+
 const isSyncedOptions = computed(() => {
   return [
     { value: '', label: 'Select All' },
@@ -145,6 +157,10 @@ const isSyncedOptions = computed(() => {
         </x-field>
         <x-field label="Is Synced?">
           <x-select v-model="filters.is_synced" placeholder="Select Is Synced?" :options="isSyncedOptions"
+            class="w-full" />
+        </x-field>
+        <x-field label="Status">
+          <x-select v-model="filters.status" placeholder="Select Status" :options="quoteSyncStatusOptions"
             class="w-full" />
         </x-field>
         <x-field label="Synced At">
@@ -179,6 +195,12 @@ const isSyncedOptions = computed(() => {
       <template #item-is_synced="{ is_synced }">
         <div class="text-center">
           <x-icon :icon="is_synced ? 'roundchecked' : 'roundcross'" :color="is_synced ? 'green' : 'red'" size="lg" />
+        </div>
+      </template>
+
+      <template #item-status="{ status_name }">
+        <div class="text-center">
+          <div class="text-sm text-center">{{ status_name }}</div>
         </div>
       </template>
 

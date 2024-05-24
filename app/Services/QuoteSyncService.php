@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-
+use App\Enums\QuoteSyncStatus;
 use App\Services\BaseService;
 use Carbon\Carbon;
 use App\Models\QuoteSync;
@@ -20,6 +20,9 @@ class QuoteSyncService extends BaseService
         })
         ->when(isset($filters['is_synced']), function ($query) use ($filters) {
             $query->where('quote_sync.is_synced', $filters['is_synced']);
+        })
+        ->when(isset($filters['status']), function ($query) use ($filters) {
+            $query->where('quote_sync.status', $filters['status']);
         })
         ->when(isset($filters['synced_at']), function ($query) use ($filters) {
             $startDate = Carbon::parse($filters['synced_at'][0])->startOfDay();
@@ -46,6 +49,7 @@ class QuoteSyncService extends BaseService
         $dataset = $dataset->orderBy($sortBy, $sortOrder)->simplePaginate()->withQueryString();
         $dataset->map(function ($item) {
             $item->quote_type = QuoteTypes::getName($item->quote_type_id)->value ?? '-';
+            $item->status_name = QuoteSyncStatus::getName($item->status);
             return $item;
         });
 

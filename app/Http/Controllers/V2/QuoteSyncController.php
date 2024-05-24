@@ -3,12 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
-use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\EmbeddedProducDocumentRequest;
-use App\Http\Requests\EmbeddedProductRequest;
-use App\Models\EmbeddedProduct;
-use App\Repositories\EmbeddedProductRepository;
 use App\Services\QuoteSyncService;
 use Illuminate\Http\Request;
 use App\Enums\QuoteTypeId;
@@ -16,6 +11,7 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
+use App\Enums\QuoteSyncStatus;
 
 class QuoteSyncController extends Controller
 {
@@ -41,10 +37,12 @@ class QuoteSyncController extends Controller
         if(isset($quotetypeOptions[QuotetypeId::Business])) {
             unset($quotetypeOptions[QuotetypeId::Business]);
         }
+        $quoteSyncStatusOptions = QuoteSyncStatus::getOptions();
 
         return inertia('QuoteSync/Index', [
             'logs' => $dataset,
             'quote_types' => $quotetypeOptions,
+            'quote_sync_status' => $quoteSyncStatusOptions,
         ]);
     }
 
@@ -78,5 +76,22 @@ class QuoteSyncController extends Controller
             'source_quote' => !empty($sourceQuote) ? $sourceQuote->toArray() : null,
             'source_quote_details' => !empty($sourceQuoteDetails) ? $sourceQuoteDetails->toArray() : null,
         ]);
+    }
+
+    public function edit(QuoteSync $quoteSync)
+    {
+        $quoteSyncStatusOptions = QuoteSyncStatus::getOptions();
+
+        return inertia('QuoteSync/Form', [
+            'quote_sync' => $quoteSync,
+            'quote_sync_status' => $quoteSyncStatusOptions,
+        ]);
+    }
+
+    public function update(Request $request, QuoteSync $quoteSync)
+    {
+        $quoteSync->update($request->all());
+
+        return redirect()->route('admin.quotesync.show', $quoteSync->id)->with('message', 'Quote Sync updated successfully');
     }
 }

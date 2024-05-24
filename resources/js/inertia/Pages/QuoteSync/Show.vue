@@ -20,9 +20,9 @@ defineProps({
         <x-icon :icon="is_synced ? 'roundchecked' : 'roundcross'" :color="is_synced ? 'green' : 'red'" size="lg" />
       </h2>
       <div class="flex gap-2">
-        <!-- <Link :href="`/embedded-products/${embeddedProduct.id}/edit`">
+        <Link :href="`/admin/quote-sync/edit/${quote_sync?.id}`">
         <x-button size="sm" tag="div">Edit</x-button>
-        </Link> -->
+        </Link>
 
         <Link href="/admin/quote-sync" preserve-scroll>
         <x-button size="sm" color="primary" tag="div">
@@ -38,6 +38,12 @@ defineProps({
         <dd>
           <pre>{{ quote_sync }}</pre>
         </dd>
+      </div>
+    </div>
+    <div v-if="quote_sync?.error && quote_sync?.is_synced == false" class="p-4 rounded shadow mb-6 bg-white">
+      <div class="text-sm">
+        <dt class="font-medium font-black mb-4">Error</dt>
+        <dd>{{ quote_sync?.error }}</dd>
       </div>
     </div>
     <div class="p-4 rounded shadow mb-6 bg-white">
