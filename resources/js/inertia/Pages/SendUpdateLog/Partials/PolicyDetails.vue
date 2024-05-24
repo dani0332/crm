@@ -32,6 +32,19 @@ const state = reactive({
 const page = usePage();
 const notification = useToast();
 
+const dateToYMD = date => {
+  if (date) {
+    // Check if date is already in YMD format
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
+    const [day, month, year] = date.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+}
+
 const issuanceStatus = page.props.issuanceStatuses;
 
 const issuanceStatusOptions = computed(() => {
@@ -89,7 +102,7 @@ const providerName = computed(() => {
 
 const filledExpiryDate = computed(() => {
   if (! isEndorsementFinancial.value) {
-    return props.sendUpdateLog?.expiry_date || props.quote?.renewal_expiry_date || null;
+    return props.sendUpdateLog?.expiry_date || dateToYMD(props.quote?.renewal_expiry_date) || null;
   }
 
   return null;
