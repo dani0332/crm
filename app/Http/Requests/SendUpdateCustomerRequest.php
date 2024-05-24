@@ -45,6 +45,10 @@ class SendUpdateCustomerRequest extends FormRequest
             $category = $this->sendUpdate?->category?->code;
             $option = $this->sendUpdate?->option?->code;
 
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
+                return $validator->errors()->add('error', 'Update already booked');
+            }
+
             if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER) {
                 return $validator->errors()->add('error', 'Already sent to customer.');
             }
