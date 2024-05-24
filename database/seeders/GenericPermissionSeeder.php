@@ -173,18 +173,11 @@ class GenericPermissionSeeder extends Seeder
     private function quoteSyncSeeds()
     {
         $permissionList = [
-            PermissionsEnum::QUOTE_SYNC_LOGS => [
-                RolesEnum::Engineering,
-            ],
+            PermissionsEnum::QUOTE_SYNC_LOGS => [],
         ];
 
         foreach ($permissionList as $permission => $roles) {
             $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
-            foreach ($roles as $roleName) {
-                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($dataset->id)) {
-                    $role->givePermissionTo($dataset->id);
-                }
-            }
         }
     }
 
