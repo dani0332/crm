@@ -39,7 +39,6 @@ defineProps({
   isBetaUser: Boolean,
   payments: Array,
   quoteRequest: Object,
-  permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
@@ -58,6 +57,7 @@ defineProps({
 });
 
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -181,7 +181,7 @@ const travelFields = computed(() => {
     'previous_policy_expiry_date',
     'policy_start_date',
     'renewal_batch',
-    'transapp_code'
+    'transapp_code',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -1209,6 +1209,23 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             View Legacy policy
           </x-button>
         </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <x-button
           size="sm"
           color="#ff5e00"
@@ -1470,18 +1487,30 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <dt class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
           </div>
 
-          <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="quoteRequest.child || quoteRequest.parent"
+          >
             <template v-if="quoteRequest.child">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     CHILD REF ID
                   </label>
-                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
+                  <template #tooltip
+                    >Navigation key from parent to child in data
+                    hierarchy.</template
+                  >
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.child.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.child.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.child?.code }}
                 </a>
               </dt>
@@ -1489,14 +1518,20 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <template v-if="quoteRequest.parent">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     PARENT REF ID
                   </label>
                   <template #tooltip>Parent Ref Id</template>
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.parent.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.parent.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.parent.code }}
                 </a>
               </dt>
@@ -2194,16 +2229,37 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-            <Link
-                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${quote.insly_id}`"
-                preserve-scroll
-            >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
-            </Link>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
+          <Link
+            v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${quote.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <Link
+            v-else-if="
+              quote.source == leadSource.RENEWAL_UPLOAD &&
+              can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            "
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                quote.previous_quote_policy_number,
+              )
+            "
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="primary"
+          >
             Upload Documents
           </x-button>
           <x-button
@@ -2298,12 +2354,17 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-              <div>
-                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
-                  age 0-64
-                </h6>
-              </div>
+            <div>
+              <h6
+                v-if="
+                  aboveAgeMembers > 0 && availablePlansTable.data.length > 0
+                "
+                class="font-semibold text-primary-600 text-ms mb-1"
+              >
+                Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                age 0-64
+              </h6>
+            </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2364,7 +2425,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
           <div v-else>
             <DataTable
-                v-model:items-selected="selectedPlans"
+              v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
@@ -2446,7 +2507,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </div>
             <div>
               <DataTable
-                  v-model:items-selected="selectedPlans"
+                v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed compact"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
@@ -2523,22 +2584,33 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       quoteType="Travel"
       :payments="payments"
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Travel"
-			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="enums.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
+      v-if="isNewPaymentStructure"
+      quoteType="Travel"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes.QUOTE.filter(
+          item =>
+            item.code === 'TPD' ||
+            item.code === 'TPDR' ||
+            item.code === 'TDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="enums.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -2721,25 +2793,29 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       />
     </div>
     <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
-        <template #header>
-          <div class="text-center">
-            SORRY!
-          </div>
-        </template>
-        <p>Please choose quotes from the same age group for a correct comparison.</p>
-        <template #actions>
-          <div class="text-center space-x-4">
-            <x-button
-              size="sm"
-              color="emerald"
-              @click.prevent="modals.mixInquiryConfirm = false"
-            >
-              Okay, got it!
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+      <template #header>
+        <div class="text-center">SORRY!</div>
+      </template>
+      <p>
+        Please choose quotes from the same age group for a correct comparison.
+      </p>
+      <template #actions>
+        <div class="text-center space-x-4">
+          <x-button
+            size="sm"
+            color="emerald"
+            @click.prevent="modals.mixInquiryConfirm = false"
+          >
+            Okay, got it!
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+    <AuditLogs
+      :type="'App\\Models\\TravelQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
   </div>
 </template>
 <style>

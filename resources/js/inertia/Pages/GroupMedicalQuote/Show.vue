@@ -33,6 +33,7 @@ defineProps({
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
+const leadSource = page.props.leadSource;
 
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -356,6 +357,34 @@ const linkEntity = () => {
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
       <div class="flex gap-2">
+        <Link
+          v-if="
+            quoteDetails?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="`/legacy-policy/${quoteDetails?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <x-button
           v-if="isDuplicateAllowed"
           size="sm"
@@ -877,23 +906,34 @@ const linkEntity = () => {
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="page.props.quoteType"
-      :payments="quote.payments"      
-    />    
-    <PaymentTableNew 
-			v-if="isNewPaymentStructure"
-			:quoteType="page.props.quoteType"
-			:payments="quote.payments"
-			:paymentDocument="documentTypes.filter(item => item.code === 'GMQPD' || item.code === 'GMQPDR' || item.code === 'GMQDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
+      v-if="isNewPaymentStructure"
+      :quoteType="page.props.quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'GMQPD' ||
+            item.code === 'GMQPDR' ||
+            item.code === 'GMQDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       quoteSubType="Group Medical"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

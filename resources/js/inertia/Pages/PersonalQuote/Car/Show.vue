@@ -11,8 +11,6 @@ import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
 
-
-
 defineProps({
   quote: Object,
   leadStatuses: Object,
@@ -94,8 +92,6 @@ defineProps({
   clientInquiryLogs: Array,
 });
 
-
-
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
@@ -104,8 +100,7 @@ const selectedProviderPlan = ref({
   id: page.props.record.plan_id,
   planName: page.props.record.plan_id_text,
   providerName: page.props.record.car_plan_provider_id_text,
-  premium: page.props.record.premium
-
+  premium: page.props.record.premium,
 });
 
 /*
@@ -154,6 +149,7 @@ onMounted(() => {
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const leadSource = page.props.leadSourceEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -303,8 +299,8 @@ function repairTypeCheck(repairType) {
     ? coreInsurer.includes(repairType.providerCode)
       ? 'Premium workshop'
       : halfLiveInsurer.includes(repairType.providerCode)
-      ? 'Non-Agency workshop'
-      : 'NON-AGENCY'
+        ? 'Non-Agency workshop'
+        : 'NON-AGENCY'
     : repairType.repairType;
 }
 
@@ -1576,14 +1572,14 @@ const linkEntity = () => {
 };
 
 const handlePlanSelected = plan => {
-  selectedProviderPlan.value.id = plan.id
-  selectedProviderPlan.value.planName = plan.planName
-  selectedProviderPlan.value.providerName = plan.providerName
-  selectedProviderPlan.value.premium = plan.premium
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','paymentEntityModel'],
+    only: ['payments', 'paymentEntityModel'],
   });
 };
 </script>
@@ -1706,8 +1702,25 @@ const handlePlanSelected = plan => {
         <h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
         <div>
           <Link
-            v-if="record?.insly_id"
+            v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${record.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <Link
+            v-else-if="
+              record.source == leadSource.RENEWAL_UPLOAD &&
+              can(permissionEnum.VIEW_LEGACY_DETAILS)
+            "
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                record.previous_quote_policy_number,
+              )
+            "
             preserve-scroll
           >
             <x-button size="sm" color="#ff5e00" tag="div">
@@ -2860,7 +2873,7 @@ const handlePlanSelected = plan => {
             isRenewal,
             isDisabled,
             puaPremium,
-            puaType
+            puaType,
           }"
         >
           <p>{{ providerName }}</p>
@@ -3219,19 +3232,30 @@ const handlePlanSelected = plan => {
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Car"
-			:payments="payments"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
-			:quoteRequest="paymentEntityModel"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      quoteType="Car"
+      :payments="payments"
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'CPD' ||
+            item.code === 'CPDR' ||
+            item.code === 'CDPDR',
+        )
+      "
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <PaymentTable
-		v-else
+      v-else
       :payments="payments"
       :quoteRequest="paymentEntityModel"
       :paymentStatusEnum="paymentStatusEnum"
@@ -3422,15 +3446,32 @@ const handlePlanSelected = plan => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
         <div>
-            <Link
-                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${record.insly_id}`"
-                preserve-scroll
-            >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
-            </Link>
+          <Link
+            v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${record.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <Link
+            v-else-if="
+              record.source == leadSource.RENEWAL_UPLOAD &&
+              can(permissionEnum.VIEW_LEGACY_DETAILS)
+            "
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                record.previous_quote_policy_number,
+              )
+            "
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
           <x-button
             class="mr-2"
             v-if="
@@ -3891,7 +3932,11 @@ const handlePlanSelected = plan => {
       :quoteType="'CAR'"
     />
   </div>
-  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code"/>
+  <AuditLogs
+    :type="'App\\Models\\CarQuote'"
+    :id="$page.props.record.id"
+    :quoteCode="$page.props.record.code"
+  />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

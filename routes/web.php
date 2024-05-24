@@ -210,6 +210,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::resource('legacy-policy', LegacyPolicyController::class);
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
+    Route::get('legacy-policy/{policyNumber}/policy', [LegacyPolicyController::class, 'getPolicyByPolicyNumber'])->name('view-legacy-policy.renewal-uploads');
     Route::post('legacy-policy/get-s3-temp-url', [LegacyPolicyController::class, 'getS3TempUrl']);
 
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
