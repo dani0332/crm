@@ -78,7 +78,7 @@ watch(
     if (!value) {
       resetForm();
     }
-  }
+  },
 );
 
 const form = useForm({
@@ -112,39 +112,70 @@ onMounted(() => {
 const authenticatedSendUpdateOptions = computed(() => {
   let filteredOptions = props.options;
 
-  if (!(can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD) || can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD))) {
-    // it will remove the main Button. 
+  if (
+    !(
+      can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD) ||
+      can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)
+    )
+  ) {
+    // it will remove the main Button.
     filteredOptions = filteredOptions.filter((option, index) => index !== 0);
   } else {
     if (!can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD)) {
-      // it will remove only sub button. 
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter((option, index) => index !== 0);
+      // it will remove only sub button.
+      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
+        (option, index) => index !== 0,
+      );
     }
     if (!can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)) {
-      // it will remove only sub button. 
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter((option, index) => index !== 1);
+      // it will remove only sub button.
+      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
+        (option, index) => index !== 1,
+      );
     }
   }
 
-  if (!(can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD) || can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD))) {
+  if (
+    !(
+      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD) ||
+      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
+    )
+  ) {
     filteredOptions = filteredOptions.filter((option, index) => index !== 1);
   } else {
     if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter((option, index) => index !== 0);
+      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
+        (option, index) => index !== 0,
+      );
     }
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter((option, index) => index !== 1);
+    if (
+      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
+    ) {
+      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
+        (option, index) => index !== 1,
+      );
     }
   }
 
-  if (!(can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD) || can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD))) {
+  if (
+    !(
+      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD) ||
+      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD)
+    )
+  ) {
     filteredOptions = filteredOptions.filter((option, index) => index !== 2);
   } else {
     if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter((option, index) => index !== 0);
+      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
+        (option, index) => index !== 0,
+      );
     }
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter((option, index) => index !== 1);
+    if (
+      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
+    ) {
+      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
+        (option, index) => index !== 1,
+      );
     }
   }
 
@@ -203,20 +234,19 @@ const goBack = () => {
 };
 
 const confirmOrAddUpdate = autoSubmit => {
-    if (!autoSubmit) {
-        if (form.option === null) {
-            optionError.value = true;
-            return;
-        }
+  if (!autoSubmit) {
+    if (form.option === null) {
+      optionError.value = true;
+      return;
     }
-    if (!['CIR'].includes(form.childCategory.slug)) {
-        onAddUpdate(true);
-    }else {
-        modals.step = 'step4';
-        modals.confirm = true;
-        optionError.value = false;
-    }
-
+  }
+  if (!['CIR'].includes(form.childCategory.slug)) {
+    onAddUpdate(true);
+  } else {
+    modals.step = 'step4';
+    modals.confirm = true;
+    optionError.value = false;
+  }
 };
 
 const onAddUpdate = autoSubmit => {
@@ -294,7 +324,14 @@ const findOption = (item, key) => {
         </div>
       </template>
       <template #body>
-        <div class="mt-4 flex justify-end">
+        <div
+          v-if="
+            props.reportable.quote_status_id !=
+              page.props.quoteStatusEnum.PolicyCancelled ||
+            page.props.linkedQuoteDetails.childLeadsCount == 0
+          "
+          class="mt-4 flex justify-end"
+        >
           <x-button
             v-if="can(permissionsEnum.SEND_UPDATE_CREATE)"
             size="sm"
@@ -419,7 +456,10 @@ const findOption = (item, key) => {
         class="w-full flex flex-wrap gap-5 justify-center text-center my-10 mb-20 items-stretch !h-100"
         v-if="modals.step === 'step1'"
       >
-        <template v-for="option in authenticatedSendUpdateOptions" :key="option.title">
+        <template
+          v-for="option in authenticatedSendUpdateOptions"
+          :key="option.title"
+        >
           <x-tooltip align="left" position="bottom" class="arrow-t">
             <x-button
               color="primary"
@@ -508,48 +548,53 @@ const findOption = (item, key) => {
           </div>
         </div>
       </div>
-<!--   Modal 4 - Confirmation and causation     -->
-        <div
-            class="w-full flex gap-5 mb-10"
-            v-else-if="modals.step === 'step4' && modals.confirm === true "
-        >
-            <div class="flex flex-col gap-2 flex-grow w-75">
-                <div>
-                    <p class="text-red-600 font-bold text-2xl"> Please note the following when performing these updates:</p>
-                    <div class="my-4">
-                        <ul class="list-disc pl-4 font-medium">
-                            <li>The new lead for the reissued policy counts as a sale only once the lead status is policy issued</li>
-                            <li class="my-2">When a policy is cancelled and reissued or simply cancelled, it will no longer count as sale.</li>
-                            <li>Lead details will be moved to new lead.</li>
-                        </ul>
-                    </div>
-
-                </div>
-                <div class="flex justify-end mt-2">
-                    <x-button
-                        class="mr-2"
-                        size="sm"
-                        color="primary"
-                        @click="onAddUpdate(false)"
-                        :disabled="form.processing"
-                        :loading="form.processing"
-                    >
-                        Confirm
-                    </x-button>
-                    <x-button
-                        size="sm"
-                        color="primary"
-                        :disabled="form.processing"
-                        :loading="form.processing"
-                        @click="setOption('step3', form.childCategory)"
-                    >
-                        Cancel
-                    </x-button>
-
-                </div>
+      <!--   Modal 4 - Confirmation and causation     -->
+      <div
+        class="w-full flex gap-5 mb-10"
+        v-else-if="modals.step === 'step4' && modals.confirm === true"
+      >
+        <div class="flex flex-col gap-2 flex-grow w-75">
+          <div>
+            <p class="text-red-600 font-bold text-2xl">
+              Please note the following when performing these updates:
+            </p>
+            <div class="my-4">
+              <ul class="list-disc pl-4 font-medium">
+                <li>
+                  The new lead for the reissued policy counts as a sale only
+                  once the lead status is policy issued
+                </li>
+                <li class="my-2">
+                  When a policy is cancelled and reissued or simply cancelled,
+                  it will no longer count as sale.
+                </li>
+                <li>Lead details will be moved to new lead.</li>
+              </ul>
             </div>
+          </div>
+          <div class="flex justify-end mt-2">
+            <x-button
+              class="mr-2"
+              size="sm"
+              color="primary"
+              @click="onAddUpdate(false)"
+              :disabled="form.processing"
+              :loading="form.processing"
+            >
+              Confirm
+            </x-button>
+            <x-button
+              size="sm"
+              color="primary"
+              :disabled="form.processing"
+              :loading="form.processing"
+              @click="setOption('step3', form.childCategory)"
+            >
+              Cancel
+            </x-button>
+          </div>
         </div>
-
+      </div>
     </AppModal>
   </div>
 </template>

@@ -35,6 +35,7 @@ const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -210,8 +211,29 @@ const submitPolicy = () => {
 };
 
 const calculateCommission = () => {
-  if (bpForm.commission_vat_applicable > 0) {
-    if (Number(props.quote?.price_without_vat > 0)) {
+  if (
+    bpForm.commission_vat_applicable > 0 &&
+    bpForm.commission_vat_not_applicable > 0
+  ) {
+    if (Number(bpForm.commission_vat_applicable) > 0) {
+      bpForm.vat_on_commission = (
+        bpForm.commission_vat_applicable * page.props.vat
+      ).toFixed(2);
+    }
+    let totalCommissionWithoutVat =
+      Number(bpForm.commission_vat_not_applicable) +
+      Number(bpForm.commission_vat_applicable);
+    bpForm.total_commission =
+      totalCommissionWithoutVat + Number(bpForm.vat_on_commission);
+
+    bpForm.commission_percentage = (
+      (totalCommissionWithoutVat /
+        (Number(props.quote?.price_vat_not_applicable) +
+          Number(props.quote?.price_without_vat))) *
+      100
+    ).toFixed(2);
+  } else if (bpForm.commission_vat_applicable > 0) {
+    if (Number(props.quote?.price_without_vat) > 0) {
       bpForm.commission_percentage = (
         (bpForm.commission_vat_applicable / props.quote?.price_without_vat) *
         100
@@ -255,6 +277,39 @@ const calculateCommission = () => {
     bpForm.total_commission = '';
   }
 };
+
+const disableCommissionVatNotApplicable = computed(() => {
+  return (
+    !bp.isEditing ||
+    (page.props.quoteType != quoteTypeCodeEnum.Life &&
+      page.props.quoteType != quoteTypeCodeEnum.Business &&
+      page.props.quoteType != quoteTypeCodeEnum.Health)
+  );
+});
+const disableCommissionVatApplicable = computed(() => {
+  return (
+    !bp.isEditing ||
+    (page.props.quoteType == quoteTypeCodeEnum.Life &&
+      page.props.quoteType != quoteTypeCodeEnum.Business &&
+      page.props.quoteType != quoteTypeCodeEnum.Health)
+  );
+});
+const showSendAndBookPolicyButton = computed(() => {
+  return (
+    props.quote.quote_status_id ==
+      page.props.quoteStatusEnum.TransactionApproved ||
+    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued ||
+    props.quote.quote_status_id ==
+      page.props.quoteStatusEnum.CancellationPending
+  );
+});
+const showActionButtons = computed(() => {
+  //Show Action Buttons only when policy is not cancelled or there are no child leads
+  return (
+    props.quote.quote_status_id != page.props.quoteStatusEnum.PolicyCancelled ||
+    page.props.linkedQuoteDetails.childLeadsCount == 0
+  );
+});
 </script>
 
 <template>
@@ -269,7 +324,7 @@ const calculateCommission = () => {
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <x-form @submit="onUpdatebookPolicyDetails" :auto-focus="false">
+        <x-form @submit.prevent :auto-focus="false">
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -355,7 +410,7 @@ const calculateCommission = () => {
                 <dd></dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-mediumuppercase">
+                <dt class="font-medium uppercase">
                   <x-tooltip>
                     <label
                       class="border-b-2 border-dotted border-black uppercase"
@@ -502,9 +557,7 @@ const calculateCommission = () => {
                     @change="calculateCommission"
                     placeholder="Commission VAT NOT APPLICABLE"
                     class="w-full"
-                    :disabled="
-                      !bp.isEditing || bpForm.commission_vat_applicable !== ''
-                    "
+                    :disabled="disableCommissionVatNotApplicable"
                   />
                 </dd>
               </div>
@@ -546,10 +599,7 @@ const calculateCommission = () => {
                     @change="calculateCommission"
                     placeholder="Commission VAT APPLICABLE"
                     class="w-full"
-                    :disabled="
-                      !bp.isEditing ||
-                      bpForm.commission_vat_not_applicable !== ''
-                    "
+                    :disabled="disableCommissionVatApplicable"
                   />
                 </dd>
               </div>
@@ -575,18 +625,9 @@ const calculateCommission = () => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
-            <div
-              v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
-              class="flex justify-end"
-            >
-              <template
-                v-if="
-                  props.quote.quote_status_id ==
-                    page.props.quoteStatusEnum.TransactionApproved ||
-                  props.quote.quote_status_id ==
-                    page.props.quoteStatusEnum.PolicyIssued
-                "
-              >
+
+            <div v-if="showActionButtons" class="flex justify-end">
+              <template v-if="showSendAndBookPolicyButton">
                 <x-button
                   v-if="bp.isEditing"
                   class="mt-4 mr-2"
@@ -608,7 +649,7 @@ const calculateCommission = () => {
                   color="emerald"
                   size="sm"
                   :loading="bpForm.processing"
-                  type="submit"
+                  @click.prevent="onUpdatebookPolicyDetails"
                 >
                   Update
                 </x-button>
@@ -703,7 +744,7 @@ const calculateCommission = () => {
                     color="emerald"
                     size="sm"
                     :loading="bpForm.processing"
-                    type="submit"
+                    @click.prevent="onUpdatebookPolicyDetails"
                   >
                     Update
                   </x-button>

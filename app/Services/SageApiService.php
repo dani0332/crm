@@ -964,7 +964,7 @@ class SageApiService
             }
             foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
                 // add discount amount to amount due for the first child payment in sage for balancing the amount
-                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $paymentSplits[$key]['collection_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0);
+                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = roundNumber($paymentSplits[$key]['collection_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
             }
             /* Add Vat on commission to the first Installment of commission */
@@ -975,7 +975,7 @@ class SageApiService
 
             foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
                 // Add Vat on commission to the first installment of commission in sage for balancing the amount
-                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $commissionSplit + ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1 ? $vatOnCommission : 0);
+                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = roundNumber($commissionSplit + ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1 ? $vatOnCommission : 0));
                 $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
             }
             //3
