@@ -88,5 +88,7 @@ class QuoteSyncUpdateCommand extends Command
                     ->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
             }
         }
+
+        info('----------- QuoteSyncJob Completed -----------');
     }
 }

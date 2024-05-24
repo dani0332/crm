@@ -111,7 +111,7 @@ trait PersonalQuoteSyncTrait
             $this->syncTable($quote, $newValues, 'personal_quotes');
             $quote->quote_type_id = $entry->quote_type_id;
             $quote->save();
-            $entry->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
+            QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
             info('Entry for quote: ' . $entry->quote_uuid . ' updated in quote sync table');
 
         } else {
@@ -125,7 +125,7 @@ trait PersonalQuoteSyncTrait
                 $this->syncTable($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
                 $quote->quote_type_id = $entry->quote_type_id;
                 $quote->save();
-                $entry->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
+                QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
             }
         }
 
@@ -142,7 +142,7 @@ trait PersonalQuoteSyncTrait
             $newValues = json_decode($entry->updated_fields, true);
             $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $newValues, $entry->quote_uuid, $entry->quote_type_id);
             $this->upsertPersonalQuoteDetail($personalQuote, $newValues);
-            $entry->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
+            QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
             info('Entry for quote: ' . $personalQuote->id . ' saved in personal quotes table');
         }
 
