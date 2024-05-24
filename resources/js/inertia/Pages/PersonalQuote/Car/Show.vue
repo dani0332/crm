@@ -2028,7 +2028,11 @@ watch(
           </div>
           <x-divider class="mb-4 mt-4" />
           <div
-            v-if="linkedQuoteDetails.childLeadsCount == 0"
+            v-if="
+              quote.quote_status_id !=
+                page.props.quoteStatusEnum.PolicyCancelled ||
+              linkedQuoteDetails.childLeadsCount == 0
+            "
             class="flex justify-end mb-4"
           >
             <Link :href="route('car.edit', record.uuid)">
@@ -2303,7 +2307,11 @@ watch(
                 </div>
               </dl>
               <div
-                v-if="linkedQuoteDetails.childLeadsCount == 0"
+                v-if="
+                  quote.quote_status_id !=
+                    page.props.quoteStatusEnum.PolicyCancelled ||
+                  linkedQuoteDetails.childLeadsCount == 0
+                "
                 class="flex justify-end"
               >
                 <x-button
@@ -2887,7 +2895,13 @@ watch(
               </div>
             </div>
           </div>
-          <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
+          <div
+            v-if="
+              quote.quote_status_id !=
+                page.props.quoteStatusEnum.PolicyCancelled ||
+              page.props.linkedQuoteDetails.childLeadsCount == 0
+            "
+          >
             <div
               class="flex justify-end"
               v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)"
@@ -3060,7 +3074,7 @@ watch(
                 isRenewal,
                 isDisabled,
                 puaPremium,
-                puaType
+                puaType,
               }"
             >
               <p>{{ providerName }}</p>
@@ -3232,7 +3246,11 @@ watch(
             <template #item-action="item">
               <div class="flex gap-2">
                 <x-button
-                  v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
+                  v-if="
+                    quote.quote_status_id !=
+                      page.props.quoteStatusEnum.PolicyCancelled ||
+                    page.props.linkedQuoteDetails.childLeadsCount == 0
+                  "
                   size="xs"
                   color="primary"
                   outlined
@@ -3573,7 +3591,11 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div
-            v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
+            v-if="
+              quote.quote_status_id !=
+                page.props.quoteStatusEnum.PolicyCancelled ||
+              page.props.linkedQuoteDetails.childLeadsCount == 0
+            "
             class="my-2 flex justify-end"
           >
             <x-button

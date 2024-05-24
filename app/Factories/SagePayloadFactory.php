@@ -72,7 +72,7 @@ class SagePayloadFactory
                             'CustomerNumber' => $request->customerId,
                             'DocumentNumber' => (string) $request->insurerPremiumNumber,
                             'ReceiptTransactionType' => 'ApplyDocument',
-                            'CustomerReceiptAmount' => $request->premiumWithTax,
+                            'CustomerReceiptAmount' => roundNumber($request->premiumWithTax),
                         ],
                     ],
                 ],
@@ -97,22 +97,22 @@ class SagePayloadFactory
 
                     'DocumentNumber' => $request->insurerPremiumNumber,
                     'InvoiceDescription' => $premiumDescription,
-                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update 
+                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'CurrencyCode' => 'AED', // alway will be AED discussed with denber
                     'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => $request->totalAmount,
-                    'DocumentTotalIncludingTax' => $request->totalAmount,
+                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalAmount),
+                    'DocumentTotalIncludingTax' => roundNumber($request->totalAmount),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
-                            'DistributedAmount' => $request->totalAmount,
-                            'DistributedAmountBeforeTaxes' => $request->totalAmount,
+                            'DistributedAmount' => roundNumber($request->totalAmount),
+                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalAmount),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -149,11 +149,11 @@ class SagePayloadFactory
 
                 $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW';
                 $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW';
-                $payLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format); 
-                $payLoad->Invoices[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format); 
-                $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = $request->premiumWithoutTax;
-                $payLoad->Invoices[0]->DocumentTotalIncludingTax = $request->premiumWithTax;
-                $payLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format); 
+                $payLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $payLoad->Invoices[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format);
+                $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = roundNumber($request->premiumWithoutTax);
+                $payLoad->Invoices[0]->DocumentTotalIncludingTax = roundNumber($request->premiumWithTax);
+                $payLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
                 $payLoad->Invoices[0]->DocumentType = 'DebitNote';
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
 
@@ -197,8 +197,8 @@ class SagePayloadFactory
                             'Description' => $description,
                             'TaxClass1' => 5,
                             'RevenueAccount' => '70010',
-                            'ExtendedAmountWithTIP' => $request->discount,
-                            'ExtendedAmountWithoutTIP' => $request->discount,
+                            'ExtendedAmountWithTIP' => roundNumber($request->discount),
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->discount),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -237,8 +237,8 @@ class SagePayloadFactory
                 $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW';
                 $payLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format); //
-                $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = $request->premiumWithoutTax;
-                $payLoad->Invoices[0]->DocumentTotalIncludingTax = $request->premiumWithTax;
+                $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = roundNumber($request->premiumWithoutTax);
+                $payLoad->Invoices[0]->DocumentTotalIncludingTax = roundNumber($request->premiumWithTax);
                 $payLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->DocumentType = 'CreditNote';
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
@@ -281,16 +281,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTax' => $premiumWithDiscount,
-                    'DocumentTotalIncludingTax' => $premiumWithDiscount,
+                    'DocumentTotalBeforeTax' => roundNumber($premiumWithDiscount),
+                    'DocumentTotalIncludingTax' => roundNumber($premiumWithDiscount),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
-                            'ExtendedAmountWithTIP' => $premiumWithDiscount,
-                            'ExtendedAmountWithoutTIP' => $premiumWithDiscount,
+                            'ExtendedAmountWithTIP' => roundNumber($premiumWithDiscount),
+                            'ExtendedAmountWithoutTIP' => roundNumber($premiumWithDiscount),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -309,7 +309,7 @@ class SagePayloadFactory
                     'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
-                    'TaxAmount1' => $request->vatOnCommission,
+                    'TaxAmount1' => roundNumber($request->vatOnCommission),
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                     'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
@@ -317,10 +317,10 @@ class SagePayloadFactory
                         [
                             'Description' => $commissionDescription,
                             'TaxClass1' => $taxClass,
-                            'TaxAmount1' => $request->vatOnCommission,
+                            'TaxAmount1' => roundNumber($request->vatOnCommission),
                             'RevenueAccount' => '60010',
-                            'ExtendedAmountWithTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
-                            'ExtendedAmountWithoutTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                            'ExtendedAmountWithTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat),
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -372,8 +372,8 @@ class SagePayloadFactory
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocumentPrem;
 
                 $payLoad->Invoices[0]->InvoiceDetails[0]->Description = $payLoad->Invoices[0]->InvoiceDescription;
-                $payLoad->Invoices[0]->InvoiceDetails[0]->ExtendedAmountWithTIP = $request->premiumWithTax;
-                $payLoad->Invoices[0]->InvoiceDetails[0]->ExtendedAmountWithoutTIP = $request->premiumWithoutTax;
+                $payLoad->Invoices[0]->InvoiceDetails[0]->ExtendedAmountWithTIP = roundNumber($request->premiumWithTax);
+                $payLoad->Invoices[0]->InvoiceDetails[0]->ExtendedAmountWithoutTIP = roundNumber($request->premiumWithoutTax);
 
                 $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->InvoiceOptionalFields = self::createOptionalFields($request);
@@ -390,8 +390,8 @@ class SagePayloadFactory
                 $payLoad->Invoices[1]->ApplytoDocument = $applyToDocumentComm;
 
                 $payLoad->Invoices[1]->InvoiceDetails[0]->Description = $payLoad->Invoices[1]->InvoiceDescription;
-                $payLoad->Invoices[1]->InvoiceDetails[0]->ExtendedAmountWithTIP = $request->commissionIncludingVat;
-                $payLoad->Invoices[1]->InvoiceDetails[0]->ExtendedAmountWithoutTIP = $request->commission;
+                $payLoad->Invoices[1]->InvoiceDetails[0]->ExtendedAmountWithTIP = roundNumber($request->commissionIncludingVat);
+                $payLoad->Invoices[1]->InvoiceDetails[0]->ExtendedAmountWithoutTIP = roundNumber($request->commission);
 
                 $payLoad->Invoices[1]->InvoicePaymentSchedules[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[1]->InvoiceOptionalFields = self::createOptionalFields($request);
@@ -440,8 +440,8 @@ class SagePayloadFactory
                             'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
-                            'ExtendedAmountWithTIP' => $request->premiumWithTax,
-                            'ExtendedAmountWithoutTIP' => $request->premiumWithTax,
+                            'ExtendedAmountWithTIP' => roundNumber($request->premiumWithTax),
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->premiumWithTax),
                         ],
                     ],
 
@@ -457,7 +457,7 @@ class SagePayloadFactory
                     'DueDate' => $request->paymentDueDate ? Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format) : null,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
-                    'TaxAmount1' => $request->vatOnCommission,
+                    'TaxAmount1' => roundNumber($request->vatOnCommission),
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                     'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
@@ -466,10 +466,10 @@ class SagePayloadFactory
                         [
                             'Description' => $commissionDescription,
                             'TaxClass1' => $taxClass,
-                            'TaxAmount1' => $request->vatOnCommission,
+                            'TaxAmount1' => roundNumber($request->vatOnCommission),
                             'RevenueAccount' => '60010',
-                            'ExtendedAmountWithTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
-                            'ExtendedAmountWithoutTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                            'ExtendedAmountWithTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat),
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [],
@@ -493,7 +493,7 @@ class SagePayloadFactory
             $temp['EntryNumber'] = 1;
             $temp['PaymentNumber'] = $key + 1;
             $temp['DueDate'] = date('Y-m-d', strtotime($item->due_date));
-            $temp['AmountDue'] = $item->collection_amount === null ? 0 : $item->collection_amount;
+            $temp['AmountDue'] = roundNumber($item->collection_amount === null ? 0 : $item->collection_amount);
             $data[] = $temp;
         }
 
@@ -552,7 +552,7 @@ class SagePayloadFactory
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $request->sage_customer_number,
-                    'BankReceiptAmount' => floatval($request->collection_amount),
+                    'BankReceiptAmount' => roundNumber(floatval($request->collection_amount)),
                     'CheckReceiptNumber' => $request->checkDetails,
                     'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code),
                     'ReceiptTransactionType' => 'Prepayment',
@@ -928,7 +928,7 @@ class SagePayloadFactory
             $receiptData['DocumentNumber'] = $payment->insurer_tax_number;
             $receiptData['PaymentNumber'] = $key + 1;
             $receiptData['ReceiptTransactionType'] = 'Receipt';
-            $receiptData['CustomerReceiptAmount'] = floatval($item->payment_amount);
+            $receiptData['CustomerReceiptAmount'] = roundNumber(floatval($item->payment_amount));
             $data[] = $receiptData;
 
             $prePaymentData['BatchType'] = 'CA';
@@ -936,7 +936,7 @@ class SagePayloadFactory
             $prePaymentData['DocumentNumber'] = $item->sage_reciept_id;
             $prePaymentData['PaymentNumber'] = 1;
             $prePaymentData['ReceiptTransactionType'] = 'Receipt';
-            $prePaymentData['CustomerReceiptAmount'] = -$item->payment_amount;
+            $prePaymentData['CustomerReceiptAmount'] = -roundNumber($item->payment_amount);
             $data[] = $prePaymentData;
         }
 
@@ -975,10 +975,10 @@ class SagePayloadFactory
             'premiumWithoutTax' => floatval($quoteDetails['price_without_vat']),
             'premiumWithTax' => floatval($quoteDetails['price_with_vat']),
             'vatOnCommission' => floatval($payment->commission_vat),
-            'totalAmount' => floatval($payment->total_amount),
-            'commission' => floatval($payment->commission),
-            'commissionIncludingVat' => floatval($payment->commission_vat_applicable),
-            'commissionWithOutVat' => $payment->commission_vat_not_applicable ? floatval($payment->commission_vat_not_applicable) : floatval($payment->commission_without_vat),
+            'totalAmount' => roundNumber(floatval($payment->total_amount)),
+            'commission' => roundNumber(floatval($payment->commission)),
+            'commissionIncludingVat' => roundNumber(floatval($payment->commission_vat_applicable)),
+            'commissionWithOutVat' => $payment->commission_vat_not_applicable ? roundNumber(floatval($payment->commission_vat_not_applicable)) : roundNumber(floatval($payment->commission_without_vat)),
             'commissionPercentage' => strval($payment->commmission_percentage),
             'insurerPremiumNumber' => (string) $payment['insurer_tax_number'],
             'insurerCommissionNumber' => (string) $payment['insurer_commmission_invoice_number'],
@@ -992,7 +992,7 @@ class SagePayloadFactory
 
         if (count($splitPayments) == 1) {
             $response['sage_reciept_id'] = $splitPayments[0]['sage_reciept_id'];
-            $response['collection_amount'] = $splitPayments[0]['collection_amount']; // + $sageRequest->discount
+            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']); // + $sageRequest->discount
         }
 
         return (object) $response;

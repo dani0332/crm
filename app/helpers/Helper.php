@@ -800,3 +800,10 @@ if (! function_exists('getManagersByUser')) {
     }
 
 }
+
+if (! function_exists('roundNumber')) {
+    function roundNumber($number)
+    {
+        return round($number, 2);
+    }
+}
