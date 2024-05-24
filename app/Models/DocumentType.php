@@ -95,4 +95,14 @@ class DocumentType extends Model implements AuditableContract
 
         return $query->where('business_type_of_customer', $businessTypeOfCustomer);
     }
+
+    public function scopeGetBusinessDocument($query, $businessTypeOfInsurance, $businessTypeOfCustomer)
+    {
+        return $query->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
+            return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
+        })->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer) {
+            return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer);
+        });
+    }
+
 }
