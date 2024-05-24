@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
@@ -30,6 +32,8 @@ class SendBookPolicyRequest extends FormRequest
             'model_type' => 'required',
             'quote_id' => 'required',
             'send_policy_type' => 'required',
+            'is_send_policy' => 'nullable',
+            'transaction_payment_status' => 'nullable',
             'modelType' => 'nullable',
         ];
     }
@@ -61,10 +65,25 @@ class SendBookPolicyRequest extends FormRequest
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                             $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
                         }
-                        if (! empty($splits)) {
-                            foreach ($splits as $item) {
-                                if (empty($item->sage_reciept_id)) {
+                     
+                        $isPaymentNotUpfrontOrSplit = !in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+                        $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+                        $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
+                        if ($isPaymentUpfrontOrSplitAndPaidOrCaptured) {
+                            if (!empty($splits)) {
+                                $isSageReceiptIdEmpty = empty($splits[0]->sage_reciept_id);
+                                if ($isSageReceiptIdEmpty) {
                                     $validator->errors()->add('value', 'Payment sage reciept id can not be null');
+                                }
+                            }
+                        }
+
+                        if (strtolower($payment->invoicePaymentStatus) == PaymentFrequency::PAID && in_array($payment->frequency, [PaymentFrequency::SPLIT_PAYMENTS, PaymentFrequency::PAID])) {
+                            if (! empty($splits)) {
+                                foreach ($splits as $item) {
+                                    if (empty($item->sage_reciept_id)) {
+                                        $validator->errors()->add('value', 'Payment sage reciept id can not be null');
+                                    }
                                 }
                             }
                         }

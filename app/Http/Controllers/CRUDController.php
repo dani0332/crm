@@ -28,6 +28,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Capi;
+use App\Http\Controllers\V2\CentralController;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -1490,6 +1491,8 @@ class CRUDController extends Controller
 
             info('Courtesy Email CAPI Response - : '.json_encode($response));
         }
+        // Update payment allocation status
+        app(CentralService::class)->updatePaymentAllocation($request->modelType, $request->quote_uuid);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
@@ -1685,8 +1688,11 @@ class CRUDController extends Controller
 
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
+        $this->updatePriceAndDiscount($quoteModel);
 
-        return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
+        return redirect()->back()->with([
+            'success' => 'Quote Policy Detail has been updated.'
+        ]);
     }
 
     public function manualPlanToggle(Request $request)

@@ -640,7 +640,7 @@ class SagePayloadFactory
         return $optionalArray;
     }
 
-    public static function arSplitPrepaymentPayload($quote, $sage_customer_number, $payment, $splitPayments)
+    public static function arSplitPrepaymentPayload($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
     {
         $payLoad = [
             'BatchRecordType' => 'CA',
@@ -649,7 +649,7 @@ class SagePayloadFactory
                     'BatchType' => 'CA',
                     'CustomerNumber' => $sage_customer_number,
                     'ReceiptTransactionType' => 'Receipt',
-                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments),
+                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
                 ],
             ],
         ];
@@ -660,30 +660,47 @@ class SagePayloadFactory
         ];
     }
 
-    private static function createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments)
+    private static function createReceiptData($item, $sage_customer_number, $payment, $paymentNumber = 1)
     {
-        $data = [];
+        $receiptData = [
+            'BatchType' => 'CA',
+            'CustomerNumber' => $sage_customer_number,
+            'DocumentNumber' => $payment->insurer_tax_number,
+            'PaymentNumber' => $paymentNumber,
+            'ReceiptTransactionType' => 'Receipt',
+            'CustomerReceiptAmount' => floatval($item->payment_amount),
+        ];
 
-        foreach ($splitPayments as $key => $item) {
+        $prePaymentData = [
+            'BatchType' => 'CA',
+            'CustomerNumber' => $sage_customer_number,
+            'DocumentNumber' => $item->sage_reciept_id,
+            'PaymentNumber' => 1,
+            'ReceiptTransactionType' => 'Receipt',
+            'CustomerReceiptAmount' => -$item->payment_amount,
+        ];
 
-            $receiptData['BatchType'] = 'CA';
-            $receiptData['CustomerNumber'] = $sage_customer_number;
-            $receiptData['DocumentNumber'] = $payment->insurer_tax_number;
-            $receiptData['PaymentNumber'] = $key + 1;
-            $receiptData['ReceiptTransactionType'] = 'Receipt';
-            $receiptData['CustomerReceiptAmount'] = floatval($item->payment_amount);
-            $data[] = $receiptData;
+        return [$receiptData, $prePaymentData];
+    }
 
-            $prePaymentData['BatchType'] = 'CA';
-            $prePaymentData['CustomerNumber'] = $sage_customer_number;
-            $prePaymentData['DocumentNumber'] = $item->sage_reciept_id;
-            $prePaymentData['PaymentNumber'] = 1;
-            $prePaymentData['ReceiptTransactionType'] = 'Receipt';
-            $prePaymentData['CustomerReceiptAmount'] = -$item->payment_amount;
-            $data[] = $prePaymentData;
+    public static function createAppliedReceiptsAdjustments($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
+    {
+        $receiptsAndAdjustmentsData = [];
+
+        if ($isPaymentsSplit) {
+            foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
+                [$singleReceiptData, $singlePrePaymentData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                $receiptsAndAdjustmentsData[] = $singleReceiptData;
+                $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+            }
+        } else {
+            $firstSplitPaymentRecord = $splitPaymentRecords[0];
+            [$singleReceiptData, $singlePrePaymentData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            $receiptsAndAdjustmentsData[] = $singleReceiptData;
+            $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
         }
 
-        return $data;
+        return $receiptsAndAdjustmentsData;
     }
 
     // Payment code mapping
