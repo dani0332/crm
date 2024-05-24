@@ -292,6 +292,22 @@ const disableCommissionVatApplicable = computed(() => {
       page.props.quoteType != quoteTypeCodeEnum.Health)
   );
 });
+const showSendAndBookPolicyButton = computed(() => {
+  return (
+    props.quote.quote_status_id ==
+      page.props.quoteStatusEnum.TransactionApproved ||
+    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued ||
+    props.quote.quote_status_id ==
+      page.props.quoteStatusEnum.CancellationPending
+  );
+});
+const showActionButtons = computed(() => {
+  //Show Action Buttons only when policy is not cancelled or there are no child leads
+  return (
+    props.quote.quote_status_id != page.props.quoteStatusEnum.PolicyCancelled ||
+    page.props.linkedQuoteDetails.childLeadsCount == 0
+  );
+});
 </script>
 
 <template>
@@ -608,24 +624,8 @@ const disableCommissionVatApplicable = computed(() => {
               <div class="w-full md:w-1/2" />
             </div>
 
-            <div
-              v-if="
-                props.quote.quote_status_id !=
-                  page.props.quoteStatusEnum.PolicyCancelled ||
-                page.props.linkedQuoteDetails.childLeadsCount == 0
-              "
-              class="flex justify-end"
-            >
-              <template
-                v-if="
-                  props.quote.quote_status_id ==
-                    page.props.quoteStatusEnum.TransactionApproved ||
-                  props.quote.quote_status_id ==
-                    page.props.quoteStatusEnum.PolicyIssued ||
-                  props.quote.quote_status_id ==
-                    page.props.quoteStatusEnum.CancellationPending
-                "
-              >
+            <div v-if="showActionButtons" class="flex justify-end">
+              <template v-if="showSendAndBookPolicyButton">
                 <x-button
                   v-if="bp.isEditing"
                   class="mt-4 mr-2"
