@@ -41,6 +41,7 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -114,7 +115,7 @@ class PetQuoteController extends Controller
     {
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
-
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::PET->value, $quote);
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::PET->id())->active()->get();
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
@@ -139,7 +140,7 @@ class PetQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::PET->id(), $quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::PET->id());
@@ -207,6 +208,7 @@ class PetQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
         ]);
     }
 

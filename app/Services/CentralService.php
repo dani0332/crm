@@ -359,6 +359,20 @@ class CentralService
         return $isAmlClearedForPayment;
     }
 
+    public function getQuoteWiseProviderPlans($quoteType, $providerId): object
+    {
+        $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
+
+        return $planModel::where('provider_id', $providerId)->get();
+    }
+
+    public function getPlanById($quoteType, $planId)
+    {
+        $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
+
+        return $planModel::find($planId);
+    }
+
     // This method is used to update payment allocation status when lead status is updated
     public function updatePaymentAllocation($modelType, $quote_uuid)
     {

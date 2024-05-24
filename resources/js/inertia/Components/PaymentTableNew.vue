@@ -8,6 +8,7 @@ const notification = useNotifications('toast');
 const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentLookups = page.props.paymentLookups;
 const documentTypeEnum = page.props.documentTypeEnum;
 const quoteDocuments = page.props.quoteDocuments;
@@ -33,6 +34,18 @@ const props = defineProps({
   quoteSubType: {
     type: String,
     default: '',
+  },
+  sendUpdate: {
+    type: Object,
+    default: null,
+  },
+  sendUpdateStatusEnum: {
+    type: Object,
+    default: null,
+  },
+  insuranceProviders: {
+    type: Array,
+    required: false,
   },
   isAmlClearedForPayment: {
     type: Boolean,

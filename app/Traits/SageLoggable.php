@@ -25,7 +25,7 @@ trait SageLoggable
                     'user_id' => $userId,
                     'total_steps' => $totalSteps,
                     'sage_end_point' => $payload['endPoint'],
-                    'sage_payload' => json_encode($payload['payload']),
+                    'sage_payload' => json_encode($payload['payload'] ?? []),
                     'response' => json_encode($response),
                     'status' => $status,
                 ]

@@ -93,6 +93,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  linkedQuoteDetails: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -153,7 +154,7 @@ onMounted(() => {
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-const quoteStatusEnum= page.props.quoteStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const leadSource = page.props.leadSourceEnum;
 
@@ -1621,6 +1622,10 @@ const handlePlanSelected = plan => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
+
 watch(
   () => page.props.record.quote_status_id,
   (newValue, oldValue) => {
@@ -1663,7 +1668,7 @@ watch(
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
@@ -1675,7 +1680,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1689,7 +1694,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName }}</dd>
+                <dd>{{ selectedProviderPlan.planName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ECOMMERCE</dt>
@@ -1768,13 +1773,13 @@ watch(
           <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
             <Link
-                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${record.insly_id}`"
-                preserve-scroll
+              v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+              :href="`/legacy-policy/${record.insly_id}`"
+              preserve-scroll
             >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
             </Link>
             <template
               v-if="
@@ -1961,12 +1966,58 @@ watch(
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
-                      Parent Ref-ID
+                      PARENT REF-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ record.parent_duplicate_quote_id ?? '' }}</dd>
+                <dd>
+                  <Link
+                    v-if="record.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ record.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </dd>
               </div>
               <div
                 class="grid sm:grid-cols-2"
@@ -1975,16 +2026,23 @@ watch(
                 <dt class="font-medium">ID</dt>
                 <dd>{{ record.id }}</dd>
               </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ENQUIRY COUNT</dt>
-            <dd>{{ record.enquiry_count }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ENQUIRY COUNT</dt>
+                <dd>{{ record.enquiry_count }}</dd>
+              </div>
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
-          <div class="flex justify-end mb-4">
+          <div
+            v-if="
+              quote.quote_status_id !=
+                page.props.quoteStatusEnum.PolicyCancelled ||
+              linkedQuoteDetails.childLeadsCount == 0
+            "
+            class="flex justify-end mb-4"
+          >
             <Link :href="route('car.edit', record.uuid)">
-              <x-button size="sm" color="primary" tag="div">Edit</x-button>
+              <x-button size="sm" color="primary" tag="div">Edit </x-button>
             </Link>
           </div>
         </template>
@@ -2080,7 +2138,10 @@ watch(
                       :rules="[isRequired]"
                       placeholder="INSURED FIRST NAME"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                     />
                   </dd>
                 </div>
@@ -2092,7 +2153,10 @@ watch(
                       :rules="[isRequired]"
                       placeholder="INSURED LAST NAME"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                     />
                   </dd>
                 </div>
@@ -2120,7 +2184,10 @@ watch(
                       :rules="[isRequired]"
                       placeholder="EMIRATES ID NUMBER"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                     />
                   </dd>
                 </div>
@@ -2131,7 +2198,10 @@ watch(
                       v-model="customerProfileForm.emirates_id_expiry_date"
                       :rules="[isRequired]"
                       placeholder="EMIRATES ID EXPIRY DATE"
-                      :disabled="!isProfileUpdateAllow"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                       :min-date="new Date()"
                     />
                   </dd>
@@ -2242,7 +2312,14 @@ watch(
                   </dd>
                 </div>
               </dl>
-              <div class="flex justify-end">
+              <div
+                v-if="
+                  quote.quote_status_id !=
+                    page.props.quoteStatusEnum.PolicyCancelled ||
+                  linkedQuoteDetails.childLeadsCount == 0
+                "
+                class="flex justify-end"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -2387,7 +2464,7 @@ watch(
                   v-model="leadStatusForm.leadStatus"
                   :single="true"
                   label="Status"
-                  class="w-full"
+                  class="w-full uppercase"
                   placeholder="Please select Lead Status"
                   :disabled="leadStatusDisabled"
                   :options="leadStatusOptions"
@@ -2469,7 +2546,7 @@ watch(
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
-              <x-field label="Cylinder" required>
+              <x-field label="Cylinder" class="uppercase" required>
                 <x-input
                   v-model="assumptionsForm.cylinder"
                   type="number"
@@ -2481,7 +2558,7 @@ watch(
               </x-field>
             </div>
             <div class="w-full md:w-1/2">
-              <x-field label="Seat Capacity" required>
+              <x-field label="Seat Capacity" class="uppercase" required>
                 <x-input
                   v-model="assumptionsForm.seat_capacity"
                   type="number"
@@ -2496,7 +2573,7 @@ watch(
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Vehicle Body Type" required>
+                <x-field label="Vehicle Body Type" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.vehicle_type_id"
                     :options="vehicleTypeOptions"
@@ -2510,7 +2587,11 @@ watch(
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is Vehicle modified?" required>
+                <x-field
+                  label="Is Vehicle modified?"
+                  class="uppercase"
+                  required
+                >
                   <x-select
                     v-model="assumptionsForm.is_modified"
                     :options="isOptions"
@@ -2526,7 +2607,7 @@ watch(
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is Bank Financed" required>
+                <x-field label="Is Bank Financed" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.is_bank_financed"
                     :options="isOptions"
@@ -2540,7 +2621,7 @@ watch(
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is GCC Standard?" required>
+                <x-field label="Is GCC Standard?" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.is_gcc_standard"
                     :options="isOptions"
@@ -2556,7 +2637,7 @@ watch(
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Current Insurance" required>
+                <x-field label="Current Insurance" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.current_insurance_status"
                     :options="currentInsuranceOptions"
@@ -2570,7 +2651,11 @@ watch(
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Year Of First Registration" required>
+                <x-field
+                  label="Year Of First Registration"
+                  class="uppercase"
+                  required
+                >
                   <x-select
                     v-model="assumptionsForm.year_of_first_registration"
                     :options="
@@ -2588,44 +2673,52 @@ watch(
             </div>
           </div>
           <div
-            class="flex justify-end"
-            v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)"
+            v-if="
+              quote.quote_status_id !=
+                page.props.quoteStatusEnum.PolicyCancelled ||
+              page.props.linkedQuoteDetails.childLeadsCount == 0
+            "
           >
-            <x-button
-              v-if="assumptionState.isEditing"
-              class="mt-4 mr-2"
-              color="orange"
-              size="sm"
-              @click.prevent="assumptionState.isEditing = false"
+            <div
+              class="flex justify-end"
+              v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)"
             >
-              Cancel
-            </x-button>
-            <template v-if="!can(permissionEnum.ApprovePayments)">
               <x-button
                 v-if="assumptionState.isEditing"
-                class="mt-4"
-                color="primary"
+                class="mt-4 mr-2"
+                color="orange"
                 size="sm"
-                :loading="assumptionsForm.processing"
-                @click.prevent="onUpdateAssumption"
+                @click.prevent="assumptionState.isEditing = false"
               >
-                Update
+                Cancel
               </x-button>
-              <x-button
-                v-if="
-                  !assumptionState.isEditing &&
-                  (access.carManagerCanEdit ||
-                    access.carAdvisorCanEdit ||
-                    !hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager]))
-                "
-                class="mt-4"
-                color="emerald"
-                size="sm"
-                @click.prevent="assumptionState.isEditing = true"
-              >
-                Edit Assumptions
-              </x-button>
-            </template>
+              <template v-if="!can(permissionEnum.ApprovePayments)">
+                <x-button
+                  v-if="assumptionState.isEditing"
+                  class="mt-4"
+                  color="primary"
+                  size="sm"
+                  :loading="assumptionsForm.processing"
+                  @click.prevent="onUpdateAssumption"
+                >
+                  Update
+                </x-button>
+                <x-button
+                  v-if="
+                    !assumptionState.isEditing &&
+                    (access.carManagerCanEdit ||
+                      access.carAdvisorCanEdit ||
+                      !hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager]))
+                  "
+                  class="mt-4"
+                  color="emerald"
+                  size="sm"
+                  @click.prevent="assumptionState.isEditing = true"
+                >
+                  Edit Assumptions
+                </x-button>
+              </template>
+            </div>
           </div>
         </template>
       </Collapsible>
@@ -2666,6 +2759,7 @@ watch(
             <x-button-group v-if="selectedPlans.length > 0" size="sm">
               <x-button
                 @click.prevent="onTogglePlans(false)"
+                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 :loading="toggleLoader"
               >
                 Show
@@ -2684,6 +2778,7 @@ watch(
               class="ml-2 mr-2"
               @click.prevent="onExportPlans"
               :loading="exportLoader"
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Download PDF
             </x-button>
@@ -2692,7 +2787,10 @@ watch(
               size="sm"
               color="orange"
               class="mr-2"
-              :disabled="record.advisor_id != $page.props.auth.user.id"
+              :disabled="
+                record.advisor_id != $page.props.auth.user.id ||
+                page.props.linkedQuoteDetails.childLeadsCount > 0
+              "
             >
               Send OCB Email to Customer
             </x-button>
@@ -2705,8 +2803,8 @@ watch(
               v-if="
                 (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
                 can(permissionEnum.CarQuotesPlansCreate)
-
               "
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Add Plan
             </x-button>
@@ -2719,6 +2817,7 @@ watch(
               size="sm"
               color="orange"
               class="mr-2"
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Add Plan
             </x-button>
@@ -2730,6 +2829,7 @@ watch(
                 typeof availablePlansTable.data !== 'string' &&
                 availablePlansTable.data.length > 0
               "
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Copy Link
             </x-button>
@@ -2751,7 +2851,7 @@ watch(
                 isRenewal,
                 isDisabled,
                 puaPremium,
-                puaType
+                puaType,
               }"
             >
               <p>{{ providerName }}</p>
@@ -2923,6 +3023,11 @@ watch(
             <template #item-action="item">
               <div class="flex gap-2">
                 <x-button
+                  v-if="
+                    quote.quote_status_id !=
+                      page.props.quoteStatusEnum.PolicyCancelled ||
+                    page.props.linkedQuoteDetails.childLeadsCount == 0
+                  "
                   size="xs"
                   color="primary"
                   outlined
@@ -2936,6 +3041,7 @@ watch(
                   outlined
                   @click.prevent="copyPlanURL(item)"
                   v-if="item.discountPremium + item.vat + totalPriceVAT > 0"
+                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 >
                   Copy
                 </x-button>
@@ -2952,6 +3058,9 @@ watch(
                     color="error"
                     outlined
                     @click="confirmChangeInsurer(item)"
+                    :disabled="
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
                   >
                     Change Insurer
                   </x-button>
@@ -2963,6 +3072,9 @@ watch(
                     @update:selectedPlanChanged="handlePlanSelected"
                     :plan="item"
                     :quoteType="quoteType"
+                    :has-child-lead="
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
                     :uuid="quote.uuid"
                   />
 
@@ -3114,20 +3226,35 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
-      :paymentCode = "record.code"
+      :paymentCode="record.code"
       :quoteType="quoteType"
+      :payments="payments"
     />
+
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Car"
-			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
-			:quoteRequest="paymentEntityModel"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      quoteType="Car"
+      :payments="payments"
+      :proformaPayment="
+        payments.find(item => item.payment_methods_code === 'PPR')
+      "
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'CPD' ||
+            item.code === 'CPDR' ||
+            item.code === 'CDPDR',
+        )
+      "
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
 		/>
@@ -3228,6 +3355,7 @@ watch(
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
       :record="record"
+      :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
       :payments="payments"
     />
@@ -3241,7 +3369,14 @@ watch(
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="my-2 flex justify-end">
+          <div
+            v-if="
+              quote.quote_status_id !=
+                page.props.quoteStatusEnum.PolicyCancelled ||
+              page.props.linkedQuoteDetails.childLeadsCount == 0
+            "
+            class="my-2 flex justify-end"
+          >
             <x-button
               class="mr-2"
               v-if="
@@ -3350,7 +3485,7 @@ watch(
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}}
+            {{ documentType.text }} {{ documentType.is_required ? '*' : '' }}
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
@@ -3697,6 +3832,7 @@ watch(
       :quoteEmail="record.email"
       :quoteMobile="record.mobile_no"
       :canDelete="false"
+      :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
       :expanded="sectionExpanded"
     />
 
@@ -3745,7 +3881,7 @@ watch(
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
-/>
+  />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

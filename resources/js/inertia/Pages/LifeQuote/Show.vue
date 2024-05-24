@@ -40,7 +40,8 @@ defineProps({
   isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
+  linkedQuoteDetails: Object,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -79,7 +80,6 @@ const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 
 const historyLoading = ref(false);
@@ -480,7 +480,8 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
-
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 
 watch(
   () => page.props.quote.quote_status_id,
@@ -630,7 +631,7 @@ watch(
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -725,12 +726,58 @@ watch(
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
-                      Parent Ref-ID
+                      PARENT REF-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote.parent_duplicate_quote_id }}</div>
+                <div>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </div>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </div>
               </div>
             </dl>
           </div>
@@ -767,7 +814,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -807,7 +854,7 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -863,7 +910,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -879,13 +926,13 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-              <dd class="break-words">
-                {{ customerProfileForm.company_name }}
-              </dd>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -1098,9 +1145,7 @@ watch(
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Status
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           </div>
         </template>
         <template #body>
@@ -1129,49 +1174,49 @@ watch(
               </div>
             </div>
             <div class="w-full md:w-2/3">
-          <div class="flex flex-col gap-4">
-              <x-field
-                label="TransApp Code"
-                v-if="
-                  leadStatusForm.leadStatus ==
-                  page.props.quoteStatusEnum.TransactionApproved
-                "
-              >
-                <x-input
-                  v-model="leadStatusForm.trans_code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-              </x-field>
-              <x-field
-                label="Lost Reason"
-                v-if="
-                  leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
-                "
-              >
-                <x-select
-                  v-model="leadStatusForm.lostReason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
+              <div class="flex flex-col gap-4">
+                <x-field
+                  label="TransApp Code"
+                  v-if="
+                    leadStatusForm.leadStatus ==
+                    page.props.quoteStatusEnum.TransactionApproved
                   "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                />
-              </x-field>
-            <x-field label="Transaction Type">
-              <x-input
-                type="text"
-                :value="quote.transaction_type_text"
-                class="w-full"
-                :disabled="true"
-              />
-            </x-field>
-          </div>
+                >
+                  <x-input
+                    v-model="leadStatusForm.trans_code"
+                    placeholder="TransApp Code is required"
+                    class="w-full"
+                    :error="leadStatusForm.errors.trans_code"
+                  />
+                </x-field>
+                <x-field
+                  label="Lost Reason"
+                  v-if="
+                    leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
+                  "
+                >
+                  <x-select
+                    v-model="leadStatusForm.lostReason"
+                    :options="
+                      lostReasons?.map(item => ({
+                        value: item.id,
+                        label: item.text,
+                      }))
+                    "
+                    placeholder="Lost Reason is required"
+                    class="w-full"
+                    :error="leadStatusForm.errors.lostReason"
+                  />
+                </x-field>
+                <x-field label="Transaction Type">
+                  <x-input
+                    type="text"
+                    :value="quote.transaction_type_text"
+                    class="w-full"
+                    :disabled="true"
+                  />
+                </x-field>
+              </div>
             </div>
           </div>
           <div class="flex justify-end">
@@ -1207,16 +1252,29 @@ watch(
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :proformaPayment="
+        payments.find(item => item.payment_methods_code === 'PPR')
+      "
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'LPD' ||
+            item.code === 'LPDR' ||
+            item.code === 'LDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
 		/>
@@ -1252,8 +1310,8 @@ watch(
     <BookPolicy
       v-if="
         canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
       :quote="record"
@@ -1418,9 +1476,7 @@ watch(
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead History
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
           </div>
         </template>
         <template #body>
@@ -1450,6 +1506,11 @@ watch(
         </template>
       </Collapsible>
     </div>
-    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
+    <AuditLogs
+      :type="'App\\Models\\LifeQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
   </div>
 </template>

@@ -7,68 +7,62 @@ import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 
-const props = defineProps({
-    quote: Object,
-    record: Object,
-    leadStatuses: Array,
-    ecomDetails: Object,
-    coPayment: Object,
-    membersDetail: Array,
-    memberCategories: Array,
-    memberRelations: Array,
-    salaryBands: Array,
-    nationalities: Array,
-    emirates: Array,
-    advisors: Array,
-    teams: Object,
-    quoteDocuments: Object,
-    documentTypes: Object,
-    documentType: Object,
-    cdnPath: String,
-    ecomHealthInsuranceQuoteUrl: String,
-    activities: Array,
-    customerAdditionalContacts: Array,
-    lostReasons: Array,
-    modelType: String,
-    quoteTypeId: Number,
-    notProductionApproval: Boolean,
-    allowedDuplicateLOB: Array,
-    permissions: Object,
-    genderOptions: Object,
-    isQuoteDocumentEnabled: Boolean,
-    isBetaUser: Boolean,
-    payments: Array,
-    mainPayment: Object,
-    quoteRequest: Object,
-    can: Object,
-    paymentMethods: Object,
-    sendPolicy: Boolean,
-    insuranceProviders: Array,
-    planTypes: Array,
-    embeddedProducts: Array,
-    healthPlanTypes: Array,
-    customerTypeEnum: Object,
-    industryType: Object,
-    UBORelations: Array,
-    UBOsDetails: Array,
-    canAddBatchNumber: Boolean,
-    paymentLink: String,
-    quoteType: String,
-    paymentTooltipEnum: Object,
-    storageUrl: String,
-    sendUpdateLogs: Array,
-    quoteNotes: Object,
-    noteDocumentType: Object,
-    enums: Object,
-    bookPolicyDetails: Array,
-    isNewPaymentStructure: Boolean,
-    isAmlClearedForPayment: Boolean,
-    clientInquiryLogs: Array,
-    linkedQuoteDetails: Object,
-    sendUpdateOptions: Array,
-    hasPolicyIssuedStatus: Boolean,
-    documentTypeCodes: Array,
-    hashCollapsibleStatuses: Boolean,
+defineProps({
+  quote: Object,
+  record: Object,
+  leadStatuses: Array,
+  ecomDetails: Object,
+  coPayment: Object,
+  membersDetail: Array,
+  memberCategories: Array,
+  memberRelations: Array,
+  salaryBands: Array,
+  nationalities: Array,
+  emirates: Array,
+  advisors: Array,
+  teams: Object,
+  quoteDocuments: Object,
+  documentTypes: Object,
+  cdnPath: String,
+  ecomHealthInsuranceQuoteUrl: String,
+  activities: Array,
+  customerAdditionalContacts: Array,
+  lostReasons: Array,
+  modelType: String,
+  quoteTypeId: Number,
+  notProductionApproval: Boolean,
+  allowedDuplicateLOB: Array,
+  permissions: Object,
+  genderOptions: Object,
+  isQuoteDocumentEnabled: Boolean,
+  isBetaUser: Boolean,
+  payments: Array,
+  mainPayment: Object,
+  quoteRequest: Object,
+  can: Object,
+  paymentMethods: Object,
+  sendPolicy: Boolean,
+  insuranceProviders: Array,
+  planTypes: Array,
+  embeddedProducts: Array,
+  healthPlanTypes: Array,
+  customerTypeEnum: Object,
+  industryType: Object,
+  UBORelations: Array,
+  UBOsDetails: Array,
+  canAddBatchNumber: Boolean,
+  paymentLink: String,
+  quoteType: String,
+  paymentTooltipEnum: Object,
+  storageUrl: String,
+  bookPolicyDetails: Array,
+  isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
+  sendUpdateOptions: Array,
+  sendUpdateLogs: Array,
+  hasPolicyIssuedStatus: Boolean,
+  linkedQuoteDetails: Object,
+  clientInquiryLogs: Array,
 });
 
 const isManualPlansCount = ref(0);
@@ -85,8 +79,8 @@ const can = permission => useCan(permission);
 const showPlans = ref(!props.hashCollapsibleStatuses);
 
 const notification = useToast();
-const hasRole = role => useHasRole(role);
-const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = (role) => useHasRole(role);
+const hasAnyRole = (roles) => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
@@ -169,7 +163,7 @@ const confirmDeleteData = reactive({
     contact: null,
 });
 
-const cleanObj = obj => useCleanObj(obj);
+const cleanObj = (obj) => useCleanObj(obj);
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
     assignLead = ref(null),
@@ -1475,6 +1469,16 @@ const handleChildUpdate = planId => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
+
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
 
 const selectedProviderPlan = ref({
     id: page.props.quote.plan_id,
@@ -1640,7 +1644,7 @@ watch(
             v-model="leadDuplicateForm.lob_team"
             label="LOBs"
             :options="
-              allowedDuplicateLOB.map(lob => ({
+              allowedDuplicateLOB.map((lob) => ({
                 value: lob,
                 label: lob,
               }))
@@ -1661,11 +1665,7 @@ watch(
             ]"
           />
 
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
+          <x-button color="orange" type="submit" :loading="leadDuplicateForm.processing">
             Create Duplicate
           </x-button>
         </div>
@@ -1843,11 +1843,11 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS ECOMMERCE</dt>
-                <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote.is_ecommerce ? "Yes" : "No" }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS EBP RENEWAL</dt>
-                <dd>{{ quote.is_ebp_renewal ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote.is_ebp_renewal ? "Yes" : "No" }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
@@ -1868,9 +1868,7 @@ watch(
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">
-                  FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?
-                </dt>
+                <dt class="font-medium">FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?</dt>
                 <dd>{{ quote.cover_for_id_text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -2140,9 +2138,7 @@ watch(
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
-            Link
-          </x-button>
+          <x-button size="sm" color="orange" @click.prevent="linkEntity"> Link </x-button>
         </div>
       </dl>
     </x-modal>

@@ -11,6 +11,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
@@ -19,6 +20,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\BerlinService;
@@ -108,8 +110,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_by' => $request->user()->id,
             ];
 
-            $count = $quoteModel->payments->count();
-            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+            // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
+            // Count will be iterative for each payment added through the send update or Child lead
+            $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+            $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
+            $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
+
+            if ($request->send_update_id) {
+                // it will make $quoteModel as SendUpdateLog model.
+                $paymentInformation['send_update_log_id'] = $request->send_update_id;
+                $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+            }
 
             if ($masterPayment->reference) {
                 $paymentInformation['reference'] = $masterPayment->reference;
@@ -129,7 +140,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_at' => now(),
             ]);
             $paymentLog->save();
-            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+            if (! $request->send_update_id) { // it will check if the payment is added from send update.
+                $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+            }
             $quoteModel->save();
             DB::commit();
 
@@ -222,7 +235,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     //add document references
                     if (isset($splitPayment['document_detail']) && count($splitPayment['document_detail'])) {
                         foreach ($splitPayment['document_detail'] as $document) {
-                            $quoteDocumentRec = QuoteDocument::find($document['id']);
+                            $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                             if ($quoteDocumentRec) {
                                 $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
                                 $quoteDocumentRec->save();
@@ -342,9 +355,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdateSplitPaymentsApprove($request)
     {
+        $parentQuoteModel =
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+
         if (! $quoteModel) {
             return response()->json(['success' => false]);
+        }
+
+        if ($request->send_update_id) {
+            $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
         }
 
         $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
@@ -354,7 +373,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'decline_custom_reason' => $request->declined_custom_reason,
                 'updated_by' => Auth::user()->id,
             ]);
-            $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
+            if ($request->send_update_id) {
+                $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
+            } else {
+                $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
+            }
             $quoteModel->save();
             $successMessage = 'Transaction declined';
         } else {
@@ -387,11 +410,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $paymentSplit->save();
                             $parentPayment = $paymentSplit->payment;
                             /* Part of milestone 2 */
-                            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER && Auth::user()->hasRole(RolesEnum::BetaUser)) {
+                            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER) {
                                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
                             }
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
+
+                            if ($parentPayment->send_update_log_id) {
+                                SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
+                                    'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+                                ]);
+                            }
                             DB::commit();
                         } catch (Exception $exception) {
                             DB::rollBack();
@@ -426,28 +455,36 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $successMessage = 'Transaction approved';
                 $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
                 if ($totalApproved == $quoteModel->payments()->count()) {
-                    $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                    if ($request->send_update_id) {
+                        $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
+                    } else {
+                        $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                    }
                     $quoteModel->save();
                     // Berlin Service - Extend Customer Subscription on Shaji request
                     $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
-                    // if ($customerData) {
-                    //     $quoteOptions = QuoteTypeId::getOptions();
-                    //     $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
-                    //     info('Transaction Approved responseExtend: '.$responseExtend);
-                    // }
-                    //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
+                    if ($customerData) {
+                        $quoteOptions = QuoteTypeId::getOptions();
+                        $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
+                        info('Transaction Approved responseExtend: '.$responseExtend);
+                    }
+                    // dispatch(new MAWelcomeJob($parentQuoteModel->first_name, $parentQuoteModel->last_name, $parentQuoteModel->email, $parentQuoteModel->mobile_no, 'IMCRM', ''));
 
                     // send EP documents
-                    EmbeddedProductRepository::sendDocumentsByLead($request->quote_id, $request->modelType);
+                    if (! $request->send_update_id) {
+                        EmbeddedProductRepository::sendDocumentsByLead($request->quote_id, $request->modelType);
+                    }
 
                     //Create duplicate lead for TRAVEL
-                    if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
+                    if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $request->send_update_id) {
                         if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
                             $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
                         }
                     }
                 }
-                $this->updateLeadStatus($firstPayment); //update lead status
+                if (! $request->send_update_id) {
+                    $this->updateLeadStatus($firstPayment); //update lead status
+                }
                 DB::commit();
             } catch (Exception $exception) {
                 DB::rollBack();
@@ -456,6 +493,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $successMessage;
     }
+
     //migrate payments
     public function fetchMigratePayments($request)
     {
@@ -507,7 +545,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 && count($request->approved_document_model[$splitPayment->sr_no]) > 0
             ) {
                 foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
-                    $quoteDocumentRec = QuoteDocument::find($document['id']);
+                    $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                     if ($quoteDocumentRec) {
                         $quoteDocumentRec->payment_split_id = $splitPayment->id;
                         $quoteDocumentRec->save();
@@ -551,7 +589,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             }
             /* Part of milestone 2*/
-            if ($masterPayment->collection_type == CollectionTypeEnum::BROKER && Auth::user()->hasRole(RolesEnum::BetaUser)) {
+            if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
             }
         } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
@@ -650,4 +688,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
         }
     }
+
+    public function getPaymentsCountByLeadCode($quoteCode)
+    {
+        return $this->where('code', 'LIKE', "%{$quoteCode}%")->count();
+    }
+
+    public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)
+    {
+        return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
+    }
+
 }

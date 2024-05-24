@@ -52,7 +52,8 @@ const props = defineProps({
   payments: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
+  linkedQuoteDetails: Object,
 });
 
 const page = usePage();
@@ -288,6 +289,8 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 </script>
 
 <template>
@@ -459,15 +462,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
-            <div
-              class="grid sm:grid-cols-2"
-              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-            >
-              <dt class="font-medium">ID</dt>
-              <dd>{{ quote.id }}</dd>
-            </div>
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+                >
+                  <dt class="font-medium">ID</dt>
+                  <dd>{{ quote.id }}</dd>
+                </div>
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -502,12 +505,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
-            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.created_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
-            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -531,12 +534,58 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
-                      Parent Ref-ID
+                      PARENT REF-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote.parent_duplicate_quote_id }}</div>
+                <div>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </div>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </div>
               </div>
             </dl>
           </div>
@@ -547,7 +596,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CYCLE MAKE</dt>
                 <dd>{{ quote?.cycle_quote?.cycle_make }}</dd>
@@ -580,7 +629,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS GOOD CONDITION</dt>
-                <dd>{{ quote?.cycle_quote?.has_good_condition ? 'YES' : 'NO' }}</dd>
+                <dd>
+                  {{ quote?.cycle_quote?.has_good_condition ? 'YES' : 'NO' }}
+                </dd>
               </div>
             </dl>
           </div>
@@ -605,7 +656,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -614,7 +667,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -691,7 +744,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -966,11 +1021,22 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
+      :insly-id="quote?.quote_detail?.insly_id"
+      :expanded="sectionExpanded"
+    />
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
+      :quoteStatusEnum="quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="Cycle"
-      :expanded="sectionExpanded"
     />
 
     <QuoteDocuments
@@ -978,6 +1044,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :modelType="quoteType"
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
     />
@@ -1004,22 +1071,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :data="sendUpdateLogs"
     />
 
+    <!-- Need to verify, is it necessary or not? -->
     <QuotePolicy
       :quote="quote"
       :can="can"
       :quoteStatusesEnum="quoteStatusesEnum"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
+    <AuditLogs
+      :quote-type="quoteType"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
-
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
   </div>

@@ -50,6 +50,7 @@ class StorePaymentRequest extends FormRequest
                 'payment.payment_splits.*.payment_amount' => 'required|numeric',
                 'payment.payment_splits.*.payment_method' => 'required|string',
                 'payment.payment_splits.*.due_date' => 'required|date',
+                'send_update_id' => 'nullable|integer',
             ];
         }
 
@@ -66,8 +67,13 @@ class StorePaymentRequest extends FormRequest
             if (! $quoteModel) {
                 $validator->errors()->add('quote', 'Quote Not Exists');
             } else {
-                $paymentAlreadyExists = Payment::where('code', $quoteModel->code)->get();
-                if ($paymentAlreadyExists->count() > 0) {
+                if (! empty(request()->send_update_id)) {
+                    $paymentAlreadyExistsCount = Payment::where('send_update_log_id', request()->send_update_id)->count();
+                } else {
+                    $paymentAlreadyExistsCount = Payment::where('code', $quoteModel->code)->count();
+                }
+
+                if ($paymentAlreadyExistsCount > 0) {
                     $validator->errors()->add('payment', 'Payment Already Added');
                 }
             }

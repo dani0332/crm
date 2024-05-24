@@ -164,6 +164,11 @@ class TravelQuote extends Model implements AuditableContract
 
     }
 
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');

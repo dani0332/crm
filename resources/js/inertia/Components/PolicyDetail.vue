@@ -3,8 +3,14 @@ import moment from 'moment';
 
 const page = usePage();
 
+const { price_vat_notapplicable, price_vat_applicable, isNumber } = useRules();
+
 const props = defineProps({
   record: {
+    type: Object,
+    default: {},
+  },
+  availablePlans: {
     type: Object,
     default: {},
   },
@@ -22,10 +28,9 @@ const props = defineProps({
     default: true,
   },
 });
-const paymentStatusEnum = page.props.paymentStatusEnum;
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
-const hasRole = role => useHasRole(role);
-const rolesEnum = page.props.rolesEnum;
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -41,12 +46,15 @@ const dateToYMD = date => {
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
-const quoteStatusEnum= page.props.quoteStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const policyIssuanceStatusOptions = computed(() => {
-  let policyIssuanceStatus= page.props.policyIssuanceStatus;
-  if( props.record.quote_status_id != quoteStatusEnum.PolicyIssued){
-    policyIssuanceStatus = policyIssuanceStatus.filter(item => item.text !== "Policy Issued");
+  let policyIssuanceStatus = page.props.policyIssuanceStatus;
+  if (page.props.record.policy_issuance_status_id !=
+    page.props.policyIssuanceStatusEnum.PolicyIssued) {
+    policyIssuanceStatus = policyIssuanceStatus.filter(
+      item => item.text !== 'Policy Issued',
+    );
   }
   return policyIssuanceStatus.map(item => {
     return {
@@ -54,8 +62,7 @@ const policyIssuanceStatusOptions = computed(() => {
       label: item.text,
     };
   });
-
- });
+});
 
  const planQuoteInsurerNumber = computed(() => {
   let quotePlanList = page.props?.listQuotePlans;
@@ -102,17 +109,27 @@ watch(
 );
 
 const caculateVatAmount = () => {
-  if (policyDetailsForm.amount > 0) {
-    let vat = policyDetailsForm.amount * page.props.vat.toFixed(2);
+  let amount = Number(policyDetailsForm.amount);
+  let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
+  // if price vat applicable and not applicable both are there
+  if (amount > 0 && priceVatNotApplicable > 0) {
+    let vat = amount * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
     policyDetailsForm.amount_with_vat = (
-      Number(vat) + Number(policyDetailsForm.amount)
+      Number(vat) +
+      Number(amount) +
+      Number(priceVatNotApplicable)
     ).toFixed(2);
-    Number(vat) + Number(policyDetailsForm.amount);
-  } else if (policyDetailsForm.price_vat_notapplicable > 0) {
-    policyDetailsForm.amount_with_vat = Number(
-      policyDetailsForm.price_vat_notapplicable,
-    ).toFixed(2);
+  } else if (amount > 0) {
+    let vat = amount * page.props.vat.toFixed(2);
+    policyDetailsForm.vat = vat.toFixed(2);
+    policyDetailsForm.amount_with_vat = (Number(vat) + Number(amount)).toFixed(
+      2,
+    );
+  } else if (priceVatNotApplicable > 0) {
+    policyDetailsForm.amount_with_vat = Number(priceVatNotApplicable).toFixed(
+      2,
+    );
   } else {
     policyDetailsForm.vat = '';
     policyDetailsForm.amount_with_vat = '';
@@ -203,6 +220,14 @@ watch(
     }
   },
 );
+
+watch(
+  () => props.availablePlans,
+  availablePlans => {
+    policyDetailsForm.quote_plan_insurer_quote_number =
+      planQuoteInsurerNumber.value || page.props.record.insurer_quote_number;
+  },
+);
 </script>
 
 <template>
@@ -220,7 +245,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Policy Number</label
                   >
                   <template #tooltip>
@@ -240,7 +265,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >ISSUANCE DATE</label
                   >
                   <template #tooltip>
@@ -262,7 +287,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Price (VAT NOT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -274,19 +299,22 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_notapplicable"
                   @change="caculateVatAmount"
+                  :rules="[price_vat_notapplicable, isNumber]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
                   class="w-full"
                   :disabled="
                     !policyDetailsState.isEditing ||
-                    policyDetailsForm.amount > 0
+                    (page.props.quoteType != quoteTypeCodeEnum.Life &&
+                      page.props.quoteType != quoteTypeCodeEnum.Business &&
+                      page.props.quoteType != quoteTypeCodeEnum.Health)
                   "
                 />
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Start Date</label
                   >
                   <template #tooltip>
@@ -308,7 +336,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Price (VAT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -320,19 +348,22 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.amount"
                   @change="caculateVatAmount"
+                  :rules="[price_vat_applicable, isNumber]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"
                   class="w-full"
                   :disabled="
                     !policyDetailsState.isEditing ||
-                    policyDetailsForm.price_vat_notapplicable > 0
+                    (page.props.quoteType == quoteTypeCodeEnum.Life &&
+                      page.props.quoteType != quoteTypeCodeEnum.Business &&
+                      page.props.quoteType != quoteTypeCodeEnum.Health)
                   "
                 />
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Expiry Date</label
                   >
                   <template #tooltip>
@@ -358,7 +389,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Total VAT Amount</label
                   >
                   <template #tooltip>
@@ -379,7 +410,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Total Price</label
                   >
                   <template #tooltip>
@@ -392,7 +423,7 @@ watch(
                   placeholder="Price"
                   class="w-full"
                   readonly
-                  :disabled="!policyDetailsState.isEditing"
+                  :disabled="true"
                 />
               </div>
             </div>
@@ -400,7 +431,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Insurer Quote Number</label
                   >
                   <template #tooltip>
@@ -420,7 +451,7 @@ watch(
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Issuance Status</label
                   >
                   <template #tooltip>
@@ -463,7 +494,8 @@ watch(
               <template
                 class="flex justify-end"
                 v-if="
-                  record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                  record.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
                   record.quote_status_id == quoteStatusEnum.PolicyPending ||
                   record.quote_status_id == quoteStatusEnum.PolicyIssued ||
                   record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
@@ -491,6 +523,7 @@ watch(
                   size="sm"
                   :loading="policyDetailsForm.processing"
                   type="submit"
+                  :disabled="!can(permissionsEnum.POLICY_DETAILS_ADD)"
                 >
                   Update
                 </x-button>
@@ -500,7 +533,8 @@ watch(
                 >
                   <x-button
                     v-if="
-                      !policyDetailsState.isEditing && hasRole(rolesEnum.PA)
+                      !policyDetailsState.isEditing &&
+                      can(permissionsEnum.POLICY_DETAILS_ADD)
                     "
                     class="mt-4"
                     color="emerald"
@@ -513,7 +547,8 @@ watch(
                 <template v-else>
                   <x-button
                     v-if="
-                      !policyDetailsState.isEditing && hasRole(rolesEnum.NRA)
+                      !policyDetailsState.isEditing &&
+                      can(permissionsEnum.POLICY_DETAILS_ADD)
                     "
                     class="mt-4"
                     color="emerald"

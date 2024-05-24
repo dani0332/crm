@@ -125,6 +125,11 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
     public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');

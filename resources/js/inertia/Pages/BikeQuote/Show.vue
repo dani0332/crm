@@ -47,7 +47,8 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  });
+  linkedQuoteDetails: Object,
+});
 
 const page = usePage();
 const { isRequired } = useRules();
@@ -220,6 +221,8 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 </script>
 
 <template>
@@ -420,12 +423,50 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <label
                   class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                 >
-                  Parent Ref-ID
+                  PARENT REF-ID
                 </label>
                 <template #tooltip> Parent Reference ID </template>
               </x-tooltip>
             </div>
-            <div>{{ quote.parent_duplicate_quote_id }}</div>
+            <div>
+              <Link
+                v-if="quote.parent_duplicate_quote_id"
+                :href="
+                  getDetailPageRoute(
+                    linkedQuoteDetails.uuid,
+                    linkedQuoteDetails.quote_type_id,
+                  )
+                "
+                class="text-primary-500 hover:underline"
+              >
+                {{ quote.parent_duplicate_quote_id ?? '' }}
+              </Link>
+            </div>
+          </div>
+          <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  CHILD REF-ID
+                </label>
+                <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+              </x-tooltip>
+            </div>
+            <div>
+              <Link
+                :href="
+                  getDetailPageRoute(
+                    linkedQuoteDetails.childLeadsUuid,
+                    linkedQuoteDetails.quote_type_id,
+                  )
+                "
+                class="text-primary-500 hover:underline"
+              >
+                {{ linkedQuoteDetails.childLeads ?? '' }}
+              </Link>
+            </div>
           </div>
         </dl>
       </div>
@@ -826,12 +867,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
+      :insly-id="quote?.quote_detail?.insly_id"
+      :expanded="sectionExpanded"
     />
 
     <PolicyDetail
@@ -846,6 +889,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :modelType="quoteType"
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
     />
@@ -864,26 +908,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
-    	:expanded="sectionExpanded"
-    />
-
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="Bike"
-      :bookPolicyDetails="bookPolicyDetails"
-      :payments="payments"
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <AuditLogs :id="$page.props.quote.id" :quote-type="quoteType" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>

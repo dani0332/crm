@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
@@ -42,6 +44,11 @@ class SendBookPolicyRequest extends FormRequest
     {
 
         if (request()->send_policy_type == 'sage') {
+            if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
+                return response()->json(['errors' => [
+                    'message' => 'You are not authorized to perform this action',
+                ]], 403);
+            }
             $validator->after(function ($validator) {
                 //check for quote records if exists
                 $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
@@ -97,6 +104,19 @@ class SendBookPolicyRequest extends FormRequest
                         }
                     } else {
                         $validator->errors()->add('value', 'Payment Not found');
+                    }
+
+                    // Check parent Lead Status not in Cancellation Pending state.
+                    $parentQuoteCode = count(explode('-', $quote->code)) > 2 ? $quote->parent_duplicate_quote_id : false;
+                    if ($parentQuoteCode) {
+                        $parentQuote = $this->getQuoteObjectBy(request()->model_type, $parentQuoteCode, 'code');
+                        if ($parentQuote) {
+                            if ($parentQuote->quote_status_id == QuoteStatusEnum::CancellationPending) {
+                                $validator->errors()->add('value', 'Cancellation for '.$parentQuoteCode.' is still pending');
+                            }
+                        } else {
+                            $validator->errors()->add('value', 'Parent Quote Not found');
+                        }
                     }
                 } else {
                     $validator->errors()->add('value', 'Quote Not found');

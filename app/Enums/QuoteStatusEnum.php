@@ -71,5 +71,6 @@ final class QuoteStatusEnum extends Enum
     public const SentForTransactionApproval = 68;
     public const RenewalTermsSent = 69;
     public const PolicyPending = 70;
+    public const EarlyRenewal = 71;
     public const LOSTREASONID = 34;
 }

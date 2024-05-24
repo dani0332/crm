@@ -36,6 +36,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -99,12 +100,10 @@ class LifeQuoteController extends Controller
     public function show($uuid)
     {
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
-
         $payments = $quote->payments;
-
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
-
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::LIFE->value);
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
@@ -133,7 +132,7 @@ class LifeQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::LIFE->id(), $quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::LIFE->id());
@@ -209,6 +208,7 @@ class LifeQuoteController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
         ]);
     }
 

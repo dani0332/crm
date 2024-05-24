@@ -88,6 +88,7 @@ use App\Services\NotesForCustomerService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TeamService;
 use App\Services\TierService;
@@ -536,6 +537,7 @@ class CRUDController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
 
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
@@ -559,7 +561,7 @@ class CRUDController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quoteTypeId, $record->id);
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($record);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
@@ -748,6 +750,7 @@ class CRUDController extends Controller
             $customerTypeEnum = CustomerTypeEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
 
             // book policy details
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
@@ -761,7 +764,8 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'bookPolicyDetails', 'listQuotePlans', 'isAmlClearedForPayment', 'clientInquiryLogs',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
+                'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'listQuotePlans', 'isAmlClearedForPayment',
             ]));
         }
 
@@ -902,6 +906,7 @@ class CRUDController extends Controller
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+                'linkedQuoteDetails' => $linkedQuoteDetails,
             ]);
         }
 
@@ -1060,6 +1065,7 @@ class CRUDController extends Controller
                 'quoteNotes' => $quoteNotes,
                 'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
+                'linkedQuoteDetails' => $linkedQuoteDetails,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
                 'clientInquiryLogs' => $clientInquiryLogs,
             ]);
@@ -1820,7 +1826,14 @@ class CRUDController extends Controller
         ];
 
         $count = $quoteModel->payments->count();
-        $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+        if ($request->send_update_id) { // it will check if the payment is added from send update.
+            $paymentInformation['send_update_log_id'] = $request->send_update_id;
+            $paymentInformation['code'] = app(SendUpdateLogService::class)->getPaymentCode($quoteModel->code);
+            // it will make $quoteModel as SendUpdateLog model.
+            $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+        } else {
+            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+        }
 
         if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
@@ -1828,6 +1841,7 @@ class CRUDController extends Controller
         if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
             $paymentInformation['authorized_at'] = now();
         }
+
         $payment = Payment::create($paymentInformation);
         $quoteModel->payments()->save($payment);
         $paymentLog = new PaymentStatusLog([
@@ -1836,8 +1850,11 @@ class CRUDController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
         $paymentLog->save();
-        $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+        if (! $request->send_update_id) { // it will check if the payment is added from send update.
+            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+        }
         $quoteModel->save();
 
         return back()->with('success', 'Payment has been created');
