@@ -88,8 +88,9 @@ class PetQuoteRepository extends BaseRepository
         });
     }
 
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($forExport = false)
     {
+
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
@@ -104,15 +105,11 @@ class PetQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
+            ->filter(! $forExport)
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
-        if ($forTotalLeadsCount) {
-            return $query->count();
-        }
-
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchGetBy($column, $value)

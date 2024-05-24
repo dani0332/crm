@@ -212,16 +212,14 @@ class LifeQuoteController extends Controller
             ->whereIn('text', [quoteStatusCode::NEWLEAD, quoteStatusCode::QUOTED, quoteStatusCode::FOLLOWEDUP, quoteStatusCode::NEGOTIATION])
             ->get()->toArray();
 
-        $leadStatuses = array_map(function ($item) use ($request) {
-            $item['data'] = getDataAgainstStatus(QuoteTypes::LIFE->value, $item['id'], $request);
+        $leadStatuses = array_map(function ($item) {
+            $item['data'] = getDataAgainstStatus(QuoteTypes::LIFE->value, $item['id']);
 
             return $item;
         }, $leadStatuses);
 
         return inertia('LifeQuote/Cards', [
             'quotes' => array_values($leadStatuses),
-            'quoteType' => QuoteTypes::LIFE->value,
-
         ]);
     }
 }

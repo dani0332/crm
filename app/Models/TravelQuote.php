@@ -152,14 +152,6 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
     }
-
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Activities::class, 'quote_request_id')
-            ->where('quote_type_id', QuoteTypeId::Travel);
-
-    }
-
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');

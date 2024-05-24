@@ -8,7 +8,6 @@ use App\Enums\quoteTypeCode;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\PetQuoteRequestDetail;
-use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -272,9 +271,34 @@ class PetQuoteService extends BaseService
             }
         }
 
-        // sortBy filter
-        if (isset($request->sortBy) && $request->sortBy != '') {
-            return $this->query->orderBy($request->sortBy, $request->sortType);
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole('ADMIN');
+            if ($isAdmin || $isManagerORDeputy == '1') {
+                if ($column == 6) {
+                    $column = 'pqr.created_at';
+                }
+                if ($column == 7) {
+                    $column = 'pqr.updated_at';
+                }
+                if ($column == 8) {
+                    $column = 'pqrd.next_followup_date';
+                }
+            } else {
+                if ($column == 5) {
+                    $column = 'pqr.created_at';
+                }
+                if ($column == 6) {
+                    $column = 'pqr.updated_at';
+                }
+                if ($column == 7) {
+                    $column = 'pqrd.next_followup_date';
+                }
+            }
+
+            return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('pqr.created_at', 'DESC');
         }
@@ -563,8 +587,7 @@ class PetQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        Log::info('Leads ids to assign: '.json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
             if (in_array(quoteTypeCode::Pet, newUi())) {
@@ -575,7 +598,6 @@ class PetQuoteService extends BaseService
 
             if ($lead) {
                 $lead->advisor_id = $userId;
-                $lead->quote_batch_id = $quoteBatch->id;
                 $lead->save();
                 $this->updateChildRecord($lead->id);
             }

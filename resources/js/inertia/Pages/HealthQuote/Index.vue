@@ -9,15 +9,11 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
-  totalCount: {
-    type: Number,
-    default: 0,
-  },
 });
 
 const page = usePage();
 const notification = useToast();
-
+const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -28,21 +24,8 @@ const loader = reactive({
 });
 
 const canExport = ref(false);
-
-const { isRequired } = useRules();
-
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
-
-let params = useUrlSearchParams('history');
-const cleanObj = obj => useCleanObj(obj);
-const showFilters = ref(true);
-const filtersCount = ref(0);
-const serverOptions = ref({
-  page: 1,
-  sortBy: 'created_at',
-  sortType: 'desc',
-});
 
 const assignForm = useForm({
   assign_team: null,
@@ -55,68 +38,38 @@ const assignForm = useForm({
   isManualAllocationAllowed: 1,
 });
 
-const tableHeader = ref([
-  { text: 'Ref-ID', value: 'code', is_active: true },
-  { text: 'FIRST NAME', value: 'first_name', is_active: true },
-  { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
-  { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
-  { text: 'ASSIGNMENT TYPE', value: 'assignment_type', is_active: true },
-  {
-    text: 'CREATED DATE',
-    value: 'created_at',
-    is_active: true,
-    sortable: true,
-  },
-  {
-    text: 'LAST MODIFIED DATE',
-    value: 'updated_at',
-    is_active: true,
-    sortable: true,
-  },
-  { text: 'HEALTH TEAM TYPE', value: 'health_team_type', is_active: true },
-  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
-  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
-  {
-    text: 'STARTING FROM',
-    value: 'price_starting_from',
-    is_active: true,
-    sortable: true,
-  },
-  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
-  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
-  { text: 'SOURCE', value: 'source', is_active: true },
-  { text: 'LEAD TYPE', value: 'lead_type_id_text', is_active: true },
-  { text: 'SALARY BAND', value: 'salary_band_id_text', is_active: true },
-  {
-    text: 'MEMBER CATEGORY',
-    value: 'member_category_id_text',
-    is_active: true,
-  },
-  {
-    text: 'CURRENTLY INSURED WITH',
-    value: 'currently_insured_with_id_text',
-    is_active: true,
-  },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
-  {
-    text: 'Previous Policy Number',
-    value: 'previous_quote_policy_number',
-    is_active: true,
-  },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
-]);
+const tableHeader = [
+  { text: 'Ref-ID', value: 'code' },
+  { text: 'FIRST NAME', value: 'first_name' },
+  { text: 'LAST NAME', value: 'last_name' },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
+  { text: 'CREATED DATE', value: 'created_at' },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'HEALTH TEAM TYPE', value: 'health_team_type' },
+  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'STARTING FROM', value: 'price_starting_from' },
+  { text: 'PRICE', value: 'premium' },
+  { text: 'POLICY NUMBER', value: 'policy_number' },
+  { text: 'SOURCE', value: 'source' },
+  { text: 'LEAD TYPE', value: 'lead_type_id_text' },
+  { text: 'SALARY BAND', value: 'salary_band_id_text' },
+  { text: 'MEMBER CATEGORY', value: 'member_category_id_text' },
+  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_id_text' },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
+];
 
 const filteredTableHeader = computed(() => {
-  let headers = [];
   if (!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])) {
-    headers = tableHeader.value;
+    return tableHeader;
   } else {
-    headers = tableHeader.value.filter(
+    return tableHeader.filter(
       column => column.value !== 'source' && column.value !== 'assignment_type',
     );
   }
-  return headers.filter(x => x.is_active);
 });
 
 const filters = reactive({
@@ -132,15 +85,11 @@ const filters = reactive({
   advisors: [],
   is_ecommerce: '',
   is_renewal: '',
+  page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
-  date: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
-  payment_status: [],
-  is_cold: false,
-  is_stale: false,
-  status_filters: null,
 });
 
 const subTeamOptions = [
@@ -206,18 +155,15 @@ const subTeamsOptions = [
 
 function onSubmit(isValid) {
   if (isValid) {
-    serverOptions.value.page = 1;
-
-    const filtersCleaned = cleanObj(filters);
-
-    filtersCount.value = Object.keys(filtersCleaned).length;
-
+    filters.page = 1;
+    Object.keys(filters).forEach(
+      key =>
+        (filters[key] === '' || filters[key].length === 0) &&
+        delete filters[key],
+    );
     router.visit(route('health.index'), {
       method: 'get',
-      data: {
-        ...filtersCleaned,
-        ...serverOptions.value,
-      },
+      data: filters,
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -228,28 +174,7 @@ function onSubmit(isValid) {
   }
 }
 
-const handleSelectedFilters = selectedFilters => {
-  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
-    filters.created_at_start = selectedFilters.created_at_start;
-    filters.created_at_end = selectedFilters.created_at_end;
-  }
-
-  if (selectedFilters.quote_status) {
-    filters.quote_status = selectedFilters.quote_status;
-  }
-
-  if (selectedFilters.payment_status) {
-    filters.payment_status = selectedFilters.payment_status;
-  }
-
-  filters.is_cold = selectedFilters.cold;
-  filters.is_stale = selectedFilters.stale;
-
-  onSubmit(true);
-};
-
 function onReset() {
-  removedSavedParams();
   router.visit(route('health.index'), {
     method: 'get',
     data: { page: 1 },
@@ -258,6 +183,10 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
+
+const rules = {
+  isRequired: v => !!v || 'Please select this option',
+};
 
 function onAssignLead(isValid) {
   if (isValid) {
@@ -286,11 +215,11 @@ function onAssignLead(isValid) {
 }
 
 function setQueryStringFilters() {
-  for (const [key, value] of Object.entries(params)) {
+  for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+      filters[key.substring(0, key.length - 2)] = params[key];
     } else {
-      filters[key] = params[key] ?? value;
+      filters[key] = params[key];
     }
   }
 }
@@ -308,66 +237,40 @@ const fixedValue = numberString => {
     });
   }
 };
-
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-onMounted(() => {
-  params = getSavedQueryParams() || params;
-  setQueryStringFilters();
-
-  let filtersCleaned = cleanObj(filters);
-
-  if (filtersCleaned.sortBy) {
-    serverOptions.value.sortBy = filtersCleaned.sortBy;
-    delete filtersCleaned.sortBy;
-  }
-
-  if (filtersCleaned.sortType) {
-    serverOptions.value.sortType = filtersCleaned.sortType;
-    delete filtersCleaned.sortType;
-  }
-
-  if (filtersCleaned.page) {
-    serverOptions.value.page = filtersCleaned.page;
-    delete filtersCleaned.page;
-  }
-
-  filtersCount.value = Object.keys(filtersCleaned).length;
-});
-
 watch(
-  () => serverOptions.value,
-  (newValue, oldValue) => {
-    if (oldValue !== newValue) onSubmit(true);
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
   },
+  { deep: true, immediate: true },
 );
+
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 
 <template>
   <div>
     <Head title="Health List" />
-    <StickyHeader>
-      <template v-slot:header>
-        <h2 class="text-xl font-semibold">Health List</h2>
-        <LeadsCount
-          :leadsCount="$page.props.totalCount"
-          :key="$page.props.totalCount"
-        />
-      </template>
-      <template #default>
-        <ColumnSelection
-          v-model:columns="tableHeader"
-          storage-key="health-list"
-        />
-
-        <FiltersButton
-          :is-shown="showFilters"
-          :filters="filters"
-          :filters-count="filtersCount"
-          @selected-filters="handleSelectedFilters"
-          @toggleFilters="showFilters = !showFilters"
-        />
+    <div class="flex justify-between items-center">
+      <h2 class="text-xl font-semibold">Health List</h2>
+      <LeadAssignedWidget
+        v-if="hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+        :todayAutoCount="todayAutoCount"
+        :todayManualCount="todayManualCount"
+        :yesterdayAutoCount="yesterdayAutoCount"
+        :yesterdayManualCount="yesterdayManualCount"
+        :userMaxCap="userMaxCap"
+      />
+      <div class="space-x-3">
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
@@ -375,20 +278,10 @@ watch(
         <Link :href="route('health.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
-      </template>
-    </StickyHeader>
-
-    <LeadAssignedWidget
-      v-if="hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
-      :todayAutoCount="todayAutoCount"
-      :todayManualCount="todayManualCount"
-      :yesterdayAutoCount="yesterdayAutoCount"
-      :yesterdayManualCount="yesterdayManualCount"
-      :userMaxCap="userMaxCap"
-    />
-
+      </div>
+    </div>
     <x-divider class="my-4" />
-    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
+    <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
@@ -465,16 +358,7 @@ watch(
           :options="leadStatusOptions"
         />
         <ComboBox
-          v-if="
-            !hasAnyRole([
-              rolesEnum.RMAdvisor,
-              rolesEnum.EBPAdvisor,
-              rolesEnum.CarAdvisor,
-              rolesEnum.HealthRenewalAdvisor,
-              rolesEnum.HealthNewBusinessAdvisor,
-              rolesEnum.HealthAdvisor,
-            ])
-          "
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -503,13 +387,7 @@ watch(
           class="w-full"
         />
         <x-select
-          v-if="
-            !hasAnyRole([
-              rolesEnum.RMAdvisor,
-              rolesEnum.EBPAdvisor,
-              rolesEnum.CarAdvisor,
-            ])
-          "
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.assignment_type"
           label="Assignment Type"
           name="assignment_type"
@@ -535,16 +413,16 @@ watch(
         />
 
         <DatePicker
-          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
-          v-model="filters.assigned_to_date_start"
-          name="assigned_to_date_start"
-          label="Advisor Assigned Date Start"
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+            v-model="filters.assigned_to_date_start"
+            name="assigned_to_date_start"
+            label="Advisor Assigned Date Start"
         />
         <DatePicker
-          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
-          v-model="filters.assigned_to_date_end"
-          name="assigned_to_date_end"
-          label="Advisor Assigned Date End"
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+            v-model="filters.assigned_to_date_end"
+            name="assigned_to_date_end"
+            label="Advisor Assigned Date End"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -569,14 +447,7 @@ watch(
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            type="submit"
-            :loading="loader.table"
-          >
-            Search
-          </x-button>
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
@@ -594,7 +465,7 @@ watch(
                 :options="subTeamsOptions"
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
-                :rules="[isRequired]"
+                :rules="[rules.isRequired]"
               />
               <x-select
                 v-model="assignForm.assigned_to_id_new"
@@ -602,7 +473,7 @@ watch(
                 :options="advisorOptions"
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
-                :rules="[isRequired]"
+                :rules="[rules.isRequired]"
               />
 
               <div class="mb-3 md:pt-6">
@@ -622,7 +493,6 @@ watch(
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
-      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="filteredTableHeader"
@@ -632,13 +502,12 @@ watch(
       hide-footer
       fixed-checkbox
     >
-      <template #item-code="item">
+      <template #item-code="{ code, uuid }">
         <Link
-          :href="route('health.show', item.uuid)"
-          class="text-primary-500 hover:underline flex items-center space-x-1"
+          :href="route('health.show', uuid)"
+          class="text-primary-500 hover:underline"
         >
-          <span>{{ item.code }}</span>
-          <StaleLeadsBadge :date="item.stale_at" :align="`left`" />
+          {{ code }}
         </Link>
       </template>
       <template #item-is_ecommerce="{ is_ecommerce }">

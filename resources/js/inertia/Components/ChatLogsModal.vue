@@ -18,9 +18,9 @@ const props = defineProps({
   },
 });
 
-const source = ref(null);
-
 const md = new markdownit();
+
+const source = ref(null);
 
 const computedMessages = computed(() => {
   if (source.value && source.value.length > 0)

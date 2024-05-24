@@ -238,7 +238,6 @@ class BaseService
                 'assignee' => User::where('id', $activity->assignee_id)->first()->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
-                'is_cold' => $activity->is_cold,
             ];
             array_push($activities, $updatedActivity);
         }

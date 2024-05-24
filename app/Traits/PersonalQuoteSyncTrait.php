@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypeShortCode;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
@@ -68,12 +67,12 @@ trait PersonalQuoteSyncTrait
     private function addQuoteSyncEntry($uuid, $quoteTypeId, $updatedFields)
     {
         unset($updatedFields['created_at'], $updatedFields['updated_at']);
-        QuoteSync::create([
-            'is_synced' => 0,
-            'quote_uuid' => $uuid,
-            'quote_type_id' => $quoteTypeId,
-            'updated_fields' => json_encode($updatedFields),
-        ]);
+        $quoteSync = new QuoteSync();
+        $quoteSync->is_synced = 0;
+        $quoteSync->quote_uuid = $uuid;
+        $quoteSync->quote_type_id = $quoteTypeId;
+        $quoteSync->updated_fields = json_encode($updatedFields);
+        $quoteSync->save();
     }
 
     public function syncTable($quote, $updatedFields, $quoteTable)
@@ -303,18 +302,11 @@ trait PersonalQuoteSyncTrait
         if (! empty($requiredFields)) {
             $personalQuoteKeys = $quote->getAttributes();
             foreach ($requiredFields as $column => $detail) {
-                if (! array_key_exists($column, $personalQuoteKeys) || empty($personalQuoteKeys[$column])) {
-
-                    if ($column === 'code') {
-                        $shortCode = QuoteTypeShortCode::getName($quote->quote_type_id);
-                        $value = "{$shortCode}-{$quote->uuid}";
-                    } else {
-                        $type = $detail['type_name'];
-                        $value = $this->generateDefaultValue($type);
-                    }
-
+                if (! array_key_exists($column, $personalQuoteKeys)) {
+                    $type = $detail['type_name'];
+                    $value = $this->generateDefaultValue($type);
                     $quote->$column = $value;
-                    Log::warning("Column not found in source quote, table: {$table} - identifier: {$identifier} - column: {$column}, setting default value: {$value}");
+                    Log::warning("Column not found in source quote, table: {$table} - identifier: {$identifier} - column: {$column}, setting default value");
                 }
             }
         }

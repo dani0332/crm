@@ -6,6 +6,7 @@ use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class QuoteSyncUpdateCommand extends Command
@@ -30,6 +31,7 @@ class QuoteSyncUpdateCommand extends Command
     {
         info('----------- QuoteSyncJob Started -----------');
         $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
+        $startDate = Carbon::parse('2021-01-05 00:00:00')->toDateTimeString();
 
         if (! $isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
             info('----------- QuoteSync is disabled -----------');
@@ -37,7 +39,7 @@ class QuoteSyncUpdateCommand extends Command
             return;
         }
 
-        $entries = QuoteSync::where('is_synced', false)->take(300)->get();
+        $entries = QuoteSync::where('is_synced', false)->orderBy('created_at', 'asc')->take(150)->get();
 
         if ($entries->isEmpty()) {
             info('----------- No entries found to be processed in quote sync table -----------');
@@ -45,17 +47,17 @@ class QuoteSyncUpdateCommand extends Command
             return;
         }
 
-        $uuids = $entries->unique('quote_uuid')->pluck('quote_uuid')->toArray();
-        $quotes = PersonalQuote::whereIn('uuid', $uuids)->get()->keyBy(function (PersonalQuote $item, int $key) {
-            return $item->uuid.'_'.$item->quote_type_id;
-        })->all();
-
+        $quotes = [];
         foreach ($entries as $entry) {
 
             info('Syncing entry: '.$entry->quote_uuid);
 
-            $key = $entry->quote_uuid.'_'.$entry->quote_type_id;
-            if (! empty($quotes[$key])) {
+            $key = $entry->quote_uuid.'-'.$entry->quote_type_id;
+            if (empty($quotes[$key])) {
+                $quotes[$key] = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
+            }
+
+            if ($quotes[$key]) {
                 // Existing quote
                 $this->processExistingQuote($quotes[$key], $entry);
             } else {

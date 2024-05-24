@@ -22,7 +22,7 @@ class YachtQuoteRepository extends BaseRepository
     }
 
     /**
-     * create new personal quote.
+     * create new personal quote
      *
      * @param  $quoteTypeCode
      * @return mixed
@@ -130,13 +130,8 @@ class YachtQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($forExport = false)
     {
-        $request = request();
-
-        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
-        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
-
         $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
             'quoteStatus',
             'currentlyInsuredWith',
@@ -145,15 +140,11 @@ class YachtQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy($sort_by, $sort_type);
+            ->filter(! $forExport)
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
-        if ($forTotalLeadsCount) {
-            return $query->count();
-        }
-
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 
     public function fetchExport()

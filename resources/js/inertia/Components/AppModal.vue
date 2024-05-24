@@ -24,13 +24,13 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  width: {
-    type: String,
-    default: 'md:min-w-[35%] max-w-[70%]',
-  },
   hideoverflow: {
     type: Boolean,
     default: true,
+  },
+  width: {
+    type: String,
+    default: 'md:min-w-[35%] max-w-[70%]',
   },
 });
 

@@ -4,9 +4,12 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\BikeQuote;
+use App\Traits\PersonalQuoteSyncTrait;
 
 class BikeQuoteObserver
 {
+    use PersonalQuoteSyncTrait;
+
     /**
      * Handle the BikeQuote "updated" event.
      */
@@ -22,5 +25,7 @@ class BikeQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $bikeQuote->transaction_approved_at];
         }
+
+        $this->syncQuote($bikeQuote, $dirty);
     }
 }

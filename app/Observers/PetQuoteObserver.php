@@ -4,9 +4,12 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\PetQuote;
+use App\Traits\PersonalQuoteSyncTrait;
 
 class PetQuoteObserver
 {
+    use PersonalQuoteSyncTrait;
+
     /**
      * Handle the PetQuote "updated" event.
      */
@@ -22,5 +25,7 @@ class PetQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $petQuote->transaction_approved_at];
         }
+
+        $this->syncQuote($petQuote, $dirty);
     }
 }

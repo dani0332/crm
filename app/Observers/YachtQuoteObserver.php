@@ -4,9 +4,12 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\YachtQuote;
+use App\Traits\PersonalQuoteSyncTrait;
 
 class YachtQuoteObserver
 {
+    use PersonalQuoteSyncTrait;
+
     /**
      * Handle the YachtQuote "updated" event.
      */
@@ -22,5 +25,7 @@ class YachtQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $yachtQuote->transaction_approved_at];
         }
+
+        $this->syncQuote($yachtQuote, $dirty);
     }
 }

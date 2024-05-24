@@ -29,7 +29,7 @@ class BusinessQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($quoteType, $forExport = false)
     {
         $query = $this->with([
             'businessQuoteRequestDetail.lostReason',
@@ -57,13 +57,9 @@ class BusinessQuoteRepository extends BaseRepository
         )), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
         })
-            ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->filter(! $forExport)
+            ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
-
-        if ($forTotalLeadsCount) {
-            return $query->count();
-        }
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }

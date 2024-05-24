@@ -58,7 +58,6 @@ const outboundCoverageCode = [
   { value: 'singleTrip', label: 'Single Trip' },
   { value: 'annualTrip', label: 'Annual Trip' },
 ];
-
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
@@ -115,7 +114,7 @@ const subTeamOptions = [
   { value: 'travelUaeOutbound', label: 'Outside UAE (OutBound)' },
 ];
 
-function onSubmit(isValid) {
+function filterQuotes(isValid) {
   if (!isValid) {
     return;
   }
@@ -128,6 +127,7 @@ function onSubmit(isValid) {
   router.visit(route('travel.index'), {
     method: 'get',
     data: filters,
+
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -243,7 +243,7 @@ onMounted(() => {
     <Head title="Travel List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
-      <div class="flex space-x-2 items-center">
+      <div class="space-x-3">
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
           <x-button size="sm" color="#1d83bc" tag="div">
             Upload Expired Leads
@@ -258,7 +258,7 @@ onMounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">

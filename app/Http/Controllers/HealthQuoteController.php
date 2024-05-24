@@ -3,19 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Http\Requests\MemberDetailRequest;
-use App\Repositories\HealthQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LostReasonRepository;
-use App\Services\CRUDService;
-use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
 
@@ -294,59 +284,58 @@ class HealthQuoteController extends Controller
         return $networks;
     }
 
+    // TODO: Code Refactor
     public function cardsView(Request $request)
     {
-        $quotes = [
-            ['id' => QuoteStatusEnum::Lost, 'title' => quoteStatusCode::LOST, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Lost, $request)],
-            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Allocated, $request)],
-            ['id' => QuoteStatusEnum::RenewalTermsReceived, 'title' => quoteStatusCode::RENEWAL_TERMS_RECEIVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::RenewalTermsReceived, $request)],
-            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Quoted, $request)],
-            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::FollowedUp, $request)],
-            ['id' => QuoteStatusEnum::ApplicationPending, 'title' => quoteStatusCode::APPLICATION_PENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationPending, $request)],
-            ['id' => QuoteStatusEnum::ApplicationSubmitted, 'title' => quoteStatusCode::APPLICATION_SUBMITTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationSubmitted, $request)],
-            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::InNegotiation, $request)],
-            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PaymentPending, $request)],
-            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::TransactionApproved, $request)],
-            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyIssued, $request)],
+        $quotes = [];
+        $quotes[] = [
+            'id' => 8,
+            'title' => 'New Lead',
+            'data' => getDataAgainstStatus('Health', 8),
         ];
-
-        $quoteStatusEnums = QuoteStatusEnum::asArray();
-        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $userId = auth()->id();
-        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if (array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)) {
-            $quotes = collect($quotes)->whereNotIn('id', [
-                QuoteStatusEnum::Lost,
-                QuoteStatusEnum::Allocated,
-                QuoteStatusEnum::RenewalTermsReceived,
-            ])->values()->toArray();
-        } elseif (array_intersect([TeamNameEnum::RM_RENEWALS], $userTeams)) {
-            $quotes = collect($quotes)->whereNotIn('id', [
-                QuoteStatusEnum::FollowedUp,
-                QuoteStatusEnum::ApplicationSubmitted,
-                QuoteStatusEnum::TransactionApproved])->values()->toArray();
-        }
-
-        $totalLeads = 0;
-        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
-
-        foreach ($quotes as $item) {
-            $totalLeads += $item['data']['total_leads'];
-        }
-
-        $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Health);
-        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Health);
+        $quotes[] = [
+            'id' => 2,
+            'title' => 'Quoted',
+            'data' => getDataAgainstStatus('Health', 2),
+        ];
+        $quotes[] = [
+            'id' => 31,
+            'title' => 'Qualified',
+            'data' => getDataAgainstStatus('Health', 31),
+        ];
+        $quotes[] = [
+            'id' => 25,
+            'title' => 'In Negotiation',
+            'data' => getDataAgainstStatus('Health', 25),
+        ];
+        $quotes[] = [
+            'id' => 26,
+            'title' => 'Application Pending',
+            'data' => getDataAgainstStatus('Health', 26),
+        ];
+        $quotes[] = [
+            'id' => 28,
+            'title' => 'Payment Pending',
+            'data' => getDataAgainstStatus('Health', 28),
+        ];
+        $quotes[] = [
+            'id' => 36,
+            'title' => 'Application Submitted',
+            'data' => getDataAgainstStatus('Health', 36),
+        ];
+        $quotes[] = [
+            'id' => 15,
+            'title' => 'Transaction Approved',
+            'data' => getDataAgainstStatus('Health', 15),
+        ];
+        $quotes[] = [
+            'id' => 29,
+            'title' => 'Policy Documents Pending',
+            'data' => getDataAgainstStatus('Health', 29),
+        ];
 
         return inertia('HealthQuote/Cards', [
             'quotes' => $quotes,
-            'quoteStatusEnum' => $quoteStatusEnums,
-            'lostReasons' => $lostReasons,
-            'leadStatuses' => $leadStatuses,
-            'advisors' => $advisors,
-            'teams' => $userTeams,
-            'quoteTypeId' => QuoteTypes::HEALTH->id(),
-            'quoteType' => QuoteTypes::HEALTH->value,
-            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : HealthQuoteRepository::getData(true, true),
         ]);
     }
 }

@@ -9,7 +9,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
-use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
@@ -60,7 +59,6 @@ class HomeQuoteService extends BaseService
             'hqr.price_vat_applicable',
             'hqr.price_vat_not_applicable',
             'hqr.price_with_vat',
-            'hqr.stale_at',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
@@ -287,21 +285,6 @@ class HomeQuoteService extends BaseService
             $this->query->whereIn('advisor_id', $request->advisors);
         }
 
-        // payment_status_id filter
-        if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
-        }
-
-        // is_cold filter
-        if (isset($request->is_cold) && $request->is_cold != '') {
-            $this->query->where('hqr.is_cold', 1);
-        }
-
-        // is_stale filter
-        if (isset($request->is_stale) && $request->is_stale != '') {
-            $this->query->whereNotNull('hqr.stale_at');
-        }
-
         $this->whereBasedOnRole($this->query, 'hqr');
 
         if (isset($request->is_renewal) && $request->is_renewal != '') {
@@ -333,10 +316,34 @@ class HomeQuoteService extends BaseService
                 }
             }
         }
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole('ADMIN');
+            if ($isAdmin || $isManagerORDeputy == '1') {
+                if ($column == 6) {
+                    $column = 'hqr.created_at';
+                }
+                if ($column == 7) {
+                    $column = 'hqr.updated_at';
+                }
+                if ($column == 8) {
+                    $column = 'hqrd.next_followup_date';
+                }
+            } else {
+                if ($column == 5) {
+                    $column = 'hqr.created_at';
+                }
+                if ($column == 6) {
+                    $column = 'hqr.updated_at';
+                }
+                if ($column == 7) {
+                    $column = 'hqrd.next_followup_date';
+                }
+            }
 
-        // sortBy filter
-        if (isset($request->sortBy) && $request->sortBy != '') {
-            return $this->query->orderBy($request->sortBy, $request->sortType);
+            return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('hqr.created_at', 'DESC');
         }
@@ -658,13 +665,11 @@ class HomeQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        Log::info('Leads ids to assign: '.json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
             // TODO: needs validation similar to Health
             $this->updateChildRecord($lead->id);

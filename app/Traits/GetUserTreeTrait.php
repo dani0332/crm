@@ -33,16 +33,6 @@ trait GetUserTreeTrait
         $productTeam = $this->getProductByName($productType ?? quoteTypeCode::Car);
         $rolesArray = [
             RolesEnum::CarManager,
-            RolesEnum::BikeManager,
-            RolesEnum::HealthManager,
-            RolesEnum::TravelManager,
-            RolesEnum::PetManager,
-            RolesEnum::CycleManager,
-            RolesEnum::YachtManager,
-            RolesEnum::LifeManager,
-            RolesEnum::HomeManager,
-            RolesEnum::CorplineManager,
-            RolesEnum::GMManager,
             RolesEnum::LeadPool,
         ];
         if (auth()->user()->hasAnyRole($rolesArray)) {
@@ -61,7 +51,7 @@ trait GetUserTreeTrait
                 $carUserIds = $this->getUsersByTeamId($productTeam->id)->pluck('id');
                 $nextChild = DB::table('user_manager')->where('manager_id', $teamMateId)->whereIn('user_id', $carUserIds)->pluck('user_id');
                 if (count($nextChild) > 0) {
-                    $this->walkTree($teamMateId, $productType);
+                    $this->walkTree($teamMateId);
                 }
                 array_push($childUserIds, $teamMateId);
             }
