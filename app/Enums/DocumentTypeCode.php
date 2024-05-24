@@ -26,7 +26,11 @@ class DocumentTypeCode extends Enum
     const HOMPD = 'HOMPD';
     const CYCPD = 'CYCPD';
     const CLPD = 'CLPD';
+    const CLPDR = 'CLPDR';
+    const CLDPDR = 'CLDPDR';
     const GMQPD = 'GMQPD';
+    const GMQPDR = 'GMQPDR';
+    const GMQDPDR = 'GMQDPDR';
     const PPD = 'PPD';
     const YPD = 'YPD';
     const CTIRBB = 'CTIRBB'; // Tax Invoice Raised By Buyer

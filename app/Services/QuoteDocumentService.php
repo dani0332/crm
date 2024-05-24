@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
@@ -226,9 +228,11 @@ class QuoteDocumentService extends BaseService
             })
             ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer) {
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer);
-            })
-            ->sortDocumentType()
-            ->get();
+            })->sortDocumentType()->get();
+
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            $businessDocumentTypeCodes = DocumentType::active()->whereIn('code', [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR])->get();
+        }
 
         $documentTypesByCategory = $documentTypes->groupBy('category');
         $orderedDocumentTypesByCategory = collect();
@@ -242,6 +246,6 @@ class QuoteDocumentService extends BaseService
             $orderedDocumentTypesByCategory->put('ISSUING_DOCUMENTS', $documentTypesByCategory->get('ISSUING_DOCUMENTS'));
         }
 
-        return [$orderedDocumentTypesByCategory, $documentTypes];
+        return [$orderedDocumentTypesByCategory, $documentTypes, $businessDocumentTypeCodes ?? []];
     }
 }
