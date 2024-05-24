@@ -24,6 +24,8 @@ const props = defineProps({
     default: true,
   },
 });
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -117,7 +119,7 @@ watch(
 const caculateVatAmount = () => {
   let amount = Number(policyDetailsForm.amount);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
-  // if price var applicable and not applicable both are there
+  // if price vat applicable and not applicable both are there
   if (amount > 0 && priceVatNotApplicable > 0) {
     let vat = amount * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
@@ -522,6 +524,7 @@ watch(
                   size="sm"
                   :loading="policyDetailsForm.processing"
                   type="submit"
+                  :disabled="!can(permissionsEnum.POLICY_DETAILS_ADD)"
                 >
                   Update
                 </x-button>
@@ -531,7 +534,8 @@ watch(
                 >
                   <x-button
                     v-if="
-                      !policyDetailsState.isEditing && hasRole(rolesEnum.PA)
+                      !policyDetailsState.isEditing &&
+                      can(permissionsEnum.POLICY_DETAILS_ADD)
                     "
                     class="mt-4"
                     color="emerald"
@@ -544,7 +548,8 @@ watch(
                 <template v-else>
                   <x-button
                     v-if="
-                      !policyDetailsState.isEditing && hasRole(rolesEnum.NRA)
+                      !policyDetailsState.isEditing &&
+                      can(permissionsEnum.POLICY_DETAILS_ADD)
                     "
                     class="mt-4"
                     color="emerald"
