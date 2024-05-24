@@ -26,7 +26,6 @@ use App\Services\BerlinService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\PaymentLinkService;
-use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -355,7 +354,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdateSplitPaymentsApprove($request)
     {
-        $parentQuoteModel = 
+        $parentQuoteModel =
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
 
         if (! $quoteModel) {
@@ -365,7 +364,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         if ($request->send_update_id) {
             $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
         }
-        
+
         $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
         if ($request->is_declined) {
             $firstPayment->update([
@@ -373,7 +372,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'decline_custom_reason' => $request->declined_custom_reason,
                 'updated_by' => Auth::user()->id,
             ]);
-            if($request->send_update_id){
+            if ($request->send_update_id) {
                 $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
             } else {
                 $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
@@ -455,7 +454,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $successMessage = 'Transaction approved';
                 $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
                 if ($totalApproved == $quoteModel->payments()->count()) {
-                    if($request->send_update_id){
+                    if ($request->send_update_id) {
                         $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                     } else {
                         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
@@ -471,18 +470,18 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     // dispatch(new MAWelcomeJob($parentQuoteModel->first_name, $parentQuoteModel->last_name, $parentQuoteModel->email, $parentQuoteModel->mobile_no, 'IMCRM', ''));
 
                     // send EP documents
-                    if (!$request->send_update_id) {
+                    if (! $request->send_update_id) {
                         EmbeddedProductRepository::sendDocumentsByLead($request->quote_id, $request->modelType);
                     }
 
                     //Create duplicate lead for TRAVEL
-                    if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && !$request->send_update_id) {
+                    if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $request->send_update_id) {
                         if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
                             $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
                         }
                     }
                 }
-                if (!$request->send_update_id) {
+                if (! $request->send_update_id) {
                     $this->updateLeadStatus($firstPayment); //update lead status
                 }
                 DB::commit();
@@ -493,7 +492,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $successMessage;
     }
-    
+
     //migrate payments
     public function fetchMigratePayments($request)
     {
@@ -698,5 +697,5 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
-   
+
 }

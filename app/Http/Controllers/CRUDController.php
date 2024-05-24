@@ -28,7 +28,6 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Capi;
-use App\Http\Controllers\V2\CentralController;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -1698,7 +1697,7 @@ class CRUDController extends Controller
         $this->updatePriceAndDiscount($quoteModel);
 
         return redirect()->back()->with([
-            'success' => 'Quote Policy Detail has been updated.'
+            'success' => 'Quote Policy Detail has been updated.',
         ]);
     }
 

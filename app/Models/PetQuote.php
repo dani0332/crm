@@ -125,7 +125,7 @@ class PetQuote extends Model implements AuditableContract
     {
         return $this->allowedColumns;
     }
-    
+
     public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');

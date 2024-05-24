@@ -2,32 +2,32 @@
 
 namespace App\Services;
 
-use Log;
-use Carbon\Carbon;
-use App\Facades\Ken;
-use App\Facades\Capi;
-use App\Models\Payment;
-use App\Models\CarQuote;
-use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeId;
-use App\Models\HealthQuote;
-use App\Models\TravelQuote;
-use App\Enums\quoteTypeCode;
-use App\Enums\LeadSourceEnum;
-use App\Models\PersonalQuote;
-use App\Enums\QuoteStatusEnum;
-use App\Models\QuoteStatusLog;
-use App\Enums\PaymentFrequency;
-use App\Enums\PaymentStatusEnum;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
-use App\Models\ApplicationStorage;
-use Illuminate\Support\Facades\DB;
-use App\Models\PersonalQuoteDetail;
-use App\Traits\GenericQueriesAllLobs;
-use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Facades\Capi;
+use App\Facades\Ken;
+use App\Models\ApplicationStorage;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\Payment;
+use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteStatusLog;
+use App\Models\TravelQuote;
 use App\Repositories\PersonalQuoteRepository;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Log;
 
 class CentralService
 {
@@ -416,7 +416,7 @@ class CentralService
         switch (true) {
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
                 return null;
-            case ($payment->frequency == PaymentFrequency::UPFRONT && $paymentSplit != null):
+            case $payment->frequency == PaymentFrequency::UPFRONT && $paymentSplit != null:
                 return $payment->payment_allocation_status;
             case $paymentSplit && in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED]):
                 return PaymentAllocationStatus::NOT_ALLOCATED;

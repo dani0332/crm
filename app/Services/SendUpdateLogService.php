@@ -26,7 +26,6 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
-use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\DB;
@@ -600,8 +599,9 @@ class SendUpdateLogService
         $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
 
         // For those send update type where payment not required.
-        if (!$payment)
+        if (! $payment) {
             return true;
+        }
 
         $sendUpdatePaymentDetails = [
             'policy_expiry_date' => $sendUpdateLog->expiry_date,

@@ -334,20 +334,20 @@ class SageApiService
 
     private function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
     {
-        $quoteModelObject = !empty($extras['send_update_log']) ? $extras['send_update_log'] : $quote;
+        $quoteModelObject = ! empty($extras['send_update_log']) ? $extras['send_update_log'] : $quote;
 
         if ($extras['send_update_type'] == SageEnum::SUT_REVE_CORR) {
             $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quote, $extras['reverse_invoice']);
             if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
-               $getReverseInvoiceRelation = [
+                $getReverseInvoiceRelation = [
                     'section_type' => $quoteModelObject->getMorphClass(),
-                    'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id
-               ];
+                    'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
+                ];
             } else {
                 $getReverseInvoiceRelation = [
                     'section_type' => $quoteModelObject->getMorphClass(),
-                    'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id
-               ];
+                    'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
+                ];
             }
 
             $sageLogArray = SageApiLog::where($getReverseInvoiceRelation)
@@ -399,7 +399,7 @@ class SageApiService
                 'totalSteps' => 13,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? []
+                'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
 
             // Create AP Invoice and marked as posted
@@ -411,7 +411,7 @@ class SageApiService
                 'totalSteps' => 13,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AP_PREM_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? []
+                'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
 
         } else {
@@ -426,7 +426,7 @@ class SageApiService
                 'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
                 'payment' => $payment,
                 'splitPayments' => $splitPayments,
-                'sendUpdateLog' => $extras['send_update_log'] ?? []
+                'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
         }
 
@@ -439,7 +439,7 @@ class SageApiService
                 'totalSteps' => 13,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_DISC_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? []
+                'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
         }
 
@@ -453,7 +453,7 @@ class SageApiService
                     'totalSteps' => 13,
                     'entryType' => SageEnum::SCT_STRAIGHT,
                     'requestType' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
-                    'sendUpdateLog' => $extras['send_update_log'] ?? []
+                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 ]);
             }
 
@@ -469,7 +469,7 @@ class SageApiService
                     'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
                     'payment' => $payment,
                     'splitPayments' => $splitPayments,
-                    'sendUpdateLog' => $extras['send_update_log'] ?? []
+                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 ]);
             }
 
@@ -486,7 +486,7 @@ class SageApiService
                 'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
                 'payment' => $payment,
                 'splitPayments' => $splitPayments,
-                'sendUpdateLog' => $extras['send_update_log'] ?? []
+                'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
         }
 
@@ -524,7 +524,7 @@ class SageApiService
                     'entryType' => SageEnum::SCT_STRAIGHT,
                     'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
                     'requestType' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV,
-                    'sendUpdateLog' => $extras['send_update_log'] ?? []
+                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 ]);
             }
 
@@ -540,7 +540,7 @@ class SageApiService
                     'entryType' => SageEnum::SCT_STRAIGHT,
                     'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
                     'requestType' => SageEnum::SRT_REV_CORR_AP_PREM_INV,
-                    'sendUpdateLog' => $extras['send_update_log'] ?? []
+                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 ]);
             }
 
@@ -555,7 +555,7 @@ class SageApiService
                 'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
                 'payment' => $payment,
                 'splitPayments' => $splitPayments,
-                'sendUpdateLog' => $extras['send_update_log'] ?? []
+                'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
         }
 
@@ -571,7 +571,7 @@ class SageApiService
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
                 'requestType' => SageEnum::SRT_REV_CORR_AR_DIS_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? []
+                'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
         }
 
@@ -597,7 +597,7 @@ class SageApiService
         $sageAPIsParams = SagePayloadFactory::handleSageAPIsParms($extraParams['requestType'], $sageEntryType);
         $sageLogKey = $extraParams['startingStep'] - 1;
         $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
-        $quoteObject = !empty($extraParams['sendUpdateLog']) ? $extraParams['sendUpdateLog'] : $quote;
+        $quoteObject = ! empty($extraParams['sendUpdateLog']) ? $extraParams['sendUpdateLog'] : $quote;
 
         // This case added for Split Payment patch
         if (isset($extraParams['payment']) && $extraParams['payment']->total_payments > 1 && $extraParams['requestType'] == SageEnum::SRT_CREATE_AR_SPPAY_INV) {
@@ -753,7 +753,7 @@ class SageApiService
     public function splitPaymentsPatch($quote, $sageRequestPayload, $sageLogArray, $extras)
     {
         $isLiveApiCall = true;
-        $quoteObject = !empty($extras['sendUpdateLog']) ? $extras['sendUpdateLog'] : $quote;
+        $quoteObject = ! empty($extras['sendUpdateLog']) ? $extras['sendUpdateLog'] : $quote;
         if (isset($sageLogArray[$extras['startingStep']]) && $sageLogArray[$extras['startingStep']]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCall = false;
             $postedResponse = json_decode($sageLogArray[$extras['startingStep']]['response'], true);
@@ -792,7 +792,7 @@ class SageApiService
 
                 if (isset($sageLogArray[$extras['startingStep']]) && $sageLogArray[$extras['startingStep']]['status'] == SageEnum::STATUS_SUCCESS) {
                     $isLiveApiCall = false;
-                    $payLoadOptions = 
+                    $payLoadOptions =
                     $postedResponse = json_decode($sageLogArray[$extras['startingStep']]['response'], true);
                 } else {
                     $payLoadOptions = $postedResponse;
@@ -971,7 +971,7 @@ class SageApiService
             $vatOnCommission = floatval($payment->commission_vat);
             $commission = floatval($payment->commission);
             $commissionWithoutVat = ($commission - $vatOnCommission);
-            $commissionSplit = $commissionWithoutVat > 0 ?  $commissionWithoutVat/ count($paymentSplits) : 0;
+            $commissionSplit = $commissionWithoutVat > 0 ? $commissionWithoutVat / count($paymentSplits) : 0;
 
             foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
                 // Add Vat on commission to the first installment of commission in sage for balancing the amount
@@ -990,7 +990,7 @@ class SageApiService
             $postedResponse['endPoint'] = $url;
             $postedResponse['payload'] = $postedResponse;
             if (isset($postedResponse['error'])) {
-                dd('ali2' , $postedResponse['error']);
+                dd('ali2', $postedResponse['error']);
                 $this->logSageApiCall($postedResponse, $postedResponse, $quote, 3, 16, 'fail');
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making ar2 split paymets patch to sage';

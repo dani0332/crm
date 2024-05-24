@@ -67,7 +67,7 @@ class StorePaymentRequest extends FormRequest
             if (! $quoteModel) {
                 $validator->errors()->add('quote', 'Quote Not Exists');
             } else {
-                if ( !empty(request()->send_update_id) ) {
+                if (! empty(request()->send_update_id)) {
                     $paymentAlreadyExistsCount = Payment::where('send_update_log_id', request()->send_update_id)->count();
                 } else {
                     $paymentAlreadyExistsCount = Payment::where('code', $quoteModel->code)->count();
