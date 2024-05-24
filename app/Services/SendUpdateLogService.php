@@ -732,17 +732,6 @@ class SendUpdateLogService
         return ['status' => true, 'message' => 'Update booked'];
     }
 
-    public function getPaymentCode($quoteCode): string
-    {
-        $countPayments = PaymentRepository::getPaymentsByQuoteCode($quoteCode);
-
-        if ($countPayments < 2) {
-            return $quoteCode.'-1';
-        }
-
-        return $quoteCode.'-'.$countPayments;
-    }
-
     public function checkSendUpdatePermission($sendUpdateType): bool
     {
         switch ($sendUpdateType) {
