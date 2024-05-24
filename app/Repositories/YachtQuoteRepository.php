@@ -150,7 +150,9 @@ class YachtQuoteRepository extends BaseRepository
             ->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            // return $query->count();
+            return 0;
         }
 
         return ($forExport) ? $query->get() : $query;

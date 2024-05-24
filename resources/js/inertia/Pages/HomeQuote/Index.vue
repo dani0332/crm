@@ -235,10 +235,11 @@ watch(
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Home List</h2>
-        <LeadsCount
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <ColumnSelection

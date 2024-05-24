@@ -83,12 +83,16 @@ class BusinessQuoteController extends Controller
         })->values();
 
         $gridData = $this->businessQuoteService->getGridData($this->genericModel, $request);
-        $count = $gridData->count();
+        //PD Revert
+        // $count = $gridData->count();
+        $count = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
-        $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
+        //PD Revert
+        // $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
+        $totalCount = 0;
 
         return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount'));
     }
@@ -140,7 +144,6 @@ class BusinessQuoteController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
         } else {
-
             event(new LeadsCount(BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true)));
             if (! isset($record->quoteUID)) {
                 return redirect('quotes/business')->with('success', 'Lead has been stored');
@@ -211,7 +214,6 @@ class BusinessQuoteController extends Controller
 
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
-
             $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->id,
@@ -352,7 +354,7 @@ class BusinessQuoteController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */

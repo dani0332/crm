@@ -9,19 +9,19 @@ class LeadsCountService
 {
     public static function getLeadCount()
     {
-
         $allowedLOBs = $totalCount = 0;
         $nameSpace = '\\App\\Models\\';
         $allowedQuoteTypes = [];
         $response = ['is_multiple_lobs_allowed' => false, 'total_count' => 0, 'quote_route' => ''];
         $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
         $quoteTypes = [
-            QuoteTypes::HOME,
-            QuoteTypes::HEALTH,
-            QuoteTypes::YACHT,
-            QuoteTypes::PET,
-            QuoteTypes::CYCLE,
-            QuoteTypes::CORPLINE,
+            // PD Revert
+            // QuoteTypes::HOME,
+            // QuoteTypes::HEALTH,
+            // QuoteTypes::YACHT,
+            // QuoteTypes::PET,
+            // QuoteTypes::CYCLE,
+            // QuoteTypes::CORPLINE,
         ];
 
         $cardViewRoute = [
@@ -74,13 +74,11 @@ class LeadsCountService
                 $response['is_multiple_lobs_allowed'] = true;
                 $response['total_count'] = $totalCount;
                 $response['quote_route'] = route('stale-leads-report');
-
             } else {
                 $response['is_multiple_lobs_allowed'] = false;
                 $response['total_count'] = $totalCount;
                 $response['quote_route'] = $cardViewRoute[strtoupper($allowedQuoteType)];
             }
-
         }
 
         return $response;
