@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -21,11 +22,13 @@ use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
+use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
@@ -37,17 +40,21 @@ use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
+use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CentralController extends Controller
 {
@@ -376,5 +383,111 @@ class CentralController extends Controller
     public function generatePaymentLink(GeneratePaymentLinkRequest $request)
     {
         return (new SplitPaymentService())->generateSplitPaymentLink($request);
+    }
+
+    public function saveQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
+    {
+        $notes = new QuoteNote([
+            'quote_status_id' => $quoteNotesRequest->quoteStatusId,
+            'note' => $quoteNotesRequest->notes,
+            'created_by' => auth()->id(),
+        ]);
+
+        $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
+        $quote->notes()->save($notes);
+
+        if ($quoteNotesRequest->hasFile('files')) {
+            $quoteDocumentService = new QuoteDocumentService();
+
+            foreach ($quoteNotesRequest->file('files') as $file) {
+                $quoteDoument = $quoteDocumentService->uploadQuoteDocument($file, $quoteNotesRequest->all(), $quote);
+                $documentIDs[] = $quoteDoument->id;
+            }
+            $notes->documents()->sync($documentIDs);
+        }
+
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text', 'documents:doc_name,doc_url,original_name')->where('id', $notes->id)->firstOrFail();
+
+        return response()->json(['response' => $notes]);
+    }
+
+    public function updateQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
+    {
+        $documentIDs = ! empty($quoteNotesRequest->get('old_documents')) ? $quoteNotesRequest->get('old_documents') : [];
+        $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
+        $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes, 'updated_by' => auth()->id()]);
+
+        if ($quoteNotesRequest->hasFile('files')) {
+            $quoteDocumentService = new QuoteDocumentService();
+
+            foreach ($quoteNotesRequest->file('files') as $file) {
+                $quoteDoument = $quoteDocumentService->uploadQuoteDocument($file, $quoteNotesRequest->all(), $quote);
+                $documentIDs[] = $quoteDoument->id;
+            }
+        }
+
+        $note = $quote->notes()->where('id', $quoteNotesRequest->id)->firstOrFail();
+        $note->documents()->sync($documentIDs);
+
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text', 'documents:doc_name,doc_url,original_name')->where('id', $quoteNotesRequest->id)->firstOrFail();
+
+        return response()->json(['response' => $notes]);
+    }
+
+    public function deleteQuoteNotes($id)
+    {
+        $quoteNote = QuoteNote::where('id', $id)->firstOrFail();
+        $quoteNote->documents()->detach();
+        $quoteNote->delete();
+
+        return response()->json(['response' => 'Note has been deleted']);
+    }
+
+    public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
+    {
+
+        $responseMessage = ['Lead status has been updated'];
+        $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
+        $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
+
+        $modelObject = $this->getModelObject(QuoteTypes::getName($dataFrom['quoteTypeId'])->value);
+        $repository = $modelObject::where('id', $dataFrom['id'])->firstOrFail();
+
+        try {
+            DB::beginTransaction();
+
+            if (! $repository->advisor_id) {
+                return response()->json(['message' => 'Current Lead has no advisor. Please assign advisor to this Lead'], 200);
+            }
+
+            $previousStatusIdChanged = false;
+            if ($repository->quote_status_id != (int) $dataTo['quote_status_id']) {
+                $previousStatusIdChanged = true;
+            }
+
+            $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now(), 'stale_at' => null]);
+
+            if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost && $dataFrom['quoteTypeId'] == QuoteTypeId::Health) {
+                HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $repository->id], ['lost_reason_id' => $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason']]);
+            }
+
+            $repository->refresh();
+
+            $activity = (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId'], $previousStatusIdChanged);
+
+            if ($activity) {
+                $responseMessage[] = 'Activity has been created';
+            }
+
+            DB::commit();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json(['message' => ['Something went wrong. Please try again later.']], 500);
+        }
+
+        return response()->json(['message' => $responseMessage]);
+
     }
 }

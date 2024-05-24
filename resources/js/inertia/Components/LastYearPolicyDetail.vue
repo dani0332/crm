@@ -1,4 +1,6 @@
 <script setup>
+import { parseDate } from '../Composables/utilities';
+
 const page = usePage();
 
 const props = defineProps({
@@ -8,19 +10,36 @@ const props = defineProps({
   },
   canAddBatchNumber: Boolean,
   modelType: String,
-  inslyId: String,
   expanded: {
     type: Boolean,
     required: false,
-    default: true,
+    default: true
   },
+  inslyId: String,
 });
+
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
+
 const dateFormat = date => {
-  return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
+  try {
+    console.log('date',date);
+    if(! date || date == "" || date == null){
+      return "-"
+    }
+
+    if(date.includes(':')){
+      return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
+    }
+    const formattedDate = parseDate(date);
+    return formattedDate;
+  } catch (error) {
+    console.error(`Error parsing date "${date}": ${error.message}`);
+  }
 };
+
 
 const allowEdit = computed(() => {
   if (
@@ -31,6 +50,7 @@ const allowEdit = computed(() => {
 
   return false;
 });
+
 const { isRequired } = useRules();
 
 const policyForm = useForm({
@@ -73,6 +93,35 @@ const rolesEnum = page.props.rolesEnum;
       </template>
       <template #body>
         <x-divider class="my-4" />
+          <div class="flex gap-2 mb-4 justify-end">
+              <Link
+                  v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                  :href="`/legacy-policy/${inslyId}`"
+                  preserve-scroll
+              >
+                  <x-button size="sm" color="#ff5e00" tag="div">
+                      View Legacy policy
+                  </x-button>
+              </Link>
+          <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+      </div>
+
         <x-form @submit="onSubmit" :auto-focus="false">
           <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="text-sm">
@@ -89,7 +138,7 @@ const rolesEnum = page.props.rolesEnum;
 
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Policy Expiry Date</div>
-                  <div>{{ props?.quote?.previous_policy_expiry_date }}</div>
+                  <div>{{ dateFormat(props?.quote?.previous_policy_expiry_date) }}</div>
                 </div>
 
                 <div class="grid sm:grid-cols-2">
@@ -99,7 +148,7 @@ const rolesEnum = page.props.rolesEnum;
 
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Policy Start Date</div>
-                  <div>{{ props?.quote?.policy_start_date }}</div>
+                  <div>{{ dateFormat(props?.quote?.policy_start_date) }}</div>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Advisor</div>
@@ -113,7 +162,7 @@ const rolesEnum = page.props.rolesEnum;
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Renewal Expiry Date</div>
-                  <div>{{ props?.quote?.renewal_expiry_date }}</div>
+                    <div>{{dateFormat(props?.quote?.previous_policy_expiry_date )}}</div>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Lost reason</div>

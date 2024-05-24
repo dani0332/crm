@@ -1,11 +1,9 @@
 <script setup>
-import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import MemberDetails from '../../Components/MemberDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MigratePayment from '../../Components/MigratePayment.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   record: Object,
   quoteType: String,
@@ -36,7 +34,10 @@ defineProps({
   canAddBatchNumber: Boolean,
   quoteDocuments: Object,
   documentTypes: Object,
+  noteDocumentType: Object,
   storageUrl: String,
+  quoteNotes: Object,
+  cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   bookPolicyDetails: Array,
@@ -58,10 +59,23 @@ const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const paymentStatusEnum= page.props.paymentStatusEnum;
 
+const countDays = computed(() =>
+  useDaysSinceStale(props.quoteRequest?.stale_at),
+);
+const compareDueDate = useCompareDueDate;
+
 const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
+});
+
+const allowStatusUpdate = computed(() => {
+  return (
+    (props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved ||
+      props.quote.quote_status_id == props.quoteStatusEnum.Lost) ??
+    false
+  );
 });
 
 const leadDuplicateForm = useForm({
@@ -155,6 +169,9 @@ const onLeadStatus = () => {
     }),
     {
       preserveScroll: true,
+      onSuccess: response => {
+        router.reload({ only: ['quoteRequest'] });
+      },
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
@@ -165,6 +182,7 @@ const onLeadStatus = () => {
 //activities
 const activityTable = [
   { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
@@ -479,6 +497,77 @@ watch(
 <template>
   <div>
     <Head title="Home Detail" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Home Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
+
+        <Link :href="route('home.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Home List </x-button>
+        </Link>
+
+        <Link :href="route('home.edit', quote.uuid)">
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Home Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
+
+        <Link :href="route('home.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Home List </x-button>
+        </Link>
+
+        <Link :href="route('home.edit', quote.uuid)">
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div> -->
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -1085,14 +1174,17 @@ watch(
                   <x-select
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
-                    :disabled="quote.quote_status_id == 15"
+                    :disabled="allowStatusUpdate"
                     placeholder="Lead Status"
                     class="w-full"
                   />
                 </x-field>
                 <x-field
                   label="TransApp Code"
-                  v-if="leadStatusForm.leadStatus == 15"
+                  v-if="
+                    leadStatusForm.leadStatus ==
+                    quoteStatusEnum.TransactionApproved
+                  "
                 >
                   <x-input
                     v-model="leadStatusForm.trans_code"
@@ -1103,7 +1195,7 @@ watch(
                 </x-field>
                 <x-field
                   label="Lost Reason"
-                  v-if="leadStatusForm.leadStatus == 17"
+                  v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 >
                   <x-select
                     v-model="leadStatusForm.lostReason"
@@ -1116,6 +1208,7 @@ watch(
                     placeholder="Lost Reason is required"
                     class="w-full"
                     :error="leadStatusForm.errors.lostReason"
+                    :disabled="allowStatusUpdate"
                   />
                 </x-field>
               </div>
@@ -1123,6 +1216,49 @@ watch(
           </div>
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-1/3">
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                label="Notes"
+                placeholder="Lead Notes"
+                class="w-full"
+                :disabled="allowStatusUpdate"
+              />
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="leadStatusForm.processing"
+              @click.prevent="onLeadStatus"
+              :disabled="allowStatusUpdate"
+            >
+              Change Status
+            </x-button>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-field label="Status">
+              <x-select
+                v-model="leadStatusForm.leadStatus"
+                :options="leadStatusOptions"
+                :disabled="allowStatusUpdate"
+                placeholder="Lead Status"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="NOTES">
               <x-textarea
                 v-model="leadStatusForm.notes"
                 type="text"
@@ -1140,22 +1276,21 @@ watch(
               :disabled="true"
             />
           </x-field>
-            </div>
-          </div>
-          <div class="flex justify-end">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-            >
-              Change Status
-            </x-button>
-          </div>
-        </template>
-      </Collapsible>
-    </div>
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="leadStatusForm.processing"
+          @click.prevent="onLeadStatus"
+          :disabled="allowStatusUpdate"
+        >
+          Change Status
+        </x-button>
+      </div>
+    </div> -->
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
@@ -1167,7 +1302,7 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
       :payments="payments"
     />

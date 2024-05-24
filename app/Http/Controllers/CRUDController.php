@@ -9,6 +9,7 @@ use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
@@ -19,14 +20,17 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Events\LeadsCount;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
@@ -38,6 +42,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
@@ -45,14 +50,19 @@ use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\QuoteType;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\HealthQuoteRepository;
+use App\Repositories\HomeQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
@@ -85,6 +95,7 @@ use App\Services\TierService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
@@ -118,7 +129,7 @@ class CRUDController extends Controller
     protected $emailDataService;
     protected $allocationService;
 
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, TeamHierarchyTrait;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -260,10 +271,18 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         // inertia rendering for health quote
+        //PD Revert
+        // $count = $gridData->count();
+        $count = 0;
+        $hasOtherFilters = count(array_diff_key($request->all(), ['page' => ''])) > 0;
+
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
+            $quote_status = collect($quote_status)->filter(function ($value) {
+                return $value['id'] != QuoteStatusEnum::Lost;
+            })->values();
 
             $todaysAllocationData = $this->allocationService->getHealthTodaysCount(auth()->user()->id);
             $userMaxCap = $todaysAllocationData['max_capacity'];
@@ -283,6 +302,7 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
+                'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
             ]);
         }
 
@@ -291,12 +311,16 @@ class CRUDController extends Controller
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
+            $quote_status = collect($quote_status)->filter(function ($value) {
+                return $value['id'] != QuoteStatusEnum::Lost;
+            })->values();
 
             return inertia('HomeQuote/Index', [
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
+                'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HomeQuoteRepository::getData(true, true),
             ]);
         }
 
@@ -308,6 +332,8 @@ class CRUDController extends Controller
             $createdAtEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
             $genericRequestEnum = GenericRequestEnum::asArray();
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
+            $productTeam = $this->getProductByName(quoteTypeCode::Car);
+            $teams = $this->getTeamsByProductId($productTeam->id);
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -323,6 +349,7 @@ class CRUDController extends Controller
                 'yesterdayManualCount' => $yesterdayManualCount,
                 'genericRequestEnum' => $genericRequestEnum,
                 'isBetaUser' => $isBetaUser,
+                'teams' => $teams,
             ]);
         }
 
@@ -342,7 +369,6 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
-
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
@@ -376,7 +402,6 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
-
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -407,7 +432,8 @@ class CRUDController extends Controller
         $modelPropertiesList = json_decode($request->get('model'), true);
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $modelType = json_decode($request->get('modelType'), true);
-        $validateArray = [];
+        $validateArray = $modelDetails = [];
+
         if ($modelType !== quoteTypeCode::Health && $modelType !== quoteTypeCode::Home && $modelType !== quoteTypeCode::Car) {
             foreach ($modelPropertiesList as $property => $value) {
                 if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
@@ -419,6 +445,9 @@ class CRUDController extends Controller
 
         if ($modelType == quoteTypeCode::Health || $modelType == quoteTypeCode::Car || $modelType == quoteTypeCode::Travel || $modelType == quoteTypeCode::Home) {
             $validateArray = [];
+            $modelDetails[quoteTypeCode::Home]['totalLeadsCount'] = HomeQuoteRepository::getData(true, true);
+            $modelDetails[quoteTypeCode::Health]['totalLeadsCount'] = HealthQuoteRepository::getData(true, true);
+
             if ($request->has('first_name')) {
                 $this->validate($request, [
                     'first_name' => 'required|between:1,20',
@@ -477,6 +506,10 @@ class CRUDController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
+            if (in_array($modelType, [quoteTypeCode::Health, quoteTypeCode::Home])) {
+                event(new LeadsCount($modelDetails[$modelType]['totalLeadsCount']));
+            }
+
             if (! isset($record->quoteUID)) {
                 return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
@@ -597,6 +630,7 @@ class CRUDController extends Controller
                 'assignee' => User::where('id', $activity->assignee_id)->first()->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
+                'is_cold' => $activity->is_cold,
             ];
             array_push($activities, $updatedActivity);
         }
@@ -802,7 +836,6 @@ class CRUDController extends Controller
             }
             $filteredInsuranceProviders = [];
             if (! empty($insuranceProviders)) {
-
                 $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
                     return [
                         'value' => $paymentMethod->id,
@@ -815,10 +848,12 @@ class CRUDController extends Controller
 
             $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
             $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
+            $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
+            $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HOME->name);
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
-                'quoteDocuments' => array_values($quoteDocuments->toArray()),
+                'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
                 'quote' => $record,
                 'record' => $record,
                 'sendUpdateOptions' => $sendUpdateOptions,
@@ -864,6 +899,8 @@ class CRUDController extends Controller
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
                 'documentTypes' => $documentTypes,
                 'bookPolicyDetails' => $bookPolicyDetails,
+                'noteDocumentType' => $noteDocumentType,
+                'quoteNotes' => $quoteNotes,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
@@ -899,7 +936,7 @@ class CRUDController extends Controller
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
-
+            $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
             $documentTypes = collect($documentTypes)->groupBy('category');
             $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
@@ -916,6 +953,8 @@ class CRUDController extends Controller
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
+
+            $hashCollapsibleStatuses = $this->crudService->hashCollapsibleStatuses($quoteTypeId, $record->id);
 
             $payments->each(function ($payment) {
                 $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
@@ -940,7 +979,6 @@ class CRUDController extends Controller
                 })->values();
             }
             if (! empty($insuranceProviders)) {
-
                 $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                     return [
                         'value' => $paymentMethod->id,
@@ -950,11 +988,9 @@ class CRUDController extends Controller
             }
 
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
-
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
-
-            // Get user teams
+            $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
             $teams = $this->crudService->getUserTeams(Auth::user()->id);
 
             return inertia('HealthQuote/Show', [
@@ -977,7 +1013,7 @@ class CRUDController extends Controller
                 'emirates' => $emirates,
                 'advisors' => $advisors,
                 'teams' => $teams,
-                'quoteDocuments' => array_values($quoteDocuments->toArray()),
+                'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
                 'documentTypes' => $documentTypes,
                 'cdnPath' => $cdnPath,
                 'domainPath' => $domainPath,
@@ -990,6 +1026,7 @@ class CRUDController extends Controller
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
                     'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
+                'hashCollapsibleStatuses' => $hashCollapsibleStatuses,
                 'modelType' => $quoteType,
                 'quoteTypeId' => $quoteTypeId,
                 'notProductionApproval' => $notProductionApproval,
@@ -1023,6 +1060,9 @@ class CRUDController extends Controller
                 'bookPolicyDetails' => $bookPolicyDetails,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+                'staleDays' => $record->stale_at, now()->diffInDays(Carbon::parse("$record->stale_at")),
+                'noteDocumentType' => $noteDocumentType,
+                'quoteNotes' => $quoteNotes,
                 'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
@@ -1091,7 +1131,6 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
-
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -1151,55 +1190,55 @@ class CRUDController extends Controller
 
     public function cardsViewHome(Request $request)
     {
-        $quotes = [];
-        $quotes[] = [
-            'id' => 8,
-            'title' => 'New Lead',
-            'data' => getDataAgainstStatus('Home', 8),
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::NewLead, $request)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::Allocated, $request)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::FollowedUp, $request)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::InNegotiation, $request)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PaymentPending, $request)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
-        $quotes[] = [
-            'id' => 2,
-            'title' => 'Quoted',
-            'data' => getDataAgainstStatus('Home', 2),
-        ];
-        $quotes[] = [
-            'id' => 31,
-            'title' => 'Qualified',
-            'data' => getDataAgainstStatus('Home', 31),
-        ];
-        $quotes[] = [
-            'id' => 25,
-            'title' => 'In Negotiation',
-            'data' => getDataAgainstStatus('Home', 25),
-        ];
-        $quotes[] = [
-            'id' => 26,
-            'title' => 'Application Pending',
-            'data' => getDataAgainstStatus('Home', 26),
-        ];
-        $quotes[] = [
-            'id' => 28,
-            'title' => 'Payment Pending',
-            'data' => getDataAgainstStatus('Home', 28),
-        ];
-        $quotes[] = [
-            'id' => 36,
-            'title' => 'Application Submitted',
-            'data' => getDataAgainstStatus('Home', 36),
-        ];
-        $quotes[] = [
-            'id' => 15,
-            'title' => 'Transaction Approved',
-            'data' => getDataAgainstStatus('Home', 15),
-        ];
-        $quotes[] = [
-            'id' => 29,
-            'title' => 'Policy Documents Pending',
-            'data' => getDataAgainstStatus('Home', 29),
-        ];
+
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HomeManager, RolesEnum::Admin]);
+
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        if (array_intersect([TeamNameEnum::HOME], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::Allocated,
+                QuoteStatusEnum::InNegotiation,
+            ])->values()->toArray();
+        } elseif (array_intersect([TeamNameEnum::HOME_RENEWALS], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::NewLead,
+                QuoteStatusEnum::InNegotiation,
+            ])->values()->toArray();
+        }
+
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
+
+        $advisors = $this->crudService->getAdvisorsByModelType(quoteTypeCode::Home);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
 
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,
+            'quoteStatusEnum' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
+            'teams' => $userTeams,
+            'quoteTypeId' => QuoteTypes::HOME->id(),
+            'quoteType' => QuoteTypes::HOME->value,
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : HomeQuoteRepository::getData(true, true),
         ]);
     }
 
@@ -1481,7 +1520,8 @@ class CRUDController extends Controller
         }
 
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
-        $entity = $this->crudService->updateQuoteStatus($request);
+        $result = $this->crudService->updateQuoteStatus($request);
+        $entity = $result['entity'];
         $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $this->crudService->calculateScore($plainEntity);
@@ -1503,8 +1543,8 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
 
-        if (isset($request->isInertia) && $request->isInertia) {
-            return redirect()->back();
+        if ($result['activityResponse']) {
+            return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', 'Status updated successfully & Activity has been created');
         }
 
         return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
@@ -1525,10 +1565,9 @@ class CRUDController extends Controller
     {
         if ($request->has('modelType') && $request->modelType && $request->status) {
             // $results = getDataAgainstEveryStatus($request->modelType, $request);
-            $results = getDataAgainstStatus($request->modelType, $request->status);
-
+            $results = getDataAgainstStatus($request->modelType, $request->status, $request);
             // and newUi is true
-            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life]) && in_array($request->modelType, newUi())) {
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht]) && in_array($request->modelType, newUi())) {
                 return $results;
             }
 
@@ -1840,7 +1879,6 @@ class CRUDController extends Controller
         $payment->update($paymentInformation);
 
         return back()->with('success', 'Payment has been updated');
-
     }
 
     public function sendEmailOneClickBuy(Request $request)
@@ -1914,6 +1952,7 @@ class CRUDController extends Controller
             'updated_by' => auth()->user()->email,
             'advisor_id' => null,
             'quote_status_id' => QuoteStatusEnum::NewLead,
+            'quote_status_date' => now(),
             'is_renewal_tier_email_sent' => 0,
         ]);
     }
@@ -1939,6 +1978,7 @@ class CRUDController extends Controller
     {
         return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
     }
+
     public function riskRatingDetails($quoteType, $uuid)
     {
         $quoteModel = $this->getQuoteObject($quoteType, $uuid);

@@ -64,21 +64,11 @@ const policyIssuanceStatusOptions = computed(() => {
   });
 });
 
-const planQuoteInsurerNumber = computed(() => {
-  if (props.availablePlans?.length > 0) {
-    return (
-      props.availablePlans.filter(
-        item => item.id == page.props.record.plan_id,
-      )[0]?.insurerQuoteNo ?? null
-    );
-  }
+ const planQuoteInsurerNumber = computed(() => {
   let quotePlanList = page.props?.listQuotePlans;
   if (!quotePlanList || typeof quotePlanList === 'string') return null;
-  let quotePlan = quotePlanList?.filter(
-    item => item.id == page.props.record.plan_id,
-  );
-
-  return quotePlan === undefined ? null : quotePlan[0]?.insurerQuoteNo || null;
+  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
+  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
 });
 
 const policyDetailsState = reactive({

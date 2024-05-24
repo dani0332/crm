@@ -33,6 +33,7 @@ class DocumentTypeCode extends Enum
     // The reason behind this code is different for all lob's but text is sames that's why we are using this as a text
     const NETWORK_LIST_BUSINESS = 'NL_GH';
     const Receipt_BUSINESS = 'REC_GH';
+    const OD = 'OD';
     const CPD = 'CPD';
     const BPD = 'BPD';
     const TPD = 'TPD';

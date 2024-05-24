@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Jobs\MAWelcomeJob;
 use App\Models\MyAlFredUser;
 use Illuminate\Support\Facades\Log;
@@ -151,7 +152,15 @@ class BerlinService extends BaseService
             if ($errorData['code'] == 'CUSTOMER_NOT_FOUND') {
                 $customer = $this->customerService->getCustomerByEmail($customerEmail);
                 Log::warning('extendCustomerSubscription Customer Id: '.$customerId.' Customer Email: '.$customerEmail.' Error Code: '.$errorData['code'].' Customer not exist so cannot proceed to extend subscription, sending signup email to customer. API Message: '.$errorData['message']);
-                dispatch(new MAWelcomeJob($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, $source, $tag));
+                MAWelcomeJob::dispatchUnless(
+                    isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
+                    $customer->first_name,
+                    $customer->last_name,
+                    $customer->email,
+                    $customer->mobile_no,
+                    $source,
+                    $tag
+                );
             } else {
                 Log::error('Berlin Service - extendCustomerSubscription - Customer ID: '.$customerId.' - Status Code: '.$statusCode.' - '.$e->getMessage());
             }

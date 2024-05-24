@@ -57,6 +57,7 @@ const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const leadSource = page.props.leadSource;
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 const permissionEnum = page.props.permissionsEnum;
@@ -227,6 +228,52 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 <template>
   <div>
     <Head title="Bike Quotes" />
+
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Bike Detail</h2>
+      <div class="flex gap-2">
+        <Link
+          v-if="quote.quote_detail?.insly_id"
+          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-if="can(permissionsEnum.BikeQuotesEdit)"
+          :href="route('bike-quotes-edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+
+        <Link
+          v-if="can(permissionsEnum.BikeQuotesList)"
+          :href="route('bike-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div"> Bike Quotes </x-button>
+        </Link>
+      </div>
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -771,7 +818,6 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote-type="quoteType"
       :expanded="sectionExpanded"
     />
-
     <QuoteStatus
       :quote="quote"
       :quote-type="quoteType"
@@ -791,7 +837,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
     />
 
@@ -806,8 +852,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
-      :bookPolicyDetails="bookPolicyDetails"
+            :isAmlClearedForPayment="isAmlClearedForPayment"
+            :bookPolicyDetails="bookPolicyDetails"
 		/>
 
     <QuotePayments
@@ -861,7 +907,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :payments="payments"
       :expanded="sectionExpanded"
     />
-    
+
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"

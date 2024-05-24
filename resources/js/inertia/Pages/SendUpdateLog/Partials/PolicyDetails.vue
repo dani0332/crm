@@ -1,62 +1,61 @@
 <script setup>
-
 const { isRequired } = useRules();
 
 const props = defineProps({
-  sendUpdateLog: {
-    type: Object,
-    required: true,
-  },
-  insuranceProviders: {
-    type: Array,
-    required: true,
-  },
-  selectedCategory: {
-    type: Object,
-    required: true,
-  },
-	quote: {
-    type: Object,
-    required: true,
-  },
-  quoteType: {
-    type: String,
-    required: true,
-  }
+    sendUpdateLog: {
+        type: Object,
+        required: true,
+    },
+    insuranceProviders: {
+        type: Array,
+        required: true,
+    },
+    selectedCategory: {
+        type: Object,
+        required: true,
+    },
+    quote: {
+        type: Object,
+        required: true,
+    },
+    quoteType: {
+        type: String,
+        required: true,
+    }
 });
 
 const state = reactive({
-  isEdit: false,
+    isEdit: false,
 });
 
 const page = usePage();
 const notification = useToast();
 
 const dateToYMD = date => {
-  if (date) {
-    // Check if date is already in YMD format
-    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
-    if (ymdRegex.test(date)) {
-      return date.split(' ')[0]; // Return only the date part
+    if (date) {
+        // Check if date is already in YMD format
+        const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+        if (ymdRegex.test(date)) {
+            return date.split(' ')[0]; // Return only the date part
+        }
+        const [day, month, year] = date.split('-');
+        return `${year}-${month}-${day}`;
     }
-    const [day, month, year] = date.split('-');
-    return `${year}-${month}-${day}`;
-  }
-  return '';
+    return '';
 }
 
 const issuanceStatus = page.props.issuanceStatuses;
 
 const issuanceStatusOptions = computed(() => {
-  return issuanceStatus.map(status => {
-    return { label: status.text, value: status.id };
-  })
+    return issuanceStatus.map(status => {
+        return { label: status.text, value: status.id };
+    })
 });
 
 const issuanceStatusText = computed(() => {
-  const statusMap = new Map(issuanceStatus.map(status => [status.id, status.text]));
+    const statusMap = new Map(issuanceStatus.map(status => [status.id, status.text]));
 
-  return (value) => statusMap.get(value);
+    return (value) => statusMap.get(value);
 });
 
 /*const issuanceStatusTextById = computed(() => {
@@ -67,151 +66,150 @@ const issuanceStatusText = computed(() => {
 
 
 const isEndorsementFinancial = computed(() => {
-  return props.selectedCategory.subCategory.slug === 'EF' && props.selectedCategory.subCategory.option.slug === 'PPE'
+    return props.selectedCategory.subCategory.slug === 'EF' && props.selectedCategory.subCategory.option.slug === 'PPE'
 });
 
 const isCIR = computed(() => {
-  return props.selectedCategory?.subCategory.slug === 'CIR';
+    return props.selectedCategory?.subCategory.slug === 'CIR';
 });
 
 const isCPD = computed(() => {
-  return props.selectedCategory?.subCategory.slug === 'CPD';
+    return props.selectedCategory?.subCategory.slug === 'CPD';
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
 
 const insuranceProvidersOptions = computed(() => {
-  return props?.insuranceProviders?.map(provider => ({
-    value: provider.id,
-    label: provider.text,
-  }));
+    return props?.insuranceProviders?.map(provider => ({
+        value: provider.id,
+        label: provider.text,
+    }));
 })
 
 const providerName = computed(() => {
-  let provider;
-  if (props.quote?.insurance_provider_id) {
-    provider = props?.insuranceProviders?.find(provider => provider.id === props.quote?.insurance_provider_id);
-  } else if (props.quote?.car_plan_provider_id) {
-    provider = props?.insuranceProviders?.find(provider => provider.id === props.quote?.car_plan_provider_id);
-  } else {
-    return null;
-  }
+    let provider;
+    if (props.quote?.insurance_provider_id) {
+        provider = props?.insuranceProviders?.find(provider => provider.id === props.quote?.insurance_provider_id);
+    } else if (props.quote?.car_plan_provider_id) {
+        provider = props?.insuranceProviders?.find(provider => provider.id === props.quote?.car_plan_provider_id);
+    } else {
+        return null;
+    }
 
-  return provider ? provider.text : null;
+    return provider?provider.text : null;
 });
 
 const filledExpiryDate = computed(() => {
-  if (! isEndorsementFinancial.value) {
-    return props.sendUpdateLog?.expiry_date || dateToYMD(props.quote?.renewal_expiry_date) || null;
-  }
+    if (!isEndorsementFinancial.value) {
+        return props.sendUpdateLog?.expiry_date || dateToYMD(props.quote?.renewal_expiry_date) || null;
+    }
 
-  return null;
+    return null;
 });
 
 const policyDetailsForm = useForm({
-	first_name: props.sendUpdateLog?.first_name || props.quote?.first_name || null,
-	last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,
-	provider_name: props.sendUpdateLog?.provider_name || providerName.value || null,
-  insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || props.quote?.insurance_provider_id || props.quote?.car_plan_provider_id || null,
-	plan_id: props.sendUpdateLog?.plan_id || props.quote?.plan_id || null,
-	plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null,
-	policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
-	issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
-	start_date: props.sendUpdateLog?.start_date || props.quote?.policy_start_date || null,
-	expiry_date: filledExpiryDate.value,
-	insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null,
-	issuance_status_id: props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null,
-	id: props.sendUpdateLog.id,
-  quote_type: props.quoteType,
+    first_name: props.sendUpdateLog?.first_name || props.quote?.first_name || null,
+    last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,
+    provider_name: props.sendUpdateLog?.provider_name || providerName.value || null,
+    insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || props.quote?.insurance_provider_id || props.quote?.car_plan_provider_id || null,
+    plan_id: props.sendUpdateLog?.plan_id || props.quote?.plan_id || null,
+    plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null,
+    policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
+    issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
+    start_date: props.sendUpdateLog?.start_date || props.quote?.policy_start_date || null,
+    expiry_date: filledExpiryDate.value,
+    insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null,
+    issuance_status_id: props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null,
+    id: props.sendUpdateLog.id,
+    quote_type: props.quoteType,
 })
 
 const onUpdate = () => {
-  policyDetailsForm.post(
-    route('send-update.save-policy-details'),
-    {
-      preserverScroll: true,
-      onSuccess: ({ props }) => {
-        notification.success({
-          title: 'The request has been updated',
-          position: 'top',
-        });
-        state.isEdit = false;
-      },
-      onError: errors => {
-        Object.keys(errors).forEach(function (key) {
-          notification.error({
-            title: errors[key],
-            position: 'top',
-          });
-        });
-      },
-    },
-  );
+    policyDetailsForm.post(
+        route('send-update.save-policy-details'), {
+            preserverScroll: true,
+            onSuccess: ({ props }) => {
+                notification.success({
+                    title: 'The request has been updated',
+                    position: 'top',
+                });
+                state.isEdit = false;
+            },
+            onError: errors => {
+                Object.keys(errors).forEach(function(key) {
+                    notification.error({
+                        title: errors[key],
+                        position: 'top',
+                    });
+                });
+            },
+        },
+    );
 }
 
 const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
 const isEcom = computed(() => {
-  return quoteTypesToCheck.includes(props.quoteType);
+    return quoteTypesToCheck.includes(props.quoteType);
 })
 
 const plansOptions = ref([]);
 
 const fetchPlans = (quoteType, providerId) => {
-  let url = `/get-plans/${quoteType}/${providerId}`;
-  axios.get(url)
-    .then(res => {
-      plansOptions.value = res.data.map(plan => ({
-        label: plan.text,
-        value: plan.id,
-      }));
-    })
-    .catch(err => {
-      console.log(err);
-    });
+    let url = `/get-plans/${quoteType}/${providerId}`;
+    axios.get(url)
+        .then(res => {
+            plansOptions.value = res.data.map(plan => ({
+                label: plan.text,
+                value: plan.id,
+            }));
+        })
+        .catch(err => {
+            console.log(err);
+        });
 };
 
 onMounted(() => {
-  if (isEcom.value && props.sendUpdateLog?.insurance_provider_id) {
-    fetchPlans(props.quoteType, props.sendUpdateLog.insurance_provider_id);
-  }
+    if (isEcom.value && props.sendUpdateLog?.insurance_provider_id) {
+        fetchPlans(props.quoteType, props.sendUpdateLog.insurance_provider_id);
+    }
 });
 
 watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
-  if (isEcom.value && providerId) {
-    fetchPlans(props.quoteType, providerId);
-  }
+    if (isEcom.value && providerId) {
+        fetchPlans(props.quoteType, providerId);
+    }
 });
 
 const isMobile = computed(() => {
-  return window.innerWidth <= 768; // Adjust the breakpoint as needed
+    return window.innerWidth <= 768; // Adjust the breakpoint as needed
 });
-
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white">
-    <Collapsible expanded>
-      <template #header>
-        <div class="flex justify-between gap-4 items-center">
-          <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        </div>
-      </template>
-      <template #body>
-        <x-divider class="my-4" />
-        <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+    <div class="p-4 rounded shadow mb-6 bg-white">
+        <Collapsible expanded>
+            <template #header>
+                <div class="flex justify-between gap-4 items-center">
+                  <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+                </div>
+</template>
+
+<template #body>
+    <x-divider class="my-4" />
+    <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
             <!-- First name -->
             <div class="grid sm:grid-cols-2">
-              <dt>
-                <x-tooltip position="left">
-                  <label
-                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                  >
-                    FIRST NAME
-                  </label>
-                  <template #tooltip>
-                    This field captures the policyholder's first name, representing the primary contact person associated with the policy.
-                  </template>
+                <dt>
+                        <x-tooltip position="left">
+                          <label
+                              class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                          >
+                            FIRST NAME
+                          </label>
+                          <template #tooltip>
+                            This field captures the policyholder's first name, representing the primary contact person associated with the policy.
+</template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -234,9 +232,9 @@ const isMobile = computed(() => {
                   >
                     LAST NAME
                   </label>
-                  <template #tooltip>
-                    Records the policyholder's surname or family name.
-                  </template>
+<template #tooltip>
+     Records the policyholder's surname or family name.
+</template>
                 </x-tooltip>
               </dt>
 							<dd>
@@ -259,9 +257,9 @@ const isMobile = computed(() => {
                   >
                     PROVIDER NAME
                   </label>
-                  <template #tooltip>
-                    Name of the insurance company responsible for the coverage.
-                  </template>
+<template #tooltip>
+     Name of the insurance company responsible for the coverage.
+</template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -286,9 +284,9 @@ const isMobile = computed(() => {
                   >
                     PLAN NAME
                   </label>
-                  <template #tooltip>
-                    Identifies the specific coverage or insurance plan offered by the provider.
-                  </template>
+<template #tooltip>
+     Identifies the specific coverage or insurance plan offered by the provider.
+</template>
                 </x-tooltip>
               </dt>
 							<dd>
@@ -313,9 +311,9 @@ const isMobile = computed(() => {
                   >
                     POLICY NUMBER
                   </label>
-                  <template #tooltip>
-                    The unique Insurance policy number for the chosen insurance plan offered by the provider.
-                  </template>
+<template #tooltip>
+     The unique Insurance policy number for the chosen insurance plan offered by the provider.
+</template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -339,9 +337,9 @@ const isMobile = computed(() => {
                   >
                     ISSUANCE DATE
                   </label>
-                  <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
-                  </template>
+<template #tooltip>
+     Signifies the date when the insurance policy was officially issued.
+</template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -366,9 +364,9 @@ const isMobile = computed(() => {
                   >
                     START DATE
                   </label>
-                  <template #tooltip>
-                    Indicates the commencement date of the insurance coverage, marking when the policy becomes effective.
-                  </template>
+<template #tooltip>
+     Indicates the commencement date of the insurance coverage, marking when the policy becomes effective.
+</template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -393,9 +391,9 @@ const isMobile = computed(() => {
                   >
                     EXPIRY DATE
                   </label>
-                  <template #tooltip>
-                    This field records the date when the insurance coverage is set to expire, marking the end of the policy's validity.
-                  </template>
+<template #tooltip>
+     This field records the date when the insurance coverage is set to expire, marking the end of the policy's validity.
+</template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -418,9 +416,9 @@ const isMobile = computed(() => {
                   >
                     INSURER QUOTE NUMBER
                   </label>
-                  <template #tooltip>
-                    Refers to the unique identifier associated with the initial quote provided by the insurer.
-                  </template>
+<template #tooltip>
+     Refers to the unique identifier associated with the initial quote provided by the insurer.
+</template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -444,9 +442,9 @@ const isMobile = computed(() => {
                   >
                     ISSUANCE STATUS
                   </label>
-                  <template #tooltip>
-                    Indicates the current state or progress of policy issuance, tracking whether it's pending, approved, or completed.
-                  </template>
+<template #tooltip>
+     Indicates the current state or progress of policy issuance, tracking whether it's pending, approved, or completed.
+</template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -469,24 +467,11 @@ const isMobile = computed(() => {
           <x-button size="sm" @click="state.isEdit = true" v-if="!state.isEdit">
             Edit
           </x-button>
-          <template v-else>
-            <x-button
-              size="sm"
-              color="orange"
-              @click="state.isEdit = false"
-              :loading="policyDetailsForm.processing"
-              :disabled="policyDetailsForm.processing"
-              >Cancel</x-button
-            >
-            <x-button
-              size="sm"
-              color="primary"
-              @click="onUpdate"
-              :loading="policyDetailsForm.processing"
-              :disabled="policyDetailsForm.processing"
-              >Update</x-button
-            >
-          </template>
+<template v-else>
+    <x-button size="sm" color="orange" @click="state.isEdit = false" :loading="policyDetailsForm.processing" :disabled="policyDetailsForm.processing">
+        Cancel</x-button>
+    <x-button size="sm" color="primary" @click="onUpdate" :loading="policyDetailsForm.processing" :disabled="policyDetailsForm.processing">Update</x-button>
+</template>
         </div>
       </template>
     </Collapsible>

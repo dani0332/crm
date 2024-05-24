@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
-use App\Enums\PermissionsEnum;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;

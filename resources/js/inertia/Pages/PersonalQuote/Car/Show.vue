@@ -156,6 +156,7 @@ const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const leadSource = page.props.leadSourceEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -507,6 +508,10 @@ const paymentItems = computed(() => {
       payment_method_code: payment.payment_method.code,
     };
   });
+});
+
+const isRenewalUpload = computed(() => {
+    return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
 });
 
 const leadStatusOptions = computed(() => {
@@ -1782,15 +1787,15 @@ watch(
                 allowedDuplicateLOB.length > 0
               "
             >
-              <x-button
-                v-if="hasAnyRole([rolesEnum.LeadPool])"
-                class="mr-2"
-                size="sm"
-                color="#ff5e00"
-                @click.prevent="openSendOCBConfirmNB"
-              >
-                Send NB OCB To Customer
-              </x-button>
+            <x-button
+              v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
+              class="mr-2"
+              size="sm"
+              color="#ff5e00"
+              @click.prevent="openSendOCBConfirmNB"
+            >
+              Send NB OCB To Customer
+            </x-button>
               <x-button
                 v-if="
                   !hasAnyRole([
@@ -2464,299 +2469,70 @@ watch(
                   :disabled="leadStatusDisabled"
                   :options="leadStatusOptions"
                 />
-                <x-field
-                  label="TransApp Code"
-                  class="uppercase"
-                  required
-                  v-if="
-                    leadStatusForm.leadStatus ==
-                    quoteStatusEnum.TransactionApproved
+              <x-field required label="Car Sold / Uncontactable Proof">
+                <input
+                  @input="
+                    leadStatusForm.mo_proof_document = $event.target.files[0]
                   "
-                >
-                  <x-input
-                    v-model="leadStatusForm.trans_code"
-                    placeholder="TransApp Code is required"
-                    class="w-full"
-                    :rules="[rules.isRequired]"
-                    :error="leadStatusForm.errors.trans_code"
-                  />
-                </x-field>
-                <x-field
-                  label="Lost Reason"
-                  class="uppercase"
-                  required
-                  v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
-                >
-                  <x-select
-                    v-model="leadStatusForm.lostReason"
-                    :options="
-                      lostReasons?.map(item => ({
-                        value: item.id,
-                        label: item.text,
-                      }))
-                    "
-                    placeholder="Lost Reason is required"
-                    class="w-full"
-                    :error="leadStatusForm.errors.lostReason"
-                  />
-                </x-field>
-                <x-field
-                  label="Followup Date"
-                  class="uppercase"
-                  v-if="
-                    leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                    leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                    leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-                  "
-                >
-                  <DatePicker
-                    v-model="leadStatusForm.next_followup_date"
-                    withTime
-                    :rules="[isRequired]"
-                    placeholder="Please select follow-up date & time"
-                    :error="leadStatusForm.errors.next_followup_date"
-                    class="w-full"
-                  />
-                  <!-- <x-input
-                    v-model="leadStatusForm.next_followup_date"
-                    :value="new Date(leadStatusForm.next_followup_date).toLocaleDateString('en-US')"
-                    type="datetime-local"
-                    placeholder="Please select follow-up date & time"
-                    class="w-full"
-                    :error="leadStatusForm.errors.next_followup_date"
-                  /> -->
-                </x-field>
-                <x-select
-                  v-if="leadStatusForm.leadStatus == quoteStatusEnum.IMRenewal"
-                  v-model="leadStatusForm.tier_id"
-                  label="Tier"
-                  :options="[
-                    { value: null, label: 'Select Tier' },
-                    ...tiers?.map(item => ({
-                      value: item.id,
-                      label: item.name,
-                    })),
-                  ]"
-                  placeholder="Please Select Tier"
-                  class="w-full uppercase"
-                  :error="leadStatusForm.errors.tier_id"
+                  type="file"
+                  :disabled="!allowQuoteLogAction"
+                  placeholder="Car Sold / Uncontactable Proof"
+                  class="w-full"
+                  :rules="[isRequired]"
                 />
-                <x-field
-                  label="Notes"
-                  class="uppercase"
-                  :required="
-                    leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                    leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                    leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-                  "
-                >
-                  <x-textarea
-                    v-model="leadStatusForm.notes"
-                    type="text"
-                    placeholder="Lead Notes"
-                    class="w-full"
-                    :rules="
-                      leadStatusForm.leadStatus ==
-                        quoteStatusEnum.FollowupCall ||
-                      leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                      leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-                        ? [isRequired]
-                        : []
-                    "
-                    :error="leadStatusForm.errors.notes"
-                    :disabled="
-                      record.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
-                      isCarLostStatus(record.quote_status_id)
-                    "
-                  />
-                </x-field>
-                <x-field
-                  label="Car Sold / Uncontactable Proof"
-                  class="uppercase"
-                  v-if="
-                    leadStatusForm.leadStatus == quoteStatusEnum.CarSold ||
-                    leadStatusForm.leadStatus == quoteStatusEnum.Uncontactable
-                  "
-                >
-                  <input
-                    @input="
-                      leadStatusForm.proof_document = $event.target.files[0]
-                    "
-                    type="file"
-                    :disabled="
-                      isCarLostStatus(record.quote_status_id) &&
-                      !carLostChangeStatus
-                    "
-                    placeholder="Car Sold / Uncontactable Proof"
-                    class="form-control w-full"
-                  />
-                </x-field>
-                <x-field class="uppercase" label="Transaction Type">
-                  <x-input
-                    type="text"
-                    :value="record.transaction_type_text"
-                    class="w-full"
-                    :disabled="true"
-                  />
-                </x-field>
-              </div>
+              </x-field>
+                    </div>
+                </div>
             </div>
-            <div
-              class="w-full md:w-50"
-              v-if="isCarLostStatus(record.quote_status_id)"
-            >
-              <div class="flex flex-col gap-4">
-                <x-field required label="Approval Status" class="uppercase">
-                  <x-select
-                    v-model="leadStatusForm.lost_approval_status"
-                    :options="leadApprovalStatusOptions"
-                    :disabled="!allowQuoteLogAction"
-                    placeholder="Approval Status"
-                    class="w-full"
-                    :rules="[isRequired]"
-                  />
-                </x-field>
-
-                <x-field
-                  required
-                  label="Approval Reasons"
-                  class="uppercase"
-                  v-if="
-                    leadStatusForm.lost_approval_status ==
-                    genericRequestEnum.APPROVED
-                  "
-                >
-                  <x-select
-                    v-model="leadStatusForm.approve_reason_id"
-                    :options="
-                      lostApproveReasons.map(item => ({
-                        value: item.id,
-                        label: item.text,
-                      }))
-                    "
-                    :disabled="
-                      !allowQuoteLogAction ||
-                      !hasRole(rolesEnum.MarketingOperations)
-                    "
-                    placeholder="Approval Reasons"
-                    class="w-full"
-                    :rules="[isRequired]"
-                  />
-                </x-field>
-                <x-field
-                  required
-                  label="Rejection Reasons"
-                  class="uppercase"
-                  v-if="
-                    leadStatusForm.lost_approval_status ==
-                    genericRequestEnum.REJECTED
-                  "
-                >
-                  <x-select
-                    v-model="leadStatusForm.reject_reason_id"
-                    :options="
-                      lostRejectReasons.map(item => ({
-                        value: item.id,
-                        label: item.text,
-                      }))
-                    "
-                    :disabled="
-                      !allowQuoteLogAction ||
-                      !hasRole(rolesEnum.MarketingOperations)
-                    "
-                    placeholder="Rejection Reasons"
-                    class="w-full"
-                    :rules="[isRequired]"
-                  />
-                </x-field>
-                <template
-                  v-if="
-                    [
-                      genericRequestEnum.APPROVED,
-                      genericRequestEnum.REJECTED,
-                    ].includes(leadStatusForm.lost_approval_status)
-                  "
-                >
-                  <x-field class="uppercase" label="Notes">
-                    <x-textarea
-                      v-model="leadStatusForm.lost_notes"
-                      :disabled="!allowQuoteLogAction"
-                      placeholder="Notes"
-                      class="w-full"
-                    />
-                  </x-field>
-                  <x-field
-                    required
-                    label="Car Sold / Uncontactable Proof"
-                    class="uppercase"
-                  >
-                    <input
-                      @input="
-                        leadStatusForm.mo_proof_document =
-                          $event.target.files[0]
-                      "
-                      type="file"
-                      :disabled="!allowQuoteLogAction"
-                      placeholder="Car Sold / Uncontactable Proof"
-                      class="w-full"
-                      :rules="[isRequired]"
-                    />
-                  </x-field>
-                </template>
-              </div>
-            </div>
-          </div>
-
-          <DataTable
-            v-if="paymentEntityModel.car_lost_quote_logs?.length > 0"
-            table-class-name="mt-5 tablefixed compact"
-            :headers="carLostQuoteLogsTable.columns"
-            :items="paymentEntityModel.car_lost_quote_logs || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="availablePlansItems.length < 15"
-          >
-            <template #item-modified_by="item">
-              {{ item.action_by_id ? item.advisor.email : 'Management' }}
-            </template>
-            <template #item-documents="item">
-              <template v-for="doc in item.documents" :key="doc">
-                <p class="my-2">
-                  <a
-                    class="underline"
-                    target="_blank"
-                    :href="leadDocsStoragePath + doc.path"
-                    >Document</a
-                  >
-                </p>
-              </template>
-            </template>
-            <template #item-created_at="item">
-              {{ dateFormat(item.created_at) }}
-            </template>
-          </DataTable>
-
-          <x-divider class="mb-1 mt-10" />
-          <div class="flex justify-end">
-            <x-button
-              v-if="!can(permissionEnum.ApprovePayments)"
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :disabled="
-                record.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                (!carLostChangeStatus && !allowQuoteLogAction)
-              "
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-            >
-              Change Status
-            </x-button>
-          </div>
         </template>
-      </Collapsible>
+      <DataTable
+        v-if="paymentEntityModel.car_lost_quote_logs?.length > 0"
+        table-class-name="mt-5 tablefixed compact"
+        :headers="carLostQuoteLogsTable.columns"
+        :items="paymentEntityModel.car_lost_quote_logs || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="availablePlansItems.length < 15"
+      >
+        <template #item-modified_by="item">
+          {{ item.action_by_id ? item.advisor.email : 'Management' }}
+        </template>
+        <template #item-documents="item">
+          <template v-for="doc in item.documents" :key="doc">
+            <p class="my-2">
+              <a
+                class="underline"
+                target="_blank"
+                :href="leadDocsStoragePath + doc.path"
+                >Document</a
+              >
+            </p>
+          </template>
+        </template>
+        <template #item-created_at="item">
+          {{ dateFormat(item.created_at) }}
+        </template>
+      </DataTable>
+
+      <x-divider class="mb-1 mt-10" />
+      <div class="flex justify-end">
+        <x-button
+          v-if="!can(permissionEnum.ApprovePayments)"
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :disabled="
+            record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+            (!carLostChangeStatus && !allowQuoteLogAction)
+          "
+          :loading="leadStatusForm.processing"
+          @click.prevent="onLeadStatus"
+        >
+          Change Status
+        </x-button>
+      </div>
+    </Collapsible>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -4100,7 +3876,6 @@ watch(
       :quoteType="'CAR'"
     />
   </div>
-
   <AuditLogs
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"

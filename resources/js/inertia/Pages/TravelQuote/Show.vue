@@ -39,7 +39,6 @@ defineProps({
   isBetaUser: Boolean,
   payments: Array,
   quoteRequest: Object,
-  permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
@@ -64,6 +63,7 @@ defineProps({
 
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -188,7 +188,7 @@ const travelFields = computed(() => {
     'previous_policy_expiry_date',
     'policy_start_date',
     'renewal_batch',
-    'transapp_code'
+    'transapp_code',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -1233,6 +1233,55 @@ watch(
 <template>
   <div>
     <Head title="Travel Detail" />
+    <div class="flex justify-between items-center flex-wrap gap-2">
+      <h2 class="text-xl font-semibold">Travel Detail</h2>
+      <div class="flex gap-2">
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+          v-if="permissions.canNotApprovePayments"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link :href="route('travel.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
+        </Link>
+
+        <Link
+          v-if="permissions.canEditQuote == true"
+          :href="route('travel.edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div>
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -1589,18 +1638,30 @@ watch(
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
-          <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="quoteRequest.child || quoteRequest.parent"
+          >
             <template v-if="quoteRequest.child">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     CHILD REF ID
                   </label>
-                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
+                  <template #tooltip
+                    >Navigation key from parent to child in data
+                    hierarchy.</template
+                  >
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.child.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.child.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.child?.code }}
                 </a>
               </dt>
@@ -1608,14 +1669,20 @@ watch(
             <template v-if="quoteRequest.parent">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     PARENT REF ID
                   </label>
                   <template #tooltip>Parent Ref Id</template>
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.parent.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.parent.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.parent.code }}
                 </a>
               </dt>
@@ -2420,12 +2487,17 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-              <div>
-                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
-                  age 0-64
-                </h6>
-              </div>
+            <div>
+              <h6
+                v-if="
+                  aboveAgeMembers > 0 && availablePlansTable.data.length > 0
+                "
+                class="font-semibold text-primary-600 text-ms mb-1"
+              >
+                Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                age 0-64
+              </h6>
+            </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2486,7 +2558,7 @@ watch(
           </div>
           <div v-else>
             <DataTable
-                v-model:items-selected="selectedPlans"
+              v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
@@ -2568,7 +2640,7 @@ watch(
             </div>
             <div>
               <DataTable
-                  v-model:items-selected="selectedPlans"
+                v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed compact"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
@@ -2645,7 +2717,7 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       quoteType="Travel"
       :payments="payments"
     />

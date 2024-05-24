@@ -40,6 +40,7 @@ const memberTabs = ref('quote-documents');
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -112,17 +113,17 @@ const docForm = useForm({
   send_update_id: props.extras.sendLogId || null,
 });
 
-const uploadFile = (doc, filesWithInfo, memberId) => {
-    let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-    const { files, rejectReason} = filesWithInfo;
-    if (files.length == 0) {
-        notification.error({
-            title: 'File upload failed',
-            position: 'top',
-        });
-        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-        return false
-    };
+const uploadFile = (doc, filesWithInfo) => {
+  let url = '/personal-quotes/' + docForm.quote_id + '/documents';
+  const { files, rejectReason } = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -213,7 +214,7 @@ const sendUpdateValidation = () => {
             Upload Documents
           </x-button>
         </div>
-        
+
       <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"
@@ -274,7 +275,7 @@ const sendUpdateValidation = () => {
 
       <div
         v-for="documentType in documentTypes"
-        :key="documentType.id" 
+        :key="documentType.id"
         class="grid md:grid-cols-2 gap-2 my-4 border-b"
       >
         <div class="flex flex-col gap-1">
@@ -292,7 +293,7 @@ const sendUpdateValidation = () => {
             :max-files="documentType.max_files"
             :max-size="documentType.max_size"
             :loading="docForm.processing"
-            @change="uploadFile(documentType, $event)" 
+            @change="uploadFile(documentType, $event)"
           />
           <a
             v-for="quoteDocument in quoteDocuments.filter(
