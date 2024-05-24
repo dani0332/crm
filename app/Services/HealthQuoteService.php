@@ -41,9 +41,9 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
-use DB;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
@@ -1142,7 +1142,6 @@ class HealthQuoteService extends BaseService
         $quoteBatch = QuoteBatches::latest()->first();
 
         foreach ($leadsIds as $leadId) {
-
             $lead = $this->getEntityPlain($leadId);
 
             if (isset($request->assign_team) && $request->assign_team !== '') {
@@ -1187,6 +1186,7 @@ class HealthQuoteService extends BaseService
 
         return [];
     }
+
     public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteType = null)
     {
         // Check if $lead or $newAdvisorId is not provided
@@ -1396,7 +1396,6 @@ class HealthQuoteService extends BaseService
                 if (isset($value['ratesPerCopay'])) {
                     foreach ($value['ratesPerCopay'] as $copay) {
                         if ((int) $copay['healthPlanCoPaymentId'] == (int) $copayId) {
-
                             if (isset($loadingPrices[$key]) &&
                                 (int) $loadingPrices[$key]['memberId'] == $value['memberId']
                             ) {
@@ -1440,7 +1439,6 @@ class HealthQuoteService extends BaseService
         $quoteId = $request->quoteId;
 
         if ($quoteId) {
-
             $memberDetails = [
                 'firstName' => $request->first_name,
                 'lastName' => $request->last_name ?? null,
@@ -1475,7 +1473,6 @@ class HealthQuoteService extends BaseService
         $memberId = $request->id ?? null;
 
         if ($quoteId && $memberId) {
-
             $memberDetails = [
                 'id' => $memberId,
                 'firstName' => $request->first_name,
@@ -1495,7 +1492,6 @@ class HealthQuoteService extends BaseService
             ];
 
             $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
-
         } else {
             $response = [
                 'status' => false,
@@ -1512,7 +1508,6 @@ class HealthQuoteService extends BaseService
         $memberId = $request->customer_member_id ?? null;
 
         if ($quoteId && $memberId) {
-
             $memberDetails = [
                 'id' => $memberId,
             ];
@@ -1798,8 +1793,7 @@ class HealthQuoteService extends BaseService
             ->first();
 
         if ($renewalBatch) {
-            $quote->renewal_batch = $renewalBatch->name;
-            $quote->save();
+            $quote->update(['renewal_batch' => $renewalBatch->name]);
         }
     }
 
