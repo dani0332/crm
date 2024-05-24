@@ -720,9 +720,19 @@ class SendUpdateLogService
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
 
+                $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+
+                if ($payment->captured_amount < 1) {
+                    $status = SendUpdateLogStatusEnum::UNPAID;
+                } elseif (($payment->captured_amount + $payment->discount_value) < $payment->total_price) {
+                    $status = SendUpdateLogStatusEnum::PARTIALLY_PAID;
+                } elseif (($payment->captured_amount + $payment->discount_value) >= $payment->total_price) {
+                    $status = SendUpdateLogStatusEnum::FULL_PAID;
+                }
+
                 $sendUpdateLog->update([
                     'booking_date' => now(),
-                    'transaction_payment_status' => SendUpdateLogStatusEnum::UNPAID, // Intially this will uppdate only for CPD, but there is task that's why update payment status for all.
+                    'transaction_payment_status' => $status ?? '',
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
                 ]);
             }

@@ -383,6 +383,7 @@ const onKeyPress = (event) => {
                       :options="additionalFieldOptions"
                       size="xs"
                       :disabled="!state.edit"
+                      :class="{ 'pointer-events-none': !state.edit }"
                       multiple
                     />
                 </dd>

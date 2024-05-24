@@ -15,6 +15,8 @@ final class SendUpdateLogStatusEnum extends Enum
     const TRANSACTION_DECLINE = 'Transaction Declined';
     const TRANSACTION_APPROVED = 'Transaction Approved';
     const UNPAID = 'Unpaid';
+    const PARTIALLY_PAID = 'Partially paid';
+    const FULL_PAID = 'Fully paid';
 
     // const STALE_REQUEST = 'Stale Request';
     const UPDATE_SENT_TO_CUSTOMER = 'Update Sent to Customer';
