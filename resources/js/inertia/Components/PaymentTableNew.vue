@@ -2160,7 +2160,7 @@ const getCaptureValidation = computed(() => {
           props.quoteRequest.quote_status_id === 15) &&
           props.quoteRequest.kyc_decision === 'Complete') ||
           props.quoteType === 'Travel')) || //skip AML & KYC for travel
-      validateAccessForSendUpdate
+          validateAccessForSendUpdate.value
     ) {
       if (payment.is_approved === 1) {
         return false;
@@ -4363,8 +4363,8 @@ watch(
                     stroke-linejoin="round"
                     stroke-width="2"
                     d="M15 19l-7-7 7-7"
-                  ></path></svg
-                >Previous
+                  ></path>
+                </svg>Previous
               </div>
               <div
                 class="flex items-center space-x-2"
