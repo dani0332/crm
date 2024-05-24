@@ -57,7 +57,10 @@ class YachtQuoteController extends Controller
             return $value['id'] != QuoteStatusEnum::Lost;
         })->values();
 
-        $count = $personalQuotes->count();
+        //PD Revert
+        // $count = $personalQuotes->count();
+
+        $count = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
 
         return inertia('YachtQuote/Index', [

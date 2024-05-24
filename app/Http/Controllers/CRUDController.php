@@ -266,7 +266,9 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         // inertia rendering for health quote
-        $count = $gridData->count();
+        //PD Revert
+        // $count = $gridData->count();
+        $count = 0;
         $hasOtherFilters = count(array_diff_key($request->all(), ['page' => ''])) > 0;
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
