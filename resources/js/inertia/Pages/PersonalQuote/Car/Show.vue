@@ -2029,7 +2029,7 @@ watch(
           <x-divider class="mb-4 mt-4" />
           <div
             v-if="
-              props.quote.quote_status_id !=
+              quote.quote_status_id !=
                 page.props.quoteStatusEnum.PolicyCancelled ||
               linkedQuoteDetails.childLeadsCount == 0
             "
@@ -2308,7 +2308,7 @@ watch(
               </dl>
               <div
                 v-if="
-                  props.quote.quote_status_id !=
+                  quote.quote_status_id !=
                     page.props.quoteStatusEnum.PolicyCancelled ||
                   linkedQuoteDetails.childLeadsCount == 0
                 "
@@ -2897,7 +2897,7 @@ watch(
           </div>
           <div
             v-if="
-              props.quote.quote_status_id !=
+              quote.quote_status_id !=
                 page.props.quoteStatusEnum.PolicyCancelled ||
               page.props.linkedQuoteDetails.childLeadsCount == 0
             "
@@ -3247,7 +3247,7 @@ watch(
               <div class="flex gap-2">
                 <x-button
                   v-if="
-                    props.quote.quote_status_id !=
+                    quote.quote_status_id !=
                       page.props.quoteStatusEnum.PolicyCancelled ||
                     page.props.linkedQuoteDetails.childLeadsCount == 0
                   "
@@ -3592,7 +3592,7 @@ watch(
           <x-divider class="my-4" />
           <div
             v-if="
-              props.quote.quote_status_id !=
+              quote.quote_status_id !=
                 page.props.quoteStatusEnum.PolicyCancelled ||
               page.props.linkedQuoteDetails.childLeadsCount == 0
             "
