@@ -161,7 +161,7 @@ const onCancel = () => {
 const onUpdateLog = (isValid) => {
   if (!isValid) return;
   sendUpdateForm.patch(
-    route('send-update-logs.update', { id: props.sendUpdateLog.id }),
+    route('send-update.update', { id: props.sendUpdateLog.id }),
     {
       preserverScroll: true,
       onSuccess: ({ props }) => {

@@ -127,7 +127,7 @@ const policyDetailsForm = useForm({
 
 const onUpdate = () => {
   policyDetailsForm.post(
-    route('send-update-logs.save-policy-details'),
+    route('send-update.save-policy-details'),
     {
       preserverScroll: true,
       onSuccess: ({ props }) => {

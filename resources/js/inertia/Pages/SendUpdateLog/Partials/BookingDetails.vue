@@ -292,7 +292,7 @@ const saveBookingDetail = isValid => {
     /* alert('payment condition will goes here. ');
     return; */
   }
-  bookingDetailsForm.post(route('send-update-logs.save-booking-details'), {
+  bookingDetailsForm.post(route('send-update.save-booking-details'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -347,7 +347,7 @@ const loader = reactive({
 
 const selectedInvoice = () => {
   loader.selectInvoice = true;
-  let url = route('send-update-logs.get-reversal-entries');
+  let url = route('send-update.get-reversal-entries');
   let data = {
     quoteType: props.quoteType,
     quoteUuid: props.realQuote.uuid,

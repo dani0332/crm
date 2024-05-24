@@ -496,7 +496,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         //        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
 
-    Route::controller(SendUpdateLogController::class)->prefix('send-update-logs')->name('send-update-logs.')->group(function () {
+    Route::controller(SendUpdateLogController::class)->prefix('send-update')->name('send-update.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::post('/', 'store')->name('store');
         Route::get('/{uuid}', 'show')->name('show');
@@ -510,7 +510,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('send-update', 'sendUpdate')->name('send-update');
     });
     Route::get('get-plans/{quoteType}/{providerId}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
-    // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
+    // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {

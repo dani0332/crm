@@ -1171,7 +1171,7 @@ const downloadProformaPayment = async () => {
     return;
   }
   if (props.proformaPayment) {
-    let isSendUpdateLogRoute = route().current() == 'send-update-logs.show';
+    let isSendUpdateLogRoute = route().current() == 'send-update.show';
     try {
       NProgress.start();
       const response = await axios.get(
