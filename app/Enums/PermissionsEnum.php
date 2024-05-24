@@ -275,4 +275,6 @@ final class PermissionsEnum extends Enum
     public const SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD = 'send-update-correct-policy-upload-add';
     public const SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD = 'send-update-correct-policy-details-add';
     public const SEND_UPDATE_TO_CUSTOMER_BUTTON = 'send-update-to-customer-button';
+    public const SEND_AND_BOOK_UPDATE_BUTTON = 'send-and-book-update-button';
+    public const BOOK_UPDATE_BUTTON = 'book-update-button';
 }

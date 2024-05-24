@@ -52,12 +52,12 @@ class InslyPermissions extends Seeder
         $permission3->assignRole($group2);
         $permission4->assignRole($group2);
 
-        $permission4 = Permission::firstOrCreate([
+        $permission5 = Permission::firstOrCreate([
             'name' => PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD,
             'guard_name' => 'web',
         ]);
 
-        $permission5 = Permission::firstOrCreate([
+        $permission6 = Permission::firstOrCreate([
             'name' => PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD,
             'guard_name' => 'web',
         ]);
@@ -68,14 +68,29 @@ class InslyPermissions extends Seeder
             RolesEnum::BikeManager, RolesEnum::BikeAdvisor, RolesEnum::CycleManager, RolesEnum::CycleAdvisor, RolesEnum::YachtManager,
             RolesEnum::YachtAdvisor, RolesEnum::GMManager, RolesEnum::GMAdvisor, RolesEnum::CorplineManager, RolesEnum::CorpLineAdvisor];
 
-        $permission4->assignRole($group3);
         $permission5->assignRole($group3);
+        $permission6->assignRole($group3);
 
-        $permission6 = Permission::firstOrCreate([
+        $permission7 = Permission::firstOrCreate([
             'name' => PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD,
             'guard_name' => 'web',
         ]);
 
-        $permission6->assignRole([RolesEnum::Admin, RolesEnum::Production, RolesEnum::NRA, RolesEnum::OperationExecutive, RolesEnum::SeniorManagement]);
+        $permission7->assignRole([RolesEnum::Admin, RolesEnum::Production, RolesEnum::NRA, RolesEnum::OperationExecutive, RolesEnum::SeniorManagement]);
+
+        $permission8 = Permission::firstOrCreate([
+            'name' => PermissionsEnum::SEND_AND_BOOK_UPDATE_BUTTON,
+            'guard_name' => 'web',
+        ]);
+
+        $permission9 = Permission::firstOrCreate([
+            'name' => PermissionsEnum::BOOK_UPDATE_BUTTON,
+            'guard_name' => 'web',
+        ]);
+
+        $group4 = [RolesEnum::Admin, RolesEnum::Production, RolesEnum::NRA, RolesEnum::OperationExecutive, RolesEnum::SeniorManagement];
+
+        $permission8->assignRole($group4);
+        $permission9->assignRole($group4);
     }
 }
