@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Enums\PermissionsEnum;
+use Illuminate\Support\Facades\Auth;
 
 class SplitPaymentApproveRequest extends FormRequest
 {
@@ -33,6 +35,20 @@ class SplitPaymentApproveRequest extends FormRequest
             'modelType' => 'required|string',
             'plan_id' => 'required|integer',
             'quote_id' => 'required|integer',
+            'collection_type' => 'required|string',
         ];
+    }
+
+    /**
+     * validate quote record
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) { 
+            // check if the user is authorized to approve the payment for broker           
+            if (request()->is_approved === true && auth()->user()->cannot(PermissionsEnum::ApprovePayments)) {
+                $validator->errors()->add('value', 'You are not authorized to approve this payment');
+            }
+        });
     }
 }
