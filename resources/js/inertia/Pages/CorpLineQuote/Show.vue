@@ -1264,7 +1264,7 @@ const linkEntity = () => {
 
     <QuoteDocuments
       :document-types="documentTypes"
-      :quote-documents="page.props.documents || []"
+      :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
