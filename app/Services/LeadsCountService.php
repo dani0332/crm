@@ -9,7 +9,7 @@ class LeadsCountService
 {
     public static function getLeadCount()
     {
-
+        return json_decode('{"is_multiple_lobs_allowed":true,"total_count":0,"quote_route":"http:\/\/127.0.0.1:8000\/reports\/stale-leads","quotes_count":{"home":{"count":0,"quote_route":"http:\/\/127.0.0.1:8000\/quotes\/home-cards?is_stale=1"},"health":{"count":0,"quote_route":"http:\/\/127.0.0.1:8000\/quotes\/health-cards?is_stale=1"},"yacht":{"count":0,"quote_route":"http:\/\/127.0.0.1:8000\/quotes\/yacht\/cards?is_stale=1"},"pet":{"count":0,"quote_route":"http:\/\/127.0.0.1:8000\/quotes\/pet\/cards?is_stale=1"},"cycle":{"count":0,"quote_route":"http:\/\/127.0.0.1:8000\/quotes\/cycle\/cards?is_stale=1"},"corpline":{"count":0,"quote_route":"http:\/\/127.0.0.1:8000\/quotes\/business\/cards\/view?is_stale=1"}}}');
         $allowedLOBs = $totalCount = 0;
         $nameSpace = '\\App\\Models\\';
         $allowedQuoteTypes = [];
@@ -74,13 +74,11 @@ class LeadsCountService
                 $response['is_multiple_lobs_allowed'] = true;
                 $response['total_count'] = $totalCount;
                 $response['quote_route'] = route('stale-leads-report');
-
             } else {
                 $response['is_multiple_lobs_allowed'] = false;
                 $response['total_count'] = $totalCount;
                 $response['quote_route'] = $cardViewRoute[strtoupper($allowedQuoteType)];
             }
-
         }
 
         return $response;
