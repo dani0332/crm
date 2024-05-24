@@ -2,29 +2,32 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
+use Log;
+use Carbon\Carbon;
+use App\Facades\Ken;
+use App\Facades\Capi;
+use App\Models\Payment;
+use App\Models\CarQuote;
+use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeId;
+use App\Models\HealthQuote;
+use App\Models\TravelQuote;
+use App\Enums\quoteTypeCode;
+use App\Enums\LeadSourceEnum;
+use App\Models\PersonalQuote;
+use App\Enums\QuoteStatusEnum;
+use App\Models\QuoteStatusLog;
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
-use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Facades\Capi;
-use App\Facades\Ken;
 use App\Models\ApplicationStorage;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
-use App\Models\PersonalQuote;
-use App\Models\PersonalQuoteDetail;
-use App\Models\QuoteStatusLog;
-use App\Models\TravelQuote;
-use App\Repositories\PersonalQuoteRepository;
-use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Log;
+use App\Models\PersonalQuoteDetail;
+use App\Traits\GenericQueriesAllLobs;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\PaymentAllocationStatus;
+use App\Repositories\PersonalQuoteRepository;
 
 class CentralService
 {
@@ -359,4 +362,90 @@ class CentralService
 
         return $isAmlClearedForPayment;
     }
+
+    // This method is used to update payment allocation status when lead status is updated
+    public function updatePaymentAllocation($modelType, $quote_uuid)
+    {
+        $quote = $this->getQuoteObject($modelType, $quote_uuid);
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            $payment = Payment::where('code', $quote->code)->with('paymentSplits')->first();
+            $this->straightforwardPayments($payment, $payment->paymentSplits, $quote);
+        }
+    }
+
+    public function straightforwardPayments($payment, $paymentSplits, $quote)
+    {
+        if ($payment) {
+            $this->updatePaymentAllocationStatus($payment, $quote);
+            if (in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SEMI_ANNUAL, PaymentFrequency::QUARTERLY, PaymentFrequency::MONTHLY, PaymentFrequency::CUSTOM])) {
+                $paymentSplit = $paymentSplits->first();
+                $this->firstSplitAllocationStatus($payment, $paymentSplit, $quote);
+            }
+
+            if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                $this->updatePaymentSplitAllocationStatus($paymentSplits, $quote);
+            }
+        }
+    }
+
+    private function updatePaymentAllocationStatus($payment, $quote)
+    {
+        $payment->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote);
+        $payment->save();
+    }
+
+    private function calculateAllocationStatus($payment, $quote, $paymentSplit = null)
+    {
+        $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
+        $priceWithVat = $quote->price_with_vat;
+
+        switch (true) {
+            case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
+                return null;
+            case ($payment->frequency == PaymentFrequency::UPFRONT && $paymentSplit != null):
+                return $payment->payment_allocation_status;
+            case $paymentSplit && in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED]):
+                return PaymentAllocationStatus::NOT_ALLOCATED;
+            case $collectionAmount <= 0:
+                return PaymentAllocationStatus::UNPAID;
+            case $collectionAmount <= $priceWithVat:
+                return PaymentAllocationStatus::FULLY_ALLOCATED;
+            default:
+                return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
+        }
+    }
+
+    private function firstSplitAllocationStatus($payment, $paymentSplit, $quote)
+    {
+        $paymentSplit->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote, $paymentSplit);
+        $paymentSplit->save();
+    }
+    
+    private function updatePaymentSplitAllocationStatus($paymentSplits, $quote)
+    {
+        $collectedAmount = 0;
+        foreach ($paymentSplits as $paymentSplit) {
+            $collectedAmount += $paymentSplit->collection_amount;
+            $paymentSplit->payment_allocation_status = $this->calculateSplitAllocationStatusWithCollectedAmount($paymentSplit, $quote, $collectedAmount);
+            $paymentSplit->save();
+        }
+    }
+
+    private function calculateSplitAllocationStatusWithCollectedAmount($paymentSplit, $quote, $collectedAmount)
+    {
+        if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
+            return PaymentAllocationStatus::NOT_ALLOCATED;
+        }
+    
+        if ($paymentSplit->collection_amount <= 0) {
+            return PaymentAllocationStatus::UNPAID;
+        }
+    
+        if ($collectedAmount <= $quote->price_with_vat) {
+            return PaymentAllocationStatus::FULLY_ALLOCATED;
+        }
+    
+        return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
+    }
+    
 }
