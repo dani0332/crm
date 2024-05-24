@@ -8,6 +8,7 @@ const notification = useNotifications('toast');
 const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentLookups = page.props.paymentLookups;
 const documentTypeEnum = page.props.documentTypeEnum;
 const quoteDocuments = page.props.quoteDocuments;
@@ -2080,8 +2081,8 @@ const uploadDocument = (doc, files, count) => {
           let quoteDocuments = [];
           if (
             quoteTypesToCheck.includes(props.quoteType) ||
-            props.quoteType === 'Home' ||
-            props.quoteSubType === 'Corpline' ||
+            props.quoteType === quoteTypeCodeEnum.Home ||
+            props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
           ) {
             quoteDocuments = data.props.quoteDocuments;
