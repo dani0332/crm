@@ -18,6 +18,7 @@ use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
@@ -27,7 +28,6 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Services\AllocationService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
@@ -401,8 +401,12 @@ class SendUpdateLogController extends Controller
         $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
+            $payment = Payment::where('send_update_log_id', $sendUpdate->id)->first();
             // Add insuficient Payment Validations here
             $insufficientPaymentCheck = false;
+            if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
+                $insufficientPaymentCheck = true;
+            }
 
             return response()->json([
                 'insufficientPaymentCheck' => $insufficientPaymentCheck,

@@ -532,6 +532,7 @@ const onKeyPress = (event) => {
       :real-quote="props.realQuote"
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"
+      :payments="props.payments"
     />
 
     <AuditLogs

@@ -404,6 +404,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $parentPayment = $paymentSplit->payment;
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
+
+                            if ($parentPayment->send_update_log_id) {
+                                SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
+                                    'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+                                ]);
+                            }
                             DB::commit();
                         } catch (Exception $exception) {
                             DB::rollBack();
@@ -578,11 +584,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
         //Update parent payment status
         $this->setMasterPaymentStatus($masterPayment);
-        if ($masterPayment->send_update_log_id) {
-            SendUpdateLog::where('id', $masterPayment->send_update_log_id)->update([
-                'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
-            ]);
-        }
 
         return $successMessage;
     }
@@ -672,4 +673,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         return $this->where('code', 'LIKE', "%{$quoteCode}%")->count();
     }
+
+    public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)
+    {
+        return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
+    }
+   
 }

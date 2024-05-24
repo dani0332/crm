@@ -57,8 +57,8 @@ class SendUpdateLogRepository extends BaseRepository
             ]);
             // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
+            $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
             if ($res->category->code == SendUpdateLogStatusEnum::CPD || ($res->category->code == SendUpdateLogStatusEnum::EF && $res->option->code == SendUpdateLogStatusEnum::PPE)) {
-                $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
 
                 if (checkPersonalQuotes($quoteType)) {
                     $realQuote = $personalQuote;
@@ -208,7 +208,6 @@ class SendUpdateLogRepository extends BaseRepository
                 'expiry_date' => $data['expiry_date'],
                 'insurer_quote_number' => $data['insurer_quote_number'] ?? null,
                 'issuance_status_id' => $data['issuance_status_id'] ?? null,
-                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
                 'is_policy_filled' => SendUpdateLogStatusEnum::POLICY_FILLED,
             ]);
         } catch (\Exception $ex) {
