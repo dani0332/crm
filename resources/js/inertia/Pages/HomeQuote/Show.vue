@@ -1412,16 +1412,6 @@ const linkEntity = () => {
       </template>
     </x-collapse>
 
-    <PaymentTable
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
-
     <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
       <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
       <template #content>
