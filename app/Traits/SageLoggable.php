@@ -18,6 +18,8 @@ trait SageLoggable
                     'section_id' => optional($section)->id,
                     'section_type' => optional($section)->getMorphClass(),
                     'step' => $step,
+                    'sage_request_type' => $payload['sage_request_type'] ?? '',
+                    'entry_type' => $payload['entry_type'] ?? '',
                 ],
                 [
                     'user_id' => $userId,

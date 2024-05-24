@@ -114,14 +114,10 @@ class SplitPaymentService
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4);
             }
             $isLiveApiCallStep3 = true;
-            if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == 'success') {
-                $isLiveApiCallStep3 = false;
-                $readyToPostResponse = json_decode($sageLogArray[3]['response'], true);
-            } else {
-                $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
-                $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
-            }
-
+            // make ready to post to sage,cannot use log data as it changes on each call
+            $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
+            $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+       
             if ($readyToPostResponse !== '') {
                 $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
                 $returnMessage['response'] = 'Error while making ready to post to sage';

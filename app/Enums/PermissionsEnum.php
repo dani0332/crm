@@ -268,4 +268,11 @@ final class PermissionsEnum extends Enum
     public const LEGACY_PAYMENTS = 'legacy-payments';
     public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
     public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
+    public const PAYMENTS_DISCOUNT_ADD = 'payments-discount-add';
+    public const PAYMENTS_CREDIT_APPROVAL_ADD = 'payments-credit-approval-add';
+    public const PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD = 'payments-frequency-upfront-split-collected-by-broker-add';
+    public const PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD = 'payments-frequency-terms-collected-by-broker-add';
+    public const PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD = 'payments-frequency-terms-collected-by-insurer-add';
+    public const PAYMENT_VERIFICATION_COLLECTED_BY_BROKER = 'payment-verification-collected-by-broker';
+    public const PAYMENT_VERIFICATION_COLLECTED_BY_INSURER = 'payment-verification-collected-by-insurer';
 }

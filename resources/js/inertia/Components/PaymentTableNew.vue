@@ -103,6 +103,10 @@ const isDiscountError = ref(false);
 const discountError = ref('');
 const isTotalPriceUpdated = ref(false);
 const trashedFilesModal = ref([]);
+const isCreditApprovalAllowed = ref(true);
+const isVerificationAllowed = ref(true);
+const isPaymentFrequencyNotSelected = ref(false);
+const isDiscountAllowed = ref(true);
 
 const modal2Ref = ref(null);
 
@@ -304,8 +308,14 @@ const validatePaymentOption = () => {
       var totalSplitAmount = 0;
       var issueFound = false;
       isPaymentCalculationError.value = false;
-      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
-        totalSplitAmount = (parseFloat(totalSplitAmount) + parseFloat(splitAmountModels.value[i]));
+      isPaymentFrequencyNotSelected.value = false;
+      // Check if payment frequency is selected
+      if (paymentMethodsForm.frequency === '') {
+        isPaymentFrequencyNotSelected.value = true;
+        issueFound = true;
+      }
+      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+        totalSplitAmount = (parseFloat(totalSplitAmount) + parseFloat(splitAmountModels.value[i]));       
         const validationResult = rules.notEmptyOrZero(paymentMethodsModels.value[i]);
         isPaymentMetodNotSelected.value[i] = false;
         if (validationResult !== true) {
@@ -437,14 +447,21 @@ const getPaymentTypeLabel = code => {
 };
 
 // Define payment collection types
-const collectionTypes = paymentLookups.paymentCollectionTypes.map(item => ({
-  value: item.code,  label: item.text,  tooltip: item.description,
-}));
+const collectionTypes = computed(() => {  
+  if( paymentMethodsForm.status != 'view' && !isBrokerHavePermission()) {   
+      return paymentLookups.paymentCollectionTypes .filter(item => item.code !== 'broker').map(item => ({
+        value: item.code,  label: item.text,  tooltip: item.description,
+      }));
+  }  
+  return paymentLookups.paymentCollectionTypes.map(item => ({
+    value: item.code,  label: item.text,  tooltip: item.description,
+  }));
+});
 
 // Define frequency types
-const frequencyTypes = paymentLookups.paymentFrequencyTypes.map(item => ({
+const frequencyTypes = ref(paymentLookups.paymentFrequencyTypes.map(item => ({
   value: item.code,  label: item.text,  tooltip: item.description,
-}));
+})));
 
 // Define payment decline reasons
 const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
@@ -575,6 +592,7 @@ const handleCollectionTypeChange = () => {
     );
     paymentMethodsModels.value[1] = '';
   }
+  applyPermissions();
 };
 
 const handlePaymentTypes = count => {
@@ -942,8 +960,9 @@ const formatAmount = amount => {
 
 const handleFrequencyChange = (noPaymentUpdate = true) => {
   var resetPaymentMethod = false;
-  totalPayments.value = [];
-  if (paymentMethodsForm.status === 'create') {
+  isPaymentFrequencyNotSelected.value = false;
+  totalPayments.value = []; 
+  if ( paymentMethodsForm.status === 'create' ) {
     paymentMethodsForm.credit_approval = '';
   }
 
@@ -1044,6 +1063,15 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
       });
     }
   }
+};
+// Function to verify if the broker has permission to add payment
+const isBrokerHavePermission = () => {
+  const hasPermissionToBroker = can(permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD);
+  const hasPermissionToTermFrequencies = can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD);      
+  if(!hasPermissionToBroker && !hasPermissionToTermFrequencies){
+    return false;
+  }
+  return true;
 };
 
 const isProformaPaymentRequestExportable = (payment, documents) => {
@@ -1218,14 +1246,10 @@ const addPaymentModal = () => {
     return;
   }
 
-  if (
-    props.quoteType === 'Health' ||
-    props.quoteSubType === 'Group Medical' ||
-    props.quoteType === 'Life' ||
-    props.quoteType === 'Marine'
-  ) {
+  if( props.quoteType === 'Health' || props.quoteSubType === 'Group Medical' || 
+      props.quoteType === 'Life' || props.quoteType === 'Marine' || !isBrokerHavePermission() ){
     paymentMethodsForm.collection_type = 'insurer';
-  } else {
+  } else {    
     paymentMethodsForm.collection_type = 'broker';
   }
 
@@ -1246,6 +1270,7 @@ const addPaymentModal = () => {
   paymentMethodsForm.payment_no = '1';
   handleCollectionTypeChange();
   calculatePaymentBreakup();
+  applyPermissions();
 };
 
 const editPaymentModal = (
@@ -1366,7 +1391,7 @@ const editPaymentModal = (
   handleDiscountChange();
   handleDeclinedReasonChange();
   calculateTotalAmount();
-
+  applyPermissions();
   var isAnyPaid = false;
 
   const paidStatusIds = [
@@ -1713,6 +1738,7 @@ const addPayment = isValid => {
       is_approved: isApproveClicked.value,
       declined_reason: paymentMethodsForm.declined_reason,
       declined_custom_reason: declinedCustomReason,
+      collection_type: paymentMethodsForm.collection_type,       
     };
     paymentMethodsForm
       .transform(data => viewData)
@@ -1748,6 +1774,7 @@ const addPayment = isValid => {
       declined_reason: paymentMethodsForm.declined_reason,
       approved_document_model: approvedDocumentModel.value,
       declined_custom_reason: declinedCustomReason,
+      collection_type: paymentMethodsForm.collection_type,     
     };
     paymentMethodsForm
       .transform(data => viewData)
@@ -1812,6 +1839,70 @@ const addPayment = isValid => {
         });
       },
     });
+};
+
+const applyPermissions = () => {
+  
+  frequencyTypes.value = paymentLookups.paymentFrequencyTypes.map(item => ({
+    value: item.code,  label: item.text,  tooltip: item.description,
+  }));
+  if (paymentMethodsForm.status === 'create' && paymentMethodsForm.frequency === '') {
+      paymentMethodsForm.frequency = '';      
+  }
+  //PAYMENTS-DISCOUNT-ADD
+  can(permissionEnum.PAYMENTS_DISCOUNT_ADD) ? isDiscountAllowed.value = true : isDiscountAllowed.value = false; 
+  
+  //PAYMENTS-CREDIT-APPROVAL-ADD
+  can(permissionEnum.PAYMENTS_CREDIT_APPROVAL_ADD) ? isCreditApprovalAllowed.value = true : isCreditApprovalAllowed.value = false; 
+  
+  //Set permission for broker
+  if (paymentMethodsForm.collection_type === 'broker') {
+      //PAYMENTS-FREQUENCY-UPRONT-SPLIT-COLLECTED-BY-BROKER-ADD
+      const hasPermissionToBroker = can(permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD);
+      const hasPermissionToTermFrequencies = can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD);
+      if (!hasPermissionToBroker) {
+        frequencyTypes.value = frequencyTypes.value.filter(item => item.value !== 'upfront' && item.value !== 'split_payments');
+      } else if (paymentMethodsForm.status === 'create' && paymentMethodsForm.frequency === '') {
+          paymentMethodsForm.frequency = 'upfront';
+      }
+      
+      if (!hasPermissionToTermFrequencies) {
+        frequencyTypes.value = frequencyTypes.value.filter(
+          item => 
+            item.value !== 'custom' &&
+            item.value !== 'monthly' &&
+            item.value !== 'quarterly' &&
+            item.value !== 'semi_annual'
+          );
+      }
+    // Set verification allowed if the payment is in view mode and the user has the permission 
+    isVerificationAllowed.value = false;
+    if (paymentMethodsForm.status === 'view' && can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_BROKER)) {
+      isVerificationAllowed.value = true;
+    }
+  }
+  
+  // Set permission for insurer
+  if(paymentMethodsForm.collection_type === 'insurer' ){
+    
+    if (!can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD)){
+      frequencyTypes.value = frequencyTypes.value.filter(
+      item => 
+        item.value !== 'custom' &&
+        item.value !== 'monthly' &&
+        item.value !== 'quarterly' &&
+        item.value !== 'semi_annual'
+      );
+    }
+    if (paymentMethodsForm.status === 'create'  && paymentMethodsForm.frequency === '') {
+      paymentMethodsForm.frequency = 'upfront';
+    }
+    // Set verification allowed if the payment is in view mode and the user has the permission
+    isVerificationAllowed.value = false;
+    if (paymentMethodsForm.status === 'view' && can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_INSURER)) {
+      isVerificationAllowed.value = true;
+    }    
+  } 
 };
 
 const documentForm = useForm({
@@ -2566,21 +2657,9 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                         >
                           Capture
                         </x-button>
-                        <x-button
-                          v-if="
-                            getCaptureOption(item) === 'approve' &&
-                            getCaptureValidation(item)
-                          "
-                          size="xs"
-                          color="orange"
-                          outlined
-                          @click="
-                            getCaptureValidation(item)
-                              ? editPaymentModal(item, 0, 0, 2)
-                              : alertCapture(item)
-                          "
-                        >
-                          Approve
+                        <x-button v-if="getCaptureOption(item)==='approve' && getCaptureValidation(item) && isVerificationAllowed" size="xs" color="orange" outlined 
+                        @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 2) : alertCapture(item)">
+                            Approve
                         </x-button>
                       </template>
                     </div>
@@ -2796,18 +2875,18 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 }}
               </span>
               <select
-                v-if="!isFieldReadonly"
-                class="custom-select"
-                v-model="paymentMethodsForm.frequency"
-                :rules="[rules.isRequired]"
-                @change="handleFrequencyChange"
-              >
-                <template v-for="option in frequencyTypes" :key="option.value">
-                  <option :value="option.value" :title="option.tooltip">
-                    {{ option.label }}
-                  </option>
-                </template>
+                  v-if="!isFieldReadonly"
+                  :class="{'custom-select-error': isPaymentFrequencyNotSelected}"
+                  class="custom-select"
+                  v-model="paymentMethodsForm.frequency"
+                  :rules="[rules.isRequired]"
+                  @change="handleFrequencyChange"
+                  >
+                  <template v-for="option in frequencyTypes" :key="option.value">
+                      <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
+                  </template>
               </select>
+              <p v-if="isPaymentFrequencyNotSelected" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
             </x-field>
           </div>
 
@@ -2884,19 +2963,12 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
             </x-field>
           </div>
 
-          <div>
+          <div v-if="isCreditApprovalAllowed && !isFieldReadonly">
             <ToolTip
               title="CREDIT APPROVAL"
               :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"
             />
-            <x-field class="w-full">
-              <span v-if="isFieldReadonly">
-                {{
-                  creditApprovalReasons.find(
-                    item => item.value === paymentMethodsForm.credit_approval,
-                  )?.label || 'N/A'
-                }}
-              </span>
+            <x-field class="w-full">              
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span
                   v-if="paymentMethodsForm.credit_approval != ''"
@@ -2923,39 +2995,37 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
               </div>
             </x-field>
           </div>
-
-          <x-field
-            v-if="isCustomReasonEnabled"
-            label="CUSTOM REASON"
-            required
-            class="w-full"
-          >
-            <span v-if="isFieldReadonly">{{
-              paymentMethodsForm.custom_reason
-            }}</span>
-            <x-input
-              v-if="!isFieldReadonly"
-              class="w-full"
-              v-model="paymentMethodsForm.custom_reason"
-              :rules="[rules.isRequired]"
+          <div v-if="isFieldReadonly">
+            <ToolTip
+              title="CREDIT APPROVAL"
+              :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"              
             />
+            <x-field class="w-full">
+              <span v-if="isFieldReadonly">                
+                {{  creditApprovalReasons.find(item => item.value === paymentMethodsForm.credit_approval)?.label || 'N/A' }}
+              </span>              
+            </x-field>
+          </div>
+          <x-field v-if="isCustomReasonEnabled && isCreditApprovalAllowed && !isFieldReadonly" label="CUSTOM REASON" required class="w-full">
+              <x-input                
+                class="w-full"
+                v-model="paymentMethodsForm.custom_reason"
+                :rules="[rules.isRequired]"                
+              />
+          </x-field>          
+          <x-field v-if="isCustomReasonEnabled && isFieldReadonly" label="CUSTOM REASON" class="w-full">
+            <span v-if="isFieldReadonly">{{ paymentMethodsForm.custom_reason }}</span>            
           </x-field>
-          <div v-if="showDiscountOptions">
+          <div v-if="showDiscountOptions && isDiscountAllowed && !isFieldReadonly">
             <x-tooltip>
               <span class="border-b-2 border-dotted border-black text-sm"
                 >DISCOUNT APPLICABLE (DISCOUNT TYPE)</span
               >
               <template #tooltip>
-                <span v-if="isFieldReadonly">{{
-                  paymentTooltipEnum.DISCOUNT_APPLICABLE_VIEW
-                }}</span>
-                <span v-else>{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
+                  <span >{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
               </template>
             </x-tooltip>
             <x-field class="w-full">
-              <span v-if="isFieldReadonly">
-                {{ discountTypeLabel }}
-              </span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span
                   v-if="paymentMethodsForm.discount != ''"
@@ -2978,8 +3048,21 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
               </div>
             </x-field>
           </div>
-
-          <div v-if="isDiscountReasonEnabled" class="">
+          <div v-if="showDiscountOptions && isFieldReadonly">
+            <x-tooltip>
+              <span class="border-b-2 border-dotted border-black text-sm">DISCOUNT APPLICABLE (DISCOUNT TYPE)</span> 
+              <template #tooltip>
+                  <span v-if="isFieldReadonly">{{ paymentTooltipEnum.DISCOUNT_APPLICABLE_VIEW }}</span>                  
+              </template>
+            </x-tooltip>            
+            <x-field class="w-full">
+            <span v-if="isFieldReadonly">              
+              {{ discountTypes.find(item => item.value === paymentMethodsForm.discount)?.label  || 'N/A'}}          
+            </span>
+          </x-field>            
+          </div>
+          
+          <div v-if="isDiscountReasonEnabled && isDiscountAllowed && !isFieldReadonly" class="">
             <ToolTip
               title="DISCOUNT REASON"
               :tooltip="
@@ -2990,15 +3073,8 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                   : paymentTooltipEnum.DISCOUNT_REASON
               "
               :required="!isFieldReadonly"
-            />
-            <x-field class="w-full">
-              <span v-if="isFieldReadonly">
-                {{
-                  discountReasons.find(
-                    item => item.value === paymentMethodsForm.discount_reason,
-                  ).label
-                }}
-              </span>
+            />          
+            <x-field class="w-full">              
               <select
                 v-if="!isFieldReadonly"
                 :class="{ 'custom-select-error': isDiscountReasonError }"
@@ -3021,15 +3097,21 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
               </p>
             </x-field>
           </div>
-          <x-field
-            v-if="isCustomDiscountReasonEnabled"
-            label="CUSTOM DISCOUNT REASON"
-            :required="!isFieldReadonly"
-            class="w-full"
-          >
-            <span v-if="isFieldReadonly">{{
-              paymentMethodsForm.discount_custom_reason
-            }}</span>
+          <div v-if="isDiscountReasonEnabled && isFieldReadonly" class="">
+            <ToolTip
+               title="DISCOUNT REASON"
+              :tooltip="(isFieldReadonly)? discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).tooltip: paymentTooltipEnum.DISCOUNT_REASON"
+              :required="!isFieldReadonly"
+            />          
+            <x-field class="w-full">
+              <span v-if="isFieldReadonly">                 
+                {{ discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).label }}
+              </span>              
+            </x-field>
+          </div>
+
+          <x-field v-if="isCustomDiscountReasonEnabled && isDiscountAllowed && !isFieldReadonly" label="CUSTOM DISCOUNT REASON" :required="!isFieldReadonly" class="w-full">
+            <span v-if="isFieldReadonly">{{ paymentMethodsForm.discount_custom_reason }}</span>
             <x-input
               v-if="!isFieldReadonly"
               class="w-full"
@@ -3037,17 +3119,14 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
               :rules="[rules.isRequired]"
             />
           </x-field>
-          <div
-            v-if="isDiscountEnabled && paymentMethodsForm.discount != 'N/A'"
-            class=""
-          >
+          <x-field v-if="isCustomDiscountReasonEnabled && isFieldReadonly" label="CUSTOM DISCOUNT REASON" :required="!isFieldReadonly" class="w-full">
+            <span v-if="isFieldReadonly">{{ paymentMethodsForm.discount_custom_reason }}</span>            
+          </x-field>
+
+          <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A' && isDiscountAllowed && !isFieldReadonly" class="">
             <ToolTip
-              title="DISCOUNT PROOF"
-              :tooltip="
-                isFieldReadonly
-                  ? paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_VIEW
-                  : paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_TITLE
-              "
+               title="DISCOUNT PROOF"
+              :tooltip="paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_TITLE"
               :required="!isFieldReadonly"
             />
             <x-field v-if="!isFieldReadonly" class="w-full">
@@ -3108,50 +3187,85 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
               </span>
             </div>
           </div>
-          <div v-if="isDiscountEnabled && paymentMethodsForm.discount != 'N/A'">
+
+          <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A' && isFieldReadonly" class="">
             <ToolTip
-              title="DISCOUNT VALUE"
-              :tooltip="paymentTooltipEnum.DISCOUNT_VALUE"
-              class="w-3/6"
+               title="DISCOUNT PROOF"
+              :tooltip="paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_VIEW"
               :required="!isFieldReadonly"
             />
-            <x-field class="w-full">
-              <span v-if="isFieldReadonly">
-                {{ formatAmount(discountValue) }}
+            <div v-for="fileData in discountDocumentModel[0]" :key="fileData.id">
+              <span style="display: flex; align-items: center;">                        
+              <span 
+                  :key="fileData.id"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  style="flex: 1; text-decoration: none; cursor: pointer;"
+                  @click="openInnerModal(fileData.id)"
+                >
+                  {{ fileData.original_name }}
+              </span>                
               </span>
-              <x-input
-                v-if="!isFieldReadonly"
-                class="w-full"
-                :class="{ 'custom-select-error': isDiscountError }"
-                v-model="discountValue"
-                name="discount_value"
-                @keyup="calculateTotalAmount()"
-              />
-              <sup
-                v-if="isDiscountError"
-                class="text-sm text-red-500 dark:text-red-400"
-                >{{ discountError }}</sup
-              >
-            </x-field>
+            </div>
           </div>
 
-          <div v-if="isDiscountEnabled && paymentMethodsForm.discount != 'N/A'">
-            <ToolTip
-              title="TOTAL AMOUNT"
-              :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"
-            />
-            <x-field class="w-full">
-              <span v-if="isFieldReadonly">
-                {{ formatAmount(totalAmount) }}
-              </span>
-              <x-input
-                v-if="!isFieldReadonly"
-                class="w-full"
-                :value="formatAmount(totalAmount)"
-                :disabled="true"
+            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A' && isDiscountAllowed && !isFieldReadonly">             
+              <ToolTip
+                  title="DISCOUNT VALUE"
+                  :tooltip="paymentTooltipEnum.DISCOUNT_VALUE"
+                  class="w-3/6"
+                  :required="!isFieldReadonly"                
+                />                            
+              <x-field class="w-full">                
+                <x-input
+                    v-if="!isFieldReadonly"                  
+                    class="w-full"
+                    :class="{'custom-select-error': isDiscountError}"
+                    v-model="discountValue"
+                    name="discount_value"                    
+                    @keyup="calculateTotalAmount()"                   
+                />                
+                <sup v-if="isDiscountError" class="text-sm text-red-500 dark:text-red-400">{{ discountError }}</sup>
+              </x-field>
+            </div>
+            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A' && isFieldReadonly">             
+              <ToolTip
+                  title="DISCOUNT VALUE"
+                  :tooltip="paymentTooltipEnum.DISCOUNT_VALUE"
+                  class="w-3/6"
+                  :required="!isFieldReadonly"                
+                />                            
+              <x-field class="w-full">
+                <span v-if="isFieldReadonly">                  
+                  {{ formatAmount(discountValue) }}
+                </span>                
+              </x-field>
+            </div>            
+            
+            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A' && isDiscountAllowed && !isFieldReadonly">            
+              <ToolTip
+                title="TOTAL AMOUNT"
+                :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"                
               />
-            </x-field>
-          </div>
+              <x-field class="w-full">                
+                <x-input
+                    v-if="!isFieldReadonly"
+                    class="w-full"
+                    :value="formatAmount(totalAmount)"
+                    :disabled="true"
+                  />
+              </x-field>
+            </div>
+            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A' && isFieldReadonly">            
+              <ToolTip
+                title="TOTAL AMOUNT"
+                :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"                
+              />
+              <x-field class="w-full">
+                <span v-if="isFieldReadonly">                  
+                  {{ formatAmount(totalAmount)}}            
+                </span>                
+              </x-field>
+            </div>          
         </div>
         <x-divider class="mb-4 mt-10" />
 
@@ -4010,54 +4124,22 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                 >
                   Cancel
                 </x-button>
+              </div>            
+              <div v-if="((!isApproveClicked && !isDeclineClicked) || (isCreditApprovalView && !isDeclineClicked)) && isVerificationAllowed" class="mr-4">
+                <x-button v-if="!isProformaPaymentRequest" size="sm"  @click="handleDeclinedChange" tabindex="0" class="focus:outline-black">
+                  Decline
+                </x-button>
               </div>
-              <div
-                v-if="
-                  (!isApproveClicked && !isDeclineClicked) ||
-                  (isCreditApprovalView && !isDeclineClicked)
-                "
-                class="mr-4"
-              >
-                <x-button
-                  v-if="!isProformaPaymentRequest"
-                  size="sm"
-                  @click="handleDeclinedChange"
-                  tabindex="0"
-                  class="focus:outline-black"
+              <div v-if="!isApproveClicked && isDeclineClicked && isVerificationAllowed" class="mr-4">
+                <x-button size="sm"  type="submit" tabindex="0" class="focus:outline-black" 
+                :loading = "paymentMethodsForm.processing"
                 >
                   Decline
                 </x-button>
               </div>
-              <div v-if="!isApproveClicked && isDeclineClicked" class="mr-4">
-                <x-button
-                  size="sm"
-                  type="submit"
-                  tabindex="0"
-                  class="focus:outline-black"
-                  :loading="paymentMethodsForm.processing"
-                >
-                  Decline
-                </x-button>
-              </div>
-              <div
-                v-if="
-                  !isDeclineClicked &&
-                  (paymentMethodsModels[splitPaymentNo] != 'CC' ||
-                    isCreditApprovalView)
-                "
-              >
-                <x-button
-                  v-if="
-                    !isApproveClicked &&
-                    isViewEnabled &&
-                    !isProformaPaymentRequest
-                  "
-                  class="mr-2 focus:outline-black"
-                  size="sm"
-                  color="#ff5e00"
-                  @click="isApproveClicked = !isApproveClicked"
-                  tabindex="0"
-                >
+              <div v-if="!isDeclineClicked && (paymentMethodsModels[splitPaymentNo]!='CC' || isCreditApprovalView)">
+                <x-button v-if="!isApproveClicked && isViewEnabled && isVerificationAllowed &&
+                    !isProformaPaymentRequest" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked" tabindex="0">
                   Approve
                 </x-button>
                 <x-button
@@ -4073,7 +4155,10 @@ watch(() => page.props?.bookPolicyDetails?.isLackingOfPayment, (newVal) => {
                   :loading="paymentMethodsForm.processing"
                 >
                   <template v-if="isCreditApprovalView && isCreditCardView">
-                    Capture
+                  Capture
+                  </template>
+                  <template v-else-if="isVerificationAllowed">
+                  Approve
                   </template>
                   <template v-else> Approve </template>
                 </x-button>

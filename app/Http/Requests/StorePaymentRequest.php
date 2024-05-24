@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Enums\PermissionsEnum;
+use Illuminate\Support\Facades\Auth;
 
 class StorePaymentRequest extends FormRequest
 {
@@ -63,6 +65,14 @@ class StorePaymentRequest extends FormRequest
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
             if (! $quoteModel) {
                 $validator->errors()->add('value', 'Quote Not Exists');
+            }
+            // check if the user is authorized to apply discount
+            if( request()->input('payment.discount_value')>0 && auth()->user()->cannot(PermissionsEnum::PAYMENTS_DISCOUNT_ADD)) {
+                $validator->errors()->add('value', 'Not Authorized to Add Discount');
+            }
+            // check if the user is authorized to apply credit approval
+            if( request()->input('payment.credit_approval')!='' && auth()->user()->cannot(PermissionsEnum::PAYMENTS_CREDIT_APPROVAL_ADD)) {
+                $validator->errors()->add('value', 'Not Authorized to Add Credit Approval');
             }
         });
     }
