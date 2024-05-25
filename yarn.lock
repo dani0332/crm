@@ -525,17 +525,10 @@
     "@vueuse/shared" "10.9.0"
     vue-demi ">=0.14.7"
 
-"@vueuse/metadata@10.7.2":
-  version "10.7.2"
-  resolved "https://registry.yarnpkg.com/@vueuse/metadata/-/metadata-10.7.2.tgz#ba0187ce138c287fd80301afc5b0d6a97e563633"
-  integrity sha512-kCWPb4J2KGrwLtn1eJwaJD742u1k5h6v/St5wFe8Quih90+k2a0JP8BS4Zp34XUuJqS2AxFYMb1wjUL8HfhWsQ==
-
-"@vueuse/shared@10.7.2":
-  version "10.7.2"
-  resolved "https://registry.yarnpkg.com/@vueuse/shared/-/shared-10.7.2.tgz#746441fbc08072371dd600a55883422c83fd0cab"
-  integrity sha512-qFbXoxS44pi2FkgFjPvF4h7c9oMDutpyBdcJdMYIMg9XyXli2meFMuaKn+UMgsClo//Th6+beeCgqweT/79BVA==
-  dependencies:
-    vue-demi ">=0.14.6"
+"@vueuse/metadata@10.9.0":
+  version "10.9.0"
+  resolved "https://registry.yarnpkg.com/@vueuse/metadata/-/metadata-10.9.0.tgz#769a1a9db65daac15cf98084cbf7819ed3758620"
+  integrity sha512-iddNbg3yZM0X7qFY2sAotomgdHK7YJ6sKUvQqbvwnf7TmaVPxS4EJydcNsVejNdS8iWCtDk+fYXr7E32nyTnGA==
 
 "@vueuse/shared@10.9.0":
   version "10.9.0"
@@ -2716,7 +2709,7 @@ vite@^5.0.12:
   optionalDependencies:
     fsevents "~2.3.3"
 
-vue-demi@>=0.14.6, vue-demi@>=0.14.7:
+vue-demi@>=0.14.7:
   version "0.14.7"
   resolved "https://registry.yarnpkg.com/vue-demi/-/vue-demi-0.14.7.tgz#8317536b3ef74c5b09f268f7782e70194567d8f2"
   integrity sha512-EOG8KXDQNwkJILkx/gPcoL/7vH+hORoBaKgGe+6W7VFMvCYJfmF2dGbvgDroVnI8LU7/kTu8mbjRZGBU1z9NTA==

@@ -70,7 +70,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const AAI = 'AAI'; // Add additional insured
     const AOC = 'AOC'; // Addition of clauses, it's for bike and business lob
     const COA = 'COA'; // Change of address
-    const CAR_AOC = 'AOC'; // Add optional cover, it's for car lob
+    const AOCOV = 'AOCOV'; // Add optional cover, it's for car lob
     const COE = 'COE'; // Change of Emirate
     const CISC = 'CISC'; // Change in seating capacity
     const CISC_NFI = 'CISC(NFI'; // Change in seating capacity (with no financial impact)

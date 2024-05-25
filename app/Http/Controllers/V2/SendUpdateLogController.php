@@ -116,7 +116,7 @@ class SendUpdateLogController extends Controller
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
         if ($quoteType == quoteTypeCode::Car) {
-            if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::CAR_AOC, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
+            if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::AOCOV, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
                 $additionalField = $this->sendUpdateLogService->getAdditionalOptionsForCar($sendUpdateLog);
             }
         }

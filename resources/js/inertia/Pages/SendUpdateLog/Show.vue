@@ -366,8 +366,8 @@ const onKeyPress = (event) => {
               </dd> -->
             </template>
           </div>
-        <div class="grid sm:grid-cols-2">
-              <template v-if="props.additionalField && selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.AOC">
+          <div class="grid sm:grid-cols-2">
+              <template v-if="props.additionalField && selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.AOCOV">
                 <dt>
                   <label
                       class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
@@ -440,8 +440,9 @@ const onKeyPress = (event) => {
             class="mr-3"
             :loading="sendUpdateForm.processing"
             :disabled="sendUpdateForm.processing"
-            >Cancel</x-button
           >
+            Cancel
+          </x-button>
           <x-button
             size="sm"
             color="primary"
