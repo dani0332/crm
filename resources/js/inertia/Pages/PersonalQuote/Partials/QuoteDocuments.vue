@@ -40,7 +40,6 @@ const memberTabs = ref('quote-documents');
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-const leadSource = page.props.leadSource;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -113,17 +112,17 @@ const docForm = useForm({
   send_update_id: props.extras.sendLogId || null,
 });
 
-const uploadFile = (doc, filesWithInfo) => {
-  let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-  const { files, rejectReason } = filesWithInfo;
-  if (files.length == 0) {
-    notification.error({
-      title: 'File upload failed',
-      position: 'top',
-    });
-    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
-    return false;
-  }
+const uploadFile = (doc, filesWithInfo, memberId) => {
+    let url = '/personal-quotes/' + docForm.quote_id + '/documents';
+    const { files, rejectReason} = filesWithInfo;
+    if (files.length == 0) {
+          notification.error({
+              title: 'File upload failed',
+              position: 'top',
+          });
+        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+        return false
+    };
   isUploading.value = true;
   docForm
     .transform(data => ({

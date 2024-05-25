@@ -775,7 +775,7 @@ class SendUpdateLogService
         switch ($sendUpdateLog->category->code) {
             case SendUpdateLogStatusEnum::EF:
                 switch ($sendUpdateLog->option->code) {
-                    case SendUpdateLogStatusEnum::CAR_AOC:
+                    case SendUpdateLogStatusEnum::AOCOV:
                         $data = $this->getCarAddons($sendUpdateLog->quote_uuid);
                         break;
                     case SendUpdateLogStatusEnum::COE:
