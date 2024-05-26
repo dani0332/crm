@@ -65,7 +65,6 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 
-
 const countDays = useDaysSinceStale(
   props.quoteRequest?.stale_at ?? props.quote?.stale_at,
 );
@@ -329,7 +328,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           <x-divider class="my-4" />
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div
                   class="grid sm:grid-cols-2"
@@ -371,12 +370,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
-            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.created_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
-            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -420,7 +419,10 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                   </Link>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -428,7 +430,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </div>
                 <div>
@@ -457,26 +464,28 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             <x-divider class="mb-4 mt-1" />
           </div>
 
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BOAT DETAILS</dt>
-            <dd class="break-words">{{ quote?.yacht_quote?.boat_details }}</dd>
-          </div>
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BOAT DETAILS</dt>
+                <dd class="break-words">
+                  {{ quote?.yacht_quote?.boat_details }}
+                </dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ENGINE DETAILS</dt>
-            <dd class="break-words">
-              {{ quote?.yacht_quote?.engine_details }}
-            </dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ENGINE DETAILS</dt>
+                <dd class="break-words">
+                  {{ quote?.yacht_quote?.engine_details }}
+                </dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CLAIM EXPERIENCE</dt>
-            <dd class="break-words">
-              {{ quote?.yacht_quote?.claim_experience }}
-            </dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CLAIM EXPERIENCE</dt>
+                <dd class="break-words">
+                  {{ quote?.yacht_quote?.claim_experience }}
+                </dd>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUM INSURED</dt>
@@ -526,7 +535,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -610,7 +619,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -858,19 +867,36 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :payments="quote.payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
-            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="documentTypes.filter(item => item.code === 'YPD' || item.code === 'YPDR' || item.code === 'YDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :proformaPayment="
+        quote.payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'YPD' ||
+            item.code === 'YPDR' ||
+            item.code === 'YDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
 
     <QuotePayments
       v-else

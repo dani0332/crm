@@ -353,7 +353,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         </div>
       </x-form>
     </x-modal>
-    
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -959,7 +959,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteType="quoteType"
       :payments="quote.payments"
       :proformaPayment="
-        quote.payments.find(item => item.payment_methods_code === 'PPR')
+        quote.payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
       "
       :paymentDocument="
         documentTypes.filter(
@@ -980,7 +984,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
     <QuotePayments
       v-else
       :can="can"

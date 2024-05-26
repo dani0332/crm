@@ -114,9 +114,11 @@ const transactionPaymentStatus = computed(() => {
   }
 });
 const bpForm = useForm({
-  booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
-  currentDateTime.value,
-  transaction_payment_status: page.props.bookPolicyDetails.transactionPaymentStatus,
+  booking_date:
+    dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
+    currentDateTime.value,
+  transaction_payment_status:
+    page.props.bookPolicyDetails.transactionPaymentStatus,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
   invoice_description: page.props.bookPolicyDetails.invoiceDescription || '',
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
@@ -135,14 +137,20 @@ const bpForm = useForm({
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
   modelType: props.modelType,
-  transaction_payment_status_tool_tip: page.props.bookPolicyDetails.paymentStatusTooltip
+  transaction_payment_status_tool_tip:
+    page.props.bookPolicyDetails.paymentStatusTooltip,
 });
 
-let is_lacking_payment = ref(page.props.bookPolicyDetails.isLackingOfPayment || false);
+let is_lacking_payment = ref(
+  page.props.bookPolicyDetails.isLackingOfPayment || false,
+);
 
-watch(() => page.props.bookPolicyDetails.isLackingOfPayment, (newVal) => {
-  is_lacking_payment.value = newVal || false;
-});
+watch(
+  () => page.props.bookPolicyDetails.isLackingOfPayment,
+  newVal => {
+    is_lacking_payment.value = newVal || false;
+  },
+);
 
 const onUpdatebookPolicyDetails = isValid => {
   showInsufficientPaymentAlert();
@@ -177,14 +185,14 @@ const isAllowedToSendPolicy = ref(false);
 const modals = reactive({
   sendPolicyConfirm: false,
   isConfirmed: false,
-  sendPolicyPopup: false
+  sendPolicyPopup: false,
 });
 
 const confirmSendPolicy = () => {
-  if (page.props.bookPolicyDetails.isInsufficientPayment){
-      modals.sendPolicyPopup = true;
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
+    modals.sendPolicyPopup = true;
   } else {
-      modals.sendPolicyConfirm = true;
+    modals.sendPolicyConfirm = true;
   }
 };
 
@@ -322,7 +330,7 @@ const showSendAndBookPolicyButton = computed(() => {
   );
 });
 const showActionButtons = computed(() => {
-  //Show Action Buttons only when policy is not cancelled or there are no child leads
+  // Hide buttons only when policy is cancelled and have a chilrd lead
   return (
     props.quote.quote_status_id != page.props.quoteStatusEnum.PolicyCancelled ||
     page.props.linkedQuoteDetails.childLeadsCount == 0
@@ -330,36 +338,39 @@ const showActionButtons = computed(() => {
 });
 
 // Watch for changes in paymentMethodsForm.collection_date
-watch(() => page.props.bookPolicyDetails.transactionPaymentStatus, (newValue, oldValue) => {
-  if (newValue && oldValue) {
-    bpForm.transaction_payment_status_tool_tip= props.bookPolicyDetails.paymentStatusTooltip;
-    bpForm.transaction_payment_status= props.bookPolicyDetails.transactionPaymentStatus;
-  }
-});
+watch(
+  () => page.props.bookPolicyDetails.transactionPaymentStatus,
+  (newValue, oldValue) => {
+    if (newValue && oldValue) {
+      bpForm.transaction_payment_status_tool_tip =
+        props.bookPolicyDetails.paymentStatusTooltip;
+      bpForm.transaction_payment_status =
+        props.bookPolicyDetails.transactionPaymentStatus;
+    }
+  },
+);
 
 const sendPolicyConfirmation = () => {
-  if (page.props.bookPolicyDetails.isInsufficientPayment){
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
     isAllowedToSendPolicy.value = true;
   }
   modals.sendPolicyPopup = false;
   modals.sendPolicyConfirm = true;
-}
+};
 
 const getPayment = () => {
   return page.props?.payments[0] ?? null;
-}
+};
 
 const showInsufficientPaymentAlert = () => {
   if (page.props.bookPolicyDetails.isInsufficientPayment) {
     notification.error({
       title: 'Insufficient payment',
       position: 'top',
-      timeout: 30000
+      timeout: 30000,
     });
   }
-}
-
-
+};
 </script>
 
 <template>
@@ -427,9 +438,9 @@ const showInsufficientPaymentAlert = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>
-                  <label
-                    class="border-b-2 border-dotted border-black uppercase"
-                    >Transaction Payment Status</label>
+                  <label class="border-b-2 border-dotted border-black uppercase"
+                    >Transaction Payment Status</label
+                  >
                   <template #tooltip>
                     <span class="custom-tooltip-content">{{
                       productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
@@ -447,9 +458,7 @@ const showInsufficientPaymentAlert = () => {
                       {{ bpForm.transaction_payment_status }}
                     </dd>
                     <template #tooltip>
-                      {{
-                        bpForm.transaction_payment_status_tool_tip
-                      }}</template
+                      {{ bpForm.transaction_payment_status_tool_tip }}</template
                     >
                   </x-tooltip>
                 </template>
@@ -744,7 +753,8 @@ const showInsufficientPaymentAlert = () => {
                     </x-button>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
-                        Action Needed: Please revise payment details to reflect plan changes.
+                        Action Needed: Please revise payment details to reflect
+                        plan changes.
                       </span>
                     </template>
                   </x-tooltip>
@@ -755,9 +765,7 @@ const showInsufficientPaymentAlert = () => {
                     color="orange"
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
-                    :disabled="
-                      bp.isEditing || is_lacking_payment
-                    "
+                    :disabled="bp.isEditing || is_lacking_payment"
                     v-if="
                       props.bookPolicyDetails?.sendButton &&
                       canAny([
@@ -769,7 +777,7 @@ const showInsufficientPaymentAlert = () => {
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
                 </template>
-            </template>
+              </template>
 
               <template
                 v-else-if="
@@ -884,15 +892,13 @@ const showInsufficientPaymentAlert = () => {
                           !can(permissionsEnum.BOOK_POLICY_BUTTON)
                         "
                       >
-                        Sending Policy To Customer
+                        Book Policy
                       </x-button>
                       <template #tooltip>
-                        <span>{{
-                          'The button is not accessible because policy has been sent to customer'
-                        }}</span>
+                        <span>{{ 'Please update the booking details.' }}</span>
                       </template>
-                    </x-tooltip></template
-                  >
+                    </x-tooltip>
+                  </template>
                 </template>
               </template>
             </div>
@@ -912,12 +918,12 @@ const showInsufficientPaymentAlert = () => {
         Please be aware that your current action involves sending the policy to
         the customer only.
       </x-alert>
-      <div class="flex items-center" >
+      <div class="flex items-center">
         <x-checkbox v-model="modals.isConfirmed" />
-          <div class="ml-2">
-            <p>I confirm and attest that all the information is correct.</p>
-            <p>I confirm I am in compliance with the COC.</p>
-          </div>
+        <div class="ml-2">
+          <p>I confirm and attest that all the information is correct.</p>
+          <p>I confirm I am in compliance with the COC.</p>
+        </div>
       </div>
       <template #actions>
         <div class="text-right space-x-4">
@@ -943,11 +949,13 @@ const showInsufficientPaymentAlert = () => {
       </template>
     </x-modal>
     <x-modal v-model="modals.sendPolicyPopup" show-close backdrop>
-      <template #header>  Are you sure you want to continue? </template>
-       <div class="text-center">
-          <p class="font-semibold pt-3">{{  props.bookPolicyDetails.paymentStatusHeading  }}</p>
-          <p>{{  props.bookPolicyDetails.paymentStatusDescription  }}</p>
-       </div>
+      <template #header> Are you sure you want to continue? </template>
+      <div class="text-center">
+        <p class="font-semibold pt-3">
+          {{ props.bookPolicyDetails.paymentStatusHeading }}
+        </p>
+        <p>{{ props.bookPolicyDetails.paymentStatusDescription }}</p>
+      </div>
       <template #actions>
         <div class="text-center space-x-4">
           <x-button

@@ -99,7 +99,6 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
-
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
   id: page.props.record.plan_id,
@@ -511,7 +510,7 @@ const paymentItems = computed(() => {
 });
 
 const isRenewalUpload = computed(() => {
-    return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
+  return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
 });
 
 const leadStatusOptions = computed(() => {
@@ -1787,15 +1786,15 @@ watch(
                 allowedDuplicateLOB.length > 0
               "
             >
-            <x-button
-              v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
-              class="mr-2"
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openSendOCBConfirmNB"
-            >
-              Send NB OCB To Customer
-            </x-button>
+              <x-button
+                v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
+                class="mr-2"
+                size="sm"
+                color="#ff5e00"
+                @click.prevent="openSendOCBConfirmNB"
+              >
+                Send NB OCB To Customer
+              </x-button>
               <x-button
                 v-if="
                   !hasAnyRole([
@@ -2448,7 +2447,7 @@ watch(
       "
     />
 
-  <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -2764,7 +2763,7 @@ watch(
         </template>
       </Collapsible>
     </div>
-    
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -3466,7 +3465,11 @@ watch(
       quoteType="Car"
       :payments="payments"
       :proformaPayment="
-        payments.find(item => item.payment_methods_code === 'PPR')
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
       "
       :paymentDocument="
         page.props.documentTypes.filter(
@@ -3487,7 +3490,7 @@ watch(
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
     <PaymentTable
       v-else
       :payments="payments"

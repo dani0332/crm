@@ -1256,7 +1256,11 @@ watch(
       :quoteType="quoteType"
       :payments="payments"
       :proformaPayment="
-        payments.find(item => item.payment_methods_code === 'PPR')
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
       "
       :paymentDocument="
         page.props.documentTypes.filter(
@@ -1277,7 +1281,7 @@ watch(
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"

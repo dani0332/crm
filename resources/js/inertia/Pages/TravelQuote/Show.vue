@@ -457,8 +457,7 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id ==
-    quoteStatusEnum.TransactionApproved &&
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved &&
     page.props.permissions.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -565,33 +564,33 @@ const onTogglePlans = toggle => {
     }),
   ).value;
 
-    axios
-        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
-            modelType: 'Travel',
-            planIds: planIds,
-            quote_uuid: page.props.quote.uuid,
-            toggle: toggle,
-        })
-        .then(response => {
-          notification.success({
-              title: 'Plans has been updated',
-              position: 'top',
-          });
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+      modelType: 'Travel',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
       onLoadAvailablePlansData();
-            router.reload({
-                preserveScroll: true,
-            });
-        })
-        .catch(error => {
-            notification.error({
-                title: error,
-                position: 'top',
-            });
-        })
-        .finally(() => {
-            toggleLoader.value = false;
-            selectedPlans.value = [];
-        });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
 };
 
 const onExportPlans = () => {
@@ -1427,7 +1426,10 @@ watch(
                 </dt>
               </div>
 
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <dt>
                   <x-tooltip position="bottom">
                     <label
@@ -1435,7 +1437,12 @@ watch(
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </dt>
                 <dt class="font-medium">
@@ -1469,17 +1476,17 @@ watch(
                     quote.direction_code != null
                       ? quote.direction_code
                       : quote?.currently_located_in_id_text ==
-                          enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                        quote?.region_cover_for_id !=
-                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                      ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                      : quote?.destination_id_text ==
-                          enums.travelQuoteEnum
-                            .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                        quote?.region_cover_for_id ==
-                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                      ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                      : ''
+                            enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                          quote?.region_cover_for_id !=
+                            enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                        ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                        : quote?.destination_id_text ==
+                              enums.travelQuoteEnum
+                                .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                            quote?.region_cover_for_id ==
+                              enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                          ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                          : ''
                   }}
                 </dt>
               </div>
@@ -1587,10 +1594,10 @@ watch(
                     quote.coverage_code != null
                       ? quote.coverage_code
                       : quote.days_cover_for <= 92
-                      ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                      : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                        '/' +
-                        enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                        ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                        : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                          '/' +
+                          enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
                   }}
                 </dt>
               </div>
@@ -2204,8 +2211,7 @@ watch(
               >
                 <x-input
                   :disabled="
-                    quote.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved
+                    quote.quote_status_id == quoteStatusEnum.TransactionApproved
                   "
                   v-model="leadStatusForm.trans_code"
                   placeholder="TransApp Code is required"
@@ -2225,14 +2231,14 @@ watch(
                   :error="leadStatusForm.errors.lostReason"
                 />
               </x-field>
-          <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
+              <x-field label="Transaction Type">
+                <x-input
+                  type="text"
+                  :value="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
+              </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -2243,8 +2249,7 @@ watch(
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="
-                quote.quote_status_id ==
-                quoteStatusEnum.TransactionApproved
+                quote.quote_status_id == quoteStatusEnum.TransactionApproved
               "
             >
               Change Status
@@ -2269,7 +2274,7 @@ watch(
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium }}</dd>
+                <dd>{{ selectedProviderPlan.premium }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
@@ -2281,12 +2286,12 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
-          </div>
+                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -2324,7 +2329,7 @@ watch(
       </Collapsible>
     </div>
 
-     <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -2563,7 +2568,6 @@ watch(
       </Collapsible>
     </div>
 
-
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
@@ -2573,18 +2577,35 @@ watch(
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Travel"
-			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      quoteType="Travel"
+      :payments="payments"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :paymentDocument="
+        documentTypes.QUOTE.filter(
+          item =>
+            item.code === 'TPD' ||
+            item.code === 'TPDR' ||
+            item.code === 'TDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
 
     <PaymentTable
       v-else
@@ -2615,7 +2636,6 @@ watch(
       :expanded="sectionExpanded"
       :payments="payments"
     />
-
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2724,11 +2744,7 @@ watch(
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.docConfirm = false"
-          >
+          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
             Cancel
           </x-button>
           <x-button
