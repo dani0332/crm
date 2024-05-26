@@ -2134,7 +2134,7 @@ watch(
       </template>
     </x-modal>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -2324,158 +2324,7 @@ watch(
       </Collapsible>
     </div>
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      modelType="travel"
-      :expanded="sectionExpanded"
-    />
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Documents
-              <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="orange"
-            >
-              Upload Documents
-            </x-button>
-            <x-button
-              size="sm"
-              color="red"
-              v-if="
-                displaySendPolicyButton &&
-                permissions.notProductionApproval &&
-                permissions.isQuoteDocumentEnabled
-              "
-              @click="sendPolicyToClient"
-            >
-              Send Policy
-            </x-button>
-          </div>
-
-          <DataTable
-            table-class-name="compact"
-            :headers="quoteDocumentsTable.columns"
-            :items="quoteDocuments || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="quoteDocuments.length < 15"
-          >
-            <template #item-original_name="item">
-              <a
-                :href="cdnPath + item.doc_url"
-                target="_blank"
-                class="text-primary-600"
-              >
-                {{ item.original_name }}
-              </a>
-            </template>
-            <template #item-action="{ doc_name }">
-              <div>
-                <x-button
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="onDocDelete(doc_name)"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-    </div>
-
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="travel"
-      :bookPolicyDetails="bookPolicyDetails"
-      :payments="payments"
-      :expanded="sectionExpanded"
-    />
-
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-      <LazyDocumentUploader
-        :members="memberDataDocs(travelers)"
-        :doc-types="documentTypes"
-        :docs="quoteDocuments || []"
-        :cdn="cdnPath"
-      />
-    </x-modal>
-
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
-      <p>Are you sure you want to delete this document?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.docConfirm = false"
-          >
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="confirmDeleteDoc"
-            :loading="quoteDocumentsTable.isLoading"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="travel"
-      :expanded="sectionExpanded"
-      :payments="payments"
-    />
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
+     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -2714,6 +2563,7 @@ watch(
       </Collapsible>
     </div>
 
+
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
@@ -2721,6 +2571,7 @@ watch(
       quoteType="Travel"
       :payments="payments"
     />
+
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
@@ -2734,6 +2585,7 @@ watch(
 			:storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
 		/>
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -2752,6 +2604,151 @@ watch(
       :quote="quote"
       :modelType="quoteType"
       :expanded="sectionExpanded"
+    />
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="travel"
+      :expanded="sectionExpanded"
+      :payments="payments"
+    />
+
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Documents
+              <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex gap-2 mb-3 justify-end">
+            <Link
+              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+              :href="`/legacy-policy/${quote.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
+            <x-button
+              @click.prevent="modals.doc = true"
+              size="sm"
+              color="orange"
+            >
+              Upload Documents
+            </x-button>
+            <x-button
+              size="sm"
+              color="red"
+              v-if="
+                displaySendPolicyButton &&
+                permissions.notProductionApproval &&
+                permissions.isQuoteDocumentEnabled
+              "
+              @click="sendPolicyToClient"
+            >
+              Send Policy
+            </x-button>
+          </div>
+
+          <DataTable
+            table-class-name="compact"
+            :headers="quoteDocumentsTable.columns"
+            :items="quoteDocuments || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="quoteDocuments.length < 15"
+          >
+            <template #item-original_name="item">
+              <a
+                :href="cdnPath + item.doc_url"
+                target="_blank"
+                class="text-primary-600"
+              >
+                {{ item.original_name }}
+              </a>
+            </template>
+            <template #item-action="{ doc_name }">
+              <div>
+                <x-button
+                  size="xs"
+                  color="error"
+                  outlined
+                  @click.prevent="onDocDelete(doc_name)"
+                >
+                  Delete
+                </x-button>
+              </div>
+            </template>
+          </DataTable>
+        </template>
+      </Collapsible>
+    </div>
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="travel"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
+    />
+
+    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+      <template #header> Upload Documents </template>
+      <LazyDocumentUploader
+        :members="memberDataDocs(travelers)"
+        :doc-types="documentTypes"
+        :docs="quoteDocuments || []"
+        :cdn="cdnPath"
+      />
+    </x-modal>
+
+    <x-modal v-model="modals.docConfirm" show-close backdrop>
+      <template #header> Delete Document </template>
+      <p>Are you sure you want to delete this document?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.docConfirm = false"
+          >
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="confirmDeleteDoc"
+            :loading="quoteDocumentsTable.isLoading"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

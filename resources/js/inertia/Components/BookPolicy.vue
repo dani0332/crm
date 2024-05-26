@@ -690,7 +690,6 @@ const showInsufficientPaymentAlert = () => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
-
             <div v-if="showActionButtons" class="flex justify-end">
               <template v-if="showSendAndBookPolicyButton">
                 <x-button
@@ -799,7 +798,7 @@ const showInsufficientPaymentAlert = () => {
                     color="orange"
                     :disabled="true"
                   >
-                    Send Policy
+                    Book Policy
                   </x-button>
                   <template #tooltip>
                     <span>{{
@@ -871,7 +870,7 @@ const showInsufficientPaymentAlert = () => {
                       "
                       @click.prevent="confirmSendPolicy"
                     >
-                      Send Policy
+                      Book Policy
                     </x-button></template
                   >
                   <template v-else>

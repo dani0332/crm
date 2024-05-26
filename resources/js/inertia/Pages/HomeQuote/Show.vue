@@ -58,6 +58,7 @@ const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const paymentStatusEnum= page.props.paymentStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
@@ -72,8 +73,8 @@ const modals = reactive({
 
 const allowStatusUpdate = computed(() => {
   return (
-    (props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved ||
-      props.quote.quote_status_id == props.quoteStatusEnum.Lost) ??
+    (props.quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+      props.quote.quote_status_id == quoteStatusEnum.Lost) ??
     false
   );
 });
@@ -338,7 +339,7 @@ const policyDetails = useForm({
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
     page.props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.TransactionApproved &&
+    quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -1241,56 +1242,6 @@ watch(
         </template>
       </Collapsible>
     </div>
-    <!-- <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2">
-          <div class="flex flex-col gap-4">
-            <x-field label="Status">
-              <x-select
-                v-model="leadStatusForm.leadStatus"
-                :options="leadStatusOptions"
-                :disabled="allowStatusUpdate"
-                placeholder="Lead Status"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="NOTES">
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                label="Notes"
-                placeholder="Lead Notes"
-                class="w-full"
-                :disabled="quote.quote_status_id == 15"
-              />
-
-	        <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
-        </div>
-      </div>
-      <div class="flex justify-end">
-        <x-button
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="leadStatusForm.processing"
-          @click.prevent="onLeadStatus"
-          :disabled="allowStatusUpdate"
-        >
-          Change Status
-        </x-button>
-      </div>
-    </div> -->
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"

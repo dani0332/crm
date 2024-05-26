@@ -587,47 +587,6 @@ watch(
           :quote="quote"
           :cdn="cdnPath"
         />
-        <x-button
-          v-if="isDuplicateAllowed"
-          size="sm"
-          color="#ff5e00"
-          @click.prevent="openDuplicate"
-        >
-          Duplicate Lead
-        </x-button>
-
-        <Link :href="route('business.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div">
-            Business Quote List
-          </x-button>
-        </Link>
-
-        <Link
-          v-if="permissions.canEditQuote == true"
-          :href="route('business.edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-      </template>
-    </StickyHeader>
-    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
-      <div class="flex items-center space-x-2">
-        <h2 class="text-xl font-semibold">Business Quote Detail</h2>
-        <p
-          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="countDays !== false"
-        >
-          Stale for {{ countDays }} days
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <LeadNotes
-          :documentType="noteDocumentType"
-          :notes="quoteDocuments"
-          modelType="Business"
-          :quote="quote"
-          :cdn="cdnPath"
-        />
         <Link
           v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
@@ -658,9 +617,9 @@ watch(
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
-      </div>
-    </div> -->
-
+      </template>
+    </StickyHeader>
+  
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -712,41 +671,7 @@ watch(
             </h3>
           </div>
         </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 my-4 justify-end">
-            <Link
-              v-if="quote?.insly_id"
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button
-              v-if="isDuplicateAllowed"
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openDuplicate"
-            >
-              Duplicate Lead
-            </x-button>
-
-            <Link :href="route('business.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Business Quote List
-              </x-button>
-            </Link>
-
-            <Link
-              v-if="permissions.canEditQuote == true"
-              :href="route('business.edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-          </div>
-
+        <template #body>         
           <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -1178,7 +1103,7 @@ watch(
             <x-input
               v-if="
                 leadStatusForm.leadStatus ==
-                enums.quoteStatusEnum.TransactionApproved
+                quoteStatusEnum.TransactionApproved
               "
               :disabled="disableStatusSection"
               v-model="leadStatusForm.trans_code"
@@ -1188,7 +1113,7 @@ watch(
               :error="leadStatusForm.errors.trans_code"
             />
             <x-select
-              v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+              v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
               v-model="leadStatusForm.lostReason"
               label="LOST REASON"
               :options="
@@ -1217,83 +1142,6 @@ watch(
         </div>
       </template>
     </Collapsible>
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2">
-          <div class="flex flex-col gap-4">
-            <x-select
-              v-model="leadStatusForm.leadStatus"
-              label="STATUS"
-              :options="leadStatusOptions"
-              :disabled="disableStatusSection"
-              placeholder="Lead Status"
-              class="w-full"
-            />
-            <x-textarea
-              v-model="leadStatusForm.notes"
-              type="text"
-              label="NOTES"
-              placeholder="Lead Notes"
-              class="w-full"
-              :disabled="disableStatusSection"
-            />
-          </div>
-        </div>
-        <div class="w-full md:w-2/3">
-          <x-input
-            v-if="
-              leadStatusForm.leadStatus ==
-              enums.quoteStatusEnum.TransactionApproved
-            "
-            :disabled="disableStatusSection"
-            v-model="leadStatusForm.trans_code"
-            label="TRANSAPP CODE"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :error="leadStatusForm.errors.trans_code"
-          />
-          <x-select
-            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
-            v-model="leadStatusForm.lostReason"
-            label="LOST REASON"
-            :options="
-              lostReasons?.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            placeholder="Lost Reason is required"
-            class="w-full"
-            :error="leadStatusForm.errors.lostReason"
-          />
-
-          <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
-        </div>
-      </div>
-      <div class="flex justify-end">
-        <x-button
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="leadStatusForm.processing"
-          @click.prevent="onLeadStatus"
-          :disabled="disableStatusSection"
-        >
-          Change Status
-        </x-button>
-      </div>
-    </div> -->
 
     <PlanDetails
       :insuranceProviders="insuranceProvidersAll"
@@ -1518,9 +1366,7 @@ watch(
           </div>
         </template>
       </x-modal>
-    </div> -->
-
-    <!-- Payments -->
+    </div> 
 
 
     <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">

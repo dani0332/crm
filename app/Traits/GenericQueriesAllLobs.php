@@ -231,7 +231,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
         $bookPolicyDetails['sendPolicyType'] = null;
-        $bookPolicyDetails['text'] = '';
+        $bookPolicyDetails['text'] = 'Send and Book Policy';
         @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record);
         $bookPolicyDetails['transactionPaymentStatus'] = $transactionPaymentStatus;
         $bookPolicyDetails['paymentStatusTooltip'] = $paymentStatusTooltip;
@@ -252,7 +252,7 @@ trait GenericQueriesAllLobs
                     $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
                     if ($taxDocumentsCount == count($taxDocuments)) {
-                        $bookPolicyDetails['text'] = 'Send Policy';
+                        $bookPolicyDetails['text'] = 'Send and Book Policy';
                         $bookPolicyDetails['editButton'] = true;
                         $bookPolicyDetails['sendPolicyType'] = 'sage';
                     }
