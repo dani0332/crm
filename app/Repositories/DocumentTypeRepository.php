@@ -29,21 +29,19 @@ class DocumentTypeRepository extends BaseRepository
     public function fetchSendPolicyDocumentCodes($quoteType, $quote)
     {
         $documentTypeCodes = DocumentType::requiredForSendPolicy()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType));
-        if ($quoteType == QuoteTypes::GROUP_MEDICAL->value || $quoteType == QuoteTypes::CORPLINE->value) {
-            $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)->latest()->first();
+        if (in_array($quoteType, [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::BUSINESS->value, QuoteTypes::CORPLINE->value])) {            $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)->latest()->first();
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
             $businessTypeOfCustomer = $latestKycLog?->search_type;
             $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer);
         }
 
-        // dd($documentTypeCodes->pluck('code')->toArray());
         return $documentTypeCodes->pluck('code')->toArray();
     }
 
     public function fetchTaxDocumentsCode($quoteType, $quote)
     {
         $documentTypeCodes= DocumentType::taxDocument()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType));
-        if ($quoteType == QuoteTypes::GROUP_MEDICAL->value || $quoteType == QuoteTypes::CORPLINE->value) {
+        if (in_array($quoteType, [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::BUSINESS->value, QuoteTypes::CORPLINE->value])) {            $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)->latest()->first();
             $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)->latest()->first();
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
             $businessTypeOfCustomer = $latestKycLog?->search_type;
