@@ -1652,14 +1652,7 @@ const editPaymentModal = (
       }
     }
   }
-
-  // Assign the first document to the approve document model for insurer
-  if (
-    paymentMethodsForm.status == 'view' &&
-    paymentMethodsForm.collection_type === 'insurer'
-  ) {
-    approvedDocumentModel.value = fileUploadModels.value.slice();
-  }
+  
   if (paymentMethodsForm.status == 'edit') {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price - payment.discount_value;
@@ -1761,6 +1754,15 @@ const validateViewPayment = isValid => {
     }
   }
 
+  if (isApproveConfirm.value === false && isValid) {
+    if (!amountExceeded) {
+      isApprovePaymentError.value = false;
+    }
+    isApproveConfirm.value = true;
+    return true;
+  }  
+  /*
+  // temporary return,not part of M2
   if (isApproveConfirmed.value === false && isValid) {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
@@ -1771,7 +1773,7 @@ const validateViewPayment = isValid => {
 
   if (isApproveNotChecked.value === true) {
     return true;
-  }
+  }*/
   return false;
 };
 
@@ -2171,14 +2173,6 @@ const deleteDocument = (docName, count) => {
       );
     }
     trashedFilesModal.value.push(docName);
-  } else if (
-    paymentMethodsForm.status == 'view' &&
-    paymentMethodsForm.collection_type === 'insurer' &&
-    approvedDocumentModel.value[count]
-  ) {
-    approvedDocumentModel.value[count] = approvedDocumentModel.value[
-      count
-    ].filter(item => item.doc_name !== docName);
   } else {
     router.post(
       `/documents/delete`,
@@ -2715,6 +2709,7 @@ watch(
 
 // verifiy if verify option is enabled
 const isVerifiedEnabled = computed(() => {
+  return false; // temporary return,not part of M2
   if (
     paymentMethodsModels.value[splitPaymentNo.value] === 'CC' ||
     paymentMethodsModels.value[splitPaymentNo.value] === 'CA' ||
@@ -4458,21 +4453,7 @@ const isVerifiedEnabled = computed(() => {
             />
           </x-field>
         </div>
-        <div
-          class="flex items-center justify-center"
-          v-if="
-            splitPaymentRecord.verified_by !== null &&
-            paymentMethodsForm.status == 'view'
-          "
-        >
-          <p class="text-lg font-bold text-blue-400 mr-2">
-            Payment has been verified
-          </p>
-          <img
-            style="width: 30px; height: 30px"
-            src="/images/payment_verified.jpg"
-          />
-        </div>
+        
         <template
           v-if="(isViewEnabled || isCreditApprovalView) && isDeclineClicked"
         >
