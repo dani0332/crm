@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             GenericPermissionSeeder::class,
             ApplicationStorageSeeder::class,
             AddPaymentPermissions::class,
+            AddSendUpdatesCategoriesInLookups::class,
             InslyRoles::class,
             InslyPermissions::class,
         ]);
