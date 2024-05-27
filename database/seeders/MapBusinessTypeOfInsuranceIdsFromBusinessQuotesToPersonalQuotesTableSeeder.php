@@ -6,7 +6,6 @@ use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder extends Seeder
 {
