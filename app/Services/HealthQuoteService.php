@@ -1784,7 +1784,7 @@ class HealthQuoteService extends BaseService
         return [$result, $skipLead];
     }
 
-    public function assignRenewalBatch(HealthQuote $quote)
+    public function assignRenewalBatch($id)
     {
         $date = Carbon::today()->toDateString();
 
@@ -1793,7 +1793,10 @@ class HealthQuoteService extends BaseService
             ->first();
 
         if ($renewalBatch) {
-            $quote->update(['renewal_batch' => $renewalBatch->name]);
+            $healthQuote = HealthQuote::find($id);
+            if ($healthQuote) {
+                $healthQuote->update(['renewal_batch' => $renewalBatch->name]);
+            }
         }
     }
 
