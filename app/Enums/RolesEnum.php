@@ -115,4 +115,5 @@ final class RolesEnum extends Enum
     public const ServiceExecutive = 'SERVICE_EXECUTIVE';
     public const Production = 'PRODUCTION';
     public const OperationExecutive = 'OPERATION_EXECUTIVE';
+    public const NonCCPaymentVerifier = 'NON_CC_PAYMENT_VERIFIER';
 }
