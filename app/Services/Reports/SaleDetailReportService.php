@@ -49,7 +49,7 @@ class SaleDetailReportService extends ManagementReport
                 'quote_type.text as line_of_business',
                 'u.name as advisor',
                 'pi.name as policy_issuer',
-                'personal_quotes.business_type_of_insurance_id as sub_type_line_of_business',
+                'btoi.text as sub_type_line_of_business',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -61,7 +61,8 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
-            ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id');
+            ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id')
+            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id');
 
         $this->applyFilters($query, $request);
 

@@ -2,18 +2,18 @@
 
 namespace App\Strategies;
 
-use Carbon\Carbon;
-use App\Models\Team;
-use App\Models\Lookup;
-use App\Enums\LookupsEnum;
-use App\Models\LeadSource;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\GenericRequestEnum;
-use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\DB;
-use App\Enums\ManagementReportTypeEnum;
-use App\Services\ApplicationStorageService;
+use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\LeadSource;
+use App\Models\Lookup;
+use App\Models\Team;
+use App\Services\ApplicationStorageService;
+use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ManagementReport
 {
