@@ -42,7 +42,6 @@ class QuoteSyncUpdateCommand extends Command
 
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::WAITING)
-            ->where('updated_fields', '!=', '{"is_cold":true}')
             ->take(300)
             ->get();
 
@@ -65,15 +64,22 @@ class QuoteSyncUpdateCommand extends Command
 
             try {
                 DB::beginTransaction();
-
+                
                 info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id);
-                $key = $entry->quote_uuid.'_'.$entry->quote_type_id;
-                if (! empty($quotes[$key])) {
-                    // Existing quote
-                    $this->processExistingQuote($quotes[$key], $entry);
+                if ($entry->updated_fields === '{"is_cold":true}') {
+                
+                    QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
+                
                 } else {
-                    // Quote not found
-                    $quotes[$key] = $this->processQuoteNotFound($entry);
+
+                    $key = $entry->quote_uuid . '_' . $entry->quote_type_id;
+                    if (!empty($quotes[$key])) {
+                        // Existing quote
+                        $this->processExistingQuote($quotes[$key], $entry);
+                    } else {
+                        // Quote not found
+                        $quotes[$key] = $this->processQuoteNotFound($entry);
+                    }
                 }
 
                 DB::commit();
