@@ -2,18 +2,18 @@
 
 namespace App\Strategies;
 
-use Carbon\Carbon;
-use App\Models\Team;
-use App\Models\Lookup;
-use App\Enums\LookupsEnum;
-use App\Models\LeadSource;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\GenericRequestEnum;
-use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\DB;
-use App\Enums\ManagementReportTypeEnum;
-use App\Services\ApplicationStorageService;
+use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\LeadSource;
+use App\Models\Lookup;
+use App\Models\Team;
+use App\Services\ApplicationStorageService;
+use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ManagementReport
 {
@@ -211,13 +211,15 @@ class ManagementReport
      * @param [type] $item
      * @return void
      */
-    public function businessSubTypeMapper ($item) {
+    public function businessSubTypeMapper($item)
+    {
         $businessTypeOfInsurance = DB::table('business_quote_request')
             ->join('business_type_of_insurance', 'business_quote_request.business_type_of_insurance_id', '=', 'business_type_of_insurance.id')
             ->where('business_quote_request.code', $item->code)
             ->select('business_type_of_insurance.text')
             ->first();
         $item->sub_type_line_of_business = $businessTypeOfInsurance ? $businessTypeOfInsurance->text : 'N/A';
+
         return $item;
     }
 }

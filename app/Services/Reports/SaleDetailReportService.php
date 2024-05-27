@@ -72,7 +72,8 @@ class SaleDetailReportService extends ManagementReport
 
         return $query->simplePaginate(10)->withQueryString()->through(function ($item) {
             return $this->businessSubTypeMapper($item);
-        });    }
+        });
+    }
 
     public function getDefaultFilters()
     {
