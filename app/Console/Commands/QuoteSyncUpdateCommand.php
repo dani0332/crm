@@ -65,7 +65,7 @@ class QuoteSyncUpdateCommand extends Command
             try {
                 DB::beginTransaction();
 
-                info('Syncing entry: '.$entry->quote_uuid);
+                info('Syncing entry: ' . $entry->quote_uuid . ' - ' . $entry->id);
                 $key = $entry->quote_uuid.'_'.$entry->quote_type_id;
                 if (! empty($quotes[$key])) {
                     // Existing quote
@@ -80,7 +80,7 @@ class QuoteSyncUpdateCommand extends Command
             } catch (Exception $e) {
                 DB::rollBack();
 
-                $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$e->getMessage();
+                $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid . ' - ' . $entry->id .' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
                 $entry->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
             }
