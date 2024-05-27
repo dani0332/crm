@@ -57,7 +57,8 @@ const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
-const paymentStatusEnum= page.props.paymentStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
@@ -72,8 +73,8 @@ const modals = reactive({
 
 const allowStatusUpdate = computed(() => {
   return (
-    (props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved ||
-      props.quote.quote_status_id == props.quoteStatusEnum.Lost) ??
+    (props.quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+      props.quote.quote_status_id == quoteStatusEnum.Lost) ??
     false
   );
 });
@@ -337,8 +338,7 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -479,10 +479,8 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
-const getDetailPageRoute = (
-  uuid,
-  quote_type_id,
-) => useGetShowPageRoute(uuid, quote_type_id, null);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 
 watch(
   () => page.props.quote.quote_status_id,
@@ -643,7 +641,7 @@ watch(
             </Link>
           </div>
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div
                   class="grid sm:grid-cols-2"
@@ -710,7 +708,10 @@ watch(
                   </Link>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -718,7 +719,12 @@ watch(
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </div>
                 <div>
@@ -756,7 +762,7 @@ watch(
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">I AM</dt>
                 <dd>{{ quote.iam_possesion_type_id_text }}</dd>
@@ -840,7 +846,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -925,7 +931,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -941,13 +947,13 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-              <dd class="break-words">
-                {{ customerProfileForm.company_name }}
-              </dd>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -1241,56 +1247,6 @@ watch(
         </template>
       </Collapsible>
     </div>
-    <!-- <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2">
-          <div class="flex flex-col gap-4">
-            <x-field label="Status">
-              <x-select
-                v-model="leadStatusForm.leadStatus"
-                :options="leadStatusOptions"
-                :disabled="allowStatusUpdate"
-                placeholder="Lead Status"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="NOTES">
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                label="Notes"
-                placeholder="Lead Notes"
-                class="w-full"
-                :disabled="quote.quote_status_id == 15"
-              />
-
-	        <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
-        </div>
-      </div>
-      <div class="flex justify-end">
-        <x-button
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="leadStatusForm.processing"
-          @click.prevent="onLeadStatus"
-          :disabled="allowStatusUpdate"
-        >
-          Change Status
-        </x-button>
-      </div>
-    </div> -->
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
@@ -1307,19 +1263,36 @@ watch(
       :payments="payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="documentTypes.filter(item => item.code === 'HOMPD' || item.code === 'HOMPDR' || item.code === 'HOMDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'HOMPD' ||
+            item.code === 'HOMPDR' ||
+            item.code === 'HOMDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -1552,6 +1525,11 @@ watch(
       </Collapsible>
     </div>
 
-    <AuditLogs :type="'App\\Models\\HomeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
+    <AuditLogs
+      :type="'App\\Models\\HomeQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
   </div>
 </template>
