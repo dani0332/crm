@@ -22,8 +22,7 @@ class TransactionReportService extends ManagementReport
 
         $query = PersonalQuote::query()
             ->select(
-                'personal_quotes.policy_number', 'personal_quotes.code', 'personal_quotes.uuid',
-                'bqr.uuid', 'bqr.code', 'btoi.text',
+                'personal_quotes.policy_number', 'personal_quotes.code',
                 DB::raw('CONCAT(p.reference, " ", p.tax_invoice_number) as transactions'),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
@@ -51,21 +50,18 @@ class TransactionReportService extends ManagementReport
                 'tax_invoice_number as insurer_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
-                'btoi.text as sub_type_line_of_business'
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-            ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
-            ->join('teams as t', 't.id', '=', 'ut.team_id')
+            ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
+            ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
-            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
-            ->leftJoin('business_quote_request as bqr', 'bqr.uuid', '=', 'personal_quotes.uuid')
-            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'bqr.business_type_of_insurance_id');
+            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id');
 
         $this->applyFilters($query, $request);
 
@@ -77,8 +73,9 @@ class TransactionReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
-        return $query->simplePaginate(10)->withQueryString();
-    }
+        return $query->simplePaginate(10)->withQueryString()->through(function ($item) {
+            return $this->businessSubTypeMapper($item);
+        });    }
 
     public function getDefaultFilters()
     {
