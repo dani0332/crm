@@ -39,7 +39,7 @@ trait PersonalQuoteSyncTrait
     public function syncQuote($quote, $updatedFields)
     {
         unset($updatedFields['created_at'], $updatedFields['updated_at']);
-        if(count($updatedFields) <= 1 && isset($updatedFields['is_cold'])) {
+        if (count($updatedFields) <= 1 && isset($updatedFields['is_cold'])) {
             return;
         }
 
@@ -192,10 +192,10 @@ trait PersonalQuoteSyncTrait
         $this->syncTable($personalQuote, $newValues, 'personal_quotes');
 
         $quoteTypeShortCode = QuoteTypeShortCode::getName($quoteTypeId);
-        $code = $quoteTypeShortCode . '-' . $quoteUuid;
+        $code = $quoteTypeShortCode.'-'.$quoteUuid;
         $personalQuote = PersonalQuote::updateOrCreate(
             [
-                'code' => $code
+                'code' => $code,
             ],
             $personalQuote->getAttributes()
         );
@@ -276,7 +276,7 @@ trait PersonalQuoteSyncTrait
 
         $personalQuoteDetail = PersonalQuoteDetail::updateOrCreate(
             [
-                'personal_quote_id' => $personalQuote->id
+                'personal_quote_id' => $personalQuote->id,
             ],
             $personalQuoteDetail->getAttributes()
         );
