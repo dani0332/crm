@@ -17,6 +17,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Events\LeadsCount;
 use App\Http\Requests\StoreBusinessQuoteRequest;
@@ -33,13 +34,16 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteNoteRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -55,7 +59,7 @@ class BusinessQuoteController extends Controller
     public const TYPE = quoteTypeCode::Business;
     public const TYPE_ID = QuoteTypeId::Business;
 
-    use RolePermissionConditions;
+    use GenericQueriesAllLobs, RolePermissionConditions;
 
     public function __construct(
         BusinessQuoteService $businessQuoteService,
@@ -83,12 +87,16 @@ class BusinessQuoteController extends Controller
         })->values();
 
         $gridData = $this->businessQuoteService->getGridData($this->genericModel, $request);
-        $count = $gridData->count();
+        //PD Revert
+        // $count = $gridData->count();
+        $count = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
-        $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
+        //PD Revert
+        // $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
+        $totalCount = 0;
 
         return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount'));
     }
@@ -140,7 +148,6 @@ class BusinessQuoteController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
         } else {
-
             event(new LeadsCount(BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true)));
             if (! isset($record->quoteUID)) {
                 return redirect('quotes/business')->with('success', 'Lead has been stored');
@@ -159,6 +166,8 @@ class BusinessQuoteController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
+
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BUSINESS->value, $record);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
@@ -211,7 +220,6 @@ class BusinessQuoteController extends Controller
 
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
-
             $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->id,
@@ -244,6 +252,42 @@ class BusinessQuoteController extends Controller
         $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($record);
+
+        if ($hasPolicyIssuedStatus) {
+            $removeOptions = [
+                // Endorsement Financial.
+                SendUpdateLogStatusEnum::MAOM,
+                SendUpdateLogStatusEnum::MDOM,
+                SendUpdateLogStatusEnum::MD,
+                SendUpdateLogStatusEnum::MSC,
+                SendUpdateLogStatusEnum::MPC,
+                SendUpdateLogStatusEnum::PU,
+                SendUpdateLogStatusEnum::SC,
+                // Endorsement non Financial.
+                SendUpdateLogStatusEnum::EIU,
+                SendUpdateLogStatusEnum::MSCNFI,
+                SendUpdateLogStatusEnum::QR,
+                SendUpdateLogStatusEnum::RFAML,
+                SendUpdateLogStatusEnum::RFCOC,
+                SendUpdateLogStatusEnum::RFCOI,
+                SendUpdateLogStatusEnum::RFEC,
+                SendUpdateLogStatusEnum::RFSOA,
+                SendUpdateLogStatusEnum::RFTI,
+                SendUpdateLogStatusEnum::RFTC,
+                SendUpdateLogStatusEnum::WOWPA,
+            ];
+
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
+        $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
+
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
@@ -266,7 +310,7 @@ class BusinessQuoteController extends Controller
             'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
-            'documents' => fn () => array_values($quoteDocuments->toArray()),
+            'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
@@ -296,10 +340,6 @@ class BusinessQuoteController extends Controller
                 'isPA' => auth()->user()->hasRole(RolesEnum::PA),
 
             ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
-            ],
             'typeCode' => quoteTypeCode::CORPLINE,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'companyTypes' => $companyType,
@@ -312,9 +352,16 @@ class BusinessQuoteController extends Controller
             'quoteNotes' => $quoteNotes,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'record' => $record,
+            'bookPolicyDetails' => $bookPolicyDetails,
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
     }
 
@@ -342,17 +389,13 @@ class BusinessQuoteController extends Controller
                 'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
             ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
-            ],
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -412,7 +455,6 @@ class BusinessQuoteController extends Controller
             $totalLeads += $item['data']['total_leads'];
         }
 
-        // dd($quotes);
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,

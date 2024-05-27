@@ -111,7 +111,7 @@ class InslyDetailRepository extends BaseRepository
             $model = $this->getModelObject($quoteType);
             if ($model) {
                 // quote against policy number
-                $quote = $model::where('policy_number', $policyNumber)->first();
+                $quote = $model::where('policy_number', $policyNumber)->orWhere('previous_quote_policy_number', $policyNumber)->first();
 
                 if (! empty($quote) && $validateAll) {
                     if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {

@@ -109,7 +109,9 @@ class PetQuoteRepository extends BaseRepository
             ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            return 0;
+            // return $query->count();
         }
 
         return ($forExport) ? $query->get() : $query;
@@ -143,9 +145,13 @@ class PetQuoteRepository extends BaseRepository
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
+                'quoteDetail',
             ])
             ->select([
                 $this->getTable().'.*',
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -154,6 +160,7 @@ class PetQuoteRepository extends BaseRepository
                 as customer_type'),
             ])
             ->firstOrFail();
+
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $data = ! empty($quote) ? $quote->toArray() : [];
@@ -189,7 +196,7 @@ class PetQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+            ['advisor', 'nationality', 'insuranceProvider']
+        )->orderBy('created_at', 'desc');
     }
-
 }

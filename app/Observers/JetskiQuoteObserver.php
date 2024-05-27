@@ -4,12 +4,9 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\JetskiQuote;
-use App\Traits\PersonalQuoteSyncTrait;
 
 class JetskiQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
-
     /**
      * Handle the JetskiQuote "updated" event.
      */
@@ -25,7 +22,5 @@ class JetskiQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $jetskiQuote->transaction_approved_at];
         }
-
-        $this->syncQuote($jetskiQuote, $dirty);
     }
 }

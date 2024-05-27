@@ -78,7 +78,9 @@ class CycleQuoteRepository extends BaseRepository
             ->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            return 0;
+            // return $query->count();
         }
 
         return ($forExport) ? $query->get() : $query;
@@ -173,6 +175,9 @@ class CycleQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping

@@ -260,7 +260,6 @@ class CRUDService extends BaseService
             }
 
             if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home), strtolower(quoteTypeCode::Business)])) {
-                // $entity->activities()->where('status', 0)->update(['status' => 1]);
                 $entity->quote_status_date = now();
                 if ($entity->stale_at) {
                     $entity->stale_at = null;
@@ -353,6 +352,7 @@ class CRUDService extends BaseService
                     CammyJob::dispatch($entity, 'unsub');
                 }
             }
+            $quoteTypeId = constant(QuoteTypeId::class.'::'.$request->modelType);
 
             $activityResponse = false;
             $previousStatusIdChanged = false;
@@ -368,7 +368,7 @@ class CRUDService extends BaseService
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
                 && $entity->source == LeadSourceEnum::IMCRM) {
-                $this->healthQuoteService->assignRenewalBatch($entity);
+                $this->healthQuoteService->assignRenewalBatch($entity->id);
                 $this->updatePaymentStatus($entity);
             }
 
@@ -380,7 +380,7 @@ class CRUDService extends BaseService
             }
 
             QuoteStatusLog::create([
-                'quote_type_id' => QuoteTypeId::Car,
+                'quote_type_id' => collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType)),
                 'quote_request_id' => $entity->id,
                 'current_quote_status_id' => $request->leadStatus,
                 'previous_quote_status_id' => $previousQuoteStatus,
@@ -403,10 +403,11 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-
             if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
-                auth()->user()->hasAnyPermission(PermissionsEnum::HEALTH_QUOTES_ACCESS,
-                    PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)
+                auth()->user()->hasAnyPermission(
+                    PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                    PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS
+                )
             ) {
                 $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
                 $query->whereIn('ut.team_id', $authUserTeamsId);
@@ -608,7 +609,8 @@ class CRUDService extends BaseService
                         'amount' => $amount,
                         'created_by' => auth()->user()->email,
                         'is_manager_approved' => 1,
-                    ]);
+                    ]
+                );
                 $data = [
                     'uuid' => $quoteModel->uuid,
                     'type_id' => $quoteTypeId,
@@ -617,7 +619,6 @@ class CRUDService extends BaseService
                 $processResponse = $this->processCapturePayment($data);
 
                 return response($processResponse, 200);
-
             } else {
                 return response(['Payment not exist'], 403);
             }
@@ -625,6 +626,7 @@ class CRUDService extends BaseService
 
         return response(['Transaction does not exist'], 403);
     }
+
     public function processCapturePayment($data)
     {
         $planData = [
@@ -767,6 +769,21 @@ class CRUDService extends BaseService
                 }
             }
         }
+    }
+
+    public function hasAtleastOneStatusPolicyIssued($record): bool
+    {
+        if (isset($record->quote_status_id) && in_array($record->quote_status_id, [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+        ])) {
+            return true;
+        }
+
+        return false;
     }
 
     public function getInquiryLogs($modelType, $uuid)

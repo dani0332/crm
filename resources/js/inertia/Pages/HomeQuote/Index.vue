@@ -58,7 +58,7 @@ const tableHeader = ref([
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
+  { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   {
     text: 'Previous Policy Number',
@@ -235,10 +235,11 @@ watch(
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Home List</h2>
-        <LeadsCount
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <ColumnSelection
@@ -489,7 +490,7 @@ watch(
       hide-footer
       fixed-checkbox
     >
-      <template #item-code="{ code, uuid, stale_at }">
+      <template #item-code="{ code, uuid, stale_at, price_with_vat }">
         <Link
           :href="route('home.show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"

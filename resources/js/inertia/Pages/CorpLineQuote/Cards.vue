@@ -88,6 +88,7 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  is_renewal: '',
   payment_status: [],
   is_cold: false,
   is_stale: false,
@@ -222,11 +223,12 @@ watch(
     <Head title="Business Quote ~ Card View" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Lead List</h2>
-        <LeadsCount
+        <h2 class="text-xl font-semibold">CorpLine List</h2>
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <FiltersButton
@@ -359,6 +361,17 @@ watch(
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+        <x-select
+          v-model="filters.is_renewal"
+          label="Is Renewal"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

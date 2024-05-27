@@ -65,6 +65,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:55')->onOneServer()->withoutOverlapping();
 
         $schedule->command('QuoteSyncUpdate:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(10);
+        $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(1);
         $schedule->command(UpdateManualOffline::class)
             ->timezone('Asia/Dubai')
             ->dailyAt('08:58')
@@ -75,8 +76,8 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->hourly()->onOneServer()->withoutOverlapping(1);
-        $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->everyTenMinutes()->onOneServer()->withoutOverlapping(1);
+        // $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('09:00');
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('11:45');

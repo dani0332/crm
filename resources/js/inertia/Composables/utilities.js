@@ -117,40 +117,26 @@ export const useConvertDate = date =>
 
 export const useDaysSinceStale = payload =>
 {
-  let diff = (new Date(payload).getTime() - new Date().getTime()) / 1000;
-  // Convert the difference from milliseconds to hours by dividing it by the number of seconds in an hour (3600)
-  diff /= 60;
-  // Return the absolute value of the rounded difference in hours
-  let result = Math.abs(Math.round(diff));
+  const quoteRequest = payload;
+  let stale_days = quoteRequest
+    ? Math.round((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
+    : false;
 
-  if (result >= 0 && result <= 40)
+  if (typeof stale_days === 'number' && stale_days <= 90)
   {
-    return ' 1 day';
-  } else if (result >= 40 && result <= 120)
-  {
-    return ' 2 days';
+    if (stale_days == 0)
+    {
+      stale_days += 1
+      return stale_days + ' day';
+    } else if (stale_days == 1)
+    {
+      return stale_days + ' day';
+    } else
+      return stale_days + ' days';
   } else
   {
-    return false;
+    return false
   }
-
-  // const quoteRequest = payload;
-  // let stale_days = quoteRequest
-  //   ? Math.round((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
-  //   : false;
-
-  // if (typeof stale_days === 'number' && stale_days <= 89)
-  // {
-  //   if (stale_days == 0)
-  //   {
-  //     stale_days += 1
-  //     return stale_days + ' day';
-  //   } else if (stale_days == 1)
-  //   {
-  //     return stale_days + ' day';
-  //   } else
-  //     return stale_days + ' days';
-  // }
 };
 
 export const useFormatPrice = (price, thousandSeparator = false) =>
@@ -332,4 +318,46 @@ export const maskPhone = mobile_no =>
       .join('');
   }
   return null;
+};
+export const  parseDate = (dateString) => {
+// Preliminary check for the DD-MM-YYYY format
+    const ddMmYyyyRegex = /^\d{2}-\d{2}-\d{4}$/;
+    if (ddMmYyyyRegex.test(dateString)) {
+    return dateString;
+    }
+
+    const patterns = [
+    // Pattern: 24-Jun-2024, 24-6-2024, 6-24-2024, fri-6-2024, fri jun 2024, 24 june 2024, 2024-06-21
+    { regex: /^(\d{1,2})-([a-zA-Z]+)-(\d{4})$/, parts: ['day', 'month', 'year'] },
+    { regex: /^(\d{1,2})-(\d{1,2})-(\d{4})$/, parts: ['day', 'month', 'year'] },
+    { regex: /^(\d{1,2})-(\d{1,2})-(\d{4})$/, parts: ['month', 'day', 'year'] },
+    { regex: /^[a-zA-Z]+-(\d{1,2})-(\d{4})$/, parts: ['month', 'year'] },
+    { regex: /^[a-zA-Z]+ ([a-zA-Z]+) (\d{4})$/, parts: ['month', 'year'] },
+    { regex: /^(\d{1,2}) ([a-zA-Z]+) (\d{4})$/, parts: ['day', 'month', 'year'] },
+    { regex: /^(\d{4})-(\d{2})-(\d{2})$/, parts: ['year', 'month', 'day'] }
+    ];
+
+    const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+    for (const { regex, parts } of patterns) {
+    const match = dateString.match(regex);
+    if (match) {
+        const dateParts = parts.reduce((acc, part, index) => {
+        acc[part] = part === 'month' && isNaN(match[index + 1]) ?
+            months.indexOf(match[index + 1].substring(0, 3).toLowerCase()) + 1 :
+            parseInt(match[index + 1], 10);
+        return acc;
+        }, {});
+
+        const date = new Date(dateParts.year, (dateParts.month || 1) - 1, dateParts.day || 1);
+
+        return [
+        String(date.getDate()).padStart(2, '0'),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        date.getFullYear()
+        ].join('-');
+    }
+    }
+
+    throw new Error('Invalid date format');
 };
