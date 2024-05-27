@@ -82,7 +82,7 @@ class QuoteSyncUpdateCommand extends Command
 
                 $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid . ' - ' . $entry->id .' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
-                $entry->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
+                QuoteSync::where('id', $entry->id)->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
             }
         }
 
