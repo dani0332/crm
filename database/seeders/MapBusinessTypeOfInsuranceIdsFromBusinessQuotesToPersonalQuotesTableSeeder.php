@@ -18,6 +18,7 @@ class MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder
         PersonalQuote::query()
             ->where('quote_type_id', QuoteTypeId::Business)
             ->whereNull('business_type_of_insurance_id')
+            ->orderBy('id', 'desc')
             ->chunk(50, function ($personalQuotes) {
                 foreach ($personalQuotes as $personalQuote) {
                     $subTypeId = BusinessQuote::query()
@@ -26,9 +27,12 @@ class MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder
                         ->whereNotNull('business_type_of_insurance_id')
                         ->first();
 
-                    $personalQuote->business_type_of_insurance_id =
-                        $subTypeId->business_type_of_insurance_id;
-                    $personalQuote->save();
+                    if ($subTypeId)
+                    {
+                        $personalQuote->business_type_of_insurance_id =
+                            $subTypeId->business_type_of_insurance_id;
+                        $personalQuote->save();
+                    }
                 }
             });
     }
