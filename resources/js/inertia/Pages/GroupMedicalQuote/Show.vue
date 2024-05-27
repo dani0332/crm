@@ -134,11 +134,10 @@ const leadStatusOptions = computed(() => {
   }));
 });
 
-
-
 const onLeadStatus = () => {
-  leadStatusForm
-    .post(`/quotes/Bussiness/${page.props.quote.id}/update-lead-status`, {
+  leadStatusForm.post(
+    `/quotes/Bussiness/${page.props.quote.id}/update-lead-status`,
+    {
       preserveScroll: true,
       onError: errors => {
         console.log(errors);
@@ -153,7 +152,8 @@ const onLeadStatus = () => {
           position: 'top',
         });
       },
-    });
+    },
+  );
 };
 
 const onLoadHistoryData = async () => {
@@ -350,7 +350,11 @@ const linkEntity = () => {
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
-  useGetShowPageRoute(uuid, quote_type_id, page.props.quote.business_type_of_insurance_id);
+  useGetShowPageRoute(
+    uuid,
+    quote_type_id,
+    page.props.quote.business_type_of_insurance_id,
+  );
 
 watch(
   () => page.props.quote.quote_status_id,
@@ -364,60 +368,6 @@ watch(
 
 <template>
   <div>
-    <Head title="Group Medical Lead Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
-      <div class="flex gap-2">
-        <Link
-          v-if="
-            quoteDetails?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)
-          "
-          :href="`/legacy-policy/${quoteDetails?.insly_id}`"
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-        <Link
-          v-else-if="
-            quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
-          "
-          :href="
-            route(
-              'view-legacy-policy.renewal-uploads',
-              quote.previous_quote_policy_number,
-            )
-          "
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-        <x-button
-          v-if="isDuplicateAllowed"
-          size="sm"
-          color="#ff5e00"
-          @click.prevent="openDuplicate"
-        >
-          Duplicate Lead
-        </x-button>
-        <Link :href="route('amt.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div">
-            Group Medical List
-          </x-button>
-        </Link>
-        <Link
-          v-if="!can(permissionsEnum.canEditQuote)"
-          :href="route('amt.edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-      </div>
-    </div>
-
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -467,6 +417,35 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
+            <Link
+              v-if="
+                quoteDetails?.insly_id &&
+                can(permissionsEnum.VIEW_LEGACY_DETAILS)
+              "
+              :href="`/legacy-policy/${quoteDetails?.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
+            <Link
+              v-else-if="
+                quote.source == leadSource.RENEWAL_UPLOAD &&
+                can(permissionsEnum.VIEW_LEGACY_DETAILS)
+              "
+              :href="
+                route(
+                  'view-legacy-policy.renewal-uploads',
+                  quote.previous_quote_policy_number,
+                )
+              "
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
             <x-button
               v-if="isDuplicateAllowed"
               size="sm"
@@ -488,7 +467,7 @@ watch(
             </Link>
           </div>
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -527,12 +506,12 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">EMAIL</dt>
-            <dd class="break-words">{{ quote.email }}</dd>
+                <dd class="break-words">{{ quote.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
-            <dd class="break-words">{{ quote.company_name }}</dd>
+                <dd class="break-words">{{ quote.company_name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -580,10 +559,10 @@ watch(
                 <dd>Group Medical</dd>
               </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BRIEF DETAILS</dt>
-            <dd class="break-words">{{ quote.brief_details }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BRIEF DETAILS</dt>
+                <dd class="break-words">{{ quote.brief_details }}</dd>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
@@ -626,7 +605,10 @@ watch(
                   </Link>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -634,7 +616,12 @@ watch(
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </div>
                 <div>
@@ -691,7 +678,7 @@ watch(
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -915,7 +902,7 @@ watch(
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
-    
+
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -979,14 +966,14 @@ watch(
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
               />
-          <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
+              <x-field label="Transaction Type">
+                <x-input
+                  type="text"
+                  :value="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
+              </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -1022,20 +1009,37 @@ watch(
       :payments="quote.payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="page.props.quoteType"
-			:payments="quote.payments"
-            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="documentTypes.filter(item => item.code === 'GMQPD' || item.code === 'GMQPDR' || item.code === 'GMQDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="page.props.quoteType"
+      :payments="quote.payments"
+      :proformaPayment="
+        quote.payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'GMQPD' ||
+            item.code === 'GMQPDR' ||
+            item.code === 'GMQDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       quoteSubType="Group Medical"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"

@@ -1,6 +1,6 @@
 <script setup>
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
-import {computed} from "vue";
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
+import { computed } from 'vue';
 
 const props = defineProps({
   quote: Object,
@@ -11,7 +11,7 @@ const props = defineProps({
   expanded: {
     type: Boolean,
     required: false,
-    default: true
+    default: true,
   },
   extras: {
     type: Object,
@@ -40,6 +40,7 @@ const memberTabs = ref('quote-documents');
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -113,16 +114,16 @@ const docForm = useForm({
 });
 
 const uploadFile = (doc, filesWithInfo, memberId) => {
-    let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-    const { files, rejectReason} = filesWithInfo;
-    if (files.length == 0) {
-          notification.error({
-              title: 'File upload failed',
-              position: 'top',
-          });
-        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-        return false
-    };
+  let url = '/personal-quotes/' + docForm.quote_id + '/documents';
+  const { files, rejectReason } = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -151,15 +152,26 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
 };
 
 const isEN = computed(() => {
-  return isSendUpdatePage && props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.EN;
+  return (
+    isSendUpdatePage &&
+    props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.EN
+  );
 });
 
 const isCPU = computed(() => {
-  return isSendUpdatePage && props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPU;
+  return (
+    isSendUpdatePage &&
+    props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPU
+  );
 });
 
 const sendUpdateButton = computed(() => {
-  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
+  return (
+    (isEN.value || isCPU.value) &&
+    props.updateBtn &&
+    props.updateBtn !== 'Send Update' &&
+    can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON)
+  );
 });
 const sendUpdateValidation = () => {
   axios
@@ -206,7 +218,22 @@ const sendUpdateValidation = () => {
             preserve-scroll
           >
             <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
+              View Legacy policy
+            </x-button>
+          </Link>
+          <Link
+            v-else-if="
+              quote.source == leadSource.RENEWAL_UPLOAD &&
+              can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            "
+            :href="route('legacy-policy.index')"
+            :data="{
+              policy_number: quote.previous_quote_policy_number,
+            }"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
             </x-button>
           </Link>
           <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
@@ -214,44 +241,44 @@ const sendUpdateValidation = () => {
           </x-button>
         </div>
 
-      <DataTable
-      table-class-name="compact"
-      :headers="quoteDocumentsTable.columns"
-      :items="quoteDocuments.sort((a, b) => b.id - a.id) || []"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="quoteDocuments.length < 15"
-    >
-      <template #item-original_name="item">
-        <a
-          :href="storageUrl + item.doc_url"
-          target="_blank"
-          class="text-primary-600"
+        <DataTable
+          table-class-name="compact"
+          :headers="quoteDocumentsTable.columns"
+          :items="quoteDocuments.sort((a, b) => b.id - a.id) || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="quoteDocuments.length < 15"
         >
-          {{ item.original_name }}
-        </a>
-      </template>
-      <template #item-action="{ doc_name }" v-if="!isSendUpdatePage">
-        <div>
-          <x-button
-            size="xs"
-            color="error"
-            outlined
-            @click.prevent="onDocDelete(doc_name)"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
+          <template #item-original_name="item">
+            <a
+              :href="storageUrl + item.doc_url"
+              target="_blank"
+              class="text-primary-600"
+            >
+              {{ item.original_name }}
+            </a>
+          </template>
+          <template #item-action="{ doc_name }" v-if="!isSendUpdatePage">
+            <div>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="onDocDelete(doc_name)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
         </DataTable>
         <div class="flex gap-2 mb-4 justify-end">
           <x-button
-              size="sm"
-              color="orange"
-              class="mt-5"
-              v-if="sendUpdateButton"
-              @click="sendUpdateValidation"
+            size="sm"
+            color="orange"
+            class="mt-5"
+            v-if="sendUpdateButton"
+            @click="sendUpdateValidation"
           >
             {{ props.updateBtn }}
           </x-button>
@@ -279,7 +306,7 @@ const sendUpdateValidation = () => {
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }}  {{ documentType.is_required ? '*' : ''}}
+            {{ documentType.text }} {{ documentType.is_required ? '*' : '' }}
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
