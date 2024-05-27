@@ -17,7 +17,8 @@ defineProps({
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">
         Quote Sync Details - {{ quote_type }}
-        <x-icon :icon="is_synced ? 'roundchecked' : 'roundcross'" :color="is_synced ? 'green' : 'red'" size="lg" />
+        <x-icon :icon="quote_sync?.is_synced ? 'roundchecked' : 'roundcross'"
+          :color="quote_sync?.is_synced ? 'green' : 'red'" size="lg" />
       </h2>
       <div class="flex gap-2">
         <Link :href="`/admin/quote-sync/edit/${quote_sync?.id}`">
