@@ -151,7 +151,7 @@ onMounted(() => {});
 
 <template>
   <div>
-    <Head title="Health List" />
+    <Head title="Health Revival List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health Revival List</h2>
       <LeadAssignedWidget
@@ -162,15 +162,6 @@ onMounted(() => {});
         :yesterdayManualCount="yesterdayManualCount"
         :userMaxCap="userMaxCap"
       />
-      <div class="space-x-3">
-        <Link :href="route('health.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
-        </Link>
-
-        <Link :href="route('health.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
-        </Link>
-      </div>
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
