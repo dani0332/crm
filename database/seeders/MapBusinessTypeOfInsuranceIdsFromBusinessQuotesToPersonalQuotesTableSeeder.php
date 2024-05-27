@@ -18,7 +18,7 @@ class MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder
             ->where('quote_type_id', QuoteTypeId::Business)
             ->whereNull('business_type_of_insurance_id')
             ->orderBy('id', 'desc')
-            ->chunk(50, function ($personalQuotes) {
+            ->chunk(200, function ($personalQuotes) {
                 foreach ($personalQuotes as $personalQuote) {
                     $subTypeId = BusinessQuote::query()
                         ->select('business_type_of_insurance_id')
