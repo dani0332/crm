@@ -26,8 +26,7 @@ class MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder
                         ->whereNotNull('business_type_of_insurance_id')
                         ->first();
 
-                    if ($subTypeId)
-                    {
+                    if ($subTypeId) {
                         $personalQuote->business_type_of_insurance_id =
                             $subTypeId->business_type_of_insurance_id;
                         $personalQuote->save();
