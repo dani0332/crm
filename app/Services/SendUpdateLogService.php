@@ -656,7 +656,7 @@ class SendUpdateLogService
             return $sageResponse;
         }
 
-        return ['status' => false, 'message' => 'Something went wrong'];
+        return ['status' => true];
     }
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)

@@ -20,7 +20,7 @@ class PersonalQuoteController extends Controller
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
     {
-        $response = app(PersonalQuoteRepository::class)->updateStatuses($quoteType, $quoteId, $request->validated());
+        $response = PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
 
         // Update payment allocation status when lead status changes when lead status as Policy Issue
         app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
