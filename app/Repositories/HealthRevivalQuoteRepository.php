@@ -39,10 +39,10 @@ class HealthRevivalQuoteRepository extends BaseRepository
         ])->where('source', LeadSourceEnum::REVIVAL)
 
             ->filter();
-        if (!empty($request->assignment_type)) {
+        if (! empty($request->assignment_type)) {
             $query->where('assignment_type', $request->assignment_type);
         }
-        if (!empty($request->advisors)) {
+        if (! empty($request->advisors)) {
             $query->whereIn('advisor_id', $request->advisors);
         }
         $query->orderBy('created_at', 'desc');

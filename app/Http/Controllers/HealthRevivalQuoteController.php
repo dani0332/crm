@@ -51,7 +51,6 @@ class HealthRevivalQuoteController extends Controller
 
         $record = app(CRUDService::class)->getEntity($quoteType, $id);
 
-
         $ecomDetails = app(HealthQuoteService::class)->getEcomDetails($record);
 
         $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
@@ -115,10 +114,9 @@ class HealthRevivalQuoteController extends Controller
             $advisors = app(CRUDService::class)->getAdvisorsByModelType(strtolower($quoteType));
         }
 
-
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
-        if (!empty($insuranceProviders)) {
+        if (! empty($insuranceProviders)) {
             $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->id,
@@ -126,6 +124,7 @@ class HealthRevivalQuoteController extends Controller
                 ];
             })->sortBy('label')->values();
         }
+
         return inertia('HealthRevivalQuote/Show', [
             'quote' => $record,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
@@ -170,11 +169,11 @@ class HealthRevivalQuoteController extends Controller
         );
     }
 
-
     public function update($uuid)
     {
         $quote = HealthRevivalQuoteRepository::getBy('uuid', $uuid);
         $quote->update(request()->all());
+
         return redirect()->route('healthrevival-quotes-show', $quote->uuid);
     }
 }
