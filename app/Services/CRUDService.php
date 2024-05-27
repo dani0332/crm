@@ -368,7 +368,7 @@ class CRUDService extends BaseService
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
                 && $entity->source == LeadSourceEnum::IMCRM) {
-                $this->healthQuoteService->assignRenewalBatch($entity);
+                $this->healthQuoteService->assignRenewalBatch($entity->id);
                 $this->updatePaymentStatus($entity);
             }
 
