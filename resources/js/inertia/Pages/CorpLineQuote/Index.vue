@@ -135,6 +135,30 @@ const tableHeader = ref([
   { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
 ]);
 
+const setIntialState = () => {
+  Object.assign(filters, {
+    code: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    mobile_no: '',
+    created_at_start: '',
+    created_at_end: '',
+    quote_status_id: '',
+    advisor_id: '',
+    business_type_of_insurance_id: '',
+    company_name: '',
+    page: 1,
+    previous_quote_policy_number: '',
+    renewal_batch: '',
+    is_renewal: '',
+    payment_status: [],
+    is_cold: false,
+    is_stale: false,
+  });
+  filtersCount.value = 0;
+};
+
 function resetFilters() {
   removedSavedParams();
   router.visit(route('business.index'), {
@@ -147,6 +171,9 @@ function resetFilters() {
     onBefore: () => {
       filters.page = 1;
       loader.table = true;
+    },
+    onSuccess: () => {
+      setIntialState();
     },
   });
 }
@@ -516,7 +543,12 @@ watch(
           >
             Search
           </x-button>
-          <x-button size="sm" color="primary" @click.prevent="resetFilters">
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="resetFilters"
+            :loading="loader.table"
+          >
             Reset
           </x-button>
         </div>
