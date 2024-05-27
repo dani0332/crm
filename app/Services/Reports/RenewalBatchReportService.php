@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Reports;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -13,6 +13,10 @@ use App\Models\HealthQuote;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\BaseService;
+use App\Services\CRUDService;
+use App\Services\Query;
+use App\Services\Request;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;

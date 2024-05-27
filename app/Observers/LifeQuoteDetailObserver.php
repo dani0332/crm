@@ -16,6 +16,6 @@ class LifeQuoteDetailObserver
     public function updated(LifeQuoteRequestDetail $lifeQuoteDetail): void
     {
         $lifeQuote = LifeQuote::find($lifeQuoteDetail->life_quote_request_id);
-        $this->syncQuoteDetail($lifeQuote, $lifeQuoteDetail->getDirty());
+        $this->syncQuote($lifeQuote, $lifeQuoteDetail->getDirty());
     }
 }

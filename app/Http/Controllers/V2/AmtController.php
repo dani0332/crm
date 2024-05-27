@@ -133,8 +133,12 @@ class AmtController extends Controller
         if (isset($request->leadStatus) && $request->leadStatus != '') {
             $data->where('qs.id', '=', $request->leadStatus);
         }
-        if (isset($request->advisor_id) && $request->advisor_id != '') {
-            $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
+        if (isset($request->advisor_id) && is_array($request->advisor_id) && count($request->advisor_id) > 0) {
+            if (count($request->advisor_id) === 1 && $request->advisor_id[0] == '-1') {
+                $data->whereNull('bqr.advisor_id');
+            } else {
+                $data->whereIn('bqr.advisor_id', $request->advisor_id);
+            }
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
@@ -368,8 +372,8 @@ class AmtController extends Controller
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
         })->toArray();
 
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus('Business', $item['id'], $request);
 
             return $item;
         }, $leadStatuses);
