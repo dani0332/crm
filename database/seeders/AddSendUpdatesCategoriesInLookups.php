@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
 use Illuminate\Database\Seeder;
 
@@ -51,6 +52,11 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     foreach ($subTypes as $subType) {
                         $words = explode(' ', ucwords($subType['name']));
                         $code = '';
+                        switch ($words) {
+                            case $words == 'Add optional cover':
+                                $code = SendUpdateLogStatusEnum::AOCOV;
+                                break;
+                        }
                         collect($words)->each(function ($word) use (&$code) {
                             $code .= substr($word, 0, 1);
                         });
