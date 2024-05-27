@@ -47,11 +47,11 @@ class AddPaymentPermissions extends Seeder
             RolesEnum::GMAdvisor,
             RolesEnum::GMManager,
             RolesEnum::CorpLineAdvisor,
-            RolesEnum::CorplineManager,           
+            RolesEnum::CorplineManager,
             RolesEnum::NonCCPaymentVerifier,
         ];
         foreach ($allRoles as $role) {
-        
+
             $adminRole = Role::where('name', $role)->first();
 
             $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_DISCOUNT_ADD, 'web');
@@ -76,9 +76,9 @@ class AddPaymentPermissions extends Seeder
                     ]
                 );
             }
-            
-            if(!in_array($role,[RolesEnum::ServiceExecutive,RolesEnum::HealthManager,RolesEnum::RMAdvisor,RolesEnum::LifeManager,
-                                RolesEnum::LifeAdvisor,RolesEnum::GMAdvisor,RolesEnum::GMManager])) {
+
+            if (! in_array($role, [RolesEnum::ServiceExecutive, RolesEnum::HealthManager, RolesEnum::RMAdvisor, RolesEnum::LifeManager,
+                RolesEnum::LifeAdvisor, RolesEnum::GMAdvisor, RolesEnum::GMManager])) {
                 $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD, 'web');
                 $rolePermission = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permission->id)->first();
                 if ($rolePermission === null) {
@@ -91,9 +91,8 @@ class AddPaymentPermissions extends Seeder
                 }
             }
 
-
-            if(in_array($role,[RolesEnum::Admin,RolesEnum::PA,RolesEnum::NRA,RolesEnum::OperationExecutive,RolesEnum::SeniorManagement,RolesEnum::CorpLineAdvisor,
-            RolesEnum::CorplineManager,RolesEnum::NonCCPaymentVerifier])) {
+            if (in_array($role, [RolesEnum::Admin, RolesEnum::PA, RolesEnum::NRA, RolesEnum::OperationExecutive, RolesEnum::SeniorManagement, RolesEnum::CorpLineAdvisor,
+                RolesEnum::CorplineManager, RolesEnum::NonCCPaymentVerifier])) {
                 $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD, 'web');
                 $rolePermission = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permission->id)->first();
                 if ($rolePermission === null) {
@@ -106,10 +105,8 @@ class AddPaymentPermissions extends Seeder
                 }
             }
 
-
-
-            if(in_array($role,[RolesEnum::Admin,RolesEnum::PA,RolesEnum::NRA,RolesEnum::OperationExecutive,RolesEnum::SeniorManagement,RolesEnum::CorpLineAdvisor,
-            RolesEnum::CorplineManager, RolesEnum::ServiceExecutive, RolesEnum::GMAdvisor, RolesEnum::GMManager, RolesEnum::HealthManager,RolesEnum::HealthAdvisor,RolesEnum::NonCCPaymentVerifier])) {
+            if (in_array($role, [RolesEnum::Admin, RolesEnum::PA, RolesEnum::NRA, RolesEnum::OperationExecutive, RolesEnum::SeniorManagement, RolesEnum::CorpLineAdvisor,
+                RolesEnum::CorplineManager, RolesEnum::ServiceExecutive, RolesEnum::GMAdvisor, RolesEnum::GMManager, RolesEnum::HealthManager, RolesEnum::HealthAdvisor, RolesEnum::NonCCPaymentVerifier])) {
                 $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD, 'web');
                 $rolePermission = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permission->id)->first();
                 if ($rolePermission === null) {
@@ -122,8 +119,7 @@ class AddPaymentPermissions extends Seeder
                 }
             }
 
-
-            if(in_array($role,[RolesEnum::NonCCPaymentVerifier,RolesEnum::Admin,RolesEnum::PA,RolesEnum::NRA,RolesEnum::OperationExecutive,RolesEnum::SeniorManagement
+            if (in_array($role, [RolesEnum::NonCCPaymentVerifier, RolesEnum::Admin, RolesEnum::PA, RolesEnum::NRA, RolesEnum::OperationExecutive, RolesEnum::SeniorManagement,
             ])) {
 
                 $permission = Permission::findOrCreate(PermissionsEnum::PAYMENT_VERIFICATION_COLLECTED_BY_BROKER, 'web');
@@ -138,7 +134,7 @@ class AddPaymentPermissions extends Seeder
                 }
             }
 
-            if(in_array($role,[RolesEnum::Admin,RolesEnum::PA,RolesEnum::NRA,RolesEnum::OperationExecutive,RolesEnum::SeniorManagement
+            if (in_array($role, [RolesEnum::Admin, RolesEnum::PA, RolesEnum::NRA, RolesEnum::OperationExecutive, RolesEnum::SeniorManagement,
             ])) {
                 $permission = Permission::findOrCreate(PermissionsEnum::PAYMENT_VERIFICATION_COLLECTED_BY_INSURER, 'web');
                 $rolePermission = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permission->id)->first();

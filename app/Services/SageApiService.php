@@ -595,7 +595,7 @@ class SageApiService
         $invoiceType = '';
         $arrayKey = isset($extraParams['arrayKey']) ? $extraParams['arrayKey'] : 0;
         $sageAPIsParams = SagePayloadFactory::handleSageAPIsParms($extraParams['requestType'], $sageEntryType);
-        $sageLogKey = (!isset($extraParams['recursiveCall']) && isset($sageLogArray[$extraParams['startingStep'] - 1])) ? $extraParams['startingStep'] - 1 : array_key_first($sageLogArray);
+        $sageLogKey = (! isset($extraParams['recursiveCall']) && isset($sageLogArray[$extraParams['startingStep'] - 1])) ? $extraParams['startingStep'] - 1 : array_key_first($sageLogArray);
         $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
         $quoteObject = ! empty($extraParams['sendUpdateLog']) ? $extraParams['sendUpdateLog'] : $quote;
 
@@ -730,7 +730,7 @@ class SageApiService
                 'arrayKey' => $arrayKey,
                 'requestType' => $extraParams['requestType'],
                 'sendUpdateLog' => $extraParams['sendUpdateLog'] ?? [],
-                'recursiveCall' => true
+                'recursiveCall' => true,
             ];
             if (isset($extraParams['batchNumber']) && isset($extraParams['invoiceType'])) {
                 $recursiveCallData = array_merge($recursiveCallData, [
