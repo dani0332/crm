@@ -25,7 +25,6 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
-use Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -398,6 +397,7 @@ class AMLService
 
         return ''; // return http code
     }
+
     private function checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl)
     {
         // creating the data for the request
@@ -430,6 +430,7 @@ class AMLService
 
         return $response;
     }
+
     private function checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl)
     {
         // creating the data for the request
@@ -467,13 +468,14 @@ class AMLService
 
         return $response;
     }
+
     // Match found Email
     private function sendAMLMatchedEmailComplianceTeam($amlUrl, $AMLResponse, $fullName, $quoteTypeName, $quoteCdbId)
     {
         if ($AMLResponse['resultsFound'] == 0) {
             return;
         }
-        $emailL_sys = config('constants.APP_ENV');
+
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
@@ -483,8 +485,8 @@ class AMLService
         foreach ($recipients as $recipient) {
             $emailRecipients[] = $recipient->user_email;
         }
-
-        if ($emailL_sys == 'PRODUCTION') {
+        $emailL_sys = config('constants.APP_ENV');
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
             $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         } else {
             $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
@@ -498,6 +500,7 @@ class AMLService
             'quoteCdbId' => $quoteCdbId,
         ], $emailSubject, $emailRecipients);
     }
+
     private function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients)
     {
         $emailL_sys = config('constants.APP_ENV');
@@ -513,11 +516,12 @@ class AMLService
             ['html' => $templateName],
             $templateParams,
             function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail) {
-                $message->to($emailRecipients)->cc(Auth::user()->email)->subject($emailSubject);
+                $message->to($emailRecipients)->cc(auth()->user()->email)->subject($emailSubject);
                 $message->from($fromEmail, $fromName);
             }
         );
     }
+
     public function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName, $forComplianceSuperUser = false)
     {
         $complianceRole = $forComplianceSuperUser ? [RolesEnum::ComplianceSuperUser] : [RolesEnum::COMPLIANCE, RolesEnum::ComplianceSuperUser];
@@ -540,7 +544,7 @@ class AMLService
             $ccRecipients = $complianceEmailRecipients;
         } else {
             // TO will be currentUserID
-            $currentUserEmailId = User::where('id', '=', Auth::user()->id)->value('email');
+            $currentUserEmailId = User::where('id', '=', auth()->user()->id)->value('email');
             $toRecipient = $currentUserEmailId;
 
             // CC will be all users compliance
@@ -548,7 +552,7 @@ class AMLService
         }
 
         $emailL_sys = config('constants.APP_ENV');
-        if ($emailL_sys == 'PRODUCTION') {
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
             $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         } else {
             $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
@@ -565,6 +569,7 @@ class AMLService
             'quoteCdbId' => $quoteCdbId,
         ], $emailSubject, $toRecipient, $ccRecipients);
     }
+
     private function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients)
     {
         $emailL_sys = config('constants.APP_ENV');

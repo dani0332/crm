@@ -574,6 +574,7 @@ function sendUpdate(prePaymentCheck = true) {
       });
     })
     .catch(function (errors) {
+      loader.sendUpdate = false;
       loader.sendUpdateSectionBtn = false;
       if (errors.response.data.message !== '') {
         notification.error({
