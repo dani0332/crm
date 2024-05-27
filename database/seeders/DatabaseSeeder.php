@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\DocumentType;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -49,15 +50,15 @@ class DatabaseSeeder extends Seeder
             // AutofollowupSeeder::class,
             // addReassignmentTime::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
-            LookupSeeder::class,
+            // LookupSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            GenericPermissionSeeder::class,
-            UpdateOldTeamNamesSeeder::class,
-            AddCapAdvisorPermissionSeeder::class,
-            UpdateLeadAllocationByQuoteId::class,
+            // GenericPermissionSeeder::class,
+            // UpdateOldTeamNamesSeeder::class,
+            // AddCapAdvisorPermissionSeeder::class,
+            // UpdateLeadAllocationByQuoteId::class,
             // AddLegacyPaymentsPermssion::class,
-            ApplicationStorageSeeder::class,
+            // ApplicationStorageSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
             addDubaiNowEmailGroup::class,
@@ -92,7 +93,8 @@ class DatabaseSeeder extends Seeder
             // DttOCBNewBusinessSeeder::class,
             // RevivalConversionReportPermissionSeeder::class,
             // end
-            AddCrossLOBSeeder::class,
+            // AddCrossLOBSeeder::class,
+            DocumentTypeSeeder::class,
         ]);
     }
 }

@@ -14,7 +14,6 @@ class DocumentTypeSeeder extends Seeder
     {
         $quoteDocuments = [
             [
-                'id' => 7,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => '',
@@ -32,7 +31,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 468,
                 'code' => 'AL_CAR',
                 'text' => 'Amendment letter',
                 'description' => '****',
@@ -50,7 +48,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 465,
                 'code' => 'AC_CAR',
                 'text' => 'Application copy',
                 'description' => null,
@@ -68,7 +65,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 13,
                 'code' => 'CAF',
                 'text' => 'Application Form',
                 'description' => '',
@@ -86,7 +82,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 21,
                 'code' => 'BAL',
                 'text' => 'Broker Appointment letter',
                 'description' => '',
@@ -104,7 +99,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 126,
                 'code' => 'CMEM_BAL',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -122,7 +116,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 64,
                 'code' => 'CCL',
                 'text' => 'Census List',
                 'description' => null,
@@ -140,7 +133,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 231,
                 'code' => 'CenVeh_Car',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -158,7 +150,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 235,
                 'code' => 'CCPI_CAR',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -176,7 +167,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 12,
                 'code' => 'CCL',
                 'text' => 'Company Letter',
                 'description' => '',
@@ -194,7 +184,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 124,
                 'code' => 'CMEM_CCL',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -212,7 +201,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 467,
                 'code' => 'COL_CAR',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -230,7 +218,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 135,
                 'code' => 'CAR_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => 'Customer Documents (Endorsement)',
@@ -248,7 +235,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 107,
                 'code' => 'CDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -266,7 +252,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 226,
                 'code' => 'DRLICE_CAR',
                 'text' => "Driver's License",
                 'description' => null,
@@ -284,7 +269,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 20,
                 'code' => 'DL_CAR',
                 'text' => 'Driver’s license (both sides)',
                 'description' => "Please share a copy of your valid driving license with us. Don't have a valid one? Please contact your personal shopper for advice on how to proceed.",
@@ -302,7 +286,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 132,
                 'code' => 'CAR_ECARD',
                 'text' => 'E-card',
                 'description' => 'E-card',
@@ -320,7 +303,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 143,
                 'code' => 'END_ECARD',
                 'text' => 'E-Card',
                 'description' => '',
@@ -338,7 +320,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 691,
                 'code' => 'EC_CAR',
                 'text' => 'E-card',
                 'description' => null,
@@ -356,7 +337,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 4,
                 'code' => 'EID_CAR',
                 'text' => 'Emirates ID (both sides)',
                 'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
@@ -374,7 +354,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 120,
                 'code' => 'CMEM_EID',
                 'text' => 'Emirates ID (both sides)',
                 'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
@@ -392,7 +371,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 228,
                 'code' => 'Emplst_Car',
                 'text' => 'Employee List',
                 'description' => null,
@@ -410,7 +388,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 142,
                 'code' => 'END_CERT',
                 'text' => 'Endorsed Certificate',
                 'description' => '',
@@ -428,7 +405,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 690,
                 'code' => 'ES_CAR',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -446,7 +422,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 141,
                 'code' => 'END_SCHED',
                 'text' => 'Endorsed Schedule',
                 'description' => '',
@@ -464,7 +439,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 689,
                 'code' => 'ES_CAR',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -482,7 +456,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 88,
                 'code' => 'CAREDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => '',
@@ -500,7 +473,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 97,
                 'code' => 'CEC',
                 'text' => 'Establishment Card',
                 'description' => '',
@@ -518,7 +490,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 129,
                 'code' => 'CMEM_CEC',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -536,7 +507,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 466,
                 'code' => 'EL_CAR',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -554,7 +524,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 14,
                 'code' => 'CTC',
                 'text' => 'Final Terms & Conditions',
                 'description' => '',
@@ -572,7 +541,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 67,
                 'code' => 'FTC_CAR',
                 'text' => 'Final terms and conditions',
                 'description' => 'sample description',
@@ -590,7 +558,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 133,
                 'code' => 'CAR_GL',
                 'text' => 'Garage List',
                 'description' => 'Garage List',
@@ -608,7 +575,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 237,
                 'code' => 'GHDF_Car',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -626,7 +592,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 238,
                 'code' => 'IndID_Car',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -644,7 +609,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 233,
                 'code' => 'IQT_CAR',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -662,7 +626,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 26,
                 'code' => 'SOLDUNCON',
                 'text' => 'Internal Proof',
                 'description' => null,
@@ -680,7 +643,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 99,
                 'code' => 'CKYCD',
                 'text' => 'KYC (Know-Your-Customer) Documents',
                 'description' => '',
@@ -698,7 +660,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 131,
                 'code' => 'CMEM_CKYCD',
                 'text' => 'KYC (Know-Your-Customer) Documents',
                 'description' => null,
@@ -716,7 +677,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 236,
                 'code' => 'KYC_CAR',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -734,7 +694,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 240,
                 'code' => 'LOFFL_Car',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -752,7 +711,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 229,
                 'code' => 'MED_CAR',
                 'text' => 'Medical application form',
                 'description' => null,
@@ -770,7 +728,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 232,
                 'code' => 'MemDet-Car',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -788,7 +745,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 234,
                 'code' => 'MAA_Car',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -806,7 +762,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 134,
                 'code' => 'MY_AF',
                 'text' => 'myAlfred',
                 'description' => 'myAlfred',
@@ -824,7 +779,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 463,
                 'code' => 'MAILF_CAR',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -842,7 +796,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 462,
                 'code' => 'NL_CAR',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -860,7 +813,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 63,
                 'code' => 'OCD',
                 'text' => 'Other documents',
                 'description' => null,
@@ -878,7 +830,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 127,
                 'code' => 'CMEM_OCD',
                 'text' => 'Other documents',
                 'description' => null,
@@ -896,7 +847,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 239,
                 'code' => 'Others_Car',
                 'text' => 'Others',
                 'description' => null,
@@ -914,7 +864,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 6,
                 'code' => 'TAD',
                 'text' => 'Passing certificate (less than 30 days old)',
                 'description' => "You may be required to submit additional documents to support the issuance of your policy. Any questions or concerns? Don't hesitate to contact your personal shopper who'll be happy to help.",
@@ -932,7 +881,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 8,
                 'code' => 'PP_CAR',
                 'text' => 'Passport',
                 'description' => '',
@@ -950,7 +898,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 121,
                 'code' => 'CMEM_PP',
                 'text' => 'Passport',
                 'description' => null,
@@ -968,7 +915,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 140,
                 'code' => 'CAR_PA',
                 'text' => 'Payment Approval',
                 'description' => '',
@@ -986,7 +932,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 65,
                 'code' => 'CPD',
                 'text' => 'Payment Proof',
                 'description' => null,
@@ -1004,7 +949,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 139,
                 'code' => 'CAR_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => '',
@@ -1022,7 +966,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 633,
                 'code' => 'PS_CAR',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -1040,7 +983,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 137,
                 'code' => 'CAR_PS_NCC',
                 'text' => 'Payment Slip (Non CC)',
                 'description' => '',
@@ -1058,7 +1000,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 125,
                 'code' => 'CMEM_DL',
                 'text' => "Please share a copy of your valid driving license with us. Don't have a valid one? Please contact yo",
                 'description' => null,
@@ -1076,7 +1017,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 1,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => '',
@@ -1094,7 +1034,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 24,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => '',
@@ -1112,7 +1051,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 16,
                 'code' => 'CPS',
                 'text' => 'Policy Schedule',
                 'description' => '',
@@ -1130,7 +1068,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 5,
                 'code' => 'TR',
                 'text' => 'Receipt',
                 'description' => '',
@@ -1148,7 +1085,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 69,
                 'code' => 'CPDR',
                 'text' => 'Receipt',
                 'description' => '',
@@ -1166,7 +1102,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 145,
                 'code' => 'END_RCPT',
                 'text' => 'Receipt',
                 'description' => '',
@@ -1184,7 +1119,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 694,
                 'code' => 'REC_CAR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -1202,7 +1136,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 138,
                 'code' => 'CAR_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => '',
@@ -1220,7 +1153,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 96,
                 'code' => 'CAR_MULKIY',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => '',
@@ -1238,7 +1170,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 128,
                 'code' => 'CMEM_MULK',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -1256,7 +1187,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 464,
                 'code' => 'SMAF_Car',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -1274,7 +1204,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 230,
                 'code' => 'TOB_Car',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -1292,7 +1221,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 470,
                 'code' => 'STI_CAR',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -1310,7 +1238,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 469,
                 'code' => 'STL_CAR',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -1328,7 +1255,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 2,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => '',
@@ -1346,7 +1272,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 144,
                 'code' => 'END_TI',
                 'text' => 'Tax Invoice',
                 'description' => '',
@@ -1364,7 +1289,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 3,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => '',
@@ -1382,7 +1306,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 11,
                 'code' => 'CTL',
                 'text' => 'Trade License',
                 'description' => '',
@@ -1400,7 +1323,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 123,
                 'code' => 'CMEM_CTL',
                 'text' => 'Trade License',
                 'description' => null,
@@ -1418,7 +1340,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 227,
                 'code' => 'VATCERT_CA',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -1436,7 +1357,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 248,
                 'code' => 'UT_Car',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -1454,7 +1374,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 136,
                 'code' => 'CUW_ECOR',
                 'text' => 'Underwriter Email Correspondence',
                 'description' => '',
@@ -1472,7 +1391,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 632,
                 'code' => 'UWEC_CAR',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -1490,7 +1408,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 312,
                 'code' => 'CVAT',
                 'text' => 'VAT Certificate or Undertaking letter for non-VAT',
                 'description' => '',
@@ -1508,7 +1425,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 130,
                 'code' => 'CMEM_CVAT',
                 'text' => 'VAT Certificate or Undertaking letter for non-VAT',
                 'description' => null,
@@ -1526,7 +1442,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 10,
                 'code' => 'CMUL',
                 'text' => 'Vehicle license (both sides) or Dealer invoice copy or VCC',
                 'description' => 'Please share a copy of the current vehicle registration document for the vehicle you are insuring with us.
@@ -1550,7 +1465,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 62,
                 'code' => 'VCP',
                 'text' => 'Vehicle photos (as per format shared by the advisor)',
                 'description' => '',
@@ -1568,7 +1482,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 9,
                 'code' => 'VISA_CAR',
                 'text' => 'Visa',
                 'description' => '',
@@ -1586,7 +1499,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 122,
                 'code' => 'CMEM_VISA',
                 'text' => 'Visa',
                 'description' => null,
@@ -1604,7 +1516,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 531,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => null,
@@ -1622,7 +1533,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 539,
                 'code' => 'AL_HOME',
                 'text' => 'Amendment letter',
                 'description' => null,
@@ -1640,7 +1550,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 555,
                 'code' => 'AC_HOME',
                 'text' => 'Application copy',
                 'description' => null,
@@ -1658,7 +1567,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 352,
                 'code' => 'BAL_HOME',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -1676,7 +1584,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 353,
                 'code' => 'CENVEH_Hom',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -1694,7 +1601,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 357,
                 'code' => 'CCPI_HOME',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -1712,7 +1618,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 348,
                 'code' => 'CL_HOME',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -1730,7 +1635,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 538,
                 'code' => 'COL_HOME',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -1748,7 +1652,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 653,
                 'code' => 'HOME_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -1766,7 +1669,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 116,
                 'code' => 'HOMDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -1784,7 +1686,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 341,
                 'code' => 'DRLIC_Home',
                 'text' => "Driver's License",
                 'description' => null,
@@ -1802,7 +1703,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 527,
                 'code' => 'ECARD_HOME',
                 'text' => 'E-card',
                 'description' => null,
@@ -1820,7 +1720,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 712,
                 'code' => 'EC_HOME',
                 'text' => 'E-card',
                 'description' => null,
@@ -1838,7 +1737,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 52,
                 'code' => 'HOMEID',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
@@ -1856,7 +1754,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 340,
                 'code' => 'HEAEID',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => null,
@@ -1874,7 +1771,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 346,
                 'code' => 'ELST_Home',
                 'text' => 'Employee List',
                 'description' => null,
@@ -1892,7 +1788,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 370,
                 'code' => 'ELST_PET',
                 'text' => 'Employee List',
                 'description' => null,
@@ -1910,7 +1805,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 711,
                 'code' => 'ES_HOME',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -1928,7 +1822,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 710,
                 'code' => 'ES_HOME',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -1946,7 +1839,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 91,
                 'code' => 'HOMEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => null,
@@ -1964,7 +1856,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 344,
                 'code' => 'EC_Home',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -1982,7 +1873,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 537,
                 'code' => 'EL_HOME',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -2000,7 +1890,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 351,
                 'code' => 'FTC_HOME',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -2018,7 +1907,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 533,
                 'code' => 'GL_HOME',
                 'text' => 'Garage List',
                 'description' => null,
@@ -2036,7 +1924,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 359,
                 'code' => 'GHDF_HOME',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -2054,7 +1941,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 360,
                 'code' => 'INDID_HOME',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -2072,7 +1958,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 355,
                 'code' => 'IQT_HOME',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -2090,7 +1975,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 356,
                 'code' => 'KYC_HOME',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -2108,7 +1992,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 349,
                 'code' => 'MED_HOME',
                 'text' => 'Medical application form',
                 'description' => null,
@@ -2126,7 +2009,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 354,
                 'code' => 'MEMDET-HOM',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -2144,7 +2026,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 358,
                 'code' => 'MAA_HOME',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -2162,7 +2043,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 535,
                 'code' => 'MAILF_HOME',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -2180,7 +2060,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 532,
                 'code' => 'NL_HOME',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -2198,7 +2077,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 361,
                 'code' => 'OTH_HOME',
                 'text' => 'Others',
                 'description' => null,
@@ -2216,7 +2094,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 338,
                 'code' => 'Home_PAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -2234,7 +2111,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 658,
                 'code' => 'PA_HOME',
                 'text' => 'Payment approval',
                 'description' => null,
@@ -2252,7 +2128,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 100,
                 'code' => 'CKYCD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -2270,7 +2145,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 209,
                 'code' => 'HOMPD',
                 'text' => 'Payment Proof',
                 'description' => null,
@@ -2288,7 +2162,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 657,
                 'code' => 'HOME_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -2306,7 +2179,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 655,
                 'code' => 'PS_HOME',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -2324,7 +2196,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 526,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -2342,7 +2213,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 534,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -2360,7 +2230,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 525,
                 'code' => 'CPS',
                 'text' => 'Policy Schedule',
                 'description' => null,
@@ -2378,7 +2247,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 530,
                 'code' => 'REC_HOME',
                 'text' => 'Receipt',
                 'description' => null,
@@ -2396,7 +2264,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 101,
                 'code' => 'HOMPDR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -2414,7 +2281,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 719,
                 'code' => 'REC_PET',
                 'text' => 'Receipt',
                 'description' => null,
@@ -2432,7 +2298,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 656,
                 'code' => 'HOME_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -2450,7 +2315,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 662,
                 'code' => 'PET_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -2468,7 +2332,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 714,
                 'code' => 'REC_HOME',
                 'text' => 'Receipt (Send Update)',
                 'description' => null,
@@ -2486,7 +2349,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 342,
                 'code' => 'Home_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -2504,7 +2366,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 536,
                 'code' => 'SMAF_HOME',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -2522,7 +2383,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 350,
                 'code' => 'TOB_HOME',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -2540,7 +2400,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 795,
                 'code' => 'STI_home',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -2558,7 +2417,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 540,
                 'code' => 'STL_HOME',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -2576,7 +2434,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 528,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -2594,7 +2451,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 713,
                 'code' => 'TI_HOME',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -2612,7 +2468,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 783,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -2630,7 +2485,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 529,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -2648,7 +2502,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 343,
                 'code' => 'TL_Home',
                 'text' => 'Trade License',
                 'description' => null,
@@ -2666,7 +2519,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 345,
                 'code' => 'VCER_Home',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -2684,7 +2536,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 347,
                 'code' => 'UT_Home',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -2702,7 +2553,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 654,
                 'code' => 'UWEC_HOME',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -2720,7 +2570,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 339,
                 'code' => 'VISA_Home',
                 'text' => 'Visa',
                 'description' => null,
@@ -2738,7 +2587,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 494,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => null,
@@ -2756,7 +2604,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 504,
                 'code' => 'AL_HLTH',
                 'text' => 'Amendment letter',
                 'description' => null,
@@ -2774,7 +2621,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 501,
                 'code' => 'AC_HLTH',
                 'text' => 'Application copy',
                 'description' => null,
@@ -2792,7 +2638,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 289,
                 'code' => 'BAL_HLTH',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -2810,7 +2655,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 290,
                 'code' => 'BAL_HLTH',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -2828,7 +2672,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 15,
                 'code' => 'CCL',
                 'text' => 'Census List',
                 'description' => '',
@@ -2846,7 +2689,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 291,
                 'code' => 'CENVEH_HLT',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -2864,7 +2706,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 292,
                 'code' => 'CENVEH_HLT',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -2882,7 +2723,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 299,
                 'code' => 'CCPI_HLTH',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -2900,7 +2740,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 300,
                 'code' => 'CCPI_HLTH',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -2918,7 +2757,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 282,
                 'code' => 'CL_HLTH',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -2936,7 +2774,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 60,
                 'code' => 'CL_HLTH',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -2954,7 +2791,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 42,
                 'code' => 'CD',
                 'text' => 'Confirmation Documents',
                 'description' => 'Please upload your signed benefit table, proof of payment, signed policy wordings here.
@@ -2973,7 +2809,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 503,
                 'code' => 'COL_HLTH',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -2991,7 +2826,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 640,
                 'code' => 'HLTH_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -3009,7 +2843,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 645,
                 'code' => 'HLTH_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -3027,7 +2860,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 106,
                 'code' => 'DENBER',
                 'text' => 'denber Offers',
                 'description' => null,
@@ -3045,7 +2877,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 38,
                 'code' => 'MEDS',
                 'text' => 'Discharge Summary (for Newborn)',
                 'description' => 'Please upload the discharge summary for members up to 6 months old.',
@@ -3063,7 +2894,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 108,
                 'code' => 'HDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -3081,7 +2911,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 268,
                 'code' => 'DRLIC_HLTH',
                 'text' => "Driver's License",
                 'description' => null,
@@ -3099,7 +2928,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 269,
                 'code' => 'DRLIC_HLTH',
                 'text' => "Driver's License",
                 'description' => null,
@@ -3117,7 +2945,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 44,
                 'code' => 'ECARD',
                 'text' => 'E-card',
                 'description' => '',
@@ -3135,7 +2962,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 700,
                 'code' => 'EC_HLTH',
                 'text' => 'E-card',
                 'description' => null,
@@ -3153,7 +2979,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 491,
                 'code' => 'ECARD_HLTH',
                 'text' => 'E-card (Health)',
                 'description' => null,
@@ -3171,7 +2996,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 53,
                 'code' => 'HEAEID',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
@@ -3189,7 +3013,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 278,
                 'code' => 'Elst_Hlth',
                 'text' => 'Employee List',
                 'description' => null,
@@ -3207,7 +3030,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 279,
                 'code' => 'ELST_HLTH',
                 'text' => 'Employee List',
                 'description' => null,
@@ -3225,7 +3047,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 702,
                 'code' => 'ES_HLTH',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -3243,7 +3064,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 701,
                 'code' => 'ES_HLTH',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -3261,7 +3081,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 89,
                 'code' => 'HEAEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => null,
@@ -3279,7 +3098,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 274,
                 'code' => 'CEC_HLTH',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -3297,7 +3115,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 275,
                 'code' => 'CEC_HLTH',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -3315,7 +3132,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 502,
                 'code' => 'EL_HLTH',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -3333,7 +3149,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 287,
                 'code' => 'FTC_Hlth',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -3351,7 +3166,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 288,
                 'code' => 'FTC_HLTH',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -3369,7 +3183,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 497,
                 'code' => 'GL_HLTH',
                 'text' => 'Garage List',
                 'description' => null,
@@ -3387,7 +3200,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 303,
                 'code' => 'GHDF_Hlth',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -3405,7 +3217,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 304,
                 'code' => 'GHDF_HLTH',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -3423,7 +3234,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 305,
                 'code' => 'INDID_Hlth',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -3441,7 +3251,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 306,
                 'code' => 'INDID_HLTH',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -3459,7 +3268,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 295,
                 'code' => 'IQT_HLTH',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -3477,7 +3285,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 296,
                 'code' => 'IQT_HLTH',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -3495,7 +3302,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 301,
                 'code' => 'KYC_HLTH',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -3513,7 +3319,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 302,
                 'code' => 'KYC_HLTH',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -3531,7 +3336,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 309,
                 'code' => 'LOFFL_HLTH',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -3549,7 +3353,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 310,
                 'code' => 'LOFFL_HLTH',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -3567,7 +3370,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 283,
                 'code' => 'MED_Hlth',
                 'text' => 'Medical application form',
                 'description' => null,
@@ -3585,7 +3387,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 43,
                 'code' => 'MEMR',
                 'text' => 'Medical Report (if applicable)',
                 'description' => 'Please upload the medical report/s of the member to be insured',
@@ -3603,7 +3404,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 36,
                 'code' => 'MEEID',
                 'text' => "Member's Emirates ID Copy",
                 'description' => 'Please upload the Emirates ID (front & back side) or Emirates ID Application Form copy of the member to be insured.',
@@ -3621,7 +3421,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 34,
                 'code' => 'MEPP',
                 'text' => "Member's Passport Copy",
                 'description' => 'Please upload the passport copy of the member to be insured.',
@@ -3639,7 +3438,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 35,
                 'code' => 'MEV',
                 'text' => "Member's Visa Copy",
                 'description' => 'Please upload the visa copy of the member to be insured.',
@@ -3657,7 +3455,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 293,
                 'code' => 'MDET-HLTH',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -3675,7 +3472,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 294,
                 'code' => 'MDET-HLTH',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -3693,7 +3489,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 297,
                 'code' => 'MAA_HLTH',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -3711,7 +3506,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 298,
                 'code' => 'MAA_HLTH',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -3729,7 +3523,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 499,
                 'code' => 'MAILF_HLTH',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -3747,7 +3540,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 496,
                 'code' => 'NL_HLTH',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -3765,7 +3557,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 41,
                 'code' => 'OAPPD',
                 'text' => 'Other Application Documents',
                 'description' => 'Please note that insurers may request further documentation as part of the underwriting process and we will let you know if this applies to your application',
@@ -3783,7 +3574,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 307,
                 'code' => 'OTH_Hlth',
                 'text' => 'Others',
                 'description' => null,
@@ -3801,7 +3591,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 308,
                 'code' => 'OTH_HLTH',
                 'text' => 'Others',
                 'description' => null,
@@ -3819,7 +3608,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 264,
                 'code' => 'HlthPAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -3837,7 +3625,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 266,
                 'code' => 'HLTHPAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -3855,7 +3642,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 644,
                 'code' => 'PA_HLTH',
                 'text' => 'Payment approval',
                 'description' => null,
@@ -3873,7 +3659,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 66,
                 'code' => 'HPD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -3891,7 +3676,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 76,
                 'code' => 'KYCDOC',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -3909,7 +3693,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 650,
                 'code' => 'HLTH_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -3927,7 +3710,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 642,
                 'code' => 'PS_HLTH',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -3945,7 +3727,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 780,
                 'code' => 'POLC',
                 'text' => 'Policy Certificate',
                 'description' => '',
@@ -3963,7 +3744,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 45,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -3981,7 +3761,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 774,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -3999,7 +3778,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 498,
                 'code' => 'PHB_HLTH',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -4017,7 +3795,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 489,
                 'code' => 'CPS',
                 'text' => 'Policy Schedule',
                 'description' => null,
@@ -4035,7 +3812,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 46,
                 'code' => 'POLW',
                 'text' => 'Policy Wordings/Bond',
                 'description' => '',
@@ -4053,7 +3829,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 769,
                 'code' => 'RV',
                 'text' => 'Receipt',
                 'description' => null,
@@ -4071,7 +3846,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 47,
                 'code' => 'RV',
                 'text' => 'Receipt',
                 'description' => null,
@@ -4089,7 +3863,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 70,
                 'code' => 'HPDR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -4107,7 +3880,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 648,
                 'code' => 'HLTH_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -4125,7 +3897,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 495,
                 'code' => 'REC_HLTH',
                 'text' => 'Receipt (Policy)',
                 'description' => null,
@@ -4143,7 +3914,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 704,
                 'code' => 'REC_HLTH',
                 'text' => 'Receipt (Send Update)',
                 'description' => null,
@@ -4161,7 +3931,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 270,
                 'code' => 'HLTH_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -4179,7 +3948,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 271,
                 'code' => 'HLTH_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -4197,7 +3965,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 800,
                 'code' => 'SCRDOC',
                 'text' => 'Riskscore',
                 'description' => '',
@@ -4215,7 +3982,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 500,
                 'code' => 'SMAF_HLTH',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -4233,7 +3999,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 285,
                 'code' => 'TOB_Hlth',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -4251,7 +4016,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 286,
                 'code' => 'TOB_HLTH',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -4269,7 +4033,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 506,
                 'code' => 'STI_HLTH',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -4287,7 +4050,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 505,
                 'code' => 'STL_HLTH',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -4305,7 +4067,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 40,
                 'code' => 'SDC',
                 'text' => "Sponsor's Documents - Company",
                 'description' => 'Please upload a copy of the Trade License, VAT certificate & Establishment Card',
@@ -4323,7 +4084,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 39,
                 'code' => 'SDI',
                 'text' => "Sponsor's Documents - Individual",
                 'description' => "Please upload the Sponsor's copy of Passport, Visa, Emirates ID (front & back), Proof of Insurance",
@@ -4341,7 +4101,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 781,
                 'code' => 'TI',
                 'text' => 'Tax Invoice',
                 'description' => 'Tax Invoice or Debit Note (without the commission)',
@@ -4359,7 +4118,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 48,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => 'Tax Invoice or Debit Note (without the commission)',
@@ -4377,7 +4135,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 493,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -4395,7 +4152,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 49,
                 'code' => 'TIRBB',
                 'text' => 'TIRBB/Credit Note',
                 'description' => 'Tax Invoice Raised by Buyer or Credit Note (document where commission is stated)',
@@ -4413,7 +4169,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 272,
                 'code' => 'CTL_Hlth',
                 'text' => 'Trade License',
                 'description' => null,
@@ -4431,7 +4186,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 273,
                 'code' => 'CTL_HLTH',
                 'text' => 'Trade License',
                 'description' => null,
@@ -4449,7 +4203,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 276,
                 'code' => 'VCER_Hlth',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -4467,7 +4220,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 277,
                 'code' => 'VCER_HLTH',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -4485,7 +4237,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 37,
                 'code' => 'MEBC',
                 'text' => 'UAE Birth Certificate (for Newborn)',
                 'description' => 'Please upload the UAE birth certificate for the newborn member up to 2 months old.',
@@ -4503,7 +4254,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 280,
                 'code' => 'UT_HLTH',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -4521,7 +4271,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 281,
                 'code' => 'UT_HLTH',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -4539,7 +4288,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 641,
                 'code' => 'UWEC_HLTH',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -4557,7 +4305,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 265,
                 'code' => 'VISA_Hlth',
                 'text' => 'Visa',
                 'description' => null,
@@ -4575,7 +4322,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 267,
                 'code' => 'VISA_HLTH',
                 'text' => 'Visa',
                 'description' => null,
@@ -4593,7 +4339,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 603,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => null,
@@ -4611,7 +4356,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 611,
                 'code' => 'AL_LIFE',
                 'text' => 'Amendment letter',
                 'description' => null,
@@ -4629,7 +4373,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 609,
                 'code' => 'AC_LIFE',
                 'text' => 'Application copy',
                 'description' => null,
@@ -4647,7 +4390,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 451,
                 'code' => 'BAL_Life',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -4665,7 +4407,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 452,
                 'code' => 'CENVEH_Lif',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -4683,7 +4424,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 456,
                 'code' => 'CCPI_Life',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -4701,7 +4441,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 447,
                 'code' => 'CL_Life',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -4719,7 +4458,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 610,
                 'code' => 'COL_LIFE',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -4737,7 +4475,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 677,
                 'code' => 'LIFE_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -4755,7 +4492,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 110,
                 'code' => 'LDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -4773,7 +4509,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 440,
                 'code' => 'DRLIC_Life',
                 'text' => "Driver's License",
                 'description' => null,
@@ -4791,7 +4526,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 599,
                 'code' => 'ECARD_LIFE',
                 'text' => 'E-card',
                 'description' => null,
@@ -4809,7 +4543,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 732,
                 'code' => 'EC_LIFE',
                 'text' => 'E-card',
                 'description' => null,
@@ -4827,7 +4560,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 737,
                 'code' => 'EC_BS',
                 'text' => 'E-card',
                 'description' => null,
@@ -4845,7 +4577,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 54,
                 'code' => 'LIFEID',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
@@ -4863,7 +4594,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 439,
                 'code' => 'EID_Life',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => null,
@@ -4881,7 +4611,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 731,
                 'code' => 'ES_LIFE',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -4899,7 +4628,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 730,
                 'code' => 'ES_LIFE',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -4917,7 +4645,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 90,
                 'code' => 'LIFEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => null,
@@ -4935,7 +4662,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 443,
                 'code' => 'EC_Life',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -4953,7 +4679,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 793,
                 'code' => 'EL_life',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -4971,7 +4696,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 450,
                 'code' => 'FTC_Life',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -4989,7 +4713,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 605,
                 'code' => 'GL_life',
                 'text' => 'Garage List',
                 'description' => null,
@@ -5007,7 +4730,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 460,
                 'code' => 'GHDF_Life',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -5025,7 +4747,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 459,
                 'code' => 'INDID_Life',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -5043,7 +4764,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 454,
                 'code' => 'IQT_Life',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -5061,7 +4781,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 457,
                 'code' => 'KYC_Life',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -5079,7 +4798,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 461,
                 'code' => 'LOFFL_LIFE',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -5097,7 +4815,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 763,
                 'code' => 'LOFFL_BS',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -5115,7 +4832,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 448,
                 'code' => 'MED_Life',
                 'text' => 'Medical application form',
                 'description' => null,
@@ -5133,7 +4849,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 453,
                 'code' => 'MEMDET-Lif',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -5151,7 +4866,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 455,
                 'code' => 'MAA_Life',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -5169,7 +4883,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 607,
                 'code' => 'MAILF_LIFE',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -5187,7 +4900,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 604,
                 'code' => 'NL_life',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -5205,7 +4917,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 458,
                 'code' => 'OTH_Life',
                 'text' => 'Others',
                 'description' => null,
@@ -5223,7 +4934,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 27,
                 'code' => 'PS',
                 'text' => 'Passport',
                 'description' => '',
@@ -5241,7 +4951,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 437,
                 'code' => 'Life_PAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -5259,7 +4968,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 682,
                 'code' => 'PA_LIFE',
                 'text' => 'Payment approval',
                 'description' => null,
@@ -5277,7 +4985,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 74,
                 'code' => 'LPD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -5295,7 +5002,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 681,
                 'code' => 'LIFE_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -5313,7 +5019,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 679,
                 'code' => 'PS_LIFE',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -5331,7 +5036,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 598,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -5349,7 +5053,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 606,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -5367,7 +5070,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 597,
                 'code' => 'PS_LIFE',
                 'text' => 'Policy Schedule',
                 'description' => null,
@@ -5385,7 +5087,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 75,
                 'code' => 'LPDR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -5403,7 +5104,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 602,
                 'code' => 'REC_LIFE',
                 'text' => 'Receipt',
                 'description' => null,
@@ -5421,7 +5121,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 734,
                 'code' => 'REC_LIFE',
                 'text' => 'Receipt',
                 'description' => null,
@@ -5439,7 +5138,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 739,
                 'code' => 'REC_BS',
                 'text' => 'Receipt',
                 'description' => null,
@@ -5457,7 +5155,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 680,
                 'code' => 'LIFE_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -5475,7 +5172,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 441,
                 'code' => 'LIFE_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -5493,7 +5189,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 608,
                 'code' => 'SMAF_LIFE',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -5511,7 +5206,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 449,
                 'code' => 'TOB_Life',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -5529,7 +5223,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 613,
                 'code' => 'STI_LIFE',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -5547,7 +5240,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 612,
                 'code' => 'STL_LIFE',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -5565,7 +5257,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 792,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -5583,7 +5274,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 733,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -5601,7 +5291,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 782,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -5619,7 +5308,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 442,
                 'code' => 'TL_Life',
                 'text' => 'Trade License',
                 'description' => null,
@@ -5637,7 +5325,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 444,
                 'code' => 'VCER_Life',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -5655,7 +5342,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 446,
                 'code' => 'UT_Life',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -5673,7 +5359,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 678,
                 'code' => 'UWEC_LIFE',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -5691,7 +5376,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 438,
                 'code' => 'VISA_Life',
                 'text' => 'Visa',
                 'description' => null,
@@ -5709,7 +5393,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 620,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => null,
@@ -5727,7 +5410,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 629,
                 'code' => 'AL_GH',
                 'text' => 'Amendment letter',
                 'description' => null,
@@ -5745,7 +5427,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 754,
                 'code' => 'BAL_BS',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -5763,7 +5444,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 208,
                 'code' => 'CCL',
                 'text' => 'Census List',
                 'description' => '',
@@ -5781,7 +5461,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 755,
                 'code' => 'CENVEH_BS',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -5799,7 +5478,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 758,
                 'code' => 'CCPI_BS',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -5817,7 +5495,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 750,
                 'code' => 'CL_BS',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -5835,7 +5512,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 628,
                 'code' => 'COL_GH',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -5853,7 +5529,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 684,
                 'code' => 'B_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -5871,7 +5546,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 115,
                 'code' => 'CLDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -5889,7 +5563,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 117,
                 'code' => 'GMQDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -5907,7 +5580,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 743,
                 'code' => 'DRLIC_BS',
                 'text' => "Driver's License",
                 'description' => null,
@@ -5925,7 +5597,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 616,
                 'code' => 'ECARD_GH',
                 'text' => 'E-card',
                 'description' => null,
@@ -5943,7 +5614,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 51,
                 'code' => 'BUSEID',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
@@ -5961,7 +5631,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 742,
                 'code' => 'EID_BS',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => null,
@@ -5979,7 +5648,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 748,
                 'code' => 'ELST_BS',
                 'text' => 'Employee List',
                 'description' => null,
@@ -5997,7 +5665,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 736,
                 'code' => 'ES_BS',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -6015,7 +5682,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 735,
                 'code' => 'ES_BS',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -6033,7 +5699,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 94,
                 'code' => 'BUSEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => null,
@@ -6051,7 +5716,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 746,
                 'code' => 'EC_BS',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -6069,7 +5733,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 627,
                 'code' => 'EL_GH',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -6087,7 +5750,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 753,
                 'code' => 'FTC_BS',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -6105,7 +5767,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 622,
                 'code' => 'GL_GH',
                 'text' => 'Garage List',
                 'description' => null,
@@ -6123,7 +5784,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 760,
                 'code' => 'GHDF_BS',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -6141,7 +5801,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 761,
                 'code' => 'INDID_BS',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -6159,7 +5818,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 756,
                 'code' => 'IQT_BS',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -6177,7 +5835,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 759,
                 'code' => 'KYC_BS',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -6195,7 +5852,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 802,
                 'code' => 'MEMDET-Bis',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -6213,7 +5869,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 757,
                 'code' => 'MAA_BS',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -6231,7 +5886,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 624,
                 'code' => 'MAILF_GH',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -6249,7 +5903,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 621,
                 'code' => 'NL_GH',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -6267,7 +5920,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 762,
                 'code' => 'OTH_BS',
                 'text' => 'Others',
                 'description' => null,
@@ -6285,7 +5937,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 740,
                 'code' => 'BS_PAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -6303,7 +5954,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 683,
                 'code' => 'PA_B',
                 'text' => 'Payment approval',
                 'description' => null,
@@ -6321,7 +5971,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 85,
                 'code' => 'CLPD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -6339,7 +5988,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 102,
                 'code' => 'GMQPD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -6357,7 +6005,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 688,
                 'code' => 'B_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -6375,7 +6022,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 686,
                 'code' => 'PS_B',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -6393,7 +6039,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 615,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -6411,7 +6056,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 790,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -6429,7 +6073,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 623,
                 'code' => 'PHB_GH',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -6447,7 +6090,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 791,
                 'code' => 'CPS',
                 'text' => 'Policy Schedule',
                 'description' => null,
@@ -6465,7 +6107,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 86,
                 'code' => 'CLPDR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -6483,7 +6124,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 103,
                 'code' => 'GMQPDR',
                 'text' => 'Receipt',
                 'description' => '',
@@ -6501,7 +6141,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 619,
                 'code' => 'REC_GH',
                 'text' => 'Receipt',
                 'description' => null,
@@ -6519,7 +6158,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 687,
                 'code' => 'B_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -6537,7 +6175,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 744,
                 'code' => 'BS_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -6555,7 +6192,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 625,
                 'code' => 'SMAF_GH',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -6573,7 +6209,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 626,
                 'code' => 'SMAF_GH',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -6591,7 +6226,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 751,
                 'code' => 'SMAF_BS',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -6609,7 +6243,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 752,
                 'code' => 'TOB_BS',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -6627,7 +6260,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 630,
                 'code' => 'STI_GH',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -6645,7 +6277,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 631,
                 'code' => 'STL_GH',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -6663,7 +6294,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 797,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -6681,7 +6311,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 618,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -6699,7 +6328,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 789,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -6717,7 +6345,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 745,
                 'code' => 'TL_BS',
                 'text' => 'Trade License',
                 'description' => null,
@@ -6735,7 +6362,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 747,
                 'code' => 'VCER_BS',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -6753,7 +6379,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 749,
                 'code' => 'UT_BS',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -6771,7 +6396,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 685,
                 'code' => 'UWEC_B',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -6789,7 +6413,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 741,
                 'code' => 'VISA_BS',
                 'text' => 'Visa',
                 'description' => null,
@@ -6807,7 +6430,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 477,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => null,
@@ -6825,7 +6447,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 486,
                 'code' => 'AL_BIKE',
                 'text' => 'Amendment letter',
                 'description' => null,
@@ -6843,7 +6464,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 483,
                 'code' => 'AC_Bike',
                 'text' => 'Application copy',
                 'description' => null,
@@ -6861,7 +6481,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 61,
                 'code' => 'CAF',
                 'text' => 'Application Form',
                 'description' => '',
@@ -6879,7 +6498,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 253,
                 'code' => 'BAL_Bike',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -6897,7 +6515,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 254,
                 'code' => 'CENVEH_Bik',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -6915,7 +6532,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 258,
                 'code' => 'CCPI_Bike',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -6933,7 +6549,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 311,
                 'code' => 'CCL',
                 'text' => 'Company Letter',
                 'description' => '',
@@ -6951,7 +6566,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 485,
                 'code' => 'COL_Bike',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -6969,7 +6583,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 635,
                 'code' => 'BIKE_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -6987,7 +6600,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 112,
                 'code' => 'BDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -7005,7 +6617,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 242,
                 'code' => 'DRLICE_BIK',
                 'text' => "Driver's License",
                 'description' => null,
@@ -7023,7 +6634,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 696,
                 'code' => 'EC_BIKE',
                 'text' => 'E-card',
                 'description' => null,
@@ -7041,7 +6651,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 473,
                 'code' => 'ECARD_BIKE',
                 'text' => 'E-card(Health)',
                 'description' => null,
@@ -7059,7 +6668,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 58,
                 'code' => 'CEID',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
@@ -7077,7 +6685,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 247,
                 'code' => 'EMPLST_Bik',
                 'text' => 'Employee List',
                 'description' => null,
@@ -7095,7 +6702,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 698,
                 'code' => 'ES_BIKE',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -7113,7 +6719,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 697,
                 'code' => 'ES_BIKE',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -7131,7 +6736,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 93,
                 'code' => 'BIKEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => null,
@@ -7149,7 +6753,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 245,
                 'code' => 'CEC_Bike',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -7167,7 +6770,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 484,
                 'code' => 'EL_Bike',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -7185,7 +6787,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 252,
                 'code' => 'CTC',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -7203,7 +6804,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 479,
                 'code' => 'GL_BIKE',
                 'text' => 'Garage List',
                 'description' => null,
@@ -7221,7 +6821,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 260,
                 'code' => 'GHDF_Bike',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -7239,7 +6838,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 105,
                 'code' => 'HTC',
                 'text' => 'Home test code',
                 'description' => 'Home test code',
@@ -7257,7 +6855,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 263,
                 'code' => 'INDID_Bike',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -7275,7 +6872,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 256,
                 'code' => 'IQT_Bike',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -7293,7 +6889,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 259,
                 'code' => 'KYC_Bike',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -7311,7 +6906,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 261,
                 'code' => 'LOFFL_Bike',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -7329,7 +6923,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 250,
                 'code' => 'MED_Bike',
                 'text' => 'Medical application form',
                 'description' => null,
@@ -7347,7 +6940,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 255,
                 'code' => 'MEMDET-Bik',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -7365,7 +6957,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 257,
                 'code' => 'MAA_Bike',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -7383,7 +6974,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 481,
                 'code' => 'MAILF_Bike',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -7401,7 +6991,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 478,
                 'code' => 'NL_Bike',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -7419,7 +7008,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 262,
                 'code' => 'OTHERS_Bik',
                 'text' => 'Others',
                 'description' => null,
@@ -7437,7 +7025,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 225,
                 'code' => 'BIKPAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -7455,7 +7042,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 634,
                 'code' => 'PA_CAR',
                 'text' => 'Payment approval',
                 'description' => null,
@@ -7473,7 +7059,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 79,
                 'code' => 'BPD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -7491,7 +7076,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 639,
                 'code' => 'BIKE_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -7509,7 +7093,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 643,
                 'code' => 'BIKE_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -7527,7 +7110,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 637,
                 'code' => 'PS_BIKE',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -7545,7 +7127,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 472,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -7563,7 +7144,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 480,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -7581,7 +7161,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 471,
                 'code' => 'CPS',
                 'text' => 'Policy Schedule',
                 'description' => null,
@@ -7599,7 +7178,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 59,
                 'code' => 'TR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -7617,7 +7195,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 80,
                 'code' => 'BPDR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -7635,7 +7212,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 638,
                 'code' => 'BIKE_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -7653,7 +7229,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 476,
                 'code' => 'REC_BIKE',
                 'text' => 'Receipt (Policy)',
                 'description' => null,
@@ -7671,7 +7246,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 695,
                 'code' => 'REC_BIKE',
                 'text' => 'Receipt (Send Update)',
                 'description' => null,
@@ -7689,7 +7263,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 243,
                 'code' => 'BIKE_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -7707,7 +7280,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 482,
                 'code' => 'SMAF_Bike',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -7725,7 +7297,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 251,
                 'code' => 'TOB_Bike',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -7743,7 +7314,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 487,
                 'code' => 'STI_CAR',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -7761,7 +7331,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 488,
                 'code' => 'STI_BIKE',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -7779,7 +7348,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 794,
                 'code' => 'STL_BIKE',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -7797,7 +7365,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 56,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => '',
@@ -7815,7 +7382,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 699,
                 'code' => 'TI_BIKE',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -7833,7 +7399,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 475,
                 'code' => 'TI_BIKE',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -7851,7 +7416,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 57,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raise by Buyer',
                 'description' => '',
@@ -7869,7 +7433,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 785,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -7887,7 +7450,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 474,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -7905,7 +7467,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 244,
                 'code' => 'CTL_Bike',
                 'text' => 'Trade License',
                 'description' => null,
@@ -7923,7 +7484,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 246,
                 'code' => 'VCer_Bike',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -7941,7 +7501,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 249,
                 'code' => 'UT_Bike',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -7959,7 +7518,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 636,
                 'code' => 'UWEC_BIKE',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -7977,7 +7535,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 241,
                 'code' => 'VISA_Bike',
                 'text' => 'Visa',
                 'description' => null,
@@ -7995,7 +7552,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 567,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => null,
@@ -8013,7 +7569,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 576,
                 'code' => 'AL_YTCH',
                 'text' => 'Amendment letter',
                 'description' => null,
@@ -8031,7 +7586,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 573,
                 'code' => 'AC_YTCH',
                 'text' => 'Application copy',
                 'description' => null,
@@ -8049,7 +7603,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 426,
                 'code' => 'BAL_YCHT',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -8067,7 +7620,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 427,
                 'code' => 'CENVEH_YCH',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -8085,7 +7637,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 431,
                 'code' => 'CCPI_YCHT',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -8103,7 +7654,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 422,
                 'code' => 'CL_YCHT',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -8121,7 +7671,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 575,
                 'code' => 'COL_YTCH',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -8139,7 +7688,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 674,
                 'code' => 'YCHT_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -8157,7 +7705,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 114,
                 'code' => 'YDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -8175,7 +7722,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 415,
                 'code' => 'DRLIC_YACH',
                 'text' => "Driver's License",
                 'description' => null,
@@ -8193,7 +7739,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 563,
                 'code' => 'ECARD_YTCH',
                 'text' => 'E-card',
                 'description' => null,
@@ -8211,7 +7756,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 727,
                 'code' => 'EC_YCHT',
                 'text' => 'E-card',
                 'description' => null,
@@ -8229,7 +7773,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 414,
                 'code' => 'EID_YACHT',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => null,
@@ -8247,7 +7790,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 420,
                 'code' => 'ELST_YCHT',
                 'text' => 'Employee List',
                 'description' => null,
@@ -8265,7 +7807,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 445,
                 'code' => 'ELST_Life',
                 'text' => 'Employee List',
                 'description' => null,
@@ -8283,7 +7824,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 726,
                 'code' => 'ES_YTCH',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -8301,7 +7841,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 725,
                 'code' => 'ES_YTCH',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -8319,7 +7858,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 73,
                 'code' => 'YACEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => 'For compliance use only',
@@ -8337,7 +7875,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 418,
                 'code' => 'EC_YCHT',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -8355,7 +7892,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 574,
                 'code' => 'EL_YTCH',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -8373,7 +7909,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 425,
                 'code' => 'FTC_YCHT',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -8391,7 +7926,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 569,
                 'code' => 'GL_YTCH',
                 'text' => 'Garage List',
                 'description' => null,
@@ -8409,7 +7943,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 433,
                 'code' => 'GHDF_YCHT',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -8427,7 +7960,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 434,
                 'code' => 'INDID_YCHT',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -8445,7 +7977,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 429,
                 'code' => 'IQT_YCHT',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -8463,7 +7994,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 432,
                 'code' => 'KYC_YCHT',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -8481,7 +8011,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 436,
                 'code' => 'LOFFL_YCHT',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -8499,7 +8028,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 423,
                 'code' => 'MED_YCHT',
                 'text' => 'Medical application form',
                 'description' => null,
@@ -8517,7 +8045,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 428,
                 'code' => 'MEMDET-YCH',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -8535,7 +8062,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 430,
                 'code' => 'MAA_YCHT',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -8553,7 +8079,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 571,
                 'code' => 'MAILF_YTCH',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -8571,7 +8096,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 568,
                 'code' => 'NL_YTCH',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -8589,7 +8113,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 801,
                 'code' => 'OTH_YACHT',
                 'text' => 'Others',
                 'description' => null,
@@ -8607,7 +8130,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 412,
                 'code' => 'YACHT_PAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -8625,7 +8147,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 673,
                 'code' => 'PA_YCHT',
                 'text' => 'Payment approval',
                 'description' => null,
@@ -8643,7 +8164,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 83,
                 'code' => 'YPD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -8661,7 +8181,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 672,
                 'code' => 'YCHT_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -8679,7 +8198,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 676,
                 'code' => 'PS_YCHT',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -8697,7 +8215,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 562,
                 'code' => 'PC_YTCH',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -8715,7 +8232,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 580,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -8733,7 +8249,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 570,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -8751,7 +8266,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 561,
                 'code' => 'CPS',
                 'text' => 'Policy Schedule',
                 'description' => null,
@@ -8769,7 +8283,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 566,
                 'code' => 'REC_YTCH',
                 'text' => 'Receipt',
                 'description' => null,
@@ -8787,7 +8300,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 84,
                 'code' => 'YPDR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -8805,7 +8317,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 729,
                 'code' => 'REC_YCHT',
                 'text' => 'Receipt',
                 'description' => null,
@@ -8823,7 +8334,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 671,
                 'code' => 'YCHT_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -8841,7 +8351,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 416,
                 'code' => 'YCHT_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -8859,7 +8368,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 572,
                 'code' => 'SMAF_YTCH',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -8877,7 +8385,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 424,
                 'code' => 'TOB_YCHT',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -8895,7 +8402,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 577,
                 'code' => 'STI_YTCH',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -8913,7 +8419,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 578,
                 'code' => 'STL_YTCH',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -8931,7 +8436,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 798,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -8949,7 +8453,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 728,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -8967,7 +8470,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 788,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -8985,7 +8487,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 417,
                 'code' => 'TL_YCHT',
                 'text' => 'Trade License',
                 'description' => null,
@@ -9003,7 +8504,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 419,
                 'code' => 'VCER_YCHT',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -9021,7 +8521,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 421,
                 'code' => 'UT_YCHT',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -9039,7 +8538,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 675,
                 'code' => 'UWEC_YCHT',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -9057,7 +8555,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 413,
                 'code' => 'VISA_YACHT',
                 'text' => 'Visa',
                 'description' => null,
@@ -9075,7 +8572,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 513,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => null,
@@ -9093,7 +8589,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 522,
                 'code' => 'AL_TRVL',
                 'text' => 'Amendment letter',
                 'description' => null,
@@ -9111,7 +8606,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 519,
                 'code' => 'AC_TRVL',
                 'text' => 'Application copy',
                 'description' => null,
@@ -9129,7 +8623,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 327,
                 'code' => 'BAL_TRVL',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -9147,7 +8640,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 328,
                 'code' => 'CENVEH_TRV',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -9165,7 +8657,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 332,
                 'code' => 'CCPI_TRVL',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -9183,7 +8674,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 323,
                 'code' => 'CL_TRVL',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -9201,7 +8691,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 521,
                 'code' => 'COL_TRVL',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -9219,7 +8708,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 796,
                 'code' => 'TRVL_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -9237,7 +8725,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 109,
                 'code' => 'TDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -9255,7 +8742,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 316,
                 'code' => 'DRLIC_TRVL',
                 'text' => "Driver's License",
                 'description' => null,
@@ -9273,7 +8759,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 707,
                 'code' => 'EC_TRVL',
                 'text' => 'E-card',
                 'description' => null,
@@ -9291,7 +8776,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 509,
                 'code' => 'ECARD_TRVL',
                 'text' => 'E-card',
                 'description' => null,
@@ -9309,7 +8793,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 50,
                 'code' => 'TRAEID',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
@@ -9327,7 +8810,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 315,
                 'code' => 'HEAEID',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => null,
@@ -9345,7 +8827,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 320,
                 'code' => 'ELST_TRVL',
                 'text' => 'Employee List',
                 'description' => null,
@@ -9363,7 +8844,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 706,
                 'code' => 'ECE_TRVL',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -9381,7 +8861,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 705,
                 'code' => 'ES_TRVL',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -9399,7 +8878,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 87,
                 'code' => 'TRAEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => null,
@@ -9417,7 +8895,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 119,
                 'code' => 'LIFEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => null,
@@ -9435,7 +8912,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 321,
                 'code' => 'CEC_TRVL',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -9453,7 +8929,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 520,
                 'code' => 'EL_TRVL',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -9471,7 +8946,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 326,
                 'code' => 'FTC_TRVL',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -9489,7 +8963,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 515,
                 'code' => 'GL_TRVL',
                 'text' => 'Garage List',
                 'description' => null,
@@ -9507,7 +8980,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 334,
                 'code' => 'GHDF_TRVL',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -9525,7 +8997,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 335,
                 'code' => 'INDID_TRVL',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -9543,7 +9014,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 330,
                 'code' => 'IQT_TRVL',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -9561,7 +9031,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 333,
                 'code' => 'KYC_TRVL',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -9579,7 +9048,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 337,
                 'code' => 'LOFFL_TRVL',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -9597,7 +9065,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 362,
                 'code' => 'LOFFL_HOME',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -9615,7 +9082,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 324,
                 'code' => 'MED_TRVL',
                 'text' => 'Medical application form',
                 'description' => null,
@@ -9633,7 +9099,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 329,
                 'code' => 'MDET-TRVL',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -9651,7 +9116,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 331,
                 'code' => 'MAA_TRVL',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -9669,7 +9133,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 517,
                 'code' => 'MAILF_TRVL',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -9687,7 +9150,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 514,
                 'code' => 'NL_TRVL',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -9705,7 +9167,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 336,
                 'code' => 'OTH_TRVL',
                 'text' => 'Others',
                 'description' => null,
@@ -9723,7 +9184,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 313,
                 'code' => 'TRVLPAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -9741,7 +9201,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 652,
                 'code' => 'PA_TRVL',
                 'text' => 'Payment approval',
                 'description' => null,
@@ -9759,7 +9218,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 68,
                 'code' => 'TPD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -9777,7 +9235,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 651,
                 'code' => 'TRVL_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -9795,7 +9252,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 647,
                 'code' => 'PS_TRVL',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -9813,7 +9269,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 508,
                 'code' => 'PC_TRVL',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -9831,7 +9286,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 764,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -9849,7 +9303,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 516,
                 'code' => 'PHB_TRVL',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -9867,7 +9320,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 767,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -9885,7 +9337,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 507,
                 'code' => 'CPS_TRVL',
                 'text' => 'Policy Schedule',
                 'description' => null,
@@ -9903,7 +9354,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 512,
                 'code' => 'REC_TRVL',
                 'text' => 'Receipt',
                 'description' => null,
@@ -9921,7 +9371,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 71,
                 'code' => 'TPDR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -9939,7 +9388,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 709,
                 'code' => 'REC_TRVL',
                 'text' => 'Receipt',
                 'description' => null,
@@ -9957,7 +9405,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 649,
                 'code' => 'TRVL_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -9975,7 +9422,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 317,
                 'code' => 'TRVL_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -9993,7 +9439,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 518,
                 'code' => 'SMAF_TRVL',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -10011,7 +9456,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 325,
                 'code' => 'TOB_TRVL',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -10029,7 +9473,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 524,
                 'code' => 'STI_TRVL',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -10047,7 +9490,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 541,
                 'code' => 'STI_HOME',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -10065,7 +9507,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 523,
                 'code' => 'STL_TRVL',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -10083,7 +9524,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 768,
                 'code' => 'TI',
                 'text' => 'Tax Invoice',
                 'description' => 'Tax Invoice or Debit Note (without the commission)',
@@ -10101,7 +9541,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 708,
                 'code' => 'TI_TRVL',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -10119,7 +9558,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 765,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -10137,7 +9575,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 511,
                 'code' => 'TI_TRVL',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -10155,7 +9592,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 510,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -10173,7 +9609,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 318,
                 'code' => 'CTL_TRVL',
                 'text' => 'Trade License',
                 'description' => null,
@@ -10191,7 +9626,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 319,
                 'code' => 'VCER_TRVL',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -10209,7 +9643,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 322,
                 'code' => 'UT_TRVL',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -10227,7 +9660,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 646,
                 'code' => 'UWEC_TRVL',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -10245,7 +9677,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 314,
                 'code' => 'VISA_TRVL',
                 'text' => 'Visa',
                 'description' => null,
@@ -10263,7 +9694,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 548,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => null,
@@ -10281,7 +9711,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 558,
                 'code' => 'AL_PET',
                 'text' => 'Amendment letter',
                 'description' => null,
@@ -10299,7 +9728,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 554,
                 'code' => 'AC_PET',
                 'text' => 'Application copy',
                 'description' => null,
@@ -10317,7 +9745,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 376,
                 'code' => 'BAL_PET',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -10335,7 +9762,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 377,
                 'code' => 'CENVEH_PET',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -10353,7 +9779,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 381,
                 'code' => 'CCPI_PET',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -10371,7 +9796,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 372,
                 'code' => 'CL_PET',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -10389,7 +9813,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 557,
                 'code' => 'COL_PET',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -10407,7 +9830,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 659,
                 'code' => 'PET_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -10425,7 +9847,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 111,
                 'code' => 'PDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -10443,7 +9864,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 365,
                 'code' => 'DRLIC_PET',
                 'text' => "Driver's License",
                 'description' => null,
@@ -10461,7 +9881,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 544,
                 'code' => 'ECARD_PET',
                 'text' => 'E-card',
                 'description' => null,
@@ -10479,7 +9898,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 717,
                 'code' => 'EC_PET',
                 'text' => 'E-card',
                 'description' => null,
@@ -10497,7 +9915,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 55,
                 'code' => 'PETEID',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
@@ -10515,7 +9932,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 716,
                 'code' => 'ECE_PET',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -10533,7 +9949,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 715,
                 'code' => 'ES_PET',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -10551,7 +9966,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 92,
                 'code' => 'PETEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => null,
@@ -10569,7 +9983,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 368,
                 'code' => 'EC_PET',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -10587,7 +10000,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 556,
                 'code' => 'EL_PET',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -10605,7 +10017,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 375,
                 'code' => 'FTC_PET',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -10623,7 +10034,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 550,
                 'code' => 'GL_PET',
                 'text' => 'Garage List',
                 'description' => null,
@@ -10641,7 +10051,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 383,
                 'code' => 'GHDF_Pet',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -10659,7 +10068,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 384,
                 'code' => 'INDID_PET',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -10677,7 +10085,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 379,
                 'code' => 'IQT_HOME',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -10695,7 +10102,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 382,
                 'code' => 'KYC_PET',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -10713,7 +10119,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 386,
                 'code' => 'LOFFL_PET',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -10731,7 +10136,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 373,
                 'code' => 'MED_PET',
                 'text' => 'Medical application form',
                 'description' => null,
@@ -10749,7 +10153,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 378,
                 'code' => 'MEMDET-PET',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -10767,7 +10170,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 380,
                 'code' => 'MAA_PET',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -10785,7 +10187,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 552,
                 'code' => 'MAILF_PET',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -10803,7 +10204,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 549,
                 'code' => 'NL_PET',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -10821,7 +10221,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 385,
                 'code' => 'OTH_PET',
                 'text' => 'Others',
                 'description' => null,
@@ -10839,7 +10238,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 363,
                 'code' => 'PET_PAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -10857,7 +10255,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 664,
                 'code' => 'PA_PET',
                 'text' => 'Payment approval',
                 'description' => null,
@@ -10875,7 +10272,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 77,
                 'code' => 'PPD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -10893,7 +10289,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 663,
                 'code' => 'PET_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -10911,7 +10306,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 661,
                 'code' => 'PS_PET',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -10929,7 +10323,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 543,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -10947,7 +10340,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 551,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -10965,7 +10357,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 542,
                 'code' => 'CPS',
                 'text' => 'Policy Schedule',
                 'description' => null,
@@ -10983,7 +10374,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 547,
                 'code' => 'REC_PET',
                 'text' => 'Receipt',
                 'description' => null,
@@ -11001,7 +10391,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 78,
                 'code' => 'PPDR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -11019,7 +10408,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 771,
                 'code' => 'REC_PET',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -11037,7 +10425,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 770,
                 'code' => 'REC_PET',
                 'text' => 'Receipt (Send Update )',
                 'description' => null,
@@ -11055,7 +10442,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 366,
                 'code' => 'PET_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -11073,7 +10459,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 553,
                 'code' => 'SMAF_PET',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -11091,7 +10476,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 374,
                 'code' => 'TOB_PET',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -11109,7 +10493,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 560,
                 'code' => 'STI_PET',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -11127,7 +10510,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 559,
                 'code' => 'STL_PET',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -11145,7 +10527,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 784,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -11163,7 +10544,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 718,
                 'code' => 'TI_PET',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -11181,7 +10561,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 545,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -11199,7 +10578,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 367,
                 'code' => 'TL_PET',
                 'text' => 'Trade License',
                 'description' => null,
@@ -11217,7 +10595,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 369,
                 'code' => 'VCER_PET',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -11235,7 +10612,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 371,
                 'code' => 'UT_PET',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -11253,7 +10629,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 660,
                 'code' => 'UWEC_PET',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -11271,7 +10646,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 364,
                 'code' => 'VISA_PET',
                 'text' => 'Visa',
                 'description' => null,
@@ -11289,7 +10663,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 587,
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
                 'description' => null,
@@ -11307,7 +10680,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 595,
                 'code' => 'AL_CYC',
                 'text' => 'Amendment letter',
                 'description' => null,
@@ -11325,7 +10697,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 592,
                 'code' => 'AC_CYC',
                 'text' => 'Application copy',
                 'description' => null,
@@ -11343,7 +10714,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 401,
                 'code' => 'BAL_CYCLE',
                 'text' => 'Broker Appointment letter',
                 'description' => null,
@@ -11361,7 +10731,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 402,
                 'code' => 'CENVEH_CYC',
                 'text' => 'Census list / Vehicle list',
                 'description' => null,
@@ -11379,7 +10748,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 407,
                 'code' => 'CCPI_CYC',
                 'text' => 'Certificate of Continuity or Proof of Insurance',
                 'description' => null,
@@ -11397,7 +10765,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 397,
                 'code' => 'CL_CYCLE',
                 'text' => 'Company Letter',
                 'description' => null,
@@ -11415,7 +10782,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 594,
                 'code' => 'COL_CYC',
                 'text' => 'Counter offer letter',
                 'description' => null,
@@ -11433,7 +10799,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 667,
                 'code' => 'CYC_CDOCS',
                 'text' => 'Customer Documents (Endorsement)',
                 'description' => null,
@@ -11451,7 +10816,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 113,
                 'code' => 'CYCDPDR',
                 'text' => 'Discount Proof',
                 'description' => null,
@@ -11469,7 +10833,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 390,
                 'code' => 'DRLIC_Cycl',
                 'text' => "Driver's License",
                 'description' => null,
@@ -11487,7 +10850,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 581,
                 'code' => 'ECARD_CYC',
                 'text' => 'E-card',
                 'description' => null,
@@ -11505,7 +10867,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 722,
                 'code' => 'EC_CYC',
                 'text' => 'E-card',
                 'description' => null,
@@ -11523,7 +10884,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 389,
                 'code' => 'EID_Cycle',
                 'text' => 'Emirates ID (Front side & Back side)',
                 'description' => null,
@@ -11541,7 +10901,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 395,
                 'code' => 'ELST_CYCLE',
                 'text' => 'Employee List',
                 'description' => null,
@@ -11559,7 +10918,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 721,
                 'code' => 'ES_CYC',
                 'text' => 'Endorsed Certificate',
                 'description' => null,
@@ -11577,7 +10935,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 720,
                 'code' => 'ES_CYC',
                 'text' => 'Endorsed Schedule',
                 'description' => null,
@@ -11595,7 +10952,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 72,
                 'code' => 'CYCEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => 'For compliance use only',
@@ -11613,7 +10969,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 393,
                 'code' => 'EC_CYCLE',
                 'text' => 'Establishment Card',
                 'description' => null,
@@ -11631,7 +10986,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 593,
                 'code' => 'EL_CYC',
                 'text' => 'Exclusion letter',
                 'description' => null,
@@ -11649,7 +11003,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 400,
                 'code' => 'FTC_CYCLE',
                 'text' => 'Final Terms & Conditions',
                 'description' => null,
@@ -11667,7 +11020,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 589,
                 'code' => 'GL_CYC',
                 'text' => 'Garage List',
                 'description' => null,
@@ -11685,7 +11037,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 408,
                 'code' => 'GHDF_CYC',
                 'text' => 'Group Health Declaration Form',
                 'description' => null,
@@ -11703,7 +11054,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 409,
                 'code' => 'INDID_CYC',
                 'text' => 'Indemnity Letter',
                 'description' => null,
@@ -11721,7 +11071,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 404,
                 'code' => 'IQT_CYC',
                 'text' => 'Insurer Quotation tool',
                 'description' => null,
@@ -11739,7 +11088,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 406,
                 'code' => 'KYC_CYC',
                 'text' => 'KYC Requirements',
                 'description' => null,
@@ -11757,7 +11105,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 411,
                 'code' => 'LOFFL_CYC',
                 'text' => 'Loan offer letter',
                 'description' => null,
@@ -11775,7 +11122,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 398,
                 'code' => 'MED_CYCLE',
                 'text' => 'Medical application form',
                 'description' => null,
@@ -11793,7 +11139,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 403,
                 'code' => 'MEMDET-CYC',
                 'text' => 'Member(s) details (Reward list)',
                 'description' => null,
@@ -11811,7 +11156,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 405,
                 'code' => 'MAA_CYC',
                 'text' => 'Memorandum of association or Articles of Association',
                 'description' => null,
@@ -11829,7 +11173,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 585,
                 'code' => 'MAILF_CYC',
                 'text' => 'myAlfred Offers',
                 'description' => null,
@@ -11847,7 +11190,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 588,
                 'code' => 'NL_CYC',
                 'text' => 'Network List (Health)',
                 'description' => null,
@@ -11865,7 +11207,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 410,
                 'code' => 'OTH_CYC',
                 'text' => 'Others',
                 'description' => null,
@@ -11883,7 +11224,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 435,
                 'code' => 'OTH_YCHT',
                 'text' => 'Others',
                 'description' => null,
@@ -11901,7 +11241,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 387,
                 'code' => 'CYCLE_PAS',
                 'text' => 'Passport',
                 'description' => null,
@@ -11919,7 +11258,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 670,
                 'code' => 'PA_CYC',
                 'text' => 'Payment approval',
                 'description' => null,
@@ -11937,7 +11275,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 81,
                 'code' => 'CYCPD',
                 'text' => 'Payment Proof',
                 'description' => '',
@@ -11955,7 +11292,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 666,
                 'code' => 'CYC_PP',
                 'text' => 'Payment Proof (Insurer Collects)',
                 'description' => null,
@@ -11973,7 +11309,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 668,
                 'code' => 'PS_CYC',
                 'text' => 'Payment Slip (Non CC payments)',
                 'description' => null,
@@ -11991,7 +11326,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 786,
                 'code' => 'CPC',
                 'text' => 'Policy Certificate',
                 'description' => null,
@@ -12009,7 +11343,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 590,
                 'code' => 'PHB',
                 'text' => 'Policy Handbook',
                 'description' => null,
@@ -12027,7 +11360,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 579,
                 'code' => 'CPS',
                 'text' => 'Policy Schedule',
                 'description' => null,
@@ -12045,7 +11377,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 1,
             ],
             [
-                'id' => 586,
                 'code' => 'REC_CYC',
                 'text' => 'Receipt',
                 'description' => null,
@@ -12063,7 +11394,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 82,
                 'code' => 'CYCPDR',
                 'text' => 'Receipt',
                 'description' => null,
@@ -12081,7 +11411,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 724,
                 'code' => 'REC_CYC',
                 'text' => 'Receipt',
                 'description' => null,
@@ -12099,7 +11428,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 665,
                 'code' => 'CYC_IRCPT',
                 'text' => 'Receipt (Insurer)',
                 'description' => null,
@@ -12117,7 +11445,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 391,
                 'code' => 'CYC_MULKI',
                 'text' => 'Registration card (Mulkiya)',
                 'description' => null,
@@ -12135,7 +11462,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 591,
                 'code' => 'SMAF_CYC',
                 'text' => 'Signed medical application form',
                 'description' => null,
@@ -12153,7 +11479,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 399,
                 'code' => 'TOB_CYCLE',
                 'text' => 'Signed Quote or TOB',
                 'description' => null,
@@ -12171,7 +11496,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 584,
                 'code' => 'STI_CYC',
                 'text' => 'Special terms illustration',
                 'description' => null,
@@ -12189,7 +11513,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 596,
                 'code' => 'STL_CYC',
                 'text' => 'Special terms letter',
                 'description' => null,
@@ -12207,7 +11530,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 799,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -12225,7 +11547,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 723,
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
                 'description' => null,
@@ -12243,7 +11564,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 787,
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raised By Buyer',
                 'description' => null,
@@ -12261,7 +11581,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 392,
                 'code' => 'TL_Cycle',
                 'text' => 'Trade License',
                 'description' => null,
@@ -12279,7 +11598,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 394,
                 'code' => 'VCER_CYCLE',
                 'text' => 'TRN / VAT Certificate /Undertaking letter for non-VAT',
                 'description' => null,
@@ -12297,7 +11615,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 396,
                 'code' => 'UT_CYCLE',
                 'text' => 'Undertaking Letter',
                 'description' => null,
@@ -12315,7 +11632,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 669,
                 'code' => 'UWEC_CYC',
                 'text' => 'UW email Correspondence',
                 'description' => null,
@@ -12333,7 +11649,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 388,
                 'code' => 'VISA_CYCLE',
                 'text' => 'Visa',
                 'description' => null,
@@ -12351,7 +11666,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 777,
                 'code' => 'JETEID',
                 'text' => 'Emirates ID copy or Passport copy',
                 'description' => null,
@@ -12369,7 +11683,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 95,
                 'code' => 'JETEDD',
                 'text' => 'Enhanced Due Diligence Form',
                 'description' => '',
@@ -12387,7 +11700,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 779,
                 'code' => 'JETPI',
                 'text' => 'Purchase invoice',
                 'description' => null,
@@ -12405,7 +11717,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 778,
                 'code' => 'JETRCC',
                 'text' => 'Registration Card Copy',
                 'description' => null,
@@ -12423,7 +11734,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 776,
                 'code' => 'JETSQ',
                 'text' => 'Signed Quote',
                 'description' => null,
@@ -12455,7 +11765,6 @@ class DocumentTypeSeeder extends Seeder
 
         $sendUpdateDocuments = [
             [
-                'id' => 772,
                 'code' => 'OD',
                 'text' => 'Other Documents',
                 'description' => null,
@@ -12473,7 +11782,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 219,
                 'code' => 'SUAEA',
                 'text' => 'Send Update Additional Email Attachments',
                 'description' => null,
@@ -12491,7 +11799,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 220,
                 'code' => 'SUAEA',
                 'text' => 'Send Update Additional Email Attachments',
                 'description' => null,
@@ -12509,7 +11816,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 212,
                 'code' => 'SUECARD',
                 'text' => 'Send Update E-Card',
                 'description' => null,
@@ -12527,7 +11833,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 213,
                 'code' => 'SUECARD',
                 'text' => 'Send Update E-Card',
                 'description' => null,
@@ -12545,7 +11850,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 221,
                 'code' => 'SUGL',
                 'text' => 'Send Update Garage List',
                 'description' => null,
@@ -12563,7 +11867,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 222,
                 'code' => 'SUGL',
                 'text' => 'Send Update Garage List',
                 'description' => null,
@@ -12581,7 +11884,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 211,
                 'code' => 'SUPC',
                 'text' => 'Send Update Policy Certificate',
                 'description' => null,
@@ -12599,7 +11901,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 223,
                 'code' => 'SUPHBOOK',
                 'text' => 'Send Update Policy Handbook',
                 'description' => null,
@@ -12617,7 +11918,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 224,
                 'code' => 'SUPHBOOK',
                 'text' => 'Send Update Policy Handbook',
                 'description' => null,
@@ -12635,7 +11935,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 210,
                 'code' => 'SUPS',
                 'text' => 'Send Update Policy Schedule',
                 'description' => null,
@@ -12653,7 +11952,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 218,
                 'code' => 'SURECEIPT',
                 'text' => 'Send Update Receipt',
                 'description' => null,
@@ -12671,7 +11969,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 214,
                 'code' => 'SUTAXINV',
                 'text' => 'Send Update Tax Invoice',
                 'description' => null,
@@ -12689,7 +11986,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 215,
                 'code' => 'SUTAXINV',
                 'text' => 'Send Update Tax Invoice',
                 'description' => null,
@@ -12707,7 +12003,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 216,
                 'code' => 'SUTAXINVRB',
                 'text' => 'Send Update Tax Invoice Raised Buyer',
                 'description' => null,
@@ -12725,7 +12020,6 @@ class DocumentTypeSeeder extends Seeder
                 'is_required_for_send_policy' => 0,
             ],
             [
-                'id' => 217,
                 'code' => 'SUTAXINVRB',
                 'text' => 'Send Update Tax Invoice Raised Buyer',
                 'description' => null,
