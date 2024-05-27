@@ -156,6 +156,7 @@ const setIntialState = () => {
     is_cold: false,
     is_stale: false,
   });
+  filtersCount.value = 0;
 };
 
 function resetFilters() {
@@ -542,7 +543,12 @@ watch(
           >
             Search
           </x-button>
-          <x-button size="sm" color="primary" @click.prevent="resetFilters">
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="resetFilters"
+            :loading="loader.table"
+          >
             Reset
           </x-button>
         </div>

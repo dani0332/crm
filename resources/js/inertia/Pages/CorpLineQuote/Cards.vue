@@ -186,6 +186,7 @@ const setIntialState = () => {
     is_cold: false,
     is_stale: false,
   });
+  filtersCount.value = 0;
 };
 
 function resetFilters() {
