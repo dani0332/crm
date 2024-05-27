@@ -5,9 +5,13 @@ namespace App\Repositories;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Models\Emirate;
+use App\Models\HealthCoverFor;
+use App\Models\HealthLeadType;
 use App\Models\HealthQuote;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\LookupService;
 use Illuminate\Support\Facades\Auth;
 
 class HealthRevivalQuoteRepository extends BaseRepository
@@ -35,9 +39,10 @@ class HealthRevivalQuoteRepository extends BaseRepository
         ])->where('source', LeadSourceEnum::REVIVAL)
 
             ->filter();
-        if (! empty($request->assignment_type)) {
+        if (!empty($request->assignment_type)) {
             $query->where('assignment_type', $request->assignment_type);
-        } if (! empty($request->advisors)) {
+        }
+        if (!empty($request->advisors)) {
             $query->whereIn('advisor_id', $request->advisors);
         }
         $query->orderBy('created_at', 'desc');
@@ -57,7 +62,13 @@ class HealthRevivalQuoteRepository extends BaseRepository
             'advisors' => app(CRUDService::class)->getAdvisorsByModelType(strtolower(quoteTypeCode::Health)),
             'teams' => app(CRUDService::class)->getUserTeams(Auth::user()->id),
             'leadStatuses' => app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Health),
-
+            'coverFor' => HealthCoverFor::select('id', 'text')->where('is_active', true)->get(),
+            'nationalities' => NationalityRepository::withActive()->get(),
+            'emirateOfVisa' => Emirate::withActive()->get(),
+            'healthLeadType' => HealthLeadType::get(),
+            'memberCategories' => app(LookupService::class)->getMemberCategories(),
+            'salaryBand' => app(LookupService::class)->getSalaryBands(),
+            'gender' => app(CRUDService::class)->getGenderOptions(),
         ];
 
         return $result;
@@ -73,6 +84,7 @@ class HealthRevivalQuoteRepository extends BaseRepository
             'memberCategory',
             'currentProvider',
             'healthLeadType',
+            'healthCoverFor',
             'healthQuoteRequestDetail.lostReason',
         ])
             ->where([

@@ -1,6 +1,7 @@
 <script setup>
 import LazyDocumentUploader from '../HealthQuote/Partials/DocumentUploader.vue';
-
+import LazyCreatePlan from '../HealthQuote/Partials/CreatePlan.vue';
+import LazyAvailablePlan from '../HealthQuote/Partials/AvailablePlans.vue';
 const props = defineProps({
   quote: Object,
   customerTypeEnum: Array,
@@ -25,9 +26,9 @@ const props = defineProps({
   quoteDocuments: Array,
   activities: Array,
   advisors: Array,
+  insuranceProviders: Array,
 });
 
-console.log('quote', props.quote);
 const page = usePage();
 
 const permissionsEnum = page.props.permissionsEnum;
@@ -63,6 +64,8 @@ const activityTable = [
   { text: 'Assigned To', value: 'assignee' },
   { text: 'Action', value: 'action' },
 ];
+
+const cleanObj = obj => useCleanObj(obj);
 
 const activityForm = useForm({
   entityUId: page.props.quote.uuid,
@@ -606,15 +609,472 @@ const dateToYMD = date => {
   }
   return '';
 };
+
+// plans
+const planDataTable = ref();
+
+const plansTable = reactive({
+  isLoading: false,
+  data: [],
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+      sortable: true,
+    },
+    {
+      text: 'Plan Name',
+      value: 'name',
+    },
+    {
+      text: 'Plan Type',
+      value: 'planTypeId',
+      sortable: true,
+    },
+    {
+      text: 'Network Provider',
+      value: 'eligibilityName',
+    },
+    {
+      text: 'CO-PAY/CO-INSURANCE',
+      value: 'copayName',
+      width: 100,
+    },
+    {
+      text: 'Price',
+      value: 'actualPremium',
+      sortable: true,
+    },
+    {
+      text: 'Basmah',
+      value: 'basmah',
+    },
+    {
+      text: 'Policy Fee (if applicable)',
+      value: 'policyFee',
+    },
+    {
+      text: 'Total Indicative Price (with VAT)',
+      value: 'total',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const onLoadAvailablePlansData = async () => {
+  let data = {
+    jsonData: true,
+  };
+  // let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
+  let url = `/quotes/health/available-plans/XJTZ3UJX`;
+  axios
+    .post(url, data)
+    .then(res => {
+      plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+      getSmallestCopayRateAsDefaultValue();
+      plansTable.data.forEach(plan => {
+        if (plan.isManualPlan) {
+          isManualPlansCount.value++;
+        }
+
+        if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
+          selectedPlan.value.needPriceUpdate = false;
+        }
+      });
+
+      setTimeout(() => {
+        onPlanFiltersSubmit();
+      }, 800);
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+const planClicked = plan => {
+  selectedPlan.value = plan;
+  modals.plan = true;
+};
+
+const onExportPlans = () => {
+  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 1 to 5 plans to download PDF.',
+      position: 'top',
+    });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
+
+  let addOns = {};
+
+  selectedPlans.value.map(plan => {
+    let copayIdToBeAdded = plan.selectedCopayId;
+    plan.coPayments.forEach(element => {
+      if (element.id == copayIdToBeAdded) {
+        addOns[plan.id] = { coPayment: element };
+      }
+    });
+  });
+
+  axios
+    .post(
+      '/api/v1/quotes/health/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.quote.uuid,
+        addons: addOns,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
+};
+
+const onTogglePlans = toggle => {
+  toggleLoader.value = true;
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'Health' }), {
+      modelType: 'Health',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      onLoadAvailablePlansData();
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
+};
+
+const onCreatePlan = () => {
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['plansTable.data'],
+    onStart: () => {
+      modals.createPlan = false;
+    },
+    onFinish: () => {
+      notification.success({
+        title: 'Plan Created',
+        position: 'top',
+      });
+      location.reload();
+    },
+  });
+};
+
+const onPlanError = data => {
+  modals.createPlan = false;
+  notification.error({
+    title: data ?? 'Plan Creation Failed',
+    position: 'top',
+  });
+};
+
+const planFilters = reactive({
+  insurer: [],
+  network: [],
+  manual_plan: null,
+  current_online: null,
+  plan_types: [],
+});
+const planFiltersCount = ref(0);
+const options = reactive({
+  network: [],
+  loading: false,
+});
+watch(
+  () => planFilters?.insurer,
+  value => {
+    if (value) {
+      options.loading = true;
+      const ids = planFilters.insurer.map(item => {
+        return item;
+      });
+      let url = `/insurance-provider-networks?insuranceProviderId=${ids.toString()}`;
+      axios
+        .get(url)
+        .then(res => {
+          if (res.data.length > 0) {
+            options.network = res.data;
+          } else {
+            options.network = [];
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        })
+        .finally(() => {
+          options.loading = false;
+        });
+    }
+  },
+);
+
+const listQuotePlansFiltered = ref([]);
+
+watchEffect(() => {
+  listQuotePlansFiltered.value = plansTable.data
+    .slice()
+    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+});
+
+const onPlanFiltersSubmit = () => {
+  const filters = cleanObj(planFilters);
+  planFiltersCount.value = Object.keys(filters).length;
+  listQuotePlansFiltered.value = plansTable.data.filter(plan => {
+    let isManualPlan = planFilters.manual_plan;
+    let isCurrentlyOnline = planFilters.current_online;
+    let network = planFilters.network;
+    let insurerIds =
+      planFilters.insurer?.map(item => {
+        return item;
+      }) || [];
+    let manualMatch = false;
+    let insurerMatch = false;
+    let networkMatch = false;
+    let onlineMatch = false;
+    let planTypeMatch = false;
+    if (isManualPlan != null) {
+      manualMatch = plan.isManualPlan == isManualPlan;
+    } else {
+      manualMatch = true;
+    }
+    if (isCurrentlyOnline != null) {
+      onlineMatch = !plan.isHidden == isCurrentlyOnline;
+    } else {
+      onlineMatch = true;
+    }
+    if (planFilters.plan_types && planFilters.plan_types.length > 0) {
+      planTypeMatch = planFilters.plan_types.includes(plan.planTypeId);
+    } else {
+      planTypeMatch = true;
+    }
+    if (insurerIds?.length > 0) {
+      insurerMatch = insurerIds.includes(plan.providerId);
+    } else {
+      insurerMatch = true;
+    }
+    if (network?.length > 0) {
+      networkMatch = network.includes(plan.eligibilityName);
+    } else {
+      networkMatch = true;
+    }
+    return (
+      manualMatch &&
+      insurerMatch &&
+      networkMatch &&
+      onlineMatch &&
+      planTypeMatch
+    );
+  });
+  modals.planFilters = false;
+  planDataTable.value.updatePage(1);
+};
+
+const onPlanFiltersReset = () => {
+  planFilters.insurer = [];
+  planFilters.network = [];
+  planFilters.manual_plan = null;
+  planFilters.current_online = null;
+  listQuotePlansFiltered.value = plansTable.data;
+  modals.planFilters = false;
+  planFiltersCount.value = 0;
+  planDataTable.value.updatePage(1);
+};
+
+const isMounted = ref(false);
+
+const selectedCoPay = reactive({
+  id: null,
+  premium: null,
+  vat: null,
+  planId: null,
+});
+
+const getSmallestCopayRateAsDefaultValue = () => {
+  let smallestCopayValue = 0;
+  let defaultCopayId = 0;
+  let smallestCopayVAT = 0;
+  let smallestCopayLoadingPrice = 0;
+  plansTable.data.forEach(element => {
+    defaultCopayId = element.selectedCopayId;
+    element.ratesPerCopay?.forEach(function callback(value, index) {
+      if (
+        element.selectedCopayId &&
+        defaultCopayId == value.healthPlanCoPaymentId
+      ) {
+        smallestCopayValue = Number(value.premium);
+        smallestCopayVAT = Number(value.vat);
+        smallestCopayLoadingPrice = Number(
+          value.loadingPrice ? value.loadingPrice : 0,
+        );
+        defaultCopayId = element.selectedCopayId;
+      } else if (
+        element.selectedCopayId == undefined ||
+        element.selectedCopayId == null
+      ) {
+        if (index == 0) {
+          smallestCopayValue = Number(value.premium);
+          smallestCopayVAT = Number(value.vat);
+          smallestCopayLoadingPrice = Number(
+            value.loadingPrice ? value.loadingPrice : 0,
+          );
+          defaultCopayId = value.healthPlanCoPaymentId;
+        } else if (value.premium < smallestCopayValue) {
+          smallestCopayValue = Number(value.premium);
+          smallestCopayVAT = Number(value.vat);
+          smallestCopayLoadingPrice = Number(
+            value.loadingPrice ? value.loadingPrice : 0,
+          );
+          defaultCopayId = value.healthPlanCoPaymentId;
+        }
+      }
+    });
+
+    element.memberPremiumBreakdown?.forEach(
+      function callback(breakDown, index) {
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+          if (ratePerCopay.notifyAgent) {
+            element.needPriceUpdate = true;
+          }
+        });
+      },
+    );
+
+    if (isMounted.value && selectedCoPay.planId == element.id) {
+      element.actualPremium = selectedCoPay.premium;
+      if (smallestCopayLoadingPrice != 0) {
+        element.vat = Number(
+          (selectedCoPay.premium + smallestCopayLoadingPrice) * 0.05,
+        );
+      } else {
+        element.vat = selectedCoPay.vat;
+      }
+      element.selectedCopayId = selectedCoPay.id;
+      element.loadingPrice = smallestCopayLoadingPrice;
+    } else {
+      element.selectedCopayId = defaultCopayId;
+      element.actualPremium = smallestCopayValue;
+      element.vat = smallestCopayVAT;
+      element.loadingPrice = smallestCopayLoadingPrice;
+    }
+    element.coPayments.forEach(function callback(value, index) {
+      if (value.id == element.selectedCopayId) {
+        element.copayName = value.text;
+      }
+    });
+  });
+};
+
+const onSelectedCopay = data => {
+  selectedCoPay.id = data.id;
+  selectedCoPay.premium = Number(data.premium);
+  selectedCoPay.vat = Number(data.vat);
+  selectedCoPay.planId = data.planId;
+  getSmallestCopayRateAsDefaultValue();
+};
+
+const onMarkPlanAsManual = (plan, loadingPrice) => {
+  listQuotePlansFiltered.value = listQuotePlansFiltered.value.map(element => {
+    if (element.id == plan.id) {
+      element.isManualPlan = true;
+      // LOADING PRICE UPDTAE
+      let vat =
+        (element.actualPremium +
+          (element.policyFee || 0) +
+          (element.basmah || 0) +
+          (loadingPrice || 0)) *
+        0.05;
+      element.loadingPrice = Number(loadingPrice);
+      element.vat = Number(vat);
+    }
+    return element;
+  });
+  onLoadAvailablePlansData();
+};
+
+onMounted(() => {
+  onLoadAvailablePlansData();
+  const isHealthAdvisor = page.props.advisors.find(
+    a => a.id == page.props.quote.advisor_id,
+  ) || { id: null };
+  if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
+  isMounted.value = true;
+});
 </script>
 
 <template>
   <div>
     <Head title="Health Revival Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Health Revival Detail</h2>
-      <div class="flex gap-2"></div>
-    </div>
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Health Revival Detail</h2>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <Link :href="route('healthrevival-quotes-list')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div">
+            Health Revival List
+          </x-button>
+        </Link>
+
+        <Link :href="route('healthrevival-quotes-edit', quote.uuid)">
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </template>
+    </StickyHeader>
 
     <x-divider class="my-4" />
 
@@ -1341,6 +1801,360 @@ const dateToYMD = date => {
     </div>
   </div>
   <!-- plans -->
+
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <TheCollapsible v-model:expanded="showPlans">
+      <template #header>
+        <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Available Plans
+            <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4"></x-divider>
+        <div class="flex flex-wrap gap-3 justify-end my-2">
+          <x-button-group v-if="selectedPlans.length > 0" size="sm">
+            <x-button
+              @click.prevent="onTogglePlans(false)"
+              :loading="toggleLoader"
+            >
+              Show
+            </x-button>
+            <x-button
+              @click.prevent="onTogglePlans(true)"
+              :loading="toggleLoader"
+            >
+              Hide
+            </x-button>
+          </x-button-group>
+
+          <x-button
+            v-if="selectedPlans.length > 0"
+            size="sm"
+            color="emerald"
+            @click.prevent="onExportPlans"
+            :loading="exportLoader"
+          >
+            Download PDF
+          </x-button>
+
+          <x-button
+            v-if="plansTable.data.length > 0"
+            size="sm"
+            color="orange"
+            @click.prevent="
+              onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
+            "
+          >
+            Copy Link
+          </x-button>
+          <x-badge
+            size="sm"
+            color="error"
+            outlined
+            animated
+            :show="planFiltersCount > 0"
+          >
+            <x-button
+              v-if="plansTable.data.length > 0"
+              size="sm"
+              color="primary"
+              @click.prevent="modals.planFilters = true"
+            >
+              Filters
+            </x-button>
+            <template #content> {{ planFiltersCount }} </template>
+          </x-badge>
+
+          <x-button
+            v-if="
+              hasAnyRole([
+                rolesEnum.BetaUser,
+                rolesEnum.RMAdvisor,
+                rolesEnum.HealthManager,
+              ])
+            "
+            size="sm"
+            color="emerald"
+            @click.prevent="modals.createPlan = true"
+          >
+            Add Plan
+          </x-button>
+        </div>
+        <DataTable
+          ref="planDataTable"
+          v-model:items-selected="selectedPlans"
+          table-class-name="tablefixed compact"
+          :headers="plansTable.columns"
+          :items="listQuotePlansFiltered || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          class="flex-wrap"
+          :sort-by="'actualPremium'"
+          :sort-type="'asc'"
+          :hide-footer="listQuotePlansFiltered.length < 15"
+        >
+          <template #item-copayName="item">
+            <span class="copay-max">{{ item.copayName }}</span>
+          </template>
+          <template #item-planTypeId="item">
+            <span class="copay-max">{{ item.plan_type }}</span>
+          </template>
+          <template
+            #item-providerName="{ providerName, isManualPlan, isHidden }"
+          >
+            <p>{{ providerName }}</p>
+            <div class="flex gap-1">
+              <x-tag
+                v-if="isManualPlan"
+                size="xs"
+                color="primary"
+                class="mt-0.5 text-[10px]"
+              >
+                Manual Plan
+              </x-tag>
+              <x-tag
+                v-if="isHidden"
+                size="xs"
+                color="error"
+                class="mt-0.5 text-[10px]"
+              >
+                Hidden
+              </x-tag>
+              <x-tag
+                v-if="!isHidden"
+                size="xs"
+                color="success"
+                class="mt-0.5 text-[10px]"
+              >
+                Currently Online
+              </x-tag>
+            </div>
+          </template>
+          <template
+            #item-total="{
+              actualPremium,
+              policyFee,
+              basmah,
+              vat,
+              loadingPrice,
+            }"
+          >
+            {{
+              fixedValue(
+                actualPremium +
+                  (policyFee || 0) +
+                  (basmah || 0) +
+                  vat +
+                  (loadingPrice || 0),
+              )
+            }}
+          </template>
+          <template #item-action="item">
+            <div class="flex gap-2 pr-2">
+              <!-- put here -->
+              <!-- don't remove this commented code anyone please -->
+              <template
+                v-if="
+                  (item.isManualPlan && membersDetailsUpdated) ||
+                  item.needPriceUpdate
+                "
+              >
+                <!-- always false temporarily -->
+                <x-tooltip position="top" class="arrow-b">
+                  <x-badge
+                    size="xs"
+                    color="error"
+                    outlined
+                    offset-x="-8"
+                    offset-y="-10"
+                  >
+                    <x-button
+                      size="xs"
+                      color="primary"
+                      outlined
+                      @click.prevent="planClicked(item)"
+                    >
+                      View
+                    </x-button>
+                    <template #content>!</template>
+                  </x-badge>
+                  <template #tooltip>
+                    Price outdated! <br />
+                    Please update
+                  </template>
+                </x-tooltip>
+              </template>
+              <template v-else>
+                <x-button
+                  size="xs"
+                  color="primary"
+                  outlined
+                  @click.prevent="planClicked(item)"
+                >
+                  View
+                </x-button>
+              </template>
+              <x-button
+                size="xs"
+                color="emerald"
+                outlined
+                @click.prevent="
+                  onCopyText(
+                    ecomHealthInsuranceQuoteUrl +
+                      quote.uuid +
+                      `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
+                  )
+                "
+              >
+                Copy
+              </x-button>
+
+              <span>
+                <SelectPlan
+                  v-if="selectedProviderPlan.id != item.id"
+                  @update:selectedPlanChanged="handlePlanSelected"
+                  :plan="item"
+                  :quoteType="quoteType"
+                  :uuid="quote.uuid"
+                />
+
+                <x-button
+                  v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+                >
+                  Selected
+                </x-button>
+              </span>
+            </div>
+          </template>
+        </DataTable>
+
+        <LazyAvailablePlan
+          v-model="modals.plan"
+          :plan="selectedPlan"
+          :genders="genderOptions"
+          :members="membersDetail"
+          :memberCategories="memberCategories"
+          :memebersDetailsChanged="membersDetailsUpdated"
+          @copay-update="onSelectedCopay"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
+          @membersDetailsReviewed="onRecieveMembersDetailsReview"
+          @markPlanAsManual="onMarkPlanAsManual"
+        />
+
+        <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
+          <template #header> Add Plan </template>
+          <LazyCreatePlan
+            :uuid="quote.uuid"
+            :members="membersDetail"
+            :genders="genderOptions"
+            @success="onCreatePlan"
+            @error="onPlanError"
+          />
+        </x-modal>
+
+        <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
+          <template #header> Filters </template>
+
+          <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
+            <ComboBox
+              v-model="planFilters.insurer"
+              label="Insurer"
+              :options="insuranceProviders"
+              :loading="planFilters.processing"
+              select-all
+              deselect-all
+            />
+            <ComboBox
+              v-model="planFilters.network"
+              :label="
+                planFilters.insurer?.length == 0
+                  ? 'Network (please select insurer first)'
+                  : 'Network'
+              "
+              :options="options.network"
+              :disabled="planFilters.insurer?.length == 0"
+              select-all
+              deselect-all
+            />
+            <div>
+              <x-tooltip position="right" class="arrow-l">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+                >
+                  Manual Plan
+                </label>
+                <template #tooltip>Manually Added Plans</template>
+              </x-tooltip>
+              <x-select
+                v-model="planFilters.manual_plan"
+                :options="[
+                  { value: '', label: 'All' },
+                  { value: '1', label: 'Yes' },
+                  { value: '0', label: 'No' },
+                ]"
+                class="w-full"
+              />
+            </div>
+
+            <div>
+              <x-tooltip position="right" class="arrow-l">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+                >
+                  Currently Online
+                </label>
+                <template #tooltip> Plans that are Currently Online </template>
+              </x-tooltip>
+              <x-select
+                v-model="planFilters.current_online"
+                :options="[
+                  { value: '', label: 'All' },
+                  { value: '1', label: 'Yes' },
+                  { value: '0', label: 'No' },
+                ]"
+                class="w-full"
+              />
+            </div>
+
+            <ComboBox
+              v-model="planFilters.plan_types"
+              :label="'Plan Type'"
+              :options="planTypes"
+              :disabled="planFilters.plan_types?.length == 0"
+              select-all
+              deselect-all
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 mb-4">
+            <x-button
+              size="sm"
+              color="#ff5e00"
+              type="submit"
+              @click="onPlanFiltersSubmit"
+            >
+              Apply
+            </x-button>
+            <x-button
+              size="sm"
+              color="primary"
+              @click.prevent="onPlanFiltersReset"
+            >
+              Reset
+            </x-button>
+          </div>
+        </x-modal>
+      </template>
+    </TheCollapsible>
+  </div>
 
   <!-- payments -->
 

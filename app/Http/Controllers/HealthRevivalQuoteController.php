@@ -15,6 +15,7 @@ use App\Models\Nationality;
 use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\HealthRevivalQuoteRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
@@ -50,18 +51,9 @@ class HealthRevivalQuoteController extends Controller
 
         $record = app(CRUDService::class)->getEntity($quoteType, $id);
 
+
         $ecomDetails = app(HealthQuoteService::class)->getEcomDetails($record);
-        $listQuotePlans = [];
-        $quotePlans = app(HealthQuoteService::class)->getQuotePlans($id);
-        if (isset($quotePlans->message) && $quotePlans->message != '') {
-            $listQuotePlans = [];
-        } else {
-            if (gettype($quotePlans) != 'string') {
-                $listQuotePlans = $quotePlans->quote->plans;
-            } else {
-                $listQuotePlans = [];
-            }
-        }
+
         $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
 
         $memberCategories = app(LookupService::class)->getMemberCategories();
@@ -123,6 +115,17 @@ class HealthRevivalQuoteController extends Controller
             $advisors = app(CRUDService::class)->getAdvisorsByModelType(strtolower($quoteType));
         }
 
+
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
+
+        if (!empty($insuranceProviders)) {
+            $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->id,
+                    'label' => $paymentMethod->text,
+                ];
+            })->sortBy('label')->values();
+        }
         return inertia('HealthRevivalQuote/Show', [
             'quote' => $record,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
@@ -149,20 +152,29 @@ class HealthRevivalQuoteController extends Controller
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'activities' => $activities,
             'advisors' => $advisors,
+            'insuranceProviders' => $insuranceProviders,
         ]);
     }
 
     public function edit($uuid)
     {
-        $formOptionsData = HealthRevivalQuoteRepository::getFormOptions(false);
+        $formOptionsData = HealthRevivalQuoteRepository::getFormOptions();
         $quote = HealthRevivalQuoteRepository::getBy('uuid', $uuid);
 
         return inertia(
-            'CarRevivalQuote/Form',
+            'HealthRevivalQuote/Form',
             [
-                'form_options' => $formOptionsData,
+                'formOptions' => $formOptionsData,
                 'quote' => $quote,
             ]
         );
+    }
+
+
+    public function update($uuid)
+    {
+        $quote = HealthRevivalQuoteRepository::getBy('uuid', $uuid);
+        $quote->update(request()->all());
+        return redirect()->route('healthrevival-quotes-show', $quote->uuid);
     }
 }

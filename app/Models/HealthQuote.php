@@ -19,7 +19,7 @@ class HealthQuote extends Model implements AuditableContract
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'health_quote_request';
-    protected $fillable = ['quote_status_id', 'quote_status_date', 'stale_at'];
+    protected $fillable = ['quote_status_id', 'quote_status_date', 'stale_at','cover_for_id','nationality_id','lead_type_id','emirate_of_your_visa_id','salary_band_id','member_category_id','gender','currently_insured_with_id','details','preference'];
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
