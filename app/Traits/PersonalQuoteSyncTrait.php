@@ -39,7 +39,7 @@ trait PersonalQuoteSyncTrait
     public function syncQuote($quote, $updatedFields)
     {
         unset($updatedFields['created_at'], $updatedFields['updated_at']);
-        if (count($updatedFields) <= 1 && isset($updatedFields['is_cold'])) {
+        if (empty($updatedFields) || (count($updatedFields) <= 1 && isset($updatedFields['is_cold']))) {
             return;
         }
 

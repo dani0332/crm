@@ -42,6 +42,7 @@ class QuoteSyncUpdateCommand extends Command
 
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::WAITING)
+            ->where('updated_fields', '!=', '{"is_cold":true}')
             ->take(300)
             ->get();
 
