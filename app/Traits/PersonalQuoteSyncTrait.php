@@ -38,6 +38,11 @@ trait PersonalQuoteSyncTrait
 {
     public function syncQuote($quote, $updatedFields)
     {
+        unset($updatedFields['created_at'], $updatedFields['updated_at']);
+        if(count($updatedFields) <= 1 && isset($updatedFields['is_cold'])) {
+            return;
+        }
+
         $quoteTypeId = $this->getQuoteTypeId($quote::class);
         $uuid = $quote->uuid;
 
@@ -67,7 +72,6 @@ trait PersonalQuoteSyncTrait
 
     private function addQuoteSyncEntry($uuid, $quoteTypeId, $updatedFields)
     {
-        unset($updatedFields['created_at'], $updatedFields['updated_at']);
         QuoteSync::create([
             'is_synced' => 0,
             'quote_uuid' => $uuid,
