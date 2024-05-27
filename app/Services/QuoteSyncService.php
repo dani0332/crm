@@ -3,10 +3,9 @@
 namespace App\Services;
 
 use App\Enums\QuoteSyncStatus;
-use App\Services\BaseService;
-use Carbon\Carbon;
-use App\Models\QuoteSync;
 use App\Enums\QuoteTypes;
+use App\Models\QuoteSync;
+use Carbon\Carbon;
 
 class QuoteSyncService extends BaseService
 {
@@ -15,33 +14,33 @@ class QuoteSyncService extends BaseService
         $dataset = QuoteSync::when(isset($filters['quote_type']), function ($query) use ($filters) {
             $query->where('quote_sync.quote_type_id', $filters['quote_type']);
         })
-        ->when(isset($filters['uuid']), function ($query) use ($filters) {
-            $query->where('quote_sync.quote_uuid', $filters['uuid']);
-        })
-        ->when(isset($filters['is_synced']), function ($query) use ($filters) {
-            $query->where('quote_sync.is_synced', $filters['is_synced']);
-        })
-        ->when(isset($filters['status']), function ($query) use ($filters) {
-            $query->where('quote_sync.status', $filters['status']);
-        })
-        ->when(isset($filters['synced_at']), function ($query) use ($filters) {
-            $startDate = Carbon::parse($filters['synced_at'][0])->startOfDay();
-            $endDate = Carbon::parse($filters['synced_at'][1])->endOfDay();
-            $query->whereBetween('quote_sync.synced_at', [$startDate, $endDate]);
-        })
-        ->when(isset($filters['created_at']), function ($query) use ($filters) {
-            $startDate = Carbon::parse($filters['created_at'][0])->startOfDay();
-            $endDate = Carbon::parse($filters['created_at'][1])->endOfDay();
-            $query->whereBetween('quote_sync.created_at', [$startDate, $endDate]);
-        });
+            ->when(isset($filters['uuid']), function ($query) use ($filters) {
+                $query->where('quote_sync.quote_uuid', $filters['uuid']);
+            })
+            ->when(isset($filters['is_synced']), function ($query) use ($filters) {
+                $query->where('quote_sync.is_synced', $filters['is_synced']);
+            })
+            ->when(isset($filters['status']), function ($query) use ($filters) {
+                $query->where('quote_sync.status', $filters['status']);
+            })
+            ->when(isset($filters['synced_at']), function ($query) use ($filters) {
+                $startDate = Carbon::parse($filters['synced_at'][0])->startOfDay();
+                $endDate = Carbon::parse($filters['synced_at'][1])->endOfDay();
+                $query->whereBetween('quote_sync.synced_at', [$startDate, $endDate]);
+            })
+            ->when(isset($filters['created_at']), function ($query) use ($filters) {
+                $startDate = Carbon::parse($filters['created_at'][0])->startOfDay();
+                $endDate = Carbon::parse($filters['created_at'][1])->endOfDay();
+                $query->whereBetween('quote_sync.created_at', [$startDate, $endDate]);
+            });
 
-        if(isset($filters['is_synced'])) {
+        if (isset($filters['is_synced'])) {
             $dataset = $dataset->where('quote_sync.is_synced', $filters['is_synced']);
         }
 
         $sortBy = 'quote_sync.id';
         $sortOrder = 'desc';
-        if (!empty($filters['sortBy']) && !empty($filters['sortType'])) {            
+        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
             $sortBy = $filters['sortBy'];
             $sortOrder = $filters['sortType'] ?? 'desc';
         }
@@ -50,6 +49,7 @@ class QuoteSyncService extends BaseService
         $dataset->map(function ($item) {
             $item->quote_type = QuoteTypes::getName($item->quote_type_id)->value ?? '-';
             $item->status_name = QuoteSyncStatus::getName($item->status);
+
             return $item;
         });
 

@@ -2,15 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteSyncStatus;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
-use Carbon\Carbon;
-use Illuminate\Console\Command;
 use Exception;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use App\Enums\QuoteSyncStatus;
 
 class QuoteSyncUpdateCommand extends Command
 {
@@ -42,9 +41,9 @@ class QuoteSyncUpdateCommand extends Command
         }
 
         $entries = QuoteSync::where('is_synced', false)
-        ->where('status', QuoteSyncStatus::WAITING)
-        ->take(300)
-        ->get();
+            ->where('status', QuoteSyncStatus::WAITING)
+            ->take(300)
+            ->get();
 
         if ($entries->isEmpty()) {
             info('----------- No entries found to be processed in quote sync table -----------');
@@ -66,9 +65,9 @@ class QuoteSyncUpdateCommand extends Command
             try {
                 DB::beginTransaction();
 
-                info('Syncing entry: ' . $entry->quote_uuid);
-                $key = $entry->quote_uuid . '_' . $entry->quote_type_id;
-                if (!empty($quotes[$key])) {
+                info('Syncing entry: '.$entry->quote_uuid);
+                $key = $entry->quote_uuid.'_'.$entry->quote_type_id;
+                if (! empty($quotes[$key])) {
                     // Existing quote
                     $this->processExistingQuote($quotes[$key], $entry);
                 } else {
@@ -81,9 +80,9 @@ class QuoteSyncUpdateCommand extends Command
             } catch (Exception $e) {
                 DB::rollBack();
 
-                $error = 'QuoteSyncJob Error syncing entry: ' . $entry->quote_uuid . ' - ' . $e->getMessage();
-                info($error . ' --- ' . $e->getTraceAsString());
-                $entry->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);;
+                $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$e->getMessage();
+                info($error.' --- '.$e->getTraceAsString());
+                $entry->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
             }
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\QuoteSyncStatus;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Models\BikeQuote;
@@ -28,12 +29,10 @@ use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Repositories\PersonalQuoteRepository;
-use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use App\Enums\QuoteSyncStatus;
 
 trait PersonalQuoteSyncTrait
 {
@@ -106,17 +105,17 @@ trait PersonalQuoteSyncTrait
     {
         if ($entry->quote_type_id) {
 
-            info('Entry for quote: ' . $entry->quote_uuid . ' found in personal quotes table');
+            info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
             $newValues = json_decode($entry->updated_fields, true);
             $this->syncTable($quote, $newValues, 'personal_quotes');
             $quote->quote_type_id = $entry->quote_type_id;
             $quote->save();
             $entry->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
-            info('Entry for quote: ' . $entry->quote_uuid . ' updated in quote sync table');
+            info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
 
         } else {
 
-            info('Entry for quote: ' . $entry->quote_uuid . ' found in personal quotes table but missing required fields');
+            info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table but missing required fields');
             $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
             if ($sourceQuote) {
                 $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');
@@ -143,7 +142,7 @@ trait PersonalQuoteSyncTrait
             $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $newValues, $entry->quote_uuid, $entry->quote_type_id);
             $this->upsertPersonalQuoteDetail($personalQuote, $newValues);
             $entry->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
-            info('Entry for quote: ' . $personalQuote->id . ' saved in personal quotes table');
+            info('Entry for quote: '.$personalQuote->id.' saved in personal quotes table');
         }
 
         return $personalQuote;
