@@ -50,6 +50,7 @@ class TransactionReportService extends ManagementReport
                 'tax_invoice_number as insurer_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
+                'personal_quotes.business_type_of_insurance_id as sub_type_line_of_business',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -73,9 +74,8 @@ class TransactionReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
-        return $query->simplePaginate(10)->withQueryString()->through(function ($item) {
-            return $this->businessSubTypeMapper($item);
-        });    }
+        return $query->simplePaginate(10)->withQueryString();
+    }
 
     public function getDefaultFilters()
     {

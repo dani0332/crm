@@ -49,6 +49,7 @@ class SaleDetailReportService extends ManagementReport
                 'quote_type.text as line_of_business',
                 'u.name as advisor',
                 'pi.name as policy_issuer',
+                'personal_quotes.business_type_of_insurance_id as sub_type_line_of_business',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -70,9 +71,8 @@ class SaleDetailReportService extends ManagementReport
             $query->groupBy($utmGroupBy);
         }
 
-        return $query->simplePaginate(10)->withQueryString()->through(function ($item) {
-            return $this->businessSubTypeMapper($item);
-        });    }
+        return $query->simplePaginate(10)->withQueryString();
+    }
 
     public function getDefaultFilters()
     {
