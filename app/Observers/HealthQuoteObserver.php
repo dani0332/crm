@@ -38,7 +38,7 @@ class HealthQuoteObserver
             });
 
             if ($healthQuote->source === LeadSourceEnum::IMCRM) {
-                app(HealthQuoteService::class)->assignRenewalBatch($healthQuote);
+                app(HealthQuoteService::class)->assignRenewalBatch($healthQuote->id);
             }
             $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
         }
