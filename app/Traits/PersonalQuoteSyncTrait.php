@@ -186,7 +186,15 @@ trait PersonalQuoteSyncTrait
         // update missing required fields
         $this->updateMissingFields($personalQuote, 'personal_quotes', $quoteTypeId);
         $this->syncTable($personalQuote, $newValues, 'personal_quotes');
-        $personalQuote->save();
+
+        $quoteTypeShortCode = QuoteTypeShortCode::getName($quoteTypeId);
+        $code = $quoteTypeShortCode . '-' . $quoteUuid;
+        $personalQuote = PersonalQuote::updateOrCreate(
+            [
+                'code' => $code
+            ],
+            $personalQuote->getAttributes()
+        );
 
         return $personalQuote;
     }
@@ -257,23 +265,17 @@ trait PersonalQuoteSyncTrait
 
     private function upsertPersonalQuoteDetail($personalQuote, $newValues)
     {
-        $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
-        $isNewInsert = false;
-        if (! $personalQuoteDetail) {
-            $isNewInsert = true;
-            $personalQuoteDetail = new PersonalQuoteDetail();
-        }
-
+        $personalQuoteDetail = new PersonalQuoteDetail();
         $this->syncTable($personalQuoteDetail, $newValues, 'personal_quote_details');
-
         $personalQuoteDetail->personal_quote_id = $personalQuote->id;
+        $this->updateMissingFields($personalQuoteDetail, 'personal_quote_details', $personalQuote->id);
 
-        if ($isNewInsert) {
-            // update missing required fields
-            $this->updateMissingFields($personalQuoteDetail, 'personal_quote_details', $personalQuote->id);
-        }
-
-        $personalQuoteDetail->save();
+        $personalQuoteDetail = PersonalQuoteDetail::updateOrCreate(
+            [
+                'personal_quote_id' => $personalQuote->id
+            ],
+            $personalQuoteDetail->getAttributes()
+        );
 
         return $personalQuoteDetail;
     }
