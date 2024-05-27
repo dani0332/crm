@@ -61,8 +61,6 @@ const genderOptions = computed(() => {
   }));
 });
 const quoteForm = useForm({
-  modelType: '"Health"',
-  model: props.model,
   first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
