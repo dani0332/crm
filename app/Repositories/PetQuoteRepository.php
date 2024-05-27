@@ -53,7 +53,7 @@ class PetQuoteRepository extends BaseRepository
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
-            'advisorId' => (!auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
@@ -105,7 +105,7 @@ class PetQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->when(!empty(request()->is_renewal), function ($query) {
+            ->when(! empty(request()->is_renewal), function ($query) {
                 $isRenewal = request()->is_renewal;
                 if ($isRenewal == quoteTypeCode::yesText) {
                     $query->whereNotNull('previous_quote_policy_number');
@@ -113,7 +113,7 @@ class PetQuoteRepository extends BaseRepository
                     $query->whereNull('previous_quote_policy_number');
                 }
             })
-            ->filter(!$forExport, $forTotalLeadsCount)
+            ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
 
@@ -156,18 +156,18 @@ class PetQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable() . '.*',
+                $this->getTable().'.*',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = ' . QuoteTypeId::Pet . ' AND quote_request_id = ' . $this->getTable() . '.id),
-                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                    WHERE quote_type_id = '.QuoteTypeId::Pet.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
                 as customer_type'),
             ])
             ->firstOrFail();
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
-        $data = !empty($quote) ? $quote->toArray() : [];
+        $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
