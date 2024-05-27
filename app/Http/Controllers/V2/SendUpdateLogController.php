@@ -427,6 +427,7 @@ class SendUpdateLogController extends Controller
             $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] === false) {
                 logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message']);
+
                 return response()->json(['message' => $sageResponse['message']], 500);
             }
 
@@ -436,10 +437,12 @@ class SendUpdateLogController extends Controller
 
             if ($sageResponse['status'] && $response['status']) {
                 info('Book Update - Sage APIs and Send Update impact moved to Main Lead Page successfully for send update code '.$sendUpdate->code);
+
                 return response()->json(['message' => $response['message']], 200);
             }
         }
-        logger()->error('Book Update - Failed to update payment details or send update to sage - Response:' .$response['message']);
+        logger()->error('Book Update - Failed to update payment details or send update to sage - Response:'.$response['message']);
+
         return response()->json(['message' => $response['message']], 500);
     }
 }

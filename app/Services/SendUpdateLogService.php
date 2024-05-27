@@ -601,6 +601,7 @@ class SendUpdateLogService
         // For those send update type where payment not required.
         if (! $payment) {
             info('Payment not found for send update log id : '.$sendUpdateLog->id);
+
             return true;
         }
 
@@ -645,7 +646,7 @@ class SendUpdateLogService
         }
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-            info('Book Update - Calling Sage APIs for Correct Policy Details - Reverse Insurer Tax Invoice Number: ' .$sendUpdateRequest->reversalInvoice);
+            info('Book Update - Calling Sage APIs for Correct Policy Details - Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -659,6 +660,7 @@ class SendUpdateLogService
             return $sageResponse;
         }
         info('Book Update - Sage APIs by pass for category code : '.$categoryCode);
+
         return ['status' => true];
     }
 

@@ -283,11 +283,12 @@ class SageApiService
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
         if (! $isSageEnabled) {
             info('Book Update - Sage is not enabled');
+
             return ['status' => false, 'message' => 'Sage is not enabled'];
         }
 
         // PT_SEND_UPDATE : Process Type Send Update
-        if ($extras['type'] == SageEnum::PT_SEND_UPDATE) { 
+        if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
             $customerTotalSteps = in_array($extras['send_update_type'], array_keys($stepsAsPerType)) ? $stepsAsPerType[$extras['send_update_type']] : 4;
         }
 
@@ -330,10 +331,12 @@ class SageApiService
             }
 
             logger()->error('Book Update - Something went wrong');
+
             return ['status' => false, 'message' => 'Something went wrong'];
         }
 
         logger()->error('Book Update - Customer not found in Sage');
+
         return ['status' => false, 'message' => 'Customer not found in Sage'];
     }
 
@@ -493,7 +496,7 @@ class SageApiService
         }
 
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices created successfully'];
-        info('Book Update - Response: ' .$response['message']);
+        info('Book Update - Response: '.$response['message']);
 
         return ['status' => $response['status'], 'message' => $response['message']];
     }
@@ -585,7 +588,7 @@ class SageApiService
         }
 
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices reversed and corrected successfully'];
-        info('Book Update - Response: ' .$response['message']);
+        info('Book Update - Response: '.$response['message']);
 
         return ['status' => $response['status'], 'message' => $response['message']];
     }
@@ -618,8 +621,8 @@ class SageApiService
                 $_REQUEST['status'] = false;
                 $_REQUEST['message'] = $splitPaymentResponse['message'];
                 $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
-                logger()->error('Book Update - Sage API Failed - Request Type: ' .SageEnum::SRT_CREATE_AR_SPPAY_INV. ' - Response: ' .$splitPaymentResponse['message']);
-                
+                logger()->error('Book Update - Sage API Failed - Request Type: '.SageEnum::SRT_CREATE_AR_SPPAY_INV.' - Response: '.$splitPaymentResponse['message']);
+
                 return $_REQUEST;
             }
 
@@ -700,13 +703,13 @@ class SageApiService
                 $_REQUEST['status'] = false;
                 $_REQUEST['message'] = $responseMessage;
                 $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
-                logger()->error('Book Update - Sage API Failed - Response: ' .$responseMessage);
+                logger()->error('Book Update - Sage API Failed - Response: '.$responseMessage);
 
                 return $_REQUEST;
             } else {
                 if ($isLiveApiCall) {
                     $this->logSageApiCall($payLoadOptions, $respParams, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps']);
-                    info('Book Update - Sage API Success - Response: ' .json_encode($respParams));
+                    info('Book Update - Sage API Success - Response: '.json_encode($respParams));
                 }
             }
         }
@@ -724,7 +727,7 @@ class SageApiService
         if ($isFollowUpCondition) {
             if ($isLiveApiCall) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps']);
-                info('Book Update - Sage API Success - Response: ' .json_encode($respParams));
+                info('Book Update - Sage API Success - Response: '.json_encode($respParams));
             }
 
             if (in_array($extraParams['requestType'], [
@@ -766,7 +769,7 @@ class SageApiService
             $_REQUEST['status'] = false;
             $_REQUEST['message'] = $responseMessage;
             $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
-            logger()->error('Book Update - Sage API Failed - Response: ' .$responseMessage);
+            logger()->error('Book Update - Sage API Failed - Response: '.$responseMessage);
 
             return $_REQUEST;
         }
@@ -833,14 +836,14 @@ class SageApiService
                     $this->logSageApiCall($postedResponse, $resp, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making AR2 Split paymets patch to sage';
-                    logger()->error('Book Update - Sage API Failed - Response:' .json_encode($resp));
+                    logger()->error('Book Update - Sage API Failed - Response:'.json_encode($resp));
 
                     return $returnMessage;
                 }
 
                 if ($isLiveApiCall) {
                     $this->logSageApiCall($postedResponse, $resp, $quoteObject, $extras['startingStep'], $extras['totalSteps']);
-                    info('Book Update - Sage API Success - Response: ' .json_encode($resp));
+                    info('Book Update - Sage API Success - Response: '.json_encode($resp));
                 }
             }
 
