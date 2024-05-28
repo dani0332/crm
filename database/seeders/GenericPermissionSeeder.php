@@ -148,6 +148,7 @@ class GenericPermissionSeeder extends Seeder
         $this->generateSegmentFilterPermission();
         $this->embeddedProductSeeds();
         $this->advisorConversionReportSeeds();
+        $this->quoteSyncSeeds();
     }
 
     private function generateSegmentFilterPermission()
@@ -166,6 +167,17 @@ class GenericPermissionSeeder extends Seeder
             if (! $role->hasPermissionTo(PermissionsEnum::SEGMENT_FILTER)) {
                 $role->givePermissionTo(PermissionsEnum::SEGMENT_FILTER);
             }
+        }
+    }
+
+    private function quoteSyncSeeds()
+    {
+        $permissionList = [
+            PermissionsEnum::QUOTE_SYNC_LOGS => [],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
     }
 

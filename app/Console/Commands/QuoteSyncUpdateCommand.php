@@ -2,11 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteSyncStatus;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
+use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class QuoteSyncUpdateCommand extends Command
 {
@@ -37,13 +40,20 @@ class QuoteSyncUpdateCommand extends Command
             return;
         }
 
-        $entries = QuoteSync::where('is_synced', false)->take(300)->get();
+        $entries = QuoteSync::where('is_synced', false)
+            ->where('status', QuoteSyncStatus::WAITING)
+            ->take(300)
+            ->get();
 
         if ($entries->isEmpty()) {
             info('----------- No entries found to be processed in quote sync table -----------');
 
             return;
         }
+
+        // mark entries in progress
+        QuoteSync::whereIn('id', $entries->pluck('id')->toArray())
+            ->update(['status' => QuoteSyncStatus::INPROGRESS]);
 
         $uuids = $entries->unique('quote_uuid')->pluck('quote_uuid')->toArray();
         $quotes = PersonalQuote::whereIn('uuid', $uuids)->get()->keyBy(function (PersonalQuote $item, int $key) {
@@ -52,16 +62,37 @@ class QuoteSyncUpdateCommand extends Command
 
         foreach ($entries as $entry) {
 
-            info('Syncing entry: '.$entry->quote_uuid);
+            try {
+                DB::beginTransaction();
 
-            $key = $entry->quote_uuid.'_'.$entry->quote_type_id;
-            if (! empty($quotes[$key])) {
-                // Existing quote
-                $this->processExistingQuote($quotes[$key], $entry);
-            } else {
-                // Quote not found
-                $quotes[$key] = $this->processQuoteNotFound($entry);
+                info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id);
+                if ($entry->updated_fields === '{"is_cold":true}') {
+
+                    QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
+
+                } else {
+
+                    $key = $entry->quote_uuid.'_'.$entry->quote_type_id;
+                    if (! empty($quotes[$key])) {
+                        // Existing quote
+                        $this->processExistingQuote($quotes[$key], $entry);
+                    } else {
+                        // Quote not found
+                        $quotes[$key] = $this->processQuoteNotFound($entry);
+                    }
+                }
+
+                DB::commit();
+
+            } catch (Exception $e) {
+                DB::rollBack();
+
+                $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$e->getMessage();
+                info($error.' --- '.$e->getTraceAsString());
+                QuoteSync::where('id', $entry->id)->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
             }
         }
+
+        info('----------- QuoteSyncJob Completed -----------');
     }
 }
