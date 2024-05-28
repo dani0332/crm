@@ -206,6 +206,14 @@ class SageApiService
                 } elseif (isset($response['CustomerNumber'])) {
                     $sageCustomerNumber = $response['CustomerNumber'];
                 }
+                // The customer already exists on Sage
+                if (isset($sageLogArray[1]) && $sageCustomerNumber === false && $sageLogArray[1]['status'] != config('constants.SAGE_LOG_SUCCESS_STATUS')) {
+                    $customerSageDbPayload = json_decode($sageLogArray[1]['sage_payload'], true);
+                    if (isset($customerSageDbPayload['CustomerNumber'])) {
+                        $sageCustomerNumber = $customerSageDbPayload['CustomerNumber'];
+                    }
+                }
+
                 if ($sageCustomerNumber) {
                     if ($isLiveApiCallStep1) {
                         $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
