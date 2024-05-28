@@ -185,7 +185,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
             ],
             'Bike' => [
                 [
-                    'name' => 'Add optional cover ',
+                    'name' => 'Add optional cover',
                     'tooltip' => "To include an additional coverage option such for Oman cover, Personal accident benefit covers, roadside assistance, etc. to enhance protection as per the policyholder's specific needs",
                 ],
                 [
