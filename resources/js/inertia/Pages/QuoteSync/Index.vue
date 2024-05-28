@@ -20,6 +20,7 @@ const loader = reactive({
 });
 
 const filters = reactive({
+  distinct: '0',
   quote_type: '',
   uuid: '',
   is_synced: '0',
@@ -138,6 +139,14 @@ const isSyncedOptions = computed(() => {
   ];
 });
 
+const distinctOptions = computed(() => {
+  return [
+    { value: '', label: 'Select All' },
+    { value: '1', label: 'Yes' },
+    { value: '0', label: 'No' },
+  ];
+});
+
 </script>
 
 <template>
@@ -170,6 +179,10 @@ const isSyncedOptions = computed(() => {
         <x-field label="Created At">
           <DatePicker v-model="filters.created_at" name="date_of_purchase" class="w-full" model-type="yyyy-MM-dd" range
             max-range="7" />
+        </x-field>
+        <x-field label="Distinct">
+          <x-select v-model="filters.distinct" placeholder="Select Distinct" :options="distinctOptions"
+            class="w-full" />
         </x-field>
       </div>
       <div class="flex flex-row-reverse gap-3">
