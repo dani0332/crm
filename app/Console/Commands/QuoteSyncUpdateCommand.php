@@ -19,7 +19,7 @@ class QuoteSyncUpdateCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'QuoteSync:cron';
+    protected $signature = 'QuoteSyncUpdate:cron';
 
     protected $description = 'Sync Quotes Data from QuoteSync table to respective quote tables';
 
