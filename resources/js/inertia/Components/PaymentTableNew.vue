@@ -2212,7 +2212,14 @@ const deleteDocument = (docName, count) => {
 
 const uploadDocument = (doc, files, count) => {
   files = files.files;
-  if (files.length == 0) return;
+   // Error if invalid files are selected
+   if (files.length == 0) {
+    notification.error({
+            title: 'Document upload failed, invalid file selected',
+            position: 'top',
+          }); 
+    return;  
+  }
 
   let url = '/quotes/' + props.quoteType + '/documents/store-multiple';
   let splitPaymentDocType = null;
@@ -2397,7 +2404,7 @@ const getCaptureValidation = computed(() => {
         const paymentMethodCC = paymentRecord.payment_splits.filter(
           item => item.payment_method.code === 'CC',
         );
-        if (paymentMethodCC.length > 0) {
+        if (paymentMethodCC.length > 0 && paymentRecord.payment_status_id != props.paymentStatusEnum.CREDIT_APPROVED) {
           let totalSplitPayments = paymentRecord.payment_splits.length;
           let paidPaymentStatus = paymentRecord.payment_splits.filter(
             item =>
