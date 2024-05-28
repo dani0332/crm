@@ -9,7 +9,6 @@ use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class QuoteSyncUpdateCommand extends Command
 {
@@ -63,7 +62,7 @@ class QuoteSyncUpdateCommand extends Command
         foreach ($entries as $entry) {
 
             try {
-                
+
                 info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id);
                 if ($entry->updated_fields === '{"is_cold":true}') {
 
@@ -82,7 +81,7 @@ class QuoteSyncUpdateCommand extends Command
                 }
 
             } catch (Exception $e) {
-                
+
                 $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
                 QuoteSync::where('id', $entry->id)->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);

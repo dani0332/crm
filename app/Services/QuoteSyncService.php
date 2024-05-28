@@ -15,7 +15,7 @@ class QuoteSyncService extends BaseService
             $query->where('quote_sync.quote_type_id', $filters['quote_type']);
         })
             ->when(isset($filters['distinct']), function ($query) use ($filters) {
-                if($filters['distinct'] == 1) {
+                if ($filters['distinct'] == 1) {
                     $query->groupBy('quote_sync.quote_uuid');
                 }
             })
@@ -64,10 +64,10 @@ class QuoteSyncService extends BaseService
     public function addFollowedEntriesForSyncing(QuoteSync $quoteSync)
     {
         QuoteSync::where('id', '>', $quoteSync->id)
-        ->where('quote_uuid', $quoteSync->quote_uuid)
-        ->update([
-            'is_synced' => false,
-            'status' => QuoteSyncStatus::WAITING,
-        ]);
+            ->where('quote_uuid', $quoteSync->quote_uuid)
+            ->update([
+                'is_synced' => false,
+                'status' => QuoteSyncStatus::WAITING,
+            ]);
     }
 }

@@ -93,7 +93,7 @@ class QuoteSyncController extends Controller
     {
         $quoteSync->update($request->all());
 
-        if(isset($request->sync_followed_entries) && $request->sync_followed_entries == 1) {
+        if (isset($request->sync_followed_entries) && $request->sync_followed_entries == 1) {
             $quoteSyncService->addFollowedEntriesForSyncing($quoteSync);
         }
 
