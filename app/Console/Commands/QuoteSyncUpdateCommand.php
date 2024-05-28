@@ -26,11 +26,14 @@ class QuoteSyncUpdateCommand extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->cacheSchemas();
     }
 
     public function handle()
     {
+        if(empty($this->schemas)) {
+            $this->cacheSchemas();
+        }
+
         info('----------- QuoteSyncJob Started -----------');
         $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
 
