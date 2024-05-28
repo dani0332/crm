@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityRequest;
-use App\Models\User;
 use App\Repositories\ActivityRepository;
 use App\Traits\GetUserTreeTrait;
 use Illuminate\Support\Facades\Auth;
