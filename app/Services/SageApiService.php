@@ -290,10 +290,13 @@ class SageApiService
 
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
         if (! $isSageEnabled) {
+            info('Book Update - Sage is not enabled');
+
             return ['status' => false, 'message' => 'Sage is not enabled'];
         }
 
-        if ($extras['type'] == SageEnum::PT_SEND_UPDATE) { // PT_SEND_UPDATE : Process Type Send Update
+        // PT_SEND_UPDATE : Process Type Send Update
+        if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
             $customerTotalSteps = in_array($extras['send_update_type'], array_keys($stepsAsPerType)) ? $stepsAsPerType[$extras['send_update_type']] : 4;
         }
 
@@ -304,6 +307,7 @@ class SageApiService
         $quoteDetails = $quote;
 
         if ($sageCustomerNumber) {
+            info('Book Update - Customer found in Sage - Customer Number: '.$sageCustomerNumber);
             $response = '';
             $paymentFilterAsPerType = ($extras['type'] == SageEnum::PT_SEND_UPDATE) ? ['send_update_log_id' => $request->sendUpdateId] : ['code' => $quote['code']];
             $payment = Payment::where($paymentFilterAsPerType)->first();
@@ -334,8 +338,12 @@ class SageApiService
                 return ['status' => $response['status'], 'message' => $response['message']];
             }
 
+            logger()->error('Book Update - Something went wrong');
+
             return ['status' => false, 'message' => 'Something went wrong'];
         }
+
+        logger()->error('Book Update - Customer not found in Sage');
 
         return ['status' => false, 'message' => 'Customer not found in Sage'];
     }
@@ -376,10 +384,12 @@ class SageApiService
 
         switch ($extras['send_update_type']) {
             case SageEnum::SUT_NORMAL:
+                info('Book Update - Sage APIs Calls - Straight Forward');
                 $response = $this->handleSendUpdateNormalCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras);
                 break;
 
             case SageEnum::SUT_REVE_CORR:
+                info('Book Update - Sage APIs Calls - Reversal and Correction');
                 $extras['sageLogArray'] = $sageLogArray;
                 $sageRevCorrLogs = $quoteModelObject->sageApiLogs?->whereIn('entry_type', [
                     SageEnum::SRT_GET_AR_INVOICE,
@@ -398,8 +408,7 @@ class SageApiService
     {
         // If upfront Payment
         if ($payment->frequency == SageEnum::SF_UPFRONT) {
-            // Create AR Invoice and marked as posted
-            // Send update Working Fine (Straight) - Tested: May 23, 2024
+            info('Book Update - Create AR Invoice and marked as posted for Upfront Payment');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -410,8 +419,7 @@ class SageApiService
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
 
-            // Create AP Invoice and marked as posted
-            // Send update Working Fine (Straight) - Tested: May 23, 2024
+            info('Book Update - Create AP Invoice and marked as posted for Upfront Payment');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -423,8 +431,7 @@ class SageApiService
             ]);
 
         } else {
-            // Create AR Invoice Split Payment and marked as posted
-            // Send update Working Fine (Straight) - Tested: May 23, 2024
+            info('Book Update - Create AR Invoice Split Payment and marked as posted for Split Payment');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -439,7 +446,7 @@ class SageApiService
         }
 
         if ($sageRequestPayload->discount > 0) {
-            // Create AR discount Invoice and marked as posted
+            info('Book Update - Create AR Discount Invoice and marked as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -453,7 +460,7 @@ class SageApiService
 
         if (strtolower($sageRequestPayload->invoicePaymentStatus) == SageEnum::STATUS_PAID) {
             if ($payment->frequency == SageEnum::SF_UPFRONT) {
-                // Apply Payment Invoices
+                info('Book Update - Create Payment Receipt One for Upfront Payment with Invoice Payment Status Paid');
                 $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                     'iterator' => 0,
                     'lastIteration' => 2,
@@ -466,8 +473,7 @@ class SageApiService
             }
 
             if ($payment->frequency == SageEnum::SF_SPLIT_PAYMENT) {
-                // Apply Split pre Payments
-                // Send update Working Fine (Straight) - Tested: May 23, 2024
+                info('Book Update - Create AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
                 $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                     'iterator' => 0,
                     'lastIteration' => 2,
@@ -480,11 +486,10 @@ class SageApiService
                     'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 ]);
             }
-
         }
 
         if (! in_array($payment->frequency, [SageEnum::SF_UPFRONT, SageEnum::SF_SPLIT_PAYMENT]) && in_array($splitPayments[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
-            // Send update Working Fine (Straight) - Tested: May 23, 2024
+            info('Book Update - Create AR Split Pre Payment for Split/Upfront Payment with Payment Status Paid/Captured');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -499,6 +504,7 @@ class SageApiService
         }
 
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices created successfully'];
+        info('Book Update - Response: '.$response['message']);
 
         return ['status' => $response['status'], 'message' => $response['message']];
     }
@@ -506,10 +512,12 @@ class SageApiService
     private function handleSendUpdateRevCorrCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras)
     {
         $sendUpdateLog = $extras['send_update_log'];
+        // Todo: Need to check for Split Payment case for Reverse and Correction
         // Should be add split payment case here. Ex -
         // CREATE_PAY_REC_ONE_INV,
         // SRT_CREATE_AR_SPPAY_INV,
         // SRT_CREATE_AR_SP_PRE_PAYMENT
+
         $invoicesForReverse = collect($extras['sageLogArray'])->filter(function ($sageApiLog) {
             return in_array($sageApiLog['sage_request_type'], [
                 SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
@@ -517,11 +525,13 @@ class SageApiService
                 SageEnum::SRT_CREATE_AR_DISC_INV,
             ]) && $sageApiLog['status'] == 'success';
         })->values()->toArray();
+        info('Book Update - Fetching Invoices for Reverse and Correction from Sage APIs Logs');
 
         // If upfront Payment
         if ($payment->frequency == SageEnum::SF_UPFRONT) {
-            // Create AR Reverse and Correction Invoice
+            info('Book Update - Create Invoice for Upfront Payment');
             if (isset($invoicesForReverse[0])) {
+                info('Book Update - Create AR Reverse and Correction Invoice for Upfront Payment');
                 $invoiceResponse = json_decode($invoicesForReverse[0]['response']);
                 $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                     'iterator' => 0,
@@ -536,8 +546,8 @@ class SageApiService
                 ]);
             }
 
-            // Create AP Reverse and Correction Invoice
             if (isset($invoicesForReverse[1])) {
+                info('Book Update - Create AP Reverse and Correction Invoice for Upfront Payment');
                 $invoiceResponse = json_decode($invoicesForReverse[1]['response']);
                 $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                     'iterator' => 0,
@@ -553,7 +563,8 @@ class SageApiService
             }
 
         } else {
-            // Create AR Invoice Split Payment and marked as posted
+            // Need to check AR Split Payment Reverse and Correction
+            info('Book Update - Create AR Split Payment Invoice for Split Payment and marked as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -569,6 +580,7 @@ class SageApiService
 
         // Reverse and Correct AR Invoice DIS
         if (isset($invoicesForReverse[2]) && $sendUpdateLog && $sendUpdateLog->discount > 0) {
+            info('Book Update - Create AR Reverse and Correction Invoice for Discount Invoice');
             $invoiceResponse = json_decode($invoicesForReverse[2]['response']);
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
@@ -584,6 +596,7 @@ class SageApiService
         }
 
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices reversed and corrected successfully'];
+        info('Book Update - Response: '.$response['message']);
 
         return ['status' => $response['status'], 'message' => $response['message']];
     }
@@ -609,12 +622,14 @@ class SageApiService
 
         // This case added for Split Payment patch
         if (isset($extraParams['payment']) && $extraParams['payment']->total_payments > 1 && $extraParams['requestType'] == SageEnum::SRT_CREATE_AR_SPPAY_INV) {
+            info('Book Update - Sage APIs - Split Payment Patch');
             $splitPaymentResponse = $this->splitPaymentsPatch($quote, $sageRequestPayload, $sageLogArray, $extraParams);
 
             if (isset($splitPaymentResponse['status']) && $splitPaymentResponse['status'] == false) {
                 $_REQUEST['status'] = false;
                 $_REQUEST['message'] = $splitPaymentResponse['message'];
                 $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
+                logger()->error('Book Update - Sage API Failed - Request Type: '.SageEnum::SRT_CREATE_AR_SPPAY_INV.' - Response: '.$splitPaymentResponse['message']);
 
                 return $_REQUEST;
             }
@@ -661,6 +676,7 @@ class SageApiService
             $_REQUEST['status'] = false;
             $_REQUEST['message'] = 'Something went wrong';
             $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
+            logger()->error('Book Update - Failed - Something went wrong');
 
             return $_REQUEST;
         }
@@ -695,11 +711,13 @@ class SageApiService
                 $_REQUEST['status'] = false;
                 $_REQUEST['message'] = $responseMessage;
                 $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
+                logger()->error('Book Update - Sage API Failed - Response: '.$responseMessage);
 
                 return $_REQUEST;
             } else {
                 if ($isLiveApiCall) {
                     $this->logSageApiCall($payLoadOptions, $respParams, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps']);
+                    info('Book Update - Sage API Success - Response: '.json_encode($respParams));
                 }
             }
         }
@@ -717,6 +735,7 @@ class SageApiService
         if ($isFollowUpCondition) {
             if ($isLiveApiCall) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps']);
+                info('Book Update - Sage API Success - Response: '.json_encode($respParams));
             }
 
             if (in_array($extraParams['requestType'], [
@@ -758,6 +777,7 @@ class SageApiService
             $_REQUEST['status'] = false;
             $_REQUEST['message'] = $responseMessage;
             $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
+            logger()->error('Book Update - Sage API Failed - Response: '.$responseMessage);
 
             return $_REQUEST;
         }
@@ -781,6 +801,7 @@ class SageApiService
 
             if ($isLiveApiCall) {
                 $this->logSageApiCall($createARInvoiceSplitPayments, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps']);
+                info('Book Update - Sage API - Create AR Split Payment Invoice');
             }
 
             $url = 'AR/ARInvoiceBatches('.$this->sageBatchNumber.')';
@@ -790,6 +811,7 @@ class SageApiService
             if (empty($postedResponse['Invoices'][0]['InvoicePaymentSchedules'])) {
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while getting AR2 Split paymets from sage';
+                logger()->error('Book Update - Sage API Failed - Response: Error while getting AR2 Split paymets from sage');
 
                 return $returnMessage;
             }
@@ -822,12 +844,14 @@ class SageApiService
                     $this->logSageApiCall($postedResponse, $resp, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making AR2 Split paymets patch to sage';
+                    logger()->error('Book Update - Sage API Failed - Response:'.json_encode($resp));
 
                     return $returnMessage;
                 }
 
                 if ($isLiveApiCall) {
                     $this->logSageApiCall($postedResponse, $resp, $quoteObject, $extras['startingStep'], $extras['totalSteps']);
+                    info('Book Update - Sage API Success - Response: '.json_encode($resp));
                 }
             }
 
@@ -835,6 +859,7 @@ class SageApiService
             $this->logSageApiCall($createARInvoiceSplitPayments, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
             $returnMessage['message'] = 'AR Split payment failed from Sage';
             $returnMessage['status'] = false;
+            logger()->error('Book Update - Sage API Failed - Response: AR Split payment failed from Sage');
 
             return $returnMessage;
         }

@@ -21,8 +21,10 @@ use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use finfo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
@@ -618,5 +620,69 @@ class EmbeddedProductRepository extends BaseRepository
         $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
 
         return $response;
+    }
+
+    public function fetchCapturePayment($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if ($quoteTypeId !== QuoteTypeId::Car) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+            ['payment_status_id', PaymentStatusEnum::AUTHORISED],
+        ])->with(['quoteRequest', 'product.embeddedProduct' => function ($query) {
+            $query->where('product_category', EpCategoryEnum::BOLT_ON);
+        }])
+            ->get();
+
+        $payload = [];
+        if ($epTransaction->isNotEmpty()) {
+            foreach ($epTransaction as $item) {
+                if (empty($payload)) {
+                    $payload = [
+                        'quoteUID' => $item->quoteRequest->uuid,
+                        'quoteTypeId' => $quoteTypeId,
+                    ];
+                }
+
+                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
+                $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
+                $payload['payments'][] = [
+                    'codeRef' => $item->code.'-'.$sr,
+                ];
+
+                PaymentAction::where('payment_code', $item->code)
+                    ->where('action_type', 'CAPTURE')
+                    ->where('is_fulfilled', 0)
+                    ->where('is_manager_approved', 1)
+                    ->delete();
+
+                PaymentAction::create([
+                    'payment_code' => $item->code,
+                    'action_type' => 'CAPTURE',
+                    'amount' => $item->price_with_vat,
+                    'is_fulfilled' => 0,
+                    'created_by' => auth()->user()->email,
+                    'reason' => 'Payment Captured',
+                    'is_manager_approved' => 1,
+                    'sr_no' => $sr,
+                ]);
+            }
+        }
+
+        if (empty($payload)) {
+            return false;
+        }
+
+        try {
+            Marshall::request('/payment/checkout/capture', 'post', $payload);
+            $this->fetchSendDocumentsByLead($leadId, $modelType);
+        } catch (Exception $e) {
+            Log::error('Capture Payment Error: '.$e->getMessage());
+        }
     }
 }
