@@ -1992,6 +1992,9 @@ const addPayment = isValid => {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
+          if (props.sendUpdate) {
+            location.reload();
+          }
         },
         onError: res => {
           notification.error({
