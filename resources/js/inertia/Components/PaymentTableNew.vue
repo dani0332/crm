@@ -2591,10 +2591,10 @@ watch(
     ) {
       if (props.isPlanDetailEnabled) {
         initialAmount.value = props.quoteRequest.price_with_vat;
-      } else if (props.quoteType === 'Health') {
-        initialAmount.value = props.eCommercePrice;
       } else if (props.sendUpdate) {
         initialAmount.value = props.sendUpdate?.total_price;
+      } else if (props.quoteType === 'Health') {
+        initialAmount.value = props.eCommercePrice;
       } else {
         initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
           ? props.quoteRequest.premium
@@ -2639,15 +2639,6 @@ const paymentAllocationStatusTooltip = payment_allocation_status => {
   }
   return '';
 };
-
-// Watch for Ecommerce Price changes
-watch(
-  () => props.eCommercePrice,
-  (newValue, oldValue) => {
-    initialAmount.value = newValue;
-    totalPrice.value = newValue;
-  },
-);
 
 // verify if master payment is paid
 const isMasterPaymentPaid = computed(() => {
@@ -2714,6 +2705,13 @@ const isVerifiedEnabled = computed(() => {
   }
   return true;
 });
+
+watch(
+  () => props.sendUpdate?.total_price,
+  (newValue, oldValue) => {
+    totalPrice.value = newValue;
+  },
+);
 </script>
 
 <template>
