@@ -3322,6 +3322,20 @@ watch(
                   )
                 }}
               </template>
+              <!--<template #item-action="item">
+    <div class="flex gap-2 pr-2">
+        <x-tag size="xs" color="primary" class="mt-0.5 text-[10px]">
+            Manual Plan
+        </x-tag>
+        <x-tag v-if="isHidden" size="xs" color="error" class="mt-0.5 text-[10px]">
+            Hidden
+        </x-tag>
+        <x-tag v-if="!isHidden" size="xs" color="success" class="mt-0.5 text-[10px]">
+            Currently Online
+        </x-tag>
+    </div>
+</template>-->
+
               <template #item-action="item">
                 <div class="flex gap-2 pr-2">
                   <!-- put here -->

@@ -400,6 +400,7 @@ class SendUpdateLogController extends Controller
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
     {
         $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
+        info('Book Update Process Start - SendUpdateCode: '.$sendUpdate->code);
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
             $payment = Payment::where('send_update_log_id', $sendUpdate->id)->first();
@@ -419,19 +420,28 @@ class SendUpdateLogController extends Controller
 
         // Calling Sage for necessary Documents
         $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($sendUpdate);
+        info('Book Update - Payment details updated against send update code '.$sendUpdate->code);
+
         if ($paymentDetailsUpdate) {
+            info('Book Update - Calling Sage APIs');
             $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] === false) {
+                logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message']);
+
                 return response()->json(['message' => $sageResponse['message']], 500);
             }
 
             // Send Update Data move to main lead page as per Send update Type
+            info('Book Update - Moving Send Update impact to Main Lead Page');
             $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
             if ($sageResponse['status'] && $response['status']) {
+                info('Book Update - Sage APIs and Send Update impact moved to Main Lead Page successfully for send update code '.$sendUpdate->code);
+
                 return response()->json(['message' => $response['message']], 200);
             }
         }
+        logger()->error('Book Update - Failed to update payment details or send update to sage - Response:'.$response['message']);
 
         return response()->json(['message' => $response['message']], 500);
     }

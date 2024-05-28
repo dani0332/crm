@@ -460,7 +460,6 @@ class CentralService
 
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId, $previousStatusIdChanged = false)
     {
-        $quoteDetails['quote_type_id'] = $quoteTypeId;
         $quoteTypeDetails = [
             CarQuote::class => [
                 'eligible_for_automate' => false,
@@ -502,7 +501,7 @@ class CentralService
 
         $quoteTypeDetail = null;
 
-        switch ($quoteDetails->quote_type_id) {
+        switch ($quoteTypeId) {
             case QuoteTypeId::Car:
                 $quoteTypeDetail = $quoteTypeDetails[CarQuote::class];
                 break;

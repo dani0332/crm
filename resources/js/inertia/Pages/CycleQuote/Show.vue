@@ -1045,7 +1045,6 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteStatusEnum="quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="Cycle"
-      :expanded="sectionExpanded"
     />
 
     <QuoteDocuments

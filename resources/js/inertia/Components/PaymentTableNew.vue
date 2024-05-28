@@ -297,7 +297,6 @@ const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
 };
-
 const hasNextFile = computed(() => {
   return currentFileIndex.value < filesTest.value.length - 1;
 });
@@ -1053,7 +1052,6 @@ const formatDate = (date, timeFlag = false) => {
   const minutes = parsedDate.getMinutes().toString().padStart(2, '0');
   const seconds = parsedDate.getSeconds().toString().padStart(2, '0');
   const formattedTime = `${hours}:${minutes}:${seconds}`;
-
   return formatedDate.concat(' ', formattedTime);
 };
 
@@ -1652,7 +1650,13 @@ const editPaymentModal = (
       }
     }
   }
-  
+  // Assign the first document to the approve document model for insurer
+  if (
+    paymentMethodsForm.status == 'view' &&
+    paymentMethodsForm.collection_type === 'insurer'
+  ) {
+    approvedDocumentModel.value = fileUploadModels.value.slice();
+  }
   if (paymentMethodsForm.status == 'edit') {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price - payment.discount_value;
@@ -1705,6 +1709,7 @@ const editPaymentModal = (
     }
     isFieldReadonly.value = true;
     isCreditApprovalView.value = true;
+    isVerificationAllowed.value = true;
   }
   createPaymentModal.value = true;
 };
@@ -1752,13 +1757,16 @@ const validateViewPayment = isValid => {
     } else {
       isApprovedDocumentNotUploaded.value = false;
     }
-  }
-
-  if (isApproveConfirm.value === false && isValid) {
+  }  
+  if (isApproveConfirmed.value === false && isValid) {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
     }
-    isApproveConfirm.value = true;
+    isApproveConfirmed.value = true;
+    return true;
+  }
+
+  if (isApproveNotChecked.value === true) {
     return true;
   }  
   /*
@@ -2173,6 +2181,16 @@ const deleteDocument = (docName, count) => {
       );
     }
     trashedFilesModal.value.push(docName);
+  } else if (paymentMethodsForm.status == 'view' && paymentMethodsForm.collection_type==='insurer' && approvedDocumentModel.value[count]) { 
+    approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);    
+  } else if (
+    paymentMethodsForm.status == 'view' &&
+    paymentMethodsForm.collection_type === 'insurer' &&
+    approvedDocumentModel.value[count]
+  ) {
+    approvedDocumentModel.value[count] = approvedDocumentModel.value[
+      count
+    ].filter(item => item.doc_name !== docName);
   } else {
     router.post(
       `/documents/delete`,
@@ -2593,6 +2611,8 @@ watch(
         initialAmount.value = props.quoteRequest.price_with_vat;
       } else if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
+      } else if (props.sendUpdate) {
+        initialAmount.value = props.sendUpdate?.total_price;
       } else {
         initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
           ? props.quoteRequest.premium
@@ -2666,13 +2686,6 @@ watch(
   },
 );
 
-watch(
-  () => props.sendUpdate?.total_price,
-  (newValue, oldValue) => {
-    totalPrice.value = newValue;
-  },
-);
-
 const discountTypeLabel = computed(() => {
   let systemAplliedDiscount = '';
   if (
@@ -2709,7 +2722,6 @@ watch(
 
 // verifiy if verify option is enabled
 const isVerifiedEnabled = computed(() => {
-  return false; // temporary return,not part of M2
   if (
     paymentMethodsModels.value[splitPaymentNo.value] === 'CC' ||
     paymentMethodsModels.value[splitPaymentNo.value] === 'CA' ||
@@ -4452,6 +4464,22 @@ const isVerifiedEnabled = computed(() => {
               v-model="paymentMethodsForm.notes"
             />
           </x-field>
+        </div>
+
+        <div
+          class="flex items-center justify-center"
+          v-if="
+            splitPaymentRecord.verified_by !== null &&
+            paymentMethodsForm.status == 'view'
+          "
+        >
+          <p class="text-lg font-bold text-blue-400 mr-2">
+            Payment has been verified
+          </p>
+          <img
+            style="width: 30px; height: 30px"
+            src="/images/payment_verified.jpg"
+          />
         </div>
         
         <template

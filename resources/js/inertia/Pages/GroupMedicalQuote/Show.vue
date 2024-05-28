@@ -1062,7 +1062,6 @@ watch(
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-
     />
 
     <SendUpdates

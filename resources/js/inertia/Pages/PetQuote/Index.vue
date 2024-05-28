@@ -395,6 +395,18 @@ watch(
             :options="advisorOptions"
           />
         </x-field>
+        <x-field label="Is Renewal">
+          <x-select
+            v-model="filters.is_renewal"
+            placeholder="Search by Renewal"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
         <x-field label="Is Ecommerce">
           <x-select
             v-model="filters.is_ecommerce"

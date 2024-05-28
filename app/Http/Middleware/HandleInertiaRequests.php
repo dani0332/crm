@@ -423,7 +423,7 @@ class HandleInertiaRequests extends Middleware
 
         if (
             auth()->user()->hasAnyPermission([
-                PermissionsEnum::EMBEDDED_PRODUCT_ADMIN,
+                PermissionsEnum::EMBEDDED_PRODUCT_CONFIG,
             ])
         ) {
             $nav = $nav->add('Embedded Products', '', function (Section $section) {
@@ -470,10 +470,17 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::TeamThresholdView,
             PermissionsEnum::COMMERCIAL_KEYWORDS,
             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+            PermissionsEnum::QUOTE_SYNC_LOGS,
         ];
         if (auth()->user()->hasAnyPermission($adminMenuPermissions)) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::QUOTE_SYNC_LOGS),
+                        'Quote Sync',
+                        url('admin/quote-sync'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::UsersList),
                         'Users',

@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
             ActivitySchedulesSeeder::class,
+            DocumentTypeSeeder::class,
             GenericPermissionSeeder::class,
             ApplicationStorageSeeder::class,
             AddPaymentPermissions::class,
