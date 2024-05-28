@@ -635,7 +635,6 @@ class SageApiService
             $sageLogKey = $extraParams['startingStep'];
         }
 
-        // dd($sageLogKey, $sageLogArray, $extraParams['startingStep'] - 1, array_key_first($sageLogArray));
         // $sageLogKey = (! isset($extraParams['recursiveCall']) && isset($sageLogArray[$extraParams['startingStep'] - 1])) ? $extraParams['startingStep'] - 1 : array_key_first($sageLogArray);
         $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
         $quoteObject = ! empty($extraParams['sendUpdateLog']) ? $extraParams['sendUpdateLog'] : $quote;
@@ -701,10 +700,6 @@ class SageApiService
 
             return $_REQUEST;
         }
-
-        // if($extraParams['iterator'] == 1) {
-        //     dd($payLoadOptions, $sageLogKey, $sageLogArray[$sageLogKey]);
-        // }
 
         if (isset($sageLogArray[$sageLogKey]) && $sageLogArray[$sageLogKey]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCall = false;
