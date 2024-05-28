@@ -80,7 +80,5 @@ class QuoteSyncUpdateCommand extends Command
                 QuoteSync::where('id', $entry->id)->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
             }
         }
-
-        info('----------- QuoteSyncJob Completed -----------');
     }
 }
