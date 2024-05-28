@@ -22,11 +22,11 @@ class ActivityRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-       
+
         $assigneeIds = [];
-        if(Auth::user()->isManagerOrDeputy()){
+        if (Auth::user()->isManagerOrDeputy()) {
             $assigneeIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
-        }else {
+        } else {
             $assigneeIds = $this->walkTree(Auth::user()->id);
             array_push($assigneeIds, Auth::user()->id);
         }
@@ -46,9 +46,9 @@ class ActivityRepository extends BaseRepository
     {
 
         $assigneeIds = [];
-        if(Auth::user()->isManagerOrDeputy()){
+        if (Auth::user()->isManagerOrDeputy()) {
             $assigneeIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
-        }else {
+        } else {
             $assigneeIds = $this->walkTree(Auth::user()->id);
             array_push($assigneeIds, Auth::user()->id);
         }
