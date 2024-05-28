@@ -332,7 +332,7 @@ trait PersonalQuoteSyncTrait
     /**
      * Retrieve required columns for a table without defaults and excluding foreign keys
      *
-     * @param  $columns      - Column list
+     * @param  $columns  - Column list
      * @param  $foreignKeys  - Foriegn keys
      */
     private function getRequiredColumns($columns, $foreignKeys)

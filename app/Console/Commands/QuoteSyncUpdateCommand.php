@@ -30,7 +30,7 @@ class QuoteSyncUpdateCommand extends Command
 
     public function handle()
     {
-        if(empty($this->schemas)) {
+        if (empty($this->schemas)) {
             $this->cacheSchemas();
         }
 
