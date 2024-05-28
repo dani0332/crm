@@ -259,7 +259,7 @@ class CarQuote extends BaseModel
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path']);
     }
 
     public function batch()
@@ -295,6 +295,11 @@ class CarQuote extends BaseModel
     public function customerMembers()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)

@@ -18,7 +18,7 @@ class PaymentSplits extends Model implements Auditable
     protected $table = 'payment_splits';
     protected $fillable = ['code', 'sr_no', 'payment_method', 'check_detail', 'payment_amount', 'due_date', 'payment_status_id', 'collection_amount', 'bank_reference_number', 'decline_reason_id',
         'decline_custom_reason', 'sage_reciept_id', 'digital_wallet', 'payment_link', 'payment_link_created_at', 'payment_allocation_status',
-        'captured_at', 'authorized_at', 'is_approved', 'reference',  'discount_value',
+        'captured_at', 'authorized_at', 'is_approved', 'reference',  'discount_value', 'verified_by', 'verified_at',
     ];
 
     public function payment()
@@ -48,9 +48,14 @@ class PaymentSplits extends Model implements Auditable
         return $data;
     }
 
-    public function sageLog()
+    public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function verifiedByUser()
+    {
+        return $this->belongsTo(User::class, 'verified_by', 'id');
     }
 
     // render payment status PAID if payment status is CAPTURED on BA Request

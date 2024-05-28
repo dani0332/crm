@@ -13,6 +13,7 @@ const props = defineProps({
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
+const notification = useNotifications('toast');
 const moveToImcrmModal = ref(false);
 const can = permission => useCan(permission);
 const itemCount = ref(false);
@@ -71,16 +72,15 @@ const submitLead = policy => {
       moveToImcrm(policy.policy?.policy_no, false);
       moveToImcrmModal.value = false;
     }
-
-    console.log('Link URL:', selectedLead.value.link);
-    console.log('Selected Document:', selectedLead.value.code);
     // Add any additional logic for submitting the lead here
   } else {
-    console.log('No document selected. Cannot submit lead.');
+    notification.warning({
+      title: 'Select Lead or Check Radio Button to proceed!',
+      position: 'top',
+    });
   }
 };
 
-const notification = useNotifications('toast');
 const single = ref(true);
 const lobLink = ref('');
 const lobCode = ref('');
@@ -276,7 +276,6 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
       validateAll: validateAll,
       isInertia: true,
     });
-    console.log(response);
     if (response?.data.status == 201) {
       notification.success({
         title: response.data.message,
