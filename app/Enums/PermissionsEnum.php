@@ -243,9 +243,14 @@ final class PermissionsEnum extends Enum
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
     public const EMBEDDED_PRODUCT_ADVISOR = 'embedded-product-view';
     public const EMBEDDED_PRODUCT_ADMIN = 'embedded-product-payment-cancel';
+    public const BOOK_POLICY_EDIT = 'book-policy-edit';
+    public const EmbeddedProductView = 'embedded-product-view';
+    public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
+    public const VIEW_INSLY_BOOK_POLICY = 'view-insly-book-policy';
+    public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
     public const LEAD_CARD_SEARCH = 'lead-card-search';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
@@ -259,6 +264,8 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_CARD_VIEW = 'business-cards';
     public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
     public const MANAGEMENT_REPORT = 'management-report';
+    public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'proforma-payment-request-add';
+    public const ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON = 'proforma-create';
     public const SEGMENT_FILTER = 'segment-filter';
     public const TEMP_UPDATE_TOTALPRICE = 'temp-update-totalprice';
     public const PLAN_DETAILS_ADD = 'plan-details-add';
@@ -273,6 +280,27 @@ final class PermissionsEnum extends Enum
     public const LEGACY_PAYMENTS = 'legacy-payments';
     public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
     public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
+    public const SEND_UPDATE_ENDO_FIN_ADD = 'send-update-endo-fin-add';
+    public const SEND_UPDATE_ENDO_NON_FIN_ADD = 'send-update-endo-non-fin-add';
+    public const SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD = 'send-update-cancel-from-inception-add';
+    public const SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD = 'send-update-cancel-from-inception-and-reissue-add';
+    public const SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD = 'send-update-correct-policy-upload-add';
+    public const SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD = 'send-update-correct-policy-details-add';
+    public const SEND_UPDATE_TO_CUSTOMER_BUTTON = 'send-update-to-customer-button';
+    public const POLICY_DETAILS_ADD = 'policy-details-add';
+    public const BOOK_POLICY_DETAILS_ADD = 'book-policy-details-add';
+    public const SEND_POLICY_TO_CUSTOMER_BUTTON = 'send-policy-to-customer-button';
+    public const SEND_AND_BOOK_POLICY_BUTTON = 'send-and-book-policy-button';
+    public const BOOK_POLICY_BUTTON = 'book-policy-button';
+    public const SEND_AND_BOOK_UPDATE_BUTTON = 'send-and-book-update-button';
+    public const BOOK_UPDATE_BUTTON = 'book-update-button';
+    public const PAYMENTS_DISCOUNT_ADD = 'payments-discount-add';
+    public const PAYMENTS_CREDIT_APPROVAL_ADD = 'payments-credit-approval-add';
+    public const PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD = 'payments-frequency-upfront-split-collected-by-broker-add';
+    public const PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD = 'payments-frequency-terms-collected-by-broker-add';
+    public const PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD = 'payments-frequency-terms-collected-by-insurer-add';
+    public const PAYMENT_VERIFICATION_COLLECTED_BY_BROKER = 'payment-verification-collected-by-broker';
+    public const PAYMENT_VERIFICATION_COLLECTED_BY_INSURER = 'payment-verification-collected-by-insurer';
     public const BIKE_CONVERSION_REPORT = 'bike-conversion-report';
     public const HEALTH_CONVERSION_REPORT = 'health-conversion-report';
     public const TRAVEL_CONVERSION_REPORT = 'travel-conversion-report';
@@ -295,7 +323,7 @@ final class PermissionsEnum extends Enum
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
     public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
 
-    public static function getAdvisorConverionReportPermissions()
+    public static function getAdvisorConversionReportPermissions()
     {
         return [
             PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
