@@ -121,6 +121,7 @@ class BikeQuoteRepository extends BaseRepository
                         'insuranceProvider',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
                     ]);
                 },
