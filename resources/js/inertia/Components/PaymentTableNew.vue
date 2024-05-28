@@ -2593,6 +2593,8 @@ watch(
         initialAmount.value = props.quoteRequest.price_with_vat;
       } else if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
+      } else if (props.sendUpdate) {
+        initialAmount.value = props.sendUpdate?.total_price;
       } else {
         initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
           ? props.quoteRequest.premium
@@ -2663,13 +2665,6 @@ watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
   newVal => {
     is_lacking_payment.value = newVal || false;
-  },
-);
-
-watch(
-  () => props.sendUpdate?.total_price,
-  (newValue, oldValue) => {
-    totalPrice.value = newValue;
   },
 );
 
