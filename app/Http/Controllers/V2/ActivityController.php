@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Repositories\ActivityRepository;
 use App\Traits\GetUserTreeTrait;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ActivityController extends Controller
 {
@@ -19,7 +20,9 @@ class ActivityController extends Controller
     public function index()
     {
         $advisors = [];
-        $advisors = User::whereIn('id', $this->walkTree(Auth::user()->id))->get();
+        // $advisors = User::whereIn('manager_id', $this->walkTree(Auth::user()->id))->get();
+        $advisorsIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
+        $advisors = DB::table('users')->whereIn('id', $advisorsIds)->get();
         $activities = ActivityRepository::getData();
         $totalActivities = ActivityRepository::countActivities();
         $cannotUseAssignee = auth()->user()->cannot(PermissionsEnum::ActivitiesAssignedToView);
