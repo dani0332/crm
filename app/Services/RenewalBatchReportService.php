@@ -550,12 +550,12 @@ class RenewalBatchReportService extends BaseService
             if (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VOLUME) {
                 foreach ($batchWiseSegmentedAdvisors as $batch => $segmentedAdvisors) {
                     $this->superRetentionQueryForSegmentType($query, $segmentedAdvisors, RenewalBatch::SEGMENT_TYPE_VOLUME,
-                'health_converted_by_volume_segment_advisors', $batch);
+                        'health_converted_by_volume_segment_advisors', $batch);
                 }
             } elseif (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VALUE) {
                 foreach ($batchWiseSegmentedAdvisors as $batch => $segmentedAdvisors) {
                     $this->superRetentionQueryForSegmentType($query, $segmentedAdvisors, RenewalBatch::SEGMENT_TYPE_VALUE,
-                    'health_converted_by_value_segment_advisors', $batch);
+                        'health_converted_by_value_segment_advisors', $batch);
                 }
             }
 
@@ -822,15 +822,16 @@ class RenewalBatchReportService extends BaseService
         if ($filter) {
             $advisors = is_array($batchWiseSegmentedAdvisors[$filter]) ? $batchWiseSegmentedAdvisors[$filter] : [$batchWiseSegmentedAdvisors[$filter]];
             $segmentAdvisorsIdString = implode(',', $advisors);
-            return $query->addSelect(
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ', ' . QuoteStatusEnum::PolicyDocumentsPending . '
-                    , ' . QuoteStatusEnum::PolicyIssued . ', ' . QuoteStatusEnum::PolicySentToCustomer . ', ' . QuoteStatusEnum::PolicyBooked . ')
-                    and car_quote_request.advisor_id in (' . $segmentAdvisorsIdString . ')
-                    and car_quote_request.quote_status_date <= "' . $reportDateEnd . '"  THEN 1 ELSE 0 END) as "' . $renewedAsColumn . '_for_' . $batchName . '"'),
 
-                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $segmentAdvisorsIdString . ')
-                    and car_quote_request.renewal_batch = "' . $batchName . '"
-                    THEN 1 ELSE 0 END) as "' . $totalAsColumn . '_for_' . $batchName . '"'),
+            return $query->addSelect(
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
+                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+                    and car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
+                    and car_quote_request.quote_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'_for_'.$batchName.'"'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
+                    and car_quote_request.renewal_batch = "'.$batchName.'"
+                    THEN 1 ELSE 0 END) as "'.$totalAsColumn.'_for_'.$batchName.'"'),
             );
         }
     }
@@ -840,10 +841,11 @@ class RenewalBatchReportService extends BaseService
         if ($filter) {
             $advisors = is_array($batchWiseSegmentedAdvisors[$filter]) ? $batchWiseSegmentedAdvisors[$filter] : [$batchWiseSegmentedAdvisors[$filter]];
             $segmentAdvisorsIdString = implode(',', $advisors);
+
             return $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = ' . QuoteStatusEnum::TransactionApproved . '
-                    and health_quote_request.advisor_id in (' . $segmentAdvisorsIdString . ')
-                    THEN 1 ELSE 0 END) as "' . $renewedAsColumn . '_for_' . $batchName . '"')
+                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
+                    and health_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
+                    THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'_for_'.$batchName.'"')
             );
         }
     }
