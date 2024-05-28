@@ -391,7 +391,6 @@ class SageApiService
         // If upfront Payment
         if ($payment->frequency == SageEnum::SF_UPFRONT) {
             // Create AR Invoice and marked as posted
-            // Send update Working Fine (Straight) - Tested: May 23, 2024
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -403,7 +402,6 @@ class SageApiService
             ]);
 
             // Create AP Invoice and marked as posted
-            // Send update Working Fine (Straight) - Tested: May 23, 2024
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -595,7 +593,14 @@ class SageApiService
         $invoiceType = '';
         $arrayKey = isset($extraParams['arrayKey']) ? $extraParams['arrayKey'] : 0;
         $sageAPIsParams = SagePayloadFactory::handleSageAPIsParms($extraParams['requestType'], $sageEntryType);
-        $sageLogKey = (! isset($extraParams['recursiveCall']) && isset($sageLogArray[$extraParams['startingStep'] - 1])) ? $extraParams['startingStep'] - 1 : array_key_first($sageLogArray);
+        if (! isset($extraParams['recursiveCall']) && ($extraParams['startingStep'] < array_key_first($sageLogArray))) {
+            $sageLogKey = $extraParams['startingStep'] = array_key_first($sageLogArray);
+        } else {
+            $sageLogKey = $extraParams['startingStep'];
+        }
+
+        // dd($sageLogKey, $sageLogArray, $extraParams['startingStep'] - 1, array_key_first($sageLogArray));
+        // $sageLogKey = (! isset($extraParams['recursiveCall']) && isset($sageLogArray[$extraParams['startingStep'] - 1])) ? $extraParams['startingStep'] - 1 : array_key_first($sageLogArray);
         $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
         $quoteObject = ! empty($extraParams['sendUpdateLog']) ? $extraParams['sendUpdateLog'] : $quote;
 
@@ -656,6 +661,10 @@ class SageApiService
 
             return $_REQUEST;
         }
+
+        // if($extraParams['iterator'] == 1) {
+        //     dd($payLoadOptions, $sageLogKey, $sageLogArray[$sageLogKey]);
+        // }
 
         if (isset($sageLogArray[$sageLogKey]) && $sageLogArray[$sageLogKey]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCall = false;
@@ -732,6 +741,7 @@ class SageApiService
                 'sendUpdateLog' => $extraParams['sendUpdateLog'] ?? [],
                 'recursiveCall' => true,
             ];
+
             if (isset($extraParams['batchNumber']) && isset($extraParams['invoiceType'])) {
                 $recursiveCallData = array_merge($recursiveCallData, [
                     'batchNumber' => $extraParams['batchNumber'],

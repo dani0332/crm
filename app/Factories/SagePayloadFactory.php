@@ -499,6 +499,7 @@ class SagePayloadFactory
     }
     public static function createCustomerPayload($customer)
     {
+        $entryType = SageEnum::SCT_STRAIGHT;
         $data = $customer->data;
         $mapping = QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first();
         if ($mapping) {
@@ -519,6 +520,8 @@ class SagePayloadFactory
             'endPoint' => 'AR/ARCustomers',
             'payload' => $payLoad,
             'customerNumber' => $payLoad['CustomerNumber'],
+            'sage_request_type' => SageEnum::SRT_CREATE_CUSTOMER,
+            'entry_type' => $entryType,
         ];
     }
 
@@ -544,6 +547,7 @@ class SagePayloadFactory
 
     public static function createPrepaymentPayload($request)
     {
+        $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchRecordType' => 'CA',
             'ReceiptsAdjustments' => [
@@ -568,6 +572,8 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
+            'sage_request_type' => SageEnum::SRT_CREATE_PP_REC,
+            'entry_type' => $entryType,
         ];
     }
 
@@ -587,6 +593,7 @@ class SagePayloadFactory
     }
     public static function aRPostReceiptsPayment($batchNumber)
     {
+        $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchType' => 'CA',
             'PostAllBatches' => 'Donotpostallbatches',
@@ -603,6 +610,8 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
+            'sage_request_type' => SageEnum::SRT_POST_PP_REC,
+            'entry_type' => $entryType,
         ];
     }
 
