@@ -68,7 +68,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('QuoteSync:cron')
             ->everyFiveMinutes()
             ->onOneServer()
-            ->withoutOverlapping(19)
+            ->withoutOverlapping(30)
             ->onSuccess(function (Stringable $output) {
                 info('----------- QuoteSyncJob Completed -----------'.$output);
             })
