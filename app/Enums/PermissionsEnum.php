@@ -293,6 +293,7 @@ final class PermissionsEnum extends Enum
     public const YACHT_COMPREHENSIVE_DASHBOARD = 'yacht-comprehensive-dashboard';
     public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
+    public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
 
     public static function getAdvisorConverionReportPermissions()
     {
