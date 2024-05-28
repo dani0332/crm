@@ -70,10 +70,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(19)
             ->onSuccess(function (Stringable $output) {
-                info('----------- QuoteSyncJob Completed -----------' . $output);
+                info('----------- QuoteSyncJob Completed -----------'.$output);
             })
             ->onFailure(function (Stringable $output) {
-                info('----------- QuoteSyncJob Failed -----------' . $output);
+                info('----------- QuoteSyncJob Failed -----------'.$output);
             });
 
         $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(30);
