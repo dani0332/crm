@@ -30,9 +30,6 @@ class ActivityRepository extends BaseRepository
             $assigneeIds = $this->walkTree(Auth::user()->id);
             array_push($assigneeIds, Auth::user()->id);
         }
-        // dd($assigneeIds);
-        // $subOrdinateIds = $this->walkTree(Auth::user()->id);
-        // array_push($subOrdinateIds, Auth::user()->id);
 
         return $this->with(['assignee'])
             ->whereIn('assignee_id', $assigneeIds)
@@ -56,12 +53,8 @@ class ActivityRepository extends BaseRepository
             array_push($assigneeIds, Auth::user()->id);
         }
 
-        // $subOrdinateIds = $this->walkTree(Auth::user()->id);
-        // array_push($subOrdinateIds, Auth::user()->id);
-
         return $this->with(['assignee'])
             ->filter()
-            // ->whereIn('assignee_id', $subOrdinateIds)
             ->whereIn('assignee_id', $assigneeIds)
             ->count();
 
