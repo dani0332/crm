@@ -1705,6 +1705,7 @@ const editPaymentModal = (
     }
     isFieldReadonly.value = true;
     isCreditApprovalView.value = true;
+    isVerificationAllowed.value = true;
   }
   createPaymentModal.value = true;
 };
