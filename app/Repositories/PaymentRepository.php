@@ -541,6 +541,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_status_id' => PaymentStatusEnum::CAPTURED,
                 'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
                 'updated_by' => $request->user()->id,
+                'verified_at' => now(),
+                'verified_by' => $request->user()->id,
             ];
 
             //associate approved documents with payment split
