@@ -1115,6 +1115,7 @@ watch(
       :quoteType="page.props.quoteType"
       :payments="payments"
     />
+    
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"

@@ -231,7 +231,7 @@ class QuoteDocumentService extends BaseService
             })->sortDocumentType()->get();
 
         if ($quoteTypeId == QuoteTypeId::Business) {
-            $businessDocumentTypeCodes = DocumentType::active()->whereIn('code', [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR])->get();
+            $businessDocumentTypeCodes = DocumentType::active()->whereIn('code', [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR])->get();
         }
 
         $documentTypesByCategory = $documentTypes->groupBy('category');

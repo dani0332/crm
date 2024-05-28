@@ -33,6 +33,7 @@ class DocumentTypeCode extends Enum
     const GMQDPDR = 'GMQDPDR';
     const PPD = 'PPD';
     const YPD = 'YPD';
+    const PPR = 'PPR';
     const CTIRBB = 'CTIRBB'; // Tax Invoice Raised By Buyer
     const TI = 'TI'; // Tax Invoice
     const COMPANY_BUSINESS_TYPE_OF_CUSTOMER = 'CBTC'; // Tax Invoice
