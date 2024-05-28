@@ -13,10 +13,12 @@ class HomeQuoteRepository extends BaseRepository
     {
         return HomeQuote::class;
     }
+
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+            ['advisor', 'nationality', 'insuranceProvider']
+        )->orderBy('created_at', 'desc');
     }
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
@@ -37,16 +39,17 @@ class HomeQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy('created_at', 'desc');
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            return 0;
+
+            // return $query->count();
         }
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
-
     }
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
         return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
     }
-
 }

@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -32,19 +34,24 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home];
-        if (in_array($quoteModelType, $enabledLOBs)) {
-            return true;
-        }
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::GroupMedical, quoteTypeCode::Business];
 
-        return false;
+        return in_array($quoteModelType, $enabledLOBs);
     }
 
-    public function getQuoteDocumentsForUpload($quoteTypeId)
+    public function getQuoteDocumentsForUpload($quoteTypeId, $options = null)
     {
-        return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
-            ->orderBy('sort_order', 'asc')
-            ->get();
+        $query = DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true]);
+        if ($options) {
+            $query = $query->whereIn('code', $options);
+        }
+
+        return $query->orderBy('sort_order', 'asc')->get();
+    }
+
+    public function getQuoteDocumentsForUploadByCategory($category)
+    {
+        return DocumentType::where(['category' => $category, 'is_active' => true])->get();
     }
 
     /**
@@ -207,11 +214,38 @@ class QuoteDocumentService extends BaseService
         return $displaySendPolicyButton;
     }
 
-    public function getQuoteDocuments($quoteType, $recordId)
+    public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null)
     {
         $quote = $this->getQuoteObject($quoteType, $recordId);
+
+        if ($quote && $documentTypeCodes) {
+            return $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
+        }
 
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
 
+    public function getQuoteDocumentsForSendUpdates($sendUpdateLogId)
+    {
+        $sendUpdateLog = SendUpdateLog::where('id', $sendUpdateLogId)->firstOrFail();
+
+        return $sendUpdateLog->documents()->with('createdBy:id,name,email')->latest()->get();
+    }
+
+    public function paymentDocumentTypesOptions($quoteTypeId): array
+    {
+        $mapping = [
+            QuoteTypeId::Car => ['CPD', 'CPDR', 'CDPDR'],
+            QuoteTypeId::Health => ['HPD', 'HPDR', 'HDPDR'],
+            QuoteTypeId::Travel => ['TPD', 'TPDR', 'TDPDR'],
+            QuoteTypeId::Life => ['LPD', 'LPDR', 'LDPDR'],
+            QuoteTypeId::Home => ['HOMPD', 'HOMPDR', 'HOMDPDR'],
+            QuoteTypeId::Pet => ['PPD', 'PPDR', 'PDPDR'],
+            QuoteTypeId::Bike => ['BPD', 'BPDR', 'BDPDR'],
+            QuoteTypeId::Cycle => ['CYCPD', 'CYCPDR', 'CYCDPDR'],
+            QuoteTypeId::Yacht => ['YPD', 'YPDR', 'YDPDR'],
+        ];
+
+        return $mapping[$quoteTypeId] ?? [];
+    }
 }

@@ -41,9 +41,9 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
-use DB;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
@@ -161,6 +161,13 @@ class HealthQuoteService extends BaseService
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
+            'hqr.price_vat_not_applicable',
+            'hqr.price_without_vat',
+            'hqr.price_with_vat',
+            'hqr.vat',
+            'hqr.insurer_quote_number',
+            'hqr.policy_issuance_status_id',
+            'hqr.policy_issuance_status_other',
             'hqr.stale_at'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -196,9 +203,22 @@ class HealthQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HealthQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        return HealthQuote::where('id', $id)->with([
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                // This condition added to get the latest payment first for fetching Booking Details accordingly
+                $payment->orderBy('created_at', 'desc');
+            },
+        ])->first();
     }
 
     public function getSelectedLostReason($id)
@@ -1142,7 +1162,6 @@ class HealthQuoteService extends BaseService
         $quoteBatch = QuoteBatches::latest()->first();
 
         foreach ($leadsIds as $leadId) {
-
             $lead = $this->getEntityPlain($leadId);
 
             if (isset($request->assign_team) && $request->assign_team !== '') {
@@ -1187,6 +1206,7 @@ class HealthQuoteService extends BaseService
 
         return [];
     }
+
     public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteType = null)
     {
         // Check if $lead or $newAdvisorId is not provided
@@ -1396,7 +1416,6 @@ class HealthQuoteService extends BaseService
                 if (isset($value['ratesPerCopay'])) {
                     foreach ($value['ratesPerCopay'] as $copay) {
                         if ((int) $copay['healthPlanCoPaymentId'] == (int) $copayId) {
-
                             if (isset($loadingPrices[$key]) &&
                                 (int) $loadingPrices[$key]['memberId'] == $value['memberId']
                             ) {
@@ -1440,7 +1459,6 @@ class HealthQuoteService extends BaseService
         $quoteId = $request->quoteId;
 
         if ($quoteId) {
-
             $memberDetails = [
                 'firstName' => $request->first_name,
                 'lastName' => $request->last_name ?? null,
@@ -1475,7 +1493,6 @@ class HealthQuoteService extends BaseService
         $memberId = $request->id ?? null;
 
         if ($quoteId && $memberId) {
-
             $memberDetails = [
                 'id' => $memberId,
                 'firstName' => $request->first_name,
@@ -1495,7 +1512,6 @@ class HealthQuoteService extends BaseService
             ];
 
             $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
-
         } else {
             $response = [
                 'status' => false,
@@ -1512,7 +1528,6 @@ class HealthQuoteService extends BaseService
         $memberId = $request->customer_member_id ?? null;
 
         if ($quoteId && $memberId) {
-
             $memberDetails = [
                 'id' => $memberId,
             ];
@@ -1789,7 +1804,7 @@ class HealthQuoteService extends BaseService
         return [$result, $skipLead];
     }
 
-    public function assignRenewalBatch(HealthQuote $quote)
+    public function assignRenewalBatch($id)
     {
         $date = Carbon::today()->toDateString();
 
@@ -1798,8 +1813,10 @@ class HealthQuoteService extends BaseService
             ->first();
 
         if ($renewalBatch) {
-            $quote->renewal_batch = $renewalBatch->name;
-            $quote->save();
+            $healthQuote = HealthQuote::find($id);
+            if ($healthQuote) {
+                $healthQuote->update(['renewal_batch' => $renewalBatch->name]);
+            }
         }
     }
 

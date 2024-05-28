@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -9,8 +10,10 @@ use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\User;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -204,18 +207,22 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 
     if ($modelType == HealthQuote::class && auth()->user()->isCarAdvisor() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
         $result['total_leads'] = $modelQuery->count();
-        $result['total_premium'] = $modelQuery->sum('price_with_vat');
+        $result['total_premium'] = $modelQuery->sum('premium');
         $result['leads_list'] = $modelQuery->paginate(10);
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif ($modelType == HealthQuote::class && auth()->user()->isCarManager() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
         $ids = app(HealthQuoteService::class)->walkTree(auth()->user()->id);
         $result['total_leads'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->count();
-        $result['total_premium'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->sum('price_with_vat');
+        $result['total_premium'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->sum('premium');
         $result['leads_list'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->paginate(10);
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
-        $result['total_premium'] = $modelQuery->sum('price_with_vat');
+        if ($modelType == HealthQuote::class) {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('premium');
+        } else {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
+        }
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
@@ -223,7 +230,11 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     } else {
 
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
-        $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        if ($modelType == HealthQuote::class) {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
+        } else {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
@@ -608,6 +619,19 @@ if (! function_exists('getRepositoryObject')) {
     }
 }
 
+if (! function_exists('getServiceObject')) {
+    function getServiceObject($quoteType)
+    {
+        if (checkPersonalQuotes($quoteType)) {
+            $quoteType = QuoteTypes::PERSONAL->value;
+        }
+
+        $quoteType = ucfirst($quoteType);
+
+        return 'App\\Services\\'.$quoteType.'QuoteService';
+    }
+}
+
 if (! function_exists('checkModifiedRecord')) {
     function checkModifiedRecord($firstDate, $secondDate): bool
     {
@@ -646,26 +670,45 @@ if (! function_exists('addDaysExcludeWeekend')) {
     }
 }
 
-if (! function_exists('addMinutesExcludeWeekend')) {
-    function addMinutesExcludeWeekend($minutesToAdd, $date = null)
-    {
-        $date = Carbon::parse($date) ?? Carbon::now();
-        $date = $date->addMinutes(8);
-
-        if ($date->isWeekend()) {
-            $date = $date->addHours(48);
-        }
-
-        return $date;
-    }
-}
-
 if (! function_exists('getIMLogo')) {
     function getIMLogo($isPDF = false)
     {
         $imLogo = 'images/im_logo_21k-hi.png';
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
+    }
+}
+if (! function_exists('mimeContentType')) {
+    function mimeContentType($ext = null, $mimeType = null)
+    {
+
+        $mime_types = [ // images
+            'png' => 'image/png',
+            'jpeg' => 'image/jpeg',
+            'jpg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'bmp' => 'image/bmp',
+            'ico' => 'image/vnd.microsoft.icon',
+            'tiff' => 'image/tiff',
+            'tif' => 'image/tiff',
+            'svg' => 'image/svg+xml',
+            'svgz' => 'image/svg+xml',
+
+            'pdf' => 'application/pdf',
+            'psd' => 'image/vnd.adobe.photoshop',
+            'ai' => 'application/postscript',
+            'eps' => 'application/postscript',
+            'ps' => 'application/postscript',
+        ];
+
+        if (! empty($ext)) {
+            array_key_exists($ext, $mime_types);
+
+            return $mime_types[$ext];
+        }
+        if (! empty($mimeType)) {
+            return array_search($mimeType, $mime_types);
+        }
     }
 }
 
@@ -695,6 +738,27 @@ if (! function_exists('apiResponse')) {
             'message' => $message,
             'status' => $statusCode,
         ], $statusCode);
+    }
+
+    if (! function_exists('generateQuoteMemberCode')) {
+        function generateQuoteMemberCode($customerType, $customerEntityID)
+        {
+            $quoteMemberCount = CustomerMembers::where([
+                'customer_type' => $customerType,
+                'customer_entity_id' => $customerEntityID,
+            ])->count();
+
+            return ($customerType == CustomerTypeEnum::Individual) ?
+                CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
+                CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
+        }
+    }
+}
+
+if (! function_exists('strToFloat')) {
+    function strToFloat($value): float
+    {
+        return floatval(str_replace(',', '', $value));
     }
 }
 if (! function_exists('getCardViewRequestFilters')) {
@@ -826,6 +890,22 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
     }
 }
 
+if (! function_exists('isMyAlfredCampaignEnabled')) {
+    function isMyAlfredCampaignEnabled($campaignId): bool
+    {
+        $campaign = getMyAlfredCampaign($campaignId);
+        if (! $campaign) {
+            return false;
+        }
+
+        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
+            return today()->between($campaign->data->startDate, $campaign->data->endDate);
+        }
+
+        return false;
+    }
+}
+
 if (! function_exists('getAppStorageValueByKey')) {
     function getAppStorageValueByKey($keyName)
     {
@@ -836,5 +916,22 @@ if (! function_exists('getAppStorageValueByKey')) {
         }
 
         return $query->value;
+    }
+}
+
+if (! function_exists('getManagersByUser')) {
+    function getManagersByUser($userId)
+    {
+        $managerIds = DB::table('user_manager')->where('user_id', $userId)->get()->pluck('manager_id');
+
+        return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
+    }
+
+}
+
+if (! function_exists('roundNumber')) {
+    function roundNumber($number)
+    {
+        return round($number, 2);
     }
 }

@@ -110,6 +110,9 @@ class YachtQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -150,7 +153,9 @@ class YachtQuoteRepository extends BaseRepository
             ->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            // return $query->count();
+            return 0;
         }
 
         return ($forExport) ? $query->get() : $query;

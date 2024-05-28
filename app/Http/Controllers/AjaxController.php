@@ -10,7 +10,6 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Http\Requests\KycEntityDocRequest;
 use App\Http\Requests\KycIndividualDocRequest;
 use App\Models\CarMake;
@@ -260,10 +259,6 @@ class AjaxController extends Controller
                 $quote->mobile_no = $data['mobile_number'];
                 $quote->nationality_id = $data['nationality_id'];
                 $quote->kyc_decision = Kyc::COMPLETE;
-
-                if (in_array($quoteType, [QuoteTypes::HEALTH, QuoteTypes::HOME, QuoteTypes::CYCLE, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CORPLINE])) {
-                    $quote->stale_at = null;
-                }
                 $quote->save();
 
                 $customer = Customer::find($request->customer_id);

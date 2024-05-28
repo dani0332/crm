@@ -286,11 +286,13 @@ function onAssignLead(isValid) {
 }
 
 function setQueryStringFilters() {
-  for (const [key, value] of Object.entries(params)) {
+  for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key] ?? value;
     } else {
-      filters[key] = params[key] ?? value;
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
     }
   }
 }
@@ -350,10 +352,11 @@ watch(
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Health List</h2>
-        <LeadsCount
+        <!-- // PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <ColumnSelection
