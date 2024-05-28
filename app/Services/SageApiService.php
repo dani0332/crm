@@ -409,7 +409,6 @@ class SageApiService
         $startingStep = 2;
         $totalSteps = 13;
 
-        // If upfront Payment
         if ($payment->frequency == SageEnum::SF_UPFRONT) {
             info('Book Update - Create AR Invoice and marked as posted for Upfront Payment');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
@@ -450,13 +449,11 @@ class SageApiService
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
 
-            $startingStep = 5;
+            $startingStep = 6;
             $totalSteps = 16;
         }
 
         if ($sageRequestPayload->discount > 0) {
-            // Discount API not tested as retry functionality
-            // Create AR discount Invoice and marked as posted
             info('Book Update - Create AR Discount Invoice and marked as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
@@ -763,7 +760,7 @@ class SageApiService
         if ($isFollowUpCondition) {
             if ($isLiveApiCall) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps']);
-                info('Book Update - Sage API Success - Response: '.json_encode($respParams));
+                info('Book Update - Sage API Success - Response: '.json_encode($sageResponse));
             }
 
             if (in_array($extraParams['requestType'], [
