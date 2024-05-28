@@ -142,7 +142,7 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'transactionType',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents']);
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents', 'paymentSplits.verifiedByUser']);
                 },
                 'createdBy',
                 'updatedBy',
