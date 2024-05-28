@@ -19,7 +19,7 @@ class QuoteSyncUpdateCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'QuoteSyncUpdate:cron';
+    protected $signature = 'QuoteSync:cron';
 
     protected $description = 'Sync Quotes Data from QuoteSync table to respective quote tables';
 
@@ -60,16 +60,11 @@ class QuoteSyncUpdateCommand extends Command
         })->all();
 
         foreach ($entries as $entry) {
-
             try {
-
                 info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id);
                 if ($entry->updated_fields === '{"is_cold":true}') {
-
                     QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
-
                 } else {
-
                     $key = $entry->quote_uuid.'_'.$entry->quote_type_id;
                     if (! empty($quotes[$key])) {
                         // Existing quote
@@ -79,9 +74,7 @@ class QuoteSyncUpdateCommand extends Command
                         $quotes[$key] = $this->processQuoteNotFound($entry);
                     }
                 }
-
             } catch (Exception $e) {
-
                 $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
                 QuoteSync::where('id', $entry->id)->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
