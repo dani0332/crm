@@ -26,6 +26,7 @@ class QuoteSyncUpdateCommand extends Command
     public function __construct()
     {
         parent::__construct();
+        $this->cacheSchemas();
     }
 
     public function handle()
