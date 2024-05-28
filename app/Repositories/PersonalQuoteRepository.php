@@ -87,7 +87,7 @@ class PersonalQuoteRepository extends BaseRepository
         }
 
         $documentType = $query->first();
-        
+
         if (request()->is_send_update) {
             $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
         } else {

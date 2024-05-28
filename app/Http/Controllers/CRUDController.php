@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use DataTables;
-use Carbon\Carbon;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
@@ -53,12 +51,24 @@ use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
-use App\Models\QuoteType;
 use App\Models\Tier;
 use App\Models\User;
-use App\Services\AMLService;
+use App\Repositories\AuditRepository;
+use App\Repositories\CustomerMembersRepository;
+use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\HealthQuoteRepository;
+use App\Repositories\HomeQuoteRepository;
+use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
+use App\Repositories\LostReasonRepository;
+use App\Repositories\NationalityRepository;
+use App\Repositories\QuoteNoteRepository;
+use App\Repositories\RenewalBatchRepository;
+use App\Repositories\SendUpdateLogRepository;
+use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\AllocationService;
+use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarEmailService;
@@ -86,23 +96,12 @@ use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
+use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use App\Repositories\AuditRepository;
-use App\Repositories\CustomerMembersRepository;
-use App\Repositories\EmbeddedProductRepository;
-use App\Repositories\HealthQuoteRepository;
-use App\Repositories\HomeQuoteRepository;
-use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
-use App\Repositories\LostReasonRepository;
-use App\Repositories\NationalityRepository;
-use App\Repositories\QuoteNoteRepository;
-use App\Repositories\RenewalBatchRepository;
-use App\Repositories\SendUpdateLogRepository;
-use App\Repositories\UserRepository;
 
 class CRUDController extends Controller
 {
@@ -754,7 +753,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bookPolicyDetails', 'documentTypeCodes', 'isAmlClearedForPayment', 'clientInquiryLogs', 'linkedQuoteDetails'
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bookPolicyDetails', 'documentTypeCodes', 'isAmlClearedForPayment', 'clientInquiryLogs', 'linkedQuoteDetails',
             ]));
         }
 

@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Enums\DocumentTypeCode;
 use App\Models\DocumentType;
-use App\Models\QuoteType;
 use Illuminate\Database\Seeder;
 
 class DocumentTypeSeeder extends Seeder
@@ -15,7 +13,7 @@ class DocumentTypeSeeder extends Seeder
     public function run(): void
     {
         $quoteDocuments = [];
-        
+
         collect($quoteDocuments)->chunk(200)->each(function ($documents) {
             foreach ($documents as $document) {
                 DocumentType::updateOrCreate(

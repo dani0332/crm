@@ -256,7 +256,7 @@ class QuoteDocumentService extends BaseService
 
         return [$orderedDocumentTypesByCategory, $documentTypes, $businessDocumentTypeCodes ?? []];
     }
-    
+
     public function getQuoteDocumentsForSendUpdates($sendUpdateLogId)
     {
         $sendUpdateLog = SendUpdateLog::where('id', $sendUpdateLogId)->firstOrFail();

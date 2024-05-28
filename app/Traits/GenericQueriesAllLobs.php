@@ -19,7 +19,6 @@ use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Arr;
-use App\Models\KycLog;
 
 trait GenericQueriesAllLobs
 {
@@ -260,6 +259,7 @@ trait GenericQueriesAllLobs
                 }
             }
         }
+
         return $bookPolicyDetails;
     }
 
