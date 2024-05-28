@@ -9,8 +9,8 @@ use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
-use Illuminate\Support\Facades\Http;
 use finfo;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class SendEmailCustomerService extends BaseService
@@ -408,6 +408,7 @@ class SendEmailCustomerService extends BaseService
 
     public function sendMyAlfredWelcomeEmail($emailData, $tag, $source = '')
     {
+        $isEmailSent = 0;
         try {
             $appEnv = config('constants.APP_ENV');
             //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler

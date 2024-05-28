@@ -251,8 +251,17 @@ final class PermissionsEnum extends Enum
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
     public const VIEW_INSLY_BOOK_POLICY = 'view-insly-book-policy';
     public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
+    public const LEAD_CARD_SEARCH = 'lead-card-search';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
+    public const STALE_LEADS_REPORT = 'stale-leads-report-view';
+    public const PIPELINE_REPORT = 'pipeline-report-view';
+    public const PET_CARD_VIEW = 'pet-quotes-card';
+    public const HEALTH_CARD_VIEW = 'health-cards';
+    public const HOME_CARD_VIEW = 'home-cardView';
+    public const YACHT_CARD_VIEW = 'yacht-quotes-card';
+    public const CYCLE_CARD_VIEW = 'cycle-quotes-card';
+    public const CORPLINE_CARD_VIEW = 'business-cards';
     public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
     public const MANAGEMENT_REPORT = 'management-report';
     public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'proforma-payment-request-add';
@@ -262,10 +271,88 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_ADD = 'plan-details-add';
     public const AVAILABLE_PLANS_SELECT_BUTTON = 'available-plans-select-button';
     public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
+    public const SAVE_QUOTE_NOTES = 'save-quote-notes';
+    public const UPDATE_QUOTE_NOTES = 'update-quote-notes';
+    public const DELETE_QUOTE_NOTES = 'delete-quote-notes';
     public const TOTAL_PREMIUM_LEADS_SALES_REPORT = 'total-premium-leads-sales-report';
     public const LEGACY_INSTALLMENTS = 'legacy-installments';
     public const LEGACY_INVOICES = 'legacy-invoices';
     public const LEGACY_PAYMENTS = 'legacy-payments';
     public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
     public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
+    public const SEND_UPDATE_ENDO_FIN_ADD = 'send-update-endo-fin-add';
+    public const SEND_UPDATE_ENDO_NON_FIN_ADD = 'send-update-endo-non-fin-add';
+    public const SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD = 'send-update-cancel-from-inception-add';
+    public const SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD = 'send-update-cancel-from-inception-and-reissue-add';
+    public const SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD = 'send-update-correct-policy-upload-add';
+    public const SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD = 'send-update-correct-policy-details-add';
+    public const SEND_UPDATE_TO_CUSTOMER_BUTTON = 'send-update-to-customer-button';
+    public const POLICY_DETAILS_ADD = 'policy-details-add';
+    public const BOOK_POLICY_DETAILS_ADD = 'book-policy-details-add';
+    public const SEND_POLICY_TO_CUSTOMER_BUTTON = 'send-policy-to-customer-button';
+    public const SEND_AND_BOOK_POLICY_BUTTON = 'send-and-book-policy-button';
+    public const BOOK_POLICY_BUTTON = 'book-policy-button';
+    public const SEND_AND_BOOK_UPDATE_BUTTON = 'send-and-book-update-button';
+    public const BOOK_UPDATE_BUTTON = 'book-update-button';
+    public const PAYMENTS_DISCOUNT_ADD = 'payments-discount-add';
+    public const PAYMENTS_CREDIT_APPROVAL_ADD = 'payments-credit-approval-add';
+    public const PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD = 'payments-frequency-upfront-split-collected-by-broker-add';
+    public const PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD = 'payments-frequency-terms-collected-by-broker-add';
+    public const PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD = 'payments-frequency-terms-collected-by-insurer-add';
+    public const PAYMENT_VERIFICATION_COLLECTED_BY_BROKER = 'payment-verification-collected-by-broker';
+    public const PAYMENT_VERIFICATION_COLLECTED_BY_INSURER = 'payment-verification-collected-by-insurer';
+    public const BIKE_CONVERSION_REPORT = 'bike-conversion-report';
+    public const HEALTH_CONVERSION_REPORT = 'health-conversion-report';
+    public const TRAVEL_CONVERSION_REPORT = 'travel-conversion-report';
+    public const LIFE_CONVERSION_REPORT = 'life-conversion-report';
+    public const HOME_CONVERSION_REPORT = 'home-conversion-report';
+    public const PET_CONVERSION_REPORT = 'pet-conversion-report';
+    public const CYCLE_CONVERSION_REPORT = 'cycle-conversion-report';
+    public const YACHT_CONVERSION_REPORT = 'yacht-conversion-report';
+    public const CORPLINE_CONVERSION_REPORT = 'corpline-conversion-report';
+    public const GROUPMEDICAL_CONVERSION_REPORT = 'groupmedicals-conversion-report';
+    public const BIKE_COMPREHENSIVE_DASHBOARD = 'bike-comprehensive-dashboard';
+    public const HEALTH_COMPREHENSIVE_DASHBOARD = 'health-comprehensive-dashboard';
+    public const TRAVEL_COMPREHENSIVE_DASHBOARD = 'travel-comprehensive-dashboard';
+    public const LIFE_COMPREHENSIVE_DASHBOARD = 'life-comprehensive-dashboard';
+    public const HOME_COMPREHENSIVE_DASHBOARD = 'home-comprehensive-dashboard';
+    public const PET_COMPREHENSIVE_DASHBOARD = 'pet-comprehensive-dashboard';
+    public const CYCLE_COMPREHENSIVE_DASHBOARD = 'cycle-comprehensive-dashboard';
+    public const YACHT_COMPREHENSIVE_DASHBOARD = 'yacht-comprehensive-dashboard';
+    public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
+    public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
+
+    public static function getAdvisorConversionReportPermissions()
+    {
+        return [
+            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
+            PermissionsEnum::BIKE_CONVERSION_REPORT,
+            PermissionsEnum::HEALTH_CONVERSION_REPORT,
+            PermissionsEnum::TRAVEL_CONVERSION_REPORT,
+            PermissionsEnum::LIFE_CONVERSION_REPORT,
+            PermissionsEnum::HOME_CONVERSION_REPORT,
+            PermissionsEnum::PET_CONVERSION_REPORT,
+            PermissionsEnum::CYCLE_CONVERSION_REPORT,
+            PermissionsEnum::YACHT_CONVERSION_REPORT,
+            PermissionsEnum::CORPLINE_CONVERSION_REPORT,
+            PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT,
+        ];
+    }
+
+    public static function getComprehensiveDashboardPermissions()
+    {
+        return [
+            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
+            PermissionsEnum::BIKE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::HEALTH_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::TRAVEL_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+        ];
+    }
 }

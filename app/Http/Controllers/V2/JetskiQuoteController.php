@@ -121,7 +121,7 @@ class JetskiQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::JETSKI->id(), $quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote->id);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::JETSKI->id());
@@ -145,6 +145,7 @@ class JetskiQuoteController extends Controller
             'embeddedProducts' => $embeddedProducts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'modelType' => QuoteTypes::JETSKI,
+            'quoteTypeId' => QuoteTypes::JETSKI->id(),
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
             'vatPercentage' => $vatPercentage,
             'isAmlClearedForPayment' => $isAmlClearedForPayment,

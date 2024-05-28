@@ -40,7 +40,6 @@ defineProps({
   isBetaUser: Boolean,
   payments: Array,
   quoteRequest: Object,
-  permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
@@ -61,10 +60,12 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
   documentTypeCodes: Array,
+  linkedQuoteDetails: Object,
 });
 
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -103,6 +104,13 @@ const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+
+const normalPlansIds = reactive({
+  ids: [],
+});
+const seniorPlansIds = reactive({
+  ids: [],
+});
 
 const {
   isRequired,
@@ -190,7 +198,7 @@ const travelFields = computed(() => {
     'previous_policy_expiry_date',
     'policy_start_date',
     'renewal_batch',
-    'transapp_code'
+    'transapp_code',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -459,8 +467,7 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id ==
-    quoteStatusEnum.TransactionApproved &&
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved &&
     page.props.permissions.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -545,33 +552,33 @@ const onTogglePlans = toggle => {
     }),
   ).value;
 
-    axios
-        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
-            modelType: 'Travel',
-            planIds: planIds,
-            quote_uuid: page.props.quote.uuid,
-            toggle: toggle,
-        })
-        .then(response => {
-          notification.success({
-              title: 'Plans has been updated',
-              position: 'top',
-          });
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+      modelType: 'Travel',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
       onLoadAvailablePlansData();
-            router.reload({
-                preserveScroll: true,
-            });
-        })
-        .catch(error => {
-            notification.error({
-                title: error,
-                position: 'top',
-            });
-        })
-        .finally(() => {
-            toggleLoader.value = false;
-            selectedPlans.value = [];
-        });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
 };
 
 const onExportPlans = () => {
@@ -1164,6 +1171,8 @@ const handleSelectionChange = (tableType, selectedItems) => {
     }
   }
 };
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 
 watch(
   () => page.props.quote.quote_status_id,
@@ -1178,6 +1187,55 @@ watch(
 <template>
   <div>
     <Head title="Travel Detail" />
+    <div class="flex justify-between items-center flex-wrap gap-2">
+      <h2 class="text-xl font-semibold">Travel Detail</h2>
+      <div class="flex gap-2">
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+          v-if="permissions.canNotApprovePayments"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link :href="route('travel.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
+        </Link>
+
+        <Link
+          v-if="permissions.canEditQuote == true"
+          :href="route('travel.edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div>
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -1272,15 +1330,14 @@ watch(
                     <template #tooltip> Reference ID </template>
                   </x-tooltip>
                 </dt>
-
-                <dt v-else-if="field.title == 'Parent Ref-ID'">
+                <dt v-else-if="field.title == 'Ref-ID'">
                   <x-tooltip position="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
                       {{ field.title }}
                     </label>
-                    <template #tooltip> Parent Reference ID </template>
+                    <template #tooltip> Reference ID </template>
                   </x-tooltip>
                 </dt>
                 <div
@@ -1303,6 +1360,67 @@ watch(
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
+                      PARENT REF-ID
+                    </label>
+                    <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+                </dt>
+                <dt>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </dt>
+              </div>
+
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium">
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </dt>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
                       TRAVELING WHERE
                     </label>
                     <template #tooltip> Traveling Where</template>
@@ -1313,17 +1431,17 @@ watch(
                     quote.direction_code != null
                       ? quote.direction_code
                       : quote?.currently_located_in_id_text ==
-                          enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                        quote?.region_cover_for_id !=
-                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                      ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                      : quote?.destination_id_text ==
-                          enums.travelQuoteEnum
-                            .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                        quote?.region_cover_for_id ==
-                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                      ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                      : ''
+                            enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                          quote?.region_cover_for_id !=
+                            enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                        ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                        : quote?.destination_id_text ==
+                              enums.travelQuoteEnum
+                                .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                            quote?.region_cover_for_id ==
+                              enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                          ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                          : ''
                   }}
                 </dt>
               </div>
@@ -1431,10 +1549,10 @@ watch(
                     quote.coverage_code != null
                       ? quote.coverage_code
                       : quote.days_cover_for <= 92
-                      ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                      : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                        '/' +
-                        enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                        ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                        : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                          '/' +
+                          enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
                   }}
                 </dt>
               </div>
@@ -1482,18 +1600,30 @@ watch(
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
-          <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="quoteRequest.child || quoteRequest.parent"
+          >
             <template v-if="quoteRequest.child">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     CHILD REF ID
                   </label>
-                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
+                  <template #tooltip
+                    >Navigation key from parent to child in data
+                    hierarchy.</template
+                  >
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.child.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.child.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.child?.code }}
                 </a>
               </dt>
@@ -1501,14 +1631,20 @@ watch(
             <template v-if="quoteRequest.parent">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     PARENT REF ID
                   </label>
                   <template #tooltip>Parent Ref Id</template>
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.parent.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.parent.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.parent.code }}
                 </a>
               </dt>
@@ -1960,7 +2096,7 @@ watch(
       </template>
     </x-modal>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -2030,8 +2166,7 @@ watch(
               >
                 <x-input
                   :disabled="
-                    quote.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved
+                    quote.quote_status_id == quoteStatusEnum.TransactionApproved
                   "
                   v-model="leadStatusForm.trans_code"
                   placeholder="TransApp Code is required"
@@ -2051,14 +2186,14 @@ watch(
                   :error="leadStatusForm.errors.lostReason"
                 />
               </x-field>
-          <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
+              <x-field label="Transaction Type">
+                <x-input
+                  type="text"
+                  :value="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
+              </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -2069,8 +2204,7 @@ watch(
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="
-                quote.quote_status_id ==
-                quoteStatusEnum.TransactionApproved
+                quote.quote_status_id == quoteStatusEnum.TransactionApproved
               "
             >
               Change Status
@@ -2095,7 +2229,7 @@ watch(
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium }}</dd>
+                <dd>{{ selectedProviderPlan.premium }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
@@ -2107,12 +2241,12 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
-          </div>
+                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -2229,7 +2363,7 @@ watch(
           </div>
           <div v-else>
             <DataTable
-                v-model:items-selected="selectedPlans"
+              v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
@@ -2311,7 +2445,7 @@ watch(
             </div>
             <div>
               <DataTable
-                  v-model:items-selected="selectedPlans"
+                v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed compact"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
@@ -2397,13 +2531,21 @@ watch(
 			quoteType="Travel"
 			:payments="payments"
       :paymentDocument="documentTypeCodes.filter(item => ['TPD', 'TPDR', 'TDPDR'].includes(item.code))"
-      :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:quoteRequest="quoteRequest"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quoteRequest"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :bookPolicyDetails="bookPolicyDetails"
 		/>
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -2455,7 +2597,7 @@ watch(
       "
       :quote="record"
       quoteType="travel"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />
@@ -2602,7 +2744,6 @@ watch(
         </template>
       </x-modal>
     </div>
-    <div class="p-4 rounded shadow mb-6 bg-warning"></div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">

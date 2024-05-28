@@ -4,15 +4,17 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
-import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MigratePayment from '../../Components/MigratePayment.vue';
+import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   documentTypes: Object,
+  noteDocumentType: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
   insuranceProviders: Object,
@@ -34,6 +36,9 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  quoteRequest: Object,
+  quoteDocuments: Object,
+  cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
@@ -42,6 +47,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
+  linkedQuoteDetails: Object,
   record: Object,
   permissions: Object,
   enums: Object,
@@ -60,6 +66,9 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 
+const countDays = useDaysSinceStale(
+  props.quoteRequest?.stale_at ?? props.quote?.stale_at,
+);
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
@@ -219,15 +228,67 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 </script>
 
 <template>
   <div>
     <Head title="Yacht Quotes" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Yacht Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteDocuments"
+          :modelType="quoteType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesEdit)"
+          :href="route('yacht-quotes-edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
 
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Yacht Detail</h2>
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesList)"
+          :href="route('yacht-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div">
+            Yacht Quotes
+          </x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Yacht Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </div>
       <div class="flex gap-2">
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteDocuments"
+          :modelType="quoteType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
         <Link
           v-if="quote.quote_detail?.insly_id"
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
@@ -255,7 +316,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </x-button>
         </Link>
       </div>
-    </div>
+    </div> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -268,7 +329,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-divider class="my-4" />
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div
                   class="grid sm:grid-cols-2"
@@ -310,12 +371,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
-            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.created_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
-            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -339,14 +400,59 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
-                      Parent Ref-ID
+                      PARENT REF-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote.parent_duplicate_quote_id }}</div>
+                <div>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </div>
               </div>
-
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </div>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
@@ -359,26 +465,28 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <x-divider class="mb-4 mt-1" />
           </div>
 
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BOAT DETAILS</dt>
-            <dd class="break-words">{{ quote?.yacht_quote?.boat_details }}</dd>
-          </div>
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BOAT DETAILS</dt>
+                <dd class="break-words">
+                  {{ quote?.yacht_quote?.boat_details }}
+                </dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ENGINE DETAILS</dt>
-            <dd class="break-words">
-              {{ quote?.yacht_quote?.engine_details }}
-            </dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ENGINE DETAILS</dt>
+                <dd class="break-words">
+                  {{ quote?.yacht_quote?.engine_details }}
+                </dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CLAIM EXPERIENCE</dt>
-            <dd class="break-words">
-              {{ quote?.yacht_quote?.claim_experience }}
-            </dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CLAIM EXPERIENCE</dt>
+                <dd class="break-words">
+                  {{ quote?.yacht_quote?.claim_experience }}
+                </dd>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUM INSURED</dt>
@@ -428,7 +536,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -512,7 +620,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -755,7 +863,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
       :payments="quote.payments"
     />
@@ -764,14 +872,21 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:quoteType="quoteType"
 			:payments="quote.payments"
       :paymentDocument="documentTypeCodes.filter(item => ['YPD', 'YPDR', 'YDPDR'].includes(item.code))"
-      :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
-			:quoteRequest="quote"
+      :proformaPayment="
+        quote.payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+      :bookPolicyDetails="bookPolicyDetails"
+    />
 
     <QuotePayments
       v-else
@@ -784,25 +899,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
-    />
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      modelType="Yacht"
-      :expanded="sectionExpanded"
-    />
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="Yacht"
       :expanded="sectionExpanded"
     />
 
@@ -833,10 +942,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
+      :quote_type_id="page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
     />
+
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"

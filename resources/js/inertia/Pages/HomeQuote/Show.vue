@@ -1,11 +1,9 @@
 <script setup>
-import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
+import MemberDetails from '../../Components/MemberDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MigratePayment from '../../Components/MigratePayment.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   record: Object,
   quoteType: String,
@@ -36,7 +34,10 @@ defineProps({
   canAddBatchNumber: Boolean,
   quoteDocuments: Object,
   documentTypes: Object,
+  noteDocumentType: Object,
   storageUrl: String,
+  quoteNotes: Object,
+  cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   bookPolicyDetails: Array,
@@ -46,6 +47,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
+  linkedQuoteDetails: Object,
 });
 
 const page = usePage();
@@ -56,12 +58,26 @@ const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
-const paymentStatusEnum= page.props.paymentStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
+
+const countDays = computed(() =>
+  useDaysSinceStale(props.quoteRequest?.stale_at),
+);
+const compareDueDate = useCompareDueDate;
 
 const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
+});
+
+const allowStatusUpdate = computed(() => {
+  return (
+    (props.quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+      props.quote.quote_status_id == quoteStatusEnum.Lost) ??
+    false
+  );
 });
 
 const leadDuplicateForm = useForm({
@@ -155,6 +171,9 @@ const onLeadStatus = () => {
     }),
     {
       preserveScroll: true,
+      onSuccess: response => {
+        router.reload({ only: ['quoteRequest'] });
+      },
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
@@ -165,6 +184,7 @@ const onLeadStatus = () => {
 //activities
 const activityTable = [
   { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
@@ -319,8 +339,7 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -461,6 +480,8 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 
 watch(
   () => page.props.quote.quote_status_id,
@@ -475,6 +496,77 @@ watch(
 <template>
   <div>
     <Head title="Home Detail" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Home Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
+
+        <Link :href="route('home.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Home List </x-button>
+        </Link>
+
+        <Link :href="route('home.edit', quote.uuid)">
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Home Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
+
+        <Link :href="route('home.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Home List </x-button>
+        </Link>
+
+        <Link :href="route('home.edit', quote.uuid)">
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div> -->
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -550,7 +642,7 @@ watch(
             </Link>
           </div>
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div
                   class="grid sm:grid-cols-2"
@@ -597,12 +689,58 @@ watch(
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
-                      Parent Ref-ID
+                      PARENT REF-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote.parent_duplicate_quote_id }}</div>
+                <div>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </div>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </div>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL BATCH</dt>
@@ -625,7 +763,7 @@ watch(
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">I AM</dt>
                 <dd>{{ quote.iam_possesion_type_id_text }}</dd>
@@ -709,7 +847,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -794,7 +932,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -810,13 +948,13 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-              <dd class="break-words">
-                {{ customerProfileForm.company_name }}
-              </dd>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -1043,14 +1181,17 @@ watch(
                   <x-select
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
-                    :disabled="quote.quote_status_id == 15"
+                    :disabled="allowStatusUpdate"
                     placeholder="Lead Status"
                     class="w-full"
                   />
                 </x-field>
                 <x-field
                   label="TransApp Code"
-                  v-if="leadStatusForm.leadStatus == 15"
+                  v-if="
+                    leadStatusForm.leadStatus ==
+                    quoteStatusEnum.TransactionApproved
+                  "
                 >
                   <x-input
                     v-model="leadStatusForm.trans_code"
@@ -1061,7 +1202,7 @@ watch(
                 </x-field>
                 <x-field
                   label="Lost Reason"
-                  v-if="leadStatusForm.leadStatus == 17"
+                  v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 >
                   <x-select
                     v-model="leadStatusForm.lostReason"
@@ -1074,6 +1215,7 @@ watch(
                     placeholder="Lost Reason is required"
                     class="w-full"
                     :error="leadStatusForm.errors.lostReason"
+                    :disabled="allowStatusUpdate"
                   />
                 </x-field>
               </div>
@@ -1087,17 +1229,8 @@ watch(
                 label="Notes"
                 placeholder="Lead Notes"
                 class="w-full"
-                :disabled="quote.quote_status_id == 15"
+                :disabled="allowStatusUpdate"
               />
-
-	        <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -1107,6 +1240,7 @@ watch(
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
+              :disabled="allowStatusUpdate"
             >
               Change Status
             </x-button>
@@ -1125,7 +1259,7 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
       :payments="payments"
     />
@@ -1134,14 +1268,21 @@ watch(
 			:quoteType="quoteType"
 			:payments="payments"
       :paymentDocument="page.props.documentTypeCodes.filter(item => ['HOMPD', 'HOMPDR', 'HOMDPDR'].includes(item.code))"
-      :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+      :bookPolicyDetails="bookPolicyDetails"
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -1166,6 +1307,8 @@ watch(
       :record="record"
       modelType="home"
       :expanded="sectionExpanded"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      :payments="payments"
     />
 
     <QuoteDocuments
@@ -1372,6 +1515,11 @@ watch(
       </Collapsible>
     </div>
 
-    <AuditLogs :type="'App\\Models\\HomeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
+    <AuditLogs
+      :type="'App\\Models\\HomeQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
   </div>
 </template>

@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   reportable: {
     type: Object,
@@ -31,7 +33,7 @@ const optionError = ref(false);
 const sendUpdatesTable = reactive({
   headers: [
     {
-      text: 'SU-REF ID',
+      text: 'SU REF ID',
       value: 'code',
       tooltip:
         'A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.',
@@ -67,7 +69,17 @@ const sendUpdatesTable = reactive({
 const modals = reactive({
   step: 'step1',
   show: false,
+  confirm: false,
 });
+
+watch(
+  () => modals.show,
+  value => {
+    if (!value) {
+      resetForm();
+    }
+  },
+);
 
 const form = useForm({
   parentCategory: null,
@@ -97,8 +109,81 @@ onMounted(() => {
   // fetchLogs();
 });
 
+const authenticatedSendUpdateOptions = computed(() => {
+  let filteredOptions = props.options;
+
+  if (
+    !(
+      can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD) ||
+      can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)
+    )
+  ) {
+    // it will remove the main Button.
+    filteredOptions = filteredOptions.filter((option, index) => index !== 0);
+  } else {
+    if (!can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD)) {
+      // it will remove only sub button.
+      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
+        (option, index) => index !== 0,
+      );
+    }
+    if (!can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)) {
+      // it will remove only sub button.
+      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
+        (option, index) => index !== 1,
+      );
+    }
+  }
+
+  if (
+    !(
+      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD) ||
+      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
+    )
+  ) {
+    filteredOptions = filteredOptions.filter((option, index) => index !== 1);
+  } else {
+    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
+      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
+        (option, index) => index !== 0,
+      );
+    }
+    if (
+      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
+    ) {
+      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
+        (option, index) => index !== 1,
+      );
+    }
+  }
+
+  if (
+    !(
+      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD) ||
+      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD)
+    )
+  ) {
+    filteredOptions = filteredOptions.filter((option, index) => index !== 2);
+  } else {
+    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
+      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
+        (option, index) => index !== 0,
+      );
+    }
+    if (
+      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
+    ) {
+      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
+        (option, index) => index !== 1,
+      );
+    }
+  }
+
+  return filteredOptions;
+});
+
 // const fetchLogs = () => {
-//   axios.get(route('send-update-logs.get-by-id', { id: props.reportableId }))
+//   axios.get(route('send-update.get-by-id', { id: props.reportableId }))
 //     .then(res => sendUpdatesTable.data = res.data.logs)
 //     .catch(err => console.log('err', err))
 // }
@@ -128,6 +213,7 @@ const setOption = (next_step, value) => {
     default:
       modals.step = 'step1';
       modals.show = false;
+      modals.confirm = false;
       break;
   }
 };
@@ -140,6 +226,25 @@ const goBack = () => {
     modals.step = 'step2';
     form.childCategory = null;
     form.option = null;
+    optionError.value = false;
+  } else if (modals.step === 'step4') {
+    modals.step = 'step3';
+    modals.confirm = false;
+  }
+};
+
+const confirmOrAddUpdate = autoSubmit => {
+  if (!autoSubmit) {
+    if (form.option === null) {
+      optionError.value = true;
+      return;
+    }
+  }
+  if (!['CIR'].includes(form.childCategory.slug)) {
+    onAddUpdate(true);
+  } else {
+    modals.step = 'step4';
+    modals.confirm = true;
     optionError.value = false;
   }
 };
@@ -168,11 +273,19 @@ const onAddUpdate = autoSubmit => {
         option_id: option?.id || null,
         quote_uuid: props.reportable.uuid,
         status: page.props.sendUpdateEnum.NEW_REQUEST,
+        ref_id: props.reportable.id,
       };
     })
-    .post(route('send-update-logs.store'), {
+    .post(route('send-update.store'), {
       onSuccess: () => {
+        modals.step = 'step1';
+        form.parentCategory = null;
+        form.childCategory = null;
+        form.option = null;
+        optionError.value = false;
         modals.show = false;
+        modals.confirm = false;
+
         // resetForm()
         // sendUpdatesTable.data = [...sendUpdatesTable.data, form.data]
       },
@@ -211,7 +324,14 @@ const findOption = (item, key) => {
         </div>
       </template>
       <template #body>
-        <div class="my-4 flex justify-end">
+        <div
+          v-if="
+            props.reportable.quote_status_id !=
+              page.props.quoteStatusEnum.PolicyCancelled ||
+            page.props.linkedQuoteDetails.childLeadsCount == 0
+          "
+          class="mt-4 flex justify-end"
+        >
           <x-button
             v-if="can(permissionsEnum.SEND_UPDATE_CREATE)"
             size="sm"
@@ -222,7 +342,7 @@ const findOption = (item, key) => {
           </x-button>
         </div>
         <DataTable
-          table-class-name="table-fixed-width"
+          table-class-name="table-fixed-width mt-4"
           :headers="sendUpdatesTable.headers"
           :items="sendUpdatesTable.data"
           border-cell
@@ -286,7 +406,7 @@ const findOption = (item, key) => {
           <template #item-code="{ code, uuid }">
             <Link
               :href="
-                route('send-update-logs.show', {
+                route('send-update.show', {
                   uuid: uuid,
                   refURL: $page.url,
                 })
@@ -336,7 +456,10 @@ const findOption = (item, key) => {
         class="w-full flex flex-wrap gap-5 justify-center text-center my-10 mb-20 items-stretch !h-100"
         v-if="modals.step === 'step1'"
       >
-        <template v-for="option in options" :key="option.title">
+        <template
+          v-for="option in authenticatedSendUpdateOptions"
+          :key="option.title"
+        >
           <x-tooltip align="left" position="bottom" class="arrow-t">
             <x-button
               color="primary"
@@ -395,7 +518,7 @@ const findOption = (item, key) => {
                 form.childCategory.childs.map(item => ({
                   label: item.title,
                   value: item.id,
-                  tooltip: item.tooltip,
+                  tooltip: item.description,
                 }))
               "
               :rules="[isRequired]"
@@ -418,11 +541,56 @@ const findOption = (item, key) => {
             <x-button
               size="sm"
               color="primary"
+              @click="confirmOrAddUpdate(false)"
+            >
+              Add
+            </x-button>
+          </div>
+        </div>
+      </div>
+      <!--   Modal 4 - Confirmation and causation     -->
+      <div
+        class="w-full flex gap-5 mb-10"
+        v-else-if="modals.step === 'step4' && modals.confirm === true"
+      >
+        <div class="flex flex-col gap-2 flex-grow w-75">
+          <div>
+            <p class="text-red-600 font-bold text-2xl">
+              Please note the following when performing these updates:
+            </p>
+            <div class="my-4">
+              <ul class="list-disc pl-4 font-medium">
+                <li>
+                  The new lead for the reissued policy counts as a sale only
+                  once the lead status is policy issued
+                </li>
+                <li class="my-2">
+                  When a policy is cancelled and reissued or simply cancelled,
+                  it will no longer count as sale.
+                </li>
+                <li>Lead details will be moved to new lead.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="flex justify-end mt-2">
+            <x-button
+              class="mr-2"
+              size="sm"
+              color="primary"
               @click="onAddUpdate(false)"
               :disabled="form.processing"
               :loading="form.processing"
             >
-              Add
+              Confirm
+            </x-button>
+            <x-button
+              size="sm"
+              color="primary"
+              :disabled="form.processing"
+              :loading="form.processing"
+              @click="setOption('step3', form.childCategory)"
+            >
+              Cancel
             </x-button>
           </div>
         </div>

@@ -38,6 +38,7 @@ use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -237,6 +238,7 @@ class AmtController extends Controller
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ]);
 
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BUSINESS->value, $record);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
@@ -278,10 +280,29 @@ class AmtController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::BUSINESS->id(), $record->id);
+        $hasPolicyIssuedStatus = $crudService->hasAtleastOneStatusPolicyIssued($record);
 
         if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
+            $removeOptions = [
+                // Endorsement Financial.
+                SendUpdateLogStatusEnum::AOLOPFMP,
+                SendUpdateLogStatusEnum::AC,
+                SendUpdateLogStatusEnum::AL,
+                SendUpdateLogStatusEnum::EA,
+                SendUpdateLogStatusEnum::ED,
+                SendUpdateLogStatusEnum::EFMP,
+                SendUpdateLogStatusEnum::ICOLOIALOLR,
+                SendUpdateLogStatusEnum::IIEAFT,
+                SendUpdateLogStatusEnum::IISI,
+                SendUpdateLogStatusEnum::MPC,
+                SendUpdateLogStatusEnum::PPE,
+                // Endorsement non Financial.
+                SendUpdateLogStatusEnum::AAI,
+                SendUpdateLogStatusEnum::AOC,
+                SendUpdateLogStatusEnum::COA,
+            ];
+
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
@@ -329,7 +350,7 @@ class AmtController extends Controller
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'documentTypeCodes' => $businessDocumentTypeCodes,
-
+            'linkedQuoteDetails' => $linkedQuoteDetails,
             'record' => fn () => $record,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
@@ -400,8 +421,8 @@ class AmtController extends Controller
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
         })->toArray();
 
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus('Business', $item['id'], $request);
 
             return $item;
         }, $leadStatuses);

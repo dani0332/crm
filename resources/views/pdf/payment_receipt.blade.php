@@ -91,13 +91,13 @@
         <table style="border: none;">        
             <tbody>
                 <tr style="border: none;">
-                    <td style="margin: 0; border: none;"><strong>Customer:</strong>{{ ucfirst($data['customer_name']) }}</td>
-                    <td style="margin: 0; border: none; text-align:right"><strong>Received Date:</strong>{{ $data['captured_at'] }}</td>
+                    <td style="margin: 0; border: none;"><strong>CUSTOMER:</strong>{{ ucfirst($data['customer_name']) }}</td>
+                    <td style="margin: 0; border: none; text-align:right"><strong>RECEIVED DATE:</strong>{{ $data['captured_at'] }}</td>
                 
                 </tr>
                 <tr style="border: none;">
-                    <td style="margin: 0; border: none;"><strong>Receipt Number:</strong>{{ $data['receipt_number'] }}</td>
-                    <td style="margin: 0; border: none; text-align:right"><strong>Paid By:</strong>{{ $data['payment_method'] }}</td>            
+                    <td style="margin: 0; border: none;"><strong>RECEIPT NUMBER:</strong>{{ $data['receipt_number'] }}</td>
+                    <td style="margin: 0; border: none; text-align:right"><strong>PAID BY:</strong>{{ $data['payment_method'] }}</td>            
                 </tr>
             </tbody>
         </table>
@@ -105,8 +105,8 @@
         <table style="height:60%">
             <thead>
                 <tr>
-                    <th style="width: 70%;">Order Detail</th>
-                    <th style="text-align:right;">Amount</th>
+                    <th style="width: 70%;">ORDER DETAILS</th>
+                    <th style="text-align:right;">AMOUNT</th>
                 </tr>
             </thead>
             <tbody>

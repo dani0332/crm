@@ -1,20 +1,28 @@
 <?php
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
+use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
@@ -85,10 +93,10 @@ function get_guid()
         $charid = strtoupper(md5(uniqid(rand(), true)));
         $hyphen = chr(45);
         $uuid = substr($charid, 0, 8).$hyphen
-            .substr($charid, 8, 4).$hyphen
-            .substr($charid, 12, 4).$hyphen
-            .substr($charid, 16, 4).$hyphen
-            .substr($charid, 20, 12);
+        .substr($charid, 8, 4).$hyphen
+        .substr($charid, 12, 4).$hyphen
+        .substr($charid, 16, 4).$hyphen
+        .substr($charid, 20, 12);
 
         return $uuid;
     }
@@ -96,8 +104,8 @@ function get_guid()
 
 function mapPhoneNumber($customerPhoneNo)
 {
-    $customerCorrectPhoneNo = $customerPhoneNo;
-    $customerCorrectPhoneNo1 = $customerPhoneNo;
+    $customerCorrectPhoneNo = $customerCorrectPhoneNo1 = $customerPhoneNo = str_replace(' ', '', trim($customerPhoneNo));
+
     if (strlen($customerPhoneNo) == 9) { // 563264418 9
         $customerCorrectPhoneNo = '0'.$customerPhoneNo;
     } elseif (strlen($customerPhoneNo) == 12) { // 971563264418 12
@@ -139,117 +147,97 @@ function cleanString($string)
     return preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
 }
 
-function getDataAgainstStatus($modelType, $statusId, $myleads = null)
+function getDataAgainstStatus($modelType, $statusId, Request $request)
 {
+    // dd($request->all());
     $result = [];
+
     if (! $modelType) {
         return $result;
     }
+
+    $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
     $nameSpace = 'App\\Models\\';
-    $modelType = $nameSpace.$modelType.'Quote';
+    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-    if ($myleads) {
-        if (Auth::user()->isRenewalAdvisor()) {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNotNull('previous_quote_id')
-                ->count();
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNotNull('previous_quote_id')
-                ->sum('premium');
+    if (! class_exists($modelType)) {
+        return false;
+    }
 
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNotNull('previous_quote_id')
-                ->paginate(10);
-        } elseif (Auth::user()->isNewBusinessAdvisor()) {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNull('previous_quote_id')
-                ->count();
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNull('previous_quote_id')
-                ->sum('premium');
+    $modelQueryWithOutAdvisor = $modelType::when($modelType == BusinessQuote::class, function ($businessQuery) {
+        $businessQuery->with('businessTypeOfInsurance');
+    })->when($modelType == HealthQuote::class, function ($healthQuery) {
+        $healthQuery->with('healthCoverFor');
+    })
+        ->when($modelType == PersonalQuote::class, function ($query) use ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        })
+        ->where('quote_status_id', $statusId)
+        ->where(function ($query) use ($request, $modelType) {
+            getCardViewRequestFilters($query, $request, $modelType);
+        });
 
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNull('previous_quote_id')
-                ->paginate(10);
+    $modelQuery = $modelType::when($modelType == BusinessQuote::class, function ($query) {
+        $query->with('businessTypeOfInsurance');
+    })->when($modelType == HealthQuote::class, function ($healthQuery) {
+        $healthQuery->with('healthCoverFor');
+    })
+        ->when($modelType == PersonalQuote::class, function ($query) use ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        })
+        ->where('quote_status_id', $statusId)
+        ->where('advisor_id', auth()->user()->id)
+        ->where(function ($query) use ($request, $modelType) {
+            getCardViewRequestFilters($query, $request, $modelType);
+        });
+
+    // Reminder: previous quote id is not available in personal quote
+
+    // if (auth()->user()->isRenewalAdvisor()) {
+    //     $result['total_leads'] = $modelQuery->whereNotNull('previous_quote_id')->count();
+    //     $result['total_premium'] = $modelQuery->whereNotNull('previous_quote_id')->sum('premium');
+    //     $result['leads_list'] = $modelQuery->whereNotNull('previous_quote_id')->paginate(10);
+
+    // } elseif (auth()->user()->isNewBusinessAdvisor()) {
+    //     $result['total_leads'] = $modelQuery->whereNull('previous_quote_id')->count();
+    //     $result['total_premium'] = $modelQuery->whereNull('previous_quote_id')->sum('premium');
+    //     $result['leads_list'] = $modelQuery->whereNull('previous_quote_id')->paginate(10);
+
+    // } else
+
+    if ($modelType == HealthQuote::class && auth()->user()->isCarAdvisor() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+        $result['total_leads'] = $modelQuery->count();
+        $result['total_premium'] = $modelQuery->sum('premium');
+        $result['leads_list'] = $modelQuery->paginate(10);
+        $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
+    } elseif ($modelType == HealthQuote::class && auth()->user()->isCarManager() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+        $ids = app(HealthQuoteService::class)->walkTree(auth()->user()->id);
+        $result['total_leads'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->count();
+        $result['total_premium'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->sum('premium');
+        $result['leads_list'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->paginate(10);
+        $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
+    } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
+        $result['total_leads'] = $modelQuery->count();
+        if ($modelType == HealthQuote::class) {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('premium');
         } else {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->count();
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->sum('premium');
-            if ($modelType == HealthQuote::class) {
-                $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
-            }
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->paginate(10);
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
+        }
+        $result['leads_list'] = $modelQuery->paginate(10);
+        if ($modelType == HealthQuote::class) {
+            $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
         }
     } else {
-        if (Auth::user()->isRenewalAdvisor()) {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNotNull('previous_quote_id')->count();
 
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNotNull('previous_quote_id')->sum('premium');
-
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNotNull('previous_quote_id')->paginate(10);
-        } elseif (Auth::user()->isNewBusinessAdvisor()) {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNull('previous_quote_id')->count();
-
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNull('previous_quote_id')->sum('premium');
-
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->whereNull('previous_quote_id')->paginate(10);
-        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->count();
-
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->sum('premium');
-
-            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
-
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', Auth::user()->id)
-                ->paginate(10);
-        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarManager() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
-            $ids = app(HealthQuoteService::class)->walkTree(Auth::user()->id);
-
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->whereIn('advisor_id', $ids)
-                ->count();
-
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->whereIn('advisor_id', $ids)
-                ->sum('premium');
-
-            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
-
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->whereIn('advisor_id', $ids)
-                ->paginate(10);
+        $result['total_leads'] = $modelQueryWithOutAdvisor->count();
+        if ($modelType == HealthQuote::class) {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
         } else {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)->count();
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)->sum('premium');
-            if ($modelType == HealthQuote::class) {
-                $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
-            }
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)->paginate(10);
+            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        }
+        $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
+        if ($modelType == HealthQuote::class) {
+            $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
         }
     }
 
@@ -631,11 +619,24 @@ if (! function_exists('getRepositoryObject')) {
     }
 }
 
+if (! function_exists('getServiceObject')) {
+    function getServiceObject($quoteType)
+    {
+        if (checkPersonalQuotes($quoteType)) {
+            $quoteType = QuoteTypes::PERSONAL->value;
+        }
+
+        $quoteType = ucfirst($quoteType);
+
+        return 'App\\Services\\'.$quoteType.'QuoteService';
+    }
+}
+
 if (! function_exists('checkModifiedRecord')) {
     function checkModifiedRecord($firstDate, $secondDate): bool
     {
         return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
-            Carbon::parse($secondDate)->format(config('constants.datetime_format'));
+        Carbon::parse($secondDate)->format(config('constants.datetime_format'));
     }
 }
 
@@ -651,6 +652,21 @@ if (! function_exists('dateQueryFilter')) {
         }
 
         return [$currentDate, $currentDate];
+    }
+}
+
+if (! function_exists('addDaysExcludeWeekend')) {
+    function addDaysExcludeWeekend($daysToAdd, $date = null)
+    {
+        // $date = $date ?? Carbon::now();
+        $date = Carbon::parse($date) ?? Carbon::now();
+        $date = $date->addDays($daysToAdd);
+
+        if ($date->isWeekend()) {
+            $date = $date->addDays(2);
+        }
+
+        return $date;
     }
 }
 
@@ -723,22 +739,170 @@ if (! function_exists('apiResponse')) {
             'status' => $statusCode,
         ], $statusCode);
     }
+
+    if (! function_exists('generateQuoteMemberCode')) {
+        function generateQuoteMemberCode($customerType, $customerEntityID)
+        {
+            $quoteMemberCount = CustomerMembers::where([
+                'customer_type' => $customerType,
+                'customer_entity_id' => $customerEntityID,
+            ])->count();
+
+            return ($customerType == CustomerTypeEnum::Individual) ?
+                CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
+                CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
+        }
+    }
+}
+
+if (! function_exists('strToFloat')) {
+    function strToFloat($value): float
+    {
+        return floatval(str_replace(',', '', $value));
+    }
+}
+if (! function_exists('getCardViewRequestFilters')) {
+    function getCardViewRequestFilters($partialQuery, Request $request, $modelType)
+    {
+        if ($modelType == HealthQuote::class && ! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+
+            $partialQuery->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+        }
+        if (isset($request->code) && $request->code != '') {
+            $partialQuery->where('code', $request->code);
+        }
+
+        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+            $partialQuery->where('renewal_batch', $request->renewal_batch);
+        }
+
+        if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
+            $partialQuery->whereIn('quote_status_id', $request->quote_status);
+        }
+
+        if (isset($request->first_name) && $request->first_name != '') {
+            $partialQuery->where('first_name', $request->first_name);
+        }
+        if (isset($request->last_name) && $request->last_name != '') {
+            $partialQuery->where('last_name', $request->last_name);
+        }
+        if (isset($request->email) && $request->email != '') {
+            $partialQuery->where('email', $request->email);
+        }
+
+        if (isset($request->mobile_no) && $request->mobile_no != '') {
+            $partialQuery->where('mobile_no', $request->mobile_no);
+        }
+
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
+
+            $partialQuery->whereBetween('created_at', [$dateFrom, $dateTo]);
+        }
+
+        if (isset($request->is_ecommerce)) {
+            $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
+            $partialQuery->where('is_ecommerce', $isEcommerce);
+        }
+
+        if (isset($request->assignment_type) && ! empty($request->assignment_type)) {
+            $partialQuery->where('assignment_type', $request->assignment_type);
+        }
+
+        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+            $partialQuery->where('previous_quote_policy_number', $request->previous_quote_policy_number);
+        }
+
+        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+            $partialQuery->where('renewal_batch', $request->renewal_batch);
+        }
+
+        if (isset($request->sub_team) && $request->sub_team != '') {
+            $partialQuery->where('health_team_type', $request->sub_team);
+        }
+
+        if ($request->hasAny(['created_at_start', 'created_at_end']) && $request->filled(['created_at_start', 'created_at_end'])) {
+            $partialQuery->whereBetween('created_at', dateQueryFilter($request->created_at_start, $request->created_at_end));
+        }
+
+        if ($request->has('is_cold') && $request->filled('is_cold')) {
+            $partialQuery->where('is_cold', true);
+        }
+
+        if ($request->has('is_stale') && $request->filled('is_stale')) {
+            $partialQuery->whereNotNull('stale_at');
+        }
+
+        if ($request->has('payment_status') && $request->filled('payment_status') && count($request->payment_status)) {
+            $partialQuery->whereIn('payment_status_id', $request->payment_status);
+        }
+
+        if (isset($request->is_renewal) && $request->is_renewal != '') {
+            if ($request->is_renewal == quoteTypeCode::yesText) {
+                $partialQuery->whereNotNull('previous_quote_policy_number');
+            }
+            if ($request->is_renewal == quoteTypeCode::noText) {
+                $partialQuery->whereNull('previous_quote_policy_number');
+            }
+        }
+    }
 }
 
 if (! function_exists('getMyAlfredCampaign')) {
     function getMyAlfredCampaign($campaignId)
     {
-        $response = Http::get(config('constants.MA_V1_ENDPOINT').'/campaigns/'.$campaignId);
+        return Cache::remember("MA_CAMPAIGN_{$campaignId}", now()->addHours(24), function () use ($campaignId) {
+            try {
+                $response = Http::timeout(20)->retry(3, 3000)->get(config('constants.MA_V1_ENDPOINT')."/campaigns/{$campaignId}");
+                if ($response->ok()) {
+                    $response = $response->object();
 
-        if ($response->ok()) {
-            $response = $response->object();
-
-            if ($response->data && $response->data->isActive) {
-                return $response;
+                    if ($response->data && $response->data->isActive) {
+                        return $response;
+                    }
+                }
+            } catch (Exception $e) {
+                Log::error('getMyAlfredCampaign Error: '.$e->getMessage().$e->getTraceAsString());
             }
+
+            return null;
+        });
+    }
+}
+
+if (! function_exists('isMyAlfredCampaignEnabled')) {
+    function isMyAlfredCampaignEnabled($campaignId): bool
+    {
+        $campaign = getMyAlfredCampaign($campaignId);
+        if (! $campaign) {
+            return false;
         }
 
-        return null;
+        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
+            return today()->between($campaign->data->startDate, $campaign->data->endDate);
+        }
+
+        return false;
+    }
+}
+
+if (! function_exists('isMyAlfredCampaignEnabled')) {
+    function isMyAlfredCampaignEnabled($campaignId): bool
+    {
+        $campaign = getMyAlfredCampaign($campaignId);
+        if (! $campaign) {
+            return false;
+        }
+
+        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
+            return today()->between($campaign->data->startDate, $campaign->data->endDate);
+        }
+
+        return false;
     }
 }
 
@@ -763,4 +927,11 @@ if (! function_exists('getManagersByUser')) {
         return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
     }
 
+}
+
+if (! function_exists('roundNumber')) {
+    function roundNumber($number)
+    {
+        return round($number, 2);
+    }
 }

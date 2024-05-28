@@ -11,12 +11,13 @@ const props = defineProps({
   expanded: {
     type: Boolean,
     required: false,
-    default: true
-  }
+    default: true,
+  },
 });
 
 const page = usePage();
 const notification = useNotifications('toast');
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
     value: status.id,
@@ -32,7 +33,6 @@ const quoteStatusForm = useForm({
   lost_reason_id: props.quote?.quote_detail?.lost_reason_id || null,
 });
 
-
 const onLeadStatus = () => {
   quoteStatusForm.patch(
     `/personal-quotes/${props.quoteType}/${props.quote.id}/update-status`,
@@ -40,9 +40,10 @@ const onLeadStatus = () => {
       preserveScroll: true,
 
       onError: errors => {
-          notification.error({ title: errors.value, position: 'top' });
+        notification.error({ title: errors.value, position: 'top' });
       },
       onSuccess: () => {
+        router.reload({ only: ['quote'] });
         notification.success({
           title: 'Quote status is updated',
           position: 'top',
@@ -58,8 +59,9 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.TransactionApproved
+    (props.quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+      props.quote.quote_status_id == quoteStatusEnum.Lost) ??
+    false
   );
 });
 watch(
@@ -93,21 +95,29 @@ watch(
                 :disabled="allowStatusUpdate"
                 :rules="[rules.isRequired]"
                 placeholder="Lead Status"
-                class="w-full"
+                class="w-full uppercase"
               />
               <x-textarea
                 v-model="quoteStatusForm.notes"
                 type="text"
                 label="Notes"
                 placeholder="Lead Notes"
-                class="w-full"
+                class="w-full uppercase"
                 :error="quoteStatusForm.errors.notes"
                 :disabled="allowStatusUpdate"
               />
             </div>
           </div>
           <div class="w-full md:w-2/3">
-            <x-field label="TransApp Code" required v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.TransactionApproved">
+            <x-field
+              label="TransApp Code"
+              class="uppercase"
+              required
+              v-if="
+                quoteStatusForm.quote_status_id ==
+                page.props.quoteStatusEnum.TransactionApproved
+              "
+            >
               <x-input
                 v-model="quoteStatusForm.transapp_code"
                 placeholder="TransApp Code is required"
@@ -116,9 +126,17 @@ watch(
                 :error="quoteStatusForm.errors.transapp_code"
               />
             </x-field>
-            <x-field label="Lost Reason" required v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost">
-              <x-select            
-                v-model="quoteStatusForm.lost_reason_id"            
+            <x-field
+              label="Lost Reason"
+              class="uppercase"
+              required
+              v-if="
+                quoteStatusForm.quote_status_id ==
+                page.props.quoteStatusEnum.Lost
+              "
+            >
+              <x-select
+                v-model="quoteStatusForm.lost_reason_id"
                 :options="
                   lostReasons?.map(item => ({
                     value: item.id,
@@ -130,14 +148,14 @@ watch(
                 :error="quoteStatusForm.errors.lost_reason_id"
               />
             </x-field>
-            <x-field label="Transaction Type">
+            <x-field class="uppercase" label="Transaction Type">
               <x-input
                 type="text"
                 :value="quote.transaction_type_text"
                 class="w-full"
                 :disabled="true"
               />
-          </x-field>
+            </x-field>
           </div>
         </div>
         <div class="flex justify-end">

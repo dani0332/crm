@@ -12,6 +12,7 @@ class QuoteSync extends Model
     protected $table = 'quote_sync';
     protected $fillable = [
         'quote_uuid',
+        'quote_type_id',
         'updated_fields',
         'is_synced',
         'synced_at',
