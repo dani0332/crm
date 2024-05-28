@@ -15,14 +15,14 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
      */
     public function run(): void
     {
-        $this->removePreviousData();
+        // $this->removePreviousData();
 
         $data = $this->getGenericData();
 
         $allLOBs = $this->getAllLOBs();
 
         foreach ($data as $option) {
-            $parentOption = Lookup::create([
+            $parentOption = Lookup::firstOrCreate([
                 'key' => $option['name'],
                 'code' => LookupsEnum::SEND_UPDATE_CODE,
                 'text' => $option['tooltip'],
@@ -30,7 +30,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
             ]);
 
             foreach ($option['types'] as $type) {
-                $typeCategory = Lookup::create([
+                $typeCategory = Lookup::firstOrCreate([
                     'key' => $type['name'],
                     'code' => $type['code'],
                     'text' => $type['tooltip'],
@@ -60,7 +60,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                         collect($words)->each(function ($word) use (&$code) {
                             $code .= substr($word, 0, 1);
                         });
-                        Lookup::create([
+                        Lookup::firstOrCreate([
                             'quote_type_id' => $item['id'],
                             'key' => $subType['name'],
                             'code' => $code,
