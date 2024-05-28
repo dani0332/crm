@@ -371,13 +371,13 @@ class SplitPaymentService
             $data = [];
             $data['order_amount'] = number_format($splitPayment->collection_amount, 2, '.', ',');
             $data['payment_split_id'] = $splitPayment->id;
-            
-            if( !empty($quote->first_name) ){
+
+            if (! empty($quote->first_name)) {
                 $data['customer_name'] = $quote->first_name.' '.$quote->last_name;
             } else {
                 $data['customer_name'] = $quote->customer->first_name.' '.$quote->customer->last_name;
             }
-            
+
             $data['receipt_number'] = $splitPayment->code;
             $data['order_number'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             $data['pdf_filename'] = $splitPayment->code.'-'.$splitPayment->sr_no;

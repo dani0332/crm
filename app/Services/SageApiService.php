@@ -191,7 +191,7 @@ class SageApiService
             if ($customer->sage_customer_number) {
                 $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
                 $sageCustomerNumber = $customer->sage_customer_number;
-            } else {                
+            } else {
                 $isLiveApiCallStep1 = true;
                 if (isset($sageLogArray[1]) && $sageLogArray[1]['status'] == config('constants.SAGE_LOG_SUCCESS_STATUS')) {
                     $isLiveApiCallStep1 = false;
@@ -199,7 +199,7 @@ class SageApiService
                 } else {
                     $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
                     $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
-                    $response = json_decode($jsonResponse, true);                    
+                    $response = json_decode($jsonResponse, true);
                 }
                 if (isset($response['error']['code']) && $response['error']['code'] == config('constants.SAGE_ERROR_DUPLICATE_CLIENT')) {
                     $sageCustomerNumber = $payLoadOptions['customerNumber'];
@@ -209,9 +209,9 @@ class SageApiService
                 // The customer already exists on Sage
                 if (isset($sageLogArray[1]) && $sageCustomerNumber === false && $sageLogArray[1]['status'] != config('constants.SAGE_LOG_SUCCESS_STATUS')) {
                     $customerSageDbPayload = json_decode($sageLogArray[1]['sage_payload'], true);
-                    if(isset($customerSageDbPayload['CustomerNumber'])) {
+                    if (isset($customerSageDbPayload['CustomerNumber'])) {
                         $sageCustomerNumber = $customerSageDbPayload['CustomerNumber'];
-                    }                    
+                    }
                 }
 
                 if ($sageCustomerNumber) {
