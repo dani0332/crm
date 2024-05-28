@@ -185,7 +185,7 @@ class SendUpdateLogController extends Controller
             $paymentEntityModel = app($serviceFile)->getEntityPlain($realQuote->id);
         }
 
-        $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog);
+        $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog, $quoteType);
 
         if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
             $paymentEntityModel->load(['plan']);

@@ -589,11 +589,14 @@ class SendUpdateLogService
                ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE);
     }
 
-    public function getSendUpdatePayments($sendUpdateLog)
+    public function getSendUpdatePayments($sendUpdateLog, $quoteType)
     {
         $payments = $sendUpdateLog->payments;
         if ($payments) {
             $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser']);
+            if ($quoteType == quoteTypeCode::Travel) {
+                $payments->load(['travelPlan']);
+            }
         }
 
         return $payments;
