@@ -14,6 +14,11 @@ class QuoteSyncService extends BaseService
         $dataset = QuoteSync::when(isset($filters['quote_type']), function ($query) use ($filters) {
             $query->where('quote_sync.quote_type_id', $filters['quote_type']);
         })
+            ->when(isset($filters['distinct']), function ($query) use ($filters) {
+                if ($filters['distinct'] == 1) {
+                    $query->groupBy('quote_sync.quote_uuid');
+                }
+            })
             ->when(isset($filters['uuid']), function ($query) use ($filters) {
                 $query->where('quote_sync.quote_uuid', $filters['uuid']);
             })
@@ -54,5 +59,15 @@ class QuoteSyncService extends BaseService
         });
 
         return $dataset;
+    }
+
+    public function addFollowedEntriesForSyncing(QuoteSync $quoteSync)
+    {
+        QuoteSync::where('id', '>', $quoteSync->id)
+            ->where('quote_uuid', $quoteSync->quote_uuid)
+            ->update([
+                'is_synced' => false,
+                'status' => QuoteSyncStatus::WAITING,
+            ]);
     }
 }

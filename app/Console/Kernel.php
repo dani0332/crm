@@ -8,6 +8,7 @@ use App\Jobs\CarLost\UnconSubmissionReminder;
 use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Stringable;
 
 class Kernel extends ConsoleKernel
 {
@@ -64,8 +65,18 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:55')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('QuoteSyncUpdate:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(10);
-        $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('QuoteSyncUpdate:cron')
+            ->everyFiveMinutes()
+            ->onOneServer()
+            ->withoutOverlapping(30)
+            ->onSuccess(function (Stringable $output) {
+                info('----------- QuoteSyncJob Completed -----------'.$output);
+            })
+            ->onFailure(function (Stringable $output) {
+                info('----------- QuoteSyncJob Failed -----------'.$output);
+            });
+
+        $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(30);
         $schedule->command(UpdateManualOffline::class)
             ->timezone('Asia/Dubai')
             ->dailyAt('08:58')
