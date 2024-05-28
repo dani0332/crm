@@ -470,7 +470,7 @@ class SagePayloadFactory
                             'ExtendedAmountWithoutTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat),
                         ],
                     ],
-                    'InvoicePaymentSchedules' => [],
+                    'InvoicePaymentSchedules' => [], // TODO:: need to verify with denber, as we are not sending payment schedules for commission
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
             ],
