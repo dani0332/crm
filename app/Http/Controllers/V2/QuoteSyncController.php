@@ -89,9 +89,13 @@ class QuoteSyncController extends Controller
         ]);
     }
 
-    public function update(Request $request, QuoteSync $quoteSync)
+    public function update(Request $request, QuoteSync $quoteSync, QuoteSyncService $quoteSyncService)
     {
         $quoteSync->update($request->all());
+
+        if (isset($request->sync_followed_entries) && $request->sync_followed_entries == 1) {
+            $quoteSyncService->addFollowedEntriesForSyncing($quoteSync);
+        }
 
         return redirect()->route('admin.quotesync.show', $quoteSync->id)->with('message', 'Quote Sync updated successfully');
     }
