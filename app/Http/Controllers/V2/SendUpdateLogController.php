@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\DocumentTypeCode;
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
@@ -11,7 +10,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveBookingDetailsRequest;
@@ -166,18 +164,7 @@ class SendUpdateLogController extends Controller
         $paymentDocumentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId, $paymentDocumentTypesOptions);
 
         $paymentMethods = app(LookupService::class)->getPaymentMethods();
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            $filteredPaymentMethods = $paymentMethods;
-        } else {
-            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-            })->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name,
-                ];
-            })->values();
-        }
+        $filteredPaymentMethods = $paymentMethods;
 
         $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
 
