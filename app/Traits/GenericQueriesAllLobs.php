@@ -252,9 +252,11 @@ trait GenericQueriesAllLobs
                     $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
                     if ($taxDocumentsCount == count($taxDocuments)) {
-                        $bookPolicyDetails['text'] = 'Send and Book Policy';
                         $bookPolicyDetails['editButton'] = true;
-                        $bookPolicyDetails['sendPolicyType'] = 'sage';
+                        if($this->areBookingDetailsFilled($payments)){
+                            $bookPolicyDetails['text'] = 'Send and Book Policy';
+                            $bookPolicyDetails['sendPolicyType'] = 'sage';
+                        }
                     }
                 }
             }
@@ -481,5 +483,19 @@ trait GenericQueriesAllLobs
         }
 
         return $difference;
+    }
+
+    private function areBookingDetailsFilled($payment)
+    {
+        $firstPayment = $payment->first();
+
+        if (!$firstPayment) {
+            return false;
+        }
+
+        return !empty($firstPayment->insurer_invoice_date) 
+            && !empty($firstPayment->insurer_tax_number) 
+            && !empty($firstPayment->insurer_commmission_invoice_number) 
+            && (!empty($firstPayment->commission_vat_not_applicable) || !empty($firstPayment->commission_vat_applicable));
     }
 }
