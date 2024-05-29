@@ -933,3 +933,10 @@ if (! function_exists('roundNumber')) {
         return round($number, 2);
     }
 }
+
+if (! function_exists('roundNumber')) {
+    function roundNumber($number)
+    {
+        return round($number, 2);
+    }
+}

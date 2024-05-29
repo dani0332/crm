@@ -142,7 +142,8 @@ class CycleQuoteController extends Controller
 
         $quote->load('documents.createdBy:id,name,email');
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->active()->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Cycle);
+
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::CYCLE->name);
@@ -227,6 +228,7 @@ class CycleQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'documentTypeCodes' => $documentTypeCodes,
             'noteDocumentType' => $noteDocumentType,
             'quoteDocuments' => $quoteNotes,
             'cdnPath' => $cdnPath,
@@ -282,10 +284,8 @@ class CycleQuoteController extends Controller
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : CycleQuoteRepository::getData(true, true),
             'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,
-            // 'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
-            // 'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments)
         ]);
     }
 }

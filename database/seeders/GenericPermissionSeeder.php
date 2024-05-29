@@ -441,7 +441,6 @@ class GenericPermissionSeeder extends Seeder
             }
         }
     }
-
     private function syncMasterPermissionList()
     {
         $permissionList = [

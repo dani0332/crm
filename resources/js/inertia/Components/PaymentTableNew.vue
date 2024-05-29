@@ -1768,7 +1768,20 @@ const validateViewPayment = isValid => {
 
   if (isApproveNotChecked.value === true) {
     return true;
+  }  
+  /*
+  // temporary return,not part of M2
+  if (isApproveConfirmed.value === false && isValid) {
+    if (!amountExceeded) {
+      isApprovePaymentError.value = false;
+    }
+    isApproveConfirmed.value = true;
+    return true;
   }
+
+  if (isApproveNotChecked.value === true) {
+    return true;
+  }*/
   return false;
 };
 

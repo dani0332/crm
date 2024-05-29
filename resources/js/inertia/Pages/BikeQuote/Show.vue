@@ -1,5 +1,5 @@
 <script setup>
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -47,6 +47,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
 });
 
@@ -850,9 +851,10 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     />
 
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
-      :payments="quote.payments"
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="quote.payments"
+      :paymentDocument="documentTypeCodes.filter(item => ['BPD', 'BPDR', 'BDPDR'].includes(item.code))"
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -860,23 +862,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="
-        documentTypes.filter(
-          item =>
-            item.code === 'BPD' ||
-            item.code === 'BPDR' ||
-            item.code === 'BDPDR',
-        )
-      "
       :quoteRequest="quote"
-      :paymentStatusEnum="page.props.paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
@@ -917,6 +907,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :modelType="quoteType"
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
+      quote-type="Bike"
     />
 
     <BookPolicy
