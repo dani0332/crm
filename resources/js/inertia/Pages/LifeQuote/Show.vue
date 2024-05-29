@@ -1,7 +1,7 @@
 <script setup>
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MemberDetails from '../../Components/MemberDetails.vue';
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import MemberDetails from "../../Components/MemberDetails.vue";
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
@@ -41,6 +41,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
 });
 const { isRequired } = useRules();
@@ -1252,9 +1253,10 @@ watch(
     />
 
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
-      :payments="payments"
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="payments"
+      :paymentDocument="page.props.documentTypeCodes.filter(item => ['LPD', 'LPDR', 'LDPDR'].includes(item.code))"
       :proformaPayment="
         payments.find(
           item =>
@@ -1262,23 +1264,11 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="
-        page.props.documentTypes.filter(
-          item =>
-            item.code === 'LPD' ||
-            item.code === 'LPDR' ||
-            item.code === 'LDPDR',
-        )
-      "
-      :quoteRequest="quote"
-      :paymentStatusEnum="page.props.paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
+			:quoteRequest="quote"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />

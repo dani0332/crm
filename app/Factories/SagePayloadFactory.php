@@ -171,7 +171,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createARInvoiceDis($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = [])
+    public static function createARInvoiceDis($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
     {
         // Payload creation logic for CreditNote scenario
         $description = 'D.'.$request->invoiceDescription;
@@ -222,7 +222,6 @@ class SagePayloadFactory
             unset($payLoad->BatchStatus);
 
             if ($type == SageEnum::SCT_REVERSAL) {
-
                 $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-REV';
                 $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $payLoad->Invoices[0]->DocumentType = 'DebitNote';
@@ -231,12 +230,11 @@ class SagePayloadFactory
             }
 
             if ($type == SageEnum::SCT_CORRECTION) {
-
                 $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW';
                 $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW';
                 $payLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format); //
-                $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = roundNumber($request->premiumWithoutTax);
+                $payLoad->Invoices[0]->DocumentTotalBeforeTax = roundNumber($request->premiumWithoutTax);
                 $payLoad->Invoices[0]->DocumentTotalIncludingTax = roundNumber($request->premiumWithTax);
                 $payLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->DocumentType = 'CreditNote';
@@ -470,7 +468,7 @@ class SagePayloadFactory
                             'ExtendedAmountWithoutTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat),
                         ],
                     ],
-                    'InvoicePaymentSchedules' => [],
+                    'InvoicePaymentSchedules' => [], // TODO:: need to verify with denber, as we are not sending payment schedules for commission
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
             ],
@@ -499,6 +497,7 @@ class SagePayloadFactory
     }
     public static function createCustomerPayload($customer)
     {
+        $entryType = SageEnum::SCT_STRAIGHT;
         $data = $customer->data;
         $mapping = QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first();
         if ($mapping) {
@@ -519,6 +518,8 @@ class SagePayloadFactory
             'endPoint' => 'AR/ARCustomers',
             'payload' => $payLoad,
             'customerNumber' => $payLoad['CustomerNumber'],
+            'sage_request_type' => SageEnum::SRT_CREATE_CUSTOMER,
+            'entry_type' => $entryType,
         ];
     }
 
@@ -544,6 +545,7 @@ class SagePayloadFactory
 
     public static function createPrepaymentPayload($request)
     {
+        $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchRecordType' => 'CA',
             'ReceiptsAdjustments' => [
@@ -568,6 +570,8 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
+            'sage_request_type' => SageEnum::SRT_CREATE_PP_REC,
+            'entry_type' => $entryType,
         ];
     }
 
@@ -587,6 +591,7 @@ class SagePayloadFactory
     }
     public static function aRPostReceiptsPayment($batchNumber)
     {
+        $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchType' => 'CA',
             'PostAllBatches' => 'Donotpostallbatches',
@@ -603,6 +608,8 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
+            'sage_request_type' => SageEnum::SRT_POST_PP_REC,
+            'entry_type' => $entryType,
         ];
     }
 
@@ -1222,6 +1229,7 @@ class SagePayloadFactory
                     'extraDetails' => [
                         'getInvoiceDetails' => [
                             'verb' => 'GET',
+                            'errorMessage' => 'Error while getting AR Invoice prem & comm details from Sage',
                         ],
                         'createARInvoicePremAndComm' => [
                             'requestParms' => 'payload',

@@ -122,7 +122,7 @@
                 <tr>
                     <td class="table-height" style="vertical-align:top;">
                         Order number: {{ $data['order_number'] }}<br>
-                        Order date And time: {{ $data['order_at'] }}<br>
+                        Order date and time: {{ $data['order_at'] }}<br>
                         Insurance company: {{ $data['insurance_company'] }}<br>
                         Type of insurance: {{ $data['type_of_insurance'] }}<br>
                     </td>
