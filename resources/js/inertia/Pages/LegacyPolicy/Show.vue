@@ -114,7 +114,6 @@ const dynamicTableHeader = computed(() => {
     },
     { text: 'Advisor', value: 'advisor_name', key: 'advisor' },
   ];
-  console.log(props.policy.quoteType);
 
   // Exclude columns according if quote type is car
   if (props.policy.quoteType === 'Car') {
@@ -294,7 +293,6 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
       });
     } else {
       if (response?.data.type == 'policy_number') {
-        console.log(response?.data.data[0].code);
         moveToImcrmModal.value = true;
         lobLink.value = response?.data.data[0].link;
         lobCode.value = response?.data.data[0].code;
