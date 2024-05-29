@@ -30,12 +30,33 @@ use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Repositories\PersonalQuoteRepository;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 trait PersonalQuoteSyncTrait
 {
+    public $schemas = [];
+
+    public function cacheSchemas()
+    {
+        $this->schemas = [
+            'personal_quotes' => $this->getTableSchema('personal_quotes'),
+            'personal_quote_details' => $this->getTableSchema('personal_quote_details'),
+        ];
+    }
+
+    protected function getTableSchema($table)
+    {
+        $schema = [
+            'columns' => collect(Schema::getColumns($table))->keyBy('name')->all(),
+            'foreign_keys' => Schema::getForeignKeys($table),
+        ];
+
+        $schema['required_columns'] = $this->getRequiredColumns($schema['columns'], $schema['foreign_keys']);
+
+        return $schema;
+    }
+
     public function syncQuote($quote, $updatedFields)
     {
         unset($updatedFields['created_at'], $updatedFields['updated_at']);
@@ -86,8 +107,8 @@ trait PersonalQuoteSyncTrait
             if ($column === 'id' || $column === 'currently_insured_with') {
                 continue;
             }
-            if (Schema::hasColumn($quoteTable, $column)) {
-                $columnType = DB::getSchemaBuilder()->getColumnType($quoteTable, $column);
+            if (isset($this->schemas[$quoteTable]['columns'][$column])) {
+                $columnType = $this->schemas[$quoteTable]['columns'][$column]['type_name'];
                 $value = $this->formatColumnValue($columnType, $value);
                 if ($value !== null || $value !== '' || $value !== 'NULL') {
                     $quote->$column = $value;
@@ -287,7 +308,7 @@ trait PersonalQuoteSyncTrait
     private function updateMissingFields($quote, $table, $identifier)
     {
 
-        $requiredFields = $this->getRequiredColumns($table);
+        $requiredFields = $this->schemas[$table]['required_columns'];
         if (! empty($requiredFields)) {
             $personalQuoteKeys = $quote->getAttributes();
             foreach ($requiredFields as $column => $detail) {
@@ -311,13 +332,12 @@ trait PersonalQuoteSyncTrait
     /**
      * Retrieve required columns for a table without defaults and excluding foreign keys
      *
-     * @param  $table  - Table name
+     * @param  $columns  - Column list
+     * @param  $foreignKeys  - Foriegn keys
      */
-    private function getRequiredColumns($table)
+    private function getRequiredColumns($columns, $foreignKeys)
     {
         $skipColumns = ['id'];
-        $columns = Schema::getColumns($table);
-        $foreignKeys = Schema::getForeignKeys($table);
         if (! empty($foreignKeys)) {
             $foreignKeys = collect($foreignKeys)->map(function ($foreignKey) {
                 return $foreignKey['columns'];

@@ -30,6 +30,10 @@ class QuoteSyncUpdateCommand extends Command
 
     public function handle()
     {
+        if (empty($this->schemas)) {
+            $this->cacheSchemas();
+        }
+
         info('----------- QuoteSyncJob Started -----------');
         $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
 
@@ -41,7 +45,7 @@ class QuoteSyncUpdateCommand extends Command
 
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::WAITING)
-            ->take(250)
+            ->take(800)
             ->get();
 
         if ($entries->isEmpty()) {

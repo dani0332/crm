@@ -90,7 +90,6 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',

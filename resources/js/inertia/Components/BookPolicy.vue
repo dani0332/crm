@@ -739,6 +739,20 @@ const showInsufficientPaymentAlert = () => {
                 >
                   Edit
                 </x-button>
+                <x-tooltip>
+                  <x-button
+                    size="sm"
+                    color="orange"
+                    class="mt-4"
+                    disabled
+                    v-if="!props.bookPolicyDetails?.sendButton"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+                  <template #tooltip>
+                        <span>{{ 'Please update the booking details.' }}</span>
+                  </template>
+                </x-tooltip>
                 <template v-if="is_lacking_payment">
                   <x-tooltip>
                     <x-button
@@ -790,8 +804,8 @@ const showInsufficientPaymentAlert = () => {
                     class="mt-4 mr-2"
                     size="sm"
                     color="emerald"
-                    :disabled="true"
-                    >Edit
+                    :disabled="true" 
+                    >Edit 
                   </x-button>
                   <template #tooltip>
                     <span>{{

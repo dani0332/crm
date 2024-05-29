@@ -1768,7 +1768,20 @@ const validateViewPayment = isValid => {
 
   if (isApproveNotChecked.value === true) {
     return true;
+  }  
+  /*
+  // temporary return,not part of M2
+  if (isApproveConfirmed.value === false && isValid) {
+    if (!amountExceeded) {
+      isApprovePaymentError.value = false;
+    }
+    isApproveConfirmed.value = true;
+    return true;
   }
+
+  if (isApproveNotChecked.value === true) {
+    return true;
+  }*/
   return false;
 };
 
@@ -2338,37 +2351,40 @@ const uploadDocument = (doc, files, count) => {
 const validateAccessForSendUpdate = ref(false);
 if (props.sendUpdate) {
   const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
-  const allowedPaymentStatus = [
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.PAID,
+  const allowedPaymentStatusForInsurer = [
     props.paymentStatusEnum.PENDING,
+    props.paymentStatusEnum.CREDIT_APPROVED,
   ];
 
-  if (
-    props.payments.length > 0 &&
-    paymentsDetails.collection_type == 'insurer'
-  ) {
-    validateAccessForSendUpdate.value =
-      allowedPaymentStatus.includes(paymentsDetails.payment_status_id) &&
-      paymentsDetails.credit_approval !== null;
-  } else if (
-    props.payments.length > 0 &&
-    paymentsDetails.collection_type == 'broker'
-  ) {
-    validateAccessForSendUpdate.value =
-      paymentsDetails.payment_status_id == props.paymentStatusEnum.PAID;
+  const allowedPaymentStatusForBroker = [
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.CREDIT_APPROVED,
+  ];
+
+  if (props.payments.length > 0) {
+    if (paymentsDetails.collection_type == 'insurer') {
+      validateAccessForSendUpdate.value = allowedPaymentStatusForInsurer.includes(
+        paymentsDetails.payment_status_id,
+      );
+    } 
+
+    if(paymentsDetails.collection_type == 'broker') {
+      validateAccessForSendUpdate.value = allowedPaymentStatusForBroker.includes(
+        paymentsDetails.payment_status_id,
+      );
+    }
   }
 }
 
 const getCaptureValidation = computed(() => {
   return payment => {
-    //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
     if (
       (props.payments.length > 0 &&
         payment.total_price === payment.total_amount + payment.discount_value &&
-        (((props.isAmlClearedForPayment || props.quoteRequest.quote_status_id === 6 ||
-          props.quoteRequest.quote_status_id === 32 ||
-          props.quoteRequest.quote_status_id === 15) &&
+        (((props.isAmlClearedForPayment || props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared ||
+          props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined ||
+          props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved) &&
           props.quoteRequest.kyc_decision === 'Complete') ||
           props.quoteType === 'Travel')) || //skip AML & KYC for travel
           validateAccessForSendUpdate.value
@@ -2480,6 +2496,7 @@ const getCaptureValidation = computed(() => {
     return false;
   };
 });
+
 //verify if all credit payments are approved
 const verifyCreditArroved = paymentRecord => {
   let caPaymentStatus = paymentRecord.payment_splits.filter(
@@ -4246,7 +4263,7 @@ watch(
               <div class="w-1/5 px-2" v-if="isVerifiedEnabled">
                 {{
                   splitPaymentRecord.verified_at !== null
-                    ? formatDate(splitPaymentRecord.verified_at, true)
+                    ? splitPaymentRecord.verified_at
                     : 'N/A'
                 }}
               </div>

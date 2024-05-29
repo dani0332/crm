@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PaymentStatusEnum;
+use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
@@ -68,5 +69,16 @@ class PaymentSplits extends Model implements Auditable
         } else {
             return $value;
         }
+    }
+
+    public function getVerifiedAtAttribute($value)
+    {
+        if (! empty($value)) {
+            $date_time_format = Config::get('constants.DATETIME_DISPLAY_FORMAT');
+
+            return $this->asDateTime($value)->timezone(config('app.timezone'))->format($date_time_format);
+        }
+
+        return null;
     }
 }
