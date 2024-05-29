@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\DocumentType;
+use App\Enums\DocumentTypeCode;
 use Illuminate\Database\Seeder;
 
 class DocumentTypeSeeder extends Seeder
@@ -36542,12 +36543,12 @@ class DocumentTypeSeeder extends Seeder
                     $conditions['category'] = $document['category'];
                 }
 
-                DocumentType::updateOrCreate($conditions, $document);
+                DocumentType::firstOrCreate($conditions, $document);
 
             }
         });
 
-        DocumentType::updateOrCreate([
+        DocumentType::firstOrCreate([
             'code' => DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
         ], [
             'text' => 'Endorsed Schedule',
@@ -36561,7 +36562,7 @@ class DocumentTypeSeeder extends Seeder
             'sort_order' => 1,
         ]);
 
-        DocumentType::updateOrCreate(([
+        DocumentType::firstOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
         ]), [
             'text' => 'Endorsed Certificate',
@@ -36575,7 +36576,7 @@ class DocumentTypeSeeder extends Seeder
             'sort_order' => 2,
         ]);
 
-        DocumentType::updateOrCreate(([
+        DocumentType::firstOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_ECARD,
         ]), [
             'text' => 'E-Card',
@@ -36589,7 +36590,7 @@ class DocumentTypeSeeder extends Seeder
             'sort_order' => 3,
         ]);
 
-        DocumentType::updateOrCreate(([
+        DocumentType::firstOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
         ]), [
             'text' => 'Tax Invoice',
@@ -36603,7 +36604,7 @@ class DocumentTypeSeeder extends Seeder
             'sort_order' => 4,
         ]);
 
-        DocumentType::updateOrCreate(([
+        DocumentType::firstOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
         ]), [
             'text' => 'Tax Invoice Raised Buyer',
@@ -36617,7 +36618,7 @@ class DocumentTypeSeeder extends Seeder
             'sort_order' => 5,
         ]);
 
-        DocumentType::updateOrCreate(([
+        DocumentType::firstOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_RECEIPT,
         ]), [
             'text' => 'Receipt',
@@ -36631,7 +36632,7 @@ class DocumentTypeSeeder extends Seeder
             'sort_order' => 6,
         ]);
 
-        DocumentType::updateOrCreate(([
+        DocumentType::firstOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_PAYMENT_PROOF,
         ]), [
             'text' => 'Payment Proof',
@@ -36644,7 +36645,7 @@ class DocumentTypeSeeder extends Seeder
             'category' => 'SEND_UPDATE',
         ]);
 
-        DocumentType::updateOrCreate(([
+        DocumentType::firstOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_CUSTOMER_DOCUMENTS,
         ]), [
             'text' => 'Customer documents',
@@ -36657,7 +36658,7 @@ class DocumentTypeSeeder extends Seeder
             'category' => 'SEND_UPDATE',
         ]);
 
-        DocumentType::updateOrCreate(([
+        DocumentType::firstOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_UW_EMAIL_CORRESPONDENCE,
         ]), [
             'text' => 'UW email Correspondence',
@@ -36670,7 +36671,7 @@ class DocumentTypeSeeder extends Seeder
             'category' => 'SEND_UPDATE',
         ]);
 
-        DocumentType::updateOrCreate(([
+        DocumentType::firstOrCreate(([
             'code' => DocumentTypeCode::PPR,
             'category' => 'SEND_UPDATE',
         ]), [
