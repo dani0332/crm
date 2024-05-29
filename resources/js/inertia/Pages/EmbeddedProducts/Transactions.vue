@@ -29,6 +29,7 @@ const page = usePage();
 
 const tableHeader = [
   { text: 'EP Ref-ID', value: 'ref_id' },
+  { text: 'Advisor Name', value: 'advisor_name' },
   { text: 'Payment Date', value: 'payment_date', sortable: true },
   { text: 'Plan Commencement Date', value: 'plan_start_date' },
   { text: 'Plan End Date', value: 'plan_end_date' },
