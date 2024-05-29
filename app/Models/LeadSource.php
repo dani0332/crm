@@ -13,6 +13,12 @@ class LeadSource extends Model implements AuditableContract
 
     protected $table = 'lead_sources';
 
+    protected $fillable = [
+        'name',
+        'is_active',
+        'is_applicable_for_rules',
+    ];
+
     public function ruleDetails()
     {
         return $this->hasMany(RuleDetail::class, 'lead_source_id');
