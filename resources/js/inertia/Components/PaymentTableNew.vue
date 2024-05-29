@@ -1337,10 +1337,6 @@ const downloadProformaPayment = async () => {
   }
 };
 
-const showMessages = () => {
-  console.log('showMessages');
-};
-
 const sendUpdateStatusEnum = props.sendUpdateStatusEnum;
 const isEF = computed(() => {
   return (
