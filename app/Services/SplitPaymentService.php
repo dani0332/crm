@@ -381,13 +381,13 @@ class SplitPaymentService
             $data['receipt_number'] = $splitPayment->code;
             $data['order_number'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             $data['pdf_filename'] = $splitPayment->code.'-'.$splitPayment->sr_no;
-            // get today date
-            $data['captured_at'] = date('Y-m-d', time());
+            // get verified at date
+            
+            $data['order_at'] = $splitPayment->verified_at;
+            $data['captured_at'] = date('d-m-Y', strtotime($splitPayment->verified_at));            
             if ($splitPayment->captured_at != null) {
-                $data['captured_at'] = date('Y-m-d', strtotime($splitPayment->captured_at));
-            }
-
-            $data['order_at'] = $splitPayment->created_at;
+                $data['captured_at'] = date('d-m-Y', strtotime($splitPayment->captured_at));
+            }            
 
             if ($modelType == QuoteTypes::BUSINESS->value || $modelType == QuoteTypes::GROUP_MEDICAL->value
             || $modelType == QuoteTypes::HOME->value) {

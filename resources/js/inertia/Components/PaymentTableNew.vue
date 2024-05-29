@@ -4246,7 +4246,7 @@ watch(
               <div class="w-1/5 px-2" v-if="isVerifiedEnabled">
                 {{
                   splitPaymentRecord.verified_at !== null
-                    ? formatDate(splitPaymentRecord.verified_at, true)
+                    ? splitPaymentRecord.verified_at
                     : 'N/A'
                 }}
               </div>
