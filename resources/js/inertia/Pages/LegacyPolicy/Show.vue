@@ -71,12 +71,12 @@ const submitLead = policy => {
       moveToImcrm(policy.policy?.policy_no, false);
       moveToImcrmModal.value = false;
     }
-
-    console.log('Link URL:', selectedLead.value.link);
-    console.log('Selected Document:', selectedLead.value.code);
     // Add any additional logic for submitting the lead here
   } else {
-    console.log('No document selected. Cannot submit lead.');
+    notification.warning({
+      title: 'Select Lead or Check Radio Button to proceed!',
+      position: 'top',
+    });
   }
 };
 
@@ -114,7 +114,6 @@ const dynamicTableHeader = computed(() => {
     },
     { text: 'Advisor', value: 'advisor_name', key: 'advisor' },
   ];
-  console.log(props.policy.quoteType);
 
   // Exclude columns according if quote type is car
   if (props.policy.quoteType === 'Car') {
@@ -276,7 +275,6 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
       validateAll: validateAll,
       isInertia: true,
     });
-    console.log(response);
     if (response?.data.status == 201) {
       notification.success({
         title: response.data.message,
@@ -295,7 +293,6 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
       });
     } else {
       if (response?.data.type == 'policy_number') {
-        console.log(response?.data.data[0].code);
         moveToImcrmModal.value = true;
         lobLink.value = response?.data.data[0].link;
         lobCode.value = response?.data.data[0].code;
