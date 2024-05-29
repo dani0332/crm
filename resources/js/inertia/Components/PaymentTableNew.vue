@@ -3509,7 +3509,7 @@ watch(
                   @change="handleDiscountChange"
                 >
                   <template v-for="option in discountTypes" :key="option.value">
-                    <option :value="option.value" :title="option.tooltip">
+                    <option :value="option.value" :title="option.tooltip" v-if="option.value !== 'system_adjusted_discount'">
                       {{ option.label }}
                     </option>
                   </template>
