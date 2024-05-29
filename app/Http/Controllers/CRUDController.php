@@ -49,8 +49,8 @@ use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
-use App\Models\QuoteType;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
@@ -569,6 +569,8 @@ class CRUDController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
+        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+
         $customTitles = $customTableList = [];
         if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
             $isRenewalUser = true;
@@ -659,7 +661,6 @@ class CRUDController extends Controller
             $carInsuranceProviders = [];
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
-            $listQuotePlans = $this->carQuoteService->getPlans($id);
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
@@ -708,16 +709,6 @@ class CRUDController extends Controller
                 }
             }
 
-            // return view('shared.show', compact([
-            //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
-            //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'mainPayment',
-            //     'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
-            //     'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
-            //     'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
-            //     'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-            //     'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access',
-            // ]));
-
             $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
             $carPlanFeaturesCodeEnum = CarPlanFeaturesCode::asArray();
             $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
@@ -726,10 +717,8 @@ class CRUDController extends Controller
             $genericRequestEnum = GenericRequestEnum::asArray();
             $carPlanTypeEnum = CarPlanType::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
-            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
+            @[$documentTypes, $documentTypeCodes] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Car);
 
-            $documentTypesByCategory = collect($documentTypes)->groupBy('category');
-            $documentTypesByCategory->all();
             $quoteDocuments = array_values($quoteDocuments->toArray());
             $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;
             $storageUrl = storageUrl();
@@ -764,8 +753,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
-                'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'listQuotePlans', 'isAmlClearedForPayment',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bookPolicyDetails', 'documentTypeCodes', 'isAmlClearedForPayment', 'clientInquiryLogs', 'linkedQuoteDetails',
             ]));
         }
 
@@ -844,7 +832,7 @@ class CRUDController extends Controller
                 })->sortBy('label')->values();
             }
 
-            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
+            @[$documentTypes, $documentTypeCodes] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Home);
 
             $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
             $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
@@ -906,6 +894,7 @@ class CRUDController extends Controller
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+                'documentTypeCodes' => $documentTypeCodes,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
             ]);
         }
@@ -935,10 +924,10 @@ class CRUDController extends Controller
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
             $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-            $documentTypes = collect($documentTypes)->groupBy('category');
+
+            @[$documentTypes, $documentTypeCodes] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Health);
             $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
                 $quoteDocument->created_by_name = isset($quoteDocument->createdBy->name) ? $quoteDocument->createdBy->name : null;
 
@@ -1065,6 +1054,7 @@ class CRUDController extends Controller
                 'quoteNotes' => $quoteNotes,
                 'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
+                'documentTypeCodes' => $documentTypeCodes,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
                 'clientInquiryLogs' => $clientInquiryLogs,

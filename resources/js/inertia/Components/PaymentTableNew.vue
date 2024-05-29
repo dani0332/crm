@@ -1768,7 +1768,20 @@ const validateViewPayment = isValid => {
 
   if (isApproveNotChecked.value === true) {
     return true;
+  }  
+  /*
+  // temporary return,not part of M2
+  if (isApproveConfirmed.value === false && isValid) {
+    if (!amountExceeded) {
+      isApprovePaymentError.value = false;
+    }
+    isApproveConfirmed.value = true;
+    return true;
   }
+
+  if (isApproveNotChecked.value === true) {
+    return true;
+  }*/
   return false;
 };
 
@@ -4246,7 +4259,7 @@ watch(
               <div class="w-1/5 px-2" v-if="isVerifiedEnabled">
                 {{
                   splitPaymentRecord.verified_at !== null
-                    ? formatDate(splitPaymentRecord.verified_at, true)
+                    ? splitPaymentRecord.verified_at
                     : 'N/A'
                 }}
               </div>

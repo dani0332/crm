@@ -668,6 +668,7 @@ class SendUpdateLogService
 
             return $sageResponse;
         }
+
         info('Book Update - Sage APIs by pass for category code : '.$categoryCode);
 
         return ['status' => true];
