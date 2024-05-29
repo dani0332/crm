@@ -36669,7 +36669,7 @@ class DocumentTypeSeeder extends Seeder
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
         ]);
-        
+
         DocumentType::updateOrCreate(([
             'code' => DocumentTypeCode::PPR,
             'category' => 'SEND_UPDATE',
