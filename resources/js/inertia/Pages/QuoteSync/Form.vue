@@ -10,6 +10,7 @@ const form = useForm({
   is_synced: props.quote_sync?.is_synced || 0,
   updated_fields: props.quote_sync?.updated_fields || '',
   status: props.quote_sync?.status || 0,
+  sync_followed_entries: 0,
 });
 
 const { isRequired } = useRules();
@@ -20,8 +21,6 @@ const quoteSyncStatusOptions = computed(() => {
     value: +id,
   }));
 });
-
-console.log(quoteSyncStatusOptions);
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -82,6 +81,10 @@ function onSubmit(isValid) {
           <dd>{{ quote_sync?.error }}</dd>
         </div>
       </div>
+
+      <x-field label="Sync Followed entries">
+        <x-toggle v-model="form.sync_followed_entries" color="success" />
+      </x-field>
 
       <div class="flex justify-end gap-3 my-4">
         <x-button size="md" color="emerald" type="submit" class="px-6" :loading="form.processing">

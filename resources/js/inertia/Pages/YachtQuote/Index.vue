@@ -46,6 +46,17 @@ let availableFilters = {
 const filters = reactive(availableFilters);
 const canExport = ref(false);
 const hasRole = role => useHasRole(role);
+watch(
+    () => filters,
+    () => {
+        if (filters.created_at_start && filters.created_at_end) {
+            canExport.value = true;
+        } else {
+            canExport.value = false;
+        }
+    },
+    { deep: true, immediate: true },
+);
 
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
