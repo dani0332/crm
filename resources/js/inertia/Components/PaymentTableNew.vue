@@ -2743,6 +2743,8 @@ watch(
     totalPrice.value = newValue;
   },
 );
+
+const lookupsEnum = page.props.lookupsEnum;
 </script>
 
 <template>
@@ -3526,7 +3528,7 @@ watch(
                   @change="handleDiscountChange"
                 >
                   <template v-for="option in discountTypes" :key="option.value">
-                    <option :value="option.value" :title="option.tooltip" v-if="option.value !== 'system_adjusted_discount'">
+                    <option :value="option.value" :title="option.tooltip" v-if="option.value !== lookupsEnum.SYSTEM_ADJUSTED_DISCOUNT">
                       {{ option.label }}
                     </option>
                   </template>
