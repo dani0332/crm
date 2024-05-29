@@ -121,9 +121,10 @@ class SplitPaymentService
 
             if ($readyToPostResponse !== '') {
                 $readyToPostArray = json_decode($readyToPostResponse, true);
-                if(isset($readyToPostArray['error']['message']['value']) && !strpos($readyToPostArray['error']['message']['value'], 'status from POSTED') ){
+                if (isset($readyToPostArray['error']['message']['value']) && ! strpos($readyToPostArray['error']['message']['value'], 'status from POSTED')) {
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
                     $returnMessage['response'] = 'Error while making ready to post to sage';
+
                     return $returnMessage;
                 } else {
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4);
