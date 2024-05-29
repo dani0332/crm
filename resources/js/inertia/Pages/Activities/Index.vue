@@ -4,15 +4,15 @@ defineProps({
   activities: Object,
   advisors: Object,
   cannotUseAssignee: Boolean,
-  totalActivities: Number   
+  totalActivities: Number,
 });
 
 // Vue Composition API
 const page = usePage();
-const selectedOption  = ref('');
+const selectedOption = ref('');
 const customStartDate = ref(null);
-const customEndDate   = ref(null);
-const activityLoader  = ref(false);
+const customEndDate = ref(null);
+const activityLoader = ref(false);
 const activityActionEdit = ref(false);
 const isOverDue = ref(false);
 const rules = {
@@ -24,7 +24,7 @@ const activityForm = useForm({
   description: null,
   due_date: null,
   assignee_id: page.props.auth.user.id,
-  status: null,  
+  status: null,
   activity_id: null,
 });
 const modals = reactive({
@@ -34,10 +34,10 @@ const modals = reactive({
 const filters = reactive({
   assignee_id: '',
   status: '',
-  due_date_start: '',  
-  due_date_end: '',  
-  due_date_time_start: '',  
-  due_date_time_end: '',    
+  due_date_start: '',
+  due_date_end: '',
+  due_date_time_start: '',
+  due_date_time_end: '',
   page: 1,
 });
 const loader = reactive({
@@ -60,15 +60,15 @@ function filterActivities(isValid) {
     return;
   }
 
-  if(isOverDue.value ){
-    if(filters.status  == '1') {
-      filters.due_date_end  = '1/1/1970';
+  if (isOverDue.value) {
+    if (filters.status == '1') {
+      filters.due_date_end = '1/1/1970';
     } else {
       const today = new Date();
       const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1); 
-      filters.due_date_end = yesterday.toLocaleDateString();    
-    }    
+      yesterday.setDate(today.getDate() - 1);
+      filters.due_date_end = yesterday.toLocaleDateString();
+    }
   }
 
   for (const key in filters) {
@@ -114,36 +114,44 @@ function setQueryFilters() {
 function resetDates(option) {
   const today = new Date();
   let startDate, endDate;
-  if(isOverDue.value ){
+  if (isOverDue.value) {
     filters.status = '';
   }
   isOverDue.value = false;
-  selectedOption.value = option; 
+  selectedOption.value = option;
   if (option == 'today') {
     startDate = today.toLocaleDateString();
     endDate = today.toLocaleDateString();
-  }  else if (option == 'tomorrow') {
+  } else if (option == 'tomorrow') {
     const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1); 
+    tomorrow.setDate(today.getDate() + 1);
     startDate = tomorrow.toLocaleDateString();
     endDate = tomorrow.toLocaleDateString();
-  }  else if (option == 'tweek') {
-    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
-    const lastDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 7));    
+  } else if (option == 'tweek') {
+    const firstDayOfWeek = new Date(
+      today.setDate(today.getDate() - today.getDay() + 1),
+    );
+    const lastDayOfWeek = new Date(
+      today.setDate(today.getDate() - today.getDay() + 7),
+    );
     startDate = firstDayOfWeek.toLocaleDateString();
     endDate = lastDayOfWeek.toLocaleDateString();
   } else if (option == 'tmonth') {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const lastDayOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0,
+    );
     startDate = firstDayOfMonth.toLocaleDateString();
     endDate = lastDayOfMonth.toLocaleDateString();
-  }  else if (option == 'overdue') {
+  } else if (option == 'overdue') {
     const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1); 
+    yesterday.setDate(today.getDate() - 1);
     startDate = '1/1/1970';
     filters.status = '0';
     isOverDue.value = true;
-    endDate = yesterday.toLocaleDateString();    
+    endDate = yesterday.toLocaleDateString();
   } else if (option === 'custom') {
     // Handle the custom option by setting the custom start and end dates
     selectedOption.value = option;
@@ -151,18 +159,18 @@ function resetDates(option) {
     customEndDate.value = null;
   }
   if (option != 'custom') {
-    filters.due_date_time_start  = '';
-    filters.due_date_time_end    = '';
-    filters.due_date_start  = startDate;
-    filters.due_date_end    = endDate;
+    filters.due_date_time_start = '';
+    filters.due_date_time_end = '';
+    filters.due_date_start = startDate;
+    filters.due_date_end = endDate;
     filterActivities(1); // Call the filterActivities function
   }
 }
 function applyCustomDates() {
   if (customStartDate.value && customEndDate.value) {
     // Update the filters with the selected custom dates
-    filters.due_date_start  = '';
-    filters.due_date_end    = '';
+    filters.due_date_start = '';
+    filters.due_date_end = '';
     filters.due_date_time_start = customStartDate.value;
     filters.due_date_time_end = customEndDate.value;
     filterActivities(1); // Call the filterActivities function
@@ -170,15 +178,15 @@ function applyCustomDates() {
 }
 
 // Helper Functions
-function buildCdbidLink(quote_uuid, quote_type_id) { 
-    if (quote_uuid) {
-      var url = '/quotes/' + getQuoteType(quote_type_id,'id') + '/' + quote_uuid;
-        var quoteTypeCode = getQuoteType(quote_type_id);
-        var CDBID = quoteTypeCode + '-' + quote_uuid.toUpperCase();
-        return "<a target='_blank' href='" + url + "'>" + CDBID +"</a>";
-    } else {
-        return '';
-    }  
+function buildCdbidLink(quote_uuid, quote_type_id) {
+  if (quote_uuid) {
+    var url = '/quotes/' + getQuoteType(quote_type_id, 'id') + '/' + quote_uuid;
+    var quoteTypeCode = getQuoteType(quote_type_id);
+    var CDBID = quoteTypeCode + '-' + quote_uuid.toUpperCase();
+    return "<a target='_blank' href='" + url + "'>" + CDBID + '</a>';
+  } else {
+    return '';
+  }
 }
 function getQuoteType(id, returnType = 'code') {
   const types = {
@@ -191,7 +199,7 @@ function getQuoteType(id, returnType = 'code') {
     7: { code: 'YAC-', id: 'yacht' },
     8: { code: 'TRA-', id: 'travel' },
   };
-  return types[id][returnType] || '';
+  return types[id] ? types[id][returnType] : '';
 }
 
 // CRUD Functions
@@ -266,7 +274,8 @@ const onSubmit = isValid => {
         title: 'Activity saved',
         position: 'top',
       });
-    }, onError: (errors) => {
+    },
+    onError: errors => {
       //console.error('Form submission error:', errors);
       notification.error({
         title: 'Activity save error',
@@ -280,31 +289,27 @@ const onSubmit = isValid => {
 };
 
 // Component hooks
-watch(
-  () => filters,
-  { deep: true, immediate: true },
-);
-onBeforeMount(() => { 
+watch(() => filters, { deep: true, immediate: true });
+onBeforeMount(() => {
   resetDates('today');
 });
 onMounted(() => {
   setQueryFilters();
 });
-
 </script>
 
 <template>
   <div>
     <Head title="Activities" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Search Activity </h2>
+      <h2 class="text-xl font-semibold">Search Activity</h2>
       <div class="space-x-3">
         <x-button size="sm" color="orange" @click.prevent="addActivity">
           Create Activity
-        </x-button>        
+        </x-button>
       </div>
     </div>
-   
+
     <x-divider class="my-4" />
 
     <x-form @submit="filterActivities" :auto-focus="false">
@@ -317,7 +322,10 @@ onMounted(() => {
           :options="[
             { value: null, label: 'All' },
             // Loop through advisorArray to generate options
-            ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
+            ...advisors.map(advisor => ({
+              value: advisor.id,
+              label: advisor.name,
+            })),
           ]"
         />
         <x-select
@@ -326,87 +334,88 @@ onMounted(() => {
           placeholder="Select Activity Status"
           :options="[
             { value: '1', label: 'Done' },
-            { value: '0', label: 'Pending' },            
+            { value: '0', label: 'Pending' },
           ]"
         />
-      </div>      
+      </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">
-        <div class="flex gap-3"> 
+        <div class="flex gap-3">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="resetFilters">
             Reset
           </x-button>
         </div>
       </div>
-
     </x-form>
     <x-divider class="my-2" />
     <div class="flex justify-between items-center mb-4 mt-1">
       <h2 class="text-left text-xl font-bold">Activities</h2>
       <div class="flex gap-3">
-      <x-button
-        size="sm"
-        :color="selectedOption === 'overdue' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('overdue')"
-      >
-        Overdue
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'today' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('today')"
-      >
-        Today
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'tomorrow' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('tomorrow')"
-      >
-        Tomorrow
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'tweek' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('tweek')"
-      >
-        This Week
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'tmonth' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('tmonth')"
-      >
-        This Month
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'custom' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('custom')"
-      >
-        Custom
-      </x-button>    
-    </div>  
-</div>
- <!-- Custom Date Range Picker -->
-  <div v-if="selectedOption === 'custom'">
+        <x-button
+          size="sm"
+          :color="selectedOption === 'overdue' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('overdue')"
+        >
+          Overdue
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'today' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('today')"
+        >
+          Today
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'tomorrow' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('tomorrow')"
+        >
+          Tomorrow
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'tweek' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('tweek')"
+        >
+          This Week
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'tmonth' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('tmonth')"
+        >
+          This Month
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'custom' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('custom')"
+        >
+          Custom
+        </x-button>
+      </div>
+    </div>
+    <!-- Custom Date Range Picker -->
+    <div v-if="selectedOption === 'custom'">
       <div class="flex gap-3">
         <x-input
-            v-model="customStartDate"
-            label="Start Date"
-            type="datetime-local"
-            class="w-full"
-          />
+          v-model="customStartDate"
+          label="Start Date"
+          type="datetime-local"
+          class="w-full"
+        />
         <x-input
-            v-model="customEndDate"
-            label="End Date"
-            type="datetime-local"
-            class="w-full"
-          />
+          v-model="customEndDate"
+          label="End Date"
+          type="datetime-local"
+          class="w-full"
+        />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">
-        <div class="flex gap-3"> 
-          <x-button size="sm" color="primary" @click="applyCustomDates">Apply</x-button>
+        <div class="flex gap-3">
+          <x-button size="sm" color="primary" @click="applyCustomDates"
+            >Apply</x-button
+          >
         </div>
       </div>
       <x-divider class="my-2" />
@@ -425,31 +434,31 @@ onMounted(() => {
       hide-footer
       fixed-checkbox
     >
-    
-    <template #item-title="{ title }">
-      <div class="w-40 whitespace-normal">{{ title }}</div>
-    </template>
+      <template #item-title="{ title }">
+        <div class="w-40 whitespace-normal">{{ title }}</div>
+      </template>
 
-    <template #item-client_name="{ client_name }">
-      <div class="w-32 whitespace-normal">{{ client_name }}</div>
-    </template>
+      <template #item-client_name="{ client_name }">
+        <div class="w-32 whitespace-normal">{{ client_name }}</div>
+      </template>
 
-    <template #item-cdbid="item">
-      <div v-html="buildCdbidLink(item.quote_uuid, item.quote_type_id)"></div>
-    </template>
+      <template #item-cdbid="item">
+        <div v-html="buildCdbidLink(item.quote_uuid, item.quote_type_id)"></div>
+      </template>
 
-    <template #item-due_date="item">
-      <td
-        :class="{
-          'bg-red-500': item.is_overdue === true,
-          'rounded': item.is_overdue === true,
-          'flex items-center justify-center w-full h-full': true
-        }">
-        {{ item.due_date }}
-      </td>
-    </template>
+      <template #item-due_date="item">
+        <td
+          :class="{
+            'bg-red-500': item.is_overdue === true,
+            rounded: item.is_overdue === true,
+            'flex items-center justify-center w-full h-full': true,
+          }"
+        >
+          {{ item.due_date }}
+        </td>
+      </template>
 
-    <template #item-status="{ status, id }">
+      <template #item-status="{ status, id }">
         <x-checkbox
           color="emerald"
           size="xl"
@@ -482,7 +491,7 @@ onMounted(() => {
           </x-button>
         </div>
       </template>
-  </DataTable>
+    </DataTable>
     <Pagination
       :links="{
         next: activities.next_page_url,
@@ -518,15 +527,18 @@ onMounted(() => {
             <x-select
               v-model="activityForm.assignee_id"
               label="Assignee*"
-              :options="[            
-                  ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
-                ]"
+              :options="[
+                ...advisors.map(advisor => ({
+                  value: advisor.id,
+                  label: advisor.name,
+                })),
+              ]"
               :rules="[rules.isRequired]"
               :disabled="cannotUseAssignee"
               placeholder="Select Assignee"
               class="w-full"
             />
-         </div>
+          </div>
           <x-input
             v-model="activityForm.due_date"
             label="Due Date*"

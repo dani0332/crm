@@ -1992,6 +1992,9 @@ const addPayment = isValid => {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
+          if (props.sendUpdate) {
+            location.reload();
+          }
         },
         onError: res => {
           notification.error({
@@ -2212,7 +2215,14 @@ const deleteDocument = (docName, count) => {
 
 const uploadDocument = (doc, files, count) => {
   files = files.files;
-  if (files.length == 0) return;
+   // Error if invalid files are selected
+   if (files.length == 0) {
+    notification.error({
+            title: 'Document upload failed, invalid file selected',
+            position: 'top',
+          }); 
+    return;  
+  }
 
   let url = '/quotes/' + props.quoteType + '/documents/store-multiple';
   let splitPaymentDocType = null;
@@ -2397,7 +2407,7 @@ const getCaptureValidation = computed(() => {
         const paymentMethodCC = paymentRecord.payment_splits.filter(
           item => item.payment_method.code === 'CC',
         );
-        if (paymentMethodCC.length > 0) {
+        if (paymentMethodCC.length > 0 && paymentRecord.payment_status_id != props.paymentStatusEnum.CREDIT_APPROVED) {
           let totalSplitPayments = paymentRecord.payment_splits.length;
           let paidPaymentStatus = paymentRecord.payment_splits.filter(
             item =>
@@ -2596,10 +2606,10 @@ watch(
     ) {
       if (props.isPlanDetailEnabled) {
         initialAmount.value = props.quoteRequest.price_with_vat;
-      } else if (props.quoteType === 'Health') {
-        initialAmount.value = props.eCommercePrice;
       } else if (props.sendUpdate) {
         initialAmount.value = props.sendUpdate?.total_price;
+      } else if (props.quoteType === 'Health') {
+        initialAmount.value = props.eCommercePrice;
       } else {
         initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
           ? props.quoteRequest.premium
@@ -2644,15 +2654,6 @@ const paymentAllocationStatusTooltip = payment_allocation_status => {
   }
   return '';
 };
-
-// Watch for Ecommerce Price changes
-watch(
-  () => props.eCommercePrice,
-  (newValue, oldValue) => {
-    initialAmount.value = newValue;
-    totalPrice.value = newValue;
-  },
-);
 
 // verify if master payment is paid
 const isMasterPaymentPaid = computed(() => {
@@ -2718,6 +2719,13 @@ const isVerifiedEnabled = computed(() => {
   }
   return true;
 });
+
+watch(
+  () => props.sendUpdate?.total_price,
+  (newValue, oldValue) => {
+    totalPrice.value = newValue;
+  },
+);
 </script>
 
 <template>

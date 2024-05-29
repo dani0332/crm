@@ -24,7 +24,6 @@ const loader = reactive({
   export: false,
 });
 
-const canExport = ref(false);
 const quotesSelected = ref([]);
 
 let params = useUrlSearchParams('history');
@@ -86,6 +85,18 @@ const filters = reactive({
   is_stale: false,
 });
 
+const canExport = ref(false);
+watch(
+    () => filters,
+    () => {
+        if (filters.created_at_start && filters.created_at_end) {
+            canExport.value = true;
+        } else {
+            canExport.value = false;
+        }
+    },
+    { deep: true, immediate: true },
+);
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
     value: status.id,
