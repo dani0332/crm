@@ -20,7 +20,7 @@ class addInusranceProvidersConfiguration extends Seeder
             ['code' => 'AFNIC', 'sage_vendor_id' => 'IP023', 'gl_liability_account' => '55200'],
             ['code' => 'AHAC', 'sage_vendor_id' => 'IP015', 'gl_liability_account' => '55130'],
             ['code' => 'AI', 'sage_vendor_id' => 'IP026', 'gl_liability_account' => '55230'],
-            ['code' => 'AIAW', 'sage_vendor_id' => null, 'gl_liability_account' => null],
+            ['code' => 'AIAW', 'sage_vendor_id' => 'IP053', 'gl_liability_account' => '55530'],
             ['code' => 'AICSAL', 'sage_vendor_id' => 'IP026', 'gl_liability_account' => '55230'],
             ['code' => 'AIG', 'sage_vendor_id' => 'IP015', 'gl_liability_account' => '55130'],
             ['code' => 'ALJALIL', 'sage_vendor_id' => 'IP009', 'gl_liability_account' => '55070'],
