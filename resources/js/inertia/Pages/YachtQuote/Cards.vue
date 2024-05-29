@@ -92,6 +92,7 @@ const filters = reactive({
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  advisors: [],
 });
 
 const serverOptions = ref({
@@ -316,7 +317,7 @@ function onReset() {
         </x-field>
         <x-field label="Advisor" v-if="isAllowed">
           <ComboBox
-            v-model="filters.advisor_id"
+            v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
           />
