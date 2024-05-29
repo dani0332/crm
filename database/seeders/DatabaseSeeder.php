@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
             // AddSendUpdatesCategoriesInLookups::class,
             // InslyRoles::class,
             // InslyPermissions::class,
-            DocumentTypeSeeder::class
+            DocumentTypeSeeder::class,
         ]);
     }
 }

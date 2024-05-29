@@ -36535,7 +36535,7 @@ class DocumentTypeSeeder extends Seeder
                 if (! is_null($document['business_type_of_customer'])) {
                     $conditions['business_type_of_customer'] = $document['business_type_of_customer'];
                 }
-                if (!is_null($document['text'])) {
+                if (! is_null($document['text'])) {
                     $conditions['text'] = $document['text'];
                 }
 
