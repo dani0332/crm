@@ -78,7 +78,7 @@ class QuoteSyncService extends BaseService
             ->groupBy('quote_uuid')
             ->get();
 
-        if(!empty($entries)) {
+        if (! empty($entries)) {
             QuoteSync::where('quote_uuid', $entries->pluck('quote_uuid')->toArray())
                 ->update([
                     'is_synced' => false,
