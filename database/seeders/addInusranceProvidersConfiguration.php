@@ -12,7 +12,7 @@ class addInusranceProvidersConfiguration extends Seeder
      */
     public function run(): void
     {
-        $providers = [
+        $insuranceProvidersMapping = [
             ['code' => 'AAIC', 'sage_vendor_id' => 'IP022', 'gl_liability_account' => '55180'],
             ['code' => 'ABNIC', 'sage_vendor_id' => 'IP003', 'gl_liability_account' => '55190'],
             ['code' => 'ADNIC', 'sage_vendor_id' => 'IP019', 'gl_liability_account' => '55150'],
@@ -75,11 +75,11 @@ class addInusranceProvidersConfiguration extends Seeder
             ['code' => 'ZILL', 'sage_vendor_id' => 'IP051', 'gl_liability_account' => '55510'],
         ];
 
-        foreach ($providers as $provider) {
-            InsuranceProvider::where('code', $provider['code'])
+        foreach ($insuranceProvidersMapping as $providerMapping) {
+            InsuranceProvider::where('code', $providerMapping['code'])
                 ->update([
-                    'sage_vendor_id' => $provider['sage_vendor_id'],
-                    'gl_liability_account' => $provider['gl_liability_account'],
+                    'sage_vendor_id' => $providerMapping['sage_vendor_id'],
+                    'gl_liability_account' => $providerMapping['gl_liability_account'],
                 ]);
         }
 
