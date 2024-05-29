@@ -436,7 +436,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
                         info('Transaction Approved responseExtend: '.$responseExtend);
                     }
-                    //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));                    
+                    //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
 
                     //Create duplicate lead for TRAVEL
                     if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
@@ -452,7 +452,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 DB::rollBack();
             }
 
-            if($canCaptureEp) {
+            if ($canCaptureEp) {
                 // capture EP and send documents
                 EmbeddedProductRepository::capturePayment($request->quote_id, $request->modelType);
             }

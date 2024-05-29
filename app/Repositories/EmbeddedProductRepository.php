@@ -21,11 +21,11 @@ use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use finfo;
 use Illuminate\Support\Facades\DB;
-use PDF;
-use Exception;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -451,12 +451,12 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
         $dataset = EmbeddedTransaction::with(
-            'quoteRequest.customer', 
-            'quoteRequest.carMake', 
-            'quoteRequest.carModel', 
-            'quoteRequest.quoteStatus', 
+            'quoteRequest.customer',
+            'quoteRequest.carMake',
+            'quoteRequest.carModel',
+            'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
-            )
+        )
             ->join('embedded_product_options', function ($join) use ($ep) {
                 $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
                     ->where('embedded_product_options.embedded_product_id', $ep->id);
@@ -643,12 +643,12 @@ class EmbeddedProductRepository extends BaseRepository
         ])->with(['quoteRequest', 'product.embeddedProduct' => function ($query) {
             $query->where('product_category', EpCategoryEnum::BOLT_ON);
         }])
-        ->get();
+            ->get();
 
         $payload = [];
         if ($epTransaction->isNotEmpty()) {
             foreach ($epTransaction as $item) {
-                if(empty($payload)) {
+                if (empty($payload)) {
                     $payload = [
                         'quoteUID' => $item->quoteRequest->uuid,
                         'quoteTypeId' => $quoteTypeId,
@@ -656,9 +656,9 @@ class EmbeddedProductRepository extends BaseRepository
                 }
 
                 $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
-                $sr = !empty($paymentSplit) ? $paymentSplit->sr_no : 1;
+                $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
                 $payload['payments'][] = [
-                    'codeRef' => $item->code . '-' . $sr,
+                    'codeRef' => $item->code.'-'.$sr,
                 ];
 
                 PaymentAction::where('payment_code', $item->code)
@@ -680,15 +680,15 @@ class EmbeddedProductRepository extends BaseRepository
             }
         }
 
-        if(empty($payload)) {
-           return false; 
+        if (empty($payload)) {
+            return false;
         }
 
         try {
             Marshall::request('/payment/checkout/capture', 'post', $payload);
             $this->fetchSendDocumentsByLead($leadId, $modelType);
         } catch (Exception $e) {
-            Log::error('Capture Payment Error: ' . $e->getMessage());
+            Log::error('Capture Payment Error: '.$e->getMessage());
         }
     }
 }
