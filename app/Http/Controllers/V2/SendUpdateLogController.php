@@ -189,7 +189,6 @@ class SendUpdateLogController extends Controller
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType, $quote);
 
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
-        // dd($filteredPaymentMethods->toArray());
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
