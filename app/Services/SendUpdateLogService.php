@@ -479,7 +479,7 @@ class SendUpdateLogService
             $quoteServiceFile = app(getServiceObject($quoteType));
             $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
             if (! is_null($payments)) {
-                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'sendUpdateLog']);
+                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'sendUpdateLog', 'paymentable']);
             }
         }
 

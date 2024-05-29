@@ -384,9 +384,9 @@ function updateReversalEntries(response) {
   reversalEntry.broker_invoice_number = (response.broker_invoice_number !== '') ? response.broker_invoice_number + '-REV' : '';
   reversalEntry.insurer_commission_invoice_number = (response.insurer_commmission_invoice_number !== '') ? response.insurer_commmission_invoice_number + '-REV' : '';
   reversalEntry.discount = response.discount_value || '';
-  reversalEntry.price_vat_applicable = response.send_update_log?.price_vat_applicable || '';
+  reversalEntry.price_vat_applicable = response.send_update_log?.price_vat_applicable || response.paymentable?.price_without_vat;
   reversalEntry.commission_percentage = ((response.commmission_percentage !== null) ? response.commmission_percentage : response.send_update_log?.commission_percentage) ?? '';
-  reversalEntry.price_vat_not_applicable = response.send_update_log?.price_vat_not_applicable || '';
+  reversalEntry.price_vat_not_applicable = response.send_update_log?.price_vat_not_applicable || response.paymentable?.price_vat_not_applicable;
   reversalEntry.vat_on_commission = ((response.commission_vat !== null) ? response.commission_vat : response.send_update_log?.vat_on_commission) ?? '';
   reversalEntry.commission_vat_applicable = response.commission_vat_applicable || '';
   reversalEntry.total_commission = response.commission || '';
