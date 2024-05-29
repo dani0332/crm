@@ -104,6 +104,8 @@ final class RolesEnum extends Enum
     public const SeniorManagement = 'SENIOR_MANAGEMENT';
     public const Accounts = 'ACCOUNTS';
     public const CallDesk = 'CALL_DESK';
+    public const PRODUCTION = 'PRODUCTION';
+    public const FINANCE = 'FINANCE';
     public const NRA = 'NON_RETAIL_ACCOUNTS';
     public const EpAdmin = 'EP_ADMIN';
     public const CorplineSalesCoordinator = 'CORPLINE_SALES_COORDINATOR';
@@ -112,4 +114,5 @@ final class RolesEnum extends Enum
     public const CycleSalesCoordinator = 'CYCLE_SALES_COORDINATOR';
     public const ServiceExecutive = 'SERVICE_EXECUTIVE';
     public const Production = 'PRODUCTION';
+    public const OperationExecutive = 'OPERATION_EXECUTIVE';
 }

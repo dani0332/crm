@@ -39,4 +39,6 @@ enum LookupsEnum: string
     case PAYMENT_CREDIT_APPROVAL_REASON = 'payment_credit_approval_reason';
     case PAYMENT_DISCOUNT_TYPE = 'payment_discount_type';
     case PAYMENT_DISCOUNT_REASON = 'payment_discount_reason';
+    case SEND_UPDATE_CODE = 'send-update-code';
+    case BUSINESS_TYPE_OF_CUSTOMER = 'business-type-of-customer';
 }

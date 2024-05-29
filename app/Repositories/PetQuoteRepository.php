@@ -90,7 +90,6 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
@@ -142,7 +141,7 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'transactionType',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents']);
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents', 'paymentSplits.verifiedByUser']);
                 },
                 'createdBy',
                 'updatedBy',
@@ -154,9 +153,13 @@ class PetQuoteRepository extends BaseRepository
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
+                'quoteDetail',
             ])
             ->select([
                 $this->getTable().'.*',
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -165,6 +168,7 @@ class PetQuoteRepository extends BaseRepository
                 as customer_type'),
             ])
             ->firstOrFail();
+
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $data = ! empty($quote) ? $quote->toArray() : [];
