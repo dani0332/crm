@@ -382,13 +382,13 @@ class SplitPaymentService
             $data['order_number'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             $data['pdf_filename'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             // get verified at date
-            
+
             $data['order_at'] = $splitPayment->verified_at;
-                        
-            $data['captured_at'] = date(config('constants.DATE_DISPLAY_FORMAT'), strtotime($splitPayment->verified_at));            
+
+            $data['captured_at'] = date(config('constants.DATE_DISPLAY_FORMAT'), strtotime($splitPayment->verified_at));
             if ($splitPayment->captured_at != null) {
                 $data['captured_at'] = date(config('constants.DATE_DISPLAY_FORMAT'), strtotime($splitPayment->captured_at));
-            }            
+            }
 
             if ($modelType == QuoteTypes::BUSINESS->value || $modelType == QuoteTypes::GROUP_MEDICAL->value
             || $modelType == QuoteTypes::HOME->value) {
