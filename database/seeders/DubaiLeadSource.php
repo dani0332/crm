@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\LeadSourceEnum;
 use App\Models\LeadSource;
-use App\Models\PersonalQuote;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
