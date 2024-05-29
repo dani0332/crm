@@ -88,16 +88,22 @@
     </table>
     <hr>
     <div id="content">
-        <table style="border: none;">        
+        
+        <table style="border: none;">
             <tbody>
                 <tr style="border: none;">
-                    <td style="margin: 0; border: none;"><strong>CUSTOMER:</strong>{{ ucfirst($data['customer_name']) }}</td>
-                    <td style="margin: 0; border: none; text-align:right"><strong>RECEIVED DATE:</strong>{{ $data['captured_at'] }}</td>
+                    <td style="margin: 0; border: none; text-align: left;"><strong>CUSTOMER:</strong></td>
+                    <td style="margin: 0; border: none; text-align: left;">{{ ucfirst($data['customer_name']) }}</td>
                 
+                    <td style="margin: 0; border: none; text-align: left;"><strong>RECEIVED DATE:</strong></td>
+                    <td style="margin: 0; border: none; text-align: left;">{{ $data['captured_at'] }}</td>
                 </tr>
                 <tr style="border: none;">
-                    <td style="margin: 0; border: none;"><strong>RECEIPT NUMBER:</strong>{{ $data['receipt_number'] }}</td>
-                    <td style="margin: 0; border: none; text-align:right"><strong>PAID BY:</strong>{{ $data['payment_method'] }}</td>            
+                    <td style="margin: 0; border: none; text-align: left;"><strong>RECEIPT NUMBER:</strong></td>
+                    <td style="margin: 0; border: none; text-align: left;">{{ $data['receipt_number'] }}</td>
+            
+                    <td style="margin: 0; border: none; text-align: left;"><strong>PAID BY:</strong></td>
+                    <td style="margin: 0; border: none; text-align: left;">{{ $data['payment_method'] }}</td>
                 </tr>
             </tbody>
         </table>
