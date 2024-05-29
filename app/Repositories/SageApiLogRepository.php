@@ -32,7 +32,7 @@ class SageApiLogRepository extends BaseRepository
             'section_type' => $request['quoteTypeObject'],
             'section_id' => $request['quote_id'],
             'sage_request_type' => $request['invoiceType'],
-        ])->where('sage_end_point', 'LIKE', '%' . $batchNumber . '%')->first()?->response;
+        ])->where('sage_end_point', 'LIKE', '%'.$batchNumber.'%')->first()?->response;
 
         return $invoiceResponse;
     }

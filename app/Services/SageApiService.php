@@ -542,7 +542,7 @@ class SageApiService
 
         $reverseSendUpdateTypes = collect($invoicesForReverse)->pluck('sage_request_type')->toArray();
 
-        foreach($reverseSendUpdateTypes as $reverseSendUpdateTypeKey => $reverseSendUpdateType) {
+        foreach ($reverseSendUpdateTypes as $reverseSendUpdateTypeKey => $reverseSendUpdateType) {
             if ($payment->frequency == SageEnum::SF_UPFRONT) {
                 if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AR_PREM_COMM_INV) {
                     info('Book Update - Create AR Reverse and Correction Invoice for Upfront Payment');
@@ -699,7 +699,7 @@ class SageApiService
                         'quote_id' => $quoteObject->id,
                         'invoiceType' => $extraParams['invoiceType'],
                         'reversal_invoice_number' => $extraParams['reversalInvoice'],
-                        'method' => $methodName
+                        'method' => $methodName,
                     ]) : [];
                     $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, $sageInvResponse);
                     break;

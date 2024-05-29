@@ -228,7 +228,7 @@ class SagePayloadFactory
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
                 $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_REV_INV;
             }
-            
+
             if ($type == SageEnum::SCT_CORRECTION) {
                 $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW';
                 $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW';
