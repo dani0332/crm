@@ -781,7 +781,7 @@ if (! function_exists('getCardViewRequestFilters')) {
             }
         }
 
-        if (isset($request->advisors) && !empty($request->advisors)) {
+        if (isset($request->advisors) && ! empty($request->advisors)) {
             $partialQuery->whereIn('advisor_id', $request->advisors)->whereNotNull('advisor_id');
         }
     }
