@@ -30,12 +30,5 @@ class DubaiLeadSource extends Seeder
                 ]
             );
         }
-
-        $this->disableLeadSources();
-    }
-
-    private function disableLeadSources()
-    {
-        LeadSource::where('created_at', null)->update(['is_active' => 0, 'created_at' => now()]);
     }
 }
