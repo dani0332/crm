@@ -36538,6 +36538,9 @@ class DocumentTypeSeeder extends Seeder
                 if (! is_null($document['text'])) {
                     $conditions['text'] = $document['text'];
                 }
+                if (! is_null($document['category'])) {
+                    $conditions['category'] = $document['category'];
+                }
 
                 DocumentType::updateOrCreate($conditions, $document);
 
