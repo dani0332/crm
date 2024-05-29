@@ -31,37 +31,11 @@ class DubaiLeadSource extends Seeder
             );
         }
 
-        $this->addMissingLeadSource();
+        $this->disableLeadSources();
     }
 
-    private function addMissingLeadSource()
+    private function disableLeadSources()
     {
-        // Step 1: Retrieve distinct sources from personal_quotes
-        $leadSourcesPersonalQuotes = PersonalQuote::select('source')
-            ->whereNotNull('source')
-            ->groupBy('source')
-            ->get()
-            ->pluck('source')
-            ->toArray();
-
-        // Step 2: Retrieve existing sources from lead_sources
-        $existingLeadSources = LeadSource::select('name')->pluck('name')->toArray();
-
-        // Step 3: Find the differences between the two arrays
-        $newLeadSources = array_diff($leadSourcesPersonalQuotes, $existingLeadSources);
-
-        // Step 4: Prepare data for insertion
-        $dataToInsert = array_map(function ($source) {
-            return [
-                'name' => $source,
-                'is_active' => 1,
-                'is_applicable_for_rules' => 0,
-            ];
-        }, $newLeadSources);
-
-        if (! empty($dataToInsert)) {
-            // Step 5: Insert new lead sources in a single query
-            LeadSource::insert($dataToInsert);
-        }
+        LeadSource::where('created_at', null)->update(['is_active' => 0, 'created_at' => now()]);
     }
 }
