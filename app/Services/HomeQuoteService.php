@@ -656,6 +656,7 @@ class HomeQuoteService extends BaseService
                             'paymentStatus',
                             'paymentMethod',
                             'documents',
+                            'verifiedByUser',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },

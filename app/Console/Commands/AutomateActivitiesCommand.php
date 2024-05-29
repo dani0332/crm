@@ -105,6 +105,10 @@ class AutomateActivitiesCommand extends Command
 
                         if (in_array($quoteClass, [HealthQuote::class, HomeQuote::class, BusinessQuote::class, PersonalQuote::class])) {
                             $quoteDetail->update(['is_cold' => true]);
+
+                            if ($quoteClass != PersonalQuote::class) {
+                                PersonalQuote::where('code', $quoteDetail->code)->update(['is_cold' => true]);
+                            }
                         }
 
                     }

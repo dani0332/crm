@@ -45,6 +45,18 @@ let availableFilters = {
 const canExport = ref(false);
 const filters = reactive(availableFilters);
 
+watch(
+    () => filters,
+    () => {
+        if (filters.created_at_start && filters.created_at_end) {
+            canExport.value = true;
+        } else {
+            canExport.value = false;
+        }
+    },
+    { deep: true, immediate: true },
+);
+
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
@@ -393,6 +405,18 @@ watch(
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
+          />
+        </x-field>
+        <x-field label="Is Renewal">
+          <x-select
+            v-model="filters.is_renewal"
+            placeholder="Search by Renewal"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+            ]"
+            class="w-full"
           />
         </x-field>
         <x-field label="Is Ecommerce">
