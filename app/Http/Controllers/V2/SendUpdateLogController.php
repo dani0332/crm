@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
@@ -184,8 +185,6 @@ class SendUpdateLogController extends Controller
         } else {
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         }
-        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType, $quote);
-
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
 
         return inertia('SendUpdateLog/Show', [
@@ -218,6 +217,7 @@ class SendUpdateLogController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'additionalField' => $additionalField ?? [],
             'issuanceStatuses' => $issuanceStatuses,
+            'lookupsEnum' => getLookupsEnum(),
         ]);
     }
 
