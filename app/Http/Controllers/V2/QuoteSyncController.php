@@ -99,4 +99,9 @@ class QuoteSyncController extends Controller
 
         return redirect()->route('admin.quotesync.show', $quoteSync->id)->with('message', 'Quote Sync updated successfully');
     }
+
+    public function addStuckEntriesForSyncing(QuoteSyncService $quoteSyncService)
+    {
+        $quoteSyncService->addStuckEntriesForSyncing();
+    }
 }
