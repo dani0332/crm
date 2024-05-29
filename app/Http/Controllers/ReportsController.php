@@ -416,7 +416,7 @@ class ReportsController extends Controller
 
         $displayByColumn = $request->displayBy ?? null;
         $displayBy = $request->displayBy ? ucfirst(str_replace('_', ' ', $request->displayBy)) : 'N/A';
-        $lob = QuoteTypes::getName($request->lob)->value . ' Insurance';
+        $lob = QuoteTypes::getName($request->lob)->value.' Insurance';
 
         $reportData = $conversionAsAtReportService->getReportData($request);
         $totalGrossConversion = $conversionAsAtReportService->calculateTotalGrossConversion($reportData);
@@ -441,9 +441,9 @@ class ReportsController extends Controller
         ];
 
         $pdf = PDF::loadView('pdf.conversion_as_at_report', compact('pdfDate'))->setOptions(['defaultFont' => 'DejaVu Sans']);
-        $name = 'InsuranceMarket.ae™ Conversion As At Report - ' . Carbon::now()->format($dateTimeFormat) . '.pdf';
+        $name = 'InsuranceMarket.ae™ Conversion As At Report - '.Carbon::now()->format($dateTimeFormat).'.pdf';
 
-        return response()->json(['data' => 'data:application/pdf;base64,' . base64_encode($pdf->stream()), 'name' => $name]);
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $name]);
     }
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)
