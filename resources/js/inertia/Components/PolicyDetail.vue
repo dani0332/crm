@@ -511,6 +511,7 @@ watch(
                     () => {
                       policyDetailsState.isEditing = false;
                       policyDetailsForm.reset();
+                      caculateVatAmount();
                     }
                   "
                 >
