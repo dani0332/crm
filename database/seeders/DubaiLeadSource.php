@@ -59,7 +59,7 @@ class DubaiLeadSource extends Seeder
             ];
         }, $newLeadSources);
 
-        if (!empty($dataToInsert)) {
+        if (! empty($dataToInsert)) {
             // Step 5: Insert new lead sources in a single query
             LeadSource::insert($dataToInsert);
         }
