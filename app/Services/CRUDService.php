@@ -271,6 +271,7 @@ class CRUDService extends BaseService
             if (
                 strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable
+                || $request->leadStatus == QuoteStatusEnum::EarlyRenewal
             ) {
                 if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                     //perform approval or rejection

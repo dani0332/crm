@@ -9,7 +9,6 @@ use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class QuoteSyncUpdateCommand extends Command
 {
@@ -31,6 +30,10 @@ class QuoteSyncUpdateCommand extends Command
 
     public function handle()
     {
+        if (empty($this->schemas)) {
+            $this->cacheSchemas();
+        }
+
         info('----------- QuoteSyncJob Started -----------');
         $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
 
@@ -42,7 +45,7 @@ class QuoteSyncUpdateCommand extends Command
 
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::WAITING)
-            ->take(300)
+            ->take(800)
             ->get();
 
         if ($entries->isEmpty()) {
@@ -61,17 +64,11 @@ class QuoteSyncUpdateCommand extends Command
         })->all();
 
         foreach ($entries as $entry) {
-
             try {
-                DB::beginTransaction();
-
                 info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id);
                 if ($entry->updated_fields === '{"is_cold":true}') {
-
                     QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
-
                 } else {
-
                     $key = $entry->quote_uuid.'_'.$entry->quote_type_id;
                     if (! empty($quotes[$key])) {
                         // Existing quote
@@ -81,18 +78,11 @@ class QuoteSyncUpdateCommand extends Command
                         $quotes[$key] = $this->processQuoteNotFound($entry);
                     }
                 }
-
-                DB::commit();
-
             } catch (Exception $e) {
-                DB::rollBack();
-
                 $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
                 QuoteSync::where('id', $entry->id)->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
             }
         }
-
-        info('----------- QuoteSyncJob Completed -----------');
     }
 }
