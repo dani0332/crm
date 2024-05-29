@@ -956,7 +956,7 @@ class CarQuoteService extends BaseService
 
             $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
         }
-        if ($request->teams) {
+        if (! empty($request->teams) && is_array($request->teams)) {
             $this->query->whereIn('team.id', $request->teams);
         }
 
