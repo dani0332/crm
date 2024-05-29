@@ -1,6 +1,6 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
 import MigratePayment from '../../Components/MigratePayment.vue';
 
 const props = defineProps({
@@ -40,6 +40,7 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
   parentLeadDetails: Object,
   linkedQuoteDetails: Array,
   record: Object,
@@ -1170,10 +1171,12 @@ watch(
       :quoteType="page.props.quoteType"
       :payments="payments"
     />
+    
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="page.props.quoteType"
-      :payments="payments"
+			v-if="isNewPaymentStructure"
+			:quoteType="page.props.quoteType"
+			:payments="payments"
+      :paymentDocument="documentTypeCodes.filter(item => ['CLPD', 'CLPDR', 'CLDPDR'].includes(item.code))"
       :proformaPayment="
         payments.find(
           item =>
@@ -1181,25 +1184,11 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="
-        documentTypes &&
-        documentTypes.filter &&
-        documentTypes.filter(
-          item =>
-            item.code === 'CLPD' ||
-            item.code === 'CLPDR' ||
-            item.code === 'CLDPDR',
-        )
-      "
       :quoteRequest="quoteRequest"
-      :paymentStatusEnum="page.props.paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
       quoteSubType="Corpline"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"

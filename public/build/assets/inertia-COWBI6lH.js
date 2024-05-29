@@ -207,7 +207,7 @@ ${S}
 `),v=x.substring(0,x.length-C.length),g=$.substring(P.length,$.length),_=!0,h=S,y=-C.length-P.length}else{const x=o.value.substring(0,o.selectionStart);/\n$/.test(x)||x===""?(m=`${E}${t}`,_=!0):m=E}break}case"shiftTab":{const{tabWidth:S=2}=l,{prefixStr:E,prefixStrEndRow:x,subfixStrEndRow:$,prefixSupply:C,subfixSupply:P}=Gm(o),I=new RegExp(`^\\s{${S}}`),L=(V=!1,k=!1)=>{const D=`${C}${t}${P}`;if(I.test(D)){const M=E.length-(k?0:S),R=V?M+t.length-S:M;return Tr(o,M,R),`${x}${D.replace(I,"")}${$}`}else if(/^\s/.test(D)){const M=D.replace(/^\s/,""),R=D.length-M.length,q=o.selectionStart-(k?0:R),A=V?q+t.length-R:q;return Tr(o,q,A),`${x}${M}${$}`}else m=t};if(t===""){const V=L();if(V)return V}else if(/\n/.test(t)){const V=`${C}${t}${P}`.split(`
 `);let[k,D]=[0,0];const M=V.map((R,q)=>{if(I.test(R))return q===0&&(k=S),D+=S,R.replace(I,"");if(/^\s/.test(R)){const A=R.replace(/^\s/,"");return D+=R.length-A.length,A}return R}).join(`
 `);return Tr(o,o.selectionStart-k,o.selectionEnd-D),`${x}${M}${$}`}else{const V=L(!0,!0);if(V)return V}break}case"ctrlC":{const{prefixSupply:S,subfixSupply:E}=Gm(o);return Uh(t===""?`${S}${E}`:t),o.value}case"ctrlX":{const{prefixStrEndRow:S,subfixStrEndRow:E,prefixStr:x,subfixStr:$,prefixSupply:C,subfixSupply:P}=Gm(o);return t===""?(Uh(`${C}${P}`),Tr(o,S.length),`${S}${E.replace(/^\n/,"")}`):(Uh(t),Tr(o,x.length),`${x}${$}`)}case"ctrlD":{const{prefixStrEndRow:S,subfixStrEndRow:E}=Gm(o);return Tr(o,S.length),`${S}${E.replace(/^\n/,"")}`}case"flow":{m=`\`\`\`mermaid
-${(T==null?void 0:T.flow)||`flowchart TD 
+${(T==null?void 0:T.flow)||`flowchart TD
   Start --> Stop`}
 \`\`\`
 `,h=2;break}case"sequence":{m=`\`\`\`mermaid

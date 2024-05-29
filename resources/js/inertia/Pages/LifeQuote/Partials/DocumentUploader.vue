@@ -1,6 +1,5 @@
 <script setup>
 // const emit = defineEmits(["update:uploadedFiles"]);
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 
 defineProps({
   members: Array,

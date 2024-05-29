@@ -1,9 +1,9 @@
 <script setup>
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -26,6 +26,7 @@ defineProps({
   quoteDocuments: Object,
   displaySendPolicyButton: Boolean,
   documentTypes: Object,
+  documentType: Object,
   cdnPath: String,
   memberCategories: Array,
   emailStatuses: Array,
@@ -58,6 +59,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
 });
 
@@ -102,6 +104,13 @@ const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+
+const normalPlansIds = reactive({
+  ids: [],
+});
+const seniorPlansIds = reactive({
+  ids: [],
+});
 
 const {
   isRequired,
@@ -181,6 +190,7 @@ const modals = reactive({
   planDetails: false,
   mixInquiryConfirm: false,
 });
+
 const travelFields = computed(() => {
   let skipFields = [
     'previous_quote_policy_number',
@@ -511,28 +521,6 @@ const memberDataDocs = membersDetail => {
     .filter(member => member.name !== undefined);
 };
 
-const quoteDocumentsTable = reactive({
-  isLoading: false,
-  columns: [
-    {
-      text: 'Document Type',
-      value: 'document_type_text',
-    },
-    {
-      text: 'Document Name',
-      value: 'original_name',
-    },
-    {
-      text: 'Created At',
-      value: 'created_at',
-    },
-    {
-      text: 'Created By',
-      value: 'created_by_name',
-    },
-  ],
-});
-
 const sendPolicyToClient = () => {
   if (confirm('Are you sure you want to send documents to customer?')) {
     let quoteType = page.props.modelType;
@@ -644,18 +632,6 @@ const onExportPlans = () => {
     });
 };
 
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
-const normalPlansIds = reactive({
-  ids: [],
-});
-const seniorPlansIds = reactive({
-  ids: [],
-});
-
 const onLoadAvailablePlansData = async () => {
   let data = {
     jsonData: true,
@@ -675,27 +651,6 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
-const confirmDeleteDoc = () => {
-  quoteDocumentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        quoteDocumentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
-};
 
 const emailStatusesTable = reactive({
   isLoading: false,
@@ -2328,7 +2283,8 @@ watch(
         </template>
       </Collapsible>
     </div>
-
+   
+    
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -2341,17 +2297,12 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <div>
-              <h6
-                v-if="
-                  aboveAgeMembers > 0 && availablePlansTable.data.length > 0
-                "
-                class="font-semibold text-primary-600 text-ms mb-1"
-              >
-                Travel plans for {{ travelers.length - aboveAgeMembers }} member
-                age 0-64
-              </h6>
-            </div>
+              <div>
+                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
+                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                  age 0-64
+                </h6>
+              </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2571,15 +2522,15 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode="quote.code"
+      :paymentCode = "quote.code"
       quoteType="Travel"
       :payments="payments"
     />
-
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      quoteType="Travel"
-      :payments="payments"
+			v-if="isNewPaymentStructure"
+			quoteType="Travel"
+			:payments="payments"
+      :paymentDocument="documentTypeCodes.filter(item => ['TPD', 'TPDR', 'TDPDR'].includes(item.code))"
       :proformaPayment="
         payments.find(
           item =>
@@ -2587,25 +2538,13 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="
-        documentTypes.QUOTE.filter(
-          item =>
-            item.code === 'TPD' ||
-            item.code === 'TPDR' ||
-            item.code === 'TDPDR',
-        )
-      "
       :quoteRequest="quoteRequest"
-      :paymentStatusEnum="page.props.paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
-    />
+		/>
 
     <PaymentTable
       v-else
@@ -2626,94 +2565,28 @@ watch(
       :modelType="quoteType"
       :expanded="sectionExpanded"
     />
-
+    
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="travel"
       :expanded="sectionExpanded"
       :payments="payments"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Documents
-              <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="orange"
-            >
-              Upload Documents
-            </x-button>
-            <x-button
-              size="sm"
-              color="red"
-              v-if="
-                displaySendPolicyButton &&
-                permissions.notProductionApproval &&
-                permissions.isQuoteDocumentEnabled
-              "
-              @click="sendPolicyToClient"
-            >
-              Send Policy
-            </x-button>
-          </div>
-
-          <DataTable
-            table-class-name="compact"
-            :headers="quoteDocumentsTable.columns"
-            :items="quoteDocuments || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="quoteDocuments.length < 15"
-          >
-            <template #item-original_name="item">
-              <a
-                :href="cdnPath + item.doc_url"
-                target="_blank"
-                class="text-primary-600"
-              >
-                {{ item.original_name }}
-              </a>
-            </template>
-            <template #item-action="{ doc_name }">
-              <div>
-                <x-button
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="onDocDelete(doc_name)"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-    </div>
+    <QuoteDocument
+      :document-types="documentTypes"
+      :quote-documents="page.props.quoteDocuments || []"
+      :storageUrl="storageUrl"
+      :quote="record"
+      :expanded="sectionExpanded"
+      :docUploadURL="docUploadURL"
+      quoteType="Travel"
+      :sendPolicy="(displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled)"
+      @sendPolicyToClient="sendPolicyToClient"
+    />
 
     <BookPolicy
       v-if="
@@ -2727,44 +2600,6 @@ watch(
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-    />
-
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-      <LazyDocumentUploader
-        :members="memberDataDocs(travelers)"
-        :doc-types="documentTypes"
-        :docs="quoteDocuments || []"
-        :cdn="cdnPath"
-      />
-    </x-modal>
-
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
-      <p>Are you sure you want to delete this document?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="confirmDeleteDoc"
-            :loading="quoteDocumentsTable.isLoading"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2943,6 +2778,14 @@ watch(
         </template>
       </Collapsible>
     </div>
+    
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
 
     <AuditLogs
       :type="'App\\Models\\TravelQuote'"

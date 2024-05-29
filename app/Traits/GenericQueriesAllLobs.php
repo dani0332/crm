@@ -243,13 +243,13 @@ trait GenericQueriesAllLobs
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
-                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType)) {
+                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)) {
                     $bookPolicyDetails['sendButton'] = true;
                     $bookPolicyDetails['text'] = 'Send Policy To Customer';
                     $bookPolicyDetails['sendPolicyType'] = 'customer';
                 }
                 if ($bookPolicyDetails['sendButton']) {
-                    $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType);
+                    $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
                     if ($taxDocumentsCount == count($taxDocuments)) {
                         $bookPolicyDetails['text'] = 'Send and Book Policy';
@@ -285,7 +285,7 @@ trait GenericQueriesAllLobs
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             if ($this->isFilledPolicyDetails($type, $quote)) {
                 $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
-                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type)) {
+                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
@@ -366,9 +366,9 @@ trait GenericQueriesAllLobs
         return false;
     }
 
-    private function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType)
+    private function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)
     {
-        $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType);
+        $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
 
         return $quoteDocumentsCount == count($documentTypeCodes);
