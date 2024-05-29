@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -47,4 +49,60 @@ class DocumentType extends Model implements AuditableContract
     {
         $query->where('is_active', 1);
     }
+
+    public function scopeSortDocumentType($query)
+    {
+        $query->orderBy('is_required', 'desc')->orderBy('text', 'asc');
+    }
+
+    public function scopeRequired($query)
+    {
+        $query->where('is_required', 1);
+    }
+
+    public function scopeIssuingDocument($query)
+    {
+        $query->where('category', DocumentTypeCode::ISSUING_DOCUMENTS);
+    }
+
+    public function scopeTaxDocument($query)
+    {
+        $query->whereIn('code', [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB])->issuingDocument()->active();
+    }
+
+    public function scopeRequiredForSendPolicy($query)
+    {
+        return $query->where('is_required_for_send_policy', 1)->required()->active()->issuingDocument();
+    }
+
+    public function scopeSendToCustomer($query)
+    {
+        $query->whereNotIn('code', [DocumentTypeCode::CTIRBB])->where('send_to_customer', 1)->active();
+    }
+
+    public function scopeByBusinessTypeOfInsurance($query, $businessTypeOfInsurance)
+    {
+        return $query->where('business_type_of_insurance_id', $businessTypeOfInsurance);
+    }
+
+    public function scopeByBusinessTypeOfCustomer($query, $businessTypeOfCustomer)
+    {
+        if ($businessTypeOfCustomer == CustomerTypeEnum::Business || $businessTypeOfCustomer == CustomerTypeEnum::Entity) {
+            $businessTypeOfCustomer = DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER;
+        } elseif ($businessTypeOfCustomer == CustomerTypeEnum::Individual) {
+            $businessTypeOfCustomer = DocumentTypeCode::INDIVIDUAL_BUSINESS_TYPE_OF_CUSTOMER;
+        }
+
+        return $query->where('business_type_of_customer', $businessTypeOfCustomer);
+    }
+
+    public function scopeGetBusinessDocument($query, $businessTypeOfInsurance, $businessTypeOfCustomer)
+    {
+        return $query->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
+            return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
+        })->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer) {
+            return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer);
+        });
+    }
+
 }

@@ -28,4 +28,9 @@ class QuoteTypeRepository extends BaseRepository
 
         return $this->whereNotIn('id', $notAllowedQuoted)->withActive()->orderBy('sort_order')->get();
     }
+
+    public function fetchGetById($quoteTypeId)
+    {
+        return $this->where('id', $quoteTypeId)->first();
+    }
 }
