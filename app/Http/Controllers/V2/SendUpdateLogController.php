@@ -166,18 +166,21 @@ class SendUpdateLogController extends Controller
         $paymentDocumentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId, $paymentDocumentTypesOptions);
 
         $paymentMethods = app(LookupService::class)->getPaymentMethods();
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            $filteredPaymentMethods = $paymentMethods;
-        } else {
-            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-            })->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name,
-                ];
-            })->values();
-        }
+        $filteredPaymentMethods = $paymentMethods;
+
+        // TODO:: Need to verify why Only BETA user able to see the payment methods.
+        // if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            // $filteredPaymentMethods = $paymentMethods;
+        // } else {
+        //     $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+        //         return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+        //     })->map(function ($paymentMethod) {
+        //         return [
+        //             'value' => $paymentMethod->code,
+        //             'label' => $paymentMethod->name,
+        //         ];
+        //     })->values();
+        // }
 
         $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
 
@@ -200,6 +203,7 @@ class SendUpdateLogController extends Controller
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType, $quote);
 
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
+        // dd($filteredPaymentMethods->toArray());
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,

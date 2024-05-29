@@ -851,7 +851,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    INSURER COMMISSION INVOICE NUMBER
+                    INSURER COMMISSION TAX INVOICE NUMBER
                   </label>
                   <template #tooltip>
                     Input the invoice number issued by the insurer for
@@ -1279,7 +1279,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
-                      INSURER COMMISSION INVOICE NUMBER
+                      INSURER COMMISSION TAX INVOICE NUMBER
                     </label>
                     <template #tooltip>
                       Input the invoice number issued by the insurer for
