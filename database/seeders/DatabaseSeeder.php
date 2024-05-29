@@ -25,11 +25,10 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
-            SendUpdateDocumentTypesSeeder::class,
             AddSendUpdatesCategoriesInLookups::class,
             InslyRoles::class,
             InslyPermissions::class,
-            // DocumentTypeSeeder::class
+            addInusranceProvidersConfiguration::class,
         ]);
     }
 }

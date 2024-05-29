@@ -2,6 +2,7 @@
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -938,5 +939,15 @@ if (! function_exists('roundNumber')) {
     function roundNumber($number)
     {
         return round($number, 2);
+    }
+}
+
+if (! function_exists('getLookupsEnum')) {
+    function getLookupsEnum(): array
+    {
+        return array_combine(
+            array_map(fn ($case) => $case->name, LookupsEnum::cases()),
+            array_map(fn ($case) => $case->value, LookupsEnum::cases())
+        );
     }
 }
