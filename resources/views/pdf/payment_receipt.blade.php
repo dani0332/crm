@@ -118,10 +118,10 @@
             <tbody>
                 <tr>
                     <td style="vertical-align:top; height:60%">
-                        Order Number: {{ $data['order_number'] }}<br>
-                        Order Date And Time: {{ $data['order_at'] }}<br>
-                        Insurance Company: {{ $data['insurance_company'] }}<br>
-                        Type of Insurance: {{ $data['type_of_insurance'] }}<br>
+                        Order number: {{ $data['order_number'] }}<br>
+                        Order date And time: {{ $data['order_at'] }}<br>
+                        Insurance company: {{ $data['insurance_company'] }}<br>
+                        Type of insurance: {{ $data['type_of_insurance'] }}<br>
                     </td>
                     <td style="vertical-align:top; text-align:right; height:60%">{{ $data['order_amount'] }} AED</td>
                 </tr>
