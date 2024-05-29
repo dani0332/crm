@@ -168,20 +168,6 @@ class SendUpdateLogController extends Controller
         $paymentMethods = app(LookupService::class)->getPaymentMethods();
         $filteredPaymentMethods = $paymentMethods;
 
-        // TODO:: Need to verify why Only BETA user able to see the payment methods.
-        // if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            // $filteredPaymentMethods = $paymentMethods;
-        // } else {
-        //     $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-        //         return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-        //     })->map(function ($paymentMethod) {
-        //         return [
-        //             'value' => $paymentMethod->code,
-        //             'label' => $paymentMethod->name,
-        //         ];
-        //     })->values();
-        // }
-
         $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
 
         if (! checkPersonalQuotes($quoteType)) {
