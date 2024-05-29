@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\InsuranceProvider;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class addInusranceProvidersConfiguration extends Seeder

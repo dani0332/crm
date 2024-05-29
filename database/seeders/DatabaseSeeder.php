@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             InslyRoles::class,
             InslyPermissions::class,
             // DocumentTypeSeeder::class
+            addInusranceProvidersConfiguration::class,
         ]);
     }
 }
