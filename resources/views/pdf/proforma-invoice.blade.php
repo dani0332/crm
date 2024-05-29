@@ -71,7 +71,7 @@
 
         .header {
             background: white;
-            font-size: 20px;
+            font-size: 26px;
             text-align: center;
             padding: 8px 10px;
             width: 100%;
@@ -100,17 +100,17 @@
             vertical-align: middle;
             padding: 18px 40px;
             font-weight: 700;
-            font-size: 20px;
+            font-size: 26px;
         }
 
         table tr td, table tr th {
-            font-size: 14px;
+            font-size: 18px;
             text-align: left;
         }
 
         td > p {
             padding: 4px;
-            font-size: 14px;
+            font-size: 18px;
             text-align: center;
         }
 
@@ -165,7 +165,7 @@
         }
 
         .info p {
-            font-size: 12px;
+            font-size: 16px;
         }
 
 
@@ -210,7 +210,7 @@
         table.tbl-footer tr td, table.tbl-footer tr td a {
             color: #ffffff;
             border: none;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         table.tbl-disclaimer {
@@ -218,7 +218,7 @@
             width: 100%;
             border: none;
             padding: 10px 50px;
-            font-size: 14px;
+            font-size: 18px;
             margin: 0;
         }
 
@@ -233,7 +233,7 @@
             text-align: left;
             width: 100%;
             padding-left: 50px;
-            font-size: 14px;
+            font-size: 18px;
             line-height: normal;
             margin: 0;
         }
@@ -244,13 +244,13 @@
 
         table.tbl-bank-details .heading {
             color: #1d83bc;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 700;
         }
 
         table.tbl-bank-details p {
             text-align: left;
-            font-size: 14px;
+            font-size: 18px;
             margin: 0;
             padding: 2px 0;
             line-height: normal;
@@ -262,7 +262,7 @@
             width: 100%;
             /*padding-left: 50px;
             padding-right: 50px;*/
-            font-size: 14px;
+            font-size: 18px;
             margin: 0 auto;
         }
 
@@ -280,19 +280,19 @@
 
         table.tbl-payment-invoice .remarks {
             width: 60%;
-            font-size: 14px;
+            font-size: 18px;
             text-align: left;
         }
 
         table.tbl-payment-invoice .payment-heading {
             width: 20%;
-            font-size: 14px;
+            font-size: 18px;
             text-align: left;
         }
 
         table.tbl-payment-invoice .amount {
             width: 20%;
-            font-size: 14px;
+            font-size: 18px;
             text-align: right;
         }
 
@@ -341,13 +341,13 @@
 
         .customer {
             width: 50%;
-            font-size: 14px;
+            font-size: 18px;
             text-align: left;
         }
 
         .date {
             width: 20%;
-            font-size: 14px;
+            font-size: 18px;
             text-align: left;
         }
 
@@ -356,6 +356,10 @@
             border-radius: 50%;
             margin-right: 5px;
         }
+
+        .mb-10 {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 
@@ -363,8 +367,8 @@
 
 @php
     use App\Enums\PaymentCollectionTypeEnum;
-    use App\Enums\PaymentMethodsEnum;
-    use App\Enums\PaymentStatusEnum;use App\Enums\QuoteTypes;
+    use App\Enums\PaymentStatusEnum;
+    use App\Enums\QuoteTypeShortCode;
 
     $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
 
@@ -378,6 +382,7 @@
     $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
     $customerDetail =  $customer->detail;
     $vat = 0;
+    $entity = null;
 
     if($isRequestFromSendUpdateLogPage){
         $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
@@ -386,7 +391,7 @@
         $vat =  $sendUpdateLog->price_with_vat ? $totalAmount - $subTotal : 0; // if price with vat then vat = total - subTotal else 0
     }else{
         $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
-        if(explode('-', $quote->code)[0] == QuoteTypes::CAR->name){
+        if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
             $carQuoteDetails = $quote->carQuoteRequestDetail;
             $subTotal =  $carQuoteDetails->actual_premium;
             $vat =  $carQuoteDetails->premium_vat;
@@ -395,6 +400,9 @@
             $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
             $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
             $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+        }
+        if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
+            $entity = $quote?->quoteRequestEntityMapping?->entity;
         }
     }
 
@@ -415,13 +423,13 @@
                     SUBTOTAL:
                 </td>
                 <td class="amount">
-                    {{ number_format($subTotal, 2 , '.', '') }}
+                    {{ number_format($subTotal, 2 , '.', ',') }}
                 </td>
             </tr>
             <tr>
                 <th></th>
                 <td class="payment-heading"> VAT:</td>
-                <td class="amount"> {{ number_format($vat, 2 , '.', '') }} </td>
+                <td class="amount"> {{ number_format($vat, 2 , '.', ',') }} </td>
             </tr>
             @if($proformaPaymentRequest->discount_value)
                 <tr>
@@ -430,7 +438,7 @@
                         TOTAL PRICE (AED):
                     </td>
                     <td class="amount">
-                        {{ number_format($totalAmount, 2 , '.', '') }}
+                        {{ number_format($totalAmount, 2 , '.', ',') }}
                     </td>
                 </tr>
                 <tr>
@@ -439,7 +447,7 @@
                         Discount:
                     </td>
                     <td class="amount">
-                        - {{ number_format( $proformaPaymentRequest->discount_value, 2, '.', '') }}
+                        - {{ number_format( $proformaPaymentRequest->discount_value, 2, '.', ',') }}
                     </td>
                 </tr>
             @endif
@@ -452,7 +460,7 @@
                     TOTAL DUE(AED):
                 </th>
                 <th class="amount text-medium">
-                    {{ number_format($proformaPaymentRequest->total_amount, 2, '.', '')}}
+                    {{ number_format($proformaPaymentRequest->total_amount, 2, '.', ',')}}
                 </th>
             </tr>
             </tfoot>
@@ -492,17 +500,19 @@
                     Brokerage Services LLC</h4></td>
         </tr>
         <tr>
-            <td colspan="2" class="text-center"><h6>27th Floor, Control Tower, Motor City,Dubai, United Arab Emirates,
-                    P.O Box 26423 | Tel: <a class="text-xxs" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a
-                        class="text-xxs" href="https://insurancemarket.ae">www.insurancemarket.ae</a></h6></td>
+            <td colspan="2" class="text-center">
+                <h6 class="text-xxs mb-10">27th Floor, Control Tower, Motor City,Dubai, United Arab Emirates,
+                    P.O Box 26423 | Tel: <a class="text-xxs" href="tel:+800253733">800 ALFRED (800-253-733)</a> |
+                    <a class="text-xxs" href="https://insurancemarket.ae">www.insurancemarket.ae</a>
+                </h6>
+            </td>
         </tr>
         <tr>
             <td class="text-left">UAE Central Bank Registration number 85</td>
             <td class="text-right">Insurance Advisor: {{ $advisor?->name }}</td>
             <td class="text-right advisor-image" rowspan="4">
                 @if($advisor?->profile_photo_path)
-                    <img class="im-logo"
-                         src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
+                    <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
                 @endif
 
             </td>
@@ -562,7 +572,7 @@
             <tr>
 
                 <td class="customer">
-                    {{ $customerName }} </br> {{ $quote->address }}
+                    {{ $customerName }} </br>
                 </td>
 
                 <th class="date">
@@ -577,13 +587,20 @@
             <tr>
 
                 <td class="customer">
-                    {{ $customerDetail?->employer_company_name }}
+                    @if($entity)
+                        {{ $entity?->company_name }} </br>
+                        {{ $entity?->company_address }} </br>
+                    @elseif(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS)
+                        {{ $quote?->company_name }} </br>
+                    @else
+                        {{ $customerDetail?->employer_company_name }}
+                        {{ $quote->address ?? '' }}
+                    @endif
+
                 </td>
             </tr>
             <tr>
-                <td class="customer">
-                    {{--{{ $customerDetail?->employer_company_name }}--}}
-                </td>
+                <td class="customer"></td>
             </tr>
 
             </tbody>
@@ -615,10 +632,17 @@
                     {{ $invoiceDate }}
                 </td>
                 <td>
-                    {{ $quoteType?->text }} <br /> {{ $insuranceProvider?->text }}
+                    @if($quote?->businessTypeOfInsurance)
+                        {{ $quote?->businessTypeOfInsurance?->text }} <br />
+                    @else
+                        {{ $quoteType?->text }} <br />
+                    @endif
+
+                    {{ $insuranceProvider?->text }}
+
                 </td>
                 <td>
-                    {{ number_format($subTotal, 2 , '.', '') }}
+                    {{ number_format($subTotal, 2 , '.', ',') }}
                 </td>
             </tr>
 
