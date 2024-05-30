@@ -452,7 +452,7 @@ const sendUpdatePermissionCheck = computed(() => {
 
 const sendUpdateValidationURL = computed(() => {
   return (props.updateBtn === sendUpdateStatusEnum.SU || props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER)
-    ? 'send-update'
+    ? 'book-update'
     : 'send-update-customer-validation';
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
@@ -555,7 +555,7 @@ function confirmationModalClose() {
 function sendUpdate(prePaymentCheck = true) {
   loader.sendUpdate = true;
   axios
-    .post('send-update', {
+    .post('book-update', {
       quoteType: props.quoteType,
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
