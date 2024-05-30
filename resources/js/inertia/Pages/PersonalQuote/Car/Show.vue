@@ -3355,7 +3355,7 @@ watch(
 
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
+      quoteType="Car"
 			:payments="payments"
       :proformaPayment="
         payments.find(

@@ -97,6 +97,7 @@ class HandleInertiaRequests extends Middleware
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
+            'lookupsEnum' => getLookupsEnum(),
         ];
     }
 
