@@ -24,7 +24,7 @@ class TransactionReportService extends ManagementReport
             ->select(
                 'personal_quotes.policy_number', 'personal_quotes.code', 'personal_quotes.uuid',
                 'bqr.uuid', 'bqr.code', 'btoi.text',
-                DB::raw('CONCAT(p.reference, " ", p.tax_invoice_number) as transactions'),
+                DB::raw('CONCAT(p.reference, " ", p.insurer_tax_number) as transactions'),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
                 DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
@@ -48,7 +48,7 @@ class TransactionReportService extends ManagementReport
                 'p.invoice_description as invoice_description',
                 'pm.name as payment_method',
                 'pg.text as payment_gateway',
-                'tax_invoice_number as insurer_invoice_number',
+                'p.insurer_tax_number as insurer_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business'

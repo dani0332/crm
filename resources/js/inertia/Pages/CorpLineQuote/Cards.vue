@@ -82,7 +82,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   quote_status_id: '',
-  advisor_id: '',
+  advisors: '',
   business_type_of_insurance_id: '',
   company_name: '',
   page: 1,
@@ -175,7 +175,7 @@ const setIntialState = () => {
     created_at_start: '',
     created_at_end: '',
     quote_status_id: '',
-    advisor_id: '',
+    advisors: '',
     business_type_of_insurance_id: '',
     company_name: '',
     page: 1,
@@ -364,11 +364,10 @@ watch(
           />
         </x-field>
         <x-field label="Advisor" v-if="isAllowed">
-          <x-select
-            v-model="filters.advisor_id"
+          <ComboBox
+            v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-            class="w-full"
           />
         </x-field>
         <x-input

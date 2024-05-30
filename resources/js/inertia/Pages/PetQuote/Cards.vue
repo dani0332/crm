@@ -87,7 +87,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   quote_status: [],
-  advisor_id: [],
+  advisors: [],
   is_ecommerce: '',
   is_renewal: '',
   page: 1,
@@ -313,7 +313,7 @@ onUnmounted(() => {
         </x-field>
         <x-field label="Advisor" v-if="isAllowed">
           <ComboBox
-            v-model="filters.advisor_id"
+            v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
           />
