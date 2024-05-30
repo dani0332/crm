@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             AddSendUpdatesCategoriesInLookups::class,
             InslyRoles::class,
             InslyPermissions::class,
-            addInusranceProvidersConfiguration::class,
+            addInsuranceProvidersConfiguration::class,
         ]);
     }
 }
