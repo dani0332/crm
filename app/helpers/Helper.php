@@ -849,6 +849,10 @@ if (! function_exists('getCardViewRequestFilters')) {
                 $partialQuery->whereNull('previous_quote_policy_number');
             }
         }
+
+        if (isset($request->advisors) && ! empty($request->advisors)) {
+            $partialQuery->whereIn('advisor_id', $request->advisors)->whereNotNull('advisor_id');
+        }
     }
 }
 
