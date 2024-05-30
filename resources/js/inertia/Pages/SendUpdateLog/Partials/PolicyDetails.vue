@@ -125,8 +125,6 @@ const policyDetailsForm = useForm({
     quote_type: props.quoteType,
 })
 
-console.log(policyDetailsForm);
-
 const onUpdate = () => {
     policyDetailsForm.post(
         route('send-update.save-policy-details'), {
