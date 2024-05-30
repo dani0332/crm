@@ -47,7 +47,6 @@ class DttHealth extends Command
         DB::enableQueryLog();
         $leads = HealthQuote::whereDate('created_at', '=', $dateOne)
 
-
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
 
             ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
@@ -61,7 +60,6 @@ class DttHealth extends Command
         dd(DB::getQueryLog());
         dd(count($leads));
 
-
         foreach ($leads as $item) {
             $jobs[] = new HealthRevivalLeadsCreationJob($item);
         }
@@ -71,19 +69,19 @@ class DttHealth extends Command
                 ->addJobs($jobs)
 
                 ->then(function () use ($logPrefix) {
-                    info($logPrefix . ' all jobs completed successfully');
+                    info($logPrefix.' all jobs completed successfully');
                 })
                 ->catch(function () use ($logPrefix) {
-                    info($logPrefix . ' one of batch is failed.');
+                    info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
-                    info($logPrefix . ' everything done');
+                    info($logPrefix.' everything done');
                 })
                 ->allowFailures()
                 ->withDelay(5)
                 ->dispatch();
         } else {
-            info($logPrefix . '------No lead Found------');
+            info($logPrefix.'------No lead Found------');
         }
     }
 }
