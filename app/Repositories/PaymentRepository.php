@@ -11,6 +11,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\DocumentTypeEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
@@ -549,8 +550,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             ) {
                 foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                     $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
-                    if ($quoteDocumentRec) {
-                        $quoteDocumentRec->payment_split_id = $splitPayment->id;
+                    if ($quoteDocumentRec) {                        
+                        if( empty($document['payment_split_id']) ){
+                            $quoteDocumentRec->payment_split_id = $splitPayment->id;                            
+                        } else {
+                            $quoteDocumentRec->document_type_code = $document['document_type_code']."R";
+                            $quoteDocumentRec->document_type_text = DocumentTypeEnum::RECEIPT;                                                        
+                        }
                         $quoteDocumentRec->save();
                     }
                 }
