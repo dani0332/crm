@@ -396,7 +396,7 @@ class SplitPaymentService
             $data['order_number'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             $data['pdf_filename'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             // get verified at date
-            $data['order_at'] = date('d-m-Y \a\t H:i', strtotime($splitPayment->verified_at));
+            $data['order_at'] = date(config('constants.RECEIPT_ORDER_DATE'), strtotime($splitPayment->verified_at));
 
             $orderDateFormat  = config('constants.DATE_DISPLAY_FORMAT');
             $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->verified_at));            
