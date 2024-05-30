@@ -2,6 +2,7 @@
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -13,6 +14,7 @@ use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
@@ -218,7 +220,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
-        if ($modelType == HealthQuote::class) {
+        if ($modelType == HealthQuote::class || $modelType == TravelQuote::class) {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('premium');
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
@@ -228,9 +230,8 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
         }
     } else {
-
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
-        if ($modelType == HealthQuote::class) {
+        if ($modelType == HealthQuote::class || $modelType == TravelQuote::class) {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
@@ -681,7 +682,6 @@ if (! function_exists('getIMLogo')) {
 if (! function_exists('mimeContentType')) {
     function mimeContentType($ext = null, $mimeType = null)
     {
-
         $mime_types = [ // images
             'png' => 'image/png',
             'jpeg' => 'image/jpeg',
@@ -926,12 +926,28 @@ if (! function_exists('getManagersByUser')) {
 
         return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
     }
-
 }
 
 if (! function_exists('roundNumber')) {
     function roundNumber($number)
     {
         return round($number, 2);
+    }
+}
+
+if (! function_exists('roundNumber')) {
+    function roundNumber($number)
+    {
+        return round($number, 2);
+    }
+}
+
+if (! function_exists('getLookupsEnum')) {
+    function getLookupsEnum(): array
+    {
+        return array_combine(
+            array_map(fn ($case) => $case->name, LookupsEnum::cases()),
+            array_map(fn ($case) => $case->value, LookupsEnum::cases())
+        );
     }
 }

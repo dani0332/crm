@@ -2,6 +2,7 @@
 const notification = useNotifications('toast');
 import { XButton } from '@indielayer/ui';
 import { useCan, useCanAny } from '../Composables/can';
+import { ref } from 'vue';
 
 const page = usePage();
 const props = defineProps({
@@ -29,20 +30,15 @@ const props = defineProps({
     type: Object,
     default: {},
   },
-  expanded: {
-    required: false,
-    type: Boolean,
-    default: true,
-  },
   paymentStatusEnum: {
     type: Array,
     default: () => [],
   },
 });
 
+const propsDataReactive = ref(props.data);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionsEnum = page.props.permissionsEnum;
-
 const modals = reactive({
   cancelPayment: false,
 });
@@ -146,10 +142,6 @@ const epTable = reactive({
       value: 'prices',
     },
     {
-      text: 'EP Status',
-      value: 'ep_status',
-    },
-    {
       text: 'Last Updated Date',
       value: 'updated_at',
     },
@@ -188,14 +180,8 @@ const checkTransactionExist = item => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
-  let paymentLink =
-    page.props.epLink +
-    '/car-insurance/quote/' +
-    props.quote.uuid +
-    '/payment?planId=' +
-    props.quote.plan_id +
-    '&providerCode=' +
-    props.quote.plan_provider_code;
+
+let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'/payment?planId='+props.quote.plan_id+'&providerCode='+props.quote.plan_provider_code;
   copy(paymentLink);
   if (copied)
     notification.success({
@@ -205,31 +191,48 @@ const onCopyText = () => {
 };
 
 const paymentStatus = id => {
-  const enums = props.paymentStatusEnum || {};
+  const enums = paymentStatusEnum || {};
   const item = Object.keys(enums).find(key => enums[key] === id);
   return item ? item : 'N/A';
 };
 
 const toggleProduct = (ep, event) => {
+
+  let removeIdFromSelection = [];
+  propsDataReactive.value?.forEach(item => {
+    if (item.id === ep.embedded_product_id) {
+      item.prices.forEach(price => {
+        if (price.id !== ep.id && price.transactions[0].is_selected !== false) {
+          price.transactions[0].is_selected = false;
+          removeIdFromSelection.push(price.id);
+        }
+      });
+    }
+  });
+
   let id = ep.id;
   if (event.target.checked) {
     selectedEp.value.push(id);
   } else {
-    var index = selectedEp.value.indexOf(id);
-    if (index !== -1) {
-      selectedEp.value.splice(id, 1);
-    }
+    removeIdFromSelection.push(id);
   }
-  let data = {
-    quote_uuid: props.quote.uuid,
-    id: id,
-    modelType: props.modelType,
-  };
+
+  if(removeIdFromSelection.length > 0) {
+    removeIdFromSelection.forEach(id => {
+      const indexToRemove = selectedEp.value.indexOf(id);
+      if (indexToRemove !== -1) {
+        selectedEp.value.splice(indexToRemove, 1);
+      }
+    });
+  }
+
+  console.log(selectedEp);
+
+  let data = { quote_uuid: props.quote.uuid, id: id,modelType:props.modelType };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
     .post(requestUrl, data)
     .then(res => {
-      console.log('res', res);
       notification.success('Updated');
     })
     .catch(err => {
@@ -244,7 +247,7 @@ const onActivitySubmit = isValid => {
   axios
     .post(url, paymentForm)
     .then(res => {
-      modals.cancelPayment = false;
+        modals.cancelPayment = false;
       notification.success('Processed');
     })
     .catch(err => {
@@ -262,63 +265,40 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
 <template>
-  <div
-    v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_ADVISOR, permissionsEnum.EMBEDDED_PRODUCT_ADMIN])"
-    class="p-4 rounded shadow mb-6 bg-white"
-  >
-    <Collapsible :expanded="expanded">
-      <template #header>
-        <div class="flex flex-wrap gap-4 justify-between items-center">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Embedded Products
-            <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
-          </h3>
-        </div>
-      </template>
-      <template #body>
-        <div class="flex flex-wrap gap-3 justify-end my-4">
-          <x-button
-            v-if="selectedEp.length > 0"
-            size="sm"
-            @click.prevent="onCopyText()"
-          >
+  <div v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_VIEW, permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL])">
+    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
+
+      <div class="flex flex-wrap gap-4 justify-between items-center">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Embedded Products <x-tag size="sm">{{ propsDataReactive.length || 0 }}</x-tag>
+        </h3>
+        <div style="margin-right:50px;">
+          <x-button v-if="selectedEp.length > 0" size="sm" @click.stop="onCopyText()">
             Copy Payment Link
           </x-button>
         </div>
-        <DataTable
-          table-class-name="tablefixed"
-          :headers="epTable.columns"
-          :items="props.data || []"
-          border-cell
-          hide-rows-per-page
-          hide-footer
-        >
+      </div>
+      <template #content>
+        <x-divider class="mb-4 mt-2 mt-1" />
+        <DataTable table-class-name="tablefixed" :headers="epTable.columns" :items="propsDataReactive || []" border-cell
+          hide-rows-per-page hide-footer>
           <template #item-code="{ short_code }">
             {{ short_code + '-' + props.code }}
           </template>
 
           <template #item-prices="{ prices }">
+
             <div v-if="prices.length > 0" class="flex gap-3">
-              <x-tag color="primary" v-for="priceItem in prices">
-                <x-checkbox
-                    v-if="priceItem.transactions[0]?.is_selected == '1'"
-                    @change="toggleProduct(priceItem, $event)"
-                    :model-value="true"
-                    color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+              <x-tag color="primary" v-for="(priceItem, index) in prices" :key="index">
+                <x-checkbox v-model="priceItem.transactions[0].is_selected"
+                  @change="toggleProduct(priceItem, $event)" color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
                     || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
                     || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED" />
-                <x-checkbox v-else @change="toggleProduct(priceItem, $event)" color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
-                  || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
-                  || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED" />
                 {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
               </x-tag>
-
             </div>
 
           </template>
-
-          <template #item-ep_status="{ ep_status }"> N/A </template>
 
           <template #item-payment_status="{ prices }">
             {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
@@ -343,14 +323,14 @@ const hasAnyRole = roles => useHasAnyRole(roles);
                 :disabled="ppDoc(item.company_documents) === ''">
                 Download Product Wordings
               </x-button>
-              <x-button v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_ADMIN)" size="xs" color="#ff5e00"
+              <x-button v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" size="xs" color="#ff5e00"
                 :disabled="checkTransactionExist(item)" @click.prevent="cancelPaymentForm(item)">
                 Cancel Payments
               </x-button>
             </div>
           </template>
         </DataTable>
-        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_ADMIN)" v-model="modals.cancelPayment" size="lg"
+        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" v-model="modals.cancelPayment" size="lg"
           show-close backdrop>
           <template #header> Cancel Payment </template>
 
@@ -374,6 +354,6 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           </x-form>
         </x-modal>
       </template>
-    </Collapsible>
+    </x-collapse>
   </div>
 </template>

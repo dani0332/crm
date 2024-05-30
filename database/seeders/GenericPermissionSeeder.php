@@ -189,6 +189,8 @@ class GenericPermissionSeeder extends Seeder
         $this->generateSegmentFilterPermission();
         $this->embeddedProductSeeds();
         $this->advisorConversionReportSeeds();
+        $this->quoteSyncSeeds();
+        $this->advisorDistributionReportSeeds();
         $this->syncMasterPermissionList();
     }
 
@@ -211,21 +213,38 @@ class GenericPermissionSeeder extends Seeder
         }
     }
 
+    private function quoteSyncSeeds()
+    {
+        $permissionList = [
+            PermissionsEnum::QUOTE_SYNC_LOGS => [],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        }
+    }
+
     private function embeddedProductSeeds()
     {
         // update name of existing permission
-        Permission::where(['name' => 'embedded-product-advisor'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR]);
-        Permission::where(['name' => 'embedded-product-admin'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_ADMIN]);
+        Permission::where(['name' => 'embedded-product-advisor'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_VIEW]);
+        Permission::where(['name' => 'embedded-product-admin'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL]);
 
         $permissionList = [
-            PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR => [
+            PermissionsEnum::EMBEDDED_PRODUCT_VIEW => [
                 RolesEnum::CarAdvisor,
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
                 RolesEnum::BetaUser,
                 RolesEnum::EpAdmin,
             ],
-            PermissionsEnum::EMBEDDED_PRODUCT_ADMIN => [
+            PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL => [
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin,
+            ],
+            PermissionsEnum::EMBEDDED_PRODUCT_CONFIG => [
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
                 RolesEnum::BetaUser,
@@ -423,6 +442,101 @@ class GenericPermissionSeeder extends Seeder
             }
         }
     }
+
+    public function advisorDistributionReportSeeds()
+    {
+        $permissionList = [
+            // car distribution report permission (already existing)
+            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW => [
+                RolesEnum::CarAdvisor,
+                RolesEnum::CarManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::BIKE_DISTRIBUTION_REPORT => [
+                RolesEnum::BikeAdvisor,
+                RolesEnum::BikeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HEALTH_DISTRIBUTION_REPORT => [
+                RolesEnum::RMAdvisor,
+                RolesEnum::HealthManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::TRAVEL_DISTRIBUTION_REPORT => [
+                RolesEnum::TravelAdvisor,
+                RolesEnum::TravelManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::LIFE_DISTRIBUTION_REPORT => [
+                RolesEnum::LifeAdvisor,
+                RolesEnum::LifeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HOME_DISTRIBUTION_REPORT => [
+                RolesEnum::HomeAdvisor,
+                RolesEnum::HomeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::PET_DISTRIBUTION_REPORT => [
+                RolesEnum::PetAdvisor,
+                RolesEnum::PetManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::CYCLE_DISTRIBUTION_REPORT => [
+                RolesEnum::CycleAdvisor,
+                RolesEnum::CycleManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::YACHT_DISTRIBUTION_REPORT => [
+                RolesEnum::YachtAdvisor,
+                RolesEnum::YachtManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::CORPLINE_DISTRIBUTION_REPORT => [
+                RolesEnum::CorpLineAdvisor,
+                RolesEnum::CorplineManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT => [
+                RolesEnum::GMAdvisor,
+                RolesEnum::GMManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+
+            foreach ($roles as $roleName) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                }
+            }
+        }
+    }
+
     private function syncMasterPermissionList()
     {
         $permissionList = [
@@ -473,7 +587,6 @@ class GenericPermissionSeeder extends Seeder
         ];
 
         $this->syncPermissionsWithRole($permissionList);
-
     }
 
     private function syncPermissionsWithRole($permissionList)

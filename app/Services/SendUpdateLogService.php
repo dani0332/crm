@@ -22,6 +22,7 @@ use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
@@ -456,8 +457,13 @@ class SendUpdateLogService
             $invoiceDescription = 'C.'.$invoiceDescription;
         }
 
+        $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+        if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
+            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+        }
+
         return [
-            'broker_invoice_number' => $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount),
+            'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
             'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
@@ -473,7 +479,7 @@ class SendUpdateLogService
             $quoteServiceFile = app(getServiceObject($quoteType));
             $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
             if (! is_null($payments)) {
-                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'sendUpdateLog']);
+                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'sendUpdateLog', 'paymentable']);
             }
         }
 
@@ -583,11 +589,14 @@ class SendUpdateLogService
                ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE);
     }
 
-    public function getSendUpdatePayments($sendUpdateLog)
+    public function getSendUpdatePayments($sendUpdateLog, $quoteType)
     {
         $payments = $sendUpdateLog->payments;
         if ($payments) {
             $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser']);
+            if ($quoteType == quoteTypeCode::Travel) {
+                $payments->load(['travelPlan']);
+            }
         }
 
         return $payments;
@@ -600,6 +609,8 @@ class SendUpdateLogService
 
         // For those send update type where payment not required.
         if (! $payment) {
+            info('Payment not found for send update log id : '.$sendUpdateLog->id);
+
             return true;
         }
 
@@ -629,6 +640,7 @@ class SendUpdateLogService
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
         if ($categoryCode == SendUpdateLogStatusEnum::EF) {
+            info('Book Update - Calling Sage APIs for Endorsement Financial');
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -643,6 +655,7 @@ class SendUpdateLogService
         }
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+            info('Book Update - Calling Sage APIs for Correct Policy Details - Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -656,7 +669,9 @@ class SendUpdateLogService
             return $sageResponse;
         }
 
-        return ['status' => false, 'message' => 'Something went wrong'];
+        info('Book Update - Sage APIs by pass for category code : '.$categoryCode);
+
+        return ['status' => true];
     }
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
@@ -701,7 +716,7 @@ class SendUpdateLogService
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
-                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
+                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
                     if (! empty($sendUpdateLog->car_addons)) { // will work on Add optional cover.
                         foreach ($sendUpdateLog->car_addons as $addonId) {
                             CarQuoteRequestAddOn::updateOrCreate([

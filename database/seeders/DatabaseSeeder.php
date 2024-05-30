@@ -14,7 +14,6 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            //QuoteStatusTableSeeder::class,
             LookupSeeder::class,
             LostReasonsTableSeeder::class,
             AddGenericRolePermissionSeeder::class,
@@ -25,9 +24,12 @@ class DatabaseSeeder extends Seeder
             GenericPermissionSeeder::class,
             ApplicationStorageSeeder::class,
             AddPaymentPermissions::class,
+            AddCreateSendUpdatePermissionToAllRoles::class,
+            AddSendUpdatesCategoriesInLookups::class,
             InslyRoles::class,
             InslyPermissions::class,
             HealthRevivalQuotesSeeder::class,
+            addInusranceProvidersConfiguration::class,
         ]);
     }
 }

@@ -111,7 +111,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function insuranceProvider()
     {
-        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
 
     public function wcAdvisor()

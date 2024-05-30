@@ -77,7 +77,8 @@ const isCPD = computed(() => {
     return props.selectedCategory?.subCategory.slug === 'CPD';
 });
 
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
 const insuranceProvidersOptions = computed(() => {
     return props?.insuranceProviders?.map(provider => ({
@@ -351,7 +352,7 @@ const isMobile = computed(() => {
                   placeholder="dd-mm-yyyy"
                   class="w-full"
                 />
-								<span v-else>{{ policyDetailsForm.issuance_date }}</span>
+								<span v-else>{{ dateFormat(policyDetailsForm.issuance_date) }}</span>
 							</dd>
             </div>
 
@@ -378,7 +379,7 @@ const isMobile = computed(() => {
                   placeholder="dd-mm-yyyy"
                   class="w-full"
                 />
-								<span v-else>{{ policyDetailsForm.start_date }}</span>
+								<span v-else>{{ dateFormat(policyDetailsForm.start_date) }}</span>
 							</dd>
             </div>
 

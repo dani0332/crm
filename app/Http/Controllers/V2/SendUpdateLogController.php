@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\DocumentTypeCode;
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
@@ -11,7 +10,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveBookingDetailsRequest;
@@ -166,18 +164,7 @@ class SendUpdateLogController extends Controller
         $paymentDocumentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId, $paymentDocumentTypesOptions);
 
         $paymentMethods = app(LookupService::class)->getPaymentMethods();
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            $filteredPaymentMethods = $paymentMethods;
-        } else {
-            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-            })->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name,
-                ];
-            })->values();
-        }
+        $filteredPaymentMethods = $paymentMethods;
 
         $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
 
@@ -185,7 +172,7 @@ class SendUpdateLogController extends Controller
             $paymentEntityModel = app($serviceFile)->getEntityPlain($realQuote->id);
         }
 
-        $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog);
+        $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog, $quoteType);
 
         if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
             $paymentEntityModel->load(['plan']);
@@ -197,8 +184,6 @@ class SendUpdateLogController extends Controller
         } else {
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         }
-        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType, $quote);
-
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
 
         return inertia('SendUpdateLog/Show', [
@@ -400,6 +385,7 @@ class SendUpdateLogController extends Controller
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
     {
         $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
+        info('Book Update Process Start - SendUpdateCode: '.$sendUpdate->code);
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
             $payment = Payment::where('send_update_log_id', $sendUpdate->id)->first();
@@ -419,19 +405,28 @@ class SendUpdateLogController extends Controller
 
         // Calling Sage for necessary Documents
         $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($sendUpdate);
+        info('Book Update - Payment details updated against send update code '.$sendUpdate->code);
+
         if ($paymentDetailsUpdate) {
+            info('Book Update - Calling Sage APIs');
             $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] === false) {
+                logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message']);
+
                 return response()->json(['message' => $sageResponse['message']], 500);
             }
 
             // Send Update Data move to main lead page as per Send update Type
+            info('Book Update - Moving Send Update impact to Main Lead Page');
             $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
             if ($sageResponse['status'] && $response['status']) {
+                info('Book Update - Sage APIs and Send Update impact moved to Main Lead Page successfully for send update code '.$sendUpdate->code);
+
                 return response()->json(['message' => $response['message']], 200);
             }
         }
+        logger()->error('Book Update - Failed to update payment details or send update to sage - Response:'.$response['message']);
 
         return response()->json(['message' => $response['message']], 500);
     }

@@ -135,6 +135,7 @@ onMounted(() => {
           :options="[
             { label: 'Car', value: 'Car' },
             { label: 'Health', value: 'Health' },
+            { label: 'Travel', value: 'Travel' },
           ]"
           placeholder="Select a Quote Type"
           class="w-full"

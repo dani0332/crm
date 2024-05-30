@@ -1,4 +1,5 @@
 <script setup>
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
@@ -7,7 +8,6 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -53,6 +53,7 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
 });
 
@@ -993,12 +994,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteId="quote.id"
       :paymentCode="quote.code"
       :quoteType="quoteType"
-      :payments="quote.payments"
-    />
+      :payments="quote.payments"      
+    />    
+ 
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
-      :payments="quote.payments"
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="quote.payments"
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -1006,23 +1008,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="
-        documentTypes.filter(
-          item =>
-            item.code === 'CYCPD' ||
-            item.code === 'CYCPDR' ||
-            item.code === 'CYCDPDR',
-        )
-      "
-      :quoteRequest="quote"
-      :paymentStatusEnum="page.props.paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
+      :paymentDocument="documentTypeCodes.filter(item => ['CYCPD', 'CYCPDR', 'CYCDPDR'].includes(item.code))"
+			:quoteRequest="quote"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
@@ -1064,6 +1055,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :modelType="quoteType"
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
+      quoteType="Cycle"
     />
 
     <BookPolicy

@@ -297,7 +297,6 @@ const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
 };
-
 const hasNextFile = computed(() => {
   return currentFileIndex.value < filesTest.value.length - 1;
 });
@@ -1053,7 +1052,6 @@ const formatDate = (date, timeFlag = false) => {
   const minutes = parsedDate.getMinutes().toString().padStart(2, '0');
   const seconds = parsedDate.getSeconds().toString().padStart(2, '0');
   const formattedTime = `${hours}:${minutes}:${seconds}`;
-
   return formatedDate.concat(' ', formattedTime);
 };
 
@@ -1337,10 +1335,6 @@ const downloadProformaPayment = async () => {
     });
     return;
   }
-};
-
-const showMessages = () => {
-  console.log('showMessages');
 };
 
 const sendUpdateStatusEnum = props.sendUpdateStatusEnum;
@@ -1652,7 +1646,13 @@ const editPaymentModal = (
       }
     }
   }
-  
+  // Assign the first document to the approve document model for insurer
+  if (
+    paymentMethodsForm.status == 'view' &&
+    paymentMethodsForm.collection_type === 'insurer'
+  ) {
+    approvedDocumentModel.value = fileUploadModels.value.slice();
+  }
   if (paymentMethodsForm.status == 'edit') {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price - payment.discount_value;
@@ -1705,6 +1705,7 @@ const editPaymentModal = (
     }
     isFieldReadonly.value = true;
     isCreditApprovalView.value = true;
+    isVerificationAllowed.value = true;
   }
   createPaymentModal.value = true;
 };
@@ -1752,13 +1753,16 @@ const validateViewPayment = isValid => {
     } else {
       isApprovedDocumentNotUploaded.value = false;
     }
-  }
-
-  if (isApproveConfirm.value === false && isValid) {
+  }  
+  if (isApproveConfirmed.value === false && isValid) {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
     }
-    isApproveConfirm.value = true;
+    isApproveConfirmed.value = true;
+    return true;
+  }
+
+  if (isApproveNotChecked.value === true) {
     return true;
   }  
   /*
@@ -1997,6 +2001,9 @@ const addPayment = isValid => {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
+          if (props.sendUpdate) {
+            location.reload();
+          }
         },
         onError: res => {
           notification.error({
@@ -2173,6 +2180,16 @@ const deleteDocument = (docName, count) => {
       );
     }
     trashedFilesModal.value.push(docName);
+  } else if (paymentMethodsForm.status == 'view' && paymentMethodsForm.collection_type==='insurer' && approvedDocumentModel.value[count]) { 
+    approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);    
+  } else if (
+    paymentMethodsForm.status == 'view' &&
+    paymentMethodsForm.collection_type === 'insurer' &&
+    approvedDocumentModel.value[count]
+  ) {
+    approvedDocumentModel.value[count] = approvedDocumentModel.value[
+      count
+    ].filter(item => item.doc_name !== docName);
   } else {
     router.post(
       `/documents/delete`,
@@ -2207,7 +2224,14 @@ const deleteDocument = (docName, count) => {
 
 const uploadDocument = (doc, files, count) => {
   files = files.files;
-  if (files.length == 0) return;
+   // Error if invalid files are selected
+   if (files.length == 0) {
+    notification.error({
+            title: 'Document upload failed, invalid file selected',
+            position: 'top',
+          }); 
+    return;  
+  }
 
   let url = '/quotes/' + props.quoteType + '/documents/store-multiple';
   let splitPaymentDocType = null;
@@ -2323,37 +2347,40 @@ const uploadDocument = (doc, files, count) => {
 const validateAccessForSendUpdate = ref(false);
 if (props.sendUpdate) {
   const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
-  const allowedPaymentStatus = [
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.PAID,
+  const allowedPaymentStatusForInsurer = [
     props.paymentStatusEnum.PENDING,
+    props.paymentStatusEnum.CREDIT_APPROVED,
   ];
 
-  if (
-    props.payments.length > 0 &&
-    paymentsDetails.collection_type == 'insurer'
-  ) {
-    validateAccessForSendUpdate.value =
-      allowedPaymentStatus.includes(paymentsDetails.payment_status_id) &&
-      paymentsDetails.credit_approval !== null;
-  } else if (
-    props.payments.length > 0 &&
-    paymentsDetails.collection_type == 'broker'
-  ) {
-    validateAccessForSendUpdate.value =
-      paymentsDetails.payment_status_id == props.paymentStatusEnum.PAID;
+  const allowedPaymentStatusForBroker = [
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.CREDIT_APPROVED,
+  ];
+
+  if (props.payments.length > 0) {
+    if (paymentsDetails.collection_type == 'insurer') {
+      validateAccessForSendUpdate.value = allowedPaymentStatusForInsurer.includes(
+        paymentsDetails.payment_status_id,
+      );
+    } 
+
+    if(paymentsDetails.collection_type == 'broker') {
+      validateAccessForSendUpdate.value = allowedPaymentStatusForBroker.includes(
+        paymentsDetails.payment_status_id,
+      );
+    }
   }
 }
 
 const getCaptureValidation = computed(() => {
   return payment => {
-    //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
     if (
       (props.payments.length > 0 &&
         payment.total_price === payment.total_amount + payment.discount_value &&
-        (((props.quoteRequest.quote_status_id === 6 ||
-          props.quoteRequest.quote_status_id === 32 ||
-          props.quoteRequest.quote_status_id === 15) &&
+        (((props.isAmlClearedForPayment || props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared ||
+          props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined ||
+          props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved) &&
           props.quoteRequest.kyc_decision === 'Complete') ||
           props.quoteType === 'Travel')) || //skip AML & KYC for travel
           validateAccessForSendUpdate.value
@@ -2392,7 +2419,7 @@ const getCaptureValidation = computed(() => {
         const paymentMethodCC = paymentRecord.payment_splits.filter(
           item => item.payment_method.code === 'CC',
         );
-        if (paymentMethodCC.length > 0) {
+        if (paymentMethodCC.length > 0 && paymentRecord.payment_status_id != props.paymentStatusEnum.CREDIT_APPROVED) {
           let totalSplitPayments = paymentRecord.payment_splits.length;
           let paidPaymentStatus = paymentRecord.payment_splits.filter(
             item =>
@@ -2465,6 +2492,7 @@ const getCaptureValidation = computed(() => {
     return false;
   };
 });
+
 //verify if all credit payments are approved
 const verifyCreditArroved = paymentRecord => {
   let caPaymentStatus = paymentRecord.payment_splits.filter(
@@ -2591,6 +2619,8 @@ watch(
     ) {
       if (props.isPlanDetailEnabled) {
         initialAmount.value = props.quoteRequest.price_with_vat;
+      } else if (props.sendUpdate) {
+        initialAmount.value = props.sendUpdate?.total_price;
       } else if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
       } else {
@@ -2638,15 +2668,6 @@ const paymentAllocationStatusTooltip = payment_allocation_status => {
   return '';
 };
 
-// Watch for Ecommerce Price changes
-watch(
-  () => props.eCommercePrice,
-  (newValue, oldValue) => {
-    initialAmount.value = newValue;
-    totalPrice.value = newValue;
-  },
-);
-
 // verify if master payment is paid
 const isMasterPaymentPaid = computed(() => {
   if (props.payments[0].payment_status_id === props.paymentStatusEnum.PAID) {
@@ -2663,13 +2684,6 @@ watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
   newVal => {
     is_lacking_payment.value = newVal || false;
-  },
-);
-
-watch(
-  () => props.sendUpdate?.total_price,
-  (newValue, oldValue) => {
-    totalPrice.value = newValue;
   },
 );
 
@@ -2709,7 +2723,6 @@ watch(
 
 // verifiy if verify option is enabled
 const isVerifiedEnabled = computed(() => {
-  return false; // temporary return,not part of M2
   if (
     paymentMethodsModels.value[splitPaymentNo.value] === 'CC' ||
     paymentMethodsModels.value[splitPaymentNo.value] === 'CA' ||
@@ -2719,6 +2732,15 @@ const isVerifiedEnabled = computed(() => {
   }
   return true;
 });
+
+watch(
+  () => props.sendUpdate?.total_price,
+  (newValue, oldValue) => {
+    totalPrice.value = newValue;
+  },
+);
+
+const lookupsEnum = page.props.lookupsEnum;
 </script>
 
 <template>
@@ -3502,7 +3524,7 @@ const isVerifiedEnabled = computed(() => {
                   @change="handleDiscountChange"
                 >
                   <template v-for="option in discountTypes" :key="option.value">
-                    <option :value="option.value" :title="option.tooltip">
+                    <option :value="option.value" :title="option.tooltip" v-if="option.value !== lookupsEnum.SYSTEM_ADJUSTED_DISCOUNT">
                       {{ option.label }}
                     </option>
                   </template>
@@ -4239,7 +4261,7 @@ const isVerifiedEnabled = computed(() => {
               <div class="w-1/5 px-2" v-if="isVerifiedEnabled">
                 {{
                   splitPaymentRecord.verified_at !== null
-                    ? formatDate(splitPaymentRecord.verified_at, true)
+                    ? splitPaymentRecord.verified_at
                     : 'N/A'
                 }}
               </div>
@@ -4452,6 +4474,22 @@ const isVerifiedEnabled = computed(() => {
               v-model="paymentMethodsForm.notes"
             />
           </x-field>
+        </div>
+
+        <div
+          class="flex items-center justify-center"
+          v-if="
+            splitPaymentRecord.verified_by !== null &&
+            paymentMethodsForm.status == 'view'
+          "
+        >
+          <p class="text-lg font-bold text-blue-400 mr-2">
+            Payment has been verified
+          </p>
+          <img
+            style="width: 30px; height: 30px"
+            src="/images/payment_verified.jpg"
+          />
         </div>
         
         <template

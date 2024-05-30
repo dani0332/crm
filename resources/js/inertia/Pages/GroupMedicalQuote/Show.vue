@@ -1,5 +1,5 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
@@ -29,6 +29,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   record: Object,
   permissions: Object,
@@ -1008,10 +1009,12 @@ watch(
       :quoteType="page.props.quoteType"
       :payments="quote.payments"
     />
+    
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="page.props.quoteType"
-      :payments="quote.payments"
+			v-if="isNewPaymentStructure"
+			:quoteType="page.props.quoteType"
+			:payments="quote.payments"
+      :paymentDocument="documentTypeCodes.filter(item => ['GMQPD', 'GMQPDR', 'GMQDPDR'].includes(item.code))"
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -1019,23 +1022,11 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="
-        documentTypes.filter(
-          item =>
-            item.code === 'GMQPD' ||
-            item.code === 'GMQPDR' ||
-            item.code === 'GMQDPDR',
-        )
-      "
-      :quoteRequest="quote"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
       quoteSubType="Group Medical"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
@@ -1055,6 +1046,7 @@ watch(
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
+      quoteType="Business"
     />
 
     <BookPolicy

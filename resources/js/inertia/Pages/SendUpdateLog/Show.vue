@@ -366,7 +366,7 @@ const onKeyPress = (event) => {
               </dd> -->
             </template>
           </div>
-          <div class="grid sm:grid-cols-2">
+          <div class="grid sm:grid-cols-2" v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car">
               <template v-if="props.additionalField && selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.AOCOV">
                 <dt>
                   <label

@@ -16,6 +16,8 @@ class QuoteSync extends Model
         'updated_fields',
         'is_synced',
         'synced_at',
+        'status',
+        'error',
     ];
     public function getCreatedAtAttribute($table)
     {

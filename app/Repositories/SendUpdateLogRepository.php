@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -9,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuote;
+use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
@@ -131,9 +133,9 @@ class SendUpdateLogRepository extends BaseRepository
             $log = $this->find($id)->update([
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
-                'car_addons' => $data['car_addons'] ?? '',
-                'emirates_registration' => $data['emirates_registration'] ?? '',
-                'seating_capacity' => $data['seating_capacity'] ?? '',
+                'car_addons' => $data['car_addons'] ?? null,
+                'emirates_registration' => $data['emirates_registration'] ?? null,
+                'seating_capacity' => $data['seating_capacity'] ?? null,
             ]);
         } catch (\Exception $ex) {
             $log = (object) [
@@ -243,7 +245,9 @@ class SendUpdateLogRepository extends BaseRepository
             $result = $sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             ]);
+            info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
+            logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
@@ -281,6 +285,21 @@ class SendUpdateLogRepository extends BaseRepository
                 $data = array_merge($data, ['reversal_invoice' => $request['reversal_invoice']]);
             }
             $res = $this->find($request['id'])->update($data);
+
+            $payment = Payment::where('send_update_log_id', $request['id'])->firstOrFail();
+            if ($payment) {
+                if (floatval($request['total_price']) > $payment->total_amount) {
+                    $diff = number_format(floatval($request['total_price']) - $payment->total_amount, 2);
+                    if ($diff < 1) {
+                        $payment->discount_value = $diff;
+                        $payment->discount_type = LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT;
+                    } else {
+                        $payment->total_price = $request['total_price'];
+                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                    }
+                    $payment->save();
+                }
+            }
         } catch (\Exception $ex) {
             $res = (object) [
                 'message' => $ex->getMessage(),
