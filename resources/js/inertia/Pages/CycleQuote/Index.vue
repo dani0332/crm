@@ -39,22 +39,47 @@ let availableFilters = {
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  advisors: [],
 };
 
 const filters = reactive(availableFilters);
 const quotesSelected = ref([]);
 const canExport = ref(false);
 
+const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
+const permissionsEnum = page.props.permissionsEnum;
+
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
+// const rolesEnum = page.props.rolesEnum;
+
+const isAllowed = computed(() => {
+  return !hasAnyRole([
+    rolesEnum.CycleAdvisor,
+    rolesEnum.CycleNewBusinessAdvisor,
+    rolesEnum.CycleRenewalAdvisor,
+  ]);
+});
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
 watch(
-    () => filters,
-    () => {
-        if (filters.created_at_start && filters.created_at_end) {
-            canExport.value = true;
-        } else {
-            canExport.value = false;
-        }
-    },
-    { deep: true, immediate: true },
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 let params = useUrlSearchParams('history');
@@ -135,13 +160,6 @@ const onLeadAssigned = () => {
   quotesSelected.value = [];
 };
 
-const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
-});
-
 const handleSelectedFilters = selectedFilters => {
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
@@ -161,13 +179,6 @@ const handleSelectedFilters = selectedFilters => {
 
   onSubmit(true);
 };
-
-const can = permission => useCan(permission);
-const canAny = permissions => useCanAny(permissions);
-const permissionsEnum = page.props.permissionsEnum;
-
-const hasRole = role => useHasRole(role);
-const rolesEnum = page.props.rolesEnum;
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
@@ -384,6 +395,13 @@ watch(
                 label: item.text,
               }))
             "
+          />
+        </x-field>
+        <x-field label="Advisor" v-if="isAllowed">
+          <ComboBox
+            v-model="filters.advisors"
+            placeholder="Search by Advisor"
+            :options="advisorOptions"
           />
         </x-field>
         <x-field label="Is Ecommerce">
