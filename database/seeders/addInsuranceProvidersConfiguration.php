@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\InsuranceProvider;
 use Illuminate\Database\Seeder;
 
-class addInusranceProvidersConfiguration extends Seeder
+class addInsuranceProvidersConfiguration extends Seeder
 {
     /**
      * Run the database seeds.
@@ -62,6 +62,7 @@ class addInusranceProvidersConfiguration extends Seeder
             ['code' => 'OI', 'sage_vendor_id' => 'IP049', 'gl_liaiblity_account' => '55490'],
             ['code' => 'OI2', 'sage_vendor_id' => 'IP002', 'gl_liaiblity_account' => '55020'],
             ['code' => 'OIC', 'sage_vendor_id' => 'IP006', 'gl_liaiblity_account' => '55080'],
+            ['code' => 'STF', 'sage_vendor_id' => 'IP006', 'gl_liaiblity_account' => '55080'],
             ['code' => 'OUNB', 'sage_vendor_id' => 'IP014', 'gl_liaiblity_account' => '55120'],
             ['code' => 'QIC', 'sage_vendor_id' => 'IP001', 'gl_liaiblity_account' => '55010'],
             ['code' => 'RAK', 'sage_vendor_id' => 'IP046', 'gl_liaiblity_account' => '55450'],

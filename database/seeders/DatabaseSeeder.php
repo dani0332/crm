@@ -28,10 +28,10 @@ class DatabaseSeeder extends Seeder
             AddSendUpdatesCategoriesInLookups::class,
             InslyRoles::class,
             InslyPermissions::class,
-            addInusranceProvidersConfiguration::class,
             QuoteStatusMapSeeder::class,
             QuoteStatusSeeder::class,
             ApplicationStorageSeeder::class,
+            addInsuranceProvidersConfiguration::class,
         ]);
     }
 }
