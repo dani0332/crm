@@ -716,7 +716,7 @@ class SendUpdateLogService
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
-                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
+                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
                     if (! empty($sendUpdateLog->car_addons)) { // will work on Add optional cover.
                         foreach ($sendUpdateLog->car_addons as $addonId) {
                             CarQuoteRequestAddOn::updateOrCreate([

@@ -139,6 +139,7 @@ const bpForm = useForm({
   modelType: props.modelType,
   transaction_payment_status_tool_tip:
     page.props.bookPolicyDetails.paymentStatusTooltip,
+  line_of_business: page.props?.bookPolicyDetails?.lineOfBusiness,
 });
 
 let is_lacking_payment = ref(
@@ -434,7 +435,7 @@ const showInsufficientPaymentAlert = () => {
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ props?.quoteType }}</dd>
+                <dd>{{ bpForm.line_of_business }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>

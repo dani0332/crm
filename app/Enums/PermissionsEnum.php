@@ -322,38 +322,66 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
     public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
+    public const BIKE_DISTRIBUTION_REPORT = 'bike-distribution-report';
+    public const HEALTH_DISTRIBUTION_REPORT = 'health-distribution-report';
+    public const TRAVEL_DISTRIBUTION_REPORT = 'travel-distribution-report';
+    public const LIFE_DISTRIBUTION_REPORT = 'life-distribution-report';
+    public const HOME_DISTRIBUTION_REPORT = 'home-distribution-report';
+    public const PET_DISTRIBUTION_REPORT = 'pet-distribution-report';
+    public const CYCLE_DISTRIBUTION_REPORT = 'cycle-distribution-report';
+    public const YACHT_DISTRIBUTION_REPORT = 'yacht-distribution-report';
+    public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
+    public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
+    public const DOCUMENT_DELETE = 'document-delete';
 
     public static function getAdvisorConversionReportPermissions()
     {
         return [
-            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
-            PermissionsEnum::BIKE_CONVERSION_REPORT,
-            PermissionsEnum::HEALTH_CONVERSION_REPORT,
-            PermissionsEnum::TRAVEL_CONVERSION_REPORT,
-            PermissionsEnum::LIFE_CONVERSION_REPORT,
-            PermissionsEnum::HOME_CONVERSION_REPORT,
-            PermissionsEnum::PET_CONVERSION_REPORT,
-            PermissionsEnum::CYCLE_CONVERSION_REPORT,
-            PermissionsEnum::YACHT_CONVERSION_REPORT,
-            PermissionsEnum::CORPLINE_CONVERSION_REPORT,
-            PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT,
+            self::ADVISOR_CONVERSION_REPORT_VIEW,
+            self::BIKE_CONVERSION_REPORT,
+            self::HEALTH_CONVERSION_REPORT,
+            self::TRAVEL_CONVERSION_REPORT,
+            self::LIFE_CONVERSION_REPORT,
+            self::HOME_CONVERSION_REPORT,
+            self::PET_CONVERSION_REPORT,
+            self::CYCLE_CONVERSION_REPORT,
+            self::YACHT_CONVERSION_REPORT,
+            self::CORPLINE_CONVERSION_REPORT,
+            self::GROUPMEDICAL_CONVERSION_REPORT,
         ];
     }
 
     public static function getComprehensiveDashboardPermissions()
     {
         return [
-            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
-            PermissionsEnum::BIKE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::HEALTH_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::TRAVEL_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+            self::COMPREHENSIVE_DASHBOARD_VIEW,
+            self::BIKE_COMPREHENSIVE_DASHBOARD,
+            self::HEALTH_COMPREHENSIVE_DASHBOARD,
+            self::TRAVEL_COMPREHENSIVE_DASHBOARD,
+            self::LIFE_COMPREHENSIVE_DASHBOARD,
+            self::HOME_COMPREHENSIVE_DASHBOARD,
+            self::PET_COMPREHENSIVE_DASHBOARD,
+            self::CYCLE_COMPREHENSIVE_DASHBOARD,
+            self::YACHT_COMPREHENSIVE_DASHBOARD,
+            self::CORPLINE_COMPREHENSIVE_DASHBOARD,
+            self::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+        ];
+    }
+
+    public static function getAdvisorDistributionReportPermissions()
+    {
+        return [
+            self::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+            self::BIKE_DISTRIBUTION_REPORT,
+            self::HEALTH_DISTRIBUTION_REPORT,
+            self::TRAVEL_DISTRIBUTION_REPORT,
+            self::LIFE_DISTRIBUTION_REPORT,
+            self::HOME_DISTRIBUTION_REPORT,
+            self::PET_DISTRIBUTION_REPORT,
+            self::CYCLE_DISTRIBUTION_REPORT,
+            self::YACHT_DISTRIBUTION_REPORT,
+            self::CORPLINE_DISTRIBUTION_REPORT,
+            self::GROUPMEDICAL_DISTRIBUTION_REPORT,
         ];
     }
 }
