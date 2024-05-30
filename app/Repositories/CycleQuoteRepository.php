@@ -73,6 +73,10 @@ class CycleQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
+            ->when(isset(request()->advisors) && ! empty(request()->advisors), function ($query) {
+                $advisors = request()->advisors;
+                    $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy($sort_by, $sort_type);
