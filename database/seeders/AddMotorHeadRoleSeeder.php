@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Role;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 
@@ -13,15 +12,14 @@ class AddMotorHeadRoleSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
     public function run(): void
     {
         $carManagerRole = Role::findByName('CAR_MANAGER');
 
-        if (!$carManagerRole) {
+        if (! $carManagerRole) {
             Log::warning('CAR_MANAGER role not found. Motor Head role creation skipped.');
+
             return;
         }
 
@@ -36,7 +34,7 @@ class AddMotorHeadRoleSeeder extends Seeder
         try {
             $motorHeadRole->syncPermissions($carManagerRole->permissions);
         } catch (\Exception $e) {
-            Log::error('Error assigning permissions to Motor Head role: ' . $e->getMessage());
+            Log::error('Error assigning permissions to Motor Head role: '.$e->getMessage());
         }
     }
 }

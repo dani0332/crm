@@ -78,7 +78,7 @@ class DatabaseSeeder extends Seeder
             // RevivalConversionReportPermissionSeeder::class,
             // end
             // AddCrossLOBSeeder::class,
-            AddMotorHeadRoleSeeder::class
+            AddMotorHeadRoleSeeder::class,
         ]);
     }
 }
