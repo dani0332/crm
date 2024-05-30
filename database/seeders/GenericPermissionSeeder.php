@@ -7,6 +7,7 @@ use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 
 class GenericPermissionSeeder extends Seeder
 {
@@ -191,6 +192,7 @@ class GenericPermissionSeeder extends Seeder
         $this->advisorConversionReportSeeds();
         $this->quoteSyncSeeds();
         $this->advisorDistributionReportSeeds();
+        $this->addMotorHeadNewRole();
         $this->syncMasterPermissionList();
     }
 
@@ -534,6 +536,31 @@ class GenericPermissionSeeder extends Seeder
                     $role->givePermissionTo($permission);
                 }
             }
+        }
+    }
+
+    public function addMotorHeadNewRole()
+    {
+        $carManagerRole = Role::findByName('CAR_MANAGER');
+
+        if (! $carManagerRole) {
+            Log::warning('CAR_MANAGER role not found. Motor Head role creation skipped.');
+
+            return;
+        }
+
+        $motorHeadRole = Role::firstOrCreate([
+            'name' => 'MOTOR_HEAD',
+        ], [
+            'guard_name' => 'web',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        try {
+            $motorHeadRole->syncPermissions($carManagerRole->permissions);
+        } catch (\Exception $e) {
+            Log::error('Error assigning permissions to Motor Head role: '.$e->getMessage());
         }
     }
 
