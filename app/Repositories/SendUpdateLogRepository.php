@@ -319,7 +319,8 @@ class SendUpdateLogRepository extends BaseRepository
         })->orderBy('id', 'desc')->get();
     }
 
-    public function checkPolicyDetailsFilled($sendUpdate, $quoteTypeId, $quote) {
+    public function checkPolicyDetailsFilled($sendUpdate, $quoteTypeId, $quote)
+    {
 
         $sendUpdatePolicyDetails = [
             'first_name' => ($sendUpdate->first_name ?? $quote->first_name) ?? null,
@@ -338,7 +339,7 @@ class SendUpdateLogRepository extends BaseRepository
         }
 
         $filledValues = array_filter($sendUpdatePolicyDetails, function ($value) {
-            return !is_null($value) && $value !== '';
+            return ! is_null($value) && $value !== '';
         });
 
         if (count($sendUpdatePolicyDetails) === count($filledValues)) {
