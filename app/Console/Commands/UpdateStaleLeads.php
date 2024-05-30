@@ -74,7 +74,7 @@ class UpdateStaleLeads extends Command
         $lostReasonId = QuoteStatusEnum::LOSTREASONID; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
-            $specifiedDate = Carbon::parse('2024-06-23 23:59:59');
+            $specifiedDate = Carbon::parse('2024-06-24 23:59:59');
             $currentDate = Carbon::now();
 
             if ($currentDate->lessThan($specifiedDate)) {
