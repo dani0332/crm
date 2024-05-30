@@ -304,9 +304,7 @@ trait GenericQueriesAllLobs
             return $this->getUnpaidStatus();
         }
 
-        $totalAmount = $payment->captured_amount + $payment->discount_value;
-
-        return $this->getPaymentStatus($payment->captured_amount, $totalAmount, $quote->price_with_vat);
+        return $this->getPaymentStatus($payment);
     }
 
     private function getUnpaidStatus()
@@ -317,17 +315,19 @@ trait GenericQueriesAllLobs
         ];
     }
 
-    private function getPaymentStatus($capturedAmount, $totalAmount, $priceWithVat)
+    private function getPaymentStatus($payment)
     {
-        if ($capturedAmount == 0) {
+        if ($payment->transaction_payment_status == TransactionPaymentStatusEnum::UNPAID_TEXT) {
             $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID;
-        } elseif ($totalAmount >= $priceWithVat) {
+        } elseif ($payment->transaction_payment_status == TransactionPaymentStatusEnum::FULLY_PAID_TEXT) {
             $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PAID;
-        } else {
+        } else if ($payment->transaction_payment_status == TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT){
             $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
+        } else{
+            return $this->getUnpaidStatus();
         }
 
         return [$paymentStatus, $paymentStatusTooltip];
