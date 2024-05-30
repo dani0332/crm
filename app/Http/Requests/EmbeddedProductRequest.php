@@ -25,6 +25,11 @@ class EmbeddedProductRequest extends FormRequest
     {
         $id = request()->route()->parameter('embedded_product');
 
+        $minAgeRule = 'nullable|int';
+        if ($this->input('min_age') && $this->input('max_age')) {
+            $minAgeRule = 'nullable|int|lte:max_age';
+        }
+
         return [
             'insurance_provider_id' => 'nullable|int|exists:insurance_provider,id',
             'product_name' => 'required',
@@ -44,6 +49,8 @@ class EmbeddedProductRequest extends FormRequest
             'logic_description' => 'nullable',
             'company_documents' => 'nullable',
             'is_active' => 'nullable',
+            'min_age' => $minAgeRule,
+            'max_age' => 'nullable|int',
         ];
     }
 }
