@@ -61,6 +61,10 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by.email',
     },
+    {
+      text: 'Action',
+      value: 'action',
+    }
   ],
 });
 
@@ -196,6 +200,9 @@ const sendUpdateValidation = () => {
       });
     });
 };
+
+const permissionEnum = page.props.permissionsEnum;
+
 </script>
 
 <template>
@@ -259,7 +266,7 @@ const sendUpdateValidation = () => {
               {{ item.original_name }}
             </a>
           </template>
-          <template #item-action="{ doc_name }" v-if="!isSendUpdatePage">
+          <template #item-action="{ doc_name }" v-if="can(permissionEnum.DOCUMENT_DELETE)">
             <div>
               <x-button
                 size="xs"
