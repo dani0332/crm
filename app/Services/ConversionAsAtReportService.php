@@ -34,7 +34,7 @@ class ConversionAsAtReportService extends BaseService
                     DB::raw('SUM(CASE WHEN
                         personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')
                         and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'"
-                        and personal_quotes.transaction_approved_date <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
+                        and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
                         THEN 1 ELSE 0 END) as bad_leads'),
                     DB::raw(
                         'SUM(
@@ -44,7 +44,7 @@ class ConversionAsAtReportService extends BaseService
                                 )
                                 OR
                                 ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')
-                                and personal_quotes.transaction_approved_date <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
+                                and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
                                 )
                             )
                           and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'"
