@@ -65,9 +65,15 @@ class UpdateStaleLeads extends Command
         $lostReasonId = QuoteStatusEnum::LOSTREASONID; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
+            $specifiedDate = Carbon::parse('2024-06-22 23:59:59');
+            $currentDate = Carbon::now();
+
+            if ($currentDate->lessThan($specifiedDate)) {
+                return;
+            }
+
             info('------------------- Update Stale Leads Command - Updating - ' . now() . ' : ' . $eligibleQuoteType . ' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
-                ->where('quote_status_date', '>', Carbon::parse('2024-05-23 23:59:59'))
                 ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))->endOfDay())
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
                     $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
