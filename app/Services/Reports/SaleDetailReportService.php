@@ -22,7 +22,7 @@ class SaleDetailReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->select(
                 DB::raw('DISTINCT(personal_quotes.policy_number)'),
-                DB::raw("CONCAT(p.reference, ' ', p.tax_invoice_number) as transactions"),
+                DB::raw("CONCAT(p.reference, ' ', p.insurer_tax_number) as transactions"),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
                 DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
@@ -38,7 +38,7 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw('FORMAT(p.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
                 DB::raw('FORMAT((commission_vat_applicable + commission_vat),2) as total_commission'),
                 DB::raw('UPPER(p.collection_type) as collects'),
-                'tax_invoice_number as insurer_tax_invoice_number',
+                'p.insurer_tax_number as insurer_tax_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',

@@ -11,6 +11,7 @@ use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -215,7 +216,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
-        if ($modelType == HealthQuote::class) {
+        if ($modelType == HealthQuote::class || $modelType == TravelQuote::class) {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('premium');
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
@@ -227,7 +228,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     } else {
 
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
-        if ($modelType == HealthQuote::class) {
+        if ($modelType == HealthQuote::class || $modelType == TravelQuote::class) {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
@@ -778,6 +779,10 @@ if (! function_exists('getCardViewRequestFilters')) {
             if ($request->is_renewal == quoteTypeCode::noText) {
                 $partialQuery->whereNull('previous_quote_policy_number');
             }
+        }
+
+        if (isset($request->advisors) && ! empty($request->advisors)) {
+            $partialQuery->whereIn('advisor_id', $request->advisors)->whereNotNull('advisor_id');
         }
     }
 }

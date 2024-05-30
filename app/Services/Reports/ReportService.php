@@ -505,7 +505,7 @@ class ReportService extends BaseService
             ->orderBy(DB::raw('DATE(cqr.transaction_approved_at)'));
 
         // Apply team filter
-        if ((isset($request->teams)) && count($request->teams) > 0) {
+        if ((! empty($request->teams)) && is_array($request->teams)) {
             $totalPremiumQuery->whereIn('cqr.advisor_id', function ($teamsSubQuery) use ($request) {
                 $teamsSubQuery->select('ut.user_id')
                     ->from('user_team as ut')

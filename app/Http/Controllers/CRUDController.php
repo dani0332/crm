@@ -668,7 +668,7 @@ class CRUDController extends Controller
             [$allowQuoteLogAction, $carLostChangeStatus, $leadStatuses] = $this->carQuoteService->checkCarLostPermissions($record, $paymentEntityModel, $leadStatuses);
 
             if (($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) && $leadStatuses != null) {
-                $leadStatuses = $leadStatuses->whereNotIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
+                $leadStatuses = $leadStatuses->whereNotIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::EarlyRenewal])->all();
             }
 
             $daysAfterCapturedPayment = null;
@@ -825,7 +825,7 @@ class CRUDController extends Controller
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
-                'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
+                'quoteDocuments' => $quoteDocuments,
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),

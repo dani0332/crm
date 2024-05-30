@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Reports;
+namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -13,10 +13,6 @@ use App\Models\HealthQuote;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
-use App\Services\BaseService;
-use App\Services\CRUDService;
-use App\Services\Query;
-use App\Services\Request;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -249,12 +245,12 @@ class RenewalBatchReportService extends BaseService
             $nextMonth = Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($dateFormat);
 
             $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-            $CurrentMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->startOfMonth()->format($monthDigitFormat), '0');
+            $previousMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
             $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->whereBetween('month', [$CurrentMonthDigitWise, $nextMonthDigitWise])
+                ->whereBetween('month', [$previousMonthDigitWise, $nextMonthDigitWise])
                 ->orderByDesc('end_date')
                 ->get()
                 ->pluck('name', 'id')
@@ -465,12 +461,12 @@ class RenewalBatchReportService extends BaseService
             $nextMonth = Carbon::parse($reportDateEnd)->addMonth()->endOfMonth()->format($dateFormat);
 
             $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-            $currentMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->startOfMonth()->format($monthDigitFormat), '0');
+            $previousMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
             $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->whereBetween('month', [$currentMonthDigitWise, $nextMonthDigitWise])
+                ->whereBetween('month', [$previousMonthDigitWise, $nextMonthDigitWise])
                 ->orderByDesc('end_date')
                 ->get()
                 ->pluck('name', 'id')

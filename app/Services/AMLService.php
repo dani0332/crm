@@ -504,7 +504,7 @@ class AMLService
     private function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients)
     {
         $emailL_sys = config('constants.APP_ENV');
-        if ($emailL_sys == 'PRODUCTION') {
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
             $fromName = config('constants.MAIL_FROM_NAME_AML');
         } else {
@@ -573,7 +573,7 @@ class AMLService
     private function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients)
     {
         $emailL_sys = config('constants.APP_ENV');
-        if ($emailL_sys == 'PRODUCTION') {
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
             $fromName = config('constants.MAIL_FROM_NAME_AML');
         } else {
