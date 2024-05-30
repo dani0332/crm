@@ -465,12 +465,12 @@ class RenewalBatchReportService extends BaseService
             $nextMonth = Carbon::parse($reportDateEnd)->addMonth()->endOfMonth()->format($dateFormat);
 
             $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-            $previousMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
+            $currentMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->startOfMonth()->format($monthDigitFormat), '0');
             $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->whereBetween('month', [$previousMonthDigitWise, $nextMonthDigitWise])
+                ->whereBetween('month', [$currentMonthDigitWise, $nextMonthDigitWise])
                 ->orderByDesc('end_date')
                 ->get()
                 ->pluck('name', 'id')
@@ -586,10 +586,6 @@ class RenewalBatchReportService extends BaseService
             $query->whereIn('health_quote_request.renewal_batch', $batchNo);
         } else {
             $query->whereIn('health_quote_request.renewal_batch', $dataBatches ?? $renewalBatches);
-        }
-
-        if (isset($filters->reportDate)) {
-            $query->whereBetween('health_quote_request.created_at', [$previousMonth, $nextMonth]);
         }
 
         return $query;
