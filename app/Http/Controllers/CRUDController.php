@@ -825,7 +825,7 @@ class CRUDController extends Controller
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
-                'quoteDocuments' => $quoteDocuments->toArray(),
+                'quoteDocuments' => $quoteDocuments,
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
