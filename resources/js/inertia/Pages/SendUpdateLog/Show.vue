@@ -214,7 +214,7 @@ const isBookingDetailsVisible = computed(() => {
 const additionalFieldOptions = computed(() => {
   if (props.additionalField) {
     return props.additionalField.map(additional => ({
-      value: additional.code,
+      value: additional.id,
       label: additional.text,
     }));
   }
