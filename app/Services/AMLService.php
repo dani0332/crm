@@ -11,29 +11,40 @@ use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\JetskiQuote;
 use App\Models\KycLog;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
 class AMLService
 {
+    use GenericQueriesAllLobs;
+
     public static function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = ''): bool
     {
         $createdDate = $parseDate;
         if (empty($parseDate)) {
-            $createdDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail()->created_at;
+            $record = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->first();
+            if ($record) {
+                $createdDate = $record->created_at;
+            } else {
+                $createdDate = Carbon::createFromFormat('Y-m-d', '2023-11-30');
+            }
         }
-
         $dateForNonMigratedPersonalQuotes = Carbon::parse($parseDate)->format(config('constants.DATE_FORMAT_ONLY'));
         $dataMigrationDate = match ((int) $quoteTypeId) {
             (int) QuoteTypes::BIKE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
@@ -67,8 +78,8 @@ class AMLService
 
         return match ($quoteTypeId) {
             QuoteTypes::BIKE->id() => BikeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
-            QuoteTypes::CYCLE->id() => true,
-            QuoteTypes::JETSKI->id() => true,
+            QuoteTypes::CYCLE->id() => CycleQuote::where($filterColumn, $quoteRequestId)->touch(),
+            QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData)
         };
@@ -200,7 +211,7 @@ class AMLService
 
     public static function sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode)
     {
-        $emailSystem = config('constants.emailL_sys');
+        $emailSystem = config('constants.APP_ENV');
         $errorEmailRecipients = explode(',', config('constants.ERROR_EMAIL_RECIPIENTS'));
 
         $subject = $emailSystem.' BRIDGER SEARCH API ERROR | '.\Request::url().' | '.date(config('constants.DB_DATE_FORMAT_MATCH'));
@@ -215,7 +226,7 @@ class AMLService
     public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
     {
         $emailRecipients = [];
-        $emailSystem = config('constants.emailL_sys');
+        $emailSystem = config('constants.APP_ENV');
         $complianceRole = $forComplianceSuperUser ? [RolesEnum::ComplianceSuperUser] : [RolesEnum::COMPLIANCE, RolesEnum::ComplianceSuperUser];
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
@@ -331,5 +342,267 @@ class AMLService
         return collect($fetchAMLRecords)->contains(function ($value) use ($failedScreeningDecisions) {
             return in_array($value, $failedScreeningDecisions);
         });
+    }
+
+    public function checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, $isEmailSendingEnabled, $yob, $companyName)
+    {
+        $quoteId = $quoteRequestId;
+        $amlEndPoint = config('constants.AML_SEARCH_API_ENDPOINT');
+        $appUrl = config('constants.APP_URL');
+        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
+        $checkAMLResponseEntity = false;
+        $isAMLResultFound = false;
+        if ($companyName != null) {
+            $checkAMLResponseEntity = $this->checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl);
+        }
+        $checkAMLResponseIndividual = $this->checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl);
+
+        if (isset($checkAMLResponseEntity['resultsFound'])) {
+            if ($checkAMLResponseEntity['resultsFound'] > 0) {
+                $isAMLResultFound = true;
+            } else {
+                $isAMLResultFound = false;
+            }
+        }
+        if (isset($checkAMLResponseIndividual['resultsFound'])) {
+            if ($checkAMLResponseIndividual['resultsFound'] > 0) {
+                $isAMLResultFound = true;
+            } else {
+                $isAMLResultFound = false;
+            }
+        }
+
+        // Match is found
+        if ($isAMLResultFound) {
+            // Send Email alert to Compliance team only
+            $quoteTypeName = QuoteType::where('id', $quoteTypeId)->value('text'); // Get quote type text
+
+            // Get Ref-ID
+            $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
+            if (checkPersonalQuotes($quoteTypeCode) && (! $this->isDataMigrated($quoteTypeId, $quoteId))) {
+                $quoteId = $this->getPersonalQuoteId($quoteTypeId, $quoteId);
+            }
+            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteId);
+
+            if ($isEmailSendingEnabled && $quoteCdbId) {
+                $fullName = $firstName.' '.$lastName;
+                if ($companyName != null) {
+                    $this->sendAMLMatchedEmailComplianceTeam($amlUrl, $checkAMLResponseEntity, $companyName, $quoteTypeName, $quoteCdbId);
+                }
+                $this->sendAMLMatchedEmailComplianceTeam($amlUrl, $checkAMLResponseIndividual, $fullName, $quoteTypeName, $quoteCdbId);
+            }
+        }
+
+        // API failed
+
+        return ''; // return http code
+    }
+
+    private function checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl)
+    {
+        // creating the data for the request
+        $requestDataForEntity = [];
+        $requestDataForEntity['search'] = $companyName;
+        $requestDataForEntity['quoteRequestId'] = $quoteRequestId;
+        $requestDataForEntity['quoteTypeId'] = $quoteTypeId;
+        //executing request
+        $amlRequest = Http::timeout(60)->contentType('application/json')->send('POST', $amlEndPoint.'/search-entity', ['body' => json_encode($requestDataForEntity)]);
+        //capturing response
+        $requestStatus = $amlRequest->status();
+        $response = $amlRequest->json();
+        // checking if the request wasn't successful
+        if ($requestStatus != 201 && $requestStatus != 200) {
+            $requestMessage = '';
+            foreach ($response as $key1 => $value1) {
+                $requestMessage .= $key1.': '.$value1;
+                $requestMessage .= '<pre>';
+            }
+
+            $emailAmlData = '';
+            foreach ($requestDataForEntity as $key => $value) {
+                $emailAmlData .= $key.': '.$value;
+                $emailAmlData .= '<pre>';
+            }
+
+            // Send Error Email alert to engineering team
+            $this->sendAMLErrorEmailEngTeam($emailAmlData, $amlUrl, $requestStatus, $requestMessage);
+        }
+
+        return $response;
+    }
+
+    private function checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl)
+    {
+        // creating the data for the request
+        $requestDataForIndividual = [];
+        $requestDataForIndividual['search'] = $firstName.' '.$lastName;
+        $requestDataForIndividual['quoteRequestId'] = $quoteRequestId;
+        $requestDataForIndividual['quoteTypeId'] = $quoteTypeId;
+        $requestDataForIndividual['yob'] = $yob;
+        //executing request
+        $amlRequest = Http::timeout(60)->contentType('application/json')->send('POST', $amlEndPoint.'/search', ['body' => json_encode($requestDataForIndividual)]);
+        //capturing response
+        $requestStatus = $amlRequest->status();
+        $response = $amlRequest->json();
+        // checking if the request wasn't successful
+        if ($requestStatus != 201 && $requestStatus != 200) {
+            $requestMessage = '';
+            if (is_array($response) || is_object($response)) {
+                foreach ($response as $key1 => $value1) {
+                    $requestMessage .= $key1.': '.$value1;
+                    $requestMessage .= '<pre>';
+                }
+            }
+
+            $emailAmlData = '';
+            if (is_array($requestDataForIndividual) || is_object($requestDataForIndividual)) {
+                foreach ($requestDataForIndividual as $key => $value) {
+                    $emailAmlData .= $key.': '.$value;
+                    $emailAmlData .= '<pre>';
+                }
+            }
+
+            // Send Error Email alert to engineering team
+            $this->sendAMLErrorEmailEngTeam($emailAmlData, $amlUrl, $requestStatus, $requestMessage);
+        }
+
+        return $response;
+    }
+
+    // Match found Email
+    private function sendAMLMatchedEmailComplianceTeam($amlUrl, $AMLResponse, $fullName, $quoteTypeName, $quoteCdbId)
+    {
+        if ($AMLResponse['resultsFound'] == 0) {
+            return;
+        }
+
+        $recipients = User::select('users.email as user_email')
+            ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
+            ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
+            ->whereIn('roles.name', ['COMPLIANCE'])->get();
+
+        $emailRecipients = [];
+        foreach ($recipients as $recipient) {
+            $emailRecipients[] = $recipient->user_email;
+        }
+        $emailL_sys = config('constants.APP_ENV');
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+        } else {
+            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+        }
+
+        $this->amlComplianceMail('AmlComplianceMail', [
+            'amlUrl' => $amlUrl,
+            'resultsFound' => $AMLResponse['resultsFound'],
+            'fullName' => $fullName,
+            'quoteTypeName' => $quoteTypeName,
+            'quoteCdbId' => $quoteCdbId,
+        ], $emailSubject, $emailRecipients);
+    }
+
+    private function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients)
+    {
+        $emailL_sys = config('constants.APP_ENV');
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = config('constants.MAIL_FROM_NAME_AML');
+        } else {
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+            $fromName = config('constants.MAIL_FROM_NAME');
+        }
+
+        Mail::send(
+            ['html' => $templateName],
+            $templateParams,
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail) {
+                $message->to($emailRecipients)->cc(auth()->user()->email)->subject($emailSubject);
+                $message->from($fromEmail, $fromName);
+            }
+        );
+    }
+
+    public function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName, $forComplianceSuperUser = false)
+    {
+        $complianceRole = $forComplianceSuperUser ? [RolesEnum::ComplianceSuperUser] : [RolesEnum::COMPLIANCE, RolesEnum::ComplianceSuperUser];
+        $complianceUsersEmails = User::select('users.email as user_email')
+            ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
+            ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
+            ->whereIn('roles.name', $complianceRole)->get();
+
+        $complianceEmailRecipients = [];
+        foreach ($complianceUsersEmails as $complianceUsersEmail) {
+            $complianceEmailRecipients[] = $complianceUsersEmail->user_email;
+        }
+
+        if ($quotePaID != '') {
+            // TO will be quotePaID
+            $paUserEmailId = User::where('id', '=', $quotePaID)->value('email');
+            $toRecipient = $paUserEmailId;
+
+            // CC will be all users compliance
+            $ccRecipients = $complianceEmailRecipients;
+        } else {
+            // TO will be currentUserID
+            $currentUserEmailId = User::where('id', '=', auth()->user()->id)->value('email');
+            $toRecipient = $currentUserEmailId;
+
+            // CC will be all users compliance
+            $ccRecipients = $complianceEmailRecipients;
+        }
+
+        $emailL_sys = config('constants.APP_ENV');
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+        } else {
+            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+        }
+
+        $appUrl = config('constants.APP_URL');
+        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
+
+        $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
+            'amlUrl' => $amlUrl,
+            'amlQuoteStatus' => $quoteStatusText,
+            'clientFullName' => $clientFullName,
+            'quoteTypeName' => $quoteTypeText,
+            'quoteCdbId' => $quoteCdbId,
+        ], $emailSubject, $toRecipient, $ccRecipients);
+    }
+
+    private function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients)
+    {
+        $emailL_sys = config('constants.APP_ENV');
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = config('constants.MAIL_FROM_NAME_AML');
+        } else {
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+            $fromName = config('constants.MAIL_FROM_NAME');
+        }
+
+        Mail::send(
+            ['html' => $templateName],
+            $templateParams,
+            function ($message) use ($emailSubject, $toRecipient, $ccRecipients, $fromName, $fromEmail) {
+                $message->to($toRecipient)->cc($ccRecipients)->subject($emailSubject);
+                $message->from($fromEmail, $fromName);
+            }
+        );
+    }
+
+    // Error Email
+    private function sendAMLErrorEmailEngTeam($emailAmlData, $amlUrl, $chAmlStatus, $requestMessage)
+    {
+        $email_sys = config('constants.APP_ENV');
+        $errorEmailRecipients = config('constants.ERROR_EMAIL_RECIPIENTS');
+        $errorEmailRecipients = explode(',', $errorEmailRecipients);
+        $subject = $email_sys.' RYU SEARCH API ERROR | '.\Request::url().' | '.date('d-m-Y H:i:s');
+        MailService::sendEmail('AmlErrorMail', [
+            'amlUrl' => $amlUrl,
+            'emailAmlData' => $emailAmlData,
+            'chAmlStatus' => $chAmlStatus,
+            'requestMessage' => $requestMessage,
+        ], $subject, $errorEmailRecipients);
     }
 }

@@ -4,6 +4,7 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  quoteType: String,
   totalAssignedLeadCount: {
     type: Number,
     default: 0,
@@ -176,7 +177,7 @@ const onStatusSubmit = async () => {
   const item = leadData.value.find(item => item.id === statusModal.data.id);
   item.loading = true;
   await axios
-    .post('/lead-allocation/update-availability', [
+    .post(`/lead-allocation/${page.props.quoteType}/update-availability`, [
       {
         userId: statusModal.data.userId,
         id: statusModal.data.id,
@@ -222,7 +223,7 @@ const onSubmitChanges = async () => {
     });
 
   await axios
-    .post('/lead-allocation/update-availability', max_cap)
+    .post(`/lead-allocation/${page.props.quoteType}/update-availability`, max_cap)
     .then(() => {
       router.get('/lead-allocation', {
         replace: true,
@@ -235,10 +236,10 @@ const onSubmitChanges = async () => {
     });
 };
 
-const onToggleResetCap = async (active, userId) => {
+const onToggleResetCap = async (active, userId, leadId) => {
   loader.submit = true;
   await axios
-    .post('/lead-allocation/toggle-reset-cap', { userId, resetCap: active })
+    .post('/lead-allocation/toggle-reset-cap', {leadId, userId, resetCap: active })
     .finally(() => {
       loader.submit = false;
     });
@@ -250,6 +251,7 @@ onMounted(() => {
       id: item.id,
       userId: item.userId,
       cap: item.max_capacity,
+      
       capEdit: false,
       status: item.is_available,
     };
@@ -392,7 +394,7 @@ onMounted(() => {
         <ItemToggler
           :is-active="reset_cap"
           :id="id"
-          @toggle="onToggleResetCap($event.active, userId)"
+          @toggle="onToggleResetCap($event.active, userId, id)"
         />
       </div>
     </template>

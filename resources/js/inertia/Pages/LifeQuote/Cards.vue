@@ -1,8 +1,18 @@
 <script setup>
+const props = defineProps({
+  quoteStatusEnum: Object,
+  quoteTypeId: String,
+  lostReasons: Object,
+    quoteType: String,
+});
 const page = usePage();
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
+
+provide('quoteStatusEnum', props.quoteStatusEnum);
+provide('quoteTypeId', props.quoteTypeId);
+provide('lostReasons', props.lostReasons);
 
 const quotes = reactive({
   data: page.props.quotes || [],
@@ -125,7 +135,18 @@ const onSearch = id => {
       v-if="quotes.data.length > 0"
       class="flex w-full h-[85vh] space-x-4 overflow-auto"
     >
-      <div
+      <LeadsCard
+        class="flex flex-col flex-shrink-0 w-64 bg-gray-200 border border-gray-300"
+        v-for="quote in quotes.data"
+        :key="quote.id"
+        :quote="quote"
+        :quotes="quotes"
+        :quoteType="quoteType"
+        :quoteTypeId="quoteTypeId"
+        :lostReasons="props.lostReasons"
+        :quoteStatusEnum="props.quoteStatusEnum"
+      />
+      <!-- <div
         v-for="quote in quotes.data"
         :key="quote.id"
         class="flex flex-col flex-shrink-0 w-64 bg-gray-200 border border-gray-300"
@@ -183,9 +204,11 @@ const onSearch = id => {
             :href="route('life-quotes-show', uuid)"
             target="_blank"
             title="View Lead"
-            class="block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"
+            class="block p-3 mt-2 border bg-white border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
           >
-            <div class="font-semibold text-sm">{{ code }}</div>
+            <div class="font-semibold text-sm">
+              {{ code }}
+            </div>
             <div class="flex items-center gap-2">
               <x-icon icon="person" size="sm" class="text-primary-400" />
               <p class="text-xs">{{ first_name }} {{ last_name }}</p>
@@ -206,7 +229,6 @@ const onSearch = id => {
               <p class="text-xs">{{ updated_at }}</p>
             </div>
           </a>
-
           <div
             class="mt-3"
             v-if="
@@ -227,7 +249,7 @@ const onSearch = id => {
             </x-button>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>

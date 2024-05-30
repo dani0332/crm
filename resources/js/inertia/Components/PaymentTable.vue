@@ -10,6 +10,11 @@ defineProps({
   paymentMethods: Object,
   insuranceProviders: Array,
   quote: Object,
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true,
+  }
 });
 
 const createPaymentModal = ref(false);
@@ -196,75 +201,84 @@ const approvePayment = payment => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex justify-between gap-4 items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Payments <x-tag size="sm">{{ payments.length || 0 }}</x-tag>
-      </h3>
-      <x-button
-        v-if="
-          can(permissionsEnum.PaymentsCreate) &&
-          !can(permissionsEnum.ApprovePayments) &&
-          !hasRole(rolesEnum.PA) && enableManageOptions
-        "
-        size="sm"
-        color="orange"
-        @click="addPaymentModal"
-      >
-        Add Payment
-      </x-button>
-    </div>
-    <DataTable
-      table-class-name="tablefixed compact"
-      :headers="paymentTableHeaders"
-      :items="payments || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-code="{ code }">
-        {{ code.toUpperCase() }}
-      </template>
-      <template #item-actions="item">
-        <div class="flex gap-2">
-          <template v-if="can(permissionsEnum.ApprovePayments)">
-            <x-button
-              size="xs"
-              color="error"
-              v-if="item.approve_button && enableManageOptions"
-              @click="approvePayment(item)"
-            >
-              Approve
-            </x-button>
-            <x-button
-              size="xs"
-              disabled
-              color="error"
-              v-if="item.approved_button"
-            >
-              Approved
-            </x-button>
-          </template>
-          <template v-else>
-            <x-button
-              size="xs"
-              color="orange"
-              v-if="item.copy_link_button && enableManageOptions"
-              @click="generateCCLink(item.code)"
-            >
-              Copy Link
-            </x-button>
-            <x-button
-              size="xs"
-              color="emerald"
-              v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button && enableManageOptions"
-              @click="editPaymentModal(item)"
-            >
-              Edit
-            </x-button>
-          </template>
+    <Collapsible expanded>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Payments <x-tag size="sm">{{ payments.length || 0 }}</x-tag>
+          </h3>
         </div>
       </template>
-    </DataTable>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="my-4 flex justify-end">
+          <x-button
+            v-if="
+              can(permissionsEnum.PaymentsCreate) &&
+              !can(permissionsEnum.ApprovePayments) &&
+              !hasRole(rolesEnum.PA) && enableManageOptions
+            "
+            size="sm"
+            color="orange"
+            @click="addPaymentModal"
+          >
+            Add Payment
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="tablefixed compact"
+          :headers="paymentTableHeaders"
+          :items="payments || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-code="{ code }">
+            {{ code.toUpperCase() }}
+          </template>
+          <template #item-actions="item">
+            <div class="flex gap-2">
+              <template v-if="can(permissionsEnum.ApprovePayments)">
+                <x-button
+                  size="xs"
+                  color="error"
+                  v-if="item.approve_button && enableManageOptions"
+                  @click="approvePayment(item)"
+                >
+                  Approve
+                </x-button>
+                <x-button
+                  size="xs"
+                  disabled
+                  color="error"
+                  v-if="item.approved_button"
+                >
+                  Approved
+                </x-button>
+              </template>
+              <template v-else>
+                <x-button
+                  size="xs"
+                  color="orange"
+                  v-if="item.copy_link_button && enableManageOptions"
+                  @click="generateCCLink(item.code)"
+                >
+                  Copy Link
+                </x-button>
+                <x-button
+                  size="xs"
+                  color="emerald"
+                  v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button && enableManageOptions"
+                  @click="editPaymentModal(item)"
+                >
+                  Edit
+                </x-button>
+              </template>
+            </div>
+          </template>
+        </DataTable>
+      </template>
+    </Collapsible>
     <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
       <template #header>
         <span class="text-primary-800 font-semibold">

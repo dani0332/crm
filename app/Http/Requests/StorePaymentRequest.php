@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
+use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -48,6 +50,7 @@ class StorePaymentRequest extends FormRequest
                 'payment.payment_splits.*.payment_amount' => 'required|numeric',
                 'payment.payment_splits.*.payment_method' => 'required|string',
                 'payment.payment_splits.*.due_date' => 'required|date',
+                'send_update_id' => 'nullable|integer',
             ];
         }
 
@@ -62,7 +65,25 @@ class StorePaymentRequest extends FormRequest
         $validator->after(function ($validator) {
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
             if (! $quoteModel) {
-                $validator->errors()->add('value', 'Quote Not Exists');
+                $validator->errors()->add('quote', 'Quote Not Exists');
+            } else {
+                if (! empty(request()->send_update_id)) {
+                    $paymentAlreadyExistsCount = Payment::where('send_update_log_id', request()->send_update_id)->count();
+                } else {
+                    $paymentAlreadyExistsCount = Payment::where('code', $quoteModel->code)->count();
+                }
+
+                if ($paymentAlreadyExistsCount > 0) {
+                    $validator->errors()->add('payment', 'Payment Already Added');
+                }
+            }
+            // check if the user is authorized to apply discount
+            if (request()->input('payment.discount_value') > 0 && auth()->user()->cannot(PermissionsEnum::PAYMENTS_DISCOUNT_ADD)) {
+                $validator->errors()->add('value', 'Not Authorized to Add Discount');
+            }
+            // check if the user is authorized to apply credit approval
+            if (request()->input('payment.credit_approval') != '' && auth()->user()->cannot(PermissionsEnum::PAYMENTS_CREDIT_APPROVAL_ADD)) {
+                $validator->errors()->add('value', 'Not Authorized to Add Credit Approval');
             }
         });
     }

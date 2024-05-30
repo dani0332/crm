@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
@@ -60,11 +61,9 @@ class CarEmailService extends BaseService
                 } else {
                     info('SIC workflow key not found');
                 }
-
             } else {
                 info('SIC workflow already enabled for lead: '.$lead->uuid);
             }
-
         }
 
         if ($lead->advisor_id) {
@@ -88,6 +87,7 @@ class CarEmailService extends BaseService
             $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
             $emailData->renewalDueDate = $carbonDate;
         }
+        info('emailData: '.json_encode($emailData));
 
         return $emailData;
     }
@@ -127,9 +127,26 @@ class CarEmailService extends BaseService
 
     private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
-        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+        $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
-        $emailData = (object) [
+
+        $isRevivalLead = $carQuote->source == LeadSourceEnum::REVIVAL || $carQuote->source == LeadSourceEnum::REVIVAL_PAID || $carQuote->source == LeadSourceEnum::REVIVAL_REPLIED;
+        $wfsBanner = null;
+        $wfsBannerRedirectUrl = null;
+
+        $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
+        if ($campaign) {
+            if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
+                $wfsBanner = $campaign->banners->buyPolicy;
+            }
+            if (property_exists($campaign, 'landingPage')) {
+                $wfsBannerRedirectUrl = $campaign->landingPage;
+            }
+        }
+
+        info('wfsBanner: '.$wfsBanner.' wfsBannerRedirectUrl: '.$wfsBannerRedirectUrl);
+
+        return (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
@@ -138,20 +155,20 @@ class CarEmailService extends BaseService
             'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
-            'documentUrl' => [$documentUrl],
+            'documentUrl' => ! $wfsBanner ? [$documentUrl] : [],
             'carQuoteId' => $carQuote->code,
             'yearOfManufacture' => $carQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.($isRevivalLead ? '?dla=true' : ''), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.'/?assignAdvisor=true',
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor),
+            'wfsBanner' => $wfsBanner,
+            'wfsBannerRedirectUrl' => $wfsBannerRedirectUrl,
         ];
-
-        return $emailData;
     }
 
     private function getAssignmentTypeText($assignmentType)
@@ -204,19 +221,6 @@ class CarEmailService extends BaseService
         $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$uuid.'/payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
 
         return $buyNowLink;
-    }
-
-    private function getAppStorageValueByKey($keyName)
-    {
-        $query = ApplicationStorage::select('value')
-            ->where('key_name', $keyName)
-            ->first();
-
-        if (! $query) {
-            return false;
-        }
-
-        return $query->value;
     }
 
     private function getVehicleName($lead)
@@ -330,5 +334,10 @@ class CarEmailService extends BaseService
 
         // return $top6Plans if $top6Plans is not empty otherwise return $plans
         return ! empty($top6Plans) ? $top6Plans : [];
+    }
+
+    public function sendSICNotificationToAdvisor($lead, $user)
+    {
+        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
     }
 }

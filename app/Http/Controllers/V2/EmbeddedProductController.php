@@ -15,7 +15,9 @@ class EmbeddedProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR.'|'.PermissionsEnum::EMBEDDED_PRODUCT_ADMIN);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'downloadDocument', 'cancelPayment']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'downloadDocument']]);
     }
 
     /**
@@ -166,5 +168,12 @@ class EmbeddedProductController extends Controller
         $filters = $request->all();
 
         return (new EmbeddedProductReport($ep, $filters))->download("Export-{$ep->short_code}-Report");
+    }
+
+    public function cancelPayment(Request $request)
+    {
+        $response = EmbeddedProductRepository::cancelPayment($request->all());
+
+        return response($response['data'], $response['code']);
     }
 }
