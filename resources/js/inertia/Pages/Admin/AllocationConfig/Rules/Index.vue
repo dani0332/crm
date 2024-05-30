@@ -109,7 +109,7 @@ onMounted(() => {
           placeholder="Created Date End"
         />
       </x-field>
-      <x-field label="Tire Name">
+      <x-field label="Rule Name">
         <x-input v-model="filters.name" type="text" class="w-full" />
       </x-field>
     </div>
