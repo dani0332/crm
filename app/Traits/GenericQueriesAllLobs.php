@@ -323,10 +323,10 @@ trait GenericQueriesAllLobs
         } elseif ($payment->transaction_payment_status == TransactionPaymentStatusEnum::FULLY_PAID_TEXT) {
             $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PAID;
-        } else if ($payment->transaction_payment_status == TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT){
+        } elseif ($payment->transaction_payment_status == TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT) {
             $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
-        } else{
+        } else {
             return $this->getUnpaidStatus();
         }
 
