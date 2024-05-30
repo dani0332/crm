@@ -512,7 +512,7 @@ const onKeyPress = (event) => {
       :quote="props.realQuote"
       :expanded="true"
       :extras="{
-        pageType: 'send-update-log',
+        pageType: 'send-update',
         quoteType: props.quoteType,
         sendLogId: props.sendUpdateLog.id,
         members: memberDataDocs(props.membersDetail),
