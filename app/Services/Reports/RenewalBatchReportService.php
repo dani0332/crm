@@ -249,12 +249,12 @@ class RenewalBatchReportService extends BaseService
             $nextMonth = Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($dateFormat);
 
             $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-            $previousMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
+            $CurrentMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->startOfMonth()->format($monthDigitFormat), '0');
             $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->whereBetween('month', [$previousMonthDigitWise, $nextMonthDigitWise])
+                ->whereBetween('month', [$CurrentMonthDigitWise, $nextMonthDigitWise])
                 ->orderByDesc('end_date')
                 ->get()
                 ->pluck('name', 'id')
@@ -415,10 +415,6 @@ class RenewalBatchReportService extends BaseService
          */
         foreach ($batchWiseSegmentedAdvisors as $batch => $segmentedAdvisors) {
             $this->queryForSegmentWiseCarsoldAndEarlyRenewal($query, $segmentedAdvisors[RenewalBatch::SEGMENT_TYPE_VOLUME], $segmentedAdvisors[RenewalBatch::SEGMENT_TYPE_VALUE], $reportDateEnd, $batch);
-        }
-
-        if (isset($filters->reportDate)) {
-            $query->whereBetween('car_quote_request.created_at', [$previousMonth, $nextMonth]);
         }
 
         return $query;
