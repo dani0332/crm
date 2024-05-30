@@ -939,13 +939,6 @@ if (! function_exists('roundNumber')) {
     }
 }
 
-if (! function_exists('roundNumber')) {
-    function roundNumber($number)
-    {
-        return round($number, 2);
-    }
-}
-
 if (! function_exists('getLookupsEnum')) {
     function getLookupsEnum(): array
     {
