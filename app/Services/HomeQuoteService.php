@@ -108,7 +108,14 @@ class HomeQuoteService extends BaseService
             'ent.company_address',
             'qrem.entity_type_code',
             'ent.industry_type_code',
-            'ent.emirate_of_registration_id'
+            'ent.emirate_of_registration_id',
+            'hqr.price_without_vat',
+            'hqr.vat',
+            'hqr.insurer_quote_number',
+            'hqr.policy_issuance_status_id',
+            'hqr.policy_issuance_status_other',
+            'hqr.policy_start_date',
+            'hqr.policy_issuance_date',
         )
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
@@ -640,9 +647,24 @@ class HomeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HomeQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        return HomeQuote::where('id', $id)->with([
+            'insuranceProviderDetails',
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                // This condition added to get the latest payment first for fetching Booking Details accordingly
+                $payment->orderBy('created_at', 'desc');
+            },
+        ])->first();
     }
 
     public function getDuplicateEntityByCode($code)
