@@ -32,9 +32,9 @@ const page = usePage();
 const notification = useNotifications('toast');
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 
-const rowsPerPage = props.extras?.pageType === 'send-update-log' ? 10 : 15;
+const rowsPerPage = props.extras?.pageType === 'send-update' ? 10 : 15;
 const isSendUpdatePage =
-  props.extras?.pageType === 'send-update-log' ? true : false;
+  props.extras?.pageType === 'send-update' ? true : false;
 const isUploading = ref(false);
 const memberTabs = ref('quote-documents');
 
@@ -179,7 +179,7 @@ const sendUpdateButton = computed(() => {
 });
 const sendUpdateValidation = () => {
   axios
-    .post('send-update-validation', {
+    .post('send-update-customer-validation', {
       quoteType: props.quoteType,
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
