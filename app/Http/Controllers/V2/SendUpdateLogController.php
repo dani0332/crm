@@ -216,7 +216,6 @@ class SendUpdateLogController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'additionalField' => $additionalField ?? [],
             'issuanceStatuses' => $issuanceStatuses,
-            'lookupsEnum' => getLookupsEnum(),
         ]);
     }
 
