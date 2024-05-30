@@ -60,7 +60,7 @@ class UpdateStaleLeads extends Command
             QuoteStatusEnum::PolicyCancelled,
         ];
 
-        info('------------------- Update Stale Leads Command Started At: ' . now() . ' -------------------');
+        info('------------------- Update Stale Leads Command Started At: '.now().' -------------------');
 
         $lostReasonId = QuoteStatusEnum::LOSTREASONID; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
@@ -81,17 +81,17 @@ class UpdateStaleLeads extends Command
                 ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote) {
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
                 })->chunkById(1000, function ($quoteDetails) {
-                foreach ($quoteDetails as $quoteDetail) {
-                    if (!isset($quoteDetail->stale_at)) {
-                        $quoteDetail->update([
-                            'stale_at' => now(),
-                        ]);
+                    foreach ($quoteDetails as $quoteDetail) {
+                        if (! isset($quoteDetail->stale_at)) {
+                            $quoteDetail->update([
+                                'stale_at' => now(),
+                            ]);
+                        }
                     }
-                }
-            });
-            info('------------------- Update Stale Leads Command - Updated - ' . now() . ' : ' . $eligibleQuoteType . ' -------------------');
+                });
+            info('------------------- Update Stale Leads Command - Updated - '.now().' : '.$eligibleQuoteType.' -------------------');
 
-            info('------------------- Updating Lost Status on Stale Leads for: ' . $eligibleQuoteType . ' -------------------');
+            info('------------------- Updating Lost Status on Stale Leads for: '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::with('activities')
                 ->whereNotNull('stale_at')
                 ->where('stale_at', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->endOfDay())
@@ -102,14 +102,14 @@ class UpdateStaleLeads extends Command
                             return Carbon::createFromFormat(config('constants.DATE_FORMAT_ONLY'), Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY')))->gt(Carbon::now());
                         });
 
-                        if (!$activityDateCheck) {
+                        if (! $activityDateCheck) {
                             $staleLead->update([
                                 'quote_status_id' => QuoteStatusEnum::Lost,
                                 'quote_status_date' => now(),
                                 'stale_at' => null,
                             ]);
 
-                            info('Quote Found - ' . $eligibleQuoteType . " - Quote Ref-ID: $staleLead->code - Old Status: $staleLead->quote_status_id - New Status: " . QuoteStatusEnum::Lost . " - Updated At: $staleLead->updated_at");
+                            info('Quote Found - '.$eligibleQuoteType." - Quote Ref-ID: $staleLead->code - Old Status: $staleLead->quote_status_id - New Status: ".QuoteStatusEnum::Lost." - Updated At: $staleLead->updated_at");
                             Audit::create([
                                 'event' => 'updated',
                                 'auditable_type' => $eligibleQuoteType,
@@ -141,9 +141,9 @@ class UpdateStaleLeads extends Command
 
                     }
                 });
-            info('------------------- Updated Lost Status on Stale Leads for: ' . $eligibleQuoteType . ' -------------------');
+            info('------------------- Updated Lost Status on Stale Leads for: '.$eligibleQuoteType.' -------------------');
         }
 
-        info('------------------- Update Stale Leads Command Finished for ' . now() . ' -------------------');
+        info('------------------- Update Stale Leads Command Finished for '.now().' -------------------');
     }
 }
