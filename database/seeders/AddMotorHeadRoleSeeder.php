@@ -26,7 +26,7 @@ class AddMotorHeadRoleSeeder extends Seeder
         }
 
         $motorHeadRole = Role::firstOrCreate([
-            'name' => 'Motor Head',
+            'name' => 'Motor_Head',
         ], [
             'guard_name' => GUARD_NAME,
             'created_at' => now(),
