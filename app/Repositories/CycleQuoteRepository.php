@@ -75,7 +75,7 @@ class CycleQuoteRepository extends BaseRepository
             })
             ->when(isset(request()->advisors) && ! empty(request()->advisors), function ($query) {
                 $advisors = request()->advisors;
-                    $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
+                $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
