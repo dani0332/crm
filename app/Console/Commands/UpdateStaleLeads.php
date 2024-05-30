@@ -39,11 +39,11 @@ class UpdateStaleLeads extends Command
      */
     public function handle()
     {
-        $specifiedDate = Carbon::parse('2024-06-22 23:59:59');
+        $specifiedDate = Carbon::parse('2024-06-24 23:59:59');
         $currentDate = Carbon::now();
 
         if ($currentDate->lessThan($specifiedDate)) {
-            info('UpdateStaleLeads Command will run after 2024-06-22 23:59:59');
+            info('UpdateStaleLeads Command will run after 2024-06-24 23:59:59');
 
             return;
         }
@@ -73,13 +73,6 @@ class UpdateStaleLeads extends Command
 
         $lostReasonId = QuoteStatusEnum::LOSTREASONID; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
-
-            $specifiedDate = Carbon::parse('2024-06-24 23:59:59');
-            $currentDate = Carbon::now();
-
-            if ($currentDate->lessThan($specifiedDate)) {
-                return;
-            }
 
             info('------------------- Update Stale Leads Command - Updating - ' . now() . ' : ' . $eligibleQuoteType . ' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
