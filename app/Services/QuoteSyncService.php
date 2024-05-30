@@ -45,7 +45,7 @@ class QuoteSyncService extends BaseService
 
         $sortBy = 'quote_sync.id';
         $sortOrder = 'desc';
-        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
+        if (!empty($filters['sortBy']) && !empty($filters['sortType'])) {
             $sortBy = $filters['sortBy'];
             $sortOrder = $filters['sortType'] ?? 'desc';
         }
@@ -76,10 +76,11 @@ class QuoteSyncService extends BaseService
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::INPROGRESS)
             ->groupBy('quote_uuid')
-            ->get();
+            ->get()
+            ->pluck('quote_uuid')->toArray();
 
-        if (! empty($entries)) {
-            QuoteSync::where('quote_uuid', $entries->pluck('quote_uuid')->toArray())
+        if (!empty($entries)) {
+            QuoteSync::whereIn('quote_uuid', $entries)
                 ->update([
                     'is_synced' => false,
                     'status' => QuoteSyncStatus::WAITING,
