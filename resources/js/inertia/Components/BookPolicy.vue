@@ -139,6 +139,7 @@ const bpForm = useForm({
   modelType: props.modelType,
   transaction_payment_status_tool_tip:
     page.props.bookPolicyDetails.paymentStatusTooltip,
+  line_of_business: page.props?.bookPolicyDetails?.lineOfBusiness,
 });
 
 let is_lacking_payment = ref(
@@ -434,7 +435,7 @@ const showInsufficientPaymentAlert = () => {
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ props?.quoteType }}</dd>
+                <dd>{{ bpForm.line_of_business }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>
@@ -750,7 +751,7 @@ const showInsufficientPaymentAlert = () => {
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
                   <template #tooltip>
-                        <span>{{ 'Please update the booking details.' }}</span>
+                    <span>{{ 'Please update the booking details.' }}</span>
                   </template>
                 </x-tooltip>
                 <template v-if="is_lacking_payment">
@@ -804,8 +805,8 @@ const showInsufficientPaymentAlert = () => {
                     class="mt-4 mr-2"
                     size="sm"
                     color="emerald"
-                    :disabled="true" 
-                    >Edit 
+                    :disabled="true"
+                    >Edit
                   </x-button>
                   <template #tooltip>
                     <span>{{
@@ -898,13 +899,11 @@ const showInsufficientPaymentAlert = () => {
                   <template v-else>
                     <x-tooltip>
                       <x-button
+                        v-if="can(permissionsEnum.BOOK_POLICY_BUTTON)"
                         size="sm"
                         class="mt-4 mr-2"
                         color="orange"
-                        :disabled="
-                          !props.bookPolicyDetails?.editButton ||
-                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
-                        "
+                        :disabled="true"
                       >
                         Book Policy
                       </x-button>

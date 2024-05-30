@@ -378,21 +378,21 @@ function reverseValue(value) {
 }
 
 function updateReversalEntries(response) {
-  reversalEntry.transaction_payment_status = '';
+  reversalEntry.transaction_payment_status = null;
   reversalEntry.invoice_date = response.insurer_invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = (response.insurer_tax_number !== '') ? response.insurer_tax_number + '-REV' : '';
   reversalEntry.broker_invoice_number = (response.broker_invoice_number !== '') ? response.broker_invoice_number + '-REV' : '';
   reversalEntry.insurer_commission_invoice_number = (response.insurer_commmission_invoice_number !== '') ? response.insurer_commmission_invoice_number + '-REV' : '';
-  reversalEntry.discount = response.discount_value || '';
+  reversalEntry.discount = response.discount_value || null;
   reversalEntry.price_vat_applicable = response.send_update_log?.price_vat_applicable || response.paymentable?.price_without_vat;
-  reversalEntry.commission_percentage = ((response.commmission_percentage !== null) ? response.commmission_percentage : response.send_update_log?.commission_percentage) ?? '';
+  reversalEntry.commission_percentage = ((response.commmission_percentage !== null) ? response.commmission_percentage : response.send_update_log?.commission_percentage) ?? null;
   reversalEntry.price_vat_not_applicable = response.send_update_log?.price_vat_not_applicable || response.paymentable?.price_vat_not_applicable;
-  reversalEntry.vat_on_commission = ((response.commission_vat !== null) ? response.commission_vat : response.send_update_log?.vat_on_commission) ?? '';
-  reversalEntry.commission_vat_applicable = response.commission_vat_applicable || '';
-  reversalEntry.total_commission = response.commission || '';
-  reversalEntry.commission_vat_not_applicable = response.commission_vat_not_applicable || '';
-  reversalEntry.total_vat_amount = ((response.total_amount !== null) ? response.total_amount : response.send_update_log?.total_vat_amount) ?? '';
-  reversalEntry.total_price = ((response.total_price !== null && response.total_price > 0) ? response.total_price : response.send_update_log?.total_price) ?? '' ;
+  reversalEntry.vat_on_commission = ((response.commission_vat !== null) ? response.commission_vat : response.send_update_log?.vat_on_commission) ?? null;
+  reversalEntry.commission_vat_applicable = response.commission_vat_applicable || null;
+  reversalEntry.total_commission = response.commission || null;
+  reversalEntry.commission_vat_not_applicable = response.commission_vat_not_applicable || null;
+  reversalEntry.total_vat_amount = ((response.total_amount !== null) ? response.total_amount : response.send_update_log?.total_vat_amount) ?? null;
+  reversalEntry.total_price = ((response.total_price !== null && response.total_price > 0) ? response.total_price : response.send_update_log?.total_price) ?? null;
 }
 
 onMounted(() => {
@@ -406,17 +406,20 @@ onMounted(() => {
 
 const onUpdateReversal = () => {
   state.reversalSectionEdit = !state.reversalSectionEdit;
-  bookingDetailsForm.transaction_payment_status = '';
+  bookingDetailsForm.transaction_payment_status = null;
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
   bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
-  bookingDetailsForm.discount = reversalEntry.discount || '';
-  bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || '';
-  bookingDetailsForm.vat_on_commission = reversalEntry.vat_on_commission || '';
-  bookingDetailsForm.commission_vat_applicable = reversalEntry.commission_vat_applicable || '';
-  bookingDetailsForm.total_commission = reversalEntry.total_commission || '';
-  bookingDetailsForm.commission_vat_not_applicable = reversalEntry.commission_vat_not_applicable || '';
+  bookingDetailsForm.discount = reversalEntry.discount || null;
+  bookingDetailsForm.price_vat_applicable = reversalEntry.price_vat_applicable || null;
+  bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
+  bookingDetailsForm.price_vat_not_applicable = reversalEntry.price_vat_not_applicable || null;
+  bookingDetailsForm.vat_on_commission = reversalEntry.vat_on_commission || null;
+  bookingDetailsForm.commission_vat_applicable = reversalEntry.commission_vat_applicable || null;
+  bookingDetailsForm.total_commission = reversalEntry.total_commission || null;
+  bookingDetailsForm.commission_vat_not_applicable = reversalEntry.commission_vat_not_applicable || null;
+  bookingDetailsForm.total_vat_amount = reversalEntry.total_vat_amount || null;
   bookingDetailsForm.total_price = reversalEntry.total_price;
 };
 
@@ -755,7 +758,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.transaction_payment_status !== '') ? reversalEntry.transaction_payment_status : 'N/A' }}</span>
+                <span>{{ reversalEntry.transaction_payment_status ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -880,7 +883,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reverseValue(reversalEntry.discount) ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.discount !== null) ? reverseValue(reversalEntry.discount) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -899,7 +902,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.price_vat_applicable !== '') ? reverseValue(reversalEntry.price_vat_applicable) : 'N/A' }}</span>
+                <span>{{ (reversalEntry.price_vat_applicable !== null) ? reverseValue(reversalEntry.price_vat_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -916,7 +919,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reverseValue(reversalEntry.commission_percentage) ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.commission_percentage !== null) ? reverseValue(reversalEntry.commission_percentage) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -934,7 +937,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.price_vat_not_applicable !== '') ? reverseValue(reversalEntry.price_vat_not_applicable) : 'N/A' }}</span>
+                <span>{{ (reversalEntry.price_vat_not_applicable !== null) ? reverseValue(reversalEntry.price_vat_not_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -951,7 +954,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reverseValue(reversalEntry.vat_on_commission) ?? 'N/A'}}</span>
+                <span>{{ (reversalEntry.vat_on_commission !== null) ? reverseValue(reversalEntry.vat_on_commission) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -971,7 +974,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reverseValue(reversalEntry.commission_vat_applicable) ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.commission_vat_applicable !== null) ? reverseValue(reversalEntry.commission_vat_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -989,7 +992,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reverseValue(reversalEntry.total_commission) ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.total_commission !== null) ? reverseValue(reversalEntry.total_commission) : 'N/A' }}</span>
               </div>
             </div>
 
@@ -1008,7 +1011,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.commission_vat_not_applicable !== '') ? reverseValue(reversalEntry.commission_vat_not_applicable) : 'N/A' }}</span>
+                <span>{{ (reversalEntry.commission_vat_not_applicable !== null) ? reverseValue(reversalEntry.commission_vat_not_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -1026,7 +1029,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reverseValue(reversalEntry.total_vat_amount) ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.total_vat_amount !== null) ? reverseValue(reversalEntry.total_vat_amount) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2">
@@ -1049,7 +1052,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reverseValue(reversalEntry.total_price) ?? 'N/A' }}</span>
+                <span>{{ (reversalEntry.total_price !== null) ? reverseValue(reversalEntry.total_price) : 'N/A' }}</span>
               </div>
             </div>
           </div>
@@ -1238,11 +1241,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                   </x-tooltip>
                 </div>
                 <div>
-                  <template v-if="isCPD">
-                    {{ bookingDetailsForm.insurer_tax_invoice_number !== '' ? bookingDetailsForm.insurer_tax_invoice_number : 'N/A'}}
-                  </template>
                   <x-input
-                    v-else
                     maxlength="60"
                     v-model="bookingDetailsForm.insurer_tax_invoice_number"
                     class="!mb-0 w-full"
@@ -1251,7 +1250,6 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                     :rules="[isRequired]"
                     size="xs"
                   />
-                  <!-- <span>{{ bookingDetailsForm.insurer_tax_invoice_number }}</span> -->
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1288,11 +1286,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                   </x-tooltip>
                 </div>
                 <div>
-                  <template v-if="isCPD">
-                    {{ bookingDetailsForm.insurer_commission_invoice_number !== '' ? bookingDetailsForm.insurer_commission_invoice_number : 'N/A'}}
-                  </template>
                   <x-input
-                    v-else
                     maxlength="60"
                     v-model="
                       bookingDetailsForm.insurer_commission_invoice_number
@@ -1303,7 +1297,6 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                     :rules="[isRequired]"
                     size="xs"
                   />
-                  <!--<span>{{ bookingDetailsForm.insurer_commission_invoice_number }}</span>-->
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1321,7 +1314,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ bookingDetailsForm.discount !== '0.00' ? bookingDetailsForm.discount : 'N/A' }}</span>
+                  <span>{{ bookingDetailsForm.discount !== null ? bookingDetailsForm.discount : 'N/A' }}</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1352,7 +1345,6 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                     :rules="[isRequired]"
                     size="xs"
                   />
-                  <!-- <span>{{ bookingDetailsForm.price_vat_applicable }}</span> -->
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1443,7 +1435,6 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                     :rules="[isRequired]"
                     size="xs"
                   />
-                  <!-- <span>{{ bookingDetailsForm.commission_vat_applicable }}</span> -->
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1482,7 +1473,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.commission_vat_not_applicable !== '' ? bookingDetailsForm.commission_vat_not_applicable : 'N/A'
+                    bookingDetailsForm.commission_vat_not_applicable !== null ? bookingDetailsForm.commission_vat_not_applicable : 'N/A'
                   }}</span>
                 </div>
               </div>
