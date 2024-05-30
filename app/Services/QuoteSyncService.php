@@ -45,7 +45,7 @@ class QuoteSyncService extends BaseService
 
         $sortBy = 'quote_sync.id';
         $sortOrder = 'desc';
-        if (!empty($filters['sortBy']) && !empty($filters['sortType'])) {
+        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
             $sortBy = $filters['sortBy'];
             $sortOrder = $filters['sortType'] ?? 'desc';
         }
@@ -79,7 +79,7 @@ class QuoteSyncService extends BaseService
             ->get()
             ->pluck('quote_uuid')->toArray();
 
-        if (!empty($entries)) {
+        if (! empty($entries)) {
             QuoteSync::whereIn('quote_uuid', $entries)
                 ->update([
                     'is_synced' => false,
