@@ -505,7 +505,7 @@ class GenericPermissionSeeder extends Seeder
         }
 
         $motorHeadRole = Role::firstOrCreate([
-            'name' => 'Motor_Head',
+            'name' => 'MOTOR_HEAD',
         ], [
             'guard_name' => 'web',
             'created_at' => now(),
