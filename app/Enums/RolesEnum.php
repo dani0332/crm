@@ -112,5 +112,5 @@ final class RolesEnum extends Enum
     public const CycleSalesCoordinator = 'CYCLE_SALES_COORDINATOR';
     public const ServiceExecutive = 'SERVICE_EXECUTIVE';
     public const Production = 'PRODUCTION';
-    public const MotorHead = 'Motor_Head';
+    public const MotorHead = 'MOTOR_HEAD';
 }
