@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
-use Illuminate\Foundation\Application;
 
 class ApplicationStorageSeeder extends Seeder
 {
@@ -135,60 +134,60 @@ class ApplicationStorageSeeder extends Seeder
 
         $applicationStorageSeeder = [
             [
-                "key_name" => ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE,
-                "value" => "591",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE,
+                'value' => '591',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE,
-                "value" => "612",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE,
+                'value' => '612',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE,
-                "value" => "593",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE,
+                'value' => '593',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE,
-                "value" => "617",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE,
+                'value' => '617',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE,
-                "value" => "616",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE,
+                'value' => '616',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE,
-                "value" => "615",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE,
+                'value' => '615',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE,
-                "value" => "592",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE,
+                'value' => '592',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE,
-                "value" => "618",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE,
+                'value' => '618',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE,
-                "value" => "622",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE,
+                'value' => '622',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::GROUP_MEDICAL_BOOK_POLICY_TEMPLATE,
-                "value" => "613",
-                "is_active" => 1,
+                'key_name' => ApplicationStorageEnums::GROUP_MEDICAL_BOOK_POLICY_TEMPLATE,
+                'value' => '613',
+                'is_active' => 1,
             ],
             [
-                "key_name" => ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE,
-                "value" => "614",
-                "is_active" => 1,
-            ]
+                'key_name' => ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE,
+                'value' => '614',
+                'is_active' => 1,
+            ],
         ];
 
         foreach ($applicationStorageSeeder as $applicationStorage) {
