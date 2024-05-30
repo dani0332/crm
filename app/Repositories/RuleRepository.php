@@ -18,7 +18,7 @@ class RuleRepository extends BaseRepository
         $data = $this->orderBy('created_at', 'desc');
 
         $data->when(request()->name, function ($query, $name) {
-            return $query->where('name', 'LIKE', '%' . $name . '%');
+            return $query->where('name', 'LIKE', '%'.$name.'%');
         })
             ->when(request()->cost_per_lead, function ($query, $costPerLead) {
                 return $query->where('cost_per_lead', $costPerLead);
@@ -26,6 +26,7 @@ class RuleRepository extends BaseRepository
             ->when(request()->created_at && request()->created_at_end, function ($query) {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', request()->created_at)->startOfDay();
                 $dateTo = Carbon::createFromFormat('Y-m-d', request()->created_at)->endOfDay();
+
                 return $query->whereBetween('created_at', [$dateFrom, $dateTo]);
             });
 

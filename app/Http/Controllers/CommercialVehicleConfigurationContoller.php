@@ -7,7 +7,6 @@ use App\Http\Requests\CommercialVehicleConfigurationRequest;
 use App\Models\CarMake;
 use App\Services\CommercialVehicleConfigurationService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 
 class CommercialVehicleConfigurationContoller extends Controller
 {
@@ -61,7 +60,7 @@ class CommercialVehicleConfigurationContoller extends Controller
 
         return inertia('Admin/AllocationConfig/CommericalVehicles/Form', [
             'carMakes' => $carsMake,
-            'commercialModels' => null
+            'commercialModels' => null,
         ]);
     }
 
@@ -110,7 +109,7 @@ class CommercialVehicleConfigurationContoller extends Controller
         // dd($carMake->toArray());
         return inertia('Admin/AllocationConfig/CommericalVehicles/Form', [
             'carMakes' => $carMake,
-            'commercialModels' => $commercialModels
+            'commercialModels' => $commercialModels,
         ]);
         // return view('commercialcarmakemodel.edit', compact('carMake', 'commercialModels'));
     }

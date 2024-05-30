@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RuleRequest;
-use App\Models\RuleType;
 use App\Repositories\RuleRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
@@ -19,7 +18,7 @@ class RulesController extends Controller
         $rules->load([
             'ruleUsers',
             'ruleType',
-            'leadSource'
+            'leadSource',
         ]);
 
         return inertia('Admin/AllocationConfig/Rules/Index', [
@@ -48,7 +47,7 @@ class RulesController extends Controller
         // Attaching users
         $response = $rule->users()->attach($request->rule_users);
 
-        if (!empty($response->errors) || !empty($response->msg)) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 
@@ -80,7 +79,7 @@ class RulesController extends Controller
             'rule' => $rule->load([
                 'ruleUsers',
                 'ruleType',
-                'leadSource'
+                'leadSource',
             ]),
         ]);
     }
@@ -96,7 +95,7 @@ class RulesController extends Controller
         // Sync users
         $response = $rule->users()->sync($request->rule_users);
 
-        if (!empty($response->errors) || !empty($response->msg)) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 
