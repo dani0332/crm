@@ -20,6 +20,7 @@ class RulesController extends Controller
             'ruleType',
             'leadSource',
         ]);
+
         return inertia('Admin/AllocationConfig/Rules/Index', [
             'rules' => $rules,
         ]);
