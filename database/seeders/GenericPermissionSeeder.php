@@ -43,7 +43,7 @@ class GenericPermissionSeeder extends Seeder
                 ]);
             }
         }
-        
+
         // Add Permission to Admin
         $healthQuoteAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_ACCESS)->first();
         if (! $healthQuoteAccess) {
@@ -88,12 +88,11 @@ class GenericPermissionSeeder extends Seeder
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-            // Add Compliance Permission to Admin
-            $role = Role::where('name', RolesEnum::Admin)->first();
+        // Add Compliance Permission to Admin
+        $role = Role::where('name', RolesEnum::Admin)->first();
 
-            if (! $role->hasPermissionTo($conversionPermission)) {
-                $role->givePermissionTo($conversionPermission);
-            }
+        if (! $role->hasPermissionTo($conversionPermission)) {
+            $role->givePermissionTo($conversionPermission);
         }
 
         // Plans Selection & Plan Details Section Permissions
