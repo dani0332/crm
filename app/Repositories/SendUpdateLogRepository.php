@@ -290,8 +290,9 @@ class SendUpdateLogRepository extends BaseRepository
 
             $payment = Payment::where('send_update_log_id', $request['id'])->firstOrFail();
             if ($payment) {
-                if (floatval($request['total_price']) > $payment->total_amount) {
-                    $diff = number_format(floatval($request['total_price']) - $payment->total_amount, 2);
+                $bookingDetailsTotalPrice = floatval($request['total_price']);
+                if ($bookingDetailsTotalPrice > $payment->total_amount) {
+                    $diff = number_format($bookingDetailsTotalPrice - $payment->total_amount, 2);
                     if ($diff < 1) {
                         $payment->discount_value = $diff;
                         $payment->discount_type = LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT;
@@ -299,8 +300,12 @@ class SendUpdateLogRepository extends BaseRepository
                         $payment->total_price = $request['total_price'];
                         $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
-                    $payment->save();
+                } elseif ($bookingDetailsTotalPrice == $payment->total_amount && $payment->discount_value && $payment->discount_type == LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT->value) {
+                    $payment->discount_value = 0;
+                    $payment->discount_type = null;
                 }
+
+                $payment->save();
             }
         } catch (\Exception $ex) {
             $res = (object) [
