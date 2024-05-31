@@ -76,10 +76,11 @@ class QuoteSyncService extends BaseService
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::INPROGRESS)
             ->groupBy('quote_uuid')
-            ->get();
+            ->get()
+            ->pluck('quote_uuid')->toArray();
 
         if (! empty($entries)) {
-            QuoteSync::where('quote_uuid', $entries->pluck('quote_uuid')->toArray())
+            QuoteSync::whereIn('quote_uuid', $entries)
                 ->update([
                     'is_synced' => false,
                     'status' => QuoteSyncStatus::WAITING,

@@ -516,7 +516,7 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled) {
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
@@ -728,8 +728,8 @@ class SendUpdateLogService
                                 'price' => 0,
                             ]);
                         }
-                    } elseif (! empty($sendUpdateLog->emirates_registration)) { // will work on Change of Emirate.
-                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_registration]);
+                    } elseif (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirate.
+                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
                     } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity.
                         $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                     }

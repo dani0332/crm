@@ -32,9 +32,9 @@ const page = usePage();
 const notification = useNotifications('toast');
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 
-const rowsPerPage = props.extras?.pageType === 'send-update-log' ? 10 : 15;
+const rowsPerPage = props.extras?.pageType === 'send-update' ? 10 : 15;
 const isSendUpdatePage =
-  props.extras?.pageType === 'send-update-log' ? true : false;
+  props.extras?.pageType === 'send-update' ? true : false;
 const isUploading = ref(false);
 const memberTabs = ref('quote-documents');
 
@@ -61,6 +61,10 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by.email',
     },
+    {
+      text: 'Action',
+      value: 'action',
+    }
   ],
 });
 
@@ -175,7 +179,7 @@ const sendUpdateButton = computed(() => {
 });
 const sendUpdateValidation = () => {
   axios
-    .post('send-update-validation', {
+    .post('send-update-customer-validation', {
       quoteType: props.quoteType,
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
@@ -196,6 +200,9 @@ const sendUpdateValidation = () => {
       });
     });
 };
+
+const permissionEnum = page.props.permissionsEnum;
+
 </script>
 
 <template>
@@ -259,7 +266,7 @@ const sendUpdateValidation = () => {
               {{ item.original_name }}
             </a>
           </template>
-          <template #item-action="{ doc_name }" v-if="!isSendUpdatePage">
+          <template #item-action="{ doc_name }" v-if="can(permissionEnum.DOCUMENT_DELETE)">
             <div>
               <x-button
                 size="xs"
