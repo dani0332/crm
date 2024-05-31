@@ -16,13 +16,36 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             LookupSeeder::class,
-            LostReasonsTableSeeder::class,
-            AddGenericRolePermissionSeeder::class,
-            addDubaiNowEmailGroup::class,
-            DubaiLeadSource::class,
-            ActivitySchedulesSeeder::class,
+            // LostReasonsTableSeeder::class,
+            // AddGenericRolePermissionSeeder::class,
+            // addDubaiNowEmailGroup::class,
+            // DubaiLeadSource::class,
+            // ActivitySchedulesSeeder::class,
             GenericPermissionSeeder::class,
-            ApplicationStorageSeeder::class,
+            /*addSICWorkflow::class,
+            UpdateRenewalTemplateStorageSeeder::class,
+            addDubaiNowEmailGroup::class,
+            DubaiLeadSource::class,*/
+            // AddNewDocumentTypesSeeder::class,
+            // UpdateCustomerToHealthAndTravelMemberDetails::class,
+            /* PaymentMethodsAddSeeder::class,
+            AddNewDocumentTypeSeeder::class,
+            PaymentStatusAddSeeder::class,
+            updateDocTypePayment::class,
+            AddSageFlagApplicationStorage::class,
+            AddTempUpdateTotalPricePermission::class,
+            PaymentLookupSeeder::class,
+            InsuranceQuoteTypeSeeder::class,
+            AddPaymentPermissionsSeeder::class,
+            TotalPremiumReportPermissionSeeder::class,*/
+
+            // dtt seeder
+            // AddDttFlagApplicationStorage::class,
+            // DttOCBNewBusinessSeeder::class,
+            // RevivalConversionReportPermissionSeeder::class,
+            // end
+            // AddCrossLOBSeeder::class,
+            MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
             AddSendUpdatesCategoriesInLookups::class,
