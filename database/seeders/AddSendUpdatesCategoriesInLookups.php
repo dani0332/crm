@@ -48,7 +48,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     if (! $item) {
                         continue;
                     }
-
+                    
                     foreach ($subTypes as $subType) {
                         $words = explode(' ', ucwords($subType['name']));
                         $code = '';
