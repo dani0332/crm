@@ -1064,9 +1064,24 @@ class SageApiService
             $commissionWithoutVat = ($commission - $vatOnCommission);
             $commissionSplit = $commissionWithoutVat > 0 ? $commissionWithoutVat / count($paymentSplits) : 0;
 
+            $commissionSplitSumWithoutLastSplit = 0;
             foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
                 // Add Vat on commission to the first installment of commission in sage for balancing the amount
-                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = roundNumber($commissionSplit + ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1 ? $vatOnCommission : 0));
+                $dueCommissionSplitAmount = roundNumber($commissionSplit);
+                if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
+                    $dueCommissionSplitAmount = roundNumber($commissionSplit) + roundNumber($vatOnCommission);
+                }
+                /*
+                 to prevent difference in amount due to rounding number, sum all the dueCommissionSplitAmount except the last one,
+                 and then subtract that amount from the total commission with vat and use the result as dueAmount for last installment
+                */
+                if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == count($paymentSplits)) {
+                    $dueCommissionSplitAmount = floatval(sprintf('%.2f', $commission - $commissionSplitSumWithoutLastSplit));
+                } else {
+                    $commissionSplitSumWithoutLastSplit += $dueCommissionSplitAmount;
+                }
+
+                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
                 $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
             }
             //3

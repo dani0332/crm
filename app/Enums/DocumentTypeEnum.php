@@ -7,4 +7,5 @@ use BenSampo\Enum\Enum;
 class DocumentTypeEnum extends Enum
 {
     const ProformaPaymentRequest = 'Proforma Payment Request';
+    const RECEIPT = 'Receipt';
 }

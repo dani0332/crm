@@ -294,7 +294,6 @@ class AmtController extends Controller
                 SendUpdateLogStatusEnum::ICOLOIALOLR,
                 SendUpdateLogStatusEnum::IIEAFT,
                 SendUpdateLogStatusEnum::IISI,
-                SendUpdateLogStatusEnum::MPC,
                 SendUpdateLogStatusEnum::PPE,
                 // Endorsement non Financial.
                 SendUpdateLogStatusEnum::AAI,
