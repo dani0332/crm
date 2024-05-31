@@ -18,12 +18,30 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
-        $managementReport = Permission::where('name', PermissionsEnum::MANAGEMENT_REPORT)->first();
-        if (! $managementReport) {
-            Permission::create([
-                'name' => PermissionsEnum::MANAGEMENT_REPORT,
-                'guard_name' => 'web',
-            ]);
+        // Conversion as at report Permissions
+        $conversionReportPermissions = [
+            PermissionsEnum::CONVERSION_AS_AT_REPORT,
+            PermissionsEnum::MOTOR_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::HEALTH_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::TRAVEL_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::LIFE_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::HOME_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::PET_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::CYCLE_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::YACHT_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::BUSINESS_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::GROUPMEDICALS_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::ACCESS_REPORT_SM,
+        ];
+
+        foreach ($conversionReportPermissions as $conversionPermission) {
+            $permission = Permission::where('name', $conversionPermission)->first();
+            if (! $permission) {
+                Permission::create([
+                    'name' => $conversionPermission,
+                    'guard_name' => 'web',
+                ]);
+            }
         }
 
         // Add Permission to Admin
@@ -70,8 +88,11 @@ class GenericPermissionSeeder extends Seeder
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        if (! $role->hasPermissionTo(PermissionsEnum::MANAGEMENT_REPORT)) {
-            $role->givePermissionTo(PermissionsEnum::MANAGEMENT_REPORT);
+        // Add Compliance Permission to Admin
+        $role = Role::where('name', RolesEnum::Admin)->first();
+
+        if (! $role->hasPermissionTo($conversionPermission)) {
+            $role->givePermissionTo($conversionPermission);
         }
 
         // Plans Selection & Plan Details Section Permissions
