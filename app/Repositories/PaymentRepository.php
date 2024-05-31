@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
+use App\Enums\DocumentTypeCode;
+use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -550,7 +552,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                     $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                     if ($quoteDocumentRec) {
-                        $quoteDocumentRec->payment_split_id = $splitPayment->id;
+                        if (empty($document['payment_split_id'])) {
+                            $quoteDocumentRec->payment_split_id = $splitPayment->id;
+                        } else {
+                            $quoteDocumentRec->document_type_code = $this->mapToReciept($quoteDocumentRec->document_type_code);
+                            $quoteDocumentRec->document_type_text = DocumentTypeEnum::RECEIPT;
+                        }
                         $quoteDocumentRec->save();
                     }
                 }
@@ -607,6 +614,26 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $this->setMasterPaymentStatus($masterPayment);
 
         return $successMessage;
+    }
+
+    //map document type to reciept
+    public function mapToReciept($documentTypeCode)
+    {
+        $map = [
+            DocumentTypeCode::CPD => DocumentTypeCode::CPD_RECEIPT,
+            DocumentTypeCode::BPD => DocumentTypeCode::BPD_RECEIPT,
+            DocumentTypeCode::TPD => DocumentTypeCode::TPD_RECEIPT,
+            DocumentTypeCode::HPD => DocumentTypeCode::HPD_RECEIPT,
+            DocumentTypeCode::LPD => DocumentTypeCode::LPD_RECEIPT,
+            DocumentTypeCode::HOMPD => DocumentTypeCode::HOMPD_RECEIPT,
+            DocumentTypeCode::CYCPD => DocumentTypeCode::CYCPD_RECEIPT,
+            DocumentTypeCode::CLPD => DocumentTypeCode::CLPD_RECEIPT,
+            DocumentTypeCode::GMQPD => DocumentTypeCode::GMQPD_RECEIPT,
+            DocumentTypeCode::PPD => DocumentTypeCode::PPD_RECEIPT,
+            DocumentTypeCode::YPD => DocumentTypeCode::YPD_RECEIPT,
+        ];
+
+        return $map[$documentTypeCode] ?? $documentTypeCode;
     }
 
     public function setMasterPaymentStatus($payment)

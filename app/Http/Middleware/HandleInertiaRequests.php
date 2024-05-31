@@ -157,7 +157,9 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::RENEWAL_BATCH_REPORT,
             PermissionsEnum::CONVERSION_AS_AT_REPORT,
             PermissionsEnum::MANAGEMENT_REPORT,
-        ], PermissionsEnum::getAdvisorConversionReportPermissions()))) {
+        ],
+            PermissionsEnum::getAdvisorConversionReportPermissions(),
+            PermissionsEnum::getAdvisorDistributionReportPermissions()))) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
                     ->addIf(auth()->user()->can(PermissionsEnum::CONVERSION_AS_AT_REPORT), 'Conversion As At Report', route('conversion-as-at-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
