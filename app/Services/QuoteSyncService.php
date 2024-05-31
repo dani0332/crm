@@ -61,7 +61,7 @@ class QuoteSyncService extends BaseService
 
         return [
             'count' => $count,
-            'dataset' => $dataset
+            'dataset' => $dataset,
         ];
     }
 

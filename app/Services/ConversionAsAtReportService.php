@@ -14,11 +14,11 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
+use App\Models\Team;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Models\Team;
 
 class ConversionAsAtReportService extends BaseService
 {
