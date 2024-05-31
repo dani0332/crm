@@ -3,6 +3,8 @@ const props = defineProps({
   carMake: Object,
 });
 
+const formatted = date => useDateFormat(date, 'DD-MM-YYYY').value;
+
 const models = computed(() => {
   if (props.carMake)
     return props.carMake.car_models.map(car => car.text).join(', ');
@@ -40,6 +42,14 @@ const models = computed(() => {
       <div class="grid sm:grid-cols-2">
         <dt class="font-medium">Commercial Car Models</dt>
         <dd>{{ models }}</dd>
+      </div>
+      <div class="grid sm:grid-cols-2">
+        <dt class="font-medium">Created At</dt>
+        <dd>{{ formatted(carMake.created_at) }}</dd>
+      </div>
+      <div class="grid sm:grid-cols-2">
+        <dt class="font-medium">Updated At</dt>
+        <dd>{{ formatted(carMake.updated_at) }}</dd>
       </div>
     </dl>
   </div>

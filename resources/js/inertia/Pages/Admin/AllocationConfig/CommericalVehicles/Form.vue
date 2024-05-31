@@ -18,19 +18,39 @@ const commercialForm = useForm({
 const carMake = ref([]);
 const carModels = ref([]);
 const loader = ref(false);
+const buttonLoader = ref(false);
 
 const getCarModel = () => {
+  buttonLoader.value = true;
   let carCode = carMake.value.find(
     x => x.id == commercialForm.car_make_id,
   ).code;
   axios.get(`/car-model?make_code=${carCode}`).then(response => {
     commercialForm.car_model_id = null;
     carModels.value = response.data;
+    buttonLoader.value = false;
   });
 };
 
+let validationPassed = ref(false);
+
+const makeModelError = computed(() => {
+  return commercialForm.car_make_id == null && validationPassed.value;
+});
+
+const modelIdError = computed(() => {
+  return commercialForm.car_model_id == null && validationPassed.value;
+});
+
 function onSubmit(isValid) {
-  if (isValid) {
+  if (
+    commercialForm.car_make_id == null ||
+    commercialForm.car_model_id == null
+  ) {
+    validationPassed.value = true;
+    return;
+  }
+  if (isValid && validationPassed.value) {
     loader.value = true;
     let method = 'post';
     let url = isEdit.value
@@ -87,7 +107,18 @@ onMounted(() => {
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="Car Make" required>
-        <x-select
+        <ComboBox
+          v-model="commercialForm.car_make_id"
+          :options="
+            carMake.map(x => {
+              return { label: x.text, value: x.id };
+            })
+          "
+          single
+          @update:modelValue="getCarModel"
+          :hasError="makeModelError"
+        />
+        <!-- <x-select
           class="w-full"
           :options="
             carMake.map(x => {
@@ -97,11 +128,23 @@ onMounted(() => {
           v-model="commercialForm.car_make_id"
           :rules="[isRequired]"
           @update:modelValue="getCarModel"
-        >
-        </x-select>
+        > -->
+        <!-- </x-select> -->
       </x-field>
       <x-field label="Car Model" required>
-        <x-select
+        <ComboBox
+          v-model="commercialForm.car_model_id"
+          :options="
+            carModels.map(x => {
+              return { label: x.text, value: x.id };
+            })
+          "
+          placeholder="Select Car Model "
+          multiple
+          :loading="buttonLoader"
+          :hasError="modelIdError"
+        />
+        <!-- <x-select
           class="w-full"
           :options="
             carModels.map(x => {
@@ -113,7 +156,7 @@ onMounted(() => {
           placeholder="Select Car Model "
           multiple
         >
-        </x-select>
+        </x-select> -->
       </x-field>
     </div>
     <x-divider class="my-4" />

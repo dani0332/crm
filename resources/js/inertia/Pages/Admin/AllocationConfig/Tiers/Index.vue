@@ -28,9 +28,9 @@ const tableHeader = [
   { text: 'Max.price', value: 'max_price' },
   { text: 'Cost Per Lead', value: 'cost_per_lead' },
   { text: 'Is Ecommerce', value: 'can_handle_ecommerce' },
-  { text: 'Null Value', value: 'can_handle_null_value' },
-  { text: 'Is TPL', value: 'can_handle_tpl' },
-  { text: 'Renewal (TPL_RENEWALS)', value: 'is_tpl_renewals' },
+  { text: 'Null Value?', value: 'can_handle_null_value' },
+  { text: 'Is TPL?', value: 'can_handle_tpl' },
+  { text: 'Renewal (TPL_RENEWALS)?', value: 'is_tpl_renewals' },
   { text: 'IsActive', value: 'is_active' },
   { text: 'Actions', value: 'actions' },
 ];

@@ -71,6 +71,7 @@ class CommercialKeywordsController extends Controller
         $attributes = $request->validated();
 
         return $this->commercialKeywordsService->store($attributes);
+
     }
 
     /**

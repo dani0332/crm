@@ -16,7 +16,7 @@ const ruleForm = useForm({
   name: props.rule?.name ?? null,
   is_active: props.rule?.is_active ? true : false,
   rule_users: props.rule?.rule_users.map(x => x.id) ?? null,
-  rule_type: props.rule?.rule_type ?? null,
+  rule_type: props.rule?.rule_type.id ?? null,
 });
 
 const ruleUsers = computed(() => {
@@ -50,7 +50,6 @@ const selectedUsers = computed(() => {
 const selectedRuleType = computed(() => {
   return props.rule && props.rule.rule_type ? props.rule.rule_type.id : null;
 });
-
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -108,7 +107,6 @@ function onSubmit(isValid) {
         />
       </x-field>
 
-
       <x-field label="Rule Users" required>
         <ComboBox
           v-model="ruleForm.rule_users"
@@ -130,7 +128,6 @@ function onSubmit(isValid) {
           :error="ruleForm.errors.is_active"
         />
       </x-field>
-
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

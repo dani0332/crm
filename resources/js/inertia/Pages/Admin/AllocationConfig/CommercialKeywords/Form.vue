@@ -9,8 +9,8 @@ const isEdit = computed(() => {
 });
 
 const commercialForm = useForm({
-  id: props.keyword.id ?? null,
-  name: props.keyword.name ?? null,
+  id: props.keyword?.id ?? null,
+  name: props.keyword?.name ?? null,
 });
 
 function onSubmit(isValid) {

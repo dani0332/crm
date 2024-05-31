@@ -10,12 +10,16 @@ const isEdit = computed(() => {
   return route().current().includes('edit');
 });
 
+console.log(props.tier);
 const tierForm = useForm({
   id: props.tier?.id ?? null,
   name: props.tier?.name ?? null,
   min_price: props.tier?.min_price ?? null,
   max_price: props.tier?.max_price ?? null,
-  cost_per_lead: props.tier?.cost_per_lead ?? null,
+  cost_per_lead:
+    props.tier?.cost_per_lead == 0
+      ? props.tier?.cost_per_lead.toString()
+      : props.tier?.cost_per_lead,
   can_handle_ecommerce: props.tier?.can_handle_ecommerce ? true : false,
   can_handle_null_value: props.tier?.can_handle_null_value ? true : false,
   is_tpl_renewals: props.tier?.is_tpl_renewals ? true : false,
@@ -50,6 +54,7 @@ function onSubmit(isValid) {
       : route('tiers.store');
 
     tierForm.processing = true;
+    tierForm.cost_per_lead = Number(tierForm.cost_per_lead);
     tierForm.submit(method, url, {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
@@ -124,7 +129,7 @@ function onSubmit(isValid) {
         />
       </x-field>
 
-      <x-field label="Renewal?">
+      <x-field label="Renewal (TPL_RENEWALS)?">
         <x-select
           v-model="tierForm.is_tpl_renewals"
           class="w-full"

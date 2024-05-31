@@ -59,7 +59,9 @@ class RulesController extends Controller
      */
     public function show($id)
     {
-        $rule = RuleRepository::find($id);
+        // get rule with type also
+        $rule = RuleRepository::with('ruleType')->findOrFail($id);
+        // $rule = RuleRepository::find($id);
 
         return inertia('Admin/AllocationConfig/Rules/Show', [
             'rule' => $rule,
