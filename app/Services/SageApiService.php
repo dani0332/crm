@@ -1345,10 +1345,9 @@ class SageApiService
         }
 
         /* applypaymentInvoices */
-        $isTransactionPaidAndFrequencyUpfront = (
-            strtolower($sageRequest->invoicePaymentStatus) == strtolower(TransactionPaymentStatusEnum::PAID_TEXT) ||
-            strtolower($sageRequest->invoicePaymentStatus) == strtolower(TransactionPaymentStatusEnum::FULLY_PAID_TEXT)) &&
-            $payment->frequency == PaymentFrequency::UPFRONT;
+        $isTransactionPaidAndFrequencyUpfront = (in_array(strtolower($sageRequest->invoicePaymentStatus),
+            [strtolower(TransactionPaymentStatusEnum::PAID_TEXT), strtolower(TransactionPaymentStatusEnum::FULLY_PAID_TEXT)]
+        )) && $payment->frequency == PaymentFrequency::UPFRONT;
 
         if ($isTransactionPaidAndFrequencyUpfront) {
             info('  ########## Start applypaymentInvoices for : '.$quote->code.' ########## ');
