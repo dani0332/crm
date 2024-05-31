@@ -67,7 +67,7 @@ class CommercialVehicleConfigurationService extends BaseService
             return redirect()->back()->with('message', 'Car Make record not found');
         }
 
-        return redirect()->route('admin.configure.commerical.vehicles')->with('success', 'Commercial status assigned to the seleced vehicles');
+        return redirect()->route('admin.configure.commerical.vehicles.show', $carMake->id)->with('success', 'Commercial status assigned to the seleced vehicles');
     }
 
     /**
@@ -145,6 +145,6 @@ class CommercialVehicleConfigurationService extends BaseService
             return redirect()->back()->with('message', 'Car Make record not found');
         }
 
-        return redirect()->route('admin.configure.commerical.vehicles')->with('success', 'Commercial status assigned to the seleced vehicles');
+        return redirect()->route('admin.configure.commerical.vehicles.show', ($carMake->id))->with('success', 'Commercial status assigned to the seleced vehicles');
     }
 }

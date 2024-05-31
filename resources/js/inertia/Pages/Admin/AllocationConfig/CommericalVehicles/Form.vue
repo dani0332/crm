@@ -49,8 +49,10 @@ function onSubmit(isValid) {
   ) {
     validationPassed.value = true;
     return;
+  } else {
+    validationPassed.value = true;
   }
-  if (isValid && validationPassed.value) {
+  if (validationPassed.value) {
     loader.value = true;
     let method = 'post';
     let url = isEdit.value

@@ -20,7 +20,6 @@ class RulesController extends Controller
             'ruleType',
             'leadSource',
         ]);
-
         return inertia('Admin/AllocationConfig/Rules/Index', [
             'rules' => $rules,
         ]);
@@ -59,8 +58,7 @@ class RulesController extends Controller
      */
     public function show($id)
     {
-        // get rule with type also
-        $rule = RuleRepository::with('ruleType')->findOrFail($id);
+        $rule = RuleRepository::with('ruleType')->with('ruleUsers')->findOrFail($id);
         // $rule = RuleRepository::find($id);
 
         return inertia('Admin/AllocationConfig/Rules/Show', [

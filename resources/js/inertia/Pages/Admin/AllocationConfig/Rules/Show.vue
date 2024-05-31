@@ -33,10 +33,14 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
           <dt class="font-medium">Rule Name</dt>
           <dd>{{ rule.name }}</dd>
         </div>
-
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Rule Type</dt>
           <dd>{{ rule.rule_type.name }}</dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Rule Type</dt>
+          <dd>{{ rule.rule_users.map(x => x.name).toString() }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Is Active?</dt>
