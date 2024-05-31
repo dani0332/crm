@@ -48,19 +48,16 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     if (! $item) {
                         continue;
                     }
-                    
+
                     foreach ($subTypes as $subType) {
                         $words = explode(' ', ucwords($subType['name']));
                         $code = '';
-                        switch ($subType['name']) {
-                            case $subType['name'] == 'Add optional cover':
-                                $code = SendUpdateLogStatusEnum::AOCOV;
-                                break;
-                            default:
-                                collect($words)->each(function ($word) use (&$code) {
-                                    $code .= substr($word, 0, 1);
-                                });
-                                break;
+                        if ($subType['name'] == SendUpdateLogStatusEnum::ADD_OPTIONAL_COVER) {
+                            $code = SendUpdateLogStatusEnum::AOCOV;
+                        } else {
+                            collect($words)->each(function ($word) use (&$code) {
+                                $code .= substr($word, 0, 1);
+                            });
                         }
                         Lookup::firstOrCreate([
                             'quote_type_id' => $item['id'],

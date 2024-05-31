@@ -75,4 +75,5 @@ final class SendUpdateLogStatusEnum extends Enum
     const CISC = 'CISC'; // Change in seating capacity
     const CISC_NFI = 'CISC(NFI'; // Change in seating capacity (with no financial impact)
     const COE_NFI = 'COE(NFI'; // Change of Emirates (with no financial impact)
+    const ADD_OPTIONAL_COVER = 'Add optional cover';
 }
