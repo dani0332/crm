@@ -81,6 +81,7 @@ function onEditMember(data) {
   memberForm.quote_request_id = props.quoteDetails.id;
   memberForm.id = data.id;
   memberForm.first_name = data.first_name;
+  memberForm.last_name = props.quoteType.code == 'Health' ? data.last_name : null;
   memberForm.dob = data.dob;
   memberForm.relation_code = data.relation_code;
   memberForm.nationality_id = data.nationality_id;
@@ -94,6 +95,7 @@ const memberForm = useForm({
   customer_id: props.quoteDetails.customer_id,
   id: null,
   first_name: null,
+    last_name : null,
   dob: null,
   relation_code: null,
   nationality_id: null,
@@ -197,7 +199,15 @@ function onMemberSubmit(isValid) {
         class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center"
         v-if="addMember"
       >
-        <x-field label="Member Name" required>
+          <x-field label="Member First Name" required v-if="quoteType.code == 'Health'">
+              <x-input
+                  v-model="memberForm.first_name"
+                  placeholder="Member First Name"
+                  class="w-full"
+                  :rules="[isRequired , rules.nameCheck]"
+              />
+          </x-field>
+          <x-field label="Member Name" required v-else>
           <x-input
             v-model="memberForm.first_name"
             placeholder="Member Name"
@@ -205,6 +215,14 @@ function onMemberSubmit(isValid) {
             :rules="[isRequired , rules.nameCheck]"
           />
         </x-field>
+          <x-field label="Member Last Name" required v-if="quoteType.code == 'Health'">
+              <x-input
+                  v-model="memberForm.last_name"
+                  placeholder="Member Last Name"
+                  class="w-full"
+                  :rules="[isRequired , rules.nameCheck]"
+              />
+          </x-field>
         <x-field label="Nationality" required>
           <ComboBox
             :single="true"
@@ -280,6 +298,9 @@ function onMemberSubmit(isValid) {
     <template #item-index="{ code }">
       <div>{{ code }}</div>
     </template>
+      <template #item-first_name="{ first_name , last_name }">
+          <div>{{ first_name }} {{quoteType.code == 'Health' ? last_name : ''}}</div>
+      </template>
     <template #item-dob="{ dob }">
       {{ dateFormat(dob) }}
     </template>
