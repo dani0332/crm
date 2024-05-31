@@ -33,7 +33,9 @@ final class QuoteTypeId extends Enum
         $constants = $oClass->getConstants();
         $retval = [];
         foreach ($constants as $name => $val) {
-            $retval[$val] = $name;
+            if ($val != self::SendUpdate) { // added because on seeders/AddSendUpdatesCategoriesInLookups file, it's getting SendUpdate as a quote type and hitting error.
+                $retval[$val] = $name;
+            }
         }
 
         return $retval;
