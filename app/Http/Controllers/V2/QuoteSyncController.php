@@ -40,7 +40,8 @@ class QuoteSyncController extends Controller
         $quoteSyncStatusOptions = QuoteSyncStatus::getOptions();
 
         return inertia('QuoteSync/Index', [
-            'logs' => $dataset,
+            'logs' => $dataset['dataset'],
+            'count' => $dataset['count'] ?? 0,
             'quote_types' => $quotetypeOptions,
             'quote_sync_status' => $quoteSyncStatusOptions,
         ]);
