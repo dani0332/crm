@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
@@ -12,6 +14,7 @@ use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Repositories\CarRevivalQuoteRepository;
+use App\Services\ConversionAsAtReportService;
 use App\Services\Reports\AdvisorConversionReportService;
 use App\Services\Reports\AdvisorDistributionReportService;
 use App\Services\Reports\AdvisorPerformanceReportService;
@@ -20,9 +23,11 @@ use App\Services\Reports\RenewalBatchReportService;
 use App\Services\Reports\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use PDF;
 
 class ReportsController extends Controller
 {
@@ -33,6 +38,9 @@ class ReportsController extends Controller
     {
         $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConverionReportPermissions());
         $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
+
+        $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
+        $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -87,6 +95,7 @@ class ReportsController extends Controller
     {
         return inertia('Reports/AdvisorDistribution', [
             'reportData' => $advisorDistributionReportService->getReportData($request),
+            'filtersByLob' => $advisorDistributionReportService->getFiltersByLob(),
             'filterOptions' => $advisorDistributionReportService->getFilterOptions(),
             'defaultFilters' => $advisorDistributionReportService->getDefaultFilters(),
         ]);
@@ -382,6 +391,59 @@ class ReportsController extends Controller
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
             'renewalBatchesList' => $renewalBatches,
         ]);
+    }
+
+    public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
+    {
+        $displayBy = $request->displayBy ?? null;
+        $quoteTypes = QuoteTypeId::getOptions();
+        $quoteTypeCodes = quoteTypeCode::asArray();
+
+        return inertia('Reports/ConversionAsAt', [
+            'reportData' => $conversionAsAtReportService->getReportData($request),
+            'filterOptions' => $conversionAsAtReportService->getFilterOptions(),
+            'quoteTypes' => $quoteTypes,
+            'displayByColumn' => $displayBy,
+            'quoteTypeCodes' => $quoteTypeCodes,
+        ]);
+    }
+
+    public function conversionAsAtReportPdf(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
+    {
+        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+        $timeOnlyFormat = config('constants.TIME_ONLY_FORMAT');
+        $dateTimeFormat = config('constants.DATETIME_DISPLAY_FORMAT');
+
+        $displayByColumn = $request->displayBy ?? null;
+        $displayBy = $request->displayBy ? ucfirst(str_replace('_', ' ', $request->displayBy)) : 'N/A';
+        $lob = QuoteTypes::getName($request->lob)->value.' Insurance';
+
+        $reportData = $conversionAsAtReportService->getReportData($request);
+        $totalGrossConversion = $conversionAsAtReportService->calculateTotalGrossConversion($reportData);
+        $totalNetConversion = $conversionAsAtReportService->calculateTotalNetConversion($reportData);
+        // this is explicitly pdf data, if I set name to 'data' then may be some dev(s) may get confused about it
+        // that what this data may refers to, so to avoid confusion I am specifying it as pdfData.
+        // Thanks
+        $pdfDate = [
+            'report_data' => $reportData->toArray(),
+            'total_gross_conversion' => $totalGrossConversion,
+            'total_net_conversion' => $totalNetConversion,
+            'lob' => $lob,
+            'display_by_column' => $displayByColumn,
+            'display_by' => $displayBy,
+            'start_date' => Carbon::parse($request->startEndDate[0])->format($dateFormat),
+            'end_date' => Carbon::parse($request->startEndDate[1])->format($dateFormat),
+            'as_at_date' => Carbon::parse($request->asAtDate)->format($dateFormat),
+            'title' => 'Conversion As At Report',
+            'auth' => auth()->user()->name,
+            'date' => date($dateFormat),
+            'time' => now()->format($timeOnlyFormat),
+        ];
+
+        $pdf = PDF::loadView('pdf.conversion_as_at_report', compact('pdfDate'))->setOptions(['defaultFont' => 'DejaVu Sans']);
+        $name = 'InsuranceMarket.ae™ Conversion As At Report - '.Carbon::now()->format($dateTimeFormat).'.pdf';
+
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $name]);
     }
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)

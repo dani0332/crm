@@ -207,7 +207,7 @@ class TravelController extends Controller
             'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
             'aboveAgeMembers' => $this->travelQuoteService->getAboveAgeMembers($record->id),
             'ecomDetails' => $ecomDetails,
-            'quoteDocuments' => array_values($quoteDocuments->toArray()),
+            'quoteDocuments' => $quoteDocuments->toArray(),
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
