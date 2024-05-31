@@ -35,7 +35,6 @@ class AllocationThresholdController extends Controller
             'teams' => $teams,
 
         ]);
-        // return view('allocationthreshold.view', compact('teams'));
     }
 
     public function updateAllocation(Request $request)

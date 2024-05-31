@@ -468,11 +468,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('renewal-batches', RenewalBatchController::class)
             ->names(generateRouteNames('renewal-batches'))
             ->middleware('check_route_access');
-        // Route::resource('tier', GenericCrudController::class);
         Route::resource('tiers', TiersController::class);
-        // Route::resource('quadrant', GenericCrudController::class);
         Route::resource('quadrants', QuadrantController::class);
-        // Route::resource('rule', GenericCrudController::class);
         Route::resource('rule', RulesController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
