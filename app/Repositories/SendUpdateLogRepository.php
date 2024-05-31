@@ -136,7 +136,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
                 'car_addons' => $data['car_addons'] ?? null,
-                'emirates_registration' => $data['emirates_registration'] ?? null,
+                'emirates_id' => $data['emirates_id'] ?? null,
                 'seating_capacity' => $data['seating_capacity'] ?? null,
             ]);
         } catch (\Exception $ex) {
@@ -237,8 +237,8 @@ class SendUpdateLogRepository extends BaseRepository
             $sendUpdateLog = $this->find($data['sendUpdateId']);
             if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
-                if (! empty($sendUpdateLog->emirates_registration)) { // will work on Change of Emirates (with no financial impact).
-                    $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_registration]);
+                if (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirates (with no financial impact).
+                    $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
                 } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity (with no financial impact).
                     $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                 }
