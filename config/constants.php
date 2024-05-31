@@ -130,4 +130,5 @@ return [
     'TIME_ONLY_FORMAT' => env('TIME_ONLY_FORMAT', 'h:i:s'),
     'MONTH_DIGIT_FORMAT' => env('MONTH_DIGIT_FORMAT', 'm'),
     'MA_V1_ENDPOINT' => env('MA_V1_ENDPOINT', ''),
+    'RECEIPT_ORDER_DATE' => env('RECEIPT_ORDER_DATE', 'd-m-Y \a\t H:i'),
 ];
