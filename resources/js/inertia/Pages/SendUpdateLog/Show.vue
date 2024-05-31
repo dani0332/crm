@@ -127,7 +127,7 @@ const sendUpdateForm = useForm({
   status: props.sendUpdateLog?.status || '',
   quote_uuid: props.realQuote.uuid,
   car_addons: props.sendUpdateLog?.car_addons || null,
-  emirates_registration: props.sendUpdateLog?.emirates_registration || null,
+  emirates_id: props.sendUpdateLog?.emirates_id || null,
   seating_capacity: props.sendUpdateLog?.seating_capacity || null,
 });
 
@@ -154,7 +154,7 @@ const onCancel = () => {
   sendUpdateForm.notes = props.sendUpdateLog?.notes || '';
   sendUpdateForm.option_id = props.sendUpdateLog?.option_id || null;
   sendUpdateForm.car_addons = props.sendUpdateLog?.car_addons || null;
-  sendUpdateForm.emirates_registration = props.sendUpdateLog?.emirates_registration || null;
+  sendUpdateForm.emirates_id = props.sendUpdateLog?.emirates_id || null;
   sendUpdateForm.seating_capacity = props.sendUpdateLog?.seating_capacity || null;
 };
 
@@ -399,7 +399,7 @@ const onKeyPress = (event) => {
                 <dd>
                   <x-select
                       :rules="[isRequired]"
-                      v-model="sendUpdateForm.emirates_registration"
+                      v-model="sendUpdateForm.emirates_id"
                       placeholder="Select Emirate of Registration"
                       :options="additionalFieldOptions"
                       size="xs"
