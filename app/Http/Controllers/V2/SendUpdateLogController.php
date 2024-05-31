@@ -385,10 +385,10 @@ class SendUpdateLogController extends Controller
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
     {
         $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
-        info('Book Update Process Start - SendUpdateCode: '.$sendUpdate->code);
+        $payment = Payment::where('send_update_log_id', $sendUpdate->id)->first();
+        $paymentDetailsUpdate = false;
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
-            $payment = Payment::where('send_update_log_id', $sendUpdate->id)->first();
             // Add insuficient Payment Validations here
             $insufficientPaymentCheck = false;
             if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
@@ -401,32 +401,34 @@ class SendUpdateLogController extends Controller
             ], 200);
         }
 
+        info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdate->uuid);
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
-
-        // Calling Sage for necessary Documents
-        $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($sendUpdate);
-        info('Book Update - Payment details updated against send update code '.$sendUpdate->code);
-
+        
+        if ($payment) {
+            $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate);
+            info('Book Update - Payment details updated. QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdate->uuid);
+        }
+        
         if ($paymentDetailsUpdate) {
-            info('Book Update - Calling Sage APIs');
+            info('Book Update - Sending Update to Sage APIs Process Start. QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdate->uuid);
+            
             $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] === false) {
-                logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message']);
+                logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message']. ' - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdate->uuid);
 
                 return response()->json(['message' => $sageResponse['message']], 500);
             }
-
-            // Send Update Data move to main lead page as per Send update Type
-            info('Book Update - Moving Send Update impact to Main Lead Page');
-            $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
-
-            if ($sageResponse['status'] && $response['status']) {
-                info('Book Update - Sage APIs and Send Update impact moved to Main Lead Page successfully for send update code '.$sendUpdate->code);
-
-                return response()->json(['message' => $response['message']], 200);
-            }
         }
-        logger()->error('Book Update - Failed to update payment details or send update to sage - Response:'.$response['message']);
+
+        // Send Update Data move to main lead page as per Send update Type
+        info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdate->uuid);
+        $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
+
+        if ($response['status']) {
+            return response()->json(['message' => $response['message']], 200);
+        }
+
+        logger()->error('Book Update - Something went wrong - Response: '.$response['message']. ' - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdate->uuid);
 
         return response()->json(['message' => $response['message']], 500);
     }
