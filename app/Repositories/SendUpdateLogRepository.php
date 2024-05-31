@@ -89,6 +89,8 @@ class SendUpdateLogRepository extends BaseRepository
                 }
 
                 $res->save();
+                $res->refresh();
+                $this->checkPolicyDetailsFilled($res, $data['quote_type_id'], $realQuote);
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
@@ -315,5 +317,34 @@ class SendUpdateLogRepository extends BaseRepository
         return $this->where('personal_quote_id', $personalQuoteId)->where(function ($q) {
             $q->where('code', 'like', '%EF%')->orWhere('code', 'like', '%EN%');
         })->orderBy('id', 'desc')->get();
+    }
+
+    public function checkPolicyDetailsFilled($sendUpdate, $quoteTypeId, $quote)
+    {
+
+        $sendUpdatePolicyDetails = [
+            'first_name' => ($sendUpdate->first_name ?? $quote->first_name) ?? null,
+            'last_name' => ($sendUpdate->last_name ?? $quote->last_name) ?? null,
+            'insurance_provider_id' => ($sendUpdate->insurance_provider_id ?? ($quote->insurance_provider_id ?? $quote->car_plan_provider_id)) ?? null,
+            'policy_number' => ($sendUpdate->policy_number ?? $quote->policy_number) ?? null,
+            'issuance_date' => ($sendUpdate->issuance_date ?? $quote->policy_issuance_date) ?? null,
+            'start_date' => ($sendUpdate->start_date ?? $quote->policy_start_date) ?? null,
+            'expiry_date' => ($sendUpdate->expiry_date ?? $quote->renewal_expiry_date) ?? null,
+            'insurer_quote_number' => ($sendUpdate->insurer_quote_number ?? $quote->insurer_quote_number) ?? null,
+            'issuance_status_id' => ($sendUpdate->issuance_status_id ?? $quote->policy_issuance_status_id) ?? null,
+        ];
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+            $sendUpdatePolicyDetails['plan_id'] = ($sendUpdate->plan_id ?? $quote->plan_id) ?? null;
+        }
+
+        $filledValues = array_filter($sendUpdatePolicyDetails, function ($value) {
+            return ! is_null($value) && $value !== '';
+        });
+
+        if (count($sendUpdatePolicyDetails) === count($filledValues)) {
+            $sendUpdate->is_policy_filled = SendUpdateLogStatusEnum::POLICY_FILLED;
+            $sendUpdate->save();
+        }
     }
 }

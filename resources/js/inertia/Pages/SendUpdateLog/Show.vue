@@ -214,7 +214,7 @@ const isBookingDetailsVisible = computed(() => {
 const additionalFieldOptions = computed(() => {
   if (props.additionalField) {
     return props.additionalField.map(additional => ({
-      value: additional.code,
+      value: additional.id,
       label: additional.text,
     }));
   }
@@ -512,7 +512,7 @@ const onKeyPress = (event) => {
       :quote="props.realQuote"
       :expanded="true"
       :extras="{
-        pageType: 'send-update-log',
+        pageType: 'send-update',
         quoteType: props.quoteType,
         sendLogId: props.sendUpdateLog.id,
         members: memberDataDocs(props.membersDetail),

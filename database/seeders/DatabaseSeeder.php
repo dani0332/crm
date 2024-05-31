@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -20,7 +21,6 @@ class DatabaseSeeder extends Seeder
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
             ActivitySchedulesSeeder::class,
-            DocumentTypeSeeder::class,
             GenericPermissionSeeder::class,
             ApplicationStorageSeeder::class,
             AddPaymentPermissions::class,
@@ -28,7 +28,10 @@ class DatabaseSeeder extends Seeder
             AddSendUpdatesCategoriesInLookups::class,
             InslyRoles::class,
             InslyPermissions::class,
-            addInusranceProvidersConfiguration::class,
+            QuoteStatusMapSeeder::class,
+            QuoteStatusSeeder::class,
+            ApplicationStorageSeeder::class,
+            addInsuranceProvidersConfiguration::class,
         ]);
     }
 }
