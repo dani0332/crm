@@ -107,8 +107,13 @@ const loadTeamsByProduct = async e => {
     let response = await axios.post('/get-product-teams', {
       productIds: userForm.products,
     });
-    if (response.data.length > 0) teams.value = [...response.data];
-    else teams.value = [];
+    if (response.data.length > 0) {
+      let newTeams = response.data.filter(
+        x => !teams.value.some(item => item.id === x.id),
+      );
+      teams.value.unshift(...newTeams);
+      loadManagerByTeam();
+    }
 
     loader.teamLoader = false;
   } catch (e) {
@@ -122,8 +127,12 @@ const loadManagerByTeam = async () => {
     let response = await axios.post('/get-team-managers', {
       teamId: userForm.products,
     });
-    if (response.data.length > 0) managers.value = [...response.data];
-    else managers.value = [];
+    if (response.data.length > 0) {
+      let newManagers = response.data.filter(
+        x => !managers.value.some(item => item.id === x.id),
+      );
+      managers.value.unshift(...newManagers);
+    }
     loader.managers = false;
   } catch (e) {
     loader.managers = false;
@@ -136,7 +145,6 @@ const loadSubTeams = async () => {
     let response = await axios.post('/get-sub-teams', {
       teamId: userForm.teams,
     });
-    console.log(response.data);
     if (response.data.length > 0) subTeams.value = [...response.data];
     else subTeams.value = [];
 
@@ -183,20 +191,10 @@ const setInitialState = async () => {
   if (isEdit.value) {
     await loadTeamsByProduct();
     await loadSubTeams();
-    await loadManagerByTeam();
   }
 };
 
 onMounted(() => setInitialState());
-
-watch(
-  () => userForm.products,
-  () => {
-    loadTeamsByProduct();
-    loadManagerByTeam()
-  },
-  { deep: true },
-);
 
 watch(
   () => userForm.teams,
@@ -205,7 +203,6 @@ watch(
   },
   { deep: true },
 );
-
 </script>
 <template>
   <Head :title="isEdit ? 'Edit Users' : 'Create Users'" />
@@ -300,6 +297,7 @@ watch(
             }))
           "
           autocomplete
+          @update:modelValue="loadTeamsByProduct"
         />
       </x-field>
       <x-field label="TEAMS" required>
@@ -322,17 +320,17 @@ watch(
         ></x-select>
       </x-field>
       <x-field label="LOB VISIBILITY">
-        <x-select
+        <ComboBox
           :multiple="true"
+          v-model="userForm.additionalTeams"
           :options="
-            props.products.map(item => ({
-              value: item.id,
-              label: item.name,
+            props.products.map(x => ({
+              value: x.id,
+              label: x.name,
             }))
           "
           class="w-full"
-          v-model="userForm.additionalTeams"
-          placeholder="Select teams "
+          autocomplete
         />
       </x-field>
       <x-field label="PERMISSIONS" v-if="hasRole(rolesEnum.Admin)">

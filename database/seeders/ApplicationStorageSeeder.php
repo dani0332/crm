@@ -69,5 +69,133 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        $advisorNotificationEnable = ApplicationStorage::where('key_name', ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE)->count();
+        if ($advisorNotificationEnable == 0) {
+            $advisorNotificationEnable = ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE,
+                'value' => '0',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
+        if (! $epMdxV2From) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::EP_MDX_V2_FROM,
+                'value' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::EMAIL_CAMPAIGN)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::EMAIL_CAMPAIGN,
+                'value' => 'WIN-FOR-SURE',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN,
+                'value' => '651',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED,
+                'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS,
+                'value' => 30,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        $applicationStorageSeeder = [
+            [
+                'key_name' => ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE,
+                'value' => '591',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE,
+                'value' => '612',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE,
+                'value' => '593',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE,
+                'value' => '617',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE,
+                'value' => '616',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE,
+                'value' => '615',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE,
+                'value' => '592',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE,
+                'value' => '618',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE,
+                'value' => '622',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::GROUP_MEDICAL_BOOK_POLICY_TEMPLATE,
+                'value' => '613',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE,
+                'value' => '614',
+                'is_active' => 1,
+            ],
+        ];
+
+        foreach ($applicationStorageSeeder as $applicationStorage) {
+            $conditions = [
+                'key_name' => $applicationStorage['key_name'],
+            ];
+            ApplicationStorage::firstOrCreate($conditions, $applicationStorage);
+        }
+
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\HomeQuote;
 
@@ -12,13 +13,15 @@ class HomeQuoteRepository extends BaseRepository
     {
         return HomeQuote::class;
     }
+
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+            ['advisor', 'nationality', 'insuranceProvider']
+        )->orderBy('created_at', 'desc');
     }
 
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
         $query = $this->with([
             'quoteStatus',
@@ -29,17 +32,24 @@ class HomeQuoteRepository extends BaseRepository
             'nationality',
             'insuranceProvider',
         ])
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->when(\auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            })
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy('created_at', 'desc');
+
+        if ($forTotalLeadsCount) {
+            //PD Revert
+            return 0;
+
+            // return $query->count();
+        }
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
-
     }
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
         return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
     }
-
 }

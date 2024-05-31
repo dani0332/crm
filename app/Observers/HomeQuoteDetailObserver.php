@@ -16,6 +16,6 @@ class HomeQuoteDetailObserver
     public function updated(HomeQuoteRequestDetail $homeQuoteDetail): void
     {
         $homeQuote = HomeQuote::find($homeQuoteDetail->home_quote_request_id);
-        $this->syncQuoteDetail($homeQuote, $homeQuoteDetail->getDirty());
+        $this->syncQuote($homeQuote, $homeQuoteDetail->getDirty());
     }
 }

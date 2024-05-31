@@ -145,7 +145,7 @@ const onUpdatePlan = () => {
       addons.push({
         addonId: addon.id,
         addonOptionId: option.id,
-        price: parseInt(option.price),
+        price: parseInt(option.price ?? 0),
         vat: option.vat,
         isSelected: option.isSelected,
       });

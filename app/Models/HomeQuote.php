@@ -16,6 +16,7 @@ class HomeQuote extends Model implements AuditableContract
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'home_quote_request';
+    protected $fillable = [];
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::FREE,
@@ -49,8 +50,9 @@ class HomeQuote extends Model implements AuditableContract
 
     public function insuranceProvider()
     {
-        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
+
     public function nationality()
     {
         return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code', 'text']);
@@ -68,7 +70,7 @@ class HomeQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'profile_photo_path']);
     }
 
     public function customer()
@@ -80,6 +82,7 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->morphMany(Payment::class, 'paymentable');
     }
+
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
@@ -96,8 +99,29 @@ class HomeQuote extends Model implements AuditableContract
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Home);
+    }
+
+    public function notes()
+    {
+        return $this->morphMany(QuoteNote::class, 'quote_noteable');
+    }
+
     public function insuranceProviderDetails()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 }

@@ -13,6 +13,6 @@ class CarQuoteDetailObserver
     public function updated(CarQuoteRequestDetail $leadDetail)
     {
         $lead = CarQuote::find($leadDetail->car_quote_request_id);
-        $this->syncQuoteDetail($lead, $leadDetail->getDirty());
+        $this->syncQuote($lead, $leadDetail->getDirty());
     }
 }

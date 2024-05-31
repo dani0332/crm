@@ -77,7 +77,6 @@ class RenewalsUploadService
     use GenericQueriesAllLobs;
 
     protected $renewalsAddonService;
-    protected $checkAMLService;
     protected $capiRequestService;
     protected $insuranceProviderService;
     protected $carQuoteService;
@@ -89,7 +88,6 @@ class RenewalsUploadService
 
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
-        CheckAmlService $checkAMLService,
         CapiRequestService $capiRequestService,
         InsuranceProviderService $insuranceProviderService,
         CarQuoteService $carQuoteService,
@@ -100,7 +98,6 @@ class RenewalsUploadService
         HealthQuoteService $healthQuoteService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
-        $this->checkAMLService = $checkAMLService;
         $this->capiRequestService = $capiRequestService;
         $this->insuranceProviderService = $insuranceProviderService;
         $this->carQuoteService = $carQuoteService;
@@ -458,7 +455,7 @@ class RenewalsUploadService
 
             if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (! $aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first())) {
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
-                $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+                app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
             }
 
@@ -860,7 +857,7 @@ class RenewalsUploadService
 
         if ($quote) {
             info($logPrefix.' AML check started for UUID: '.$quote->uuid);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
         }
 
@@ -900,7 +897,7 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
         if ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first()) {
             info($logPrefix.' AML process Started for quote uuid: '.$quote->uuid.' quote_id: '.$renewalQuoteProcess->quote_id);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML process completed for quote uuid: '.$quote->uuid);
 
             return true;
@@ -1078,7 +1075,7 @@ class RenewalsUploadService
 
         if ($quote && $isNameChanged) {
             info($logPrefix.' AML check started for UUID: '.$quote->uuid);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
         }
 
@@ -1311,35 +1308,17 @@ class RenewalsUploadService
                     Log::info('Renewals OCB Email sent to uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                     RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-                    //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
                 } else {
                     Log::error('Renewals OCB Email failed for uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
                 }
             }
-
-            //$this->updateRenewalEmailBatchStatus($batchEmailId, $isCompleted);
             Log::info('Renewals OCB Email completed for uuid: '.$carQuote->uuid);
         } catch (\Exception $exception) {
             Log::info('Renewals OCB Email failed error: '.$exception->getMessage());
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
-
-    //    public function updateRenewalEmailBatchStatus($batchEmailId, $isCompleted)
-    //    {
-    //        Log::info('updateRenewalEmailBatchStatus START');
-    //        $renewalsBatchStatus = RenewalsBatchEmails::find($batchEmailId);
-    //        if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
-    //            $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
-    //            $renewalsBatchStatus->save();
-    //        }
-    //        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads || $isCompleted == 1) { // if all records are uploaded, update the status to completed
-    //            $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
-    //            $renewalsBatchStatus->save();
-    //        }
-    //        Log::info('updateRenewalEmailBatchStatus END');
-    //    }
 
     /**
      * //$modelName, $quoteRequestIdName.

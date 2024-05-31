@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
@@ -14,6 +13,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
@@ -21,14 +21,15 @@ use App\Models\BusinessQuote;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GroupMedicalType;
+use App\Models\KycLog;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
-use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
@@ -36,7 +37,10 @@ use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -46,7 +50,7 @@ use Illuminate\Support\Facades\Redirect;
 
 class AmtController extends Controller
 {
-    use RolePermissionConditions;
+    use GenericQueriesAllLobs, RolePermissionConditions;
 
     /**
      * Display a listing of the resource.
@@ -133,8 +137,12 @@ class AmtController extends Controller
         if (isset($request->leadStatus) && $request->leadStatus != '') {
             $data->where('qs.id', '=', $request->leadStatus);
         }
-        if (isset($request->advisor_id) && $request->advisor_id != '') {
-            $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
+        if (isset($request->advisor_id) && is_array($request->advisor_id) && count($request->advisor_id) > 0) {
+            if (count($request->advisor_id) === 1 && $request->advisor_id[0] == '-1') {
+                $data->whereNull('bqr.advisor_id');
+            } else {
+                $data->whereIn('bqr.advisor_id', $request->advisor_id);
+            }
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
@@ -230,6 +238,7 @@ class AmtController extends Controller
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ]);
 
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BUSINESS->value, $record);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
@@ -254,7 +263,7 @@ class AmtController extends Controller
             })->values();
         }
 
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::GROUP_MEDICAL->id());
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
         $countries = Nationality::all();
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
@@ -264,8 +273,42 @@ class AmtController extends Controller
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->active()->get();
+        $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)->latest()->first();
+        @[$documentTypes,, $businessDocumentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id(), $record?->business_type_of_insurance_id, $latestKycLog?->search_type);
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = $crudService->hasAtleastOneStatusPolicyIssued($record);
+
+        if ($hasPolicyIssuedStatus) {
+            $removeOptions = [
+                // Endorsement Financial.
+                SendUpdateLogStatusEnum::AOLOPFMP,
+                SendUpdateLogStatusEnum::AC,
+                SendUpdateLogStatusEnum::AL,
+                SendUpdateLogStatusEnum::EA,
+                SendUpdateLogStatusEnum::ED,
+                SendUpdateLogStatusEnum::EFMP,
+                SendUpdateLogStatusEnum::ICOLOIALOLR,
+                SendUpdateLogStatusEnum::IIEAFT,
+                SendUpdateLogStatusEnum::IISI,
+                SendUpdateLogStatusEnum::PPE,
+                // Endorsement non Financial.
+                SendUpdateLogStatusEnum::AAI,
+                SendUpdateLogStatusEnum::AOC,
+                SendUpdateLogStatusEnum::COA,
+            ];
+
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BUSINESS->value);
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -288,7 +331,6 @@ class AmtController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'modelType' => QuoteTypes::BUSINESS,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::GMManager),
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'companyTypes' => $companyType,
@@ -299,11 +341,21 @@ class AmtController extends Controller
             'insuranceProviders' => $insuranceProviders,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentMethods' => $paymentMethods,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($record->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
-
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'documentTypeCodes' => $businessDocumentTypeCodes,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'record' => fn () => $record,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'bookPolicyDetails' => $bookPolicyDetails,
+            'payments' => $record->payments->toArray() ?? [],
         ]);
     }
 
@@ -368,8 +420,8 @@ class AmtController extends Controller
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
         })->toArray();
 
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus('Business', $item['id'], $request);
 
             return $item;
         }, $leadStatuses);

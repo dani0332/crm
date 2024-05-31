@@ -10,6 +10,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
+use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
@@ -74,6 +75,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.parent_duplicate_quote_id',
                 'bqr.renewal_import_code',
                 'bqr.kyc_decision',
+                'bqr.stale_at',
                 DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
                 'c.insured_first_name',
                 'c.insured_last_name',
@@ -93,6 +95,14 @@ class BusinessQuoteService extends BaseService
                 'bqr.price_vat_not_applicable',
                 'bqr.price_with_vat',
                 'bqr.company_name as business_company_name',
+                'ent.emirate_of_registration_id',
+                'bqr.price_without_vat',
+                'bqr.vat',
+                'bqr.insurer_quote_number',
+                'bqr.policy_issuance_status_id',
+                'bqr.policy_issuance_status_other',
+                'policy_start_date',
+                'policy_issuance_date',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -149,7 +159,7 @@ class BusinessQuoteService extends BaseService
     {
         return BusinessQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
             $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser'])->first();
     }
 
     public function updateChildRecord($id)
@@ -266,6 +276,14 @@ class BusinessQuoteService extends BaseService
             $dateTo = $request['created_at_end'];
             $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
+
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
+
+            $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
+        }
+
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
@@ -309,6 +327,22 @@ class BusinessQuoteService extends BaseService
                 $this->query->whereNull('bqr.previous_quote_policy_number');
             }
         }
+
+        // payment_status_id filter
+        if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
+            $this->query->whereIn('bqr.payment_status_id', $request->payment_status);
+        }
+
+        // is_cold filter
+        if (isset($request->is_cold) && $request->is_cold != '') {
+            $this->query->where('bqr.is_cold', 1);
+        }
+
+        // is_stale filter
+        if (isset($request->is_stale) && $request->is_stale != '') {
+            $this->query->whereNotNull('bqr.stale_at');
+        }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
@@ -330,36 +364,10 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-        // }
 
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-            $isAdmin = Auth::user()->hasRole('ADMIN');
-            if ($isAdmin || $isManagerORDeputy == '1') {
-                if ($column == 10) {
-                    $column = 'bqr.created_at';
-                }
-                if ($column == 11) {
-                    $column = 'bqr.updated_at';
-                }
-                if ($column == 5) {
-                    $column = 'bqrd.next_followup_date';
-                }
-            } else {
-                if ($column == 9) {
-                    $column = 'bqr.created_at';
-                }
-                if ($column == 10) {
-                    $column = 'bqr.updated_at';
-                }
-                if ($column == 4) {
-                    $column = 'bqrd.next_followup_date';
-                }
-            }
-
-            return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($column, $direction);
+        // sortBy filter
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($request->sortBy, $request->sortType);
         } else {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'DESC');
         }
@@ -577,11 +585,14 @@ class BusinessQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $quoteBatch = QuoteBatches::latest()->first();
+
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
+            $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
             $this->updateChildRecord($lead->id);
         }
