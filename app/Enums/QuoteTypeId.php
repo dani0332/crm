@@ -25,6 +25,7 @@ final class QuoteTypeId extends Enum
     const Jetski = 11;
     const Corpline = 101;
     const GroupMedical = 102;
+    const SendUpdate = 99; // this quote type pass to Marshal Service for capture payment
 
     public static function getOptions()
     {
