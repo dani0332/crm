@@ -10,9 +10,11 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
+use App\Models\Team;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -302,9 +304,9 @@ class ConversionAsAtReportService extends BaseService
     {
         $teamType = null;
         if ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
-            $teamType = TeamTypeEnum::CAR_PARENT_TEAM_ID;
+            $teamType = Team::where('name', TeamNameEnum::CAR)->where('type', TeamTypeEnum::PRODUCT)->first()->id;
         } elseif ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health)) {
-            $teamType = TeamTypeEnum::HEALTH_PARENT_TEAM_ID;
+            $teamType = Team::where('name', TeamNameEnum::HEALTH)->where('type', TeamTypeEnum::PRODUCT)->first()->id;
         }
 
         return $query
