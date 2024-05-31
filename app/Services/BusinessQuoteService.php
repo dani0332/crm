@@ -95,6 +95,14 @@ class BusinessQuoteService extends BaseService
                 'bqr.price_vat_not_applicable',
                 'bqr.price_with_vat',
                 'bqr.company_name as business_company_name',
+                'ent.emirate_of_registration_id',
+                'bqr.price_without_vat',
+                'bqr.vat',
+                'bqr.insurer_quote_number',
+                'bqr.policy_issuance_status_id',
+                'bqr.policy_issuance_status_other',
+                'policy_start_date',
+                'policy_issuance_date',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -151,7 +159,7 @@ class BusinessQuoteService extends BaseService
     {
         return BusinessQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
             $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser'])->first();
     }
 
     public function updateChildRecord($id)

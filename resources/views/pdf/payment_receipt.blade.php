@@ -32,7 +32,7 @@
         }
        
         #footer {
-            margin: 100px -50px 0 -45px !important;
+            margin: 300px -50px 0 -45px !important;
             background-color: rgb(29 131 188);
             color: white;
             width: 800px !important;
@@ -47,7 +47,7 @@
         }       
 
         .pl-6 {
-            padding-left: 8px;
+            padding-left: 5px;
         }
 
         .text-center {
@@ -71,6 +71,9 @@
                 -webkit-print-color-adjust: exact;
             }
         }
+        .table-height{
+            height:55%;
+        }
     </style>
 </head>
 <body>    
@@ -88,36 +91,42 @@
     </table>
     <hr>
     <div id="content">
-        <table style="border: none;">        
+        
+        <table style="border: none;">
             <tbody>
                 <tr style="border: none;">
-                    <td style="margin: 0; border: none;"><strong>Customer:</strong>{{ ucfirst($data['customer_name']) }}</td>
-                    <td style="margin: 0; border: none; text-align:right"><strong>Received Date:</strong>{{ $data['captured_at'] }}</td>
+                    <td style="margin: 0; border: none; text-align: left;"><strong>CUSTOMER:</strong></td>
+                    <td style="margin: 0; border: none; text-align: left;">{{ ucfirst($data['customer_name']) }}</td>
                 
+                    <td style="margin: 0; border: none; text-align: left;"><strong>RECEIVED DATE:</strong></td>
+                    <td style="margin: 0; border: none; text-align: left;">{{ $data['captured_at'] }}</td>
                 </tr>
                 <tr style="border: none;">
-                    <td style="margin: 0; border: none;"><strong>Receipt Number:</strong>{{ $data['receipt_number'] }}</td>
-                    <td style="margin: 0; border: none; text-align:right"><strong>Paid By:</strong>{{ $data['payment_method'] }}</td>            
+                    <td style="margin: 0; border: none; text-align: left;"><strong>RECEIPT NUMBER:</strong></td>
+                    <td style="margin: 0; border: none; text-align: left;">{{ $data['receipt_number'] }}</td>
+            
+                    <td style="margin: 0; border: none; text-align: left;"><strong>PAID BY:</strong></td>
+                    <td style="margin: 0; border: none; text-align: left;">{{ $data['payment_method'] }}</td>
                 </tr>
             </tbody>
         </table>
         <br>
-        <table style="height:60%">
+        <table class="table-height">
             <thead>
                 <tr>
-                    <th style="width: 70%;">Order Detail</th>
-                    <th style="text-align:right;">Amount</th>
+                    <th style="width: 70%;">ORDER DETAILS</th>
+                    <th style="text-align:right;">AMOUNT</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td style="vertical-align:top; height:60%">
-                        Order Number: {{ $data['order_number'] }}<br>
-                        Order Date And Time: {{ $data['order_at'] }}<br>
-                        Insurance Company: {{ $data['insurance_company'] }}<br>
-                        Type of Insurance: {{ $data['type_of_insurance'] }}<br>
+                    <td class="table-height" style="vertical-align:top;">
+                        Order number: {{ $data['order_number'] }}<br>
+                        Order date and time: {{ $data['order_at'] }}<br>
+                        Insurance company: {{ $data['insurance_company'] }}<br>
+                        Type of insurance: {{ $data['type_of_insurance'] }}<br>
                     </td>
-                    <td style="vertical-align:top; text-align:right; height:60%">{{ $data['order_amount'] }} AED</td>
+                    <td class="table-height" style="vertical-align:top; text-align:right;">{{ $data['order_amount'] }} AED</td>
                 </tr>
             </tbody>
         </table>      
@@ -137,31 +146,42 @@
     </div>
    
     <p style="font-size: 11px; text-align: center;">
-        <i>***This is system generated receipt.Manual signature is not required***</i>
+        <i>***This is a system generated receipt, manual signature is not required***</i>
     </p>
-
     <div id="footer">
-        <h5 class="text-center" style="padding-top: 5px;">InsuranceMarket.ae is the registered trademark of AFIA
-            Insurance Brokerage Services LLC</h5>
-        <h6 class="pl-6">
-            <u>UAE Central Bank</u> Registration number 85
-        </h6>
-        <h6 class="pl-6">
-            Registered member of the <u>Emirates Insurance Association</u>
-            <span class="float-right" style="margin-right: 20px;">27th floor, Control Tower, Motor City</span>
-        </h6>
-        <h6 class="pl-6">
-            <u>Department of Economy & Tourism in Dubai</u> Trade License number 238534
-            <span class="float-right" style="margin-right: -165px;">Dubai, United Arab Emirates, PO Box - 26423</span>
-        </h6>
-        <h6 class="pl-6">
-            Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from <u>Dubai Health Authority</u>
-            <span class="float-right" style="margin-right: -20px;">Tel: 800 ALFRED (800 253 733)</span>
-        </h6>
-        <h6 class="pl-6" style="padding-bottom: 5px;">
-            Registered member of <u>Insurance Business Group</u> under the <u>Dubai Chamber of Commerce and Industry</u>
-            <span class="float-right" style="margin-right: -102px;">insurancemarket.ae</span>
-        </h6>
+        <h5 class="text-center">InsuranceMarket.ae is the registered trademark of AFIA
+            Insurance Brokerage Services LLC
+            <h6 class="text-center">
+                27th floor, Control Tower, Motor City, Dubai, United Arab Emirates, PO Box - 26423 | Tel: 800 ALFRED (800 253 733) | insurancemarket.ae
+            </h6>
+        </h5>
+        <table style="width=100%; font-size: 9px; padding:10px;">
+        <tr>
+            <td style="width=50%; verticle-align:top">
+                
+                UAE Central Bank Registration number 85<br>
+                Registered member of the Emirates Insurance Association<br>
+                Department of Economy & Tourism in Dubai Trade License number 238534<br>
+                Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority <br>
+                Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry
+            </td>
+            @if (!empty($data['advisor_name']))
+                <td style="width=25%; verticle-align:top; text-align:right;">
+                    Insurer Advisor: {{ $data['advisor_name'] }}<br>
+                    Email: {{ $data['advisor_email'] }}<br>
+                    Mobilel Number: {{ $data['advisor_mobile_no'] }}<br>
+                    Direct Line: {{ $data['advisor_landline_no'] }}<br>
+                    <br>                
+                </td>
+
+                <td style="width=25%; verticle-align:top">            
+                    @if (!empty($data['profile_photo_path']))
+                        <img style="border-radius: 50%; width: 60px; height: 60px;" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($data['profile_photo_path']))}}" alt="Insurance Market Logo">
+                    @endif
+                </td>
+            @endif
+        </tr>
+      </table>
     </div>
 </body>
 </html>
