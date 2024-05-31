@@ -34,7 +34,7 @@
     "parsecsv/php-parsecsv": "^1.3",
     "predis/predis": "^2.2",
     "pusher/pusher-php-server": "^7.2",
-    "sammyjo20/laravel-haystack": "dev-l11-compatibility",
+    "sammyjo20/laravel-haystack": "^2.2.0",
     "sentry/sentry-laravel": "^4.4.1",
     "spatie/laravel-fractal": "^6.0.3",
     "spatie/laravel-navigation": "^1.2",
@@ -52,13 +52,6 @@
     "nunomaduro/collision": "^8.1",
     "phpunit/phpunit": "^11.1.2"
   },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/laravel-shift/laravel-haystack.git",
-      "no-api": true
-    }
-  ],
   "autoload": {
     "files": [
       "app/helpers/Helper.php"
