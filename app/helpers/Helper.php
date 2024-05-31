@@ -849,6 +849,10 @@ if (! function_exists('getCardViewRequestFilters')) {
                 $partialQuery->whereNull('previous_quote_policy_number');
             }
         }
+
+        if (isset($request->advisors) && ! empty($request->advisors)) {
+            $partialQuery->whereIn('advisor_id', $request->advisors)->whereNotNull('advisor_id');
+        }
     }
 }
 
@@ -925,13 +929,6 @@ if (! function_exists('getManagersByUser')) {
         $managerIds = DB::table('user_manager')->where('user_id', $userId)->get()->pluck('manager_id');
 
         return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
-    }
-}
-
-if (! function_exists('roundNumber')) {
-    function roundNumber($number)
-    {
-        return round($number, 2);
     }
 }
 
