@@ -846,7 +846,7 @@ class SendUpdateLogService
                 'landLine' => $quote->advisor->landline_no ?? '',
                 'email' => $quote->advisor->email ?? '',
                 'name' => $quote->advisor->name ?? '',
-            ]
+            ],
         ];
 
         if ($quote->quote_type_id == QuoteTypeId::Car && $sendUpdateLog->option->code == SendUpdateLogStatusEnum::AOCOV) {
