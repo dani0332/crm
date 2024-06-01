@@ -1047,7 +1047,7 @@ class SendEmailCustomerService extends BaseService
 
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor, $ebServiceTeam);
 
-            // need to discuss this. 
+            // need to discuss this.
             /* $body['bcc'] = [
                 'email' => 'sendpolicyupdate@insurancemarket.ae',
                 'name' => 'SendPolicyUpdate',

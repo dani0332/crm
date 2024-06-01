@@ -839,7 +839,7 @@ class SendUpdateLogService
         $emailData = (object) [
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
             'policyNumber' => $quote->policy_number,
-            'carQuoteId' => $quote->id, // carQuoteId is same for all email templates. 
+            'carQuoteId' => $quote->id, // carQuoteId is same for all email templates.
             'currentInsurer' => $quote->plan->insuranceProvider->text ?? '',
             'policyUpdate' => $sendUpdateLog->category->key,
             'customerEmail' => 'mirza.baig@myalfred.com', // $quote->customer_email,
@@ -866,7 +866,7 @@ class SendUpdateLogService
         }
 
         // need to confirm CORPLINE_TRADE_SEND_POLICY_TEMPLATE for template id, also test group medical quote object.
-        
+
         if ($quote->quote_type_id == QuoteTypeId::Car) {
             $templateId = SendUpdateLogStatusEnum::CAR_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Health) {
