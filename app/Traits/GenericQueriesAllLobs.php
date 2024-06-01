@@ -218,9 +218,9 @@ trait GenericQueriesAllLobs
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
-        $payment = $payments->first();
+        $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
-            $insurance_provider_id = $payments[0]['insurance_provider_id'];
+            $insurance_provider_id = $payment->insurance_provider_id;
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
@@ -229,6 +229,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
         $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
         $bookPolicyDetails['invoiceDescription'] = $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number;
+        $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
         $bookPolicyDetails['sendPolicyType'] = null;
@@ -236,13 +237,13 @@ trait GenericQueriesAllLobs
         @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record);
         $bookPolicyDetails['transactionPaymentStatus'] = $transactionPaymentStatus;
         $bookPolicyDetails['paymentStatusTooltip'] = $paymentStatusTooltip;
-        $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payments);
-        @[$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription] = $this->checkForInsufficientPayment($payments);
+        $bookPolicyDetails['isLackingOfPayment'] = $this->isLackingPayment($payment);
+        @[$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription] = $this->checkForInsufficientPayment($payment);
         $bookPolicyDetails['isInsufficientPayment'] = $isInsufficientPayment;
         $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
-        if ($this->isFilledPolicyDetails($quoteType, $record)) {
+        if (! in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
                 if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)) {
                     $bookPolicyDetails['sendButton'] = true;
@@ -254,7 +255,7 @@ trait GenericQueriesAllLobs
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
                     if ($taxDocumentsCount == count($taxDocuments)) {
                         $bookPolicyDetails['editButton'] = true;
-                        if ($this->areBookingDetailsFilled($payments)) {
+                        if ($this->areBookingDetailsFilled($payment)) {
                             $bookPolicyDetails['text'] = 'Send and Book Policy';
                             $bookPolicyDetails['sendPolicyType'] = 'sage';
                         }
@@ -305,6 +306,10 @@ trait GenericQueriesAllLobs
             return $this->getUnpaidStatus();
         }
 
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked && $payment->transaction_payment_status == null) {
+            $this->updatePaymentAllocationStatus($payment, $quote);
+        }
+
         return $this->getPaymentStatus($payment);
     }
 
@@ -336,7 +341,7 @@ trait GenericQueriesAllLobs
 
     public function updatePriceAndDiscount($quoteModel): bool
     {
-        $payment = $quoteModel->payments()->first();
+        $payment = $quoteModel->payments()->mainLeadPayment()->first();
         $priceWithVat = $quoteModel->price_with_vat;
         $paymentTotalPrice = $payment->total_price;
 
@@ -351,7 +356,7 @@ trait GenericQueriesAllLobs
             $payment->save();
         }
 
-        return $this->isLackingPayment($quoteModel->payments);
+        return $this->isLackingPayment($payment);
     }
 
     private function isFilledPolicyDetails($type, $quote)
@@ -379,8 +384,7 @@ trait GenericQueriesAllLobs
 
     private function isLackingPayment($payment)
     {
-        if ($payment && ! $payment->isEmpty()) {
-            $payment = $payment->first();
+        if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
 
@@ -390,15 +394,14 @@ trait GenericQueriesAllLobs
         return true;
     }
 
-    private function checkForInsufficientPayment($paymentRecords)
+    private function checkForInsufficientPayment($paymnet)
     {
         $paymentStatusHeading = '';
         $paymentStatusDescription = '';
         $isInsufficientPayment = false;
 
-        if ($paymentRecords && ! $paymentRecords->isEmpty()) {
-            $firstPaymentRecord = $paymentRecords->first();
-            $paymentStatusId = $firstPaymentRecord->payment_status_id;
+        if ($paymnet) {
+            $paymentStatusId = $paymnet->payment_status_id;
 
             $insufficientPaymentStatuses = [
                 PaymentStatusEnum::PARTIALLY_PAID,
@@ -414,7 +417,7 @@ trait GenericQueriesAllLobs
                 PaymentStatusEnum::OVERDUE,
             ];
 
-            if (in_array($firstPaymentRecord->payment_status_id, $insufficientPaymentStatuses)) {
+            if (in_array($paymnet->payment_status_id, $insufficientPaymentStatuses)) {
                 switch ($paymentStatusId) {
                     case PaymentStatusEnum::PARTIALLY_PAID:
                         $paymentStatusHeading = 'Insufficient payment received';
@@ -488,15 +491,39 @@ trait GenericQueriesAllLobs
 
     private function areBookingDetailsFilled($payment)
     {
-        $firstPayment = $payment->first();
 
-        if (! $firstPayment) {
+        if (! $payment) {
             return false;
         }
 
-        return ! empty($firstPayment->insurer_invoice_date)
-            && ! empty($firstPayment->insurer_tax_number)
-            && ! empty($firstPayment->insurer_commmission_invoice_number)
-            && (! empty($firstPayment->commission_vat_not_applicable) || ! empty($firstPayment->commission_vat_applicable));
+        return ! empty($payment->insurer_invoice_date)
+            && ! empty($payment->insurer_tax_number)
+            && ! empty($payment->insurer_commmission_invoice_number)
+            && (! empty($payment->commission_vat_not_applicable) || ! empty($payment->commission_vat_applicable));
+    }
+
+    private function updatePaymentAllocationStatus($payment, $quote)
+    {
+        $capturedAmount = $payment->captured_amount;
+        $totalAmount = $payment->captured_amount + $payment->discount_value;
+        $priceWithVat = $quote->price_with_vat;
+
+        $totalAmount = round($totalAmount, 2);
+        $priceWithVat = round($priceWithVat, 2);
+
+        if ($capturedAmount == 0) {
+            $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
+        } elseif ($totalAmount >= $priceWithVat) {
+            $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
+        } else {
+            $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+        }
+        // Unset specific keys
+        unset($payment->copy_link_button);
+        unset($payment->edit_button);
+        unset($payment->approve_button);
+        unset($payment->approved_button);
+        $payment->transaction_payment_status = $paymentStatus;
+        $payment->save();
     }
 }

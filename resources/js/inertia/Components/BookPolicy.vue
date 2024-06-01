@@ -160,11 +160,6 @@ const onUpdatebookPolicyDetails = isValid => {
     bpForm.post('/quotes/update-booking-policy', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Book policy details update Successfully',
-          position: 'top',
-        });
-
         bp.isEditing = false;
       },
       onError: errors => {
@@ -768,7 +763,7 @@ const showInsufficientPaymentAlert = () => {
                     color="orange"
                     class="mt-4"
                     disabled
-                    v-if="!props.bookPolicyDetails?.sendButton"
+                    v-if="(!props.bookPolicyDetails?.sendButton && (!props.quote.quote_status_id == page.props.quoteStatusEnum.CancellationPending))"
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
@@ -900,7 +895,7 @@ const showInsufficientPaymentAlert = () => {
 
                   <template
                     v-if="
-                      props.bookPolicyDetails?.editButton &&
+                      props.bookPolicyDetails?.bookButton &&
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
@@ -909,7 +904,7 @@ const showInsufficientPaymentAlert = () => {
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        !props.bookPolicyDetails?.editButton ||
+                        !props.bookPolicyDetails?.bookButton ||
                         bp.isEditing ||
                         !can(permissionsEnum.BOOK_POLICY_BUTTON)
                       "

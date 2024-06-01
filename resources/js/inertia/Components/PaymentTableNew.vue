@@ -2966,7 +2966,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   </td>
                   <td>{{ item.code }}</td>
                   <td>{{ formatDate(item.collection_date) }}</td>
-                  <td>{{ formatDate(item.collection_date) }}</td>
+                  <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
                   <td>{{ item.payment_method.name }}</td>
                   <td>{{ formatAmount(item.total_price) }}</td>
                   <td>{{ formatAmount(item.discount_value) }}</td>
@@ -2995,7 +2995,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   </td>
                   <td>
                     <div class="flex gap-2">
-                      <template v-if="is_lacking_payment">
+                      <template v-if="item.send_update_log_id ==null && is_lacking_payment">
                         <x-tooltip position="left" class="arrow-r">
                           <x-badge
                             size="xs"
