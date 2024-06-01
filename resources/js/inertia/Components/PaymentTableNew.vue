@@ -2995,7 +2995,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   </td>
                   <td>
                     <div class="flex gap-2">
-                      <template v-if="is_lacking_payment">
+                      <template v-if="item.send_update_log_id ==null && is_lacking_payment">
                         <x-tooltip position="left" class="arrow-r">
                           <x-badge
                             size="xs"

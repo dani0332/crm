@@ -1726,7 +1726,7 @@ class CRUDController extends Controller
         $this->updatePriceAndDiscount($quoteModel);
 
         return redirect()->back()->with([
-            'success' => 'Quote Policy Detail has been updated.',
+            'success' => 'Policy details has been updated.',
         ]);
     }
 

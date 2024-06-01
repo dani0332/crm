@@ -206,4 +206,9 @@ class Payment extends Model implements Auditable
     {
         return $this->belongsTo(SendUpdateLog::class, 'send_update_log_id', 'id');
     }
+
+    public function scopeMainLeadPayment($q)
+    {
+        return $q->whereNull('send_update_log_id');
+    }
 }
