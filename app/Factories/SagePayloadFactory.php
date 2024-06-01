@@ -177,7 +177,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createAPInvoicePremSplitPayments($request , $paymentSplits , $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createAPInvoicePremSplitPayments($request, $paymentSplits, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
     {
         $optionalFields = self::createOptionalFields($request);
         //Additional Option Field just for AP Invoice
