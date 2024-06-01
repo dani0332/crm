@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
+use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
@@ -950,7 +951,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendBookUpdateEmail($emailTemplateId, $emailData, $tag)
+    public function sendBookUpdateEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
     {
         try {
             info('fn: sendBookUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
@@ -1022,6 +1023,14 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
 
+            $ebServiceTeam = [];
+            if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
+                $ebServiceTeam = [[
+                    'email' => 'ebserviceteam@insurancemarket.ae',
+                    'name' => 'ebserviceteam',
+                ]];
+            }
+
             $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
             $ccAdditional = [];
             if ($customer) {
@@ -1036,7 +1045,13 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
+            $body['cc'] = array_merge($ccAdditional, $ccAdvisor, $ebServiceTeam);
+
+            // need to discuss this. 
+            /* $body['bcc'] = [
+                'email' => 'sendpolicyupdate@insurancemarket.ae',
+                'name' => 'SendPolicyUpdate',
+            ]; */
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(

@@ -36684,5 +36684,33 @@ class DocumentTypeSeeder extends Seeder
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
         ]);
+
+        DocumentType::firstOrCreate(([
+            'code' => DocumentTypeCode::QD,
+            'category' => 'SEND_UPDATE',
+        ]), [
+            'text' => 'Quotation Document',
+            'is_active' => 1,
+            'folder_path' => 'send-update',
+            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+            'max_files' => 5,
+            'max_size' => 25,
+            'is_required' => 0,
+            'category' => 'SEND_UPDATE',
+        ]);
+
+        DocumentType::firstOrCreate(([
+            'code' => DocumentTypeCode::AML,
+            'category' => 'SEND_UPDATE',
+        ]), [
+            'text' => 'Active Member List',
+            'is_active' => 1,
+            'folder_path' => 'send-update',
+            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+            'max_files' => 5,
+            'max_size' => 25,
+            'is_required' => 0,
+            'category' => 'SEND_UPDATE',
+        ]);
     }
 }
