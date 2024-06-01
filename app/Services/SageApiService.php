@@ -293,7 +293,7 @@ class SageApiService
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
         if (! $isSageEnabled) {
             info('Book Update - Sage is not enabled');
-            
+
             return ['status' => false, 'message' => 'Sage is not enabled'];
         }
 
@@ -309,7 +309,7 @@ class SageApiService
         $quoteDetails = $quote;
 
         if ($sageCustomerNumber) {
-            info('Book Update - Customer found in Sage - Customer Number: '.$sageCustomerNumber. ' - QuoteType: '.$request->quoteType. ' - QuoteUUID: '. $request->quoteUuid.' - SendUpdateCode: '.$extras['send_update_log']->uuid);
+            info('Book Update - Customer found in Sage - Customer Number: '.$sageCustomerNumber.' - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateCode: '.$extras['send_update_log']->uuid);
             $response = '';
             $paymentFilterAsPerType = ($extras['type'] == SageEnum::PT_SEND_UPDATE) ? ['send_update_log_id' => $request->sendUpdateId] : ['code' => $quote['code']];
             $payment = Payment::where($paymentFilterAsPerType)->first();
@@ -348,7 +348,7 @@ class SageApiService
             return ['status' => false, 'message' => 'Something went wrong'];
         }
 
-        logger()->error('Book Update - Customer not found in Sage. QuoteType: '.$request->quoteType. ' - QuoteUUID: '. $request->quoteUuid.' - SendUpdateCode: '.$extras['send_update_log']->uuid);
+        logger()->error('Book Update - Customer not found in Sage. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateCode: '.$extras['send_update_log']->uuid);
 
         return ['status' => false, 'message' => 'Customer not found in Sage'];
     }

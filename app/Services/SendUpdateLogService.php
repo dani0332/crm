@@ -642,8 +642,8 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::DM,
         ];
 
-        if ($categoryCode == SendUpdateLogStatusEnum::EF && !in_array($optionCode, $excludedOptionForEF)) {
-            info('Book Update - Sending Update to Sage APIs for Endorsement Financial - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
+        if ($categoryCode == SendUpdateLogStatusEnum::EF && ! in_array($optionCode, $excludedOptionForEF)) {
+            info('Book Update - Sending Update to Sage APIs for Endorsement Financial - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -658,7 +658,7 @@ class SendUpdateLogService
         }
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-            info('Book Update - Sending Update to Sage APIs for Correction of Policy Details - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid. '- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
+            info('Book Update - Sending Update to Sage APIs for Correction of Policy Details - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -672,7 +672,7 @@ class SendUpdateLogService
             return $sageResponse;
         }
 
-        info('Book Update - Skipping Sage APIs for Send Update - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
+        info('Book Update - Skipping Sage APIs for Send Update - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
 
         return ['status' => true];
     }
@@ -691,7 +691,7 @@ class SendUpdateLogService
 
                 $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
                 if ($payment) {
-                    info('Book Update - Updating Payment Details - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
+                    info('Book Update - Updating Payment Details - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
                     $payment->update([
                         'paymentable_id' => $quote->id,
                         'paymentable_type' => ltrim($quoteModel, '\\'),
@@ -699,12 +699,12 @@ class SendUpdateLogService
                 }
 
                 if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
-                    info('Book Update - Updating Renewal Expiry Date - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
+                    info('Book Update - Updating Renewal Expiry Date - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
                     $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
                 }
 
                 if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-                    info('Book Update - Updating Policy Details - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
+                    info('Book Update - Updating Policy Details - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
@@ -772,12 +772,13 @@ class SendUpdateLogService
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            logger()->error('Book Update - Error while moving updates to lead - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid. ' - Exception: '.$exception->getMessage());
+            logger()->error('Book Update - Error while moving updates to lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
             return ['status' => false, 'message' => 'Update not booked'];
         }
 
-        info('Book Update - Update booked successfully - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
+        info('Book Update - Update booked successfully - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->uuid);
+
         return ['status' => true, 'message' => 'Update booked'];
     }
 
