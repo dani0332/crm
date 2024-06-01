@@ -14,6 +14,7 @@ use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Support\Str;
 
@@ -247,6 +248,19 @@ class SendUpdateLogRepository extends BaseRepository
             $result = $sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             ]);
+            if ($result) {
+                $emailData = (object) [
+                    'clientFullName' => 'Mirza Haseeb Baig',
+                    'policyNumber' => '9837839kHKUH',
+                    'carQuoteId' => 172420,
+                    'currentInsurer' => 'testing insurer',
+                    'policyUpdate' => 'policy update',
+                    'advisorEmail' => 'advisor@email.com',
+                    'advisorName' => 'testing advisor name',
+                    'customerEmail' => 'mirza.baig@myalfred.com',
+                ];
+                app(SendEmailCustomerService::class)->sendBookUpdateEmail(664, $emailData, 'send-update');
+            }
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
