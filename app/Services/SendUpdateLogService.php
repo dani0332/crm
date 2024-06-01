@@ -842,13 +842,16 @@ class SendUpdateLogService
             'currentInsurer' => $quote->plan->insuranceProvider->text ?? '',
             'policyUpdate' => $sendUpdateLog->category->key,
             'customerEmail' => 'mirza.baig@myalfred.com', // $quote->customer_email,
-            'details' => ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '',
             'advisor' => (object) [
                 'landLine' => $quote->advisor->landline_no ?? '',
                 'email' => $quote->advisor->email ?? '',
                 'name' => $quote->advisor->name ?? '',
             ]
         ];
+
+        if ($quote->quote_type_id == QuoteTypeId::Car && $sendUpdateLog->option->code == SendUpdateLogStatusEnum::AOCOV) {
+            $emailData->details = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
+        }
 
         app(SendEmailCustomerService::class)->sendBookUpdateEmail(SendUpdateLogStatusEnum::CAR_SEND_POLICY_TEMPLATE, $emailData, 'send-update');
     }
