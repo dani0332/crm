@@ -158,9 +158,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     public function fetchUpdateNewPayment($request)
-    {        
+    {
         $attempts = 0;
-        $maxRetries = 2;        
+        $maxRetries = 2;
         while ($attempts < $maxRetries) { //Tries to avoid transaction deadlock issue
             DB::beginTransaction();
             try {
@@ -205,19 +205,22 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
                 $this->updatePaymentSplits($request);
                 DB::commit(); // Commit changes if everything went well
+
                 return ['status' => 'success', 'message' => 'Payment Updated'];
-            
+
             } catch (Exception $exception) {
                 DB::rollBack(); // Rollback changes if any error occurred
                 if ($exception->getCode() == '40001' || $exception->getCode() == '1213') { // Deadlock error codes
                     $attempts++;
                     if ($attempts >= $maxRetries) {
                         Log::error('UpdatePayment Error After All Attempts: '.$exception->getMessage());
+
                         return ['status' => 'error', 'message' => $exception->getMessage()];
                     }
                     sleep(1); // Optional: wait a bit before retrying
                 } else {
                     Log::error('UpdatePayment Error: '.$exception->getMessage()); // Rethrow the exception if it's not a deadlock
+
                     return ['status' => 'error', 'message' => $exception->getMessage()];
                 }
             }
@@ -276,7 +279,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
         //Skipping paid payments and deleting extra payments
-        if ($paymentSplits) {            
+        if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
                 if (
                     in_array($paymentSplit->payment_status_id, [
@@ -304,7 +307,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                     }
                 }
-            }           
+            }
         }
         $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
