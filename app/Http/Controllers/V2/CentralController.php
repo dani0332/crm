@@ -42,7 +42,6 @@ use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
-use App\Models\PaymentSplits;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;

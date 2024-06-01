@@ -9,7 +9,6 @@ use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
-use finfo;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -819,10 +818,10 @@ class SendEmailCustomerService extends BaseService
         try {
             info('sendBookPolicyDocumentsEmail  , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
 
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
             $attachments = [];
-            if (!empty($documents)) {
+            if (! empty($documents)) {
                 foreach ($documents as $document) {
                     $path = $document->doc_url;
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
@@ -844,14 +843,14 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
                 ]],
-                'templateId' => (int)$emailData->emailTemplateId,
+                'templateId' => (int) $emailData->emailTemplateId,
                 'params' => [
                     'clientFullName' => $emailData->clientFullName,
                     'carQuoteId' => $emailData->code,
                     'currentInsurer' => $emailData->currentInsurer,
                     'renewalDueDate' => $emailData->renewalDueDate,
                     'policyNumber' => $emailData->policy_number,
-                    'advisor' => (object)[
+                    'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
                     ],
@@ -872,20 +871,18 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $response = json_decode($clientRequest->getStatusCode() . ' ' . $clientRequest->getBody()->getContents(), true);
+            $response = json_decode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents(), true);
             $responseCode = $clientRequest->getStatusCode();
             info('sendBookPolicyDocumentsEmail ---- Request Sent '.$emailData->code);
             info('sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail . ' Class: ' . get_class();
+            $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
             Log::error($responseDetail);
         }
 
         return $responseCode;
     }
-
-
 
     public function sendSICNotificationToAdvisor($lead, $user)
     {

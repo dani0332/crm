@@ -243,7 +243,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
-        if (!in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $this->isFilledPolicyDetails($quoteType, $record)) {
+        if (! in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
                 if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)) {
                     $bookPolicyDetails['sendButton'] = true;
@@ -306,7 +306,7 @@ trait GenericQueriesAllLobs
             return $this->getUnpaidStatus();
         }
 
-        if($quote->quote_status_id == QuoteStatusEnum::PolicyBooked && $payment->transaction_payment_status == null) {
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked && $payment->transaction_payment_status == null) {
             $this->updatePaymentAllocationStatus($payment, $quote);
         }
 
@@ -510,7 +510,6 @@ trait GenericQueriesAllLobs
 
         $totalAmount = round($totalAmount, 2);
         $priceWithVat = round($priceWithVat, 2);
-
 
         if ($capturedAmount == 0) {
             $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
