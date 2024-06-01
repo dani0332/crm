@@ -48,4 +48,9 @@ class SendUpdateLog extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
+
+    public function emirates(): BelongsTo
+    {
+        return $this->belongsTo(Emirate::class, 'emirates_id');
+    }
 }
