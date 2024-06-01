@@ -11,6 +11,7 @@ use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
+use App\Models\CarAddOn;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestAddOn;
 use App\Models\CycleQuote;
@@ -761,6 +762,8 @@ class SendUpdateLogService
                     'transaction_payment_status' => $status ?? '',
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
                 ]);
+
+                $this->bookUpdateEmail($sendUpdateLog, $quote);
             }
 
             DB::commit();
@@ -819,10 +822,34 @@ class SendUpdateLogService
         return $data;
     }
 
-    public function getCarAddons($quoteUuid): array
+    public function getCarAddons($quoteUuid, $addonsIds = null): array
     {
+        if (! empty($addonsIds)) {
+            return CarAddOn::whereIn('id', $addonsIds)->pluck('text')->toArray();
+        }
+
         $carQuote = CarQuote::where('uuid', $quoteUuid)->first();
 
         return $carQuote->plan->carAddons->toArray();
+    }
+
+    public function bookUpdateEmail($sendUpdateLog, $quote): void
+    {
+        $emailData = (object) [
+            'clientFullName' => $quote->first_name.' '.$quote->last_name,
+            'policyNumber' => $quote->policy_number,
+            'carQuoteId' => $quote->id,
+            'currentInsurer' => $quote->plan->insuranceProvider->text ?? '',
+            'policyUpdate' => $sendUpdateLog->category->key,
+            'customerEmail' => 'mirza.baig@myalfred.com', // $quote->customer_email,
+            'details' => ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '',
+            'advisor' => (object) [
+                'landLine' => $quote->advisor->landline_no ?? '',
+                'email' => $quote->advisor->email ?? '',
+                'name' => $quote->advisor->name ?? '',
+            ]
+        ];
+
+        app(SendEmailCustomerService::class)->sendBookUpdateEmail(SendUpdateLogStatusEnum::CAR_SEND_POLICY_TEMPLATE, $emailData, 'send-update');
     }
 }
