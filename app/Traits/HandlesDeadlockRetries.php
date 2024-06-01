@@ -11,9 +11,8 @@ trait HandlesDeadlockRetries
     /**
      * Handle the given callback with retries for deadlock exceptions.
      *
-     * @param callable $callback
-     * @param int $maxRetries
      * @return mixed
+     *
      * @throws Exception
      */
     public function handleWithDeadlockRetries(callable $callback, int $maxRetries = 5)
@@ -24,8 +23,9 @@ trait HandlesDeadlockRetries
             DB::beginTransaction();
             try {
                 $result = $callback();
-                
+
                 DB::commit();
+
                 return $result;
             } catch (Exception $exception) {
                 DB::rollBack();
@@ -33,13 +33,15 @@ trait HandlesDeadlockRetries
                 if ($this->isDeadlockException($exception)) {
                     $attempts++;
                     if ($attempts >= $maxRetries) {
-                        Log::error('Error After All Attempts: ' . $exception->getMessage());
-                        return ['status' => 'error', 'message' => $exception->getMessage()];                        
+                        Log::error('Error After All Attempts: '.$exception->getMessage());
+
+                        return ['status' => 'error', 'message' => $exception->getMessage()];
                     }
                     sleep(1); // Optional: wait a bit before retrying
                 } else {
-                    Log::error('Error: ' . $exception->getMessage());
-                    return ['status' => 'error', 'message' => $exception->getMessage()];                    
+                    Log::error('Error: '.$exception->getMessage());
+
+                    return ['status' => 'error', 'message' => $exception->getMessage()];
                 }
             }
         }
@@ -47,9 +49,6 @@ trait HandlesDeadlockRetries
 
     /**
      * Determine if the exception is a deadlock exception.
-     *
-     * @param Exception $exception
-     * @return bool
      */
     private function isDeadlockException(Exception $exception): bool
     {

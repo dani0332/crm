@@ -31,11 +31,10 @@ use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\HandlesDeadlockRetries;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Traits\HandlesDeadlockRetries;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -160,8 +159,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     public function fetchUpdateNewPayment($request)
-    {       
-        $maxRetries = 2;        
+    {
+        $maxRetries = 2;
+
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $masterPayment = (object) $request->payment;
             $paymentInformation = [
@@ -202,9 +202,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if (! empty($request->trashedFilesModal)) {
                 QuoteDocument::whereIn('doc_name', $request->trashedFilesModal)->delete();
             }
-            $this->updatePaymentSplits($request);                
+            $this->updatePaymentSplits($request);
+
             return ['status' => 'success', 'message' => 'Payment Updated'];
-        }, $maxRetries);        
+        }, $maxRetries);
     }
 
     //Add split payments
