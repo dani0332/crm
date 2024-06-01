@@ -814,35 +814,22 @@ class SendEmailCustomerService extends BaseService
             $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
         }
     }
-
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
         try {
+            info('sendBookPolicyDocumentsEmail  , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
 
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
             $documents = $emailData->quoteDocuments;
-
-            if (! empty($documents)) {
-                foreach ($documents as $item) {
-
-                    $path = $item->doc_url;
-                    $pwDoc = $path !== '' ? $websiteURL.$path : '';
-                    if (! empty($path)) {
-
-                        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-
-                        $file = file_get_contents($pwDoc);
-                        $mimeType = $fileInfo->buffer($file);
-
-                        $ext = mimeContentType(null, $mimeType);
-                        $name = $item->document_type_text.'.'.$ext;
-                        // info('Mime type ========' . $name);
-                        $attachments[] = [
-                            'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => $name,
-                            'ContentType' => $mimeType,
-                        ];
-                    }
+            $attachments = [];
+            if (!empty($documents)) {
+                foreach ($documents as $document) {
+                    $path = $document->doc_url;
+                    $documentURL = $path !== '' ? $websiteURL.$path : '';
+                    $attachments[] = [
+                        'url' => $documentURL,
+                        'name' => basename($documentURL),
+                    ];
                 }
             }
 
@@ -857,14 +844,14 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
                 ]],
-                'templateId' => (int) $emailData->emailTemplateId,
+                'templateId' => (int)$emailData->emailTemplateId,
                 'params' => [
                     'clientFullName' => $emailData->clientFullName,
                     'carQuoteId' => $emailData->code,
                     'currentInsurer' => $emailData->currentInsurer,
                     'renewalDueDate' => $emailData->renewalDueDate,
                     'policyNumber' => $emailData->policy_number,
-                    'advisor' => (object) [
+                    'advisor' => (object)[
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
                     ],
@@ -885,16 +872,20 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $response = json_decode($clientRequest->getStatusCode() . ' ' . $clientRequest->getBody()->getContents(), true);
             $responseCode = $clientRequest->getStatusCode();
+            info('sendBookPolicyDocumentsEmail ---- Request Sent '.$emailData->code);
+            info('sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
+            $responseDetail = 'Brevo Send Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail . ' Class: ' . get_class();
             Log::error($responseDetail);
         }
 
         return $responseCode;
     }
+
+
 
     public function sendSICNotificationToAdvisor($lead, $user)
     {

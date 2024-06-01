@@ -237,7 +237,7 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
         $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
 
-        return redirect()->back()->with('success', 'Booking Status has been updated.');
+        return redirect()->back()->with('success', 'Booking details has been updated.');
     }
 
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
@@ -262,8 +262,8 @@ class CentralController extends Controller
                 ]], 403);
             }
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
-            $payment = Payment::where('code', $quote['code'])->first();
-            $paymentSplits = PaymentSplits::where('code', $quote['code'])->get();
+            $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
+            $paymentSplits = $payment->paymentSplits;
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
 
