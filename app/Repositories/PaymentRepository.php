@@ -259,7 +259,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
         //Skipping paid payments and deleting extra payments
-        if ($paymentSplits) {            
+        if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
                 if (
                     in_array($paymentSplit->payment_status_id, [
@@ -287,7 +287,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                     }
                 }
-            }           
+            }
         }
         $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
