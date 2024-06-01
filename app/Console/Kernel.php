@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Stringable;
+use App\Enums\EnvEnum;
 
 class Kernel extends ConsoleKernel
 {
@@ -30,8 +31,10 @@ class Kernel extends ConsoleKernel
         Commands\UpdateStaleLeads::class,
         Commands\AutomateActivitiesCommand::class,
         Commands\PaymentOverdueStatus::class,
+        Commands\AlfredFollowUpSchedulerCommand::class,
     ];
 
+    private $appEnv = '';
     /**
      * Define the application's command schedule.
      *
@@ -39,6 +42,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $this->appEnv = config('constants.APP_ENV');
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
@@ -92,6 +96,18 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('09:00');
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('11:45');
+
+        if ($this->appEnv == EnvEnum::PRODUCTION) {
+            $schedule->command('alfred:followupEmails')
+                ->timezone('Asia/Dubai')
+                ->weekly()
+                ->mondays()
+                ->at('11:00')
+                ->onOneServer()
+                ->withoutOverlapping(1);
+        } else {
+            $schedule->command('alfred:followupEmails')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        }
     }
 
     /**
