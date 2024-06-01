@@ -89,6 +89,12 @@ class SagePayloadFactory
 
     public static function createAPInvoicePrem($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
     {
+        $optionalFields = self::createOptionalFields($request);
+        //Additional Option Field just for AP Invoice
+        $optionalFields[] = [
+            'OptionalField' => 'IGTC',
+            'Value' => 'N',
+        ];
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
@@ -119,12 +125,99 @@ class SagePayloadFactory
                             'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
                         ],
                     ],
-                    'InvoiceOptionalFields' => self::createOptionalFields($request),
+                    'InvoiceOptionalFields' => $optionalFields,
                 ],
             ],
         ];
 
         $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_INV;
+        $entryType = SageEnum::SCT_STRAIGHT;
+
+        // Payload update logic for reversal and correction scenario
+        if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION]) && ! empty($revCorrDetails)) {
+            $entryType = $type;
+            $payLoad = json_decode($revCorrDetails);
+
+            $applyToDocument = $payLoad->Invoices[0]->DocumentNumber;
+            unset($payLoad->BatchStatus);
+
+            if ($type == SageEnum::SCT_REVERSAL) {
+
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-REV';
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
+                $payLoad->Invoices[0]->DocumentType = 'CreditNote';
+                $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
+                $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_REV_INV;
+            }
+
+            if ($type == SageEnum::SCT_CORRECTION) {
+
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW';
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW';
+                $payLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format);
+                $payLoad->Invoices[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format);
+                $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = roundNumber($request->premiumWithoutTax);
+                $payLoad->Invoices[0]->DocumentTotalIncludingTax = roundNumber($request->premiumWithTax);
+                $payLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
+                $payLoad->Invoices[0]->DocumentType = 'DebitNote';
+                $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
+
+                $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format);
+                $payLoad->Invoices[0]->InvoiceOptionalFields = self::createOptionalFields($request);
+
+                $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_CORR_INV;
+            }
+        }
+
+        return [
+            'endPoint' => 'AP/APInvoiceBatches',
+            'payload' => $payLoad,
+            'sage_request_type' => $sageRequestType,
+            'entry_type' => $entryType,
+        ];
+    }
+
+    public static function createAPInvoicePremSplitPayments($request , $paymentSplits , $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    {
+        $optionalFields = self::createOptionalFields($request);
+        //Additional Option Field just for AP Invoice
+        $optionalFields[] = [
+            'OptionalField' => 'IGTC',
+            'Value' => 'N',
+        ];
+        $premiumDescription = 'P.'.$request->invoiceDescription;
+        $payLoad = [
+            'Invoices' => [
+                [
+                    'VendorNumber' => $request->sageVenderId, // use vender api to create vender in sage
+                    'DocumentNumber' => $request->insurerPremiumNumber,
+                    'InvoiceDescription' => $premiumDescription,
+                    'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'CurrencyCode' => 'AED', // alway will be AED discussed with denber
+                    'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                    'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
+                    'TaxClass1' => 5,
+                    'TaxAmount1' => 0.000,
+                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalAmount),
+                    'DocumentTotalIncludingTax' => roundNumber($request->totalAmount),
+                    'Terms' => 'SPLIT'.count($paymentSplits),
+                    'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'InvoiceDetails' => [
+                        [
+                            'DistributionDescription' => $premiumDescription,
+                            'TaxClass1' => 5,
+                            'GLAccount' => $request->insurerGlLiaiblityAccount,
+                            'DistributedAmount' => roundNumber($request->totalAmount),
+                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalAmount),
+                        ],
+                    ],
+                    'InvoicePaymentSchedules' => self::createPaymentSchedules($paymentSplits),
+                    'InvoiceOptionalFields' => $optionalFields,
+                ],
+            ],
+        ];
+
+        $sageRequestType = SageEnum::SRT_CREATE_AP_SP_PREM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
 
         // Payload update logic for reversal and correction scenario

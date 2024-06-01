@@ -45,6 +45,7 @@ final class SageEnum extends Enum
 
     // AP Invoices - Upfront
     const SRT_CREATE_AP_PREM_INV = 'CREATE_AP_PREM_INV';
+    const SRT_CREATE_AP_SP_PREM_INV = 'CREATE_AP_SP_PREM_INV';
     const SRT_RTP_AP_PREM_INV = 'RTP_AP_PREM_INV';
     const SRT_POST_AP_PREM_INV = 'POST_AP_PREM_INV';
 
