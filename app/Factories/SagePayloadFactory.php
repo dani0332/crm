@@ -355,10 +355,8 @@ class SagePayloadFactory
         if ($request->commissionIncludingVat > 0) {
             $taxClass = 1;
         }
-
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $commissionDescription = 'C.'.$request->invoiceDescription;
-        $premiumWithDiscount = $request->totalAmount + $request->discount;
         $payLoad = [
             'Invoices' => [
                 [
@@ -371,16 +369,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTax' => roundNumber($premiumWithDiscount),
-                    'DocumentTotalIncludingTax' => roundNumber($premiumWithDiscount),
+                    'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
+                    'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
-                            'ExtendedAmountWithTIP' => roundNumber($premiumWithDiscount),
-                            'ExtendedAmountWithoutTIP' => roundNumber($premiumWithDiscount),
+                            'ExtendedAmountWithTIP' => roundNumber($request->premiumWithTax),
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->premiumWithTax),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
