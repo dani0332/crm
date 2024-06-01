@@ -900,7 +900,7 @@ const showInsufficientPaymentAlert = () => {
 
                   <template
                     v-if="
-                      props.bookPolicyDetails?.editButton &&
+                      props.bookPolicyDetails?.bookButton &&
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
@@ -909,7 +909,7 @@ const showInsufficientPaymentAlert = () => {
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        !props.bookPolicyDetails?.editButton ||
+                        !props.bookPolicyDetails?.bookButton ||
                         bp.isEditing ||
                         !can(permissionsEnum.BOOK_POLICY_BUTTON)
                       "

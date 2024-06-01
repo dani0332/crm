@@ -622,7 +622,7 @@ class CRUDService extends BaseService
 
                 // Payload update for Send Update to Payment Gateway
                 if (get_class($quoteModel) == SendUpdateLog::class) {
-                    $data['type_id'] = QuoteTypeId::SendUpdate;
+                    $data['type_id'] = GenericRequestEnum::SEND_UPDATE_QUOTE_TYPE_MARSHAL;
                 }
 
                 $processResponse = $this->processCapturePayment($data);
