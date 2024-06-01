@@ -35,10 +35,12 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Traits\HandlesDeadlockRetries;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
     use GenericQueriesAllLobs;
+    use HandlesDeadlockRetries;
 
     protected $paymentService;
 
@@ -158,70 +160,51 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     public function fetchUpdateNewPayment($request)
-    {        
-        $attempts = 0;
+    {       
         $maxRetries = 2;        
-        while ($attempts < $maxRetries) { //Tries to avoid transaction deadlock issue
-            DB::beginTransaction();
-            try {
-                $masterPayment = (object) $request->payment;
-                $paymentInformation = [
-                    'total_price' => $masterPayment->total_price,
-                    'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
-                    'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
-                    'discount_reason' => $masterPayment->discount_reason,
-                    'discount_custom_reason' => $masterPayment->discount_custom_reason,
-                    'discount_type' => $masterPayment->discount,
-                    'frequency' => $masterPayment->frequency,
-                    'credit_approval' => $masterPayment->credit_approval,
-                    'total_payments' => $masterPayment->payment_no,
-                    'collection_type' => $masterPayment->collection_type,
-                    'total_amount' => $masterPayment->total_amount, //amount after discount
-                    'collection_date' => $masterPayment->collection_date,
-                    'discount_value' => $masterPayment->discount_value,
-                    'payment_methods_code' => $masterPayment->payment_methods,
-                    'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                    'updated_by' => $request->user()->id,
-                ];
+        return $this->handleWithDeadlockRetries(function () use ($request) {
+            $masterPayment = (object) $request->payment;
+            $paymentInformation = [
+                'total_price' => $masterPayment->total_price,
+                'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                'discount_reason' => $masterPayment->discount_reason,
+                'discount_custom_reason' => $masterPayment->discount_custom_reason,
+                'discount_type' => $masterPayment->discount,
+                'frequency' => $masterPayment->frequency,
+                'credit_approval' => $masterPayment->credit_approval,
+                'total_payments' => $masterPayment->payment_no,
+                'collection_type' => $masterPayment->collection_type,
+                'total_amount' => $masterPayment->total_amount, //amount after discount
+                'collection_date' => $masterPayment->collection_date,
+                'discount_value' => $masterPayment->discount_value,
+                'payment_methods_code' => $masterPayment->payment_methods,
+                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                'updated_by' => $request->user()->id,
+            ];
 
-                if ($masterPayment->reference) {
-                    $paymentInformation['reference'] = $masterPayment->reference;
-                }
-                $payment = Payment::where('code', $request->paymentCode)->first();
-                if (! $payment) {
-                    return ['status' => 'error', 'message' => 'Payment record not found'];
-                }
-
-                if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
-                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
-                } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
-                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
-                }
-                $payment->update($paymentInformation);
-
-                //Update split payments start
-                if (! empty($request->trashedFilesModal)) {
-                    QuoteDocument::whereIn('doc_name', $request->trashedFilesModal)->delete();
-                }
-                $this->updatePaymentSplits($request);
-                DB::commit(); // Commit changes if everything went well
-                return ['status' => 'success', 'message' => 'Payment Updated'];
-            
-            } catch (Exception $exception) {
-                DB::rollBack(); // Rollback changes if any error occurred
-                if ($exception->getCode() == '40001' || $exception->getCode() == '1213') { // Deadlock error codes
-                    $attempts++;
-                    if ($attempts >= $maxRetries) {
-                        Log::error('UpdatePayment Error After All Attempts: '.$exception->getMessage());
-                        return ['status' => 'error', 'message' => $exception->getMessage()];
-                    }
-                    sleep(1); // Optional: wait a bit before retrying
-                } else {
-                    Log::error('UpdatePayment Error: '.$exception->getMessage()); // Rethrow the exception if it's not a deadlock
-                    return ['status' => 'error', 'message' => $exception->getMessage()];
-                }
+            if ($masterPayment->reference) {
+                $paymentInformation['reference'] = $masterPayment->reference;
             }
-        } // End of while loop
+            $payment = Payment::where('code', $request->paymentCode)->first();
+            if (! $payment) {
+                return ['status' => 'error', 'message' => 'Payment record not found'];
+            }
+
+            if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
+            } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
+            }
+            $payment->update($paymentInformation);
+
+            //Update split payments start
+            if (! empty($request->trashedFilesModal)) {
+                QuoteDocument::whereIn('doc_name', $request->trashedFilesModal)->delete();
+            }
+            $this->updatePaymentSplits($request);                
+            return ['status' => 'success', 'message' => 'Payment Updated'];
+        }, $maxRetries);        
     }
 
     //Add split payments
