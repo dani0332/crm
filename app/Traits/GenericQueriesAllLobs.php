@@ -229,6 +229,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
         $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
         $bookPolicyDetails['invoiceDescription'] = $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number;
+        $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
         $bookPolicyDetails['sendPolicyType'] = null;

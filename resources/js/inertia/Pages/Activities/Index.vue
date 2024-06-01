@@ -1,6 +1,6 @@
 <script setup>
 // Component Props and State Initialization
-defineProps({
+const props = defineProps({
   activities: Object,
   advisors: Object,
   cannotUseAssignee: Boolean,
@@ -460,6 +460,7 @@ onMounted(() => {
 
       <template #item-status="{ status, id }">
         <x-checkbox
+          :key="id"
           color="emerald"
           size="xl"
           :modelValue="status === 1"

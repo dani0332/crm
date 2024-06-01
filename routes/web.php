@@ -148,6 +148,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/revival-conversion', [ReportsController::class, 'renderRevivalConversionReport'])->name('revival-conversion-report-view');
         Route::get('/reports/utm-report', [ReportsController::class, 'utmLeadsSaleReport'])->name('utm-leads-sales-report');
         Route::get('/reports/renewal-report', [ReportsController::class, 'renderRenewalReport'])->name('renewal-batch-report');
+        Route::get('/reports/conversion-as-at', [ReportsController::class, 'renderConversionAsAtReport'])->name('conversion-as-at-report');
         Route::get('/reports/management-report', [ReportsController::class, 'renderSaleManagementReport'])->name('management-report');
         Route::get('/reports/total-premium', [ReportsController::class, 'totalPremiumLeadsSaleReport'])->name('total-premium-leads-sales-report');
 
@@ -209,6 +210,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
             Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export');
         });
+    });
+
+    Route::group(['middleware' => ['permission:'.PermissionsEnum::DATA_EXTRACTION]], function () {
+        Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
 
     Route::get('embedded-products-reports', [EmbeddedProductController::class, 'reportsList'])->name('embedded-products.reports');
@@ -536,7 +541,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/get-reversal-entries', 'getReversalEntries')->name('get-reversal-entries');
         Route::post('/send-update-customer-validation', 'sendUpdateCustomerValidation')->name('send-update-customer-validation');
         Route::post('/send-update-to-customer', 'sendUpdateToCustomer')->name('send-update-to-customer');
-        Route::post('send-update', 'sendUpdate')->name('send-update');
+        Route::post('book-update', 'sendUpdate')->name('book-update');
     });
     Route::get('get-plans/{quoteType}/{providerId}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');

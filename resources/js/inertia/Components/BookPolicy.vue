@@ -232,38 +232,60 @@ const submitPolicy = () => {
     });
 };
 
+const calculateVatOnCommission = commissionVatApplicable => {
+  if (commissionVatApplicable > 0) {
+    return Number(commissionVatApplicable * page.props.vat).toFixed(2);
+  } else {
+    return 0;
+  }
+};
+const calculateCommissionPercentage = (
+  totalCommissionWithoutVat,
+  totalPriceWithoutVat,
+) => {
+  if (totalCommissionWithoutVat > 0) {
+    return ((totalCommissionWithoutVat / totalPriceWithoutVat) * 100).toFixed(
+      2,
+    );
+  } else {
+    return 0;
+  }
+};
+
 const calculateCommission = () => {
-  if (
+  let isBothTypeOfCommission =
     bpForm.commission_vat_applicable > 0 &&
-    bpForm.commission_vat_not_applicable > 0
-  ) {
-    if (Number(bpForm.commission_vat_applicable) > 0) {
-      bpForm.vat_on_commission = (
-        bpForm.commission_vat_applicable * page.props.vat
-      ).toFixed(2);
-    }
+    bpForm.commission_vat_not_applicable > 0;
+
+  if (isBothTypeOfCommission) {
+    bpForm.vat_on_commission = calculateVatOnCommission(
+      bpForm.commission_vat_applicable,
+    );
+
     let totalCommissionWithoutVat =
       Number(bpForm.commission_vat_not_applicable) +
       Number(bpForm.commission_vat_applicable);
-    bpForm.total_commission =
-      totalCommissionWithoutVat + Number(bpForm.vat_on_commission);
 
-    bpForm.commission_percentage = (
-      (totalCommissionWithoutVat /
-        (Number(props.quote?.price_vat_not_applicable) +
-          Number(props.quote?.price_without_vat))) *
-      100
+    bpForm.total_commission = (
+      totalCommissionWithoutVat + Number(bpForm.vat_on_commission)
     ).toFixed(2);
+
+    bpForm.commission_percentage = calculateCommissionPercentage(
+      totalCommissionWithoutVat,
+      Number(props.quote?.price_vat_not_applicable) +
+        Number(props.quote?.price_without_vat),
+    );
   } else if (bpForm.commission_vat_applicable > 0) {
     if (Number(props.quote?.price_without_vat) > 0) {
-      bpForm.commission_percentage = (
-        (bpForm.commission_vat_applicable / props.quote?.price_without_vat) *
-        100
-      ).toFixed(2);
+      bpForm.commission_percentage = calculateCommissionPercentage(
+        bpForm.commission_vat_applicable,
+        Number(props.quote?.price_vat_not_applicable) +
+          Number(props.quote?.price_without_vat),
+      );
 
-      bpForm.vat_on_commission = (
-        bpForm.commission_vat_applicable * page.props.vat
-      ).toFixed(2);
+      bpForm.vat_on_commission = calculateVatOnCommission(
+        bpForm.commission_vat_applicable,
+      );
       bpForm.total_commission = (
         Number(bpForm.vat_on_commission) +
         Number(bpForm.commission_vat_applicable)
@@ -277,11 +299,11 @@ const calculateCommission = () => {
     }
   } else if (bpForm.commission_vat_not_applicable > 0) {
     if (Number(props.quote?.price_vat_not_applicable) > 0) {
-      bpForm.commission_percentage = (
-        (bpForm.commission_vat_not_applicable /
-          props.quote?.price_vat_not_applicable) *
-        100
-      ).toFixed(2);
+      bpForm.commission_percentage = calculateCommissionPercentage(
+        bpForm.commission_vat_not_applicable,
+        Number(props.quote?.price_vat_not_applicable) +
+          Number(props.quote?.price_without_vat),
+      );
 
       bpForm.total_commission = Number(
         bpForm.commission_vat_not_applicable,
@@ -604,7 +626,7 @@ const showInsufficientPaymentAlert = () => {
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ bpForm.commission_percentage }}</dd>
+                <dd>{{ bpForm.commission_percentage }}%</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
@@ -873,7 +895,7 @@ const showInsufficientPaymentAlert = () => {
 
                   <template
                     v-if="
-                      props.bookPolicyDetails?.editButton &&
+                      props.bookPolicyDetails?.bookButton &&
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
@@ -882,7 +904,7 @@ const showInsufficientPaymentAlert = () => {
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        !props.bookPolicyDetails?.editButton ||
+                        !props.bookPolicyDetails?.bookButton ||
                         bp.isEditing ||
                         !can(permissionsEnum.BOOK_POLICY_BUTTON)
                       "
