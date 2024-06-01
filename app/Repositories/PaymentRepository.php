@@ -412,6 +412,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                         DB::beginTransaction();
                         try {
+                            if (empty($paymentSplit->verified_at)) {
+                                $paymentSplit->verified_at = now();
+                                $paymentSplit->verified_by = Auth::user()->id;
+                            }
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
                             $parentPayment = $paymentSplit->payment;
