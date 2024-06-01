@@ -91,7 +91,7 @@ class SageApiService
         $sageRequest->policyHolder = $insuredFullName;
         $sageRequest->premiumCollectedBy = ucfirst($payment->collection_type);
 
-        $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
+        $sageRequest->invoicePaymentStatus = $payment->payment_status_id;
         // $sageRequest->invoicePaymentStatus = 'paid';
         $advisorName = '';
         $managerName = '';
@@ -120,6 +120,8 @@ class SageApiService
         if (count($paymentSplits) == 1) {
             $sageRequest->sage_reciept_id = $paymentSplits[0]['sage_reciept_id'];
             $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'] + $sageRequest->discount;
+        }else{
+            $sageRequest->invoicePaymentStatus = $paymentSplits[0]['payment_status_id'];
         }
 
         //Insurer GL Account and Vendor Number
@@ -1261,7 +1263,7 @@ class SageApiService
                 return $returnMessage;
             }
             info('  ########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
-        }else{
+        } else {
             info('  ########## Start of NON Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
             $isLiveApiCallStep6 = true;
             if (isset($sageLogArray[6]) && $sageLogArray[6]['status'] == 'success') {
@@ -1424,10 +1426,8 @@ class SageApiService
             info('  ########## End createARInvoiceDis for : '.$quote->code.' ########## ');
         }
 
-        /* applypaymentInvoices */
-        $isTransactionPaidAndFrequencyUpfront = (in_array(strtolower($sageRequest->invoicePaymentStatus),
-            [strtolower(TransactionPaymentStatusEnum::PAID_TEXT), strtolower(TransactionPaymentStatusEnum::FULLY_PAID_TEXT)]
-        )) && $payment->frequency == PaymentFrequency::UPFRONT;
+        /* applyPaymentInvoices */
+        $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
         if ($isTransactionPaidAndFrequencyUpfront) {
             info('  ########## Start applypaymentInvoices for : '.$quote->code.' ########## ');
@@ -1514,7 +1514,9 @@ class SageApiService
             info('  ########## End applypaymentInvoices for : '.$quote->code.' ########## ');
         }
 
-        if (strtolower($sageRequest->invoicePaymentStatus) == 'paid' && $payment->frequency == 'split_payments') {
+        $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID  && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
+
+        if ($isFrequencySplitAndFirstChildPaymentPaid) {
             $totalSteps = 14;
 
             //12
@@ -1602,7 +1604,7 @@ class SageApiService
             }
         }
 
-        if (! in_array($payment->frequency, ['upfront', 'split_payments']) && in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
+        if (! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]) && in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
 
             $totalSteps = 17;
 

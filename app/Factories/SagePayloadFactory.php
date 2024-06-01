@@ -580,7 +580,7 @@ class SagePayloadFactory
             $temp['EntryNumber'] = 1;
             $temp['PaymentNumber'] = $key + 1;
             $temp['DueDate'] = date('Y-m-d', strtotime($item->due_date));
-            $temp['AmountDue'] = roundNumber($item->collection_amount === null ? 0 : $item->collection_amount);
+            $temp['AmountDue'] = roundNumber($item->payment_amount);
             $data[] = $temp;
         }
 
