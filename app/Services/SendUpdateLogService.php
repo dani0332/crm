@@ -847,7 +847,7 @@ class SendUpdateLogService
                 'landLine' => $quote->advisor->landline_no ?? '',
                 'email' => $quote->advisor->email ?? '',
                 'name' => $quote->advisor->name ?? '',
-            ]
+            ],
         ];
 
         app(SendEmailCustomerService::class)->sendBookUpdateEmail(SendUpdateLogStatusEnum::CAR_SEND_POLICY_TEMPLATE, $emailData, 'send-update');

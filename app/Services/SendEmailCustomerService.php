@@ -1009,7 +1009,7 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
-            
+
             $ccAdvisor = [];
             if (isset($emailData->advisor->email) && isset($emailData->advisor->name)) {
                 $ccAdvisor = [[
