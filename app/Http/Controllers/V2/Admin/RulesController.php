@@ -1,11 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\V2\Admin;
 
+
+use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;
+use App\Models\Rule;
 use App\Repositories\RuleRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use App\Models\RuleType;
 
 class RulesController extends Controller
 {
@@ -14,7 +19,23 @@ class RulesController extends Controller
      */
     public function index()
     {
-        $rules = RuleRepository::getData();
+        $data = Rule::orderBy('created_at', 'desc');
+
+        $data->when(request()->name, function ($query, $name) {
+            return $query->where('name', 'LIKE', '%'.$name.'%');
+        })
+            ->when(request()->cost_per_lead, function ($query, $costPerLead) {
+                return $query->where('cost_per_lead', $costPerLead);
+            })
+            ->when(request()->created_at && request()->created_at_end, function ($query) {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', request()->created_at)->startOfDay();
+                $dateTo = Carbon::createFromFormat('Y-m-d', request()->created_at)->endOfDay();
+
+                return $query->whereBetween('created_at', [$dateFrom, $dateTo]);
+            });
+
+        $rules = $data->simplePaginate(10)->withQueryString();
+
         $rules->load([
             'ruleUsers',
             'ruleType',
@@ -33,7 +54,7 @@ class RulesController extends Controller
     {
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
-            'rulesTypeList' => RuleRepository::getRuleTypes(),
+            'rulesTypeList' => RuleType::select('id', 'name')->get(),
         ]);
     }
 
@@ -42,7 +63,7 @@ class RulesController extends Controller
      */
     public function store(RuleRequest $request)
     {
-        $rule = RuleRepository::create($request->except(['rule_users']));
+        $rule = Rule::create($request->except(['rule_users']));
 
         // Attaching users
         $response = $rule->users()->attach($request->rule_users);
@@ -59,7 +80,7 @@ class RulesController extends Controller
      */
     public function show($id)
     {
-        $rule = RuleRepository::with('ruleType')->with('ruleUsers')->findOrFail($id);
+        $rule = Rule::with('ruleType')->with('ruleUsers')->findOrFail($id);
 
         return inertia('Admin/AllocationConfig/Rules/Show', [
             'rule' => $rule,
@@ -75,7 +96,7 @@ class RulesController extends Controller
 
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
-            'rulesTypeList' => RuleRepository::getRuleTypes(),
+            'rulesTypeList' => RuleType::select('id', 'name')->get(),
             'rule' => $rule->load([
                 'ruleUsers',
                 'ruleType',
@@ -107,7 +128,9 @@ class RulesController extends Controller
      */
     public function destroy($id)
     {
-        $rule = RuleRepository::deleteRule($id);
+        $rule = Rule::findOrFail($id);
+        $rule->users()->detach();
+        $rule = $rule->delete();
         if ($rule) {
             return back()->with('message', 'Rule has been deleted.');
         } else {

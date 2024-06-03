@@ -42,7 +42,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\RulesController;
+use App\Http\Controllers\V2\Admin\RulesController;
 use App\Http\Controllers\SageApi;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
@@ -76,10 +76,10 @@ use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
-use App\Http\Controllers\V2\QuadrantController;
+use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\QuoteSyncController;
 use App\Http\Controllers\V2\SendUpdateLogController;
-use App\Http\Controllers\V2\TiersController;
+use App\Http\Controllers\V2\Admin\TierController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -473,7 +473,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('renewal-batches', RenewalBatchController::class)
             ->names(generateRouteNames('renewal-batches'))
             ->middleware('check_route_access');
-        Route::resource('tiers', TiersController::class);
+        Route::resource('tiers', TierController::class);
         Route::resource('quadrants', QuadrantController::class);
         Route::resource('rule', RulesController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');

@@ -1,21 +1,30 @@
 <?php
 
-namespace App\Http\Controllers\V2;
+namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QuadrantRequest;
 use App\Repositories\QuadrantRepository;
 use App\Repositories\TierRepository;
 use App\Repositories\UserRepository;
+use App\Models\Quadrant;
+use App\Models\Tier;
+use DB;
 
 class QuadrantController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $quadrants = QuadrantRepository::getData();
+        $data = Quadrant::orderBy('id');
+        if (request()->name) {
+            $data->where('name', 'LIKE', '%'.request()->name.'%');
+        }
+
+        $quadrants =  $data->simplePaginate(10)->withQueryString();
         $quadrants->load([
             'users' => function ($users) {
                 return $users->select('id', 'name');
@@ -36,7 +45,7 @@ class QuadrantController extends Controller
     public function create()
     {
         $quadUsers = UserRepository::select('id', 'name')->where('is_active', true)->get();
-        $quadTiers = TierRepository::select('id', 'name')->where('is_active', true)->get();
+        $quadTiers = Tier::select('id', 'name')->where('is_active', true)->get();
 
         return inertia('Admin/AllocationConfig/Quadrants/Form', [
             'quad_users' => $quadUsers,
@@ -51,7 +60,7 @@ class QuadrantController extends Controller
     {
         $data = $request->except('quad_users', 'quad_tiers');
 
-        $response = QuadrantRepository::create($data);
+        $response = Quadrant::create($data);
 
         $response->users()->attach($request->quad_users);
         $response->tiers()->attach($request->quad_tiers);
@@ -64,7 +73,7 @@ class QuadrantController extends Controller
      */
     public function show(string $id)
     {
-        $quadrant = QuadrantRepository::where(['id' => $id])->first();
+        $quadrant = Quadrant::where(['id' => $id])->first();
         $quadrant->load([
             'users' => function ($users) {
                 return $users->select('id', 'name');
@@ -84,9 +93,9 @@ class QuadrantController extends Controller
      */
     public function edit(string $id)
     {
-        $quadrant = QuadrantRepository::find($id);
+        $quadrant = Quadrant::find($id);
         $quadUsers = UserRepository::select('id', 'name')->where('is_active', true)->get();
-        $quadTiers = TierRepository::select('id', 'name')->where('is_active', true)->get();
+        $quadTiers = Tier::select('id', 'name')->where('is_active', true)->get();
 
         $quadrant = $quadrant->load([
             'users' => function ($users) {
@@ -111,7 +120,7 @@ class QuadrantController extends Controller
     {
         $data = $request->except('quad_users', 'quad_tiers');
 
-        $quadrant = QuadrantRepository::find($id);
+        $quadrant = Quadrant::find($id);
         $quadrant->update($data);
         $quadrant->users()->sync($request->quad_users);
         $quadrant->tiers()->sync($request->quad_tiers);
@@ -124,7 +133,12 @@ class QuadrantController extends Controller
      */
     public function destroy(string $id)
     {
-        $deleted = QuadrantRepository::deleteQuad($id);
+        $quad = Quadrant::where('id', $id)->first();
+        $quad->is_active = 0;
+        $quad->save();
+        DB::table('quad_tiers')->where('quad_id', $quad->id)->delete();
+        DB::table('quad_users')->where('quad_id', $quad->id)->delete();
+        $deleted = Quadrant::destroy($id);
         if ($deleted) {
             return redirect()->route('quadrants.index')->with('success', 'Quadrant deleted successfully');
         }

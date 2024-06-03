@@ -1,6 +1,6 @@
 <script setup>
 const props = defineProps({
-  quadrant: Array,
+  quadrant: Object,
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;

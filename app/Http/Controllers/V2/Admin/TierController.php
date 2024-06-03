@@ -1,20 +1,45 @@
 <?php
 
-namespace App\Http\Controllers\V2;
+namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TierRequest;
+use App\Models\Tier;
 use App\Repositories\TierRepository;
 use App\Repositories\UserRepository;
+use Carbon\Carbon;
 
-class TiersController extends Controller
+
+class TierController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $tiers = TierRepository::getData();
+
+        $data = Tier::orderBy('created_at', 'desc');
+
+        $data->when(request()->name, function ($query, $name) {
+            return $query->where('name', 'LIKE', '%'.$name.'%');
+        })
+            ->when(request()->min_price, function ($query, $minPrice) {
+                return $query->where('min_price', $minPrice);
+            })
+            ->when(request()->max_price, function ($query, $maxPrice) {
+                return $query->where('max_price', $maxPrice);
+            })
+            ->when(request()->cost_per_lead, function ($query, $costPerLead) {
+                return $query->where('cost_per_lead', $costPerLead);
+            })
+            ->when(request()->created_at && request()->created_at_end, function ($query) {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', request()->created_at)->startOfDay();
+                $dateTo = Carbon::createFromFormat('Y-m-d', request()->created_at)->endOfDay();
+
+                return $query->whereBetween('created_at', [$dateFrom, $dateTo]);
+            });
+
+        $tiers = $data->simplePaginate(10)->withQueryString();
 
         return inertia('Admin/AllocationConfig/Tiers/Index', [
             'tiers' => $tiers,
@@ -37,9 +62,8 @@ class TiersController extends Controller
     public function store(TierRequest $request)
     {
 
-        $tier = TierRepository::create($request->except('tier_user'));
+        $tier = Tier::create($request->except('tier_user'));
 
-        // Attaching users
         $response = $tier->users()->attach($request->tier_user);
 
         if (! empty($response->errors) || ! empty($response->msg)) {
@@ -54,7 +78,7 @@ class TiersController extends Controller
      */
     public function show(string $id)
     {
-        $tier = TierRepository::find($id);
+        $tier = Tier::find($id);
 
         return inertia('Admin/AllocationConfig/Tiers/Show', [
             'tier' => $tier,
@@ -66,7 +90,7 @@ class TiersController extends Controller
      */
     public function edit(string $id)
     {
-        $tier = TierRepository::find($id);
+        $tier = Tier::find($id);
 
         return inertia('Admin/AllocationConfig/Tiers/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
@@ -79,7 +103,7 @@ class TiersController extends Controller
      */
     public function update(TierRequest $request, string $id)
     {
-        $tier = TierRepository::findOrFail($id);
+        $tier = Tier::findOrFail($id);
         $tier->update($request->except('tier_user'));
 
         // Sync users
@@ -97,7 +121,9 @@ class TiersController extends Controller
      */
     public function destroy(string $id)
     {
-        $tier = TierRepository::deleteTier($id);
+        $tier = Tier::findOrFail($id);
+        $tier->users()->detach();
+        $tier->delete();
         if ($tier) {
             return back()->with('message', 'Tier has been deleted.');
         } else {
