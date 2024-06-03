@@ -573,7 +573,7 @@
                 <br> <br> <br>
 
                 <b>For and on behalf of SALAMA – ISLAMIC ARAB INSURANCE CO PSC</b>
-                <img style="position: absolute; z-index:0; left: 42%; top: 100px;" width="140" height="auto" src="{{public_path('images/ep/logos/sign_v3.png')}}" alt="signature">
+                <img style="position: absolute; z-index:0; left: 42%; top: 140px;" width="140" height="auto" src="{{public_path('images/ep/logos/sign_v3.png')}}" alt="signature">
             </p>
             <p style="margin-top: 5px;">
                 <p> <b>Date:</b> {{ $viewData['date_of_enrollment'] }} </p>
