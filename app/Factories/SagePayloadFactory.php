@@ -1015,7 +1015,7 @@ class SagePayloadFactory
             'DocumentNumber' => $payment->insurer_tax_number,
             'PaymentNumber' => $paymentNumber,
             'ReceiptTransactionType' => 'Receipt',
-            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + floatval($payment->discount_value)),
+            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + $item->sr_no == 1 ? floatval($payment->discount_value) : 0),
         ];
 
         $prePaymentData = [
