@@ -142,5 +142,14 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ]);
         }
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE,
+                'value' => 117,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
     }
 }
