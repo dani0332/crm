@@ -772,6 +772,7 @@ class RenewalsUploadService
             $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
 
             $quoteUuid = $this->generateUUID($quoteType->code, $quoteType->id);
+            $isQuotePersonal = checkPersonalQuotes($quoteType->code);
 
             $customerData = $this->buildCustomerData($data);
             $customer = $this->getCustomer($customerData);
@@ -794,17 +795,22 @@ class RenewalsUploadService
                 'previous_quote_policy_premium' => $data['premium'],
             ];
 
-            if(checkPersonalQuotes($quoteType->code)) {
-                $detailData['additional_notes'] = $data['notes'].$customerData['notes'];
+            if ($isQuotePersonal) {
+                $detailData['additional_notes'] = $data['notes'] . $customerData['notes'];
                 $detailData['previous_advisor_id'] = $previousAdvisorId;
                 $quoteData['quote_type_id'] = $quoteType->id;
-                if(!empty($data['insly_id'])) {
-                    $detailData['insly_id'] = $data['insly_id'];
-                }
-            } else
-            {
-                $quoteData['additional_notes'] = $data['notes'].$customerData['notes'];
+                
+            } else {
+                $quoteData['additional_notes'] = $data['notes'] . $customerData['notes'];
                 $quoteData['previous_advisor_id'] = $previousAdvisorId;
+            }
+
+            if (!empty($data['insly_id'])) {
+                $detailData['insly_id'] = $data['insly_id'];
+            }
+
+            if (!empty($data['insly_advisor_name'])) {
+                $detailData['insly_advisor_name'] = $data['insly_advisor_name'];
             }
 
             if ($quoteType->code == quoteTypeCode::Car) {
@@ -850,7 +856,7 @@ class RenewalsUploadService
                 $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
             }
 
-            if ($quoteType->code == quoteTypeCode::Health || checkPersonalQuotes($quoteType->code)) {
+            if ($quoteType->code == quoteTypeCode::Health || $isQuotePersonal) {
                 $quoteData['currently_insured_with_id'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->id;
             }
 
@@ -866,9 +872,15 @@ class RenewalsUploadService
             $quote = $quoteObject->create($quoteData);
             info('created quote ' . json_encode($quote->toArray()));
 
-            if(checkPersonalQuotes($quoteType->code)) {
+            if ($isQuotePersonal) {
                 $quote->quoteDetail()->create($detailData);
+            } else {
+                $quotType = strtolower($quoteType->code);
+                $class = $quotType . 'QuoteRequestDetail';
+                $quote->{$class}()->create($detailData);
             }
+
+            info('created quote ' . json_encode($quote->toArray()));
 
             //update advisor assign date/time
             if (! empty($advisorId)) {
