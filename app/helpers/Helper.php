@@ -923,6 +923,35 @@ if (! function_exists('getAppStorageValueByKey')) {
     }
 }
 
+if (! function_exists('getAlfredEligibleCustomers')) {
+    function getAlfredEligibleCustomers($data)
+    {
+        try {
+            $username = config('constants.MA_V1_USERNAME');
+            $password = config('constants.MA_V1_PASSWORD');
+            $basicAuth = base64_encode("$username:$password");
+
+            $response = Http::timeout(20)->retry(2, 3000)
+                ->withHeaders([
+                    'Authorization' => 'Basic '.$basicAuth,
+                ])
+                ->post(config('constants.MA_V1_ENDPOINT').'/internal/wfs/get-remaining-scratches', ['data' => $data]);
+
+            if ($response->ok()) {
+                $response = $response->object();
+
+                if ($response->data) {
+                    return $response;
+                }
+            }
+        } catch (Exception $e) {
+            Log::error('getAlfredEligibleCustomers Error: '.$e->getMessage().$e->getTraceAsString());
+        }
+
+        return null;
+    }
+}
+
 if (! function_exists('getManagersByUser')) {
     function getManagersByUser($userId)
     {
