@@ -108,7 +108,7 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param  $quoteType
+     * @param    $quoteType
      * @return mixed
      */
     public function fetchCreatePayment($quoteId, $data)
