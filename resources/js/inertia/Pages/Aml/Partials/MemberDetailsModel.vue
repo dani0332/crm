@@ -95,7 +95,7 @@ const memberForm = useForm({
   customer_id: props.quoteDetails.customer_id,
   id: null,
   first_name: null,
-    last_name : null,
+  last_name : null,
   dob: null,
   relation_code: null,
   nationality_id: null,
@@ -298,9 +298,9 @@ function onMemberSubmit(isValid) {
     <template #item-index="{ code }">
       <div>{{ code }}</div>
     </template>
-      <template #item-first_name="{ first_name , last_name }">
-          <div>{{ first_name }} {{quoteType.code == 'Health' ? last_name : ''}}</div>
-      </template>
+    <template #item-first_name="{ first_name , last_name }">
+        <div>{{ first_name }} {{quoteType.code == 'Health' ? last_name : ''}}</div>
+    </template>
     <template #item-dob="{ dob }">
       {{ dateFormat(dob) }}
     </template>
