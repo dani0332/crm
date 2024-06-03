@@ -954,7 +954,7 @@ class SendEmailCustomerService extends BaseService
     public function sendBookUpdateEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
     {
         try {
-            info('fn: sendBookUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
+            info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
 
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
@@ -983,25 +983,16 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
 
-            /* $wfsBanner = null;
-
-            $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
-            if ($campaign) {
-                $emailTemplateId = (int) getAppStorageValueByKey(ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN);
-                if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
-                    $wfsBanner = $campaign->banners->buyPolicy;
-                }
-            }
-            $emailData->wfsBanner = $wfsBanner; */
+            $sendUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_UPDATE_EMAIL)->first()->value;
 
             $body = [
                 'sender' => [
-                    'email' => strstr($emailData->advisorEmail, '@', true).'@renewals.insurancemarket.ae',
+                    'email' => $sendUpdateEmail,
                     'name' => $emailData->advisorName,
                 ],
                 'to' => [[
-                    'email' => 'mirza.baig@myalfred.com',
-                    'name' => 'Mirza',
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->clientFullName,
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => $emailData,
@@ -1011,24 +1002,27 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
 
+            $checkIsHealthOrGroupMedical = in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical]);
+
+            $ebServiceTeam = [];
+            $ebServiceEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL)->first()->value;
+            if ($checkIsHealthOrGroupMedical) {
+                $ebServiceTeam = [
+                    'email' => $ebServiceEmail,
+                    'name' => 'IM EB Service',
+                ];
+            }
+            
             $ccAdvisor = [];
             if (isset($emailData->advisor->email) && isset($emailData->advisor->name)) {
                 $ccAdvisor = [[
                     'email' => $emailData->advisor->email,
                     'name' => $emailData->advisor->name,
                 ]];
-                $body['replyTo'] = [
-                    'email' => $emailData->advisor->email,
-                    'name' => $emailData->advisor->name,
-                ];
-            }
-
-            $ebServiceTeam = [];
-            if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
-                $ebServiceTeam = [[
-                    'email' => 'ebserviceteam@insurancemarket.ae',
-                    'name' => 'ebserviceteam',
-                ]];
+                $body['replyTo'][] = $ccAdvisor;
+                if ($checkIsHealthOrGroupMedical) {
+                    $body['replyTo'] = array_merge($body['replyTo'], [$ebServiceTeam]);
+                }
             }
 
             $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
@@ -1039,7 +1033,7 @@ class SendEmailCustomerService extends BaseService
                     if (! empty($additionalContact->value)) {
                         $ccAdditional[] = [
                             'email' => $additionalContact->value,
-                            'name' => $emailData->customerName,
+                            'name' => $emailData->clientFullName,
                         ];
                     }
                 }
@@ -1048,10 +1042,12 @@ class SendEmailCustomerService extends BaseService
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor, $ebServiceTeam);
 
             // need to discuss this.
-            /* $body['bcc'] = [
-                'email' => 'sendpolicyupdate@insurancemarket.ae',
+            $sendPolicyUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL)->first()->value;
+
+            $body['bcc'] = [
+                'email' => $sendPolicyUpdateEmail,
                 'name' => 'SendPolicyUpdate',
-            ]; */
+            ];
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
