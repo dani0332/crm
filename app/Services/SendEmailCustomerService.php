@@ -862,13 +862,13 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
-            
-            if ($emailData->advisorEmail){
+
+            if ($emailData->advisorEmail) {
                 $bodyData['cc'] = [
                     [
                         'email' => $emailData->advisorEmail,
-                        'name' => $emailData->advisorName // assuming advisorName is available
-                    ]
+                        'name' => $emailData->advisorName, // assuming advisorName is available
+                    ],
                 ];
             }
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
@@ -894,6 +894,7 @@ class SendEmailCustomerService extends BaseService
         }
 
         dd($responseCode);
+
         return $responseCode;
     }
 

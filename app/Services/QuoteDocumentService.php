@@ -243,23 +243,23 @@ class QuoteDocumentService extends BaseService
             $businessDocumetTypes = [];
             if ($quoteType == quoteTypeCode::GroupMedical) {
                 $businessDocumetTypes = [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::PPR];
-            } else if($quoteType == quoteTypeCode::CORPLINE){
+            } elseif ($quoteType == quoteTypeCode::CORPLINE) {
                 $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
             }
-            $businessDocumentTypeCodes = DocumentType::active()->where('quote_type_id',QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->get();
+            $businessDocumentTypeCodes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->get();
         }
 
         $documentTypesByCategory = $documentTypes->groupBy('category');
         $orderedDocumentTypesByCategory = collect();
         if ($documentTypesByCategory->has('QUOTE') || $quoteTypeId == QuoteTypeId::Business) {
-            if ($quoteTypeId == QuoteTypeId::Business){
+            if ($quoteTypeId == QuoteTypeId::Business) {
                 $quoteDocumentTypes = $documentTypesByCategory->get('QUOTE');
                 if ($quoteDocumentTypes === null) {
                     $quoteDocumentTypes = collect();
                 }
                 $quoteDocumentTypes = $quoteDocumentTypes->concat($businessDocumentTypeCodes);
                 $orderedDocumentTypesByCategory->put('QUOTE', $quoteDocumentTypes);
-            }else {
+            } else {
                 $orderedDocumentTypesByCategory->put('QUOTE', $documentTypesByCategory->get('QUOTE'));
             }
         }
