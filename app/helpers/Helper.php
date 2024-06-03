@@ -882,5 +882,3 @@ if (! function_exists('getAlfredEligibleCustomers')) {
         return null;
     }
 }
-
-
