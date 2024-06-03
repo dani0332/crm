@@ -307,7 +307,7 @@ trait GenericQueriesAllLobs
         }
 
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked && $payment->transaction_payment_status == null) {
-            $this->updatePaymentAllocationStatus($payment, $quote);
+            $this->updatePaymentAllocationStatus($quote);
         }
 
         return $this->getPaymentStatus($payment);
@@ -502,28 +502,29 @@ trait GenericQueriesAllLobs
             && (! empty($payment->commission_vat_not_applicable) || ! empty($payment->commission_vat_applicable));
     }
 
-    private function updatePaymentAllocationStatus($payment, $quote)
+    private function updatePaymentAllocationStatus($quote)
     {
-        $capturedAmount = $payment->captured_amount;
-        $totalAmount = $payment->captured_amount + $payment->discount_value;
-        $priceWithVat = $quote->price_with_vat;
 
-        $totalAmount = round($totalAmount, 2);
-        $priceWithVat = round($priceWithVat, 2);
+        $payment = Payment::where('code', '=', $quote->code)->mainLeadPayment()->first();
 
-        if ($capturedAmount == 0) {
-            $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
-        } elseif ($totalAmount >= $priceWithVat) {
-            $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
-        } else {
-            $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+        if ($payment) {
+            $capturedAmount = $payment->captured_amount;
+            $totalAmount = $payment->captured_amount + $payment->discount_value;
+            $priceWithVat = $quote->price_with_vat;
+
+            $totalAmount = round($totalAmount, 2);
+            $priceWithVat = round($priceWithVat, 2);
+
+            if ($capturedAmount == 0) {
+                $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
+            } elseif ($totalAmount >= $priceWithVat) {
+                $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
+            } else {
+                $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+            }
+
+            $payment->transaction_payment_status = $paymentStatus;
+            $payment->save();
         }
-        // Unset specific keys
-        unset($payment->copy_link_button);
-        unset($payment->edit_button);
-        unset($payment->approve_button);
-        unset($payment->approved_button);
-        $payment->transaction_payment_status = $paymentStatus;
-        $payment->save();
     }
 }
