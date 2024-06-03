@@ -840,7 +840,7 @@ class SendUpdateLogService
         $emailData = (object) [
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
             'policyNumber' => $quote->policy_number,
-            'carQuoteId' => $quote->id, // carQuoteId is same for all email templates. 
+            'carQuoteId' => $quote->id, // carQuoteId is same for all email templates.
             'currentInsurer' => $quote->plan->insuranceProvider->text ?? '',
             'policyUpdate' => $sendUpdateLog->category->key,
             'customerEmail' => 'mirza.baig@myalfred.com', // $quote->customer_email,
