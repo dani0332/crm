@@ -8,7 +8,6 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SageEnum;
-use App\Enums\TransactionPaymentStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\BusinessInsuranceType;
 use App\Models\Customer;
@@ -121,7 +120,7 @@ class SageApiService
         if (count($paymentSplits) == 1) {
             $sageRequest->sage_reciept_id = $paymentSplits[0]['sage_reciept_id'];
             $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'] + $sageRequest->discount;
-        }else{
+        } else {
             $sageRequest->invoicePaymentStatus = $paymentSplits[0]['payment_status_id'];
         }
 
@@ -1549,7 +1548,7 @@ class SageApiService
             info('  ########## End applypaymentInvoices for : '.$quote->code.' ########## ');
         }
 
-        $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID  && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
+        $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
 
         if ($isFrequencySplitAndFirstChildPaymentPaid) {
             info('  ########## Start arSplitPrepaymentPayload for : '.$quote->code.' ########## ');
