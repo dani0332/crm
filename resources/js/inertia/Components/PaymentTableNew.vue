@@ -15,7 +15,7 @@ const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const paymentAllocationStatus = page.props.paymentAllocationStatus;
-
+const paymentMethodsEnums = page.props.paymentMethodsEnum;
 const props = defineProps({
   payments: Array,
   can: Object,
@@ -1422,7 +1422,7 @@ const addPaymentModal = () => {
     'Yacht',
   ];
 
-  if (quoteCollectedBy.includes(props.quoteType) || !isBrokerHavePermission()) {
+  if ( (quoteCollectedBy.includes(props.quoteType) && props.quoteSubType != quoteTypeCodeEnum.CORPLINE) || !isBrokerHavePermission()) {
     paymentMethodsForm.collection_type = 'insurer';
   } else {
     paymentMethodsForm.collection_type = 'broker';
@@ -2302,7 +2302,7 @@ const uploadDocument = (doc, files, count) => {
           if (
             quoteTypesToCheck.includes(props.quoteType) ||
             props.quoteType === 'Home' ||
-            props.quoteSubType === 'Corpline' ||
+            props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
           ) {
             quoteDocuments = data.props.quoteDocuments;
@@ -4449,7 +4449,8 @@ const lookupsEnum = page.props.lookupsEnum;
           class="flex items-center justify-center"
           v-if="
             splitPaymentRecord.verified_by !== null &&
-            paymentMethodsForm.status == 'view'
+            paymentMethodsForm.status == 'view' &&
+            paymentMethodsModels[splitPaymentNo] != paymentMethodsEnums.CreditCard
           "
         >
           <p class="text-lg font-bold text-blue-400 mr-2">
