@@ -844,8 +844,7 @@ class SendUpdateLogService
         $categoryCode = $sendUpdateLog->category->code;
 
         if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN]) && $optionCode != SendUpdateLogStatusEnum::MPC) {
-            $sendUpdateLog->category->key;
-            $update = '';
+            $update = $sendUpdateLog?->option->key;
         } elseif (in_array($categoryCode, [SendUPdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
             $update = quoteStatusCode::POLICY_CANCELLED;
         }
@@ -855,8 +854,8 @@ class SendUpdateLogService
             'policyNumber' => $quote->policy_number,
             'carQuoteId' => $sendUpdateLog->code,
             'currentInsurer' => $quote->plan->insuranceProvider->text ?? '',
-            'policyUpdate' => $update,
-            'customerEmail' => $quote->customer_email,
+            'policyUpdate' => $update ?? '',
+            'customerEmail' => $quote->email,
             'advisor' => (object) [
                 'landLine' => $quote->advisor->landline_no ?? '',
                 'email' => $quote->advisor->email ?? '',
