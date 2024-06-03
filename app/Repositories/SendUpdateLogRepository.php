@@ -8,12 +8,14 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuote;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\SendUpdateLogService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Support\Str;
 
@@ -247,6 +249,10 @@ class SendUpdateLogRepository extends BaseRepository
             $result = $sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             ]);
+
+            if ($result && auth()->user()->hasRole(RolesEnum::BetaUser)) {
+                app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog);
+            }
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());

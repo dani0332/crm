@@ -963,7 +963,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendBookUpdateEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
+    public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
     {
         try {
             info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
@@ -1000,7 +1000,7 @@ class SendEmailCustomerService extends BaseService
             $body = [
                 'sender' => [
                     'email' => $sendUpdateEmail,
-                    'name' => $emailData->advisorName,
+                    'name' => $emailData->advisor->name,
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
@@ -1072,7 +1072,7 @@ class SendEmailCustomerService extends BaseService
             );
 
             $messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
-            info('fn: sendBookUpdateEmail, email sending completed. messageId: '.$messageId);
+            info('fn: sendUpdateToCustomerEmail, email sending completed. messageId: '.$messageId);
             $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
             $responseCode = $clientRequest->getStatusCode();
 

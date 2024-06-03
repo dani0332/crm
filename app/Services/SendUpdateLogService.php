@@ -767,9 +767,7 @@ class SendUpdateLogService
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
                 ]);
 
-                if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-                    $this->bookUpdateEmail($sendUpdateLog, $quote);
-                }
+                
             }
 
             DB::commit();
@@ -839,9 +837,11 @@ class SendUpdateLogService
         return $carQuote->plan->carAddons->toArray();
     }
 
-    public function bookUpdateEmail($sendUpdateLog, $quote): void
+    public function sendUpdateToCustomerEmail($sendUpdateLog): void
     {
-        $quoteTypeId = $quote->quote_type_id;
+        $quoteTypeId = $sendUpdateLog->quote_type_id;
+        $quoteModel = $this->getModelObject(QuoteTypeId::getOptions()[$quoteTypeId]);
+        $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
 
@@ -888,6 +888,6 @@ class SendUpdateLogService
         $constantName = 'App\Enums\ApplicationStorageEnums::'.$quoteType;
         $templateId = ApplicationStorage::where('key_name', constant($constantName))->first()->value;
 
-        app(SendEmailCustomerService::class)->sendBookUpdateEmail($templateId, $emailData, 'send-update', $quote->quote_type_id);
+        app(SendEmailCustomerService::class)->sendUpdateToCustomerEmail($templateId, $emailData, 'send-update', $quote->quote_type_id);
     }
 }
