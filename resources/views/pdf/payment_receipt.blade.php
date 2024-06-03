@@ -32,12 +32,12 @@
         }
        
         #footer {
-            margin: 300px -50px 0 -45px !important;
+            margin: 300px -50px 0 -50px !important;
             background-color: rgb(29 131 188);
             color: white;
             width: 800px !important;
             position: fixed;
-            bottom: 0;
+            bottom: -33;
         }
 
         #footer > h6 {
@@ -155,9 +155,9 @@
                 27th floor, Control Tower, Motor City, Dubai, United Arab Emirates, PO Box - 26423 | Tel: 800 ALFRED (800 253 733) | insurancemarket.ae
             </h6>
         </h5>
-        <table style="width=100%; font-size: 9px; padding:10px;">
+        <table style="width=100%; font-size: 9px; padding:2px;">
         <tr>
-            <td style="width=50%; verticle-align:top">
+            <td style="width=65%; verticle-align:top">
                 
                 UAE Central Bank Registration number 85<br>
                 Registered member of the Emirates Insurance Association<br>
@@ -166,7 +166,7 @@
                 Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry
             </td>
             @if (!empty($data['advisor_name']))
-                <td style="width=25%; verticle-align:top; text-align:right;">
+                <td style="width=20%; verticle-align:top; text-align:right;">
                     Insurer Advisor: {{ $data['advisor_name'] }}<br>
                     Email: {{ $data['advisor_email'] }}<br>
                     Mobilel Number: {{ $data['advisor_mobile_no'] }}<br>
@@ -174,7 +174,7 @@
                     <br>                
                 </td>
 
-                <td style="width=25%; verticle-align:top">            
+                <td style="width=15%; verticle-align:top">            
                     @if (!empty($data['profile_photo_path']))
                         <img style="border-radius: 50%; width: 60px; height: 60px;" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($data['profile_photo_path']))}}" alt="Insurance Market Logo">
                     @endif

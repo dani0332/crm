@@ -25,7 +25,6 @@ final class QuoteTypeId extends Enum
     const Jetski = 11;
     const Corpline = 101;
     const GroupMedical = 102;
-    const SendUpdate = 99; // this quote type pass to Marshal Service for capture payment
 
     public static function getOptions()
     {
@@ -33,9 +32,7 @@ final class QuoteTypeId extends Enum
         $constants = $oClass->getConstants();
         $retval = [];
         foreach ($constants as $name => $val) {
-            if ($val != self::SendUpdate) { // added because on seeders/AddSendUpdatesCategoriesInLookups file, it's getting SendUpdate as a quote type and hitting error.
-                $retval[$val] = $name;
-            }
+            $retval[$val] = $name;
         }
 
         return $retval;
