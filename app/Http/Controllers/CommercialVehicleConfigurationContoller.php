@@ -89,8 +89,6 @@ class CommercialVehicleConfigurationContoller extends Controller
         return inertia('Admin/AllocationConfig/CommericalVehicles/Show', [
             'carMake' => $carMake,
         ]);
-
-        // return view('commercialcarmakemodel.show', compact('carMake'));
     }
 
     /**
@@ -106,12 +104,10 @@ class CommercialVehicleConfigurationContoller extends Controller
         $carMake = $data['car_make'];
         $commercialModels = $data['commercial_models'];
 
-        // dd($carMake->toArray());
         return inertia('Admin/AllocationConfig/CommericalVehicles/Form', [
             'carMakes' => $carMake,
             'commercialModels' => $commercialModels,
         ]);
-        // return view('commercialcarmakemodel.edit', compact('carMake', 'commercialModels'));
     }
 
     /**

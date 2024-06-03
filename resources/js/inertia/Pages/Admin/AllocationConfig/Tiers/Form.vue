@@ -10,7 +10,6 @@ const isEdit = computed(() => {
   return route().current().includes('edit');
 });
 
-console.log(props.tier);
 const tierForm = useForm({
   id: props.tier?.id ?? null,
   name: props.tier?.name ?? null,
