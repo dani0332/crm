@@ -8,11 +8,11 @@ use App\Enums\EnvEnum;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
+use App\Models\Customer;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Models\Customer;
-use Carbon\Carbon;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -934,5 +934,4 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    
 }
