@@ -56,6 +56,7 @@ const hasRole = role => useHasRole(role);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
 const compareDueDate = useCompareDueDate;
@@ -1189,7 +1190,7 @@ watch(
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
-      quoteSubType="Corpline"
+      :quoteSubType="quoteTypeCodeEnum.CORPLINE"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
