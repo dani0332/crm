@@ -226,8 +226,9 @@ class QuoteDocumentService extends BaseService
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
 
-    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null)
+    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
     {
+
         $documentTypes = DocumentType::active()
             ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
             ->byQuoteTypeId($quoteTypeId)
@@ -239,13 +240,28 @@ class QuoteDocumentService extends BaseService
             })->sortDocumentType()->get();
 
         if ($quoteTypeId == QuoteTypeId::Business) {
-            $businessDocumentTypeCodes = DocumentType::active()->whereIn('code', [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR])->get();
+            $businessDocumetTypes = [];
+            if ($quoteType == quoteTypeCode::GroupMedical) {
+                $businessDocumetTypes = [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::PPR];
+            } elseif ($quoteType == quoteTypeCode::CORPLINE) {
+                $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
+            }
+            $businessDocumentTypeCodes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->get();
         }
 
         $documentTypesByCategory = $documentTypes->groupBy('category');
         $orderedDocumentTypesByCategory = collect();
-        if ($documentTypesByCategory->has('QUOTE')) {
-            $orderedDocumentTypesByCategory->put('QUOTE', $documentTypesByCategory->get('QUOTE'));
+        if ($documentTypesByCategory->has('QUOTE') || $quoteTypeId == QuoteTypeId::Business) {
+            if ($quoteTypeId == QuoteTypeId::Business) {
+                $quoteDocumentTypes = $documentTypesByCategory->get('QUOTE');
+                if ($quoteDocumentTypes === null) {
+                    $quoteDocumentTypes = collect();
+                }
+                $quoteDocumentTypes = $quoteDocumentTypes->concat($businessDocumentTypeCodes);
+                $orderedDocumentTypesByCategory->put('QUOTE', $quoteDocumentTypes);
+            } else {
+                $orderedDocumentTypesByCategory->put('QUOTE', $documentTypesByCategory->get('QUOTE'));
+            }
         }
         if ($documentTypesByCategory->has('MEMBER')) {
             $orderedDocumentTypesByCategory->put('MEMBER', $documentTypesByCategory->get('MEMBER'));

@@ -80,6 +80,12 @@ class SagePayloadFactory
 
     public static function createAPInvoicePrem($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
     {
+        $optionalFields = self::createOptionalFields($request);
+        //Additional Option Field just for AP Invoice
+        $optionalFields[] = [
+            'OptionalField' => 'IGTC',
+            'Value' => 'N',
+        ];
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
@@ -110,7 +116,7 @@ class SagePayloadFactory
                             'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
                         ],
                     ],
-                    'InvoiceOptionalFields' => self::createOptionalFields($request),
+                    'InvoiceOptionalFields' => $optionalFields,
                 ],
             ],
         ];
@@ -183,8 +189,8 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalAmount),
-                    'DocumentTotalIncludingTax' => roundNumber($request->totalAmount),
+                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalPrice),
+                    'DocumentTotalIncludingTax' => roundNumber($request->totalPrice),
                     'Terms' => 'SPLIT'.count($paymentSplits),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
@@ -192,8 +198,8 @@ class SagePayloadFactory
                             'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
-                            'DistributedAmount' => roundNumber($request->totalAmount),
-                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalAmount),
+                            'DistributedAmount' => roundNumber($request->totalPrice),
+                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalPrice),
                         ],
                     ],
                     'InvoicePaymentSchedules' => self::createPaymentSchedules($paymentSplits),
@@ -340,10 +346,8 @@ class SagePayloadFactory
         if ($request->commissionIncludingVat > 0) {
             $taxClass = 1;
         }
-
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $commissionDescription = 'C.'.$request->invoiceDescription;
-        $premiumWithDiscount = $request->totalAmount + $request->discount;
         $payLoad = [
             'Invoices' => [
                 [
@@ -356,16 +360,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTax' => roundNumber($premiumWithDiscount),
-                    'DocumentTotalIncludingTax' => roundNumber($premiumWithDiscount),
+                    'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
+                    'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
-                            'ExtendedAmountWithTIP' => roundNumber($premiumWithDiscount),
-                            'ExtendedAmountWithoutTIP' => roundNumber($premiumWithDiscount),
+                            'ExtendedAmountWithTIP' => roundNumber($request->premiumWithTax),
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->premiumWithTax),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -514,8 +518,8 @@ class SagePayloadFactory
                             'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
-                            'ExtendedAmountWithTIP' => roundNumber($request->premiumWithTax),
-                            'ExtendedAmountWithoutTIP' => roundNumber($request->premiumWithTax),
+                            'ExtendedAmountWithTIP' => roundNumber($request->totalPrice),
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->totalPrice),
                         ],
                     ],
 
@@ -567,7 +571,7 @@ class SagePayloadFactory
             $temp['EntryNumber'] = 1;
             $temp['PaymentNumber'] = $key + 1;
             $temp['DueDate'] = date('Y-m-d', strtotime($item->due_date));
-            $temp['AmountDue'] = roundNumber($item->collection_amount === null ? 0 : $item->collection_amount);
+            $temp['AmountDue'] = roundNumber($item->payment_amount);
             $data[] = $temp;
         }
 
@@ -1012,7 +1016,7 @@ class SagePayloadFactory
             'DocumentNumber' => $payment->insurer_tax_number,
             'PaymentNumber' => $paymentNumber,
             'ReceiptTransactionType' => 'Receipt',
-            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount)),
+            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + $item->sr_no == 1 ? floatval($payment->discount_value) : 0),
         ];
 
         $prePaymentData = [
@@ -1023,25 +1027,41 @@ class SagePayloadFactory
             'ReceiptTransactionType' => 'Receipt',
             'CustomerReceiptAmount' => -roundNumber($item->payment_amount),
         ];
+        $discountData = null;
+        if ($payment->discount_value > 0) {
+            $discountData = [
+                'BatchType' => 'CA',
+                'CustomerNumber' => $sage_customer_number,
+                'DocumentNumber' => $payment->insurer_tax_number.'-DIS',
+                'PaymentNumber' => 1,
+                'ReceiptTransactionType' => 'Receipt',
+                'CustomerReceiptAmount' => -roundNumber($payment->discount_value),
+            ];
+        }
 
-        return [$receiptData, $prePaymentData];
+        return [$receiptData, $prePaymentData, $discountData];
     }
 
     public static function createAppliedReceiptsAdjustments($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
     {
         $receiptsAndAdjustmentsData = [];
-
         if ($isPaymentsSplit) {
             foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
-                [$singleReceiptData, $singlePrePaymentData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
                 $receiptsAndAdjustmentsData[] = $singleReceiptData;
                 $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+                if ($discountData) {
+                    $receiptsAndAdjustmentsData[] = $discountData;
+                }
             }
         } else {
             $firstSplitPaymentRecord = $splitPaymentRecords[0];
-            [$singleReceiptData, $singlePrePaymentData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
             $receiptsAndAdjustmentsData[] = $singleReceiptData;
             $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+            if ($discountData) {
+                $receiptsAndAdjustmentsData[] = $discountData;
+            }
         }
 
         return $receiptsAndAdjustmentsData;
