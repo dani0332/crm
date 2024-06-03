@@ -98,4 +98,5 @@ final class ApplicationStorageEnums extends Enum
     public const IM_EB_SERVICE_TEAM_EMAIL = 'IM_EB_SERVICE_TEAM_EMAIL';
     public const SEND_UPDATE_EMAIL = 'SEND_UPDATE_EMAIL';
     public const SEND_POLICY_UPDATE_EMAIL = 'SEND_POLICY_UPDATE_EMAIL';
+    public const ALFRED_FOLLOWUP_TEMPLATE = 'ALFRED_FOLLOWUP_TEMPLATE';
 }

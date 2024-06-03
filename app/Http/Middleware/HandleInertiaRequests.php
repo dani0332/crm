@@ -148,18 +148,20 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasAnyPermission(array_merge([
-            PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
-            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
-            PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
-            PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW,
-            PermissionsEnum::UtmLeadsSalesReport,
-            PermissionsEnum::RENEWAL_BATCH_REPORT,
-            PermissionsEnum::CONVERSION_AS_AT_REPORT,
-            PermissionsEnum::MANAGEMENT_REPORT,
-        ],
+        if (auth()->user()->hasAnyPermission(array_merge(
+            [
+                PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
+                PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+                PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
+                PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW,
+                PermissionsEnum::UtmLeadsSalesReport,
+                PermissionsEnum::RENEWAL_BATCH_REPORT,
+                PermissionsEnum::CONVERSION_AS_AT_REPORT,
+                PermissionsEnum::MANAGEMENT_REPORT,
+            ],
             PermissionsEnum::getAdvisorConversionReportPermissions(),
-            PermissionsEnum::getAdvisorDistributionReportPermissions()))) {
+            PermissionsEnum::getAdvisorDistributionReportPermissions()
+        ))) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
                     ->addIf(auth()->user()->can(PermissionsEnum::CONVERSION_AS_AT_REPORT), 'Conversion As At Report', route('conversion-as-at-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
@@ -381,44 +383,6 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        // Scheduled to delete 15th April 2024
-        // if (auth()->user()->can(PermissionsEnum::CRMAdmin)) {
-        //     $nav = $nav->add('Claims', '', function (Section $section) {
-        //         $section
-        //             ->add('Claims List', url('claim/claims'), fn ($s) => $s->attributes(['icon' => 'box']))
-        //             ->addIf(
-        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
-        //                 'Type of Insurance',
-        //                 url('claim/typeofinsurance'),
-        //                 fn ($s) => $s->attributes(['icon' => 'box'])
-        //             )
-        //             ->addIf(
-        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
-        //                 'Sub Type of Insurance',
-        //                 url('claim/subtypeofinsurance'),
-        //                 fn ($s) => $s->attributes(['icon' => 'box'])
-        //             )
-        //             ->addIf(
-        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
-        //                 'Claim Status',
-        //                 url('claim/claimsstatus'),
-        //                 fn ($s) => $s->attributes(['icon' => 'box'])
-        //             )
-        //             ->addIf(
-        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
-        //                 'Car Repair Coverage',
-        //                 url('claim/carrepaircoverage'),
-        //                 fn ($s) => $s->attributes(['icon' => 'box'])
-        //             )
-        //             ->addIf(
-        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
-        //                 'Car Repair Type',
-        //                 url('claim/carrepairtype'),
-        //                 fn ($s) => $s->attributes(['icon' => 'box'])
-        //             );
-        //     });
-        // }
-
         if (auth()->user()->can(PermissionsEnum::AMLList)) {
             $nav = $nav->add('AML', '', function (Section $section) {
                 $section
@@ -520,19 +484,19 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
                         ]),
                         'Allocation Config',
-                        url('generic/tier'),
+                        url('generic/tiers'),
                         fn ($s) => $s
                             ->attributes(['icon' => 'box'])
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::TIER_CONFIG_LIST),
                                 'Tiers',
-                                url('generic/tier'),
+                                url('generic/tiers'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::QUAD_CONFIG_LIST),
                                 'Quadrants',
-                                url('generic/quadrant'),
+                                url('generic/quadrants'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(

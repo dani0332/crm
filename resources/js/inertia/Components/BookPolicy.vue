@@ -129,7 +129,7 @@ const bpForm = useForm({
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
     page.props?.payments[0]?.commission_vat_applicable || '',
-  commission_percentage: page.props?.payments[0]?.commmission_percentage || '',
+  commission_percentage: page.props?.payments[0]?.commmission_percentage || 0,
   vat_on_commission: page.props?.payments[0]?.commission_vat || '',
   total_commission: page.props?.payments[0]?.commission || '',
   payment_code: page.props?.payments[0]?.code,
