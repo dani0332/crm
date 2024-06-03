@@ -105,7 +105,6 @@ class TierController extends Controller
         $tier = Tier::findOrFail($id);
         $tier->update($request->except('tier_user'));
 
-        // Sync users
         $response = $tier->users()->sync($request->tier_user);
 
         if (! empty($response->errors) || ! empty($response->msg)) {
@@ -115,18 +114,4 @@ class TierController extends Controller
         return redirect(route('tiers.show', $id))->with('message', 'Tier is updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        $tier = Tier::findOrFail($id);
-        $tier->users()->detach();
-        $tier->delete();
-        if ($tier) {
-            return back()->with('message', 'Tier has been deleted.');
-        } else {
-            return back()->with('message', 'Something went wrong.');
-        }
-    }
 }

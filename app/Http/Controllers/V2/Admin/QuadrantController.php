@@ -126,19 +126,4 @@ class QuadrantController extends Controller
         return redirect(route('quadrants.show', $id))->with('success', 'Quadrant updated successfully');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        $quad = Quadrant::where('id', $id)->first();
-        $quad->is_active = 0;
-        $quad->save();
-        DB::table('quad_tiers')->where('quad_id', $quad->id)->delete();
-        DB::table('quad_users')->where('quad_id', $quad->id)->delete();
-        $deleted = Quadrant::destroy($id);
-        if ($deleted) {
-            return redirect()->route('quadrants.index')->with('success', 'Quadrant deleted successfully');
-        }
-    }
 }

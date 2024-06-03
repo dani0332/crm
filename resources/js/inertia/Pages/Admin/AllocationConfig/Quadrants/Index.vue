@@ -155,17 +155,6 @@ const showDeleteModal = ref(false),
         <Link :href="route('quadrants.edit', id)">
           <x-button color="primary" size="xs" outlined> Edit </x-button>
         </Link>
-        <x-button
-          color="red"
-          size="xs"
-          outlined
-          @click.prevent="
-            deleteAction.id = id;
-            showDeleteModal = true;
-          "
-        >
-          Delete
-        </x-button>
       </div>
     </template>
   </DataTable>

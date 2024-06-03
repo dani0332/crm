@@ -122,18 +122,4 @@ class RulesController extends Controller
         return redirect(route('rule.show', $id))->with('message', 'Rule is updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        $rule = Rule::findOrFail($id);
-        $rule->users()->detach();
-        $rule = $rule->delete();
-        if ($rule) {
-            return back()->with('message', 'Rule has been deleted.');
-        } else {
-            return back()->with('message', 'Something went wrong.');
-        }
-    }
 }
