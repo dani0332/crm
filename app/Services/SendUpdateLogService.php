@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -859,36 +860,34 @@ class SendUpdateLogService
             $emailData->details = $sendUpdateLog->emirates->text ?? '';
         } elseif ($quote->quote_type_id == QuoteTypeId::Car && in_array($sendUpdateLog->option->code, [SendUpdateLogStatusEnum::CISC, SendUpdateLogStatusEnum::CISC_NFI])) {
             $emailData->details = $sendUpdateLog->seating_capacity ?? '';
-        } elseif (in_array($quote->quote_type_id, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Corpline]) && $sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE) {
+        } elseif ($quote->quote_type_id == QuoteTypeId::Car && $sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE) {
             $emailData->details = $sendUpdateLog->expiry_date ? 'New Expiry Date: '.Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '';
-        } elseif ($quote->quote_type_id == QuoteTypeId::Home && $sendUpdateLog->option->code == SendUpdateLogStatusEnum::COA) {
-            $emailData->details = $sendUpdateLog->address ? 'New address: '.$sendUpdateLog->address : '';
         }
 
         // need to confirm CORPLINE_TRADE_SEND_POLICY_TEMPLATE for template id, also test group medical quote object.
-        
+
         if ($quote->quote_type_id == QuoteTypeId::Car) {
-            $templateId = SendUpdateLogStatusEnum::CAR_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::CAR_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Health) {
-            $templateId = SendUpdateLogStatusEnum::HEALTH_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::HEALTH_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Travel) {
-            $templateId = SendUpdateLogStatusEnum::TRAVEL_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::TRAVEL_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Life) {
-            $templateId = SendUpdateLogStatusEnum::LIFE_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::LIFE_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Home) {
-            $templateId = SendUpdateLogStatusEnum::HOME_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::HOME_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Pet) {
-            $templateId = SendUpdateLogStatusEnum::PET_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::PET_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Cycle) {
-            $templateId = SendUpdateLogStatusEnum::CYCLE_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::CYCLE_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Bike) {
-            $templateId = SendUpdateLogStatusEnum::BIKE_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::BIKE_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Yacht) {
-            $templateId = SendUpdateLogStatusEnum::YACHT_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::YACHT_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::Corpline) {
-            $templateId = SendUpdateLogStatusEnum::CORPLINE_CAR_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::CORPLINE_CAR_SEND_POLICY_TEMPLATE;
         } elseif ($quote->quote_type_id == QuoteTypeId::GroupMedical) {
-            $templateId = SendUpdateLogStatusEnum::GROUP_MEDICAL_SEND_POLICY_TEMPLATE;
+            $templateId = ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE;
         }
 
         app(SendEmailCustomerService::class)->sendBookUpdateEmail($templateId, $emailData, 'send-update', $quote->quote_type_id);

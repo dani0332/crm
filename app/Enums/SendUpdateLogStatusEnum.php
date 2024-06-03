@@ -76,16 +76,4 @@ final class SendUpdateLogStatusEnum extends Enum
     const CISC_NFI = 'CISC(NFI'; // Change in seating capacity (with no financial impact)
     const COE_NFI = 'COE(NFI'; // Change of Emirates (with no financial impact)
     const ADD_OPTIONAL_COVER = 'Add optional cover';
-    const CAR_SEND_POLICY_TEMPLATE = 664;
-    const HEALTH_SEND_POLICY_TEMPLATE = 665;
-    const TRAVEL_SEND_POLICY_TEMPLATE = 666;
-    const LIFE_SEND_POLICY_TEMPLATE = 667;
-    const HOME_SEND_POLICY_TEMPLATE = 668;
-    const PET_SEND_POLICY_TEMPLATE = 669;
-    const CYCLE_SEND_POLICY_TEMPLATE = 670;
-    const BIKE_SEND_POLICY_TEMPLATE = 671;
-    const YACHT_SEND_POLICY_TEMPLATE = 672;
-    const CORPLINE_CAR_SEND_POLICY_TEMPLATE = 673;
-    const CORPLINE_TRADE_SEND_POLICY_TEMPLATE = 674;
-    const GROUP_MEDICAL_SEND_POLICY_TEMPLATE = 675;
 }
