@@ -198,7 +198,7 @@ class ApplicationStorageSeeder extends Seeder
         }
 
         // SEND UPDATE TEMPLATE START
-        
+
         ApplicationStorage::firstOrCreate([
             'key_name' => ApplicationStorageEnums::CAR_SEND_POLICY_TEMPLATE,
             'value' => '664',

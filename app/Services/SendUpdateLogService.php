@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -886,7 +885,7 @@ class SendUpdateLogService
         // need to confirm CORPLINE_TRADE_SEND_POLICY_TEMPLATE for template id, also test group medical quote object.
 
         $quoteType = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
-        $constantName = 'App\Enums\ApplicationStorageEnums::' . $quoteType;
+        $constantName = 'App\Enums\ApplicationStorageEnums::'.$quoteType;
         $templateId = ApplicationStorage::where('key_name', constant($constantName))->first()->value;
 
         app(SendEmailCustomerService::class)->sendBookUpdateEmail($templateId, $emailData, 'send-update', $quote->quote_type_id);

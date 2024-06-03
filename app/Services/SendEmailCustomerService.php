@@ -1012,7 +1012,7 @@ class SendEmailCustomerService extends BaseService
                     'name' => 'IM EB Service',
                 ];
             }
-            
+
             $ccAdvisor = [];
             if (isset($emailData->advisor->email) && isset($emailData->advisor->name)) {
                 $ccAdvisor = [[
