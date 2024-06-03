@@ -404,7 +404,7 @@ class SendUpdateLogController extends Controller
 
         info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
-        
+
         if ($payment) {
             $isPaymentFetchedFromMainLead = false;
             $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate);
