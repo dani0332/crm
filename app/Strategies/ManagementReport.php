@@ -111,8 +111,8 @@ class ManagementReport
         switch ($request['reportCategory']) {
             case ManagementReportCategoriesEnum::SALE_SUMMARY:
             case ManagementReportCategoriesEnum::SALE_DETAIL:
-                if ($request['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
-                    $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
+                if ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
+                    $dateFilter('personal_quotes.policy_booking_date', 'policyBookDate');
                 } elseif ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
                     $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
                 }
@@ -127,6 +127,8 @@ class ManagementReport
             case ManagementReportCategoriesEnum::TRANSACTION:
                 if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
                     $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
+                } elseif ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
+                    $dateFilter('personal_quotes.policy_booking_date', 'policyBookDate');
                 }
                 break;
 

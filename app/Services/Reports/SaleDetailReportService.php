@@ -84,7 +84,7 @@ class SaleDetailReportService extends ManagementReport
         ];
 
         return [
-            'policyIssuanceDate' => $defaultDate,
+            'policyBookDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::SALE_DETAIL,
             'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
         ];

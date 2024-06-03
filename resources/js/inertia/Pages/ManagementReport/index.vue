@@ -32,18 +32,18 @@ const filterkeys = () => {
     filters.reportCategory != 'Sales Detail' &&
     filters.reportCategory != 'Transaction'
   ) {
-    delete filters.policyIssuanceDate;
+    delete filters.policyBookDate;
     delete filters.paymentDueDate;
   }
   if (filters.reportCategory == 'Active Policies') {
-    delete filters.policyIssuanceDate;
+    delete filters.policyBookDate;
     delete filters.paymentDueDate;
     delete filters.policyExpiredDate;
   }
   if (
     (filters.reportCategory == 'Sales Summary' ||
       filters.reportCategory == 'Sales Detail') &&
-    filters.reportType == 'Issued Policies'
+    filters.reportType == 'Booked Policies'
   ) {
     delete filters.paymentDueDate;
   }
@@ -52,14 +52,14 @@ const filterkeys = () => {
       filters.reportCategory == 'Sales Detail') &&
     filters.reportType == 'Transaction Payments'
   ) {
-    delete filters.policyIssuanceDate;
+    delete filters.policyBookDate;
   }
 };
 
 let filters = reactive({
   reportCategory: props.defaultFilters.reportCategory,
-  reportType: 'Issued Policies',
-  policyIssuanceDate: props.defaultFilters.policyIssuanceDate ?? [
+  reportType: 'Booked Policies',
+  policyBookDate: props.defaultFilters.policyBookDate ?? [
     new Date(),
     new Date(),
   ],
@@ -120,8 +120,8 @@ const showPaymentDueDate = computed(() => {
   return filters.reportType == 'Transaction Payments' ?? false;
 });
 
-const showIssuanceDate = computed(() => {
-  return filters.reportType == 'Issued Policies' ?? false;
+const showBookingDate = computed(() => {
+  return filters.reportType == 'Booked Policies' ?? false;
 });
 
 const showExpiryDate = computed(() => {
@@ -152,9 +152,9 @@ const umtGroup = reactive([
 
 const reportTypes = ref([
   {
-    label: 'Issued Policies',
-    value: 'Issued Policies',
-    report: ['Sales Summary', 'Sales Detail'],
+    label: 'Booked Policies',
+    value: 'Booked Policies',
+    report: ['Sales Summary', 'Sales Detail', 'Transaction'],
   },
   {
     label: 'Transaction Payments',
@@ -260,9 +260,9 @@ function onReset() {
           :rules="[isRequired]"
         />
       </x-field>
-      <x-field v-if="showIssuanceDate" label="Policy Issuance Date" required>
+      <x-field v-if="showBookingDate" label="Booking Date" required>
         <DatePicker
-          v-model="filters.policyIssuanceDate"
+          v-model="filters.policyBookDate"
           placeholder="Select Start & End Date"
           range
           :max-range="92"
