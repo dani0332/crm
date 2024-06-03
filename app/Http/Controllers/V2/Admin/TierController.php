@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TierRequest;
 use App\Models\Tier;
-use App\Repositories\TierRepository;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
 

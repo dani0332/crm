@@ -6,7 +6,6 @@ namespace App\Http\Controllers\V2\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;
 use App\Models\Rule;
-use App\Repositories\RuleRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -92,7 +91,7 @@ class RulesController extends Controller
      */
     public function edit($id)
     {
-        $rule = RuleRepository::find($id);
+        $rule = Rule::find($id);
 
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
@@ -110,7 +109,7 @@ class RulesController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $rule = RuleRepository::findOrFail($id);
+        $rule = Rule::findOrFail($id);
         $rule->update($request->except('rule_users'));
 
         // Sync users

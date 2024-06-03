@@ -4,8 +4,6 @@ namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QuadrantRequest;
-use App\Repositories\QuadrantRepository;
-use App\Repositories\TierRepository;
 use App\Repositories\UserRepository;
 use App\Models\Quadrant;
 use App\Models\Tier;
