@@ -261,6 +261,8 @@ class CarAllocationService extends AllocationService
 
             // If eligible users are found, log the results and return them.
             if ($eligibleUsers && count($eligibleUsers) > 0) {
+                info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+
                 return $eligibleUsers->toArray();
             }
         }
