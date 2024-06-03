@@ -893,8 +893,6 @@ class SendEmailCustomerService extends BaseService
             Log::error($responseDetail);
         }
 
-        dd($responseCode);
-
         return $responseCode;
     }
 
