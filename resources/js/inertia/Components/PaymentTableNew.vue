@@ -15,7 +15,7 @@ const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const paymentAllocationStatus = page.props.paymentAllocationStatus;
-
+const paymentMethodsEnums = page.props.paymentMethodsEnum;
 const props = defineProps({
   payments: Array,
   can: Object,
@@ -1337,10 +1337,6 @@ const downloadProformaPayment = async () => {
   }
 };
 
-const showMessages = () => {
-  console.log('showMessages');
-};
-
 const sendUpdateStatusEnum = props.sendUpdateStatusEnum;
 const isEF = computed(() => {
   return (
@@ -1426,7 +1422,7 @@ const addPaymentModal = () => {
     'Yacht',
   ];
 
-  if (quoteCollectedBy.includes(props.quoteType) || !isBrokerHavePermission()) {
+  if ( (quoteCollectedBy.includes(props.quoteType) && props.quoteSubType != quoteTypeCodeEnum.CORPLINE) || !isBrokerHavePermission()) {
     paymentMethodsForm.collection_type = 'insurer';
   } else {
     paymentMethodsForm.collection_type = 'broker';
@@ -2306,7 +2302,7 @@ const uploadDocument = (doc, files, count) => {
           if (
             quoteTypesToCheck.includes(props.quoteType) ||
             props.quoteType === 'Home' ||
-            props.quoteSubType === 'Corpline' ||
+            props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
           ) {
             quoteDocuments = data.props.quoteDocuments;
@@ -2348,43 +2344,15 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
-const validateAccessForSendUpdate = ref(false);
-if (props.sendUpdate) {
-  const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
-  const allowedPaymentStatus = [
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.PAID,
-    props.paymentStatusEnum.PENDING,
-  ];
-
-  if (
-    props.payments.length > 0 &&
-    paymentsDetails.collection_type == 'insurer'
-  ) {
-    validateAccessForSendUpdate.value =
-      allowedPaymentStatus.includes(paymentsDetails.payment_status_id) &&
-      paymentsDetails.credit_approval !== null;
-  } else if (
-    props.payments.length > 0 &&
-    paymentsDetails.collection_type == 'broker'
-  ) {
-    validateAccessForSendUpdate.value =
-      paymentsDetails.payment_status_id == props.paymentStatusEnum.PAID;
-  }
-}
-
 const getCaptureValidation = computed(() => {
   return payment => {
-    //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
     if (
-      (props.payments.length > 0 &&
-        payment.total_price === payment.total_amount + payment.discount_value &&
-        (((props.isAmlClearedForPayment || props.quoteRequest.quote_status_id === 6 ||
-          props.quoteRequest.quote_status_id === 32 ||
-          props.quoteRequest.quote_status_id === 15) &&
-          props.quoteRequest.kyc_decision === 'Complete') ||
-          props.quoteType === 'Travel')) || //skip AML & KYC for travel
-          validateAccessForSendUpdate.value
+      (props.payments.length > 0 && (payment.total_price === (payment.total_amount + payment.discount_value))) &&
+      (((props.isAmlClearedForPayment || (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared) ||
+        (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined) ||
+        (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved)) && 
+        props.quoteRequest.kyc_decision === 'Complete') || 
+        (props.quoteType === 'Travel') || props.sendUpdate) //Skip AML & KYC for travel and send update
     ) {
       if (payment.is_approved === 1) {
         return false;
@@ -2414,8 +2382,8 @@ const getCaptureValidation = computed(() => {
         } else if (
           paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID
         ) {
-          return true;
-        }
+            return true;
+          }
       } else if (paymentRecord.frequency === 'split_payments') {
         const paymentMethodCC = paymentRecord.payment_splits.filter(
           item => item.payment_method.code === 'CC',
@@ -2493,6 +2461,7 @@ const getCaptureValidation = computed(() => {
     return false;
   };
 });
+
 //verify if all credit payments are approved
 const verifyCreditArroved = paymentRecord => {
   let caPaymentStatus = paymentRecord.payment_splits.filter(
@@ -2739,6 +2708,8 @@ watch(
     totalPrice.value = newValue;
   },
 );
+
+const lookupsEnum = page.props.lookupsEnum;
 </script>
 
 <template>
@@ -2995,7 +2966,7 @@ watch(
                   </td>
                   <td>{{ item.code }}</td>
                   <td>{{ formatDate(item.collection_date) }}</td>
-                  <td>{{ formatDate(item.collection_date) }}</td>
+                  <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
                   <td>{{ item.payment_method.name }}</td>
                   <td>{{ formatAmount(item.total_price) }}</td>
                   <td>{{ formatAmount(item.discount_value) }}</td>
@@ -3024,7 +2995,7 @@ watch(
                   </td>
                   <td>
                     <div class="flex gap-2">
-                      <template v-if="is_lacking_payment">
+                      <template v-if="item.send_update_log_id ==null && is_lacking_payment">
                         <x-tooltip position="left" class="arrow-r">
                           <x-badge
                             size="xs"
@@ -3522,7 +3493,7 @@ watch(
                   @change="handleDiscountChange"
                 >
                   <template v-for="option in discountTypes" :key="option.value">
-                    <option :value="option.value" :title="option.tooltip">
+                    <option :value="option.value" :title="option.tooltip" v-if="option.value !== lookupsEnum.SYSTEM_ADJUSTED_DISCOUNT">
                       {{ option.label }}
                     </option>
                   </template>
@@ -3543,11 +3514,7 @@ watch(
             </x-tooltip>
             <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                {{
-                  discountTypes.find(
-                    item => item.value === paymentMethodsForm.discount,
-                  )?.label || 'N/A'
-                }}
+                {{ discountTypeLabel }}
               </span>
             </x-field>
           </div>
@@ -4478,7 +4445,8 @@ watch(
           class="flex items-center justify-center"
           v-if="
             splitPaymentRecord.verified_by !== null &&
-            paymentMethodsForm.status == 'view'
+            paymentMethodsForm.status == 'view' &&
+            paymentMethodsModels[splitPaymentNo] != paymentMethodsEnums.CreditCard
           "
         >
           <p class="text-lg font-bold text-blue-400 mr-2">

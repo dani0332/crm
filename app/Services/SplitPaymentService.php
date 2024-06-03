@@ -120,10 +120,15 @@ class SplitPaymentService
             $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
 
             if ($readyToPostResponse !== '') {
-                $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
-                $returnMessage['response'] = 'Error while making ready to post to sage';
+                $readyToPostArray = json_decode($readyToPostResponse, true);
+                if (isset($readyToPostArray['error']['message']['value']) && ! strpos($readyToPostArray['error']['message']['value'], 'status from POSTED')) {
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
+                    $returnMessage['response'] = 'Error while making ready to post to sage';
 
-                return $returnMessage;
+                    return $returnMessage;
+                } else {
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4);
+                }
             } else {
                 if ($isLiveApiCallStep3) {
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4);
@@ -368,6 +373,8 @@ class SplitPaymentService
         try {
             $quote = $this->getQuoteObject($modelType, $quoteId);
             $quote->load(['customer']);
+            $quote->load(['advisor']);
+
             $data = [];
             $data['order_amount'] = number_format($splitPayment->collection_amount, 2, '.', ',');
             $data['payment_split_id'] = $splitPayment->id;
@@ -378,14 +385,20 @@ class SplitPaymentService
                 $data['customer_name'] = $quote->customer->first_name.' '.$quote->customer->last_name;
             }
 
+            // get the advisor details
+            $data['advisor_name'] = $quote->advisor->name ?? '';
+            $data['advisor_email'] = $quote->advisor->email ?? '';
+            $data['advisor_mobile_no'] = $quote->advisor->mobile_no ?? '';
+            $data['advisor_landline_no'] = $quote->advisor->landline_no ?? '';
+            $data['profile_photo_path'] = $quote->advisor->profile_photo_path ?? '';
+
             $data['receipt_number'] = $splitPayment->code;
             $data['order_number'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             $data['pdf_filename'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             // get verified at date
+            $data['order_at'] = date(config('constants.RECEIPT_ORDER_DATE'), strtotime($splitPayment->verified_at));
 
-            $data['order_at'] = $splitPayment->verified_at;
             $orderDateFormat = config('constants.DATE_DISPLAY_FORMAT');
-
             $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->verified_at));
             if ($splitPayment->captured_at != null) {
                 $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->captured_at));

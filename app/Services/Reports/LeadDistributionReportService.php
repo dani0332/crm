@@ -47,7 +47,7 @@ class LeadDistributionReportService extends BaseService
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $query->where('car_quote_request.advisor_id', auth()->user()->id);
         } else {
-            if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
+            if (! auth()->user()->hasRole(RolesEnum::LeadPool) && ! auth()->user()->hasRole(RolesEnum::MotorHead)) {
                 $userIds = $this->walkTree(auth()->user()->id);
                 $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
             }
@@ -100,8 +100,7 @@ class LeadDistributionReportService extends BaseService
         $freshLoad = ! isset($filters->page);
 
         $startDate = isset($filters->createdAtDates) ?
-            Carbon::parse($filters->createdAtDates[0])->startOfDay()->format($dateFormat) :
-                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+            Carbon::parse($filters->createdAtDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->createdAtDates) ?
             Carbon::parse($filters->createdAtDates[1])->endOfDay()->format($dateFormat) :

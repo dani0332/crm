@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
+use App\Enums\DocumentTypeCode;
+use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -29,6 +31,7 @@ use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\HandlesDeadlockRetries;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +39,7 @@ use Illuminate\Support\Facades\DB;
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
     use GenericQueriesAllLobs;
+    use HandlesDeadlockRetries;
 
     protected $paymentService;
 
@@ -156,8 +160,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdateNewPayment($request)
     {
-        DB::beginTransaction();
-        try {
+        $maxRetries = 2;
+
+        return $this->handleWithDeadlockRetries(function () use ($request) {
             $masterPayment = (object) $request->payment;
             $paymentInformation = [
                 'total_price' => $masterPayment->total_price,
@@ -198,15 +203,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 QuoteDocument::whereIn('doc_name', $request->trashedFilesModal)->delete();
             }
             $this->updatePaymentSplits($request);
-            DB::commit(); // Commit changes if everything went well
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
-        } catch (Exception $exception) {
-            DB::rollBack(); // Rollback changes if any error occurred
-
-            return ['status' => 'error', 'message' => $exception->getMessage()];
-        }
+        }, $maxRetries);
     }
+
     //Add split payments
     public function addPaymentSplits($request, $quoteID)
     {
@@ -219,7 +220,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
@@ -261,42 +261,34 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $splitPaymentDocumentIds = [];
         //Skipping paid payments and deleting extra payments
         if ($paymentSplits) {
-            DB::beginTransaction();
-            try {
-                foreach ($paymentSplits as $paymentSplit) {
-                    if (
-                        in_array($paymentSplit->payment_status_id, [
-                            PaymentStatusEnum::PAID,
-                            PaymentStatusEnum::PARTIAL_CAPTURED,
-                            PaymentStatusEnum::PARTIALLY_PAID,
-                            PaymentStatusEnum::CAPTURED,
-                            PaymentStatusEnum::AUTHORISED,
-                        ])
-                    ) {
-                        $paymentPaidSerialNo[] = $paymentSplit->sr_no;
+            foreach ($paymentSplits as $paymentSplit) {
+                if (
+                    in_array($paymentSplit->payment_status_id, [
+                        PaymentStatusEnum::PAID,
+                        PaymentStatusEnum::PARTIAL_CAPTURED,
+                        PaymentStatusEnum::PARTIALLY_PAID,
+                        PaymentStatusEnum::CAPTURED,
+                        PaymentStatusEnum::AUTHORISED,
+                    ])
+                ) {
+                    $paymentPaidSerialNo[] = $paymentSplit->sr_no;
 
-                        continue;
-                    }
-                    if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
+                    continue;
+                }
+                if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
+                    // Delete QuoteDocuments referencing the payment split
+                    $paymentSplit->documents()->forceDelete();
+                    // Then delete the payment split
+                    $paymentSplit->delete();
 
-                        // Delete QuoteDocuments referencing the payment split
-                        $paymentSplit->documents()->forceDelete();
-                        // Then delete the payment split
-                        $paymentSplit->delete();
-
-                        // Unset/remove the element with sr_no from the split payment object
-                        foreach ($masterPayment->payment_splits as $key => $payment_split) {
-                            if ($payment_split['sr_no'] === $paymentSplit->sr_no) {
-                                unset($masterPayment->payment_splits[$key]);
-                            }
+                    // Unset/remove the element with sr_no from the split payment object
+                    foreach ($masterPayment->payment_splits as $key => $payment_split) {
+                        if ($payment_split['sr_no'] === $paymentSplit->sr_no) {
+                            unset($masterPayment->payment_splits[$key]);
                         }
                     }
                 }
-                DB::commit();
-            } catch (Exception $exception) {
-                DB::rollBack();
             }
-
         }
         $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
@@ -384,11 +376,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
             if ($request->is_capture) { //update collected amount in childs
-
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
-
                         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
                             //create sage reciept
                             if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
@@ -406,6 +396,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                         DB::beginTransaction();
                         try {
+                            if (empty($paymentSplit->verified_at)) {
+                                $paymentSplit->verified_at = now();
+                                $paymentSplit->verified_by = Auth::user()->id;
+                            }
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
                             $parentPayment = $paymentSplit->payment;
@@ -471,6 +465,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
                         info('Transaction Approved responseExtend: '.$responseExtend);
                     }
+                    //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
                     // dispatch(new MAWelcomeJob($parentQuoteModel->first_name, $parentQuoteModel->last_name, $parentQuoteModel->email, $parentQuoteModel->mobile_no, 'IMCRM', ''));
 
                     //Create duplicate lead for TRAVEL
@@ -553,7 +548,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                     $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                     if ($quoteDocumentRec) {
-                        $quoteDocumentRec->payment_split_id = $splitPayment->id;
+                        if (empty($document['payment_split_id'])) {
+                            $quoteDocumentRec->payment_split_id = $splitPayment->id;
+                        } else {
+                            $quoteDocumentRec->document_type_code = $this->mapToReciept($quoteDocumentRec->document_type_code);
+                            $quoteDocumentRec->document_type_text = DocumentTypeEnum::RECEIPT;
+                        }
                         $quoteDocumentRec->save();
                     }
                 }
@@ -580,7 +580,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     vAbort($failMessage);
                 }
             } else {
-
                 $splitPayment->update($paymentInformation);
 
                 if ($masterPayment) {
@@ -592,7 +591,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         ]
                     );
                 }
-
             }
             /* Part of milestone 2*/
             if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
@@ -614,11 +612,30 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $successMessage;
     }
 
+    //map document type to reciept
+    public function mapToReciept($documentTypeCode)
+    {
+        $map = [
+            DocumentTypeCode::CPD => DocumentTypeCode::CPD_RECEIPT,
+            DocumentTypeCode::BPD => DocumentTypeCode::BPD_RECEIPT,
+            DocumentTypeCode::TPD => DocumentTypeCode::TPD_RECEIPT,
+            DocumentTypeCode::HPD => DocumentTypeCode::HPD_RECEIPT,
+            DocumentTypeCode::LPD => DocumentTypeCode::LPD_RECEIPT,
+            DocumentTypeCode::HOMPD => DocumentTypeCode::HOMPD_RECEIPT,
+            DocumentTypeCode::CYCPD => DocumentTypeCode::CYCPD_RECEIPT,
+            DocumentTypeCode::CLPD => DocumentTypeCode::CLPD_RECEIPT,
+            DocumentTypeCode::GMQPD => DocumentTypeCode::GMQPD_RECEIPT,
+            DocumentTypeCode::PPD => DocumentTypeCode::PPD_RECEIPT,
+            DocumentTypeCode::YPD => DocumentTypeCode::YPD_RECEIPT,
+        ];
+
+        return $map[$documentTypeCode] ?? $documentTypeCode;
+    }
+
     public function setMasterPaymentStatus($payment)
     {
         if ($payment) {
             if ($payment->frequency == 'upfront') {
-
                 if ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PAID) {
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::CAPTURED]
@@ -633,7 +650,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     );
                 }
             } else {
-
                 $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
                     PaymentStatusEnum::PAID,
                     PaymentStatusEnum::CAPTURED,
@@ -704,5 +720,4 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
-
 }

@@ -479,7 +479,7 @@ class SendUpdateLogService
             $quoteServiceFile = app(getServiceObject($quoteType));
             $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
             if (! is_null($payments)) {
-                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'sendUpdateLog']);
+                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'sendUpdateLog', 'paymentable']);
             }
         }
 
@@ -506,6 +506,10 @@ class SendUpdateLogService
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled) {
+            return SendUpdateLogStatusEnum::SNBU;
+        }
+
         if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
             (
                 (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
@@ -516,7 +520,7 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled) {
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
@@ -716,7 +720,7 @@ class SendUpdateLogService
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
-                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
+                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
                     if (! empty($sendUpdateLog->car_addons)) { // will work on Add optional cover.
                         foreach ($sendUpdateLog->car_addons as $addonId) {
                             CarQuoteRequestAddOn::updateOrCreate([
@@ -728,8 +732,8 @@ class SendUpdateLogService
                                 'price' => 0,
                             ]);
                         }
-                    } elseif (! empty($sendUpdateLog->emirates_registration)) { // will work on Change of Emirate.
-                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_registration]);
+                    } elseif (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirate.
+                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
                     } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity.
                         $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                     }

@@ -2,6 +2,7 @@
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -848,6 +849,10 @@ if (! function_exists('getCardViewRequestFilters')) {
                 $partialQuery->whereNull('previous_quote_policy_number');
             }
         }
+
+        if (isset($request->advisors) && ! empty($request->advisors)) {
+            $partialQuery->whereIn('advisor_id', $request->advisors)->whereNotNull('advisor_id');
+        }
     }
 }
 
@@ -918,6 +923,35 @@ if (! function_exists('getAppStorageValueByKey')) {
     }
 }
 
+if (! function_exists('getAlfredEligibleCustomers')) {
+    function getAlfredEligibleCustomers($data)
+    {
+        try {
+            $username = config('constants.MA_V1_USERNAME');
+            $password = config('constants.MA_V1_PASSWORD');
+            $basicAuth = base64_encode("$username:$password");
+
+            $response = Http::timeout(20)->retry(2, 3000)
+                ->withHeaders([
+                    'Authorization' => 'Basic '.$basicAuth,
+                ])
+                ->post(config('constants.MA_V1_ENDPOINT').'/internal/wfs/get-remaining-scratches', ['data' => $data]);
+
+            if ($response->ok()) {
+                $response = $response->object();
+
+                if ($response->data) {
+                    return $response;
+                }
+            }
+        } catch (Exception $e) {
+            Log::error('getAlfredEligibleCustomers Error: '.$e->getMessage().$e->getTraceAsString());
+        }
+
+        return null;
+    }
+}
+
 if (! function_exists('getManagersByUser')) {
     function getManagersByUser($userId)
     {
@@ -934,9 +968,12 @@ if (! function_exists('roundNumber')) {
     }
 }
 
-if (! function_exists('roundNumber')) {
-    function roundNumber($number)
+if (! function_exists('getLookupsEnum')) {
+    function getLookupsEnum(): array
     {
-        return round($number, 2);
+        return array_combine(
+            array_map(fn ($case) => $case->name, LookupsEnum::cases()),
+            array_map(fn ($case) => $case->value, LookupsEnum::cases())
+        );
     }
 }

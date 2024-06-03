@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -9,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuote;
+use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
@@ -87,6 +89,8 @@ class SendUpdateLogRepository extends BaseRepository
                 }
 
                 $res->save();
+                $res->refresh();
+                $this->checkPolicyDetailsFilled($res, $data['quote_type_id'], $realQuote);
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
@@ -132,7 +136,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
                 'car_addons' => $data['car_addons'] ?? null,
-                'emirates_registration' => $data['emirates_registration'] ?? null,
+                'emirates_id' => $data['emirates_id'] ?? null,
                 'seating_capacity' => $data['seating_capacity'] ?? null,
             ]);
         } catch (\Exception $ex) {
@@ -233,8 +237,8 @@ class SendUpdateLogRepository extends BaseRepository
             $sendUpdateLog = $this->find($data['sendUpdateId']);
             if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
-                if (! empty($sendUpdateLog->emirates_registration)) { // will work on Change of Emirates (with no financial impact).
-                    $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_registration]);
+                if (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirates (with no financial impact).
+                    $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
                 } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity (with no financial impact).
                     $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                 }
@@ -283,6 +287,26 @@ class SendUpdateLogRepository extends BaseRepository
                 $data = array_merge($data, ['reversal_invoice' => $request['reversal_invoice']]);
             }
             $res = $this->find($request['id'])->update($data);
+
+            $payment = Payment::where('send_update_log_id', $request['id'])->firstOrFail();
+            if ($payment) {
+                $bookingDetailsTotalPrice = floatval($request['total_price']);
+                if ($bookingDetailsTotalPrice > $payment->total_amount) {
+                    $diff = number_format($bookingDetailsTotalPrice - $payment->total_amount, 2);
+                    if ($diff < 1) {
+                        $payment->discount_value = $diff;
+                        $payment->discount_type = LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT;
+                    } else {
+                        $payment->total_price = $request['total_price'];
+                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                    }
+                } elseif ($bookingDetailsTotalPrice == $payment->total_amount && $payment->discount_value && $payment->discount_type == LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT->value) {
+                    $payment->discount_value = 0;
+                    $payment->discount_type = null;
+                }
+
+                $payment->save();
+            }
         } catch (\Exception $ex) {
             $res = (object) [
                 'message' => $ex->getMessage(),
@@ -298,5 +322,34 @@ class SendUpdateLogRepository extends BaseRepository
         return $this->where('personal_quote_id', $personalQuoteId)->where(function ($q) {
             $q->where('code', 'like', '%EF%')->orWhere('code', 'like', '%EN%');
         })->orderBy('id', 'desc')->get();
+    }
+
+    public function checkPolicyDetailsFilled($sendUpdate, $quoteTypeId, $quote)
+    {
+
+        $sendUpdatePolicyDetails = [
+            'first_name' => ($sendUpdate->first_name ?? $quote->first_name) ?? null,
+            'last_name' => ($sendUpdate->last_name ?? $quote->last_name) ?? null,
+            'insurance_provider_id' => ($sendUpdate->insurance_provider_id ?? ($quote->insurance_provider_id ?? $quote->car_plan_provider_id)) ?? null,
+            'policy_number' => ($sendUpdate->policy_number ?? $quote->policy_number) ?? null,
+            'issuance_date' => ($sendUpdate->issuance_date ?? $quote->policy_issuance_date) ?? null,
+            'start_date' => ($sendUpdate->start_date ?? $quote->policy_start_date) ?? null,
+            'expiry_date' => ($sendUpdate->expiry_date ?? $quote->renewal_expiry_date) ?? null,
+            'insurer_quote_number' => ($sendUpdate->insurer_quote_number ?? $quote->insurer_quote_number) ?? null,
+            'issuance_status_id' => ($sendUpdate->issuance_status_id ?? $quote->policy_issuance_status_id) ?? null,
+        ];
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+            $sendUpdatePolicyDetails['plan_id'] = ($sendUpdate->plan_id ?? $quote->plan_id) ?? null;
+        }
+
+        $filledValues = array_filter($sendUpdatePolicyDetails, function ($value) {
+            return ! is_null($value) && $value !== '';
+        });
+
+        if (count($sendUpdatePolicyDetails) === count($filledValues)) {
+            $sendUpdate->is_policy_filled = SendUpdateLogStatusEnum::POLICY_FILLED;
+            $sendUpdate->save();
+        }
     }
 }

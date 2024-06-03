@@ -97,6 +97,7 @@ class HandleInertiaRequests extends Middleware
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
+            'lookupsEnum' => getLookupsEnum(),
         ];
     }
 
@@ -154,13 +155,17 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW,
             PermissionsEnum::UtmLeadsSalesReport,
             PermissionsEnum::RENEWAL_BATCH_REPORT,
+            PermissionsEnum::CONVERSION_AS_AT_REPORT,
             PermissionsEnum::MANAGEMENT_REPORT,
-        ], PermissionsEnum::getAdvisorConversionReportPermissions()))) {
+        ],
+            PermissionsEnum::getAdvisorConversionReportPermissions(),
+            PermissionsEnum::getAdvisorDistributionReportPermissions()))) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
+                    ->addIf(auth()->user()->can(PermissionsEnum::CONVERSION_AS_AT_REPORT), 'Conversion As At Report', route('conversion-as-at-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->hasAnyPermission(PermissionsEnum::getAdvisorConversionReportPermissions()), 'Advisor Conversion', route('advisor-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW), 'Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission(PermissionsEnum::getAdvisorDistributionReportPermissions()), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW), 'Revival Conversion', route('revival-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
@@ -515,19 +520,19 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
                         ]),
                         'Allocation Config',
-                        url('generic/tier'),
+                        url('generic/tiers'),
                         fn ($s) => $s
                             ->attributes(['icon' => 'box'])
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::TIER_CONFIG_LIST),
                                 'Tiers',
-                                url('generic/tier'),
+                                url('generic/tiers'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::QUAD_CONFIG_LIST),
                                 'Quadrants',
-                                url('generic/quadrant'),
+                                url('generic/quadrants'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(

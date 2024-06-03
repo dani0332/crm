@@ -841,7 +841,7 @@ class CRUDController extends Controller
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
-                'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
+                'quoteDocuments' => $quoteDocuments,
                 'quote' => $record,
                 'record' => $record,
                 'sendUpdateOptions' => $sendUpdateOptions,
@@ -1726,7 +1726,7 @@ class CRUDController extends Controller
         $this->updatePriceAndDiscount($quoteModel);
 
         return redirect()->back()->with([
-            'success' => 'Quote Policy Detail has been updated.',
+            'success' => 'Policy details has been updated.',
         ]);
     }
 
