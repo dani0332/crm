@@ -8,8 +8,9 @@ use App\Enums\EnvEnum;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
+use App\Models\Customer;
+use Carbon\Carbon;
 use Exception;
-use finfo;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -814,35 +815,22 @@ class SendEmailCustomerService extends BaseService
             $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
         }
     }
-
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
         try {
+            info('sendBookPolicyDocumentsEmail  , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
 
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
-
+            $attachments = [];
             if (! empty($documents)) {
-                foreach ($documents as $item) {
-
-                    $path = $item->doc_url;
-                    $pwDoc = $path !== '' ? $websiteURL.$path : '';
-                    if (! empty($path)) {
-
-                        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-
-                        $file = file_get_contents($pwDoc);
-                        $mimeType = $fileInfo->buffer($file);
-
-                        $ext = mimeContentType(null, $mimeType);
-                        $name = $item->document_type_text.'.'.$ext;
-                        // info('Mime type ========' . $name);
-                        $attachments[] = [
-                            'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => $name,
-                            'ContentType' => $mimeType,
-                        ];
-                    }
+                foreach ($documents as $document) {
+                    $path = $document->doc_url;
+                    $documentURL = $path !== '' ? $websiteURL.$path : '';
+                    $attachments[] = [
+                        'url' => $documentURL,
+                        'name' => basename($documentURL),
+                    ];
                 }
             }
 
@@ -885,8 +873,10 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $response = json_decode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents(), true);
             $responseCode = $clientRequest->getStatusCode();
+            info('sendBookPolicyDocumentsEmail ---- Request Sent '.$emailData->code);
+            info('sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
@@ -961,4 +951,54 @@ class SendEmailCustomerService extends BaseService
 
         return $responseCode;
     }
+
+    public function sendingAlfredFollowupEmail($customer)
+    {
+
+        $emailTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE)->first();
+
+        $apiKey = config('constants.MA_BREVO_KEY');
+        $url = config('constants.SIB_URL');
+        try {
+
+            info('AlfredFollowUpEmail Starting');
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            $body = [
+                'to' => [[
+                    'email' => $customer->email,
+                    'name' => $customer->name,
+                ]],
+                'templateId' => (int) $emailTemplateId->value,
+                'params' => ['email' => $customer->email, 'customerName' => $customer->name],
+            ];
+            $response = Http::withHeaders($headers)
+                ->post($url, $body);
+
+            info('AlfredFollowUpEmail ---- Request Sent '.$customer->email);
+
+            $responseCode = $response->status();
+            if ($responseCode == 200 || $responseCode == 201) {
+                $isCustomer = Customer::where('id', $customer->customer_id)->first();
+                if ($isCustomer->campaign_followups < 3) {
+                    $isCustomer->increment('campaign_followups');
+                    $isCustomer->last_followup_sent_at = Carbon::now();
+                    $isCustomer->save();
+                }
+            }
+
+            info('AlfredFollowUpEmail ---- Received Code : '.$responseCode.' '.$customer->email);
+            info('AlfredFollowUpEmail ---- response object : '.json_encode($response->object()).'--'.$customer->email);
+
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            Log::error($responseCode);
+        }
+
+        return $responseCode;
+    }
+
 }

@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   logs: Object,
+  count: Object,
   quote_types: Object,
   quote_sync_status: Object,
 });
@@ -208,7 +209,10 @@ const distinctOptions = computed(() => {
             class="w-full" />
         </x-field>
       </div>
-      <div class="flex flex-row-reverse gap-3">
+      <div class="flex justify-between">
+        <div class="font-bold pt-4">
+          Total: {{ count }}
+        </div>
         <div class="flex justify-self-end gap-3">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="resetFilters">Reset</x-button>

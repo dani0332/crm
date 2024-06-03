@@ -506,6 +506,10 @@ class SendUpdateLogService
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled) {
+            return SendUpdateLogStatusEnum::SNBU;
+        }
+
         if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
             (
                 (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||

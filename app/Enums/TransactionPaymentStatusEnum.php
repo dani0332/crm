@@ -14,4 +14,5 @@ final class TransactionPaymentStatusEnum extends Enum
     const UNPAID_TEXT = 'Unpaid';
     const PARTIALLY_PAID_TEXT = 'Partially Paid';
     const FULLY_PAID_TEXT = 'Fully Paid';
+    const PAID_TEXT = 'Paid';
 }
