@@ -996,6 +996,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $sendUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_UPDATE_EMAIL)->first()->value;
+            info('send update email fetched. email: '.$sendUpdateEmail);
 
             $body = [
                 'sender' => [
@@ -1018,6 +1019,7 @@ class SendEmailCustomerService extends BaseService
 
             $ebServiceTeam = [];
             $ebServiceEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL)->first()->value;
+            info('IM EB Service team email fetched. email: '.$ebServiceEmail);
             if ($checkIsHealthOrGroupMedical) {
                 $ebServiceTeam = [
                     'email' => $ebServiceEmail,
@@ -1055,6 +1057,7 @@ class SendEmailCustomerService extends BaseService
 
             // need to discuss this.
             $sendPolicyUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL)->first()->value;
+            info('Send Policy Update email fetched. email: '.$sendPolicyUpdateEmail);
 
             $body['bcc'] = [
                 'email' => $sendPolicyUpdateEmail,
