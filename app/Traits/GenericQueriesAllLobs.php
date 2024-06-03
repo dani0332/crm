@@ -507,7 +507,7 @@ trait GenericQueriesAllLobs
 
         $payment = Payment::where('code', '=', $quote->code)->mainLeadPayment()->first();
 
-        if($payment) { 
+        if ($payment) {
             $capturedAmount = $payment->captured_amount;
             $totalAmount = $payment->captured_amount + $payment->discount_value;
             $priceWithVat = $quote->price_with_vat;
@@ -522,7 +522,7 @@ trait GenericQueriesAllLobs
             } else {
                 $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
             }
-            
+
             $payment->transaction_payment_status = $paymentStatus;
             $payment->save();
         }
