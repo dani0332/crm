@@ -867,7 +867,7 @@ class SendEmailCustomerService extends BaseService
                 $bodyData['cc'] = [
                     [
                         'email' => $emailData->advisorEmail,
-                        'name' => $emailData->advisorName, // assuming advisorName is available
+                        'name' => $emailData->advisorName,
                     ],
                 ];
             }
