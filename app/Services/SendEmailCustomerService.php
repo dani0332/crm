@@ -840,7 +840,7 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $body = json_encode([
+            $bodyData = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
@@ -861,7 +861,17 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
-            ], JSON_UNESCAPED_SLASHES);
+            ];
+
+            if ($emailData->advisorEmail) {
+                $bodyData['cc'] = [
+                    [
+                        'email' => $emailData->advisorEmail,
+                        'name' => $emailData->advisorName,
+                    ],
+                ];
+            }
+            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(

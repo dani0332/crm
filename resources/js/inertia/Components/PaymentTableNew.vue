@@ -3514,11 +3514,7 @@ const lookupsEnum = page.props.lookupsEnum;
             </x-tooltip>
             <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                {{
-                  discountTypes.find(
-                    item => item.value === paymentMethodsForm.discount,
-                  )?.label || 'N/A'
-                }}
+                {{ discountTypeLabel }}
               </span>
             </x-field>
           </div>
