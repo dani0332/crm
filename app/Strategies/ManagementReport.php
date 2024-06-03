@@ -93,8 +93,8 @@ class ManagementReport
                 }
             }
             $dateRange = $request[$filterKey] ?? [
-                Carbon::parse(now())->startOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
-                Carbon::parse(now())->endOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
+                Carbon::today()->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
+                Carbon::today()->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
             ];
 
             if ($secondOptionalFieldName) {
