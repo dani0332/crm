@@ -93,7 +93,7 @@ class ApplicationStorageSeeder extends Seeder
         }
 
         $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
-        if (!$epMdxV3From) {
+        if (! $epMdxV3From) {
             ApplicationStorage::insert([
                 'key_name' => ApplicationStorageEnums::EP_MDX_V3_FROM,
                 'value' => now(),
