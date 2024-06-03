@@ -150,15 +150,15 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->hasAnyPermission(array_merge(
             [
-            PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
-            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
-            PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
-            PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW,
-            PermissionsEnum::UtmLeadsSalesReport,
-            PermissionsEnum::RENEWAL_BATCH_REPORT,
-            PermissionsEnum::CONVERSION_AS_AT_REPORT,
-            PermissionsEnum::MANAGEMENT_REPORT,
-        ],
+                PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
+                PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+                PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
+                PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW,
+                PermissionsEnum::UtmLeadsSalesReport,
+                PermissionsEnum::RENEWAL_BATCH_REPORT,
+                PermissionsEnum::CONVERSION_AS_AT_REPORT,
+                PermissionsEnum::MANAGEMENT_REPORT,
+            ],
             PermissionsEnum::getAdvisorConversionReportPermissions(),
             PermissionsEnum::getAdvisorDistributionReportPermissions()
         ))) {
