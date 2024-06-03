@@ -577,6 +577,7 @@ class SagePayloadFactory
 
         return $data;
     }
+    
     public static function createCustomerPayload($customer)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
