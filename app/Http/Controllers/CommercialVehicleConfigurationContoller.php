@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Http\Requests\CommercialVehicleConfigurationRequest;
-use App\Models\CarMake;
 use App\Services\CommercialVehicleConfigurationService;
 use Illuminate\Http\Request;
 

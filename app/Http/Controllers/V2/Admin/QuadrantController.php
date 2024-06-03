@@ -4,14 +4,12 @@ namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QuadrantRequest;
-use App\Repositories\UserRepository;
 use App\Models\Quadrant;
 use App\Models\Tier;
-use DB;
+use App\Repositories\UserRepository;
 
 class QuadrantController extends Controller
 {
-
     /**
      * Display a listing of the resource.
      */
@@ -22,7 +20,7 @@ class QuadrantController extends Controller
             $data->where('name', 'LIKE', '%'.request()->name.'%');
         }
 
-        $quadrants =  $data->simplePaginate(10)->withQueryString();
+        $quadrants = $data->simplePaginate(10)->withQueryString();
         $quadrants->load([
             'users' => function ($users) {
                 return $users->select('id', 'name');

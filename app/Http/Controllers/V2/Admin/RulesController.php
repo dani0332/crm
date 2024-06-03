@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
-
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;
 use App\Models\Rule;
-use App\Repositories\UserRepository;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use App\Models\RuleType;
+use App\Repositories\UserRepository;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class RulesController extends Controller
 {

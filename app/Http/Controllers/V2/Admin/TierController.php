@@ -8,7 +8,6 @@ use App\Models\Tier;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
 
-
 class TierController extends Controller
 {
     /**

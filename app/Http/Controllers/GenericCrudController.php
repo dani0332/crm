@@ -19,7 +19,6 @@ use App\Services\QuadrantService;
 use App\Services\RuleService;
 use App\Services\TeamService;
 use App\Services\TierService;
-use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
@@ -99,6 +98,7 @@ class GenericCrudController extends Controller
             }
         }
         $model = $this->genericModel;
+
         return inertia('Admin/AllocationConfig/Tiers/Index', [
             'model' => $model,
             'tiers' => $tiers,
@@ -129,6 +129,7 @@ class GenericCrudController extends Controller
         if ($request->has('id')) {
             $id = $request->id;
         }
+
         return view('generic.add', compact('model', 'dropdownSource', 'customTitles', 'id'));
     }
 
