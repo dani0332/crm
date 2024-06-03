@@ -8,7 +8,6 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\ApplicationStorage;
@@ -767,7 +766,6 @@ class SendUpdateLogService
                     'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
                 ]);
 
-                
             }
 
             DB::commit();
