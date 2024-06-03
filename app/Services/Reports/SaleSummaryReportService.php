@@ -18,7 +18,7 @@ class SaleSummaryReportService extends ManagementReport
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
-        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ISSUED_POLICIES;
+        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
 
         $query = PersonalQuote::query()
@@ -115,7 +115,7 @@ class SaleSummaryReportService extends ManagementReport
         return [
             'policyBookDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::SALE_SUMMARY,
-            'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
+            'reportType' => ManagementReportTypeEnum::BOOKED_POLICIES,
         ];
     }
 }

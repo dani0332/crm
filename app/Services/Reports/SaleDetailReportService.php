@@ -18,7 +18,7 @@ class SaleDetailReportService extends ManagementReport
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_DETAIL;
-        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ISSUED_POLICIES;
+        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $query = PersonalQuote::query()
             ->select(
                 DB::raw('DISTINCT(personal_quotes.policy_number)'),
@@ -86,7 +86,7 @@ class SaleDetailReportService extends ManagementReport
         return [
             'policyBookDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::SALE_DETAIL,
-            'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
+            'reportType' => ManagementReportTypeEnum::BOOKED_POLICIES,
         ];
     }
 }
