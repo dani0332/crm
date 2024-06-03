@@ -19,6 +19,7 @@ class CommercialKeywordsService extends BaseService
             'name' => $attributes['name'],
             'key' => strtoupper(str_replace(' ', '_', $attributes['name'])),
         ]);
+
         return redirect()->route('admin.commercial.keywords.show', ($latestRecord->id + 1))->with('success', 'Commercial Keyword has been stored');
     }
 
