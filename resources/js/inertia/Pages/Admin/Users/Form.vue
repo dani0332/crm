@@ -311,13 +311,13 @@ watch(
         />
       </x-field>
       <x-field label="SUB TEAM">
-        <x-select
-          v-model="userForm.sub_team_id"
-          class="w-full"
-          :loading="loader.subTeamLoader"
-          :options="computedSubTeams"
-          placeholder="Select sub team"
-        ></x-select>
+        <ComboBox
+            v-model="userForm.sub_team_id"
+            placeholder="Select sub team"
+            :options="computedSubTeams"
+            :single="true"
+            :loading="loader.subTeamLoader"
+        />
       </x-field>
       <x-field label="LOB VISIBILITY">
         <ComboBox
