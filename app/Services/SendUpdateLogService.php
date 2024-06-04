@@ -836,7 +836,8 @@ class SendUpdateLogService
     public function sendUpdateToCustomerEmail($sendUpdateLog, $buttonText): void
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
-        $quoteModel = $this->getModelObject(QuoteTypeId::getOptions()[$quoteTypeId]);
+        $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
+        $quoteModel = $this->getModelObject($quoteType);
         $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
@@ -870,6 +871,7 @@ class SendUpdateLogService
                 'landLine' => $quote->advisor->landline_no ?? '',
                 'email' => $quote->advisor->email ?? '',
                 'name' => $quote->advisor->name ?? '',
+                'mobileNo' => $quote->advisor->mobile_no ?? '',
             ],
             'googleMeet' => $quote->advisor->calendar_link ?? '',
             'documentUrl' => $documentUrl,
@@ -881,22 +883,22 @@ class SendUpdateLogService
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
-                $emailData->details = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
+                $emailData->policyNewExpiry = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
             } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
-                $emailData->details = $sendUpdateLog->emirates->text ?? '';
+                $emailData->policyNewExpiry = $sendUpdateLog->emirates->text ?? '';
             } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::CISC, SendUpdateLogStatusEnum::CISC_NFI])) {
-                $emailData->details = $sendUpdateLog->seating_capacity ?? '';
+                $emailData->policyNewExpiry = $sendUpdateLog->seating_capacity ?? '';
             } elseif ($optionCode == SendUpdateLogStatusEnum::PPE) {
-                $emailData->details = $sendUpdateLog->expiry_date ? 'New Expiry Date: '.Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '';
+                $emailData->policyNewExpiry = $sendUpdateLog->expiry_date ? 'New Expiry Date: '.Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '';
             }
         }
 
         // need to confirm CORPLINE_TRADE_SEND_POLICY_TEMPLATE for template id, also test group medical quote object.
 
-        $quoteType = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
-        $constantName = 'App\Enums\ApplicationStorageEnums::'.$quoteType;
-        $templateId = ApplicationStorage::where('key_name', constant($constantName))->first()->value;
+        $templateCode = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
+        $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
+        $templateId = getAppStorageValueByKey(constant($constantName));
 
-        app(SendEmailCustomerService::class)->sendUpdateToCustomerEmail($templateId, $emailData, 'send-update', $quote->quote_type_id);
+        app(SendEmailCustomerService::class)->sendUpdateToCustomerEmail($templateId, $emailData, 'send-update', $quoteTypeId);
     }
 }
