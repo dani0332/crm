@@ -14,7 +14,6 @@ use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
-use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Support\Str;
 
