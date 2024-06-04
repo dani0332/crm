@@ -678,9 +678,10 @@ class SendUpdateLogService
         try {
             DB::beginTransaction();
 
+            $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
 
-                $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
                 if ($payment) {
                     info('Book Update - Updating Payment Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $payment->update([
@@ -707,6 +708,22 @@ class SendUpdateLogService
                     ]);
                 }
             }
+
+            if ($payment) {
+                if ($payment->captured_amount < 1) {
+                    $status = SendUpdateLogStatusEnum::UNPAID;
+                } elseif (($payment->captured_amount + $payment->discount_value) < $payment->total_price) {
+                    $status = SendUpdateLogStatusEnum::PARTIALLY_PAID;
+                } elseif (($payment->captured_amount + $payment->discount_value) >= $payment->total_price) {
+                    $status = SendUpdateLogStatusEnum::FULL_PAID;
+                }
+            }
+
+            $sendUpdateLog->update([
+                'booking_date' => now(),
+                'transaction_payment_status' => $status ?? '',
+                'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
+            ]);
 
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
@@ -741,22 +758,6 @@ class SendUpdateLogService
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
-
-                $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
-
-                if ($payment->captured_amount < 1) {
-                    $status = SendUpdateLogStatusEnum::UNPAID;
-                } elseif (($payment->captured_amount + $payment->discount_value) < $payment->total_price) {
-                    $status = SendUpdateLogStatusEnum::PARTIALLY_PAID;
-                } elseif (($payment->captured_amount + $payment->discount_value) >= $payment->total_price) {
-                    $status = SendUpdateLogStatusEnum::FULL_PAID;
-                }
-
-                $sendUpdateLog->update([
-                    'booking_date' => now(),
-                    'transaction_payment_status' => $status ?? '',
-                    'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
-                ]);
             }
 
             DB::commit();
