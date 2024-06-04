@@ -833,7 +833,7 @@ class SendUpdateLogService
         return $carQuote->plan->carAddons->toArray();
     }
 
-    public function sendUpdateToCustomerEmail($sendUpdateLog): void
+    public function sendUpdateToCustomerEmail($sendUpdateLog, $buttonText): void
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteModel = $this->getModelObject(QuoteTypeId::getOptions()[$quoteTypeId]);
@@ -845,6 +845,18 @@ class SendUpdateLogService
             $update = $sendUpdateLog?->option->key;
         } elseif (in_array($categoryCode, [SendUPdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
             $update = quoteStatusCode::POLICY_CANCELLED;
+        }
+
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
+            $documentUrl = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->pluck('doc_url')->toArray();
+        } elseif (in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
+            if ($buttonText == SendUpdateLogStatusEnum::SNBU) {
+                $documentUrl = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->pluck('doc_url')->toArray();
+            } elseif ($buttonText == SendUpdateLogStatusEnum::SUC) {
+                $documentUrl = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->pluck('doc_url')->toArray();
+            } elseif ($buttonText == SendUpdateLogStatusEnum::SU) {
+                $documentUrl = $sendUpdateLog->documents->where('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)->pluck('doc_url')->toArray();
+            }
         }
 
         $emailData = (object) [
@@ -860,6 +872,7 @@ class SendUpdateLogService
                 'name' => $quote->advisor->name ?? '',
             ],
             'googleMeet' => $quote->advisor->calendar_link ?? '',
+            'documentUrl' => $documentUrl,
         ];
 
         // need to add "Car Fleet" for PPE details.

@@ -982,18 +982,18 @@ class SendEmailCustomerService extends BaseService
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
                     $attachments[] = [
-                        'url' => $emailAttachment,
+                        'url' => storageUrl().$emailAttachment,
                         'name' => basename($emailAttachment),
                     ];
                 }
             }
 
-            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            /* if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
                 ];
-            }
+            } */
 
             $sendUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_UPDATE_EMAIL)->first()->value;
             info('send update email fetched. email: '.$sendUpdateEmail);

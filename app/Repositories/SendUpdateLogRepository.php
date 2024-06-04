@@ -251,7 +251,7 @@ class SendUpdateLogRepository extends BaseRepository
             ]);
 
             if ($result && auth()->user()->hasRole(RolesEnum::BetaUser)) {
-                app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog);
+                app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $data['buttonText']);
             }
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
