@@ -129,7 +129,7 @@ const bpForm = useForm({
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
     page.props?.payments[0]?.commission_vat_applicable || '',
-  commission_percentage: page.props?.payments[0]?.commmission_percentage || '',
+  commission_percentage: page.props?.payments[0]?.commmission_percentage || 0,
   vat_on_commission: page.props?.payments[0]?.commission_vat || '',
   total_commission: page.props?.payments[0]?.commission || '',
   payment_code: page.props?.payments[0]?.code,
@@ -160,11 +160,6 @@ const onUpdatebookPolicyDetails = isValid => {
     bpForm.post('/quotes/update-booking-policy', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Book policy details update Successfully',
-          position: 'top',
-        });
-
         bp.isEditing = false;
       },
       onError: errors => {
@@ -768,7 +763,7 @@ const showInsufficientPaymentAlert = () => {
                     color="orange"
                     class="mt-4"
                     disabled
-                    v-if="!props.bookPolicyDetails?.sendButton"
+                    v-if="(!props.bookPolicyDetails?.sendButton && (!props.quote.quote_status_id == page.props.quoteStatusEnum.CancellationPending))"
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>

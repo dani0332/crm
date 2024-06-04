@@ -66,6 +66,7 @@ final class ApplicationStorageEnums extends Enum
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
     public const ENABLE_PLAN_MODIFY_VALIDATION = 'ENABLE_PLAN_MODIFY_VALIDATION';
     public const EP_MDX_V2_FROM = 'EP_MDX_V2_FROM';
+    public const EP_MDX_V3_FROM = 'EP_MDX_V3_FROM';
     public const ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE = 'ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE';
     public const EMAIL_CAMPAIGN = 'EMAIL_CAMPAIGN';
     public const INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN = 'INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN';
@@ -83,4 +84,5 @@ final class ApplicationStorageEnums extends Enum
     public const VAT = 0.05;
     public const QUOTE_SYNC_CLEANUP_ENABLED = 'QUOTE_SYNC_CLEANUP_ENABLED';
     public const QUOTE_SYNC_CLEANUP_DAYS = 'QUOTE_SYNC_CLEANUP_DAYS';
+    public const ALFRED_FOLLOWUP_TEMPLATE = 'ALFRED_FOLLOWUP_TEMPLATE';
 }

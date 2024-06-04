@@ -15,7 +15,7 @@ const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const paymentAllocationStatus = page.props.paymentAllocationStatus;
-
+const paymentMethodsEnums = page.props.paymentMethodsEnum;
 const props = defineProps({
   payments: Array,
   can: Object,
@@ -1422,7 +1422,7 @@ const addPaymentModal = () => {
     'Yacht',
   ];
 
-  if (quoteCollectedBy.includes(props.quoteType) || !isBrokerHavePermission()) {
+  if ( (quoteCollectedBy.includes(props.quoteType) && props.quoteSubType != quoteTypeCodeEnum.CORPLINE) || !isBrokerHavePermission()) {
     paymentMethodsForm.collection_type = 'insurer';
   } else {
     paymentMethodsForm.collection_type = 'broker';
@@ -2302,7 +2302,7 @@ const uploadDocument = (doc, files, count) => {
           if (
             quoteTypesToCheck.includes(props.quoteType) ||
             props.quoteType === 'Home' ||
-            props.quoteSubType === 'Corpline' ||
+            props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
           ) {
             quoteDocuments = data.props.quoteDocuments;
@@ -2995,7 +2995,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   </td>
                   <td>
                     <div class="flex gap-2">
-                      <template v-if="is_lacking_payment">
+                      <template v-if="item.send_update_log_id ==null && is_lacking_payment">
                         <x-tooltip position="left" class="arrow-r">
                           <x-badge
                             size="xs"
@@ -3514,11 +3514,7 @@ const lookupsEnum = page.props.lookupsEnum;
             </x-tooltip>
             <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                {{
-                  discountTypes.find(
-                    item => item.value === paymentMethodsForm.discount,
-                  )?.label || 'N/A'
-                }}
+                {{ discountTypeLabel }}
               </span>
             </x-field>
           </div>
@@ -4449,7 +4445,8 @@ const lookupsEnum = page.props.lookupsEnum;
           class="flex items-center justify-center"
           v-if="
             splitPaymentRecord.verified_by !== null &&
-            paymentMethodsForm.status == 'view'
+            paymentMethodsForm.status == 'view' &&
+            paymentMethodsModels[splitPaymentNo] != paymentMethodsEnums.CreditCard
           "
         >
           <p class="text-lg font-bold text-blue-400 mr-2">
