@@ -859,6 +859,7 @@ class SendUpdateLogService
                 'email' => $quote->advisor->email ?? '',
                 'name' => $quote->advisor->name ?? '',
             ],
+            'googleMeet' => $quote->advisor->calendar_link ?? '',
         ];
 
         // need to add "Car Fleet" for PPE details.
