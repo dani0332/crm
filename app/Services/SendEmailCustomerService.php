@@ -995,7 +995,7 @@ class SendEmailCustomerService extends BaseService
                 ];
             } */
 
-            $sendUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_UPDATE_EMAIL)->first()->value;
+            $sendUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_UPDATE_EMAIL);
             info('send update email fetched. email: '.$sendUpdateEmail);
             info('template id is : '.$emailTemplateId);
 
@@ -1019,7 +1019,7 @@ class SendEmailCustomerService extends BaseService
             $checkIsHealthOrGroupMedical = in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical]);
 
             $ebServiceTeam = [];
-            $ebServiceEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL)->first()->value;
+            $ebServiceEmail = getAppStorageValueByKey(ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL);
             info('IM EB Service team email fetched. email: '.$ebServiceEmail);
             if ($checkIsHealthOrGroupMedical) {
                 $ebServiceTeam = [[
@@ -1065,7 +1065,7 @@ class SendEmailCustomerService extends BaseService
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
 
             // need to discuss this.
-            $sendPolicyUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL)->first()->value;
+            $sendPolicyUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL);
             info('Send Policy Update email fetched. email: '.$sendPolicyUpdateEmail);
 
             $body['bcc'] = [[
