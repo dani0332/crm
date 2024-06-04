@@ -172,7 +172,7 @@ use App\Enums\LeadSourceEnum;
                                 <div class="col-md-4">
                                     <select class="form-control" id="assign_team" name="assign_team">
                                         <option value="">Select Team</option>
-                                        <option @if ($record->health_team_type == 'Entry-Level') selected="selected" @endif value="Entry-Level">EBP
+                                        <option @if ($record->health_team_type == 'Entry-Level') selected="selected" @endif value="Entry-Level">Entry-Level
                                         </option>
                                         <option @if ($record->health_team_type == 'Best') selected="selected" @endif value="Best">Best
                                         </option>
