@@ -11,7 +11,6 @@ use App\Models\Transaction;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class DttHealth extends Command
@@ -59,7 +58,8 @@ class DttHealth extends Command
             ->get();
 
         if ($leads->count() == 0) {
-            info($logPrefix . 'No leads found');
+            info($logPrefix.'No leads found');
+
             return false;
         }
 
@@ -76,9 +76,7 @@ class DttHealth extends Command
             return in_array($item->customer_id, $customerIdsWithTransApp) ? false : true;
         });
 
-
-        info($logPrefix . ' count - ' . count($filteredLeads) . ' - ' . json_encode($filteredLeads->pluck('uuid')->toArray()));
-
+        info($logPrefix.' count - '.count($filteredLeads).' - '.json_encode($filteredLeads->pluck('uuid')->toArray()));
 
         foreach ($filteredLeads as $item) {
             $jobs[] = new HealthRevivalLeadsCreationJob($item);

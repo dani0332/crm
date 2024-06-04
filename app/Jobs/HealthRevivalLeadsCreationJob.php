@@ -78,17 +78,14 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'memberCategoryId' => $this->lead->member_category_id,
             ];
 
-
-            info($logPrefix . 'capiPayLoad' . json_encode($dataArr));
-
+            info($logPrefix.'capiPayLoad'.json_encode($dataArr));
 
             $capiResponse = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
 
-
-            if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
-                info('carRevivalParentLead -' . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response-' . json_encode($capiResponse));
+            if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
+                info('carRevivalParentLead -'.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID.' - CAPI Response-'.json_encode($capiResponse));
             } else {
-                info('healthRevivalLeadsCreationJob - healthRevivalParentLead -' . $this->lead->uuid . '- capiResponseError - ' . json_encode($capiResponse));
+                info('healthRevivalLeadsCreationJob - healthRevivalParentLead -'.$this->lead->uuid.'- capiResponseError - '.json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
             Log::error($logPrefix.'health revival Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
