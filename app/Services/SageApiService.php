@@ -449,7 +449,7 @@ class SageApiService
                 ];
             } else {
                 $getReverseInvoiceRelation = [
-                    'section_type' => $quoteModelObject->getMorphClass(),
+                    'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
                     'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
                 ];
             }
@@ -635,8 +635,9 @@ class SageApiService
         $invoicesForReverse = collect($extras['sageLogArray'])->filter(function ($sageApiLog) {
             return in_array($sageApiLog['sage_request_type'], [
                 SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
-                SageEnum::SRT_CREATE_AP_PREM_INV,
                 // SageEnum::SRT_CREATE_AR_SPPAY_INV,
+                SageEnum::SRT_CREATE_AP_PREM_INV,
+                // SageEnum::SRT_CREATE_AP_SPPAY_INV,
                 SageEnum::SRT_CREATE_AR_DISC_INV,
                 // SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
                 // SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
@@ -648,9 +649,10 @@ class SageApiService
             
             return ['status' => false, 'message' => 'No Invoices found for Reverse and Correction'];
         }
-
+        
         $reverseSendUpdateTypes = collect($invoicesForReverse)->pluck('sage_request_type')->toArray();
 
+        // First we reverse Ivnoices and then we create correction invoices
         foreach ($reverseSendUpdateTypes as $reverseSendUpdateTypeKey => $reverseSendUpdateType) {
             if ($payment->frequency == SageEnum::SF_UPFRONT) {
                 if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AR_PREM_COMM_INV) {
@@ -666,7 +668,7 @@ class SageApiService
                         'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
                         'requestType' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => $extras['reverse_invoice'] ?? '',
+                        'reversalInvoice' => collect($invoicesForReverse)->where('sage_request_type', SageEnum::SRT_CREATE_AR_PREM_COMM_INV)->first() ?? [],
                     ]);
                 }
 
@@ -683,11 +685,10 @@ class SageApiService
                         'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
                         'requestType' => SageEnum::SRT_REV_CORR_AP_PREM_INV,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => $extras['reverse_invoice'] ?? '',
+                        'reversalInvoice' => collect($invoicesForReverse)->where('sage_request_type', SageEnum::SRT_CREATE_AP_PREM_INV)->first() ?? [],
                     ]);
                 }
 
-                // Reverse and Correct AR Invoice DIS
                 if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AR_DISC_INV && $sendUpdateLog && $sendUpdateLog->discount > 0) {
                     info('Book Update - Create AR Reverse and Correction Invoice for Discount Invoice');
                     $invoiceResponse = json_decode($invoicesForReverse[$reverseSendUpdateTypeKey]['response']);
@@ -701,11 +702,11 @@ class SageApiService
                         'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
                         'requestType' => SageEnum::SRT_REV_CORR_AR_DIS_INV,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => $extras['reverse_invoice'] ?? '',
+                        'reversalInvoice' => collect($invoicesForReverse)->where('sage_request_type', SageEnum::SRT_CREATE_AR_DISC_INV)->first() ?? [],
                     ]);
                 }
             } else {
-                // Need to check AR Split Payment Reverse and Correction
+                // Reversal Cases with Split Payments not tested yet
                 if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AR_SPPAY_INV) {
                     info('Book Update - Create AR Split Payment Invoice for Split Payment and marked as posted');
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
@@ -721,7 +722,21 @@ class SageApiService
                     ]);
                 }
 
-                // Reverse and Correct AR Invoice DIS
+                if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AP_SPPAY_INV) {
+                    info('Book Update - Create AP Split Payment Invoice for Split Payment and marked as posted');
+                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                        'iterator' => 0,
+                        'lastIteration' => 2,
+                        'startingStep' => 2,
+                        'totalSteps' => 16,
+                        'entryType' => SageEnum::SCT_STRAIGHT,
+                        'requestType' => SageEnum::SRT_CREATE_AP_SPPAY_INV,
+                        'payment' => $payment,
+                        'splitPayments' => $splitPayments,
+                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
+                    ]);
+                }
+
                 if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AR_DISC_INV && $sendUpdateLog && $sendUpdateLog->discount > 0) {
                     info('Book Update - Create AR Reverse and Correction Invoice for Discount Invoice');
                     $invoiceResponse = json_decode($invoicesForReverse[$reverseSendUpdateTypeKey]['response']);
@@ -804,14 +819,18 @@ class SageApiService
                 case 'createARInvoicePremAndComm':
                 case 'createAPInvoicePrem':
                 case 'createARInvoiceDis':
-                    $sageInvResponse = isset($extraParams['invoiceType']) ? SageApiLogRepository::getInvoiceResponse([
-                        'quoteTypeObject' => $quoteObject->getMorphClass(),
-                        'quote_id' => $quoteObject->id,
-                        'invoiceType' => $extraParams['invoiceType'],
-                        'reversal_invoice_number' => $extraParams['reversalInvoice'],
-                        'method' => $methodName,
-                    ]) : [];
-                    $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, $sageInvResponse, ['mainLeadDetails' => $extraParams['mainLeadDetails']]);
+                    $sageInvResponse = [];
+
+                    if (isset($extraParams['invoiceType'])) {
+                        $sageInvResponse = SageApiLogRepository::getInvoiceResponse([
+                            'reverseInvoiceDetails' => $extraParams['reversalInvoice'],
+                            'quoteTypeObject' => $quoteObject->getMorphClass(),
+                            'quoteTypeId' => $quoteObject->id,
+                            'invoiceType' => $extraParams['invoiceType'],
+                        ]);
+                    }
+
+                    $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, $sageInvResponse, ['mainLeadDetails' => $extraParams['mainLeadDetails'] ?? []]);
                     break;
 
                 case 'arSplitPrepaymentPayload': // This add for Split Payment
@@ -918,7 +937,7 @@ class SageApiService
                 'arrayKey' => $arrayKey,
                 'requestType' => $extraParams['requestType'],
                 'sendUpdateLog' => $extraParams['sendUpdateLog'] ?? [],
-                'reversalInvoice' => $extraParams['reversalInvoice'] ?? '',
+                'reversalInvoice' => $extraParams['reversalInvoice'] ?? [],
                 'recursiveCall' => true,
             ];
 
@@ -960,8 +979,8 @@ class SageApiService
             info('Book Update - Sage API Call - Method Name ('.$processDetails['methodName'].') Already called - '.(! empty($extras['sendUpdateLog']) ? 'SendUpdateUUID' : 'QuoteUUID').': '.$quoteObject->uuid);
 
         } else {
-            $$processDetails['methodName'] = SagePayloadFactory::{$processDetails['methodName']}($sageRequestPayload, $extras['splitPayments']);
-            $resp = $this->postToSage300($$processDetails['methodName']['endPoint'], $$processDetails['methodName']['payload']);
+            ${$processDetails['methodName']} = SagePayloadFactory::{$processDetails['methodName']}($sageRequestPayload, $extras['splitPayments']);
+            $resp = $this->postToSage300(${$processDetails['methodName']}['endPoint'], ${$processDetails['methodName']}['payload']);
             $postedResponse = json_decode($resp, true);
         }
 
@@ -969,7 +988,7 @@ class SageApiService
             $this->sageBatchNumber = $postedResponse['BatchNumber'];
 
             if ($isLiveApiCall) {
-                $this->logSageApiCall($$processDetails['methodName'], $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps']);
+                $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps']);
                 info('Book Update - Sage API - Create '.$processDetails['invoiceType'].' Split Payment');
             }
 
@@ -1056,7 +1075,7 @@ class SageApiService
             }
 
         } else {
-            $this->logSageApiCall($$processDetails['methodName'], $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
+            $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
 
             $responseMessage = isset($postedResponse['error']['message']['value']) ?
                     $postedResponse['error']['message']['value'] : $processDetails['invoiceType'].' Split payment failed from Sage';
