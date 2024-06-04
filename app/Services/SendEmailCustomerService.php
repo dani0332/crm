@@ -1068,10 +1068,9 @@ class SendEmailCustomerService extends BaseService
             $sendPolicyUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL)->first()->value;
             info('Send Policy Update email fetched. email: '.$sendPolicyUpdateEmail);
 
-            $body['bcc'] = [
+            $body['bcc'] = [[
                 'email' => $sendPolicyUpdateEmail,
-                'name' => 'SendPolicyUpdate',
-            ];
+            ]];
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
