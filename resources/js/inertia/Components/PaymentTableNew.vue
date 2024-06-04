@@ -15,7 +15,7 @@ const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const paymentAllocationStatus = page.props.paymentAllocationStatus;
-
+const paymentMethodsEnums = page.props.paymentMethodsEnum;
 const props = defineProps({
   payments: Array,
   can: Object,
@@ -1422,7 +1422,7 @@ const addPaymentModal = () => {
     'Yacht',
   ];
 
-  if (quoteCollectedBy.includes(props.quoteType) || !isBrokerHavePermission()) {
+  if ( (quoteCollectedBy.includes(props.quoteType) && props.quoteSubType != quoteTypeCodeEnum.CORPLINE) || !isBrokerHavePermission()) {
     paymentMethodsForm.collection_type = 'insurer';
   } else {
     paymentMethodsForm.collection_type = 'broker';
@@ -2302,7 +2302,7 @@ const uploadDocument = (doc, files, count) => {
           if (
             quoteTypesToCheck.includes(props.quoteType) ||
             props.quoteType === 'Home' ||
-            props.quoteSubType === 'Corpline' ||
+            props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
           ) {
             quoteDocuments = data.props.quoteDocuments;
@@ -2344,46 +2344,15 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
-const validateAccessForSendUpdate = ref(false);
-if (props.sendUpdate) {
-  const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
-  const allowedPaymentStatusForInsurer = [
-    props.paymentStatusEnum.PENDING,
-    props.paymentStatusEnum.CREDIT_APPROVED,
-  ];
-
-  const allowedPaymentStatusForBroker = [
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.PAID,
-    props.paymentStatusEnum.CREDIT_APPROVED,
-  ];
-
-  if (props.payments.length > 0) {
-    if (paymentsDetails.collection_type == 'insurer') {
-      validateAccessForSendUpdate.value = allowedPaymentStatusForInsurer.includes(
-        paymentsDetails.payment_status_id,
-      );
-    } 
-
-    if(paymentsDetails.collection_type == 'broker') {
-      validateAccessForSendUpdate.value = allowedPaymentStatusForBroker.includes(
-        paymentsDetails.payment_status_id,
-      );
-    }
-  }
-}
-
 const getCaptureValidation = computed(() => {
   return payment => {
     if (
-      (props.payments.length > 0 &&
-        payment.total_price === payment.total_amount + payment.discount_value &&
-        (((props.isAmlClearedForPayment || props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared ||
-          props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined ||
-          props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved) &&
-          props.quoteRequest.kyc_decision === 'Complete') ||
-          props.quoteType === 'Travel')) || //skip AML & KYC for travel
-          validateAccessForSendUpdate.value
+      (props.payments.length > 0 && (payment.total_price === (payment.total_amount + payment.discount_value))) &&
+      (((props.isAmlClearedForPayment || (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared) ||
+        (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined) ||
+        (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved)) && 
+        props.quoteRequest.kyc_decision === 'Complete') || 
+        (props.quoteType === 'Travel') || props.sendUpdate) //Skip AML & KYC for travel and send update
     ) {
       if (payment.is_approved === 1) {
         return false;
@@ -2413,8 +2382,8 @@ const getCaptureValidation = computed(() => {
         } else if (
           paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID
         ) {
-          return true;
-        }
+            return true;
+          }
       } else if (paymentRecord.frequency === 'split_payments') {
         const paymentMethodCC = paymentRecord.payment_splits.filter(
           item => item.payment_method.code === 'CC',
@@ -2997,7 +2966,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   </td>
                   <td>{{ item.code }}</td>
                   <td>{{ formatDate(item.collection_date) }}</td>
-                  <td>{{ formatDate(item.collection_date) }}</td>
+                  <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
                   <td>{{ item.payment_method.name }}</td>
                   <td>{{ formatAmount(item.total_price) }}</td>
                   <td>{{ formatAmount(item.discount_value) }}</td>
@@ -3026,7 +2995,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   </td>
                   <td>
                     <div class="flex gap-2">
-                      <template v-if="is_lacking_payment">
+                      <template v-if="item.send_update_log_id ==null && is_lacking_payment">
                         <x-tooltip position="left" class="arrow-r">
                           <x-badge
                             size="xs"
@@ -3545,11 +3514,7 @@ const lookupsEnum = page.props.lookupsEnum;
             </x-tooltip>
             <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                {{
-                  discountTypes.find(
-                    item => item.value === paymentMethodsForm.discount,
-                  )?.label || 'N/A'
-                }}
+                {{ discountTypeLabel }}
               </span>
             </x-field>
           </div>
@@ -4480,7 +4445,8 @@ const lookupsEnum = page.props.lookupsEnum;
           class="flex items-center justify-center"
           v-if="
             splitPaymentRecord.verified_by !== null &&
-            paymentMethodsForm.status == 'view'
+            paymentMethodsForm.status == 'view' &&
+            paymentMethodsModels[splitPaymentNo] != paymentMethodsEnums.CreditCard
           "
         >
           <p class="text-lg font-bold text-blue-400 mr-2">

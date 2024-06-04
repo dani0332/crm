@@ -229,7 +229,7 @@ const uploadDocumentModal = () => {
               {{ item.original_name }}
             </a>
           </template>
-          <template #item-action="{ doc_name }">
+          <template v-if="can(permissionEnum.DOCUMENT_DELETE)" #item-action="{ doc_name }">
             <div>
               <x-button
                 size="xs"

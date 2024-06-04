@@ -90,6 +90,7 @@ const filters = reactive({
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  advisors: [],
 });
 
 const serverOptions = ref({
@@ -102,6 +103,13 @@ const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
     value: status.id,
     label: status.text,
+  }));
+});
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
   }));
 });
 
@@ -311,6 +319,13 @@ function onReset() {
                 label: item.text,
               }))
             "
+          />
+        </x-field>
+        <x-field label="Advisor" v-if="isAllowed">
+          <ComboBox
+            v-model="filters.advisors"
+            placeholder="Search by Advisor"
+            :options="advisorOptions"
           />
         </x-field>
         <x-field label="Is Ecommerce">

@@ -325,6 +325,18 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
     public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
+    public const CONVERSION_AS_AT_REPORT = 'conversion-as-at-report';
+    public const MOTOR_AS_AT_REPORT_MANAGER = 'motor-as-at-report-manager';
+    public const HEALTH_AS_AT_REPORT_MANAGER = 'health-as-at-report-manager';
+    public const TRAVEL_AS_AT_REPORT_MANAGER = 'travel-as-at-report-manager';
+    public const LIFE_AS_AT_REPORT_MANAGER = 'life-as-at-report-manager';
+    public const HOME_AS_AT_REPORT_MANAGER = 'home-as-at-report-manager';
+    public const PET_AS_AT_REPORT_MANAGER = 'pet-as-at-report-manager';
+    public const CYCLE_AS_AT_REPORT_MANAGER = 'cycle-as-at-report-manager';
+    public const YACHT_AS_AT_REPORT_MANAGER = 'yacht-as-at-report-manager';
+    public const BUSINESS_AS_AT_REPORT_MANAGER = 'business-as-at-report-manager';
+    public const GROUPMEDICALS_AS_AT_REPORT_MANAGER = 'groupmedicals-as-at-report-manager';
+    public const ACCESS_REPORT_SM = 'access-report-sm';
     public const BIKE_DISTRIBUTION_REPORT = 'bike-distribution-report';
     public const HEALTH_DISTRIBUTION_REPORT = 'health-distribution-report';
     public const TRAVEL_DISTRIBUTION_REPORT = 'travel-distribution-report';
@@ -335,6 +347,7 @@ final class PermissionsEnum extends Enum
     public const YACHT_DISTRIBUTION_REPORT = 'yacht-distribution-report';
     public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
     public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
+    public const DOCUMENT_DELETE = 'document-delete';
 
     public static function getAdvisorConversionReportPermissions()
     {

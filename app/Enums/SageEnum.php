@@ -39,14 +39,20 @@ final class SageEnum extends Enum
 
     // AR Invoices - Monthly, Quaterly, Semi-Annual, Split, Custom
     const SRT_CREATE_AR_SPPAY_INV = 'CREATE_AR_SPPAY_INV';
+    const SRT_AR_SPPAY_PAY_SCDULE_PATCH = 'SRT_AR_SPPAY_PAY_SCDULE_PATCH';
     const SRT_RTP_AR_SPPAY_INV = 'RTP_AR_SPPAY_INV';
     const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
-    const SRT_AR_SPPAY_INV_PATCH = 'AR_SPPAY_INV_PATCH';
 
     // AP Invoices - Upfront
     const SRT_CREATE_AP_PREM_INV = 'CREATE_AP_PREM_INV';
     const SRT_RTP_AP_PREM_INV = 'RTP_AP_PREM_INV';
     const SRT_POST_AP_PREM_INV = 'POST_AP_PREM_INV';
+
+    // AP Invoices - Monthly, Quaterly, Semi-Annual, Split, Custom
+    const SRT_CREATE_AP_SPPAY_INV = 'SRT_CREATE_AP_SPPAY_INV';
+    const SRT_AP_SPPAY_PAY_SCDULE_PATCH = 'SRT_AP_SPPAY_PAY_SCDULE_PATCH';
+    const SRT_RTP_AP_SPPAY_INV = 'RTP_AR_SPPAY_INV';
+    const SRT_POST_AP_SPPAY_INV = 'POST_AR_SPPAY_INV';
 
     // AR Discount Invoices
     const SRT_CREATE_AR_DISC_INV = 'CREATE_AR_DISC_INV';
@@ -113,4 +119,6 @@ final class SageEnum extends Enum
     // Payment Frequencies
     const SF_UPFRONT = 'upfront';
     const SF_SPLIT_PAYMENT = 'split_payments';
+    const AR_INVOICE = 'AR Invoice';
+    const AP_INVOICE = 'AP Invoice';
 }
