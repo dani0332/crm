@@ -313,6 +313,14 @@ class ApplicationStorageSeeder extends Seeder
         ]);
 
         ApplicationStorage::firstOrCreate([
+            'key_name' => ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL,
+            'value' => 'ebserviceteam@insurancemarket.ae',
+            'created_at' => now(),
+            'updated_at' => now(),
+            'is_active' => 1,
+        ]);
+
+        ApplicationStorage::firstOrCreate([
             'key_name' => ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL,
             'value' => 'sendpolicyupdate@insurancemarket.ae',
             'created_at' => now(),
