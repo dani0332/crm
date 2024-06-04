@@ -25,6 +25,7 @@ class SagePayloadFactory
 
     public static function createPayload($request, $leadStatus)
     {
+        // This function might be outdated, it's not being used anywhere in the codebase
         $request->discount = floatval($request->discount);
         $request->insurerInvoiceDate = date('Y-m-d', strtotime($request->insurerInvoiceDate));
         $request->paymentDueDate = date('Y-m-d', strtotime($request->paymentDueDate));
@@ -41,7 +42,7 @@ class SagePayloadFactory
             strtolower($request->invoicePaymentStatus) == 'paid' &&
             $leadStatus == quoteStatusCode::PolicyBooked
         ) {
-            return self::createPaymontRecieptOneInvoice($request);
+            return self::createPaymontRecieptOneInvoice($request); // Ignore this error because it's not being used anywhere in the codebase
         } elseif (
             $request->discount > 0 &&
             $leadStatus == quoteStatusCode::PolicyBooked &&
@@ -78,7 +79,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createAPInvoicePrem($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createAPInvoicePrem($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '', $extras = [])
     {
         $optionalFields = self::createOptionalFields($request);
         //Additional Option Field just for AP Invoice
@@ -122,6 +123,17 @@ class SagePayloadFactory
                 ],
             ],
         ];
+
+        if (! empty($extras['mainLeadDetails'])) {
+            $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
+            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
+
+            $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+
+            $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
+        }
 
         $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -259,7 +271,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createARInvoiceDis($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createARInvoiceDis($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '', $extras = [])
     {
         // Payload creation logic for CreditNote scenario
         $description = 'D.'.$request->invoiceDescription;
@@ -299,6 +311,17 @@ class SagePayloadFactory
                 ],
             ],
         ];
+
+        if (! empty($extras['mainLeadDetails'])) {
+            $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
+            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
+
+            $payLoad['Invoices'][0]['DocumentType'] = 'DebitNote';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+
+            $payLoad['Invoices'][1]['DocumentType'] = 'DebitNote';
+            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
+        }
 
         $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -345,7 +368,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createARInvoicePremAndComm($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createARInvoicePremAndComm($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '', $extras = [])
     {
         // Payload creation logic for default scenario
         $taxClass = 2;
@@ -420,6 +443,18 @@ class SagePayloadFactory
                 ],
             ],
         ];
+
+        if (! empty($extras['mainLeadDetails'])) {
+            $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
+            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
+
+            $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+
+            $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
+        }
+
         $sageRequestType = SageEnum::SRT_CREATE_AR_PREM_COMM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
 
@@ -599,6 +634,7 @@ class SagePayloadFactory
 
         return $data;
     }
+
     public static function createCustomerPayload($customer)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -1049,6 +1085,7 @@ class SagePayloadFactory
             'ReceiptTransactionType' => 'Receipt',
             'CustomerReceiptAmount' => -roundNumber($item->payment_amount),
         ];
+
         $discountData = null;
         if ($payment->discount_value > 0 && $item->sr_no == 1) {
             $discountData = [
@@ -1114,7 +1151,7 @@ class SagePayloadFactory
             'insured' => $insuredFullName,
             'policyHolder' => $insuredFullName,
             'premiumCollectedBy' => ucfirst($payment->collection_type),
-            'invoicePaymentStatus' => $payment->transaction_payment_status,
+            'invoicePaymentStatus' => $payment->payment_status_id,
             'advisorName' => ! empty($quoteDetails['advisor_id']) ? User::where('id', $quoteDetails['advisor_id'])->value('name') : '',
             'manager' => implode(',', getManagersByUser(User::where('id', ($quoteDetails['advisor_id'] ?? ''))->value('id'))->pluck('name')->toArray()),
             'vatOnPremium' => isset($quoteDetails['vat']) ?: (isset($quoteDetails['price_with_vat']) ? (floatval($quoteDetails['price_with_vat']) - floatval($quoteDetails['price_vat_applicable'] ?? 0)) : 0),
@@ -1139,6 +1176,8 @@ class SagePayloadFactory
         if (count($splitPayments) == 1) {
             $response['sage_reciept_id'] = $splitPayments[0]['sage_reciept_id'];
             $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']); // + $sageRequest->discount
+        } else {
+            $response['invoicePaymentStatus'] = $splitPayments[0]['payment_status_id'];
         }
 
         return (object) $response;
@@ -1266,13 +1305,37 @@ class SagePayloadFactory
                             'verb' => 'PATCH',
                             'logResponse' => true,
                             'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AR2 Apply Split payment ready to post to sage',
+                            'errorMessage' => 'Error while making AR Split payment ready to post to sage',
                         ],
                         'aRPostInvoices' => [
                             'requestParms' => 'BatchNumber',
                             'logResponse' => true,
                             'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AR2 Apply Split payment posted to sage',
+                            'errorMessage' => 'Error while making AR Split payment posted to sage',
+                        ],
+                    ],
+                ];
+                break;
+
+            case SageEnum::SRT_CREATE_AP_SPPAY_INV:
+                $response = [
+                    'recursiveCalls' => [
+                        'readyToPostInvoiceAP',
+                        'aPPostInvoices',
+                    ],
+                    'extraDetails' => [
+                        'readyToPostInvoiceAP' => [
+                            'requestParms' => 'BatchNumber',
+                            'verb' => 'PATCH',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => 'Error while making AP Split payment ready to post to sage',
+                        ],
+                        'aPPostInvoices' => [
+                            'requestParms' => 'BatchNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => 'Error while making AP Split payment posted to sage',
                         ],
                     ],
                 ];
