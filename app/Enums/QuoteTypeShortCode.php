@@ -20,4 +20,25 @@ final class QuoteTypeShortCode extends Enum
     const TRA = 'TRA';
     const YAC = 'YAC';
     const PET = 'PET';
+    const CYC = 'CYC';
+    const JSK = 'JSK';
+
+    public static function getName($value)
+    {
+        $types = [
+            1 => QuoteTypeShortCode::CAR,
+            2 => QuoteTypeShortCode::HOM,
+            3 => QuoteTypeShortCode::HEA,
+            4 => QuoteTypeShortCode::LIF,
+            5 => QuoteTypeShortCode::BUS,
+            6 => QuoteTypeShortCode::BIK,
+            7 => QuoteTypeShortCode::YAC,
+            8 => QuoteTypeShortCode::TRA,
+            9 => QuoteTypeShortCode::PET,
+            10 => QuoteTypeShortCode::CYC,
+            11 => QuoteTypeShortCode::JSK,
+        ];
+
+        return $types[$value] ?? 'Unknown';
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
@@ -11,6 +12,7 @@ use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
 use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
+use App\Services\CarQuoteService;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
@@ -157,5 +159,53 @@ class CarQuoteController extends Controller
         return inertia('CarQuote/Index', [
             'quotes' => $personalQuotes,
         ]);
+    }
+
+    public function carPlanUpdateManualProcess(Request $request)
+    {
+        $response = app(CarQuoteService::class)->carPlanModify($request);
+
+        $message = 'Car Plan has not been updated';
+
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Plan has been updated';
+
+            return redirect()->back()->with('message', $message);
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Car Plan has not been updated '.$responseMessage;
+        }
+
+        return redirect()->back()->with('error', $message);
+    }
+
+    public function carPlansByInsuranceProvider(Request $request)
+    {
+        $insuranceProviderId = $request->insuranceProviderId;
+        $quoteUuId = $request->quoteUuId;
+
+        $quotePlans = app(CarQuoteService::class)->getQuotePlans($quoteUuId);
+
+        $quotePlanId = [];
+        $listQuotePlans = [];
+        if (isset($quotePlans->quotes->plans)) {
+            $listQuotePlans = $quotePlans->quotes->plans;
+        }
+
+        foreach ($listQuotePlans as $key => $quotePlan) {
+            if (! isset($quotePlan->id)) {
+                continue;
+            }
+
+            $quotePlanId[] = $quotePlan->id;
+        }
+
+        $carPlans = app(CarQuoteService::class)->getNonQuotedCarPlans($insuranceProviderId, $quotePlanId);
+
+        return response()->json($carPlans);
     }
 }

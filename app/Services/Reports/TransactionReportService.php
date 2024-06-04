@@ -30,7 +30,8 @@ class TransactionReportService extends ManagementReport
 
         $query = PersonalQuote::query()
             ->select(
-                'personal_quotes.policy_number', 'personal_quotes.code',
+                'personal_quotes.policy_number',
+                'personal_quotes.code',
                 DB::raw('CONCAT(p.reference, " ", p.tax_invoice_number) as transactions'),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
@@ -62,9 +63,10 @@ class TransactionReportService extends ManagementReport
                 'p.invoice_description as invoice_description',
                 'pm.name as payment_method',
                 'pg.text as payment_gateway',
-                'tax_invoice_number as insurer_invoice_number',
+                'p.insurer_tax_number as insurer_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
+                'btoi.text as sub_type_line_of_business',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -76,7 +78,8 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
-            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id');
+            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
+            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id');
 
         $this->applyFilters($query, $request);
 
@@ -89,12 +92,10 @@ class TransactionReportService extends ManagementReport
         }
 
         if ($request->export == 1) {
-            $data = $query->get()->map(function ($item) {
-                return $this->businessSubTypeMapper($item);
-            });
+            $data = $query->get();
 
             // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
+            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
 
             return $this->download(
                 'Transaction Report '.$this->reportDateRange,
@@ -102,9 +103,7 @@ class TransactionReportService extends ManagementReport
                 $this->headings(),
                 $nonIntegarIndexes);
         } else {
-            return $query->simplePaginate(10)->withQueryString()->through(function ($item) {
-                return $this->businessSubTypeMapper($item);
-            });
+            return $query->simplePaginate(10)->withQueryString();
         }
     }
 

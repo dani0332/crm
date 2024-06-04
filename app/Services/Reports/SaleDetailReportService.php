@@ -35,7 +35,7 @@ class SaleDetailReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->select(
                 DB::raw('DISTINCT(personal_quotes.policy_number)'),
-                DB::raw("CONCAT(p.reference, ' ', p.tax_invoice_number) as transactions"),
+                DB::raw("CONCAT(p.reference, ' ', p.insurer_tax_number) as transactions"),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
                 DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
@@ -52,8 +52,9 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw('FORMAT(p.commission_vat_applicable,2) as commission_vat_applicable'),
                 DB::raw('FORMAT(p.commission_vat,2) as commission_vat'),
                 DB::raw('FORMAT(p.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
-                DB::raw('FORMAT(( IFNULL( commission_vat_applicable , 0 ) + IFNULL( commission_vat , 0 )),2) as total_commission'),                DB::raw('UPPER(p.collection_type) as collects'),
-                'tax_invoice_number as insurer_tax_invoice_number',
+                DB::raw('FORMAT(( IFNULL( commission_vat_applicable , 0 ) + IFNULL( commission_vat , 0 )),2) as total_commission'),
+                DB::raw('UPPER(p.collection_type) as collects'),
+                'p.insurer_tax_number as insurer_tax_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
@@ -64,6 +65,7 @@ class SaleDetailReportService extends ManagementReport
                 'quote_type.text as line_of_business',
                 'u.name as advisor',
                 'pi.name as policy_issuer',
+                'btoi.text as sub_type_line_of_business',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -75,7 +77,8 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
-            ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id');
+            ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id')
+            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id');
 
         $this->applyFilters($query, $request);
 
@@ -86,12 +89,10 @@ class SaleDetailReportService extends ManagementReport
         }
 
         if ($request->export == 1) {
-            $data = $query->get()->map(function ($item) {
-                return $this->businessSubTypeMapper($item);
-            });
+            $data = $query->get();
 
             // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 2, 3, 4, 5, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27];
+            $nonIntegarIndexes = [0, 1, 2, 3, 4, 5, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27];
 
             return $this->download(
                 'Sale Detail Report '.$this->reportDateRange,
@@ -99,9 +100,7 @@ class SaleDetailReportService extends ManagementReport
                 $this->headings(),
                 $nonIntegarIndexes);
         } else {
-            return $query->simplePaginate(10)->withQueryString()->through(function ($item) {
-                return $this->businessSubTypeMapper($item);
-            });
+            return $query->simplePaginate(10)->withQueryString();
         }
     }
 

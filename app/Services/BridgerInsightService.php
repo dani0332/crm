@@ -75,7 +75,7 @@ class BridgerInsightService
 
             switch ($customerType) {
                 case CustomerTypeEnum::Individual:
-                    $customerOrEntityName = $memberUboDetails['first_name'].' '.$memberUboDetails['last_name'];
+                    $customerOrEntityName = $memberUboDetails['first_name'].(($memberUboDetails['last_name'] == 'NULL' || $memberUboDetails['last_name'] == null) ? '' : ' '.$memberUboDetails['last_name']);
                     $amlSearchData = $this->getPayload(CustomerTypeEnum::Individual, $memberUboDetails, $getBasicConfiguration);
                     break;
 
@@ -89,7 +89,7 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
-            info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' - AML Search API Payload : '.json_encode($amlSearchData).'. Triggered By: '.$loginCustomerEmail);
+            info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' Triggered By: '.$loginCustomerEmail);
 
             try {
                 $bridgerRequest = $bridgerClient->post(

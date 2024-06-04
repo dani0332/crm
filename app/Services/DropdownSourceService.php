@@ -98,7 +98,6 @@ class DropdownSourceService extends BaseService
 
     public function getDropdownSource($type, $quoteTypeId = false)
     {
-        $advisorType = strtoupper(explode('/', request()->path())[1]);
         $data = '';
         $lookUpService = new LookupService();
         switch ($type) {
@@ -185,6 +184,7 @@ class DropdownSourceService extends BaseService
                 $data = YearOfManufacture::select('text as id', 'text')->orderBy('sort_order')->get();
                 break;
             case 'advisor_id':
+                $advisorType = strtoupper(explode('/', request()->path())[1]);
                 if (Auth::user()->isRenewalUser() || Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
                     $advisorType = $advisorType.'_RENEWAL';
                 }

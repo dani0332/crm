@@ -261,6 +261,8 @@ class CarAllocationService extends AllocationService
 
             // If eligible users are found, log the results and return them.
             if ($eligibleUsers && count($eligibleUsers) > 0) {
+                info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+
                 return $eligibleUsers->toArray();
             }
         }
@@ -369,6 +371,7 @@ class CarAllocationService extends AllocationService
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
+        info('Available User IDs are: '.json_encode($availableUserIds));
 
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
@@ -544,7 +547,7 @@ class CarAllocationService extends AllocationService
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
-                info('Inside reassignment general run and selected advisors are: '.json_encode($advisorIds->toArray()));
+                info('Inside reassignment general run');
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }
