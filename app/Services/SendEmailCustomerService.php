@@ -1030,14 +1030,14 @@ class SendEmailCustomerService extends BaseService
 
             $ccAdvisor = [];
             if (isset($emailData->advisor->email) && isset($emailData->advisor->name)) {
-                $ccAdvisor = [[
+                $ccAdvisor = [
                     'email' => $emailData->advisor->email,
                     'name' => $emailData->advisor->name,
-                ]];
-                $body['replyTo'][] = $ccAdvisor;
-                if ($checkIsHealthOrGroupMedical) {
+                ];
+                $body['replyTo'] = $ccAdvisor;
+                /* if ($checkIsHealthOrGroupMedical) {
                     $body['replyTo'] = array_merge($body['replyTo'], [$ebServiceTeam]);
-                }
+                } */
             }
 
             $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
