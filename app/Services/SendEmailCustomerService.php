@@ -1026,6 +1026,10 @@ class SendEmailCustomerService extends BaseService
                     'email' => $ebServiceEmail,
                     'name' => 'IM EB Service',
                 ]];
+                $body['replyTo'] = [
+                    'email' => $ebServiceEmail,
+                    'name' => 'IM EB Service',
+                ];
             }
 
             $ccAdvisor = [];
@@ -1034,13 +1038,13 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->advisor->email,
                     'name' => $emailData->advisor->name,
                 ]];
-                $body['replyTo'] = [
-                    'email' => $emailData->advisor->email,
-                    'name' => $emailData->advisor->name,
-                ];
-                /* if ($checkIsHealthOrGroupMedical) {
-                    $body['replyTo'] = array_merge($body['replyTo'], [$ebServiceTeam]);
-                } */
+
+                if (! $checkIsHealthOrGroupMedical) {
+                    $body['replyTo'] = [
+                        'email' => $emailData->advisor->email,
+                        'name' => $emailData->advisor->name,
+                    ];
+                }
             }
 
             $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
@@ -1057,7 +1061,8 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            $body['cc'] = array_merge($ccAdditional, $ccAdvisor, $ebServiceTeam);
+            // $body['cc'] = array_merge($ccAdditional, $ccAdvisor, $ebServiceTeam);
+            $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
 
             // need to discuss this.
             $sendPolicyUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL)->first()->value;
