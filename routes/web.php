@@ -13,7 +13,6 @@ use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
-use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\CommercialKeywordsController;
 use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\CRUDController;
@@ -558,7 +557,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/car-model', [AjaxController::class, 'carModelBasedOnCarMake']);
     Route::get('/car-make', [AjaxController::class, 'getCarMake']);
-    Route::get('/getoverdueleads', [ClaimController::class, 'getoverdueleads']);
     Route::get('/getCarModelDetails', [AjaxController::class, 'getCarModelDetails']);
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
@@ -571,21 +569,18 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::post('/{quoteType}/upload-individual-kycdoc', [AjaxController::class, 'uploadKycIndividualDocument']);
     Route::post('/{quoteType}/upload-entity-kycdoc', [AjaxController::class, 'uploadKycEntityDocument']);
-    // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
     Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);
 
     Route::resource('members', MembersDetailController::class);
     Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
-    Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
     //health plan manual add routes
     Route::get('/network-plans-health', [HealthQuoteController::class, 'plansByNetwork']);
     Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
 
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
-    Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
 
