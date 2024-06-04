@@ -402,36 +402,37 @@ class SendUpdateLogController extends Controller
             ], 200);
         }
 
-        info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+        info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
 
         if ($payment) {
             $isPaymentFetchedFromMainLead = false;
             $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate);
-            info('Book Update - Payment details updated. QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-        } 
-        
+            info('Book Update - Payment details updated. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+        }
+
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            info('Book Update - Sending Update to Sage300 Process Start. QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-            
+            info('Book Update - Sending Update to Sage300 Process Start. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+
             $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] === false) {
-                logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message']. ' - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+                logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
 
                 return response()->json(['message' => $sageResponse['message']], 500);
             }
         }
 
         // Send Update Data move to main lead page as per Send update Type
-        info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+        info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
         $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
         if ($response['status']) {
-            info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+            info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+
             return response()->json(['message' => $response['message']], 200);
         }
 
-        logger()->error('Book Update - Something went wrong - Response: '.$response['message']. ' - QuoteType: '.$sendUpdateRequest->quoteType. ' - QuoteUUID: '. $sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+        logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
 
         return response()->json(['message' => $response['message']], 500);
     }

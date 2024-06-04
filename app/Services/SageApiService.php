@@ -295,7 +295,7 @@ class SageApiService
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
         if (! $isSageEnabled) {
             info('Book Update - Sage300 is not enabled');
-            
+
             return ['status' => false, 'message' => 'Sage300 is not enabled'];
         }
 
@@ -311,7 +311,7 @@ class SageApiService
         $quoteDetails = $quote;
 
         if ($sageCustomerNumber) {
-            info('Book Update - Customer found in Sage300 - Customer Number: '.$sageCustomerNumber. ' - QuoteType: '.$request->quoteType. ' - QuoteUUID: '. $request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+            info('Book Update - Customer found in Sage300 - Customer Number: '.$sageCustomerNumber.' - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
             $response = '';
             $getingPaymentDetails = $this->getPaymentDetails($request, $extras);
 
@@ -334,17 +334,17 @@ class SageApiService
             $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quoteDetails, $getingPaymentDetails['payment'], $getingPaymentDetails['splitPayments']);
             $sageRequestPayload->customerId = $sageCustomerNumber;
 
-            if (!$sageRequestPayload->insurerGlLiaiblityAccount || !$sageRequestPayload->sageVenderId) {
-                info('Book Update - Sage Vendor ID or GL Account for Insurance Provider not found. QuoteType: '.$request->quoteType. ' - QuoteUUID: '. $request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-                
-                if (!$sageRequestPayload->sageVenderId && !$sageRequestPayload->insurerGlLiaiblityAccount) {
+            if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId) {
+                info('Book Update - Sage Vendor ID or GL Account for Insurance Provider not found. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+
+                if (! $sageRequestPayload->sageVenderId && ! $sageRequestPayload->insurerGlLiaiblityAccount) {
                     $message = 'Sage Vendor ID and GL Account for Insurance Provider not found';
 
                     return ['status' => false, 'message' => $message];
                 } else {
-                    $message = (!$sageRequestPayload->sageVenderId) ? 'Sage Vendor ID' : 'GL Account'; 
-                    
-                    return ['status' => false, 'message' => $message . ' for Insurance Provider not found'];
+                    $message = (! $sageRequestPayload->sageVenderId) ? 'Sage Vendor ID' : 'GL Account';
+
+                    return ['status' => false, 'message' => $message.' for Insurance Provider not found'];
                 }
             }
 
@@ -366,7 +366,7 @@ class SageApiService
             return ['status' => false, 'message' => 'Something went wrong'];
         }
 
-        logger()->error('Book Update - Customer not found in Sage300. QuoteType: '.$request->quoteType. ' - QuoteUUID: '. $request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+        logger()->error('Book Update - Customer not found in Sage300. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
 
         return ['status' => false, 'message' => 'Customer not found in Sage300'];
     }
@@ -378,21 +378,21 @@ class SageApiService
 
         if ($extras['type'] !== SageEnum::PT_SEND_UPDATE) {
             $payment = Payment::where($paymentClause)->first();
-            $splitPayments = PaymentSplits::where('code', $payment->code)->get();   
+            $splitPayments = PaymentSplits::where('code', $payment->code)->get();
 
             return ['payment' => $payment, 'splitPayments' => $splitPayments];
         } else {
             $payment = Payment::where($paymentClause)->first();
             if ($payment) {
-                info('Book Update - Fetching Payment details from Send Update. QuoteType: '.$request->quoteType. ' - QuoteUUID: '. $request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                info('Book Update - Fetching Payment details from Send Update. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
                 $splitPayments = PaymentSplits::where('code', $payment->code)->get();
 
                 return ['payment' => $payment, 'splitPayments' => $splitPayments];
             } else {
                 // If we don't have payment details then we fetched it from the Main Lead
-                info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType. ' - QuoteUUID: '. $request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
                 $getQuoteDetails = $this->getQuoteObjectBy($request->quoteType, $request->quoteUuid, 'uuid');
-                $getQuoteDetails->load(['payments' => function($query){
+                $getQuoteDetails->load(['payments' => function ($query) {
                     $query->whereNull('send_update_log_id');
                 }, 'payments.paymentSplits']);
 
@@ -433,7 +433,7 @@ class SageApiService
 
                 return ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
             }
-        } 
+        }
     }
 
     private function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
@@ -845,7 +845,7 @@ class SageApiService
             $resp = ($sageLogArray[$sageLogKey]['response'] == 'null') ? '' : $sageLogArray[$sageLogKey]['response'];
             $sageResponse = json_decode($sageLogArray[$sageLogKey]['response'], true);
             info('Book Update - Sage API Call - Method Name ('.$methodName.') Already called - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
-        
+
         } else {
             $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], $sageAPIsParams['extraDetails'][$methodName]['verb'] ?? 'POST');
             $sageResponse = json_decode($resp, true);
@@ -950,15 +950,15 @@ class SageApiService
     {
         $isLiveApiCall = true;
         $quoteObject = ! empty($extras['sendUpdateLog']) ? $extras['sendUpdateLog'] : $quote;
-        $processDetails = ($extras['requestType'] == SageEnum::SRT_CREATE_AR_SPPAY_INV ) ? 
-            ['methodName' => 'createARInvoiceSplitPayments', 'invoiceType' => SageEnum::AR_INVOICE, 'url' => 'AR/ARInvoiceBatches', 'requestType' => SageEnum::SRT_AR_SPPAY_PAY_SCDULE_PATCH] : 
+        $processDetails = ($extras['requestType'] == SageEnum::SRT_CREATE_AR_SPPAY_INV) ?
+            ['methodName' => 'createARInvoiceSplitPayments', 'invoiceType' => SageEnum::AR_INVOICE, 'url' => 'AR/ARInvoiceBatches', 'requestType' => SageEnum::SRT_AR_SPPAY_PAY_SCDULE_PATCH] :
             ['methodName' => 'createAPInvoiceSplitPayments', 'invoiceType' => SageEnum::AP_INVOICE, 'url' => 'AP/APInvoiceBatches', 'requestType' => SageEnum::SRT_AP_SPPAY_PAY_SCDULE_PATCH];
 
         if (isset($sageLogArray[$extras['startingStep']]) && $sageLogArray[$extras['startingStep']]['status'] == SageEnum::STATUS_SUCCESS) {
             $isLiveApiCall = false;
             $postedResponse = json_decode($sageLogArray[$extras['startingStep']]['response'], true);
-            info('Book Update - Sage API Call - Method Name ('.$processDetails['methodName'].') Already called - '.(! empty($extras['sendUpdateLog']) ? 'SendUpdateUUID' : 'QuoteUUID') .': '.$quoteObject->uuid);
-        
+            info('Book Update - Sage API Call - Method Name ('.$processDetails['methodName'].') Already called - '.(! empty($extras['sendUpdateLog']) ? 'SendUpdateUUID' : 'QuoteUUID').': '.$quoteObject->uuid);
+
         } else {
             $$processDetails['methodName'] = SagePayloadFactory::{$processDetails['methodName']}($sageRequestPayload, $extras['splitPayments']);
             $resp = $this->postToSage300($$processDetails['methodName']['endPoint'], $$processDetails['methodName']['payload']);
@@ -1007,7 +1007,7 @@ class SageApiService
                         if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
                             $dueCommissionSplitAmount = roundNumber($commissionSplit) + roundNumber($vatOnCommission);
                         }
-                        
+
                         // To prevent difference in amount due to rounding number, sum all the dueCommissionSplitAmount except the last one,
                         // and then subtract that amount from the total commission with vat and use the result as dueAmount for last installment
                         if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == count($extras['splitPayments'])) {
