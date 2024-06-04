@@ -404,7 +404,7 @@ class SageApiService
                     'payment' => [
                         'insurer_tax_number' => $payment->insurer_tax_number,
                         'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-                    ]
+                    ],
                 ];
 
                 $payment->fill([
@@ -570,8 +570,8 @@ class SageApiService
             $startingStep = ($startingStep + 3);
         }
 
-         // For payment adjustments in Send Update, there should be payment in Send update.
-        if ( $payment->send_update_log_id !== null ) {
+        // For payment adjustments in Send Update, there should be payment in Send update.
+        if ($payment->send_update_log_id !== null) {
             $totalSteps = 15;
             if (strtolower($sageRequestPayload->invoicePaymentStatus) == PaymentStatusEnum::PAID && $payment->send_update_log_id !== null) {
                 if ($payment->frequency == PaymentFrequency::UPFRONT) {
@@ -587,8 +587,7 @@ class SageApiService
                         'splitPayments' => $splitPayments,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                     ]);
-                } 
-                else if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                     info('Book Update - Create Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
@@ -620,7 +619,7 @@ class SageApiService
                 ]);
             }
         }
-        
+
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices created successfully'];
         info('Book Update - Response: '.$response['message']);
 
@@ -646,7 +645,7 @@ class SageApiService
 
         if (empty($invoicesForReverse)) {
             info('Book Update - No Invoices found for Reverse and Correction');
-            
+
             return ['status' => false, 'message' => 'No Invoices found for Reverse and Correction'];
         }
         
@@ -1237,8 +1236,17 @@ class SageApiService
             info(' SAGE API:  Prepare Patch payload for SpitPayments  for '.$quote->uuid);
             foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
                 // add discount amount to amount due for the first child payment in sage for balancing the amount
-                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
-                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
+                $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
+
+                if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                    $dueDate = $invoicePaymentSchedulesDueDate;
+                } else {
+                    $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                }
+
+                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
+                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
             }
 
             info(' SAGE API:  Prepare Patch payload for Commission Spits  for '.$quote->uuid);
@@ -1265,8 +1273,14 @@ class SageApiService
                     $commissionSplitSumWithoutLastSplit += $dueCommissionSplitAmount;
                 }
 
+                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
+                if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                    $dueDate = $invoicePaymentSchedulesDueDate;
+                } else {
+                    $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                }
                 $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
-                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
             }
             //3
             $isLiveApiCallStep3 = true;
@@ -1452,8 +1466,16 @@ class SageApiService
                 info(' SAGE API:  Prepare Patch payload for SpitPayments  for '.$quote->uuid);
                 foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
                     // add discount amount to amount due for the first child payment in sage for balancing the amount
-                    $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
-                    $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                    $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
+                    $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
+                    if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                        $dueDate = $invoicePaymentSchedulesDueDate;
+                    } else {
+                        $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                    }
+
+                    $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
+                    $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
                 }
                 //7
                 $isLiveApiCallStep7 = true;
