@@ -1217,7 +1217,7 @@ class SageApiService
             info(' SAGE API:  Prepare Patch payload for SpitPayments  for '.$quote->uuid);
             foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
                 // add discount amount to amount due for the first child payment in sage for balancing the amount
-                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])) , $sageRequest->insurerInvoiceDate);
+                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
                 $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
 
                 if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
@@ -1254,7 +1254,7 @@ class SageApiService
                     $commissionSplitSumWithoutLastSplit += $dueCommissionSplitAmount;
                 }
 
-                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])) , $sageRequest->insurerInvoiceDate);
+                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
                 if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                     $dueDate = $invoicePaymentSchedulesDueDate;
                 } else {
@@ -1448,7 +1448,7 @@ class SageApiService
                 foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
                     // add discount amount to amount due for the first child payment in sage for balancing the amount
                     $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
-                    $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])) , $sageRequest->insurerInvoiceDate);
+                    $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
                     if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                         $dueDate = $invoicePaymentSchedulesDueDate;
                     } else {
