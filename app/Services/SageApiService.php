@@ -404,7 +404,7 @@ class SageApiService
                     'payment' => [
                         'insurer_tax_number' => $payment->insurer_tax_number,
                         'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-                    ]
+                    ],
                 ];
 
                 $payment->fill([
@@ -570,8 +570,8 @@ class SageApiService
             $startingStep = ($startingStep + 3);
         }
 
-         // For payment adjustments in Send Update, there should be payment in Send update.
-        if ( $payment->send_update_log_id !== null ) {
+        // For payment adjustments in Send Update, there should be payment in Send update.
+        if ($payment->send_update_log_id !== null) {
             $totalSteps = 15;
             if (strtolower($sageRequestPayload->invoicePaymentStatus) == PaymentStatusEnum::PAID && $payment->send_update_log_id !== null) {
                 if ($payment->frequency == PaymentFrequency::UPFRONT) {
@@ -587,8 +587,7 @@ class SageApiService
                         'splitPayments' => $splitPayments,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                     ]);
-                } 
-                else if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                     info('Book Update - Create Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
@@ -620,7 +619,7 @@ class SageApiService
                 ]);
             }
         }
-        
+
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices created successfully'];
         info('Book Update - Response: '.$response['message']);
 
@@ -645,7 +644,7 @@ class SageApiService
 
         if (empty($invoicesForReverse)) {
             info('Book Update - No Invoices found for Reverse and Correction');
-            
+
             return ['status' => false, 'message' => 'No Invoices found for Reverse and Correction'];
         }
 

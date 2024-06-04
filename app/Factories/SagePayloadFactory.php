@@ -121,7 +121,7 @@ class SagePayloadFactory
             ],
         ];
 
-        if (!empty($extras['mainLeadDetails'])) {
+        if (! empty($extras['mainLeadDetails'])) {
             $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
             $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
 
@@ -305,7 +305,7 @@ class SagePayloadFactory
             ],
         ];
 
-        if (!empty($extras['mainLeadDetails'])) {
+        if (! empty($extras['mainLeadDetails'])) {
             $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
             $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
 
@@ -434,7 +434,7 @@ class SagePayloadFactory
             ],
         ];
 
-        if (!empty($extras['mainLeadDetails'])) {
+        if (! empty($extras['mainLeadDetails'])) {
             $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
             $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
 
