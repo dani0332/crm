@@ -997,6 +997,7 @@ class SendEmailCustomerService extends BaseService
 
             $sendUpdateEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_UPDATE_EMAIL)->first()->value;
             info('send update email fetched. email: '.$sendUpdateEmail);
+            info('template id is : '.$emailTemplateId);
 
             $body = [
                 'sender' => [
@@ -1007,7 +1008,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
                 ]],
-                'templateId' => $emailTemplateId,
+                'templateId' => (int) $emailTemplateId,
                 'params' => $emailData,
                 'tags' => [
                     $tag,
