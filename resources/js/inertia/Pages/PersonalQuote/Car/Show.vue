@@ -3168,7 +3168,7 @@ watch(
                 >
                   Copy
                 </x-button>
-                <template
+                <!-- <template
                   v-if="item.actualPremium > 0 && item.id != record.plan_id"
                 >
                   <x-button
@@ -3187,7 +3187,7 @@ watch(
                   >
                     Change Insurer
                   </x-button>
-                </template>
+                </template> -->
 
                 <span>
                   <SelectPlan
