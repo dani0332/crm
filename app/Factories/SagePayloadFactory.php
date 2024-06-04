@@ -78,7 +78,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createAPInvoicePrem($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createAPInvoicePrem($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '', $extras = [])
     {
         $optionalFields = self::createOptionalFields($request);
         //Additional Option Field just for AP Invoice
@@ -120,6 +120,17 @@ class SagePayloadFactory
                 ],
             ],
         ];
+
+        if (!empty($extras['mainLeadDetails'])) {
+            $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
+            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
+
+            $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+
+            $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
+        }
 
         $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -255,7 +266,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createARInvoiceDis($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createARInvoiceDis($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '', $extras = [])
     {
         // Payload creation logic for CreditNote scenario
         $description = 'D.'.$request->invoiceDescription;
@@ -293,6 +304,17 @@ class SagePayloadFactory
                 ],
             ],
         ];
+
+        if (!empty($extras['mainLeadDetails'])) {
+            $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
+            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
+
+            $payLoad['Invoices'][0]['DocumentType'] = 'DebitNote';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+
+            $payLoad['Invoices'][1]['DocumentType'] = 'DebitNote';
+            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
+        }
 
         $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -339,7 +361,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createARInvoicePremAndComm($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createARInvoicePremAndComm($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '', $extras = [])
     {
         // Payload creation logic for default scenario
         $taxClass = 2;
@@ -411,6 +433,17 @@ class SagePayloadFactory
                 ],
             ],
         ];
+
+        if (!empty($extras['mainLeadDetails'])) {
+            $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
+            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
+
+            $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+
+            $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
+        }
 
         $sageRequestType = SageEnum::SRT_CREATE_AR_PREM_COMM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -577,7 +610,7 @@ class SagePayloadFactory
 
         return $data;
     }
-    
+
     public static function createCustomerPayload($customer)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -1017,7 +1050,7 @@ class SagePayloadFactory
             'DocumentNumber' => $payment->insurer_tax_number,
             'PaymentNumber' => $paymentNumber,
             'ReceiptTransactionType' => 'Receipt',
-            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + $item->sr_no == 1 ? floatval($payment->discount_value) : 0),
+            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount + ($item->sr_no == 1 ? $payment->discount_value : 0))),
         ];
 
         $prePaymentData = [
@@ -1028,6 +1061,7 @@ class SagePayloadFactory
             'ReceiptTransactionType' => 'Receipt',
             'CustomerReceiptAmount' => -roundNumber($item->payment_amount),
         ];
+
         $discountData = null;
         if ($payment->discount_value > 0) {
             $discountData = [
