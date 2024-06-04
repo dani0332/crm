@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\HealthRevivalLeadsCreationJob;
 use App\Models\HealthQuote;
+use App\Models\Transaction;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -44,7 +45,6 @@ class DttHealth extends Command
         $dateOne = Carbon::now()->subMonths(11)->toDateString();
 
         $logPrefix = 'HealthRevivalLeadsCreationJob-';
-        DB::enableQueryLog();
         $leads = HealthQuote::whereDate('created_at', '=', $dateOne)
 
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
@@ -57,10 +57,30 @@ class DttHealth extends Command
                 $q->whereNull('transapp_code');
             }])
             ->get();
-        dd(DB::getQueryLog());
-        dd(count($leads));
 
-        foreach ($leads as $item) {
+        if ($leads->count() == 0) {
+            info($logPrefix . 'No leads found');
+            return false;
+        }
+
+        $customer_ids = $leads->pluck('customer_id')->toArray();
+        $customerIdsWithTransApp = [];
+        foreach ($customer_ids as $customer_id) {
+
+            if (Transaction::where('customer_id', $customer_id)->exists()) {
+                $customerIdsWithTransApp[] = $customer_id;
+            }
+        }
+
+        $filteredLeads = $leads->filter(function ($item) use ($customerIdsWithTransApp) {
+            return in_array($item->customer_id, $customerIdsWithTransApp) ? false : true;
+        });
+
+
+        info($logPrefix . ' count - ' . count($filteredLeads) . ' - ' . json_encode($filteredLeads->pluck('uuid')->toArray()));
+
+
+        foreach ($filteredLeads as $item) {
             $jobs[] = new HealthRevivalLeadsCreationJob($item);
         }
 
