@@ -1022,19 +1022,22 @@ class SendEmailCustomerService extends BaseService
             $ebServiceEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL)->first()->value;
             info('IM EB Service team email fetched. email: '.$ebServiceEmail);
             if ($checkIsHealthOrGroupMedical) {
-                $ebServiceTeam = [
+                $ebServiceTeam = [[
                     'email' => $ebServiceEmail,
                     'name' => 'IM EB Service',
-                ];
+                ]];
             }
 
             $ccAdvisor = [];
             if (isset($emailData->advisor->email) && isset($emailData->advisor->name)) {
-                $ccAdvisor = [
+                $ccAdvisor = [[
+                    'email' => $emailData->advisor->email,
+                    'name' => $emailData->advisor->name,
+                ]];
+                $body['replyTo'] = [
                     'email' => $emailData->advisor->email,
                     'name' => $emailData->advisor->name,
                 ];
-                $body['replyTo'] = $ccAdvisor;
                 /* if ($checkIsHealthOrGroupMedical) {
                     $body['replyTo'] = array_merge($body['replyTo'], [$ebServiceTeam]);
                 } */
