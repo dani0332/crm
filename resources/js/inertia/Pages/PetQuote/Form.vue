@@ -109,22 +109,6 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.mobile_no"
           />
         </x-field>
-        <x-field label="PRICE">
-          <x-input
-            v-model="quoteForm.premium"
-            type="number"
-            class="w-full"
-            :error="quoteForm.errors.premium"
-          />
-        </x-field>
-        <x-field label="POLICY NUMBER">
-          <x-input
-            v-model="quoteForm.policy_number"
-            type="text"
-            class="w-full"
-            :error="quoteForm.errors.policy_number"
-          />
-        </x-field>
         <x-field label="TYPE OF PET" required>
           <x-select
             v-model="quoteForm.pet_type_id"
