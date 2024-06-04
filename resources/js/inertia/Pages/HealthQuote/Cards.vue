@@ -102,9 +102,9 @@ modifiedAdvisorOptions.value.push({
 
 const subTeamOptions = [
   { value: '', label: 'All' },
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-Speed', label: 'RM-Speed' },
-  { value: 'EBP', label: 'EBP' },
+  { value: 'Best', label: 'Best' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
 ];
@@ -118,9 +118,9 @@ const assignmentTypeOptions = [
 ];
 
 const subTeamsOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
+  { value: 'Best', label: 'Best' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
 ];
