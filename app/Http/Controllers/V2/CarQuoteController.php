@@ -182,4 +182,30 @@ class CarQuoteController extends Controller
 
         return redirect()->back()->with('error', $message);
     }
+
+    public function carPlansByInsuranceProvider(Request $request)
+    {
+        $insuranceProviderId = $request->insuranceProviderId;
+        $quoteUuId = $request->quoteUuId;
+
+        $quotePlans = app(CarQuoteService::class)->getQuotePlans($quoteUuId);
+
+        $quotePlanId = [];
+        $listQuotePlans = [];
+        if (isset($quotePlans->quotes->plans)) {
+            $listQuotePlans = $quotePlans->quotes->plans;
+        }
+
+        foreach ($listQuotePlans as $key => $quotePlan) {
+            if (! isset($quotePlan->id)) {
+                continue;
+            }
+
+            $quotePlanId[] = $quotePlan->id;
+        }
+
+        $carPlans = app(CarQuoteService::class)->getNonQuotedCarPlans($insuranceProviderId, $quotePlanId);
+
+        return response()->json($carPlans);
+    }
 }
