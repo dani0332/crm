@@ -256,6 +256,7 @@ trait GenericQueriesAllLobs
                     if ($taxDocumentsCount == count($taxDocuments)) {
                         $bookPolicyDetails['editButton'] = true;
                         if ($this->areBookingDetailsFilled($payment)) {
+                            $bookPolicyDetails['bookButton'] = true;
                             $bookPolicyDetails['text'] = 'Send and Book Policy';
                             $bookPolicyDetails['sendPolicyType'] = 'sage';
                         }
