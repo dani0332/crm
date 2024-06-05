@@ -38,7 +38,7 @@ class QuotesDocumentRequest extends FormRequest
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->where('quote_type_id', request()->quote_type_id ?? 0)->first())) {
-            $rules['file'] .= '|custom_file_type:' . $this->documentType->accepted_files.'|max:' . $this->documentType->max_size * 1024;
+            $rules['file'] .= '|custom_file_type:'.$this->documentType->accepted_files.'|max:'.$this->documentType->max_size * 1024;
         }
 
         return $rules;
