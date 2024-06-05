@@ -366,9 +366,11 @@
 <body>
 
 @php
+    use App\Enums\ApplicationStorageEnums;
     use App\Enums\PaymentCollectionTypeEnum;
     use App\Enums\PaymentStatusEnum;
     use App\Enums\QuoteTypeShortCode;
+    use App\Models\ApplicationStorage;
 
     $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
 
@@ -382,6 +384,7 @@
     $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
     $customerDetail =  $customer->detail;
     $vat = 0;
+    $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
     $entity = null;
 
     if($isRequestFromSendUpdateLogPage){
@@ -397,9 +400,9 @@
             $vat =  $carQuoteDetails->premium_vat;
             $totalAmount =  $subTotal + $vat;
         }else{
-            $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
-            $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
-            $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+            $subTotal =  floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0 );
+            $totalAmount =  $quote->price_with_vat;
+            $vat =  $vatPercentage && $quote->price_vat_applicable ? ($quote->price_vat_applicable * $vatPercentage / 100) : 0; // if amount with vat then vat = total - subTotal else 0
         }
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
             $entity = $quote?->quoteRequestEntityMapping?->entity;
@@ -512,7 +515,8 @@
             <td class="text-right">Insurance Advisor: {{ $advisor?->name }}</td>
             <td class="text-right advisor-image" rowspan="4">
                 @if($advisor?->profile_photo_path)
-                    <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
+                    <img class="im-logo"
+                         src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
                 @endif
 
             </td>
@@ -528,11 +532,15 @@
                     href="tel:{{ $advisor?->mobile_no }}">{{ $advisor?->mobile_no }}</a></td>
         </tr>
         <tr>
-            <td class="text-left left-column">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority  </td>
+            <td class="text-left left-column">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from
+                Dubai Health Authority
+            </td>
             <td class="text-right">Direct Line: <a href="tel:048185663">048185663</a></td>
         </tr>
         <tr>
-            <td class="text-left left-column">Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry. </td>
+            <td class="text-left left-column">Registered member of the Insurance Business Group under the Dubai Chamber
+                of Commerce and Industry.
+            </td>
         </tr>
     </table>
 </footer>
@@ -585,7 +593,7 @@
                 <td class="customer">
                     @if($entity)
                         {{ $entity?->company_name }} </br>
-                        {{ $entity?->company_address }} </br>
+                    {{ $entity?->company_address }} </br>
                     @elseif(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS)
                         {{ $quote?->company_name }} </br>
                     @else
