@@ -108,6 +108,17 @@ watch(
   },
 );
 
+watch(
+  () => page.props.record?.price_with_vat,
+  (newValue, oldValue) => {
+    policyDetailsForm.price_vat_notapplicable =  page.props.record.price_vat_not_applicable || '';
+    policyDetailsForm.amount =  page.props.record.price_vat_applicable || '';
+    policyDetailsForm.vat= page.props.record.vat || '';
+
+    caculateVatAmount();
+  },
+);
+
 const caculateVatAmount = () => {
   let amount = Number(policyDetailsForm.amount);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
