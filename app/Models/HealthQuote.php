@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeId;
-use App\Services\CarAllocationService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,13 +31,7 @@ class HealthQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
     ];
     protected $guarded = [];
-    protected $appends = ['assignment_type_text'];
 
-    public function getAssignmentTypeTextAttribute()
-    {
-
-        return app(CarAllocationService::class)->getAssignmentTypeText($this->assignment_type);
-    }
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');
