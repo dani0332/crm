@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Lookup;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class FixSendUpdateLogSeeder extends Seeder
@@ -16,16 +15,16 @@ class FixSendUpdateLogSeeder extends Seeder
         $allMainTypes = Lookup::where('code', 'send-update-code')->get(); // Endorsement, Cancellation from inception, Correction of policy.
 
         foreach ($allMainTypes as $mainType) {
-            info('Main Type: ' . $mainType->key);
+            info('Main Type: '.$mainType->key);
             $allSubTypes = Lookup::where('parent_id', $mainType->id)->get(); // EF EN, CI CIR, CPU CPD.
 
             foreach ($allSubTypes as $subType) {
-                info('Sub Type: ' . $subType->key);
+                info('Sub Type: '.$subType->key);
                 $childTypes = Lookup::where('parent_id', $subType->id)->get(); // all subtypes
 
                 foreach ($childTypes as $childType) {
                     $updatedChildType = Lookup::where('id', $childType->id)->whereNull('description')->first();
-                    info('Child Type: ' . $childType->key);
+                    info('Child Type: '.$childType->key);
 
                     if ($updatedChildType) {
                         $updatedChildType->quote_type_id = $childType->quote_type_id ?? null;
