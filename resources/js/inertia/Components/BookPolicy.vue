@@ -322,21 +322,26 @@ const calculateCommission = () => {
   }
 };
 
+// Disable Commission vat nor applicable for all LOBs
 const disableCommissionVatNotApplicable = computed(() => {
-  return (
-    !bp.isEditing ||
-    (page.props.quoteType != quoteTypeCodeEnum.Life &&
-      page.props.quoteType != quoteTypeCodeEnum.Business &&
-      page.props.quoteType != quoteTypeCodeEnum.Health)
-  );
+  return true;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType != quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
 });
+
+// Enable Commission vat nor applicable for all LOBs
 const disableCommissionVatApplicable = computed(() => {
-  return (
-    !bp.isEditing ||
-    (page.props.quoteType == quoteTypeCodeEnum.Life &&
-      page.props.quoteType != quoteTypeCodeEnum.Business &&
-      page.props.quoteType != quoteTypeCodeEnum.Health)
-  );
+  return !bp.isEditing;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType == quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
 });
 const showSendAndBookPolicyButton = computed(() => {
   return (
@@ -763,7 +768,11 @@ const showInsufficientPaymentAlert = () => {
                     color="orange"
                     class="mt-4"
                     disabled
-                    v-if="(!props.bookPolicyDetails?.sendButton && (!props.quote.quote_status_id == page.props.quoteStatusEnum.CancellationPending))"
+                    v-if="
+                      !props.bookPolicyDetails?.sendButton &&
+                      !props.quote.quote_status_id ==
+                        page.props.quoteStatusEnum.CancellationPending
+                    "
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
