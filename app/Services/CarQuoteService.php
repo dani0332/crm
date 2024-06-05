@@ -106,7 +106,7 @@ class CarQuoteService extends BaseService
                 'cqr.payment_status_id',
                 'ps.text AS payment_status_id_text',
                 'cqr.price_vat_not_applicable',
-                'cqr.price_without_vat',
+                'cqr.price_vat_applicable',
                 'cqr.price_with_vat',
                 'cqr.vat',
                 'cqr.insurer_quote_number',

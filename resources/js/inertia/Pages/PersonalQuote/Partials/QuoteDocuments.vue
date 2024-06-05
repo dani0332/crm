@@ -328,17 +328,32 @@ const permissionEnum = page.props.permissionsEnum;
             :loading="docForm.processing"
             @change="uploadFile(documentType, $event)"
           />
-          <a
-            v-for="quoteDocument in quoteDocuments.filter(
-              d => d.document_type_code == documentType.code,
-            )"
-            :key="quoteDocument.id"
-            :href="storageUrl + quoteDocument.doc_url"
-            target="_blank"
-            class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-          >
-            {{ quoteDocument.original_name || quoteDocument.doc_name }}
-          </a>
+          <div v-if="isSendUpdatePage">
+            <a
+              v-for="quoteDocument in quoteDocuments.filter(
+                d => d.document_type_text == documentType.text,
+              )"
+              :key="quoteDocument.id"
+              :href="storageUrl + quoteDocument.doc_url"
+              target="_blank"
+              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+            >
+              {{ quoteDocument.original_name || quoteDocument.doc_name }}
+            </a>
+          </div>
+          <div v-else>
+            <a
+              v-for="quoteDocument in quoteDocuments.filter(
+                d => d.document_type_code == documentType.code,
+              )"
+              :key="quoteDocument.id"
+              :href="storageUrl + quoteDocument.doc_url"
+              target="_blank"
+              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+            >
+              {{ quoteDocument.original_name || quoteDocument.doc_name }}
+            </a>
+          </div>
         </div>
       </div>
     </x-modal>

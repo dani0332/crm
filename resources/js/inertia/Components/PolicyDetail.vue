@@ -50,8 +50,10 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const policyIssuanceStatusOptions = computed(() => {
   let policyIssuanceStatus = page.props.policyIssuanceStatus;
-  if (page.props.record.policy_issuance_status_id !=
-    page.props.policyIssuanceStatusEnum.PolicyIssued) {
+  if (
+    page.props.record.policy_issuance_status_id !=
+    page.props.policyIssuanceStatusEnum.PolicyIssued
+  ) {
     policyIssuanceStatus = policyIssuanceStatus.filter(
       item => item.text !== 'Policy Issued',
     );
@@ -64,7 +66,7 @@ const policyIssuanceStatusOptions = computed(() => {
   });
 });
 
- const planQuoteInsurerNumber = computed(() => {
+const planQuoteInsurerNumber = computed(() => {
   let quotePlanList = page.props?.listQuotePlans;
   if (!quotePlanList || typeof quotePlanList === 'string') return null;
   let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
@@ -84,7 +86,7 @@ const policyDetailsForm = useForm({
     dateToYMD(page.props.record.policy_issuance_date) ||
     new Date().toJSON().slice(0, 10),
   price_vat_notapplicable: page.props.record.price_vat_not_applicable || '',
-  amount: page.props.record.price_without_vat || '',
+  price_vat_applicable: page.props.record.price_vat_applicable || '',
   vat: page.props.record.vat || '',
   quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
   quote_policy_expiry_date:
@@ -108,22 +110,33 @@ watch(
   },
 );
 
+watch(
+  () => page.props.record?.price_with_vat,
+  (newValue, oldValue) => {
+    policyDetailsForm.price_vat_notapplicable =  page.props.record.price_vat_not_applicable || '';
+    policyDetailsForm.price_vat_applicable =  page.props.record.price_vat_applicable || '';
+    policyDetailsForm.vat= page.props.record.vat || '';
+
+    caculateVatAmount();
+  },
+);
+
 const caculateVatAmount = () => {
-  let amount = Number(policyDetailsForm.amount);
+  let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
   // if price vat applicable and not applicable both are there
-  if (amount > 0 && priceVatNotApplicable > 0) {
-    let vat = amount * page.props.vat.toFixed(2);
+  if (priceVatApplicable > 0 && priceVatNotApplicable > 0) {
+    let vat = priceVatApplicable * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
     policyDetailsForm.amount_with_vat = (
       Number(vat) +
-      Number(amount) +
+      Number(priceVatApplicable) +
       Number(priceVatNotApplicable)
     ).toFixed(2);
-  } else if (amount > 0) {
-    let vat = amount * page.props.vat.toFixed(2);
+  } else if (priceVatApplicable > 0) {
+    let vat = priceVatApplicable * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
-    policyDetailsForm.amount_with_vat = (Number(vat) + Number(amount)).toFixed(
+    policyDetailsForm.amount_with_vat = (Number(vat) + Number(priceVatApplicable)).toFixed(
       2,
     );
   } else if (priceVatNotApplicable > 0) {
@@ -163,11 +176,12 @@ const onUpdatePolicyDetails = isValid => {
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
     onSuccess: () => {
-      if (page.props?.bookPolicyDetails?.isLackingOfPayment){
+      if (page.props?.bookPolicyDetails?.isLackingOfPayment) {
         notification.error({
-          title: 'Action Needed: Please revise payment details to reflect plan changes.',
+          title:
+            'Action Needed: Please revise payment details to reflect plan changes.',
           position: 'top',
-          timeout: 10000
+          timeout: 10000,
         });
       }
       policyDetailsState.isEditing = false;
@@ -221,11 +235,19 @@ watch(
   },
 );
 
+const setQuotePlanInsurerNumber = () => {
+  policyDetailsForm.quote_plan_insurer_quote_number =
+    planQuoteInsurerNumber.value ||
+    page.props.record.insurer_quote_number ||
+    props.availablePlans?.find(item => item.id == page.props.record?.plan_id)
+      ?.insurerQuoteNo ||
+    '';
+};
+
 watch(
   () => props.availablePlans,
   availablePlans => {
-    policyDetailsForm.quote_plan_insurer_quote_number =
-      planQuoteInsurerNumber.value || page.props.record.insurer_quote_number;
+    setQuotePlanInsurerNumber();
   },
 );
 </script>
@@ -346,7 +368,7 @@ watch(
                   </template>
                 </x-tooltip>
                 <x-textarea
-                  v-model="policyDetailsForm.amount"
+                  v-model="policyDetailsForm.price_vat_applicable"
                   @change="caculateVatAmount"
                   :rules="[price_vat_applicable, isNumber]"
                   type="number"
@@ -512,6 +534,7 @@ watch(
                       policyDetailsState.isEditing = false;
                       policyDetailsForm.reset();
                       caculateVatAmount();
+                      setQuotePlanInsurerNumber();
                     }
                   "
                 >

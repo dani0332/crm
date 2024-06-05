@@ -2,6 +2,7 @@
 
 namespace App\Factories;
 
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\SageEnum;
@@ -24,6 +25,7 @@ class SagePayloadFactory
 
     public static function createPayload($request, $leadStatus)
     {
+        // This function might be outdated, it's not being used anywhere in the codebase
         $request->discount = floatval($request->discount);
         $request->insurerInvoiceDate = date('Y-m-d', strtotime($request->insurerInvoiceDate));
         $request->paymentDueDate = date('Y-m-d', strtotime($request->paymentDueDate));
@@ -40,7 +42,7 @@ class SagePayloadFactory
             strtolower($request->invoicePaymentStatus) == 'paid' &&
             $leadStatus == quoteStatusCode::PolicyBooked
         ) {
-            return self::createPaymontRecieptOneInvoice($request);
+            return self::createPaymontRecieptOneInvoice($request); // Ignore this error because it's not being used anywhere in the codebase
         } elseif (
             $request->discount > 0 &&
             $leadStatus == quoteStatusCode::PolicyBooked &&
@@ -77,7 +79,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createAPInvoicePrem($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createAPInvoicePrem($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '', $extras = [])
     {
         $optionalFields = self::createOptionalFields($request);
         //Additional Option Field just for AP Invoice
@@ -86,6 +88,7 @@ class SagePayloadFactory
             'Value' => 'N',
         ];
         $premiumDescription = 'P.'.$request->invoiceDescription;
+        $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
         $payLoad = [
             'Invoices' => [
                 [
@@ -94,7 +97,8 @@ class SagePayloadFactory
                     'InvoiceDescription' => $premiumDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'CurrencyCode' => 'AED', // alway will be AED discussed with denber
-                    'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                    'DueDate' => $invoicePaymentSchedulesDueDate,
+                    'AsOfDate' => $invoicePaymentSchedulesDueDate,
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
@@ -112,13 +116,21 @@ class SagePayloadFactory
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                            'DueDate' => $invoicePaymentSchedulesDueDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => $optionalFields,
                 ],
             ],
         ];
+
+        if (! empty($extras['mainLeadDetails'])) {
+            $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
+            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
+
+            $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+        }
 
         $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -176,6 +188,7 @@ class SagePayloadFactory
             'Value' => 'N',
         ];
         $premiumDescription = 'P.'.$request->invoiceDescription;
+        $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
         $payLoad = [
             'Invoices' => [
                 [
@@ -184,7 +197,8 @@ class SagePayloadFactory
                     'InvoiceDescription' => $premiumDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'CurrencyCode' => 'AED', // alway will be AED discussed with denber
-                    'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                    'DueDate' => $invoicePaymentSchedulesDueDate,
+                    'AsOfDate' => $invoicePaymentSchedulesDueDate,
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
@@ -201,7 +215,7 @@ class SagePayloadFactory
                             'DistributedAmountBeforeTaxes' => roundNumber($request->totalPrice),
                         ],
                     ],
-                    'InvoicePaymentSchedules' => self::createPaymentSchedules($paymentSplits),
+                    'InvoicePaymentSchedules' => self::createPaymentSchedules($paymentSplits, $invoicePaymentSchedulesDueDate),
                     'InvoiceOptionalFields' => $optionalFields,
                 ],
             ],
@@ -254,10 +268,11 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createARInvoiceDis($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createARInvoiceDis($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '', $extras = [])
     {
         // Payload creation logic for CreditNote scenario
         $description = 'D.'.$request->invoiceDescription;
+        $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
         $payLoad = [
             'Invoices' => [
                 [
@@ -267,7 +282,8 @@ class SagePayloadFactory
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
                     'DocumentType' => 'CreditNote',
                     'CurrencyCode' => 'AED',
-                    'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                    'DueDate' => $invoicePaymentSchedulesDueDate,
+                    'AsOfDate' => $invoicePaymentSchedulesDueDate,
                     'ApplytoDocument' => '',
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
@@ -285,13 +301,24 @@ class SagePayloadFactory
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                            'DueDate' => $invoicePaymentSchedulesDueDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
             ],
         ];
+
+        if (! empty($extras['mainLeadDetails'])) {
+            $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
+            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
+
+            $payLoad['Invoices'][0]['DocumentType'] = 'DebitNote';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+
+            $payLoad['Invoices'][1]['DocumentType'] = 'DebitNote';
+            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
+        }
 
         $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -338,7 +365,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createARInvoicePremAndComm($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '')
+    public static function createARInvoicePremAndComm($request, $type = SageEnum::SCT_STRAIGHT, $revCorrDetails = '', $extras = [])
     {
         // Payload creation logic for default scenario
         $taxClass = 2;
@@ -347,6 +374,7 @@ class SagePayloadFactory
         }
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $commissionDescription = 'C.'.$request->invoiceDescription;
+        $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
         $payLoad = [
             'Invoices' => [
                 [
@@ -355,7 +383,8 @@ class SagePayloadFactory
                     'InvoiceDescription' => $premiumDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
                     'CurrencyCode' => 'AED',
-                    'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                    'DueDate' => $invoicePaymentSchedulesDueDate,
+                    'AsOfDate' => $invoicePaymentSchedulesDueDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
@@ -373,7 +402,7 @@ class SagePayloadFactory
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                            'DueDate' => $invoicePaymentSchedulesDueDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
@@ -384,7 +413,8 @@ class SagePayloadFactory
                     'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
                     'CurrencyCode' => 'AED',
-                    'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                    'DueDate' => $invoicePaymentSchedulesDueDate,
+                    'AsOfDate' => $invoicePaymentSchedulesDueDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
                     'TaxAmount1' => roundNumber($request->vatOnCommission),
@@ -403,13 +433,24 @@ class SagePayloadFactory
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format),
+                            'DueDate' => $invoicePaymentSchedulesDueDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
             ],
         ];
+
+        if (! empty($extras['mainLeadDetails'])) {
+            $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
+            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
+
+            $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+
+            $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
+            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
+        }
 
         $sageRequestType = SageEnum::SRT_CREATE_AR_PREM_COMM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -496,6 +537,7 @@ class SagePayloadFactory
         $entryType = SageEnum::SCT_STRAIGHT;
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $commissionDescription = 'C.'.$request->invoiceDescription;
+        $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
         $payLoad = [
             'Invoices' => [
                 [
@@ -504,7 +546,8 @@ class SagePayloadFactory
                     'InvoiceDescription' => $premiumDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
                     'CurrencyCode' => 'AED',
-                    'DueDate' => $request->paymentDueDate ? Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format) : null,
+                    'DueDate' => $invoicePaymentSchedulesDueDate,
+                    'AsOfDate' => $invoicePaymentSchedulesDueDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
@@ -522,7 +565,7 @@ class SagePayloadFactory
                         ],
                     ],
 
-                    'InvoicePaymentSchedules' => self::createPaymentSchedules($splitPayments),
+                    'InvoicePaymentSchedules' => self::createPaymentSchedules($splitPayments, $invoicePaymentSchedulesDueDate),
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
                 [
@@ -531,7 +574,8 @@ class SagePayloadFactory
                     'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
                     'CurrencyCode' => 'AED',
-                    'DueDate' => $request->paymentDueDate ? Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format) : null,
+                    'DueDate' => $invoicePaymentSchedulesDueDate,
+                    'AsOfDate' => $invoicePaymentSchedulesDueDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
                     'TaxAmount1' => roundNumber($request->vatOnCommission),
@@ -563,19 +607,31 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createPaymentSchedules($splitPayments)
+    public static function createPaymentSchedules($splitPayments, $insurerInvoiceDate)
     {
+
         $data = [];
         foreach ($splitPayments as $key => $item) {
+            $payment = $item->payment;
+            if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                $dueDate = $insurerInvoiceDate;
+            } else {
+                $dueDate = date('Y-m-d', strtotime($item->due_date));
+                if ($item->sr_no == 1) {
+                    $dueDate = $insurerInvoiceDate;
+                }
+            }
+
             $temp['EntryNumber'] = 1;
             $temp['PaymentNumber'] = $key + 1;
-            $temp['DueDate'] = date('Y-m-d', strtotime($item->due_date));
+            $temp['DueDate'] = $dueDate;
             $temp['AmountDue'] = roundNumber($item->payment_amount);
             $data[] = $temp;
         }
 
         return $data;
     }
+
     public static function createCustomerPayload($customer)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -1015,7 +1071,7 @@ class SagePayloadFactory
             'DocumentNumber' => $payment->insurer_tax_number,
             'PaymentNumber' => $paymentNumber,
             'ReceiptTransactionType' => 'Receipt',
-            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + $item->sr_no == 1 ? floatval($payment->discount_value) : 0),
+            'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
         ];
 
         $prePaymentData = [
@@ -1026,8 +1082,9 @@ class SagePayloadFactory
             'ReceiptTransactionType' => 'Receipt',
             'CustomerReceiptAmount' => -roundNumber($item->payment_amount),
         ];
+
         $discountData = null;
-        if ($payment->discount_value > 0) {
+        if ($payment->discount_value > 0 && $item->sr_no == 1) {
             $discountData = [
                 'BatchType' => 'CA',
                 'CustomerNumber' => $sage_customer_number,
@@ -1091,14 +1148,15 @@ class SagePayloadFactory
             'insured' => $insuredFullName,
             'policyHolder' => $insuredFullName,
             'premiumCollectedBy' => ucfirst($payment->collection_type),
-            'invoicePaymentStatus' => $payment->transaction_payment_status,
+            'invoicePaymentStatus' => $payment->payment_status_id,
             'advisorName' => ! empty($quoteDetails['advisor_id']) ? User::where('id', $quoteDetails['advisor_id'])->value('name') : '',
             'manager' => implode(',', getManagersByUser(User::where('id', ($quoteDetails['advisor_id'] ?? ''))->value('id'))->pluck('name')->toArray()),
             'vatOnPremium' => isset($quoteDetails['vat']) ?: (isset($quoteDetails['price_with_vat']) ? (floatval($quoteDetails['price_with_vat']) - floatval($quoteDetails['price_vat_applicable'] ?? 0)) : 0),
-            'premiumWithoutTax' => floatval($quoteDetails['price_without_vat']),
+            'premiumWithoutTax' => floatval($quoteDetails['price_vat_applicable'] ?? 0) + floatval($quoteDetails['price_vat_not_applicable'] ?? 0),
             'premiumWithTax' => floatval($quoteDetails['price_with_vat']),
             'vatOnCommission' => floatval($payment->commission_vat),
             'totalAmount' => roundNumber(floatval($payment->total_amount)),
+            'totalPrice' => floatval($payment->total_price),
             'commission' => roundNumber(floatval($payment->commission)),
             'commissionIncludingVat' => roundNumber(floatval($payment->commission_vat_applicable)),
             'commissionWithOutVat' => $payment->commission_vat_not_applicable ? roundNumber(floatval($payment->commission_vat_not_applicable)) : roundNumber(floatval($payment->commission_without_vat)),
@@ -1115,7 +1173,9 @@ class SagePayloadFactory
 
         if (count($splitPayments) == 1) {
             $response['sage_reciept_id'] = $splitPayments[0]['sage_reciept_id'];
-            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']); // + $sageRequest->discount
+            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']) + $response['discount'];
+        } else {
+            $response['invoicePaymentStatus'] = $splitPayments[0]['payment_status_id'];
         }
 
         return (object) $response;
@@ -1243,13 +1303,37 @@ class SagePayloadFactory
                             'verb' => 'PATCH',
                             'logResponse' => true,
                             'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AR2 Apply Split payment ready to post to sage',
+                            'errorMessage' => 'Error while making AR Split payment ready to post to sage',
                         ],
                         'aRPostInvoices' => [
                             'requestParms' => 'BatchNumber',
                             'logResponse' => true,
                             'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AR2 Apply Split payment posted to sage',
+                            'errorMessage' => 'Error while making AR Split payment posted to sage',
+                        ],
+                    ],
+                ];
+                break;
+
+            case SageEnum::SRT_CREATE_AP_SPPAY_INV:
+                $response = [
+                    'recursiveCalls' => [
+                        'readyToPostInvoiceAP',
+                        'aPPostInvoices',
+                    ],
+                    'extraDetails' => [
+                        'readyToPostInvoiceAP' => [
+                            'requestParms' => 'BatchNumber',
+                            'verb' => 'PATCH',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => 'Error while making AP Split payment ready to post to sage',
+                        ],
+                        'aPPostInvoices' => [
+                            'requestParms' => 'BatchNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => 'Error while making AP Split payment posted to sage',
                         ],
                     ],
                 ];
@@ -1533,6 +1617,19 @@ class SagePayloadFactory
         ];
 
         return $message;
+    }
+
+    // Payment code mapping
+    public static function calculateDueDate($paymentDueDate, $insurerInvoiceDate)
+    {
+        // if due date is older than Insurer invoice date than use insure invoice date
+        $paymentDueDateCarbonObject = Carbon::parse($paymentDueDate)->startOfDay();
+        $insurerInvoiceDateDateCarbon = Carbon::parse($insurerInvoiceDate)->startOfDay();
+        if ($insurerInvoiceDateDateCarbon->gt($paymentDueDateCarbonObject)) {
+            return $insurerInvoiceDateDateCarbon->format(self::instanceData()->sage_api_date_format);
+        }
+
+        return $paymentDueDateCarbonObject->format(self::instanceData()->sage_api_date_format);
     }
 
     // Payment code mapping

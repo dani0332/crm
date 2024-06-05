@@ -109,7 +109,7 @@ class HomeQuoteService extends BaseService
             'qrem.entity_type_code',
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
-            'hqr.price_without_vat',
+            'hqr.price_vat_applicable',
             'hqr.vat',
             'hqr.insurer_quote_number',
             'hqr.policy_issuance_status_id',
