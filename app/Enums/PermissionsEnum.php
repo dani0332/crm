@@ -294,7 +294,7 @@ final class PermissionsEnum extends Enum
     public const BOOK_POLICY_BUTTON = 'book-policy-button';
     public const SEND_AND_BOOK_UPDATE_BUTTON = 'send-and-book-update-button';
     public const BOOK_UPDATE_BUTTON = 'book-update-button';
-    public const PAYMENTS_DISCOUNT_ADD = 'payments-discount-add';
+    public const PAYMENTS_DISCOUNT_ADD = 'payments-discount-add';    
     public const PAYMENTS_CREDIT_APPROVAL_ADD = 'payments-credit-approval-add';
     public const PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD = 'payments-frequency-upfront-split-collected-by-broker-add';
     public const PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD = 'payments-frequency-terms-collected-by-broker-add';
@@ -345,6 +345,7 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
     public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
     public const DOCUMENT_DELETE = 'document-delete';
+    public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
 
     public static function getAdvisorConversionReportPermissions()
     {

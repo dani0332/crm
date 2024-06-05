@@ -18,6 +18,20 @@ class AddPaymentPermissions extends Seeder
     {
         $adminRole = Role::where('name', RolesEnum::Admin)->first();
 
+        
+        $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_DISCOUNT_EDIT, 'web');
+
+        $rolePermission = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permission->id)->first();
+        if ($rolePermission === null) {
+            DB::table('role_has_permissions')->insert(
+                [
+                    'role_id' => $adminRole->id,
+                    'permission_id' => $permission->id,
+                ]
+            );
+        }
+        
+        
         $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_DISCOUNT_ADD, 'web');
 
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permission->id)->first();

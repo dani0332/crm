@@ -214,6 +214,20 @@ const calculateTotalAmount = () => {
   calculatePaymentBreakup(false);
 };
 
+const isPolicyIssuanceDiscount = computed(() => {
+  if (
+    can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
+    (
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyIssued ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicySentToCustomer
+    )  
+  ) {
+    return true;
+  }  
+  return false;
+});
+
 const { copy, copied } = useClipboard();
 const onCopyPaymentLink = (paymentLink, paymentStatus) => {
   if (paymentStatus == props.paymentStatusEnum.PAID) {
@@ -383,8 +397,15 @@ const validatePaymentOption = () => {
     }
   }
 
-  if (
-    totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)
+  if (isPolicyIssuanceDiscount.value === true){
+    if ( totalSplitAmount.toFixed(2) === parseFloat(totalAmount.value).toFixed(2) ||  discountValue.value>0) {
+      isPaymentCalculationError.value = false;
+    } else {
+      isPaymentCalculationError.value = true;
+      issueFound = true;
+    }
+  } else if (
+    totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2) 
   ) {
     isPaymentCalculationError.value = true;
     issueFound = true;
@@ -2016,7 +2037,7 @@ const addPayment = isValid => {
   }
 
   if (paymentMethodsForm.status === 'edit') {
-    if (totalPaidAmount.value == paymentMethodsForm.payment_no) {
+    if (totalPaidAmount.value == paymentMethodsForm.payment_no && isPolicyIssuanceDiscount.value === false) {
       notification.error({
         title: 'No further actions allowed to paid payments',
         position: 'top',
@@ -2027,6 +2048,7 @@ const addPayment = isValid => {
       ...data,
       paymentCode: paymentMethodsForm.paymentCode,
       trashedFilesModal: trashedFilesModal.value,
+      isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
     };
     paymentMethodsForm
       .transform(data => editData)
