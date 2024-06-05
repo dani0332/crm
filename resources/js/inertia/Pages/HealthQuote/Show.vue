@@ -3311,10 +3311,22 @@ watch(
                 </div>
               </template>
 
-              <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+              <template
+                #item-total="{
+                  actualPremium,
+                  policyFee,
+                  basmah,
+                  vat,
+                  loadingPrice,
+                }"
+              >
                 {{
                   fixedValue(
-                    actualPremium + (policyFee || 0) + (basmah || 0) + vat,
+                    actualPremium +
+                      (policyFee || 0) +
+                      (basmah || 0) +
+                      vat +
+                      (loadingPrice || 0),
                   )
                 }}
               </template>
