@@ -701,7 +701,7 @@ const travelCoverageOptions = computed(() => {
         <span class="font-bold"> {{ item.advisor_name }} </span>
       </template>
       <template #body-append>
-        <tr v-if="reportData.data && reportData.data.length > 0" class="total-row">
+        <tr v-if="reportData?.data?.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData.data, 'total_leads') }}
