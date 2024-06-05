@@ -2,9 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Enums\SageEnum;
 use App\Models\SageApiLog;
-use App\Models\SendUpdateLog;
 
 class SageApiLogRepository extends BaseRepository
 {
