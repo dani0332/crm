@@ -130,9 +130,6 @@ class SagePayloadFactory
 
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
-
-            $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
-            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
         }
 
         $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_INV;
@@ -1159,6 +1156,7 @@ class SagePayloadFactory
             'premiumWithTax' => floatval($quoteDetails['price_with_vat']),
             'vatOnCommission' => floatval($payment->commission_vat),
             'totalAmount' => roundNumber(floatval($payment->total_amount)),
+            'totalPrice' => floatval($payment->total_price),
             'commission' => roundNumber(floatval($payment->commission)),
             'commissionIncludingVat' => roundNumber(floatval($payment->commission_vat_applicable)),
             'commissionWithOutVat' => $payment->commission_vat_not_applicable ? roundNumber(floatval($payment->commission_vat_not_applicable)) : roundNumber(floatval($payment->commission_without_vat)),
@@ -1175,7 +1173,7 @@ class SagePayloadFactory
 
         if (count($splitPayments) == 1) {
             $response['sage_reciept_id'] = $splitPayments[0]['sage_reciept_id'];
-            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']); // + $sageRequest->discount
+            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']) + $response['discount'];
         } else {
             $response['invoicePaymentStatus'] = $splitPayments[0]['payment_status_id'];
         }
