@@ -65,6 +65,7 @@ const props = defineProps({
   documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   clientInquiryLogs: Array,
+  quoteNotes: Object,
 });
 
 const isManualPlansCount = ref(0);
