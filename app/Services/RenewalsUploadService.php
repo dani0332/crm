@@ -873,7 +873,6 @@ class RenewalsUploadService
             $quoteObject = $this->createQuoteObject($quoteType->code);
 
             $quote = $quoteObject->create($quoteData);
-            info('created quote '.json_encode($quote->toArray()));
 
             if ($isQuotePersonal) {
                 $quote->quoteDetail()->create($detailData);
@@ -882,8 +881,6 @@ class RenewalsUploadService
                 $class = $quotType.'QuoteRequestDetail';
                 $quote->{$class}()->create($detailData);
             }
-
-            info('created quote '.json_encode($quote->toArray()));
 
             //update advisor assign date/time
             if (! empty($advisorId)) {
