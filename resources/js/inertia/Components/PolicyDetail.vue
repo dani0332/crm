@@ -50,8 +50,10 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const policyIssuanceStatusOptions = computed(() => {
   let policyIssuanceStatus = page.props.policyIssuanceStatus;
-  if (page.props.record.policy_issuance_status_id !=
-    page.props.policyIssuanceStatusEnum.PolicyIssued) {
+  if (
+    page.props.record.policy_issuance_status_id !=
+    page.props.policyIssuanceStatusEnum.PolicyIssued
+  ) {
     policyIssuanceStatus = policyIssuanceStatus.filter(
       item => item.text !== 'Policy Issued',
     );
@@ -64,7 +66,7 @@ const policyIssuanceStatusOptions = computed(() => {
   });
 });
 
- const planQuoteInsurerNumber = computed(() => {
+const planQuoteInsurerNumber = computed(() => {
   let quotePlanList = page.props?.listQuotePlans;
   if (!quotePlanList || typeof quotePlanList === 'string') return null;
   let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
@@ -174,11 +176,12 @@ const onUpdatePolicyDetails = isValid => {
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
     onSuccess: () => {
-      if (page.props?.bookPolicyDetails?.isLackingOfPayment){
+      if (page.props?.bookPolicyDetails?.isLackingOfPayment) {
         notification.error({
-          title: 'Action Needed: Please revise payment details to reflect plan changes.',
+          title:
+            'Action Needed: Please revise payment details to reflect plan changes.',
           position: 'top',
-          timeout: 10000
+          timeout: 10000,
         });
       }
       policyDetailsState.isEditing = false;
@@ -232,11 +235,19 @@ watch(
   },
 );
 
+const setQuotePlanInsurerNumber = () => {
+  policyDetailsForm.quote_plan_insurer_quote_number =
+    planQuoteInsurerNumber.value ||
+    page.props.record.insurer_quote_number ||
+    props.availablePlans?.find(item => item.id == page.props.record?.plan_id)
+      ?.insurerQuoteNo ||
+    '';
+};
+
 watch(
   () => props.availablePlans,
   availablePlans => {
-    policyDetailsForm.quote_plan_insurer_quote_number =
-      planQuoteInsurerNumber.value || page.props.record.insurer_quote_number;
+    setQuotePlanInsurerNumber();
   },
 );
 </script>
@@ -523,6 +534,7 @@ watch(
                       policyDetailsState.isEditing = false;
                       policyDetailsForm.reset();
                       caculateVatAmount();
+                      setQuotePlanInsurerNumber();
                     }
                   "
                 >
