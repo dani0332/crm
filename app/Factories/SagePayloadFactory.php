@@ -130,9 +130,6 @@ class SagePayloadFactory
 
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
-
-            $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
-            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
         }
 
         $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_INV;
@@ -1176,7 +1173,7 @@ class SagePayloadFactory
 
         if (count($splitPayments) == 1) {
             $response['sage_reciept_id'] = $splitPayments[0]['sage_reciept_id'];
-            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']); + $response['discount'];
+            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']) + $response['discount'];
         } else {
             $response['invoicePaymentStatus'] = $splitPayments[0]['payment_status_id'];
         }
