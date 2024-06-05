@@ -47,7 +47,6 @@ final class quoteBusinessTypeCode extends Enum
     const fidelityGuarantee = 'Fidelity Guarantee';
     const goodsInTransit = 'Goods In Transit';
 
-
     public static function getId($value): int
     {
         return match ($value) {
