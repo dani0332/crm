@@ -116,7 +116,7 @@ class RenewalsUploadService
     public function generateUUID($quoteType, $quoteTypeId)
     {
         info('UAT FN: generateUUID QuoteTypeId: '.$quoteTypeId);
-        if(checkPersonalQuotes($quoteType)) {
+        if (checkPersonalQuotes($quoteType)) {
             $response = $this->capiRequestService->getPersonalQuoteUUID($quoteTypeId);
         } else {
             $response = $this->capiRequestService->getUUID($quoteTypeId);
@@ -578,7 +578,7 @@ class RenewalsUploadService
         info('fn: createQuoteObject QuoteType: '.$quoteType);
         $nameSpace = '\\App\\Models\\';
 
-        if(checkPersonalQuotes($quoteType)) {
+        if (checkPersonalQuotes($quoteType)) {
             $quoteType = QuoteTypes::PERSONAL->value;
         }
 
@@ -795,20 +795,20 @@ class RenewalsUploadService
             ];
 
             if ($isQuotePersonal) {
-                $detailData['additional_notes'] = $data['notes'] . $customerData['notes'];
+                $detailData['additional_notes'] = $data['notes'].$customerData['notes'];
                 $detailData['previous_advisor_id'] = $previousAdvisorId;
                 $quoteData['quote_type_id'] = $quoteType->id;
-                
+
             } else {
-                $quoteData['additional_notes'] = $data['notes'] . $customerData['notes'];
+                $quoteData['additional_notes'] = $data['notes'].$customerData['notes'];
                 $quoteData['previous_advisor_id'] = $previousAdvisorId;
             }
 
-            if (!empty($data['insly_id'])) {
+            if (! empty($data['insly_id'])) {
                 $detailData['insly_id'] = $data['insly_id'];
             }
 
-            if (!empty($data['insly_advisor_name'])) {
+            if (! empty($data['insly_advisor_name'])) {
                 $detailData['insly_advisor_name'] = $data['insly_advisor_name'];
             }
 
@@ -873,17 +873,17 @@ class RenewalsUploadService
             $quoteObject = $this->createQuoteObject($quoteType->code);
 
             $quote = $quoteObject->create($quoteData);
-            info('created quote ' . json_encode($quote->toArray()));
+            info('created quote '.json_encode($quote->toArray()));
 
             if ($isQuotePersonal) {
                 $quote->quoteDetail()->create($detailData);
             } else {
                 $quotType = strtolower($quoteType->code);
-                $class = $quotType . 'QuoteRequestDetail';
+                $class = $quotType.'QuoteRequestDetail';
                 $quote->{$class}()->create($detailData);
             }
 
-            info('created quote ' . json_encode($quote->toArray()));
+            info('created quote '.json_encode($quote->toArray()));
 
             //update advisor assign date/time
             if (! empty($advisorId)) {
@@ -1390,13 +1390,12 @@ class RenewalsUploadService
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)
     {
-        if(checkPersonalQuotes($quoteType)) {
+        if (checkPersonalQuotes($quoteType)) {
 
             $quoteRequestDetail = '\\App\\Models\\PersonalQuoteDetail';
             $quoteRequestField = 'personal_quote_id';
 
-        } else
-        {
+        } else {
             $quoteRequestDetail = '\\App\\Models\\'.ucfirst($quoteType).'QuoteRequestDetail';
             $quoteRequestField = strtolower($quoteType).'_quote_request_id';
         }
