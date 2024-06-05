@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Http\Requests\PaymentDocumentRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
@@ -108,6 +109,20 @@ class QuoteDocumentController extends Controller
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
 
         return redirect()->back()->with('success', 'File Uploaded');
+    }
+
+    public function storeMultiple(PaymentDocumentRequest $request, $quoteType)
+    {
+        if (! count($request->file) ||
+            ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
+        ) {
+            return false;
+        }
+        foreach ($request->file as $file) {
+            $this->quoteDocumentService->uploadQuoteDocument($file['file'], $request->all(), $quote);
+        }
+
+        return redirect()->back()->with('success', 'Document Uploaded Successfully');
     }
 
     public function sendPolicyDocument($quoteType, $quoteUuId)

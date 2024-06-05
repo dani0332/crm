@@ -2,13 +2,14 @@
 
 namespace App\Console;
 
-use App\Console\Commands\UpdateHealthStatus;
 use App\Console\Commands\UpdateManualOffline;
+use App\Enums\EnvEnum;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\CarLost\UnconSubmissionReminder;
 use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Stringable;
 
 class Kernel extends ConsoleKernel
 {
@@ -19,15 +20,21 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\AddBatchNumber::class,
+        Commands\Dtt::class,
+        Commands\DttFollowUp::class,
         Commands\TierAssignment::class,
         Commands\UpdateUserStatus::class,
         Commands\QuoteAllocation::class,
         Commands\LeadsReassignment::class,
         Commands\ResetLeadAllocationCounts::class,
-        Commands\UpdateHealthStatus::class,
         Commands\QuoteSyncUpdateCommand::class,
+        Commands\UpdateStaleLeads::class,
+        Commands\AutomateActivitiesCommand::class,
+        Commands\PaymentOverdueStatus::class,
+        Commands\AlfredFollowUpSchedulerCommand::class,
     ];
 
+    private $appEnv = '';
     /**
      * Define the application's command schedule.
      *
@@ -35,8 +42,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $this->appEnv = config('constants.APP_ENV');
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+
+        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         /*$schedule->job(new UnconSubmissionReminder)
             ->tuesdays()
@@ -53,18 +63,24 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
 
-        $schedule
-            ->command(UpdateHealthStatus::class)->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
-        $schedule
-            ->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
-        $schedule
-            ->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:55')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('QuoteSyncUpdate:cron')
+            ->everyFiveMinutes()
+            ->onOneServer()
+            ->withoutOverlapping(29)
+            ->onSuccess(function (Stringable $output) {
+                info('----------- QuoteSyncJob Completed -----------'.$output);
+            })
+            ->onFailure(function (Stringable $output) {
+                info('----------- QuoteSyncJob Failed -----------'.$output);
+            });
 
-        $schedule->command('QuoteSyncUpdate:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(30);
         $schedule->command(UpdateManualOffline::class)
             ->timezone('Asia/Dubai')
             ->dailyAt('08:58')
@@ -75,6 +91,23 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
+        // $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
+
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('09:00');
+        $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('11:45');
+
+        if ($this->appEnv == EnvEnum::PRODUCTION) {
+            $schedule->command('alfred:followupEmails')
+                ->timezone('Asia/Dubai')
+                ->weekly()
+                ->mondays()
+                ->at('11:00')
+                ->onOneServer()
+                ->withoutOverlapping(1);
+        } else {
+            $schedule->command('alfred:followupEmails')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        }
     }
 
     /**

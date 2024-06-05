@@ -3,14 +3,16 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class DashboardService extends BaseService
 {
@@ -84,6 +86,14 @@ class DashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('tiers.name', '!=', TiersEnum::TIER_R)
+            ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
+                $query->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                    ->where('quote_tags.name', 'SIC')
+                    ->where('quote_type.code', quoteTypeCode::Car);
+            })
             ->groupBy('tiers.name');
         if ($filters['applyUnAssignedLeadsCountByTierDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
             $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
@@ -182,13 +192,49 @@ class DashboardService extends BaseService
             ->whereNull('advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('tiers.name', '!=', TiersEnum::TIER_R)
-            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]);
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL, LeadSourceEnum::DUBAI_NOW])
+            ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
+                $query->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                    ->where('quote_tags.name', 'SIC')
+                    ->where('quote_type.code', quoteTypeCode::Car);
+            });
 
         if ($filters['applyTotalUnAssignedLeadsDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
             $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
         } else {
             $from = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
             $query->whereBetween('car_quote_request.created_at', [$from, now()->endOfDay()]);
+        }
+
+        return $query->get();
+    }
+
+    public function getTotalUnAssignedOnlySICLeads($filters, $isPaid = false)
+    {
+        $query = CarQuote::leftJoin('quote_tags', 'quote_tags.quote_uuid', 'car_quote_request.uuid')
+            ->whereNull('advisor_id')
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]);
+
+        if ($filters['applyTotalUnAssignedLeadsDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
+            $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
+        } else {
+            $from = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
+            if (! $isPaid) {
+                $from = now()->startOfDay();
+            }
+            $query->whereBetween('car_quote_request.created_at', [$from, now()->endOfDay()]);
+        }
+
+        // fetch only records with SIC tag
+        $query = $query->where('quote_tags.name', 'SIC');
+
+        // fetch only paid records if isPaid is true
+        if ($isPaid) {
+            $query = $query->where('car_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED);
         }
 
         return $query->get();

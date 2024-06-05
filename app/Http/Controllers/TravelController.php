@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -30,6 +31,7 @@ use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
+use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -108,20 +110,26 @@ class TravelController extends Controller
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
-        $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-            return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-        })->map(function ($paymentMethod) {
-            return [
-                'value' => $paymentMethod->code,
-                'label' => $paymentMethod->name,
-            ];
-        })->values();
 
+        $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+        if ($isNewPaymentStructure) {
+            $filteredPaymentMethods = $paymentMethods;
+        } else {
+            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+            })->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->code,
+                    'label' => $paymentMethod->name,
+                ];
+            })->values();
+        }
+        /* // Will skip KYC and AML check , required by BA for payments
         if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
             $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
-        }
+        }*/
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
@@ -134,7 +142,7 @@ class TravelController extends Controller
                 ];
             })->sortBy('label')->values();
         }
-        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'travelPlan', 'travelPlan.insuranceProvider']);
 
         $payments->each(function ($payment) {
             $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
@@ -155,7 +163,9 @@ class TravelController extends Controller
             'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '',
             'paymentStatus' => $record->payment_status_id_text,
             'planName' => $record->plan_id_text,
+            'providerName' => $record->travel_plan_provider_text,
         ];
+
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->travelQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($this->genericModel->modelType, $record->id);
@@ -197,7 +207,7 @@ class TravelController extends Controller
             'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
             'aboveAgeMembers' => $this->travelQuoteService->getAboveAgeMembers($record->id),
             'ecomDetails' => $ecomDetails,
-            'quoteDocuments' => array_values($quoteDocuments->toArray()),
+            'quoteDocuments' => $quoteDocuments->toArray(),
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
@@ -214,6 +224,9 @@ class TravelController extends Controller
             'embeddedProducts' => $embeddedProducts,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::TravelManager),
             'message' => session('message'),
+            'quoteType' => QuoteTypes::TRAVEL,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'storageUrl' => storageUrl(),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
@@ -243,6 +256,7 @@ class TravelController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
+            'isNewPaymentStructure' => $isNewPaymentStructure,
         ]);
     }
 
@@ -447,15 +461,15 @@ class TravelController extends Controller
         $leadStatuses = $leadStatuses->filter(function ($item) {
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING;
         })->toArray();
-
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id']);
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id'], $request);
 
             return $item;
         }, $leadStatuses);
 
         return inertia('TravelQuote/Cards', [
             'quotes' => array_values($leadStatuses),
+            'quoteType' => QuoteTypes::TRAVEL->value,
         ]);
     }
 

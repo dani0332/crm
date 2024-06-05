@@ -7,15 +7,33 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Payment extends Model
+class Payment extends Model implements Auditable
 {
+    use AuditableTrait;
+
+    protected $auditEvents = [
+        'updated',
+    ];
     protected $table = 'payments';
     protected $primaryKey = 'code';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'payer_name', 'paid_by'];
+    protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount',
+        'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by',
+        'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'total_payments', 'credit_approval', 'frequency', 'discount_type', 'discount_reason', 'custom_reason', 'notes', 'total_price', 'collection_date', 'payer_name', 'paid_by',
+        'discount_value', 'total_amount', 'payment_allocation_status', 'decline_reason_id', 'decline_custom_reason', 'discount_custom_reason',
+    ];
     protected $forceDeleting = true;
+
+    public function transformAudit(array $data): array
+    {
+        $data['old_values']['code'] = strtolower($this->code);
+
+        return $data;
+    }
 
     /**
      * @return bool
@@ -81,6 +99,11 @@ class Payment extends Model
     public function personalPlan()
     {
         return $this->belongsTo(PersonalPlan::class, 'plan_id');
+    }
+
+    public function travelPlan()
+    {
+        return $this->belongsTo(TravelPlan::class, 'plan_id');
     }
 
     public function plan()
@@ -153,4 +176,20 @@ class Payment extends Model
         return $this->belongsTo(InsuranceProvider::class);
     }
 
+    public function paymentSplits()
+    {
+        return $this->hasMany(PaymentSplits::class, 'code', 'code');
+    }
+
+    // render payment status PAID if payment status is CAPTURED
+    public function getPaymentStatusIdAttribute($value)
+    {
+        if ($value == PaymentStatusEnum::CAPTURED) {
+            return PaymentStatusEnum::PAID;
+        } elseif ($value == PaymentStatusEnum::PARTIAL_CAPTURED) {
+            return PaymentStatusEnum::PARTIALLY_PAID;
+        } else {
+            return $value;
+        }
+    }
 }

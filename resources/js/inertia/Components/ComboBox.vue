@@ -88,6 +88,14 @@ const filteredList = computed(() => {
       });
 });
 
+const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(
+  filteredList,
+  {
+    itemHeight: 34,
+    overscan: 10,
+  },
+);
+
 const onSelectAll = () => {
   const values = props.options.map(item => item.value);
   emit('update:modelValue', values);
@@ -190,11 +198,11 @@ const removeSelected = item => {
           >
             No results found
           </li>
-          <div class="max-h-40 overflow-auto h-full">
-            <div>
+          <div v-bind="containerProps" class="max-h-40 overflow-auto h-full">
+            <div v-bind="wrapperProps">
               <ComboboxOption
                 as="template"
-                v-for="item of filteredList"
+                v-for="{ data: item } of list"
                 v-slot="{ selected }"
                 :key="`${item.value}-${item.label}`"
                 :value="item"

@@ -5,6 +5,7 @@ use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\V2\CarRevivalQuoteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,8 +22,17 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
 });
+
+Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
+    Route::post('/imcrm/evaluate-tier', [ApiController::class, 'evaluateTier'])->name('evaluateTier');
+    Route::post('/imcrm/trigger-sic-workflow', [ApiController::class, 'triggerSICWorkflow'])->name('triggerSICWorkflow');
+});
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
+
+//postmark inbound hook url
+
+Route::post('/car-revival/update', [CarRevivalQuoteController::class, 'updateQuote']);
 
 Route::prefix('v1')->group(function () {
 

@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
@@ -34,17 +36,20 @@ class CarLeadAllocationDashboardService extends BaseService
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
                 ->where('users.is_active', 1)
+                ->where('la.quote_type_id', QuoteTypes::CAR->id())
                 ->groupBy('users.name', 'users.id', 'la.id')
                 ->select(
                     'users.id as userId',
-                    'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
+                    'users.name as userName',
+                    DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
                     DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
                     DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
                     DB::RAW("DATE_FORMAT(FROM_UNIXTIME(la.last_allocated), '%d-%m-%Y %H:%i:%s') as lastAllocation"),
                     'la.max_capacity as maxCapacity',
                     'users.status as isAvailable',
                     DB::RAW("DATE_FORMAT(users.last_login, '%d-%m-%Y %H:%i:%s') as lastLogin"),
-                    'la.id as id', 'la.manual_assignment_count as manualAllocationCount',
+                    'la.id as id',
+                    'la.manual_assignment_count as manualAllocationCount',
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.reset_cap',
                 );
@@ -99,6 +104,15 @@ class CarLeadAllocationDashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('tiers.name', '!=', TiersEnum::TIER_R)
             ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->subMinutes(2)->toDateTimeString()])
-            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])->count();
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
+                $query->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                    ->where('quote_tags.name', 'SIC')
+                    ->where('quote_type.code', quoteTypeCode::Car);
+            })
+            ->count();
     }
 }

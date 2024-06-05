@@ -17,4 +17,5 @@ final class TravelQuoteEnum extends Enum
     const LOCATION_UNITED_ARAB_EMIRATES_TEXT = 'United Arab Emirates';
     const LOCATION_OUTSIDE_UAE = 'Outside UAE';
     const REVIVAL = 'Revival';
+    const IMCRM_BOOKING = 'imcrm_booking';
 }

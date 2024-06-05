@@ -84,7 +84,7 @@ class LookupService extends BaseService
 
     public function getPaymentMethods()
     {
-        return PaymentMethod::select('code', 'name', 'parent_code')->orderBy('name')->get();
+        return PaymentMethod::select('code', 'name', 'parent_code', 'tool_tip')->orderBy('name')->get();
     }
 
     public function getActiveInsuranceProviders()

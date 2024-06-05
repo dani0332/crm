@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -17,12 +18,9 @@ use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
 use App\Models\GenericModel;
 use App\Models\PaymentAction;
 use App\Models\QuoteStatusLog;
-use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -130,7 +128,7 @@ class CRUDService extends BaseService
 
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
-        $allowedLeadTypes = ['Home', 'Health', 'Life', 'Corpline', 'Group Medical', 'Travel', 'Car', 'Pet'];
+        $allowedLeadTypes = ['Home', 'Health', 'Life', 'CorpLine', 'Group Medical', 'Travel', 'Car', 'Pet'];
         if (strtolower($modelType) == 'business') {
             $modelType = 'Corpline';
         }
@@ -246,6 +244,7 @@ class CRUDService extends BaseService
             $quoteDetailEntity->save();
 
             $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
+
             $previousQuoteStatus = $entity->quote_status_id;
             //if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
@@ -259,11 +258,20 @@ class CRUDService extends BaseService
             if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
                 $entity->tier_id = $request->tier_id;
             }
+
+            if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home), strtolower(quoteTypeCode::Business)])) {
+                $entity->quote_status_date = now();
+                if ($entity->stale_at) {
+                    $entity->stale_at = null;
+                }
+            }
+
             $entity->save();
 
             if (
                 strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable
+                || $request->leadStatus == QuoteStatusEnum::EarlyRenewal
             ) {
                 if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                     //perform approval or rejection
@@ -346,10 +354,21 @@ class CRUDService extends BaseService
                 }
             }
 
+            $activityResponse = false;
+            $previousStatusIdChanged = false;
+            if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home), strtolower(quoteTypeCode::Business)])) {
+                $quoteTypeId = [strtolower(quoteTypeCode::Home) => QuoteTypeId::Home, strtolower(quoteTypeCode::Health) => QuoteTypeId::Health, strtolower(quoteTypeCode::Business) => QuoteTypeId::Business];
+                if ($entity->quotes_status_id != $previousQuoteStatus) {
+                    $previousStatusIdChanged = true;
+                }
+                $activityResponse = (new CentralService())->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)], $previousStatusIdChanged);
+            }
+
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-                $this->healthQuoteService->assignRenewalBatch($entity);
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+                && $entity->source == LeadSourceEnum::IMCRM) {
+                $this->healthQuoteService->assignRenewalBatch($entity->id);
                 $this->updatePaymentStatus($entity);
             }
 
@@ -361,7 +380,7 @@ class CRUDService extends BaseService
             }
 
             QuoteStatusLog::create([
-                'quote_type_id' => QuoteTypeId::Car,
+                'quote_type_id' => collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType)),
                 'quote_request_id' => $entity->id,
                 'current_quote_status_id' => $request->leadStatus,
                 'previous_quote_status_id' => $previousQuoteStatus,
@@ -371,7 +390,7 @@ class CRUDService extends BaseService
                 'created_by' => Auth::user()->id,
             ]);
 
-            return $entity;
+            return ['entity' => $entity, 'activityResponse' => $activityResponse];
         });
     }
 
@@ -384,10 +403,11 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-
             if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
-                auth()->user()->hasAnyPermission(PermissionsEnum::HEALTH_QUOTES_ACCESS,
-                    PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)
+                auth()->user()->hasAnyPermission(
+                    PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                    PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS
+                )
             ) {
                 $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
                 $query->whereIn('ut.team_id', $authUserTeamsId);
@@ -577,47 +597,28 @@ class CRUDService extends BaseService
         return $response;
     }
 
-    public function cancelPayment($request)
+    public function capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amount)
     {
-        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
-        $type = QuoteType::where('code', $request->modelType)->first();
-
-        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $request->quote_id)
-            ->where('quote_type_id', $type->id)
-            ->where('is_selected', true)
-            ->whereIn('product_id', $embeddedProductOptionsIds)
-            ->get();
-
-        if ($embededTransaction->isNotEmpty()) {
-            if (! empty($embededTransaction[0]['payments'][0])) {
-                $transaction = $embededTransaction[0];
-
-                $payment = $transaction['payments'][0];
-                $maxAmount = $payment->premium_captured - $payment->premium_refunded;
-
-                if ($maxAmount >= $request->amount) {
-                    PaymentAction::create([
-                        'payment_code' => $transaction->code,
+        if ($paymentSplit) {
+            if ($amount > 0) {
+                PaymentAction::updateOrInsert(
+                    ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
+                    [
                         'is_fulfilled' => 0,
-                        'action_type' => 'REFUND',
-                        'reason' => $request->reason,
-                        'amount' => $request->amount,
+                        'action_type' => 'CAPTURE',
+                        'amount' => $amount,
                         'created_by' => auth()->user()->email,
                         'is_manager_approved' => 1,
+                    ]
+                );
+                $data = [
+                    'uuid' => $quoteModel->uuid,
+                    'type_id' => $quoteTypeId,
+                    'code' => $paymentSplit->code.'-'.$paymentSplit->sr_no,
+                ];
+                $processResponse = $this->processCapturePayment($data);
 
-                    ]);
-                    $data = [
-                        'uuid' => $request->uuid,
-                        'type_id' => $type->id,
-                        'code' => $transaction->code,
-
-                    ];
-                    $processResponse = $this->processCancelPayment($data);
-
-                    return response($processResponse, 200);
-                } else {
-                    return response(['Cancel amount should not exceeded from transaction amount'], 403);
-                }
+                return response($processResponse, 200);
             } else {
                 return response(['Payment not exist'], 403);
             }
@@ -626,7 +627,7 @@ class CRUDService extends BaseService
         return response(['Transaction does not exist'], 403);
     }
 
-    public function processCancelPayment($data)
+    public function processCapturePayment($data)
     {
         $planData = [
             'quoteUID' => $data['uuid'],
@@ -638,7 +639,7 @@ class CRUDService extends BaseService
             ],
         ];
 
-        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+        $response = Marshall::request('/payment/checkout/capture', 'post', $planData);
 
         return $response;
     }
@@ -778,5 +779,22 @@ class CRUDService extends BaseService
             ->first();
 
         return optional($quote)->duplicateInquiryLog;
+    }
+
+    public function hashCollapsibleStatuses($quoteTypeId, $quoteId)
+    {
+        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $quoteId)
+            ->where(function ($query) {
+                $query->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicyBooked)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyBooked);
+            })
+            ->first() !== null;
     }
 }

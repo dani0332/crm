@@ -24,6 +24,8 @@ class EmbeddedProductReport
      */
     public function collection()
     {
+        $this->filters['excel_export'] = true;
+
         return EmbeddedProductRepository::getSoldTransactionList($this->embeddedProduct, $this->filters);
     }
 
@@ -31,6 +33,7 @@ class EmbeddedProductReport
     {
         return [
             'EP REF-ID',
+            'ADVISOR NAME',
             'PAYMENT DATE',
             'PLAN COMMENCEMENT DATE',
             'PLAN END DATE',
@@ -48,18 +51,19 @@ class EmbeddedProductReport
     public function map($certificate): array
     {
         return [
-            $certificate['ref_id'],
-            $certificate['payment_date'],
-            $certificate['plan_start_date'],
-            $certificate['plan_end_date'],
-            $certificate['certificate_number'],
-            $certificate['name'],
-            $certificate['emirates_id_number'],
-            $certificate['dob'],
-            $certificate['age'],
-            $certificate['vehicle'],
-            $certificate['contribution_amount'],
-            $certificate['status'],
+            $certificate->ref_id,
+            $certificate->advisor_name,
+            $certificate->payment_date,
+            $certificate->plan_start_date,
+            $certificate->plan_end_date,
+            $certificate->certificate_number,
+            $certificate->name,
+            $certificate->emirates_id_number,
+            $certificate->dob,
+            $certificate->age,
+            $certificate->vehicle,
+            $certificate->contribution_amount,
+            $certificate->status,
         ];
     }
 }

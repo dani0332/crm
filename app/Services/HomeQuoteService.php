@@ -9,6 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
+use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
@@ -54,6 +55,12 @@ class HomeQuoteService extends BaseService
             'hqr.kyc_decision',
             'hqr.nationality_id',
             'hqr.risk_score',
+            'hqr.insurance_provider_id',
+            'hqr.insurer_quote_number',
+            'hqr.price_vat_applicable',
+            'hqr.price_vat_not_applicable',
+            'hqr.price_with_vat',
+            'hqr.stale_at',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
@@ -72,6 +79,8 @@ class HomeQuoteService extends BaseService
             'n.TEXT AS nationality_id_text',
             'hqrd.transapp_code',
             'hqrd.notes',
+            'hqrd.insly_id',
+            'lu.text as transaction_type_text',
             'ls.text as lost_reason',
             'ls.id as lost_reason_id',
             'hqr.previous_quote_id',
@@ -104,6 +113,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'hqr.previous_advisor_id')
             ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
@@ -277,6 +287,21 @@ class HomeQuoteService extends BaseService
             $this->query->whereIn('advisor_id', $request->advisors);
         }
 
+        // payment_status_id filter
+        if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
+            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
+        }
+
+        // is_cold filter
+        if (isset($request->is_cold) && $request->is_cold != '') {
+            $this->query->where('hqr.is_cold', 1);
+        }
+
+        // is_stale filter
+        if (isset($request->is_stale) && $request->is_stale != '') {
+            $this->query->whereNotNull('hqr.stale_at');
+        }
+
         $this->whereBasedOnRole($this->query, 'hqr');
 
         if (isset($request->is_renewal) && $request->is_renewal != '') {
@@ -308,34 +333,10 @@ class HomeQuoteService extends BaseService
                 }
             }
         }
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-            $isAdmin = Auth::user()->hasRole('ADMIN');
-            if ($isAdmin || $isManagerORDeputy == '1') {
-                if ($column == 6) {
-                    $column = 'hqr.created_at';
-                }
-                if ($column == 7) {
-                    $column = 'hqr.updated_at';
-                }
-                if ($column == 8) {
-                    $column = 'hqrd.next_followup_date';
-                }
-            } else {
-                if ($column == 5) {
-                    $column = 'hqr.created_at';
-                }
-                if ($column == 6) {
-                    $column = 'hqr.updated_at';
-                }
-                if ($column == 7) {
-                    $column = 'hqrd.next_followup_date';
-                }
-            }
 
-            return $this->query->orderBy($column, $direction);
+        // sortBy filter
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
         } else {
             return $this->query->orderBy('hqr.created_at', 'DESC');
         }
@@ -639,7 +640,9 @@ class HomeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HomeQuote::where('id', $id)->first();
+        return HomeQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
+            $query->orderBy('sr_no', 'asc');
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
     }
 
     public function getDuplicateEntityByCode($code)
@@ -655,11 +658,13 @@ class HomeQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $quoteBatch = QuoteBatches::latest()->first();
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
+            $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
             // TODO: needs validation similar to Health
             $this->updateChildRecord($lead->id);

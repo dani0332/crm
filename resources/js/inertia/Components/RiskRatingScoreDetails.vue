@@ -16,7 +16,7 @@ const modals = reactive({
 const scoreBreakdown = ref(false);
 const riskRatingScore = quote => {
     console.log('quote.risk_score',quote.risk_score);
-    if(quote.risk_score != null) {
+    if(quote?.risk_score != null) {
         modals.riskRatingScoreModal = true;
         let url = `/quotes/${props.modelType.toLowerCase()}/risk-rating-details/${quote.uuid}`;
         axios.get(url)
@@ -34,7 +34,7 @@ const riskRatingScore = quote => {
     <div class="grid sm:grid-cols-2">
         <dt class="font-medium">Risk Category</dt>
 
-        <dd @click.prevent="riskRatingScore(quote)">{{ quote.risk_score==null?'N/A':quote.risk_score <= 16?'Low Risk':((quote.risk_score <= 31)?'Medium Risk':(quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
+        <dd @click.prevent="riskRatingScore(quote)">{{ quote?.risk_score==null?'N/A':quote?.risk_score <= 16?'Low Risk':((quote?.risk_score <= 31)?'Medium Risk':(quote?.risk_score >= 32?'High Risk':'N/A')) }}</dd>
             <x-modal v-model="modals.riskRatingScoreModal" show-close backdrop size="md">
                 <template #header> Risk Rating - Score </template>
                 <template #actions>

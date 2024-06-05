@@ -19,6 +19,8 @@ defineProps({
 
 const paymentModal = ref(false);
 
+const enableManageOptions = ref(false);
+
 const rules = {
   isRequired: v => !!v || 'This field is required',
   reference: v => {
@@ -228,14 +230,154 @@ const rolesEnum = page.props.rolesEnum;
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white">
+  <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+    <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
+    <template #content>
+      <x-divider class="mb-4 mt-1" />
+      <div class="flex justify-end items-center mb-4">
+        <x-button
+          v-if="
+            can(permissionsEnum.PaymentsCreate) &&
+            !can(permissionsEnum.ApprovePayments) &&
+            !hasRole(rolesEnum.PA)
+          "
+          size="sm"
+          color="orange"
+          @click="addPaymentModal"
+        >
+          Add Payment
+        </x-button>
+      </div>
+      <DataTable
+        table-class-name="tablefixed compact"
+        :headers="paymentTableHeaders"
+        :items="payments || []"
+        border-cell
+        hide-rows-per-page
+        hide-footer
+      >
+        <template #item-code="{ code }">
+          {{ code.toUpperCase() }}
+        </template>
+        <template #item-plan_name="{ personal_plan }">
+          {{ personal_plan?.text }}
+        </template>
+        <template #item-change_date="{ payment_status_logs }">
+          {{ payment_status_logs[0]?.created_at }}
+        </template>
+        <template #item-payment_methods_code="{ payment_method }">
+          {{ payment_method?.name }}
+        </template>
+        <template #item-actions="item">
+          <div class="flex gap-2">
+            <template v-if="can(permissionsEnum.ApprovePayments)">
+              <x-button size="xs" color="error" @click="approvePayment(item)">
+                Approve
+              </x-button>
+
+              <x-button size="xs" disabled color="error"> Approved </x-button>
+            </template>
+            <template v-else>
+              <x-button
+                size="xs"
+                color="orange"
+                v-if="item.copy_link_button"
+                @click="generateCCLink(item)"
+                :loading="paymentLoader == item.code"
+              >
+                Copy Link
+              </x-button>
+              <x-button
+                size="xs"
+                color="emerald"
+                v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button"
+                @click="editPaymentModal(item)"
+              >
+                Edit
+              </x-button>
+            </template>
+          </div>
+        </template>
+      </DataTable>
+
+      <x-modal v-model="paymentModal" size="lg" show-close backdrop>
+        <template #header>
+          <span class="text-primary-800 font-semibold">
+            {{
+              paymentForm.status == 'create' ? 'New Payment' : 'Update Payment'
+            }}
+          </span>
+        </template>
+        <x-form @submit="addPayment" :auto-focus="false">
+          <div class="w-full grid md:grid-cols-2 gap-5">
+            <x-input
+              class="w-full"
+              :rules="[rules.isRequired]"
+              label="Price Including VAT*"
+              v-model="paymentForm.captured_amount"
+              :error="paymentForm.errors.captured_amount"
+            />
+
+            <x-select
+              class="w-full"
+              v-model="paymentForm.collection_type"
+              :options="collectionTypes"
+              label="Collection Type*"
+              disabled
+              :rules="[rules.isRequired]"
+              :error="paymentForm.errors.collection_type"
+            >
+            </x-select>
+
+            <x-select
+              class="w-full md:col-span-2"
+              v-model="paymentForm.payment_methods_code"
+              :options="paymentMethodOptions"
+              label="Payment Method*"
+              disabled
+              :rules="[rules.isRequired]"
+              :error="paymentForm.errors.payment_methods_code"
+            >
+            </x-select>
+
+            <x-select
+              class="w-full md:col-span-2"
+              v-model="paymentForm.insurance_provider_id"
+              :options="insuranceProviderOptions"
+              label="Provider Name*"
+              :rules="[rules.isRequired]"
+              :error="paymentForm.errors.insurance_provider_id"
+            >
+            </x-select>
+
+            <div
+              class="w-full md:col-span-2 flex justify-end"
+              v-if="
+                paymentForm.status == 'create' || paymentForm.status == 'edit'
+              "
+            >
+              <x-button
+                :loading="paymentForm.processing"
+                color="primary"
+                type="submit"
+              >
+                {{ paymentForm.status == 'create' ? 'Create' : 'Update' }}
+                Payment
+              </x-button>
+            </div>
+          </div>
+        </x-form>
+      </x-modal>
+    </template>
+  </x-collapse>
+  <!-- <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
         v-if="
           can(permissionsEnum.PaymentsCreate) &&
           !can(permissionsEnum.ApprovePayments) &&
-          !hasRole(rolesEnum.PA)
+          !hasRole(rolesEnum.PA) && enableManageOptions
         "
         size="sm"
         color="orange"
@@ -268,7 +410,7 @@ const rolesEnum = page.props.rolesEnum;
       <template #item-actions="item">
         <div class="flex gap-2">
           <template v-if="can(permissionsEnum.ApprovePayments)">
-            <x-button size="xs" color="error" @click="approvePayment(item)">
+            <x-button size="xs" color="error" @click="approvePayment(item)" v-if="enableManageOptions">
               Approve
             </x-button>
 
@@ -278,7 +420,7 @@ const rolesEnum = page.props.rolesEnum;
             <x-button
               size="xs"
               color="orange"
-              v-if="item.copy_link_button"
+              v-if="item.copy_link_button  && enableManageOptions"
               @click="generateCCLink(item)"
               :loading="paymentLoader == item.code"
             >
@@ -287,7 +429,7 @@ const rolesEnum = page.props.rolesEnum;
             <x-button
               size="xs"
               color="emerald"
-              v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button"
+              v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button && enableManageOptions"
               @click="editPaymentModal(item)"
             >
               Edit
@@ -365,5 +507,5 @@ const rolesEnum = page.props.rolesEnum;
         </div>
       </x-form>
     </x-modal>
-  </div>
+  </div> -->
 </template>

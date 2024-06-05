@@ -1,11 +1,17 @@
 <script setup>
+import PaymentTableNew from './../../../Components/PaymentTableNew.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
+import { onMounted, watch } from 'vue';
+import { reactive } from 'vue';
+import MigratePayment from './../../../Components/MigratePayment.vue';
+
+
 
 defineProps({
   quote: Object,
@@ -82,12 +88,69 @@ defineProps({
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
+  paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   clientInquiryLogs: Array,
 });
+
+
 
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
+
+const selectedProviderPlan = ref({
+  id: page.props.record.plan_id,
+  planName: page.props.record.plan_id_text,
+  providerName: page.props.record.car_plan_provider_id_text,
+  premium: page.props.record.premium
+
+});
+
+/*
+* comment for now, will be used in later after confirmation
+
+const prefillPlanPremium = ref('');
+
+const computedPlanDetails = reactive({
+  premium: '',
+  planName: '',
+  providerName: ''
+});
+
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+
+//compare plan selected at and prefill plan selected at
+const updateComputedPlanDetails = () => {
+
+  console.log('updateComputedPlanDetails called');
+
+  let planSelectedAt = new Date(page.props.record.plan_selected_at);
+  let prefillPlanSelectedAt = new Date(page.props.record.prefill_plan_selected_at);
+
+  console.log('plan selected at', planSelectedAt, prefillPlanSelectedAt);
+  console.log('plan selected at', ' PlanId:', page.props.record.plan_id, " : PREFILL PLAN ID", page.props.record.prefill_plan_id);
+
+  if ( (page.props.record.plan_id && !page.props.record.prefill_plan_id) ||  (planSelectedAt > prefillPlanSelectedAt) ) {
+
+      console.log('plan selected at is greater than prefill plan selected at :' , "PRICE", page.props.record.premium, "PLAN", page.props.record.plan_id_text, "PROVIDER",  page.props.record.car_plan_provider_id_text);
+      computedPlanDetails.premium = page.props.record.premium,
+      computedPlanDetails.planName = page.props.record.plan_id_text,
+      computedPlanDetails.providerName = page.props.record.car_plan_provider_id_text
+  } else
+  {
+      console.log('plan selected at is less than prefill plan selected at');
+      computedPlanDetails.premium = '',
+      computedPlanDetails.planName = page.props.record.prefill_plan_id_text,
+      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text
+  }
+};
+
+onMounted(() => {
+  updateComputedPlanDetails();
+});*/
+
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
@@ -257,13 +320,40 @@ const availablePlansTable = reactive({
     { text: 'PAB cover', value: 'addons' },
     { text: 'Roadside assistance', value: 'roadSideAssistance' },
     { text: 'Oman cover TPL', value: 'omanCoverTPL' },
-    { text: 'Actual Price', value: 'actualPremium' },
+    { text: 'Price', value: 'actualPremium' },
     { text: 'Discounted Price', value: 'discountPremium' },
-    { text: 'Price with VAT.', value: 'premiumWithVat' },
+    { text: 'Total Price', value: 'premiumWithVat' },
     { text: 'Excess', value: 'excess' },
     { text: 'Action', value: 'action' },
   ],
 });
+
+/*
+// comment for now, will be used in later after confirmation
+watch(availablePlansTable, (newPlans) =>  {
+
+  console.log('plan selected at - inside watch availablePlans - ');
+  let planSelectedAt = new Date(page.props.record.plan_selected_at);
+  let prefillPlanSelectedAt = new Date(page.props.record.prefill_plan_selected_at);
+
+  console.log('plan selected at - prefillPlanId - ' , prefillPlanId.value, " : plan SelectedAT: ", planSelectedAt, " : prefillPlanSelectedAt ", prefillPlanSelectedAt);
+
+  //find selected plan from available plans and calculate prefilled plan premium
+  if(prefillPlanId.value && prefillPlanSelectedAt > planSelectedAt )
+  {
+    console.log('plan selected at updating premium of prefill plan')
+    let selectedPlan = newPlans.data.find(
+        plan => plan.id === page.props.record.prefill_plan_id,
+      );
+
+    computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
+  }
+  else
+  {
+    console.log('plan selected at - prefillPlanSelectedAt is less than planSelectedAt' );
+  }
+
+}); */
 
 const documentsTable = reactive({
   columns: [
@@ -280,6 +370,7 @@ const documentsTableItems = computed(() => {
       document_type_text:
         doc.document_type_text.length > 0 ? doc.document_type_text : '',
       document_name_text: doc.doc_name,
+      document_original_name: doc.original_name,
       created_at: doc.created_at,
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
@@ -414,6 +505,10 @@ const paymentItems = computed(() => {
       payment_method_code: payment.payment_method.code,
     };
   });
+});
+
+const isRenewalUpload = computed(() => {
+    return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
 });
 
 const leadStatusOptions = computed(() => {
@@ -951,15 +1046,15 @@ const docForm = useForm({
 
 const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-  const { files, rejectReason} = filesWithInfo;
+  const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-    return false
-  };
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -1204,12 +1299,9 @@ const confirmSendEmail = () => {
 const confirmSendOCBEmailNB = () => {
   processingOCBEmailNB.value = true;
   axios
-    .post(
-      `/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`,
-      {
-        responseType: 'json',
-      },
-    )
+    .post(`/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
+    })
     .then(response => {
       processingOCBEmailNB.value = false;
       notification.success({
@@ -1483,9 +1575,16 @@ const linkEntity = () => {
     });
 };
 
-const prefillPlanId = ref(page.props.quote.prefill_plan_id);
-const handleChildUpdate = planId => {
-  prefillPlanId.value = planId;
+const handlePlanSelected = plan => {
+  selectedProviderPlan.value.id = plan.id
+  selectedProviderPlan.value.planName = plan.planName
+  selectedProviderPlan.value.providerName = plan.providerName
+  selectedProviderPlan.value.premium = plan.premium
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments','paymentEntityModel'],
+  });
 };
 </script>
 
@@ -1512,7 +1611,7 @@ const handleChildUpdate = planId => {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ record.premium ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
@@ -1524,7 +1623,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ record.car_plan_provider_id_text ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1538,7 +1637,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ record.plan_id_text }}</dd>
+            <dd>{{ selectedProviderPlan.planName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ECOMMERCE</dt>
@@ -1606,6 +1705,15 @@ const handleChildUpdate = planId => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
         <div>
+          <Link
+            v-if="record?.insly_id"
+            :href="`/legacy-policy/${record.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
           <template
             v-if="
               !can(permissionEnum.ApprovePayments) &&
@@ -1628,11 +1736,7 @@ const handleChildUpdate = planId => {
               Duplicate Lead
             </x-button>
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.LeadPool,
-                ])
-              "
+              v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
               class="mr-2"
               size="sm"
               color="#ff5e00"
@@ -2178,6 +2282,7 @@ const handleChildUpdate = planId => {
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :quote="record"
       modelType="Car"
+      :insly-id="record?.insly_id"
       v-if="
         record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
         record.source == page.props.leadSourceEnum.INSLY
@@ -2189,7 +2294,7 @@ const handleChildUpdate = planId => {
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+      <div class="flex flex-wrap md:flex-nowrap gap-4 w-full">
         <div class="w-full md:w-50">
           <div class="flex flex-col gap-4">
             <ComboBox
@@ -2202,20 +2307,37 @@ const handleChildUpdate = planId => {
               :options="leadStatusOptions"
             />
             <x-field
-              label="TransApp Code"
-              required
-              v-if="
-                leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved
+              label="Notes"
+              :required="
+                leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
+                leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
+                leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
               "
             >
-              <x-input
-                v-model="leadStatusForm.trans_code"
-                placeholder="TransApp Code is required"
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                placeholder="Lead Notes"
                 class="w-full"
-                :rules="[rules.isRequired]"
-                :error="leadStatusForm.errors.trans_code"
+                :rules="
+                  leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
+                  leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
+                  leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
+                    ? [isRequired]
+                    : []
+                "
+                :error="leadStatusForm.errors.notes"
+                :disabled="
+                  record.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
+                  isCarLostStatus(record.quote_status_id)
+                "
               />
             </x-field>
+          </div>
+        </div>
+        <div class="w-full md:w-50">
+          <div class="flex flex-col gap-7">
             <x-field
               label="Lost Reason"
               required
@@ -2275,34 +2397,6 @@ const handleChildUpdate = planId => {
               :error="leadStatusForm.errors.tier_id"
             />
             <x-field
-              label="Notes"
-              :required="
-                leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-              "
-            >
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                placeholder="Lead Notes"
-                class="w-full"
-                :rules="
-                  leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                  leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                  leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-                    ? [isRequired]
-                    : []
-                "
-                :error="leadStatusForm.errors.notes"
-                :disabled="
-                  record.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved ||
-                  isCarLostStatus(record.quote_status_id)
-                "
-              />
-            </x-field>
-            <x-field
               label="Car Sold / Uncontactable Proof"
               v-if="
                 leadStatusForm.leadStatus == quoteStatusEnum.CarSold ||
@@ -2318,6 +2412,14 @@ const handleChildUpdate = planId => {
                 "
                 placeholder="Car Sold / Uncontactable Proof"
                 class="form-control w-full"
+              />
+            </x-field>
+            <x-field class="" label="Transaction Type">
+              <x-input
+                type="text"
+                :value="record.transaction_type_text"
+                class="w-full"
+                :disabled="true"
               />
             </x-field>
           </div>
@@ -2477,18 +2579,6 @@ const handleChildUpdate = planId => {
 			:quote="record"
 		/> -->
 
-    <PaymentTable
-      :payments="payments"
-      :quoteRequest="paymentEntityModel"
-      :paymentStatusEnum="paymentStatusEnum"
-      :isCommercialVehicles="isCommercialVehicles"
-      :carInsuranceProviders="carInsuranceProviders"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name };
-        })
-      "
-    />
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
@@ -2769,7 +2859,8 @@ const handleChildUpdate = planId => {
             isManualUpdate,
             isRenewal,
             isDisabled,
-            puaPremium
+            puaPremium,
+            puaType
           }"
         >
           <p>{{ providerName }}</p>
@@ -2800,19 +2891,23 @@ const handleChildUpdate = planId => {
             </x-tag>
 
             <x-tag
-                v-if="puaPremium && puaPremium != null"
-                size="xs"
-                class="mt-0.5 text-[10px] text-white"
-                style="background-color: #E00000"
+              v-if="puaPremium && puaPremium != null && puaType"
+              size="xs"
+              class="mt-0.5 text-[10px] text-white"
+              style="background-color: #e00000"
             >
-                <x-tooltip  position="right">
-                    <template #tooltip>
-                      <span class="font-medium">
-                          Pending Underwriter Approval (PUA) indicates that this quote is prepared using our internal rating calculator. Please contact the client to get the required documents, to proceed with generating a quote on the insurer portal and connect with the underwriter to obtain their approval.
-                       </span>
-                    </template>
-                    PUA
-                </x-tooltip>
+              <x-tooltip position="right">
+                <template #tooltip>
+                  <span class="font-medium">
+                    Pending Underwriter Approval (PUA) indicates that this quote
+                    is prepared using our internal rating calculator. Please
+                    contact the client to get the required documents, to proceed
+                    with generating a quote on the insurer portal and connect
+                    with the underwriter to obtain their approval.
+                  </span>
+                </template>
+                {{ puaType }}
+              </x-tooltip>
             </x-tag>
           </div>
         </template>
@@ -2964,11 +3059,10 @@ const handleChildUpdate = planId => {
               </x-button>
             </template>
 
-            <!-- v-if="hasRole(rolesEnum.CarAdvisor)" , hide it temp -->
-            <span v-if="true == false">
+            <span>
               <SelectPlan
-                v-if="prefillPlanId != item.id"
-                @update:updatePlanId="handleChildUpdate"
+                v-if="selectedProviderPlan.id != item.id"
+                @update:selectedPlanChanged="handlePlanSelected"
                 :plan="item"
                 :quoteType="quoteType"
                 :uuid="quote.uuid"
@@ -3074,15 +3168,15 @@ const handleChildUpdate = planId => {
         :showHeader="true"
         v-model:modelValue="modals.sendOCBConfirmNB"
         :backdrop-close="false"
-        >
+      >
         <template #header>
-        <p>Send Email OCB NB</p>
+          <p>Send Email OCB NB</p>
         </template>
         <template #default>
-        <p>Are you sure send email to customer?</p>
+          <p>Are you sure send email to customer?</p>
         </template>
         <template #actions>
-            <div class="text-right space-x-4">
+          <div class="text-right space-x-4">
             <x-button
               size="sm"
               ghost
@@ -3091,12 +3185,17 @@ const handleChildUpdate = planId => {
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error" :loading="processingOCBEmailNB" @click.prevent="confirmSendOCBEmailNB">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmailNB"
+              @click.prevent="confirmSendOCBEmailNB"
+            >
               Send
             </x-button>
           </div>
         </template>
-    </AppModal>
+      </AppModal>
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Car Quote </template>
         <LazyCreatePlan
@@ -3110,6 +3209,40 @@ const handleChildUpdate = planId => {
          missing @error="onPlanError" -->
       </x-modal>
     </div>
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="record.id"
+      :paymentCode = "record.code"
+      :quoteType="quoteType"
+      :payments="payments"
+    />
+
+    <PaymentTableNew
+			v-if="isNewPaymentStructure"
+			quoteType="Car"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
+			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+		/>
+    <PaymentTable
+		v-else
+      :payments="payments"
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :isCommercialVehicles="isCommercialVehicles"
+      :carInsuranceProviders="carInsuranceProviders"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name };
+        })
+      "
+    />
 
     <div
       class="p-4 rounded shadow mb-6 bg-white"
@@ -3289,6 +3422,15 @@ const handleChildUpdate = planId => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
         <div>
+            <Link
+                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${record.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
           <x-button
             class="mr-2"
             v-if="
@@ -3297,7 +3439,7 @@ const handleChildUpdate = planId => {
             "
             @click.prevent="copyUploadURL"
             size="sm"
-            color="orange"
+            color="primary"
           >
             Copy upload Link
           </x-button>
@@ -3339,7 +3481,7 @@ const handleChildUpdate = planId => {
       >
         <template #item-document_name_text="item">
           <a target="_blank" :href="storageUrl + item.doc_url">{{
-            item.document_name_text
+            item.document_original_name
           }}</a>
         </template>
         <template #item-action="item">
@@ -3742,8 +3884,14 @@ const handleChildUpdate = planId => {
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <CustomerChatLogs
+      :customerName="record?.first_name + ' ' + record?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'CAR'"
+    />
   </div>
-  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
+  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code"/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
@@ -3751,7 +3899,7 @@ const handleChildUpdate = planId => {
   />
 
   <ClientInquiryLogs
-      v-if="clientInquiryLogs.length > 0"
-      :logs="clientInquiryLogs"
+    v-if="clientInquiryLogs?.length > 0"
+    :logs="clientInquiryLogs"
   />
 </template>

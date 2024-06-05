@@ -10,6 +10,7 @@ use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
@@ -63,6 +64,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CarQuoteRepository;
+use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DateTime;
@@ -76,7 +78,6 @@ class RenewalsUploadService
     use GenericQueriesAllLobs;
 
     protected $renewalsAddonService;
-    protected $checkAMLService;
     protected $capiRequestService;
     protected $insuranceProviderService;
     protected $carQuoteService;
@@ -88,7 +89,6 @@ class RenewalsUploadService
 
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
-        CheckAmlService $checkAMLService,
         CapiRequestService $capiRequestService,
         InsuranceProviderService $insuranceProviderService,
         CarQuoteService $carQuoteService,
@@ -99,7 +99,6 @@ class RenewalsUploadService
         HealthQuoteService $healthQuoteService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
-        $this->checkAMLService = $checkAMLService;
         $this->capiRequestService = $capiRequestService;
         $this->insuranceProviderService = $insuranceProviderService;
         $this->carQuoteService = $carQuoteService;
@@ -462,7 +461,7 @@ class RenewalsUploadService
 
             if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (! $aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first())) {
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
-                $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+                app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
             }
 
@@ -813,6 +812,10 @@ class RenewalsUploadService
                 $detailData['insly_advisor_name'] = $data['insly_advisor_name'];
             }
 
+            $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)->first();
+            if ($lookup) {
+                $quoteData['transaction_type_id'] = $lookup->id;
+            }
             if ($quoteType->code == quoteTypeCode::Car) {
                 $model = null;
                 $make = CarMake::where('text', $data['make'])->first();
@@ -898,7 +901,7 @@ class RenewalsUploadService
 
         if ($quote) {
             info($logPrefix.' AML check started for UUID: '.$quote->uuid);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
         }
 
@@ -938,7 +941,7 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
         if ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first()) {
             info($logPrefix.' AML process Started for quote uuid: '.$quote->uuid.' quote_id: '.$renewalQuoteProcess->quote_id);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML process completed for quote uuid: '.$quote->uuid);
 
             return true;
@@ -1116,7 +1119,7 @@ class RenewalsUploadService
 
         if ($quote && $isNameChanged) {
             info($logPrefix.' AML check started for UUID: '.$quote->uuid);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
         }
 
@@ -1349,7 +1352,7 @@ class RenewalsUploadService
                     Log::info('Renewals OCB Email sent to uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                     RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-                //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
+                    //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
                 } else {
                     Log::error('Renewals OCB Email failed for uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
@@ -1382,7 +1385,7 @@ class RenewalsUploadService
     /**
      * //$modelName, $quoteRequestIdName.
      *
-     * @param    $quoteRequestIdName
+     * @param  $quoteRequestIdName
      * @return false|mixed
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)

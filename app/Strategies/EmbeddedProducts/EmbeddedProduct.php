@@ -5,6 +5,7 @@ namespace App\Strategies\EmbeddedProducts;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Collection;
 
 class EmbeddedProduct
 {
@@ -18,47 +19,50 @@ class EmbeddedProduct
     /**
      * Retrieves sold transaction data from a dataset.
      *
-     * @return array
+     * @return Collection
      */
     public function getTransactionData($dataset)
     {
-        return $dataset->map(function ($item) {
-
+        $dataset->each(function ($item) {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-            $modelType = $item->model_type;
-            $quoteId = $item->quote_request_id;
-            $quoteObject = $this->getQuoteObject($modelType, $quoteId);
+            $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
-            $customer = $quoteObject->customer;
+            $customer = $quoteObject->customer ?? null;
             $carMake = $quoteObject->carMake->text ?? '';
             $carModel = $quoteObject->carModel->text ?? '';
+            $advisorName = $quoteObject->advisor->name ?? '';
             $age = isset($quoteObject->dob) ?
                 Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now()).' Years'
                 : '';
-            $planStartDate = isset($quoteObject->policy_start_date) ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
+            $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
-            if (isset($planEndDate)) {
+            if (! empty($planStartDate)) {
                 $planEndDate = Carbon::parse($quoteObject->policy_start_date)->addYear()->format($dateFormat);
             }
+            $firstName = $quoteObject->first_name ?? '';
+            $lastName = $quoteObject->last_name ?? '';
 
-            return [
-                'id' => $item->id,
-                'ref_id' => $item->code,
-                'payment_date' => isset($item->paid_at) ? Carbon::parse($item->paid_at)->format($dateFormat) : '',
-                'plan_start_date' => $planStartDate,
-                'plan_end_date' => $planEndDate,
-                'certificate_number' => $item->certificate_number ?? '',
-                'name' => $quoteObject->first_name.' '.$quoteObject->last_name,
-                'dob' => isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '',
-                'age' => $age,
-                'vehicle' => $carMake.' '.$carModel,
-                'contact_number' => $quoteObject->mobile_no ?? '',
-                'email' => $quoteObject->email ?? '',
-                'contribution_amount' => 'AED '.$item->price_with_vat.'/-',
-                'status' => $status,
-                'policy_issuance_date' => $quoteObject->policy_issuance_date ?? '',
-                'emirates_id_number' => $customer->emirates_id_number ?? '',
-            ];
+            $item->id = $item->id;
+            $item->ref_id = $item->code;
+            $item->advisor_name = $advisorName;
+            $item->payment_date = isset($item->paid_at) ? Carbon::parse($item->paid_at)->format($dateFormat) : '';
+            $item->plan_start_date = $planStartDate;
+            $item->plan_end_date = $planEndDate;
+            $item->certificate_number = $item->certificate_number ?? '';
+            $item->name = $firstName.' '.$lastName;
+            $item->dob = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '';
+            $item->age = $age;
+            $item->vehicle = $carMake.' '.$carModel;
+            $item->contact_number = $quoteObject->mobile_no ?? '';
+            $item->email = $quoteObject->email ?? '';
+            $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
+            $item->status = $status;
+            $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
+            $item->emirates_id_number = $customer->emirates_id_number ?? '';
+
+            return $item;
         });
+
+        return $dataset;
     }
 }

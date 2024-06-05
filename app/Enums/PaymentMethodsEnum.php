@@ -20,4 +20,10 @@ final class PaymentMethodsEnum extends Enum
     const CMOApproval = 'CR_HITESH';
     const COOApproval = 'CR_MAHESH';
     const InsureNowPayLater = 'IN_PL';
+    const PostDatedCheque = 'PDC';
+    const InsurerPayment = 'IP';
+    const PartialPayment = 'PP';
+    const MultiplePayment = 'MP';
+    const CreditApproval = 'CA';
+    const ProformaPaymentRequest = 'PPR';
 }

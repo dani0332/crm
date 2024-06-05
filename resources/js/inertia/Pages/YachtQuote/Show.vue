@@ -1,17 +1,20 @@
 <script setup>
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
-import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   documentTypes: Object,
+  noteDocumentType: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
   insuranceProviders: Object,
@@ -34,6 +37,14 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  quoteRequest: Object,
+  quoteDocuments: Object,
+  cdnPath: String,
+  vatPercentage: Number,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -42,7 +53,12 @@ const { isRequired } = useRules();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+
+const countDays = useDaysSinceStale(
+  props.quoteRequest?.stale_at ?? props.quote?.stale_at,
+);
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
@@ -71,11 +87,11 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  insured_first_name: page.props.quote?.customer?.insured_first_name || '',
+  insured_last_name: page.props.quote?.customer?.insured_last_name || '',
+  emirates_id_number: page.props.quote?.customer?.emirates_id_number || null,
   emirates_id_expiry_date:
-    page.props.quote?.customer.emirates_id_expiry_date || null,
+    page.props.quote?.customer?.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
@@ -205,10 +221,70 @@ const linkEntity = () => {
 <template>
   <div>
     <Head title="Yacht Quotes" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Yacht Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteDocuments"
+          :modelType="quoteType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesEdit)"
+          :href="route('yacht-quotes-edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
 
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Yacht Detail</h2>
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesList)"
+          :href="route('yacht-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div">
+            Yacht Quotes
+          </x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Yacht Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </div>
       <div class="flex gap-2">
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteDocuments"
+          :modelType="quoteType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <Link
+          v-if="quote.quote_detail?.insly_id"
+          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+
         <Link
           v-if="can(permissionsEnum.YachtQuotesEdit)"
           :href="route('yacht-quotes-edit', quote.uuid)"
@@ -226,7 +302,7 @@ const linkEntity = () => {
           </x-button>
         </Link>
       </div>
-    </div>
+    </div> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
@@ -665,6 +741,7 @@ const linkEntity = () => {
       "
       modelType="Yacht"
       :quote="quote"
+      :insly-id="quote?.quote_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -676,7 +753,52 @@ const linkEntity = () => {
       :quote-type="quoteType"
     />
 
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="quoteStatusEnum"
+    />
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode="quote.code"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'YPD' ||
+            item.code === 'YPDR' ||
+            item.code === 'YDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+    />
     <QuotePayments
+      v-else
       :can="can"
       :payments="quote.payments"
       :quote-type="quoteType"
@@ -686,31 +808,18 @@ const linkEntity = () => {
       :personal-plans="personalPlans"
     />
 
-    <QuoteStatus
-      :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
-    />
-
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quote?.quote_detail?.insly_id"
     />
 
     <QuotePolicy
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
-    />
-
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
     />
 
     <EmbeddedProducts
@@ -721,7 +830,11 @@ const linkEntity = () => {
       :modelType="quoteType"
     />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs
+      :quote-type="quoteType"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
 
     <LeadHistory :quote="$page.props.quote" />
   </div>

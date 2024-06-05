@@ -103,6 +103,10 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Customer::class);
     }
+    public function transactionType()
+    {
+        return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
 
     public function quoteRequestEntityMapping()
     {
@@ -113,5 +117,16 @@ class LifeQuote extends Model implements AuditableContract
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Life);
+    }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 }

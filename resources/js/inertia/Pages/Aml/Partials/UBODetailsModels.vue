@@ -42,6 +42,16 @@ const uboRelationOptions = computed(() => {
   }));
 });
 
+const rules = {
+    nameCheck: v => {
+        const pattern = /^[a-zA-Z0-9\s]+$/;
+        if(v == null || v == '') return true;
+        return pattern.test(v) || 'Special characters are not allowed in Name';
+    }
+};
+
+
+
 const addUBODetails = ref(false);
 const editUBODetails = ref(false);
 const addUBOToggle = payload => {
@@ -190,7 +200,7 @@ const onUBOSubmit = isValid => {
             v-model="uboForm.first_name"
             placeholder="Full Name"
             class="w-full"
-            :rules="[isRequired]"
+            :rules="[isRequired , rules.nameCheck]"
           />
         </x-field>
         <x-field label="Nationality" required>

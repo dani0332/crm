@@ -176,4 +176,53 @@ class SIBService extends BaseService
 
         return $newEmailActivity->id;
     }
+
+    public static function createWorkflowEvent($eventName, $quote, $eventProperties = [], $eventData = [])
+    {
+        $appEnv = config('constants.APP_ENV');
+        $eventQualifiedName = ($appEnv == EnvEnum::PRODUCTION ? '' : $appEnv.'_').$eventName;
+        $endPointUrl = config('constants.SIB_AUTOMATE_URL').'/trackEvent';
+        $apiKey = config('constants.SIB_WORKFLOW_CLIENT_KEY');
+        if (empty($eventProperties)) {
+            $eventProperties = [
+                'default_key' => 'default_value',
+            ];
+        }
+        if (empty($eventData)) {
+            $eventData = [
+                'default_key' => 'default_value',
+            ];
+        }
+        $eventData = json_encode([
+            'event' => $eventQualifiedName,
+            'email' => $quote ? $quote->email : null,
+            'properties' => $eventProperties,
+            'eventdata' => [
+                'data' => $eventData,
+            ],
+        ]);
+
+        $client = new \GuzzleHttp\Client();
+        $apiResponse = null;
+        try {
+            $request = $client->post(
+                $endPointUrl,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'ma-key' => $apiKey,
+                    ],
+                    'body' => $eventData,
+                    'timeout' => 10000,
+                ]
+            );
+
+            $apiResponse = $request->getStatusCode();
+        } catch (\GuzzleHttp\Exception\BadResponseException $exception) {
+            Log::error('Create Event SIB - Error: '.$exception->getMessage());
+        }
+
+        return $apiResponse;
+    }
 }

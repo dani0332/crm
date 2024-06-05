@@ -8,6 +8,9 @@ const loaders = reactive({
   table: false,
 });
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const quoteSegments = page.props.quoteSegments;
 
 const params = useUrlSearchParams('history');
 const tableHeader = [
@@ -46,6 +49,7 @@ const filters = reactive({
   tiers: [],
   assignmentTypes: 'All',
   isCommercial: 'All',
+  segment_filter: 'all',
   page: 1,
 });
 
@@ -165,6 +169,13 @@ const calculateTotalSum = (data, key) => {
             { value: 3, label: 'Manual Assigned' },
             { value: 4, label: 'Manual ReAssigned' },
           ]"
+        />
+        <x-select
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegments"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">

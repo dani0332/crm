@@ -155,6 +155,28 @@ const userRoles = computed(() => {
             {{ user.updated_at ? dateFormat(user.new_updated_at) : 'N/A' }}
           </dd>
         </div>
+
+        <div class="grid sm:grid-cols-2" v-show="user.calendar_link">
+          <dt class="font-medium">GOOGLE MEET CALENDAR (EMBEDDED LINK)</dt>
+          <dd class="bg-gray-100 h-48 rounded-lg relative p-3 overflow-hidden">
+            {{ user.calendar_link }}
+            <XCopy
+              :text="user.calendar_link"
+              class="text-primary absolute bottom-0 right-2"
+            />
+          </dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2" v-show="user.phone_calendar_link">
+          <dt class="font-medium">PHONE CALL CALENDAR (EMBEDDED LINK)</dt>
+          <dd class="bg-gray-100 h-48 rounded-lg relative p-3 overflow-hidden">
+            {{ user.phone_calendar_link }}
+            <XCopy
+              :text="user.phone_calendar_link"
+              class="text-primary absolute bottom-0 right-2"
+            />
+          </dd>
+        </div>
       </dl>
     </div>
   </div>

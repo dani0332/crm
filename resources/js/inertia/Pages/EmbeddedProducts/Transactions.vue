@@ -5,6 +5,12 @@ defineProps({
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+const params = useUrlSearchParams('history');
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'id',
+  sortType: 'desc',
+});
 
 const loader = reactive({
   table: false,
@@ -23,7 +29,8 @@ const page = usePage();
 
 const tableHeader = [
   { text: 'EP Ref-ID', value: 'ref_id' },
-  { text: 'Payment Date', value: 'payment_date' },
+  { text: 'Advisor Name', value: 'advisor_name' },
+  { text: 'Payment Date', value: 'payment_date', sortable: true },
   { text: 'Plan Commencement Date', value: 'plan_start_date' },
   { text: 'Plan End Date', value: 'plan_end_date' },
   { text: 'Full Name', value: 'name' },
@@ -33,7 +40,7 @@ const tableHeader = [
   { text: 'Vehicle', value: 'vehicle' },
   { text: 'Contact Number', value: 'contact_number' },
   { text: 'Email ID', value: 'email' },
-  { text: 'Contribution Amount', value: 'contribution_amount' },
+  { text: 'Contribution Amount', value: 'contribution_amount', sortable: true },
   { text: 'Policy Issue Status', value: 'status' },
 ];
 
@@ -48,6 +55,7 @@ function resetFilters() {
     ),
     {
       method: 'get',
+      data: { page: 1 },
       preserveState: true,
       preserveScroll: true,
       onFinish: () => {
@@ -64,6 +72,9 @@ function filterTransactions(isValid) {
   if (!isValid) {
     return;
   }
+
+  serverOptions.value.page = 1;
+
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
@@ -79,6 +90,7 @@ function filterTransactions(isValid) {
       method: 'get',
       data: {
         ...filters,
+        ...serverOptions.value,
       },
       preserveState: true,
       preserveScroll: true,
@@ -93,13 +105,11 @@ function filterTransactions(isValid) {
 }
 
 function setQueryFilters() {
-  let urlParams = new URLSearchParams(window.location.search);
-  for (const [key, value] of urlParams) {
-    if (key.includes('[')) {
-      let index = key.replace('[]', '');
-      filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
     } else {
-      filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
+      filters[key] = params[key];
     }
   }
 }
@@ -116,6 +126,9 @@ function exportReport() {
 onMounted(() => {
   setQueryFilters();
 });
+
+watch(serverOptions, (value) => { filterTransactions(true); }, { deep: true });
+
 </script>
 
 <template>
@@ -211,10 +224,11 @@ onMounted(() => {
     <x-divider class="my-4" />
 
     <DataTable
+      v-model:server-options="serverOptions"
       table-class-name=""
       :headers="tableHeader"
       :loading="loader.table"
-      :items="embeddedProduct.transactions || []"
+      :items="embeddedProduct.transactions.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -253,5 +267,16 @@ onMounted(() => {
         </div>
       </template>
     </DataTable>
+
+    <Pagination
+      :links="{
+        next: embeddedProduct.transactions.next_page_url,
+        prev: embeddedProduct.transactions.prev_page_url,
+        current: embeddedProduct.transactions.current_page,
+        from: embeddedProduct.transactions.from,
+        to: embeddedProduct.transactions.to,
+      }"
+    />
+
   </div>
 </template>

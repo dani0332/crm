@@ -123,6 +123,14 @@ const insuredFormDetails = useForm({
     props.entityDetails?.entity?.emirate_of_registration_id ?? null,
 });
 
+const rules = {
+    nameCheck: v => {
+        const pattern = /^[a-zA-Z0-9\s]+$/;
+        if(v == null || v == '') return true;
+        return pattern.test(v) || 'Special characters are not allowed in Insured Name';
+    }
+};
+
 const submitQuoteUpdateForm = isValid => {
   insuredFormDetails.get(`${props.quoteDetails.id}/quoteUpdate`, {
     preserveScroll: true,
@@ -292,6 +300,7 @@ const linkEntity = () => {
         insuredFormDetails.industry_type_code = response.industry_type_code;
         insuredFormDetails.emirate_of_registration_id =
           response.emirate_of_registration_id;
+
         notification.success({
           title: res.data.message,
           position: 'top',
@@ -334,7 +343,7 @@ watch(
           >
             <x-input
               v-model="insuredFormDetails.insured_first_name"
-              :rules="[isRequired]"
+              :rules="[isRequired , rules.nameCheck]"
               placeholder="Insured First Name"
               type="text"
               class="w-full"
@@ -345,7 +354,7 @@ watch(
           >
             <x-input
               v-model="insuredFormDetails.insured_last_name"
-              :rules="[isRequired]"
+              :rules="[isRequired , rules.nameCheck]"
               placeholder="Insured Last Name"
               type="text"
               class="w-full"
@@ -368,6 +377,7 @@ watch(
               :rules="[isRequired]"
               placeholder="Date of Birth"
               class="w-full"
+              :utc="true"
             />
           </x-field>
           <div

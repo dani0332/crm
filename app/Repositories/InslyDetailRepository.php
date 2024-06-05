@@ -3,11 +3,22 @@
 namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Models\BikeQuote;
+use App\Models\CycleQuote;
 use App\Models\InslyDetail;
+use App\Models\PetQuote;
+use App\Models\QuoteType;
+use App\Models\YachtQuote;
 use App\Services\CapiRequestService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use MongoDB\BSON\Regex;
+use MongoDB\BSON\UTCDateTime;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -18,19 +29,27 @@ class InslyDetailRepository extends BaseRepository
     }
     public function fetchGetData()
     {
+        $coverage = $this->getCoverageList(auth()->user());
+
         $query = InslyDetail::query();
+
+        if (! empty($coverage)) {
+            $query->whereIn('policy.coverage', $coverage);
+        }
 
         if (! empty(request()->policy_number)) {
             $query->where('policy_no', '=', request()->policy_number);
         }
 
         if (! empty(request()->email)) {
-            $query->where('customer.email', '=', request()->email);
+            $query->where('customer.email', 'like', '%'.request()->email.'%');
         }
 
         if (! empty(request()->mobile_no)) {
-            $query->where('customer.mobile_phone', '=', request()->mobile_no);
+            $query->where('customer.mobile_phone', 'like', '%'.request()->mobile_no.'%')
+                ->orWhere('customer.mobile_phone', 'regex', $this->searchPhoneNumberRegexPattern(request()->mobile_no));
         }
+
         $data = $query->simplePaginate()->withQueryString()->toArray();
 
         return $data;
@@ -38,9 +57,15 @@ class InslyDetailRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $policy = $this->where($column, $value)->firstOrFail();
-
+        $query = $this->where($column, $value);
+        if (! empty(request()->policy_oid)) {
+            $query->orWhere('policy_oid', (int) request()->policy_oid);
+        }
+        $policy = $query->firstOrFail();
         $data = $policy->toArray();
+        $policy->quoteType = $this->getQuoteType($data['policy']['coverage']);
+        $policy->imcrm_link = $this->replaceStoredAppURLWithCurrentAppURL($policy->imcrm_link);
+
         if (! empty($data['installments'])) {
             $policy->premium = collect($data['installments'])->sum('gross_premium');
         }
@@ -48,37 +73,52 @@ class InslyDetailRepository extends BaseRepository
         return $policy;
     }
 
+    private function getQuoteType($coverage)
+    {
+        $coverage = $coverage ?? null;
+        $inslyCoverageArray = $this->inslyInsurances();
+        $quoteType = null;
+        foreach ($inslyCoverageArray as $key => $item) {
+            $lowerCaseCoverageValues = array_map('strtolower', $item);
+            $item = array_merge($item, $lowerCaseCoverageValues);
+            if (in_array($coverage, $item)) {
+                $quoteType = $key;
+            }
+        }
+
+        return $quoteType;
+    }
+
     public function fetchSaveToImcrm($data)
     {
         $policyNumber = $data['policyNumber'];
+        $validateAll = $data['validateAll'];
+
         $policy = $this->where('policy_no', $policyNumber)->first();
+
         $email = $policy['customer']['email'] ?? null;
+        $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
+        if ($inslyPolicyIssueDate) {
+            $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
+        }
 
-        // $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
-        // $inslyPolicyIssueDate = Carbon::parse($inslyPolicyIssueDate)->format('Y-m-d');
+        $appUrl = config('constants.APP_URL');
 
-        $inslyPolicyIssueDate = '2020-09-21';
-
-        // dd($inslyPolicyIssueDate);
-        $appUrl = env('APP_URL');
-        $inslyCoverageArray = $this->inslyInsurances();
         if (! empty($policy)) {
-            $coverage = $policy['policy']['coverage'] ?? null;
-            // $coverage = 'Casco';
-            $quoteType = null;
-            foreach ($inslyCoverageArray as $key => $item) {
-                if (in_array(ucfirst($coverage), $item)) {
-                    $quoteType = $key;
-                }
-            }
-
+            $coverage = $policy['policy']['coverage'];
+            $quoteType = $this->getQuoteType($coverage);
             $data = [];
             $model = $this->getModelObject($quoteType);
             if ($model) {
+                // quote against policy number
+                $quote = $model::where('policy_number', $policyNumber)->orWhere('previous_quote_policy_number', $policyNumber)->first();
 
-                $quote = $model::where('policy_number', $policyNumber)->first();
-                if (! empty($quote)) {
-                    $quote->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$quote->uuid;
+                if (! empty($quote) && $validateAll) {
+                    if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
+                        $quote->link = $appUrl.'/personal-quotes/'.strtolower($quoteType).'/'.$quote->uuid;
+                    } else {
+                        $quote->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$quote->uuid;
+                    }
                     $quote->modelType = $quoteType;
                     $data[] = $quote;
 
@@ -96,41 +136,32 @@ class InslyDetailRepository extends BaseRepository
                 $quote = $model::whereHas('payments', function ($query) use ($dateFrom, $dateTo) {
                     return $query->whereBetween('captured_at', [$dateFrom, $dateTo]);
                 })->where('email', $email)->get();
-                switch (ucfirst($quoteType)) {
 
-                    case QuoteTypes::BUSINESS->value:
-                        $route = '/api/v1-save-business-quote';
-                        $quote->load('businessTypeOfInsurance', 'advisor:id,name');
-                        break;
-                    case QuoteTypes::CAR->value:
-                        $route = '/api/v1-save-car-quote';
-                        $quote->load('advisor:id,name');
-                        break;
-                    case QuoteTypes::LIFE->value:
-                        $route = '/api/v1-save-life-quote';
-                        break;
-                    case QuoteTypes::HOME->value:
-                        $route = '/api/v1-save-home-quote';
-                        break;
-                    case QuoteTypes::TRAVEL->value:
-                        $route = '/api/v1-save-travel-quote';
-                        break;
-                    case QuoteTypes::PET->value:
-                    case QuoteTypes::BIKE->value:
-                    case QuoteTypes::CYCLE->value:
-                    case QuoteTypes::YACHT->value:
-                        $route = '/api/v1-save-personal-quote';
-                        break;
-                    case QuoteTypes::HEALTH->value:
-                        $route = '/api/v1-save-health-quote';
-                        break;
-                    default:
-                        $route = '';
-                }
-
-                if (! $quote->isEmpty()) {
+                // quote against email and in between two month of payment captured
+                if (! $quote->isEmpty() && $validateAll) {
                     foreach ($quote as $item) {
-                        $item->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$item->uuid;
+
+                        $item->advisor_name = $item->advisor->name ?? null;
+
+                        if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                            $item->make = $item->carMake->text ?? null;
+                            $item->model = $item->carModel->text ?? null;
+                        }
+                        if (ucfirst($quoteType) == QuoteTypes::BUSINESS->value) {
+                            $item->type_of_insurance = $item->businessTypeOfInsurance->code ?? null;
+                        }
+                        if (ucfirst($quoteType) == QuoteTypes::HOME->value) {
+                            $item->apartment_or_villa = $item->accommodationType->text ?? null;
+                            $item->landlord_or_tenant = $item->possessionType->text ?? null;
+                        }
+                        if (ucfirst($quoteType) == QuoteTypes::PET->value) {
+                            $item->breed = $item->petQuote->breed_of_pet1 ?? null;
+                        }
+                        if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
+                            $item->link = $appUrl.'/personal-quotes/'.strtolower($quoteType).'/'.$item->uuid;
+                        } else {
+                            $item->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$item->uuid;
+                        }
                         $item->modelType = $quoteType;
                         $data[] = $item;
                     }
@@ -143,58 +174,238 @@ class InslyDetailRepository extends BaseRepository
                     ];
                 }
 
-                $dataArr = [];
-                $dataArr['previousPolicyNo'] = $policy['policy_no'] ?? null;
-                $insurer = $policy['policy']['insurer'] ?? null;
-                if ($insurer == 'Tokio Marine Nichido') {
-                    $insurer = 'Tokio Marine & Nichido Fire Insurance Co';
-                }
-                $insuredWith = InsuranceProviderRepository::where('code', 'like', '%'.$insurer.'%')
-                    ->orWhere('text', 'like', '%'.$insurer.'%')->first();
+                // create lead in case no record found
+                $payLoad = $this->prePareData($policy, $quoteType);
 
-                $dataArr['currentlyInsuredWith'] = ! empty($insuredWith) ? $insuredWith->id : null;
-                $dataArr['previousPolicyStartDate'] = $policy['policy']['start_date'] ?? null;
-                $dataArr['previousPolicyExpiryDate'] = $policy['policy']['end_date'] ?? null;
+                info('InslyLead - Payload: '.json_encode($payLoad));
+                $id = $model::create($payLoad)->id;
+                info('InslyLead - created Lead Id : '.json_encode($id));
+                if (! empty($id)) {
+                    $obj = $model::where('id', $id)->first();
+                    switch (ucfirst($quoteType)) {
 
-                $customerName = $policy['customer']['name'] ?? null;
-                $arr = explode(' ', trim($customerName));
-                $dataArr['firstName'] = $arr[0];
-                array_shift($arr);
+                        case QuoteTypes::BUSINESS->value:
+                            $obj->businessQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            break;
 
-                $dataArr['lastName'] = implode(' ', $arr);
-                $dataArr['email'] = $email;
-                $dataArr['mobileNo'] = $policy['customer']['mobile_phone'] ?? '0552244556';
-                $dataArr['referenceUrl'] = config('constants.APP_URL');
+                        case QuoteTypes::CAR->value:
+                            $obj->carQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            break;
 
-                $premium = null;
-                $data = $policy->toArray();
-                if (! empty($data['installments'])) {
-                    $premium = collect($data['installments'])->sum('gross_premium');
-                }
+                        case QuoteTypes::LIFE->value:
+                            $obj->lifeQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            break;
 
-                $dataArr['premium'] = $premium;
-                $dataArr['source'] = LeadSourceEnum::INSLY;
+                        case QuoteTypes::HOME->value:
+                            $obj->homeQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            break;
 
-                dd($dataArr);
+                        case QuoteTypes::TRAVEL->value:
+                            $obj->travelQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            break;
 
-                info('------Insly route ------'.$route);
-                info('------Insly data ------'.json_encode($dataArr));
-
-                $response = CapiRequestService::sendCAPIRequest($route, $dataArr);
-
-                if (! empty($response->quoteUID)) {
+                        case QuoteTypes::HEALTH->value:
+                            $obj->healthQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            break;
+                        case QuoteTypes::PET->value:
+                            $obj->petQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new PetQuote())->allowedColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
+                        case QuoteTypes::BIKE->value:
+                            $obj->bikeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new BikeQuote())->allowedColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
+                        case QuoteTypes::CYCLE->value:
+                            $obj->cycleQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new CycleQuote())->allowedColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
+                        case QuoteTypes::YACHT->value:
+                            $obj->yachtQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new YachtQuote())->allowedColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
+                    }
                     $policy->moved_to_imcrm = true;
-                    $policy->imcrm_link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$response->quoteUID;
+                    if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
+                        $policy->imcrm_link = '/personal-quotes/'.strtolower($quoteType).'/'.$obj->uuid;
+                    } else {
+                        $policy->imcrm_link = '/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
+                    }
+                    $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
+                    $policy->moved_to_imcrm_by = auth()->user()->name;
+                    $policy->code = $obj->code;
                     $policy->save();
                 }
                 $data[] = $this->where('policy_no', $policyNumber)->first()->toArray();
 
                 return [
                     'status' => 201,
-                    'message' => 'Lead Created Successully',
+                    'message' => 'Lead Created Successfully',
                     'data' => $data,
                 ];
+            } else {
+                return [
+                    'status' => 400,
+                    'message' => 'Quote Type not found.',
+                    'data' => '',
+                ];
             }
+        } else {
+            return [
+                'status' => 400,
+                'message' => 'Quote not found.',
+                'data' => '',
+            ];
         }
+    }
+
+    // payload
+    private function prePareData($policy, $quoteType)
+    {
+
+        $dataArr = [];
+        $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
+        $dataArr['email'] = $policy['customer']['email'] ?? null;
+        if ($dataArr['email'] == null) {
+            $dataArr['email'] = $policy['customer']['contact_person_email'] ?? null;
+        }
+        $insurer = $policy['policy']['insurer'] ?? null;
+        if ($insurer == 'Tokio Marine Nichido') {
+            $insurer = 'Tokio Marine & Nichido Fire Insurance Co';
+        }
+        $insuredWith = InsuranceProviderRepository::where('code', 'like', '%'.$insurer.'%')
+            ->orWhere('text', 'like', '%'.$insurer.'%')->first();
+
+        $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;
+        if ($previousPolicyStartDate) {
+            $dataArr['previous_policy_expiry_date'] = $this->formatDate($previousPolicyStartDate);
+        }
+
+        $customerName = $policy['customer']['name'] ?? null;
+        $arr = explode(' ', trim($customerName));
+        $dataArr['first_name'] = $arr[0];
+        array_shift($arr);
+
+        $dataArr['last_name'] = implode(' ', $arr);
+        $dataArr['mobile_no'] = $policy['customer']['mobile_phone'] ?? '0552244556';
+
+        $premium = null;
+        $data = $policy->toArray();
+        if (! empty($data['installments'])) {
+            $premium = collect($data['installments'])->sum('gross_premium');
+        }
+        $quoteTypeData = QuoteType::where('code', $quoteType)->first();
+        if ($dataArr['email'] != null) {
+            $customer = $this->getCustomer($dataArr);
+            $dataArr['customer_id'] = $customer->id ?? null;
+        } else {
+            $dataArr['customer_id'] = null;
+        }
+        $capi = new CapiRequestService();
+        $resp = $capi->getUUID($quoteTypeData->id);
+        if ($resp) {
+            $dataArr['uuid'] = $resp->uuid;
+            $dataArr['code'] = $quoteTypeData->short_code.'-'.$resp->uuid;
+        }
+        $dataArr['premium'] = $premium;
+        $dataArr['source'] = LeadSourceEnum::INSLY;
+        $dataArr['quote_status_id'] = QuoteStatusEnum::NewLead;
+        if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
+            $dataArr['quote_type_id'] = $quoteTypeData->id;
+            $dataArr['is_ecommerce'] = false;
+        }
+
+        return $dataArr;
+    }
+
+    public function getCoverageList($user)
+    {
+        $coverage = [];
+        $inslyCoverageArray = $this->inslyInsurances();
+        if ($user->hasRole(RolesEnum::BikeAdvisor)) {
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BIKE->value]);
+        }
+        if ($user->hasRole(RolesEnum::CorpLineAdvisor)) {
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BUSINESS->value]);
+        }
+        if ($user->hasRole(RolesEnum::CarAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::CAR->value]);
+        }
+        if ($user->hasRole(RolesEnum::LifeAdvisor)) {
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::LIFE->value]);
+        }
+        if ($user->hasRole(RolesEnum::HomeAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::HOME->value]);
+        }
+        if ($user->hasRole(RolesEnum::TravelAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::TRAVEL->value]);
+        }
+        if ($user->hasRole(RolesEnum::HealthAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::HEALTH->value]);
+        }
+        if ($user->hasRole(RolesEnum::CycleAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::CYCLE->value]);
+        }
+        if ($user->hasRole(RolesEnum::PetAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::PET->value]);
+        }
+        if ($user->hasRole(RolesEnum::YachtAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::YACHT->value]);
+        }
+        if (! empty($coverage)) {
+            // converted all values to lower case because some time data in mongodb have different case values.
+            $lowerCaseCoverageValues = array_map('strtolower', $coverage);
+            $coverage = array_merge($coverage, $lowerCaseCoverageValues);
+        }
+
+        return $coverage;
+    }
+
+    private function formatDate($date)
+    {
+        if ($date instanceof UTCDateTime) {
+            return $date->toDateTime()->format('Y-m-d');
+        } else {
+            return Carbon::parse($date)->format('Y-m-d');
+        }
+    }
+    private function replaceStoredAppURLWithCurrentAppURL($url)
+    {
+        $hostUrl = config('constants.APP_URL');
+        if ($url) {
+            $parsedUrl = parse_url($url);
+
+            return $hostUrl.$parsedUrl['path'];
+        }
+
+        return null;
+
+    }
+
+    private function searchPhoneNumberRegexPattern($mobileNo)
+    {
+        $phoneNumber = str_replace(' ', '', $mobileNo);
+        // Creating a regex pattern to match phone numbers ignoring spaces
+        $regexPattern = implode('.*', str_split($phoneNumber));
+
+        return new Regex("$regexPattern", 'i');
     }
 }

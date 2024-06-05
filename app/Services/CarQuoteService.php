@@ -2,20 +2,23 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Facades\Ken;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
-use App\Models\Payment;
 use App\Models\QuoteBatches;
-use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -36,15 +39,18 @@ class CarQuoteService extends BaseService
     protected $leadAllocationService;
     protected $sendEmailCustomerService;
     protected $applicationStorageService;
+    protected $activityService;
+
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->activityService = $activityService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
@@ -103,6 +109,8 @@ class CarQuoteService extends BaseService
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
+                //'ppip.text AS prefill_plan_provider_id_text',
+                //'prefill_plan.text AS prefill_plan_id_text',
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
                 'cqr.year_of_manufacture AS year_of_manufacture_text',
@@ -111,6 +119,7 @@ class CarQuoteService extends BaseService
                 'cqrd.notes',
                 'cqrd.lost_approval_status',
                 'cqrd.lost_approval_reason',
+                'cqrd.insly_id',
                 'vt.text as vehicle_type_id_text',
                 'cqr.currently_insured_with',
                 'cqr.currently_insured_with as currently_insured_with_text',
@@ -142,6 +151,7 @@ class CarQuoteService extends BaseService
                 'qvc.visit_count as visit_count',
                 't.cost_per_lead as cost_per_lead',
                 'cqr.quote_batch_id',
+                'lu.text as transaction_type_text',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
                 'cqr.risk_score',
@@ -169,8 +179,12 @@ class CarQuoteService extends BaseService
                 'ent.company_address',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
-                'cqr.prefill_plan_id',
+                //'cqr.prefill_plan_id',
+                //'cqr.prefill_plan_selected_at',
+                //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
+                //'cqr.aml_status_id',
+                DB::raw('GROUP_CONCAT(team.name) as team_name')
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -179,6 +193,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
             ->leftJoin('uae_license_held_for as ulhfs', 'ulhfs.id', '=', 'cqr.back_home_license_held_for_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
@@ -186,6 +201,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+            //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
+            //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
@@ -202,7 +219,10 @@ class CarQuoteService extends BaseService
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
                 $join->on('qvc.user_id', 'cqr.advisor_id');
-            });
+            })
+            ->leftJoin('user_team as ut', 'u.id', '=', 'ut.user_id')
+            ->leftJoin('teams as team', 'team.id', '=', 'ut.team_id')
+            ->groupBy('cqr.id');
 
         $this->exportQuery = DB::table('car_quote_request as cqr')
             ->select(
@@ -312,6 +332,8 @@ class CarQuoteService extends BaseService
         $carQuote = CarQuote::where('uuid', $id)->first();
 
         $oldCarValue = $carQuote->car_value;
+        $oldDob = $carQuote->dob;
+        $oldBodyType = $carQuote->vehicle_type_id;
         info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
 
         if ($request->first_name) {
@@ -414,6 +436,15 @@ class CarQuoteService extends BaseService
         if ($deleteValuationResponse) {
             $carQuote->save();
 
+            $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';
+            // update embedded products list
+            if (
+                (isset($request->dob) && $oldFormattedDate != $request->dob) ||
+                (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)
+            ) {
+                Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
+            }
+
             if (isset($request->return_to_view)) {
                 return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
             }
@@ -445,10 +476,25 @@ class CarQuoteService extends BaseService
     public function updatedAccessAgainstPaymentStatus($paymentEntityModel, $record)
     {
         $carPayment = [];
+        $paymentStatuses = [
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DECLINED,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::OVERDUE,
+            PaymentStatusEnum::CREDIT_APPROVED,
+            PaymentStatusEnum::CANCELLED,
+            PaymentStatusEnum::REFUNDED,
+            PaymentStatusEnum::DISPUTED,
+            PaymentStatusEnum::FAILED,
+            PaymentStatusEnum::DRAFT,
+        ];
+
         if ($paymentEntityModel->payments) {
             $carPayment = $paymentEntityModel->payments()->where('code', '=', $record->code)->first();
         }
-        $quoteStatusArray = [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved];
 
         $access['carAdvisorCanEdit'] = false;
         $access['carManagerCanEdit'] = false;
@@ -456,57 +502,44 @@ class CarQuoteService extends BaseService
         $access['carAdvisorCanEditInsurer'] = false;
         $access['carManagerCanEditInsurer'] = false;
 
-        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-            if (! empty($record->payment_status_id) && $record->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+        // Car Advisor Validations
+        if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && ! empty($record->payment_status_id)) {
+            if ($record->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                $access['carAdvisorCanEditInsurer'] = true;
+            }
+
+            if (in_array($record->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
+                $access['carAdvisorCanEditPaymentCancelledRefund'] = true;
+            }
+
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
+                $access['carAdvisorCanEdit'] = true;
                 $access['carAdvisorCanEditInsurer'] = true;
             }
         }
 
-        if (auth()->user()->hasRole(RolesEnum::CarManager)) {
-            if (! empty($record->payment_status_id) && $record->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+        // Car Manager Validations
+        if (auth()->user()->hasRole(RolesEnum::CarManager) && ! empty($record->payment_status_id)) {
+            if ($record->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                $access['carManagerCanEditInsurer'] = true;
+            }
+
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
+                $access['carManagerCanEdit'] = true;
                 $access['carManagerCanEditInsurer'] = true;
             }
         }
-        // Car Advisor & Manager with payment status captured/Partially captured
-        if (! empty($carPayment->captured_at)) {
-            $paymentCapturedAt = $carPayment->captured_at;
-            $today = Carbon::today();
 
-            $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
-            $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
-
-            if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-                if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && $today->lte($dateLimitForAdvisor) && ! in_array($record->quote_status_id, $quoteStatusArray)) {
-                    $access['carAdvisorCanEdit'] = true;
-                    $access['carAdvisorCanEditInsurer'] = true;
-                }
-            }
-
-            if (auth()->user()->hasRole(RolesEnum::CarManager)) {
-                if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager) && ! in_array($record->quote_status_id, $quoteStatusArray)) {
-                    $access['carManagerCanEdit'] = true;
-                    $access['carManagerCanEditInsurer'] = true;
-                }
-            }
-        }
-        // Car Advisor
-        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-            if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
-                $access['carAdvisorCanEditPaymentCancelledRefund'] = true;
-            }
-        }
-
-        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::LeadPool])) {
-            if ((in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) || $record->payment_status_id == '' || $record->payment_status_id == null)) {
+        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor]) && $record->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if ((! empty($record->payment_status_id) && in_array($record->payment_status_id, $paymentStatuses)) || $record->payment_status_id == '' || $record->payment_status_id == null) {
                 $access['carManagerCanEdit'] = true;
                 $access['carAdvisorCanEdit'] = true;
-            }
-        }
-
-        if (! empty($record->payment_status_id)) {
-            if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && in_array($record->quote_status_id, $quoteStatusArray)) {
-                $access['carAdvisorCanEdit'] = false;
-                $access['carManagerCanEdit'] = false;
             }
         }
 
@@ -545,7 +578,9 @@ class CarQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return CarQuote::where('id', $id)->first();
+        return CarQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
+            $query->orderBy('sr_no', 'asc');
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
     }
 
     public function fillModelProperties()
@@ -793,7 +828,7 @@ class CarQuoteService extends BaseService
 
     private function parseDate($date, $isStartOfDay)
     {
-        if ($date != '') {
+        if ($date && $date != '') {
             if ($isStartOfDay) {
                 return Carbon::parse($date)->startOfDay()->toDateTimeString();
             } else {
@@ -883,12 +918,32 @@ class CarQuoteService extends BaseService
             $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
         }
 
+        if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
+            CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr');
+        }
+        if ($request->transaction_approved_dates) {
+
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+            $freshLoad = ! isset($request->page);
+            $startDate = isset($request->transaction_approved_dates) ?
+                Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+
+            $endDate = isset($request->transaction_approved_dates) ?
+                Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+            $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
+        }
+        if (! empty($request->teams) && is_array($request->teams)) {
+            $this->query->whereIn('team.id', $request->teams);
+        }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == null) {
+                    if (in_array('-1', $request[$item]) || in_array(-1, $request[$item])) {
                         $this->query->whereNull('cqr.advisor_id');
                     } else {
                         $this->query->whereIn('cqr.advisor_id', $request[$item]);
@@ -1042,6 +1097,7 @@ class CarQuoteService extends BaseService
             )
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('teams as team', 'u.team_id', '=', 'team.id')
             ->orderBy('advisor_id', 'ASC');
 
         if (! empty($CDBID)) {
@@ -1086,15 +1142,17 @@ class CarQuoteService extends BaseService
     }
 
     /**
-     * get car quote details, quote plans and pdf
+     * get car quote details, quote plans and pdf.
      *
      * @return mixed
      */
     public function getOcbDetails($uuid)
     {
         $carQuote = CarQuote::select(
-            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'customer_id',
-                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'renewal_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date']
+            [
+                'id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'customer_id',
+                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'renewal_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date',
+            ]
         )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name')->with(['additionalContacts' => function ($q) {
                 $q->where('key', 'email');
@@ -1227,7 +1285,7 @@ class CarQuoteService extends BaseService
     /**
      * modify plan during upload & update process.
      *
-     * @param    $data
+     * @param  $data
      * @return false
      */
     public function renewalCreatePlan($planData)
@@ -1305,6 +1363,11 @@ class CarQuoteService extends BaseService
 
             $response = $this->httpService->processRequest($carPlanData, $apiCreds);
             if ($response == 200) {
+                $plan_id = CarQuote::where('uuid', '=', $request->car_quote_uuid)->value('plan_id');
+                if ($plan_id == $request->car_plan_id) {
+                    $request->merge(['plan_id' => $request->car_plan_id]);
+                    (new CentralService())->updateSelectedPlan(quoteTypeCode::Car, $request->car_quote_uuid, $request);
+                }
                 $this->lockCarQuote($request->car_quote_uuid);
             }
         }
@@ -1318,43 +1381,50 @@ class CarQuoteService extends BaseService
      */
     public function isPlanModifyAllowed($data)
     {
-        $logPrefix = 'fn: isPlanModifyAllowed ';
-        $quote = CarQuote::where('uuid', $data['car_quote_uuid'])->with('paymentStatus')->first();
+        if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
+            if (! $enablePlanValidation->value) {
+                info('plan modification validation is disabled from backend');
 
-        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
-            $carPayment = Payment::where('code', '=', $quote->code)->first();
-            if (! empty($carPayment->captured_at)) {
-                $paymentCapturedAt = $carPayment->captured_at;
-                $today = Carbon::today();
-
-                $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
-                $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
-
-                if (Auth::user()->hasRole(RolesEnum::CarAdvisor) && $today->lte($dateLimitForAdvisor)) {
-                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
-
-                    return true;
-                } elseif (Auth::user()->hasRole(RolesEnum::CarManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
-                    info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
-
-                    return true;
-                }
+                return true;
             }
         }
 
-        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager])) {
-            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+        $logPrefix = 'fn: isPlanModifyAllowed ';
+        $quote = CarQuote::where('uuid', $data['car_quote_uuid'])->with('paymentStatus')->first();
+        $paymentStatuses = [
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DECLINED,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::OVERDUE,
+            PaymentStatusEnum::CREDIT_APPROVED,
+            PaymentStatusEnum::CANCELLED,
+            PaymentStatusEnum::REFUNDED,
+            PaymentStatusEnum::DISPUTED,
+            PaymentStatusEnum::FAILED,
+            PaymentStatusEnum::DRAFT,
+        ];
 
-            return true;
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+                info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+
+                return true;
+            } elseif (auth()->user()->hasRole(RolesEnum::CarManager) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+                info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid);
+
+                return true;
+            }
         }
 
-        if (
-            $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
-                && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager]))
-        ) {
-            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if (in_array($quote->payment_status_id, $paymentStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
+                info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
-            return true;
+                return true;
+            }
         }
 
         info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
@@ -1407,6 +1477,7 @@ class CarQuoteService extends BaseService
     public function processManualLeadAssignment($request): array
     {
         $userId = (int) $request->assigned_to_id_new;
+        $quoteType = $request->modelType;
 
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -1433,33 +1504,15 @@ class CarQuoteService extends BaseService
 
             info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType); // update new and previous (if applicable) advisor counts in lead allocation table
 
-            $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
-
+            $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Car, $userId);
             $lead->auto_assigned = false;
 
             $lead->save();
         }
 
         return [];
-    }
-
-    private function updateExistingQuoteViewCount($userId, $leadId)
-    {
-        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->first();
-        if ($quoteViewCount) {
-            $quoteViewCount->user_id = $userId;
-            $quoteViewCount->visit_count = 0;
-            $quoteViewCount->save();
-        } else {
-            QuoteViewCount::create([
-                'quote_id' => $leadId,
-                'quote_type_id' => 1,
-                'user_id' => $userId,
-                'visit_count' => 1,
-            ]);
-        }
     }
 
     public function updateTierAndCost($lead)
@@ -1598,29 +1651,6 @@ class CarQuoteService extends BaseService
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
 
-    public function addOrUpdateQuoteViewCount($record)
-    {
-        if ($record->advisor_id != null && $record->advisor_id == Auth::user()->id) {
-            // Search for an existing record with the same quote_id and user_id
-            $quoteViewCount = QuoteViewCount::where('quote_id', $record->id)
-                ->where('user_id', Auth::user()->id)
-                ->first();
-
-            if ($quoteViewCount) {
-                // If the record exists, increment its visit_count
-                $quoteViewCount->increment('visit_count');
-            } else {
-                // If the record does not exist, create a new one
-                QuoteViewCount::create([
-                    'quote_id' => $record->id,
-                    'quote_type_id' => 1,
-                    'user_id' => Auth::user()->id,
-                    'visit_count' => 1,
-                ]);
-            }
-        }
-    }
-
     private function deleteValuationAPI($oldValue, $currentValue, $quoteUuId)
     {
         if ($oldValue == $currentValue) {
@@ -1713,7 +1743,7 @@ class CarQuoteService extends BaseService
         return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
     }
 
-    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteType = null)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
@@ -1722,13 +1752,16 @@ class CarQuoteService extends BaseService
 
         info('Previous assignment type is : '.$previousAssignmentType);
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
+
         //Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
         // Get the allocation record for the new advisor
-        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
+        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor only if its different from previous advisor
+
         if ($newAdvisorId !== $previousAdvisorId) {
             // Update allocation counts for the new advisor (if applicable)
             $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
@@ -1736,7 +1769,7 @@ class CarQuoteService extends BaseService
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
-            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
+            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
@@ -1869,8 +1902,18 @@ class CarQuoteService extends BaseService
     {
         $request = request();
         $results = DB::table('car_quote_request AS cqr')
-            ->select('cqr.code', 'qb.name AS batch_no', 'cqr.first_name', 'cqr.last_name', 'cqr.email', 'cqr.mobile_no',
-                'cqr.created_at', 'qs.text AS status', 'tr.name AS tier', 'u.name AS assigned_to')
+            ->select(
+                'cqr.code',
+                'qb.name AS batch_no',
+                'cqr.first_name',
+                'cqr.last_name',
+                'cqr.email',
+                'cqr.mobile_no',
+                'cqr.created_at',
+                'qs.text AS status',
+                'tr.name AS tier',
+                'u.name AS assigned_to'
+            )
             ->leftJoin('quote_status AS qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users AS u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('quote_batches AS qb', 'qb.id', '=', 'cqr.quote_batch_id')

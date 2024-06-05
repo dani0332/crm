@@ -1,6 +1,8 @@
 <script setup>
 const notification = useNotifications('toast');
 import { XButton } from '@indielayer/ui';
+import { useCan, useCanAny } from '../Composables/can';
+import { ref } from 'vue';
 
 const page = usePage();
 const props = defineProps({
@@ -28,9 +30,15 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  paymentStatusEnum: {
+    type: Array,
+    default: () => [],
+  },
 });
 
+const propsDataReactive = ref(props.data);
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const permissionsEnum = page.props.permissionsEnum;
 const modals = reactive({
   cancelPayment: false,
 });
@@ -50,6 +58,7 @@ const paymentForm = useForm({
   modelType: props.modelType,
   embedded_id: null,
   quote_id: null,
+  processing: false,
 });
 
 const downloadLoader = ref(false);
@@ -133,10 +142,6 @@ const epTable = reactive({
       value: 'prices',
     },
     {
-      text: 'EP Status',
-      value: 'ep_status',
-    },
-    {
       text: 'Last Updated Date',
       value: 'updated_at',
     },
@@ -158,11 +163,14 @@ const ppDoc = str => {
 const checkTransactionExist = item => {
   for (let price of item.prices) {
     for (let transaction of price.transactions) {
-      var timeStart = new Date(transaction.created_at);
-      var timeEnd = new Date();
-      var hourDiff = timeEnd - timeStart;
-      if ((transaction.payment_status_id == 6 || transaction.payment_status_id == 4) && hourDiff <= 172800000) {
-        return false;
+      const paymentStatusDate = transaction.payment_status_date;
+      if(paymentStatusDate) {
+        var timeStart = new Date(paymentStatusDate);
+        var timeEnd = new Date();
+        var timeDifferenceInMiliseconds = timeEnd.getTime() - timeStart.getTime();
+        if ((transaction.payment_status_id == 6 || transaction.payment_status_id == 4) && timeDifferenceInMiliseconds <= 259200000) {
+          return false;
+        }
       }
     }
   }
@@ -189,21 +197,42 @@ const paymentStatus = id => {
 };
 
 const toggleProduct = (ep, event) => {
+
+  let removeIdFromSelection = [];
+  propsDataReactive.value?.forEach(item => {
+    if (item.id === ep.embedded_product_id) {
+      item.prices.forEach(price => {
+        if (price.id !== ep.id && price.transactions[0].is_selected !== false) {
+          price.transactions[0].is_selected = false;
+          removeIdFromSelection.push(price.id);
+        }
+      });
+    }
+  });
+
   let id = ep.id;
   if (event.target.checked) {
     selectedEp.value.push(id);
   } else {
-    var index =  selectedEp.value.indexOf(id);
-    if (index !== -1) {
-      selectedEp.value.splice(id, 1);
-    }
+    removeIdFromSelection.push(id);
   }
+
+  if(removeIdFromSelection.length > 0) {
+    removeIdFromSelection.forEach(id => {
+      const indexToRemove = selectedEp.value.indexOf(id);
+      if (indexToRemove !== -1) {
+        selectedEp.value.splice(indexToRemove, 1);
+      }
+    });
+  }
+
+  console.log(selectedEp);
+
   let data = { quote_uuid: props.quote.uuid, id: id,modelType:props.modelType };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
     .post(requestUrl, data)
     .then(res => {
-        console.log('res',res);
       notification.success('Updated');
     })
     .catch(err => {
@@ -214,6 +243,7 @@ const onActivitySubmit = isValid => {
   if (!isValid) return;
   const method = 'post';
   const url = '/quotes/cancel-payment';
+  paymentForm.processing = true;
   axios
     .post(url, paymentForm)
     .then(res => {
@@ -226,167 +256,104 @@ const onActivitySubmit = isValid => {
       } else {
         notification.error('Something went wrong');
       }
+    })
+    .finally(() => {
+      paymentForm.processing = false;
     });
 };
 const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
 <template>
-  <div
-    v-if="
-      hasAnyRole([
-        $page.props.rolesEnum.Engineering,
-        $page.props.rolesEnum.BetaUser,
-      ])
-    "
-    class="p-4 rounded shadow mb-6 bg-white"
-  >
-    <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Embedded Products <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
-      </h3>
-      <div class="flex flex-wrap gap-3">
-        <x-button
-          v-if="selectedEp.length > 0"
-          size="sm"
-          @click.prevent="onCopyText()"
-        >
-          Copy Payment Link
-        </x-button>
+  <div v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_VIEW, permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL])">
+    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
+
+      <div class="flex flex-wrap gap-4 justify-between items-center">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Embedded Products <x-tag size="sm">{{ propsDataReactive.length || 0 }}</x-tag>
+        </h3>
+        <div style="margin-right:50px;">
+          <x-button v-if="selectedEp.length > 0" size="sm" @click.stop="onCopyText()">
+            Copy Payment Link
+          </x-button>
+        </div>
       </div>
-    </div>
-    <DataTable
-      table-class-name="tablefixed"
-      :headers="epTable.columns"
-      :items="props.data || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-code="{ short_code }">
-        {{ short_code + '-' + props.code }}
-      </template>
+      <template #content>
+        <x-divider class="mb-4 mt-2 mt-1" />
+        <DataTable table-class-name="tablefixed" :headers="epTable.columns" :items="propsDataReactive || []" border-cell
+          hide-rows-per-page hide-footer>
+          <template #item-code="{ short_code }">
+            {{ short_code + '-' + props.code }}
+          </template>
 
-      <template #item-prices="{prices}">
+          <template #item-prices="{ prices }">
 
-        <div v-if="prices.length > 0" class="flex gap-3">
-
-
-            <x-tag color="primary" v-for="priceItem  in prices">
-                <x-checkbox
-
-                    v-if="priceItem.transactions[0]?.is_selected == '1'"
-                    @change="toggleProduct(priceItem, $event)"
-                    :model-value="true"
-                    color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+            <div v-if="prices.length > 0" class="flex gap-3">
+              <x-tag color="primary" v-for="(priceItem, index) in prices" :key="index">
+                <x-checkbox v-model="priceItem.transactions[0].is_selected"
+                  @change="toggleProduct(priceItem, $event)" color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
                     || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
-                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED"
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED" />
+                {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
+              </x-tag>
+            </div>
 
-                />
-                <x-checkbox
+          </template>
 
-                    v-else
-                    @change="toggleProduct(priceItem, $event)"
-                    color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
-                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
-                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED"
-                />
-              {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
-            </x-tag>
+          <template #item-payment_status="{ prices }">
+            {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
+          </template>
 
-        </div>
+          <template #item-updated_at="{ updated_at }">
+            {{ dateFormat(updated_at) }}
+          </template>
 
+          <template #item-actions="item">
+            <div class="flex flex-col gap-1">
+              <x-button size="xs" color="emerald" :disabled="!item.send_document_button" :loading="sendDocumentLoader"
+                @click.prevent="sendDcoument(item.id)">
+                Send Documents
+              </x-button>
+              <x-button v-if="item.canGenerateCerticate" size="xs" color="#ff5e00"
+                :disabled="!item.send_document_button" :loading="downloadLoader"
+                @click.prevent="downloadDcoument(item.id)">
+                Download Certificate
+              </x-button>
+              <x-button size="xs" color="primary" :href="ppDoc(item.company_documents)" target="_blank"
+                :disabled="ppDoc(item.company_documents) === ''">
+                Download Product Wordings
+              </x-button>
+              <x-button v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" size="xs" color="#ff5e00"
+                :disabled="checkTransactionExist(item)" @click.prevent="cancelPaymentForm(item)">
+                Cancel Payments
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" v-model="modals.cancelPayment" size="lg"
+          show-close backdrop>
+          <template #header> Cancel Payment </template>
+
+          <x-form @submit="onActivitySubmit" :auto-focus="false">
+            <div class="grid gap-4">
+              <x-input v-model="paymentForm.amount" label="Amount" :rules="[isRequired, isNumber]" class="w-full" />
+
+              <x-textarea v-model="paymentForm.reason" label="Reason" maxlength="250" :adjust-to-text="false"
+                class="w-full" />
+            </div>
+
+            <div class="text-right space-x-4 mt-12">
+              <x-button size="sm" @click.prevent="modals.cancelPayment = false">
+                Cancel
+              </x-button>
+
+              <x-button size="sm" color="emerald" :loading="paymentForm.processing" type="submit">
+                Cancel Payment
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
       </template>
-
-      <template #item-ep_status="{ ep_status }"> N/A </template>
-
-      <template #item-payment_status="{ prices }">
-        {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
-      </template>
-
-      <template #item-updated_at="{ updated_at }">
-        {{ dateFormat(updated_at) }}
-      </template>
-
-      <template #item-actions="item">
-        <div class="flex flex-col gap-1">
-          <x-button
-            size="xs"
-            color="emerald"
-            :disabled="!item.send_document_button"
-            :loading="sendDocumentLoader"
-            @click.prevent="sendDcoument(item.id)"
-          >
-            Send Documents
-          </x-button>
-          <x-button
-            v-if="item.canGenerateCerticate"
-            size="xs"
-            color="#ff5e00"
-            :disabled="!item.send_document_button"
-            :loading="downloadLoader"
-            @click.prevent="downloadDcoument(item.id)"
-          >
-            Download Certificate
-          </x-button>
-          <x-button
-            size="xs"
-            color="primary"
-            :href="ppDoc(item.company_documents)"
-            target="_blank"
-            :disabled="ppDoc(item.company_documents) === ''"
-          >
-            Download Product Wordings
-          </x-button>
-          <x-button
-            size="xs"
-            color="#ff5e00"
-            :disabled="checkTransactionExist(item)"
-            @click.prevent="cancelPaymentForm(item)"
-          >
-            Cancel Payments
-          </x-button>
-        </div>
-      </template>
-    </DataTable>
-    <x-modal v-model="modals.cancelPayment" size="lg" show-close backdrop>
-      <template #header> Cancel Payment </template>
-
-      <x-form @submit="onActivitySubmit" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-input
-            v-model="paymentForm.amount"
-            label="Amount"
-            :rules="[isRequired, isNumber]"
-            class="w-full"
-          />
-
-          <x-textarea
-            v-model="paymentForm.reason"
-            label="Reason"
-            maxlength="250"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-        </div>
-
-        <div class="text-right space-x-4 mt-12">
-          <x-button size="sm" @click.prevent="modals.cancelPayment = false">
-            Cancel
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="paymentForm.processing"
-            type="submit"
-          >
-            Cancel Payment
-          </x-button>
-        </div>
-      </x-form>
-    </x-modal>
+    </x-collapse>
   </div>
 </template>

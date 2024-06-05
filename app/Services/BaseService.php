@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\GenericModel;
+use App\Models\QuoteViewCount;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -237,6 +238,7 @@ class BaseService
                 'assignee' => User::where('id', $activity->assignee_id)->first()->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
+                'is_cold' => $activity->is_cold,
             ];
             array_push($activities, $updatedActivity);
         }
@@ -301,5 +303,24 @@ class BaseService
             $quote->save();
         }
 
+    }
+
+    public function addOrUpdateQuoteViewCount($record, $quoteTypeId, $userId = null)
+    {
+        $userId = $userId ?: Auth::user()->id;
+
+        if ($record->advisor_id != null && $record->advisor_id == $userId) {
+            $quoteViewCount = QuoteViewCount::updateOrCreate(
+                ['quote_id' => $record->id, 'user_id' => $userId, 'quote_type_id' => $quoteTypeId],
+                [],
+            );
+
+            if ($quoteViewCount->wasRecentlyCreated) {
+                $quoteViewCount->visit_count = 1;
+                $quoteViewCount->save();
+            } else {
+                $quoteViewCount->increment('visit_count');
+            }
+        }
     }
 }

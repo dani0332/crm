@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -12,6 +15,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
+use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Emirate;
@@ -27,10 +31,12 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\SplitPaymentService;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -127,8 +133,12 @@ class AmtController extends Controller
         if (isset($request->leadStatus) && $request->leadStatus != '') {
             $data->where('qs.id', '=', $request->leadStatus);
         }
-        if (isset($request->advisor_id) && $request->advisor_id != '') {
-            $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
+        if (isset($request->advisor_id) && is_array($request->advisor_id) && count($request->advisor_id) > 0) {
+            if (count($request->advisor_id) === 1 && $request->advisor_id[0] == '-1') {
+                $data->whereNull('bqr.advisor_id');
+            } else {
+                $data->whereIn('bqr.advisor_id', $request->advisor_id);
+            }
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
@@ -213,7 +223,7 @@ class AmtController extends Controller
     }
 
     /**
-     * @param    $uuid
+     * @param  $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($id)
@@ -228,6 +238,7 @@ class AmtController extends Controller
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
+        $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -238,6 +249,8 @@ class AmtController extends Controller
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, QuoteTypes::BUSINESS->name);
 
         if (AMLService::checkAMLStatusFailed(QuoteTypes::BUSINESS->id(), $record->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
@@ -250,12 +263,13 @@ class AmtController extends Controller
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
         $lookupService = app(LookupService::class);
+        $paymentMethods = $lookupService->getPaymentMethods();
         $legalStructure = $lookupService->getLegalStructure();
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->active()->get();
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -287,6 +301,13 @@ class AmtController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'insuranceProviders' => $insuranceProviders,
+            'vatPercentage' => $vatPercentage,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'paymentMethods' => $paymentMethods,
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($record->payments),
+            'isAmlClearedForPayment' => $isAmlClearedForPayment,
+
         ]);
     }
 
@@ -351,8 +372,8 @@ class AmtController extends Controller
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
         })->toArray();
 
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus('Business', $item['id'], $request);
 
             return $item;
         }, $leadStatuses);

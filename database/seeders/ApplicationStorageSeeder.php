@@ -25,5 +25,131 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ]);
         }
+
+        $advisorNotificationTemplateId = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_TEMPLATE')->count();
+        if ($advisorNotificationTemplateId == 0) {
+            $advisorNotificationTemplateId = ApplicationStorage::create([
+                'key_name' => 'ADVISOR_NOTIFICATION_TEMPLATE',
+                'value' => '603',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $advisorNotificationCarAdvisor = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_CAR_ADVISOR')->count();
+        if ($advisorNotificationCarAdvisor == 0) {
+            $advisorNotificationCarAdvisor = ApplicationStorage::create([
+                'key_name' => 'ADVISOR_NOTIFICATION_CAR_ADVISOR',
+                'value' => 'Veeral Joshi,veeral.joshi@insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $advisorNotificationHealthAdvisor = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_HEALTH_ADVISOR')->count();
+        if ($advisorNotificationHealthAdvisor == 0) {
+            $advisorNotificationHealthAdvisor = ApplicationStorage::create([
+                'key_name' => 'ADVISOR_NOTIFICATION_HEALTH_ADVISOR',
+                'value' => 'Agatha Alicdan,agatha.alicdan@insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $advisorNotificationBccEmails = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_BCC_EMAILS')->count();
+        if ($advisorNotificationBccEmails == 0) {
+            $advisorNotificationBccEmails = ApplicationStorage::create([
+                'key_name' => 'ADVISOR_NOTIFICATION_BCC_EMAILS',
+                'value' => 'IM HR,hr@insurancemarket.ae,Hitesh Motwani,hitesh.motwani@insurancemarket.ae,Fayaz Kariyambath,fayaz.k@insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $advisorNotificationEnable = ApplicationStorage::where('key_name', ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE)->count();
+        if ($advisorNotificationEnable == 0) {
+            $advisorNotificationEnable = ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE,
+                'value' => '0',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
+        if (! $epMdxV2From) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::EP_MDX_V2_FROM,
+                'value' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
+        if (! $epMdxV3From) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::EP_MDX_V3_FROM,
+                'value' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::EMAIL_CAMPAIGN)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::EMAIL_CAMPAIGN,
+                'value' => 'WIN-FOR-SURE',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN,
+                'value' => '651',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED,
+                'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS,
+                'value' => 30,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE,
+                'value' => 117,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
     }
 }

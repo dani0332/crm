@@ -35,8 +35,8 @@ const computedParent = computed(() => {
   if (teamForm.type)
     return props.products
       .filter(x => {
-        if (x.type == 'Team' && teamForm.type == 2) return x;
-        if (x.type == 'Subteam' && teamForm.type == 3) return x;
+        if (x.type == 'Product' && teamForm.type == 2) return x;
+        if (x.type == 'Team' && teamForm.type == 3) return x;
       })
       .map(item => ({
         value: item.id,

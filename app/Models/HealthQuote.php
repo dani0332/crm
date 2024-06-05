@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -17,6 +18,7 @@ class HealthQuote extends Model implements AuditableContract
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'health_quote_request';
+    protected $fillable = [];
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
@@ -26,6 +28,7 @@ class HealthQuote extends Model implements AuditableContract
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'mobile_no' => FilterTypes::EXACT,
+        'created_at' => FilterTypes::DATE_BETWEEN,
     ];
     protected $guarded = [];
 
@@ -71,7 +74,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function healthQuoteRequestDetail()
     {
-        return $this->hasOne(HealthQuoteRequestDetail::class, 'id', 'health_quote_request_id');
+        return $this->hasOne(HealthQuoteRequestDetail::class, 'health_quote_request_id', 'id');
     }
 
     public function currentProvider()
@@ -139,7 +142,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function lostReason()
     {
-        return $this->belongsTo(LostReason::class, 'lost_reason_id');
+        return $this->belongsTo(LostReasons::class, 'lost_reason_id');
     }
 
     public function healthLeadType()
@@ -158,8 +161,44 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Health);
+    }
+
+    public function notes()
+    {
+        return $this->morphMany(QuoteNote::class, 'quote_noteable');
+    }
+
     public function duplicateInquiryLog(): MorphMany
     {
         return $this->morphMany(DuplicateInquiryLog::class, 'loggable');
+    }
+
+    public static function getCustomerMemberName($id)
+    {
+        $customerMember = CustomerMembers::find($id);
+        if ($customerMember) {
+            if ($customerMember->first_name == null && $customerMember->last_name == null) {
+                $quoteMemberCount = CustomerMembers::where([
+                    'customer_type' => $customerMember->customer_type,
+                    'first_name' => GenericRequestEnum::MEMBER,
+                ])->count();
+                $customerMember->first_name = GenericRequestEnum::MEMBER;
+                $customerMember->last_name = (++$quoteMemberCount);
+                $customerMember->save();
+            }
+
+            return $customerMember->first_name.' '.$customerMember->last_name;
+        } else {
+            $healthQuote = HealthQuote::find($id);
+            if ($healthQuote) {
+                return $healthQuote->first_name.' '.$healthQuote->last_name;
+            }
+        }
+
+        return 'Price';
     }
 }

@@ -11,6 +11,7 @@ class CycleQuote extends Model
 
     protected $table = 'cycle_quote_request';
     protected $fillable = ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition'];
+    public $allowedColumns = ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition'];
 
     /**
      * @return array
@@ -34,5 +35,15 @@ class CycleQuote extends Model
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
+
+    public function allowedColumns()
+    {
+        return $this->allowedColumns;
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\EnvEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SageApi;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
 use App\Http\Controllers\TeamController;
@@ -53,20 +55,24 @@ use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
 use App\Http\Controllers\V2\CarQuoteController;
+use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
+use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\QuoteSyncController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -94,6 +100,8 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
     });
 }
 
+Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
+
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
@@ -101,32 +109,49 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('leadsearch', function () {
         return redirect('home');
     });
+    Route::get('verify-sage', [SageApi::class, 'index']);
 
     Route::get('home', function () {
         return inertia('Home/Home', ['im_logo' => getIMLogo()]);
     });
 
-    Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan/{planId}', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
+    Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
+
+    Route::post('get-alfred-chat', [AlfredChatController::class, 'index']);
+    Route::post('get-alfred-chat-by-date', [AlfredChatController::class, 'getChatByDate'])->name('getChatByDate');
+
+    Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
+
+    Route::post('/reports/fetch-teams-by-lob', [ReportsController::class, 'fetchTeamListByLob']);
+    Route::post('/reports/fetch-advisors-by-lob', [ReportsController::class, 'fetchAdvisorsListByLob']);
+    Route::post('/reports/fetch-subteams-by-team', [ReportsController::class, 'fetchSubTeamListByTeam']);
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
+    Route::post('/reports/fetch-advisor-by-sub-team', [ReportsController::class, 'fetchAdvisorListBySubTeam']);
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
+    Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport'])->name('advisor-conversion-report-view');
+    Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
+
+    Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
 
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
         Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard'])->name('tpl-dashboard-view');
-        Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
-        Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport'])->name('advisor-conversion-report-view');
         Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport'])->name('lead-distribution-report-view');
-        Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
         Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport'])->name('advisor-performance-report-view');
+        Route::get('/reports/revival-conversion', [ReportsController::class, 'renderRevivalConversionReport'])->name('revival-conversion-report-view');
         Route::get('/reports/utm-report', [ReportsController::class, 'utmLeadsSaleReport'])->name('utm-leads-sales-report');
         Route::get('/reports/renewal-report', [ReportsController::class, 'renderRenewalReport'])->name('renewal-batch-report');
+        Route::get('/reports/conversion-as-at', [ReportsController::class, 'renderConversionAsAtReport'])->name('conversion-as-at-report');
+        Route::get('/reports/management-report', [ReportsController::class, 'renderSaleManagementReport'])->name('management-report');
+        Route::get('/reports/total-premium', [ReportsController::class, 'totalPremiumLeadsSaleReport'])->name('total-premium-leads-sales-report');
 
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
         if (in_array(quoteTypeCode::Pet, newUi())) {
+            Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
             Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
         }
         if (in_array(quoteTypeCode::Bike, newUi())) {
@@ -134,13 +159,23 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         if (in_array(quoteTypeCode::Cycle, newUi())) {
             Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
+            Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
         }
         if (in_array(quoteTypeCode::Yacht, newUi())) {
             Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
+            Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
         }
         if (in_array(quoteTypeCode::Jetski, newUi())) {
             Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
         }
+
+        Route::group(['prefix' => 'quotes/'], function () {
+            Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
+            Route::get('revival/{uuid}/edit', [CarRevivalQuoteController::class, 'edit'])->name('carrevival-quotes-edit');
+            Route::put('revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('carrevival-quotes-update');
+
+            Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
+        });
 
         if (in_array(quoteTypeCode::Life, newUi())) {
             Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
@@ -156,6 +191,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction');
+        Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
+        Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
+        Route::delete('delete-quote-notes/{id}', [CentralController::class, 'deleteQuoteNotes'])->name('delete-quote-notes');
         Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-plan-detail');
         Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-leads-detail-with-email-mobile');
         Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-makes-models');
@@ -170,18 +208,29 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
     });
 
+    Route::group(['middleware' => ['permission:'.PermissionsEnum::DATA_EXTRACTION]], function () {
+        Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
+    });
+
     Route::get('embedded-products-reports', [EmbeddedProductController::class, 'reportsList'])->name('embedded-products.reports');
     Route::get('embedded-products-reports/{ep}', [EmbeddedProductController::class, 'reportTransactions'])->name('embedded-products.reports.certificates');
     Route::get('embedded-products-reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::resource('legacy-policy', LegacyPolicyController::class);
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
+    Route::post('legacy-policy/get-s3-temp-url', [LegacyPolicyController::class, 'getS3TempUrl']);
+
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
     Route::post('embedded-products/download-document', [EmbeddedProductController::class, 'downloadDocument'])->name('embedded-products.download-document');
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
 
+    Route::post('updateLeadStatusDragDrop', [CentralController::class, 'updateLeadStatusDragDrop'])->name('update-lead-status-drag-drop');
+
     Route::get('/clear-cache', function () {
+        if (request()->has('info')) {
+            return phpinfo();
+        }
         Artisan::call('cache:clear');
         Artisan::call('route:clear');
         Artisan::call('config:clear');
@@ -191,6 +240,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
+    Route::post('/payments/{quoteType}/split-update', [CentralController::class, 'splitPaymentUpdate'])->name('approve-payments')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/split-payments-approve', [CentralController::class, 'splitPaymentsApprove'])->name('approve-payments')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/migrate-payment', [CentralController::class, 'migratePayment'])->name('payment-edit')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/update-total-price', [CentralController::class, 'updateTotalPrice'])->name('temp-update-totalprice')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/store-new', [CentralController::class, 'storeNewPayment'])->name('payment-create')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/update-new', [CentralController::class, 'updateNewPayment'])->name('payment-edit')->middleware('check_route_access');
+
+    Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
+    // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
 
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
@@ -230,8 +288,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
-    Route::post('/lead-allocation/update-availability', [LeadAllocationController::class, 'updateAvailability']);
-    Route::post('/lead-allocation/update-cap', [LeadAllocationController::class, 'updateCaps']);
+
+    Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
+    Route::get('/advisor-by-quotetype/{user_id}', [LeadAllocationController::class, 'getAdvisorByQuoteType'])->name('allocations.advisor-quotestype');
+
+    Route::post('/lead-allocation/{quoteType}/update-availability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/{quoteType}/update-cap', [LeadAllocationController::class, 'updateCaps']);
     Route::post('/lead-allocation/toggle-reset-cap', [LeadAllocationController::class, 'updateResetCapSwitch']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
@@ -240,6 +302,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
+    Route::post('quotes/{quoteType}/documents/store-multiple', [QuoteDocumentController::class, 'storeMultiple']);
     Route::get('documents/{id}', [QuoteDocumentController::class, 'show'])->name('documents.show');
     Route::post('quotes/{quoteType}/{quoteUuId}/send-policy-documents', [QuoteDocumentController::class, 'sendPolicyDocument']);
     Route::get('quotes/{quoteType}/{quoteId}/documents/{documentTypeCode}/get-uploaded', [QuoteDocumentController::class, 'getQuoteDocumentsUploaded']);
@@ -262,11 +325,18 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
     Route::post('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
     Route::post('/get-users-by-team', [DashboardController::class, 'getUsersByTeam']);
+    Route::post('/get-teams-by-product', [DashboardController::class, 'getTeamsByProduct']);
 
-    Route::post('/get-sub-teams-by-team', [DashboardController::class, 'getSubTeamsByTeam']);
+    Route::post('/get-sub-teams-by-team', [DashboardController::class, 'getSubTeamsByTeam'])->name('getSubTeamsByTeams');
     Route::post('/get-users-by-sub-team', [DashboardController::class, 'getUsersBySubTeam']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
+    Route::get('/reports/stale-leads', [ReportsController::class, 'renderStaleLeadsReport'])->name('stale-leads-report');
+    Route::get('/reports/pipeline-report', [ReportsController::class, 'renderPipelineReport'])->name('pipeline-report');
+
+    Route::post('/reports/fetch-advisors-by-team', [ReportsController::class, 'fetchAdvisorsByTeam'])->name('fetch-advisors-by-team');
+    Route::post('/reports/fetch-teams-by-type', [ReportsController::class, 'fetchTeamsbyType'])->name('fetch-teams-by-type');
+
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])
         ->middleware('check_lead_report_access')
         ->name('lead-list-report');
@@ -293,11 +363,20 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('/edit/{carMake}', [CommercialVehicleConfigurationContoller::class, 'edit'])->name('admin.configure.commerical.vehicles.edit');
             Route::post('/update', [CommercialVehicleConfigurationContoller::class, 'update'])->name('admin.configure.commerical.vehicles.update');
         });
+
+        Route::group(['prefix' => 'quote-sync'], function () {
+            Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
+            Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
+            Route::get('/edit/{quoteSync}', [QuoteSyncController::class, 'edit'])->name('admin.quotesync.edit');
+            Route::put('/update/{quoteSync}', [QuoteSyncController::class, 'update'])->name('admin.quotesync.update');
+            Route::post('/sync-stuck-entries', [QuoteSyncController::class, 'addStuckEntriesForSyncing'])->name('admin.quotesync.sync-stuck-entries');
+        });
     });
 
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
+
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
@@ -313,7 +392,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
-        Route::post('cancel-payment', [CRUDController::class, 'cancelPayment'])->name('cancelPayment');
+        Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
@@ -489,23 +568,37 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
+    Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);
 
     Route::resource('members', MembersDetailController::class);
     Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
+    //health plan manual add routes
+    Route::get('/network-plans-health', [HealthQuoteController::class, 'plansByNetwork']);
+    Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
+
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
+
+    // new route for health plan update process being used now
+
+    Route::post('/health-plan-manual-update-process-v2', [HealthQuoteController::class, 'healthPlanUpdateManualProcessV2']);
     Route::post('/health-plan-manual-create', [HealthQuoteController::class, 'healthPlanCreateQuote']);
+    Route::post('/health-plan-notify-agent', [HealthQuoteController::class, 'healthPlanNotifyAgent']);
 
     Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 
-    Route::post('followups/emails/events', [App\Http\Controllers\V2\FollowupController::class, 'getEmailEvents']);
+    /* health quote members */
+    Route::post('/health-quote-add-member', [HealthQuoteController::class, 'healthQuoteAddMember']);
+    Route::put('/health-quote-update-member', [HealthQuoteController::class, 'healthQuoteUpdateMember']);
+    Route::post('/health-quote-delete-member', [HealthQuoteController::class, 'healthQuoteDeleteMember']);
+    Route::post('followups/emails/events', [FollowupController::class, 'getEmailEvents']);
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
 

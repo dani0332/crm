@@ -1,8 +1,14 @@
 <script setup>
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  quoteType: {
+    type: String,
+    default: 'jetski',
+  },
 });
 
 const page = usePage();
@@ -28,6 +34,15 @@ let availableFilters = {
 
 const filters = reactive(availableFilters);
 const canExport = ref(false);
+
+const quotesSelected = ref([]);
+const permissionAssignLeads = ref(false);
+
+const hasRole = role => useHasRole(role);
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -73,15 +88,37 @@ function setQueryStringFilters() {
   }
 }
 
+const onLeadAssigned = () => {
+  quotesSelected.value = [];
+};
+
+const advisorOptionsFilter = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.roles[0].name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
+      : advisor.name,
+  }));
+});
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
 onMounted(() => {
   setQueryStringFilters();
+  if (hasRole(rolesEnum.JetskiManager) || hasRole(rolesEnum.Admin)) {
+    permissionAssignLeads.value = true;
+  }
 });
 
 const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
@@ -93,8 +130,7 @@ const tableHeader = [
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
-const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
+
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
@@ -223,6 +259,13 @@ watch(
             "
           />
         </x-field>
+        <x-field label="Advisor">
+            <ComboBox
+              v-model="filters.advisor_id"
+              placeholder="Search by Advisor"
+              :options="advisorOptionsFilter"
+            />
+          </x-field>
         <x-field label="Is Ecommerce">
           <x-select
             v-model="filters.is_ecommerce"
@@ -277,8 +320,22 @@ watch(
         </div>
       </div>
     </x-form>
-
+    <Transition name="fade">
+        <div
+          v-if="quotesSelected.length > 0 && permissionAssignLeads"
+          class="mb-4"
+        >
+          <LeadAssignment
+            :selected="quotesSelected.map(e => e.id)"
+            :advisors="advisorOptions"
+            :quoteType="quoteType"
+            @success="onLeadAssigned"
+          />
+        </div>
+      </Transition>
     <DataTable
+
+    v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

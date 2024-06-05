@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
@@ -22,12 +23,12 @@ class CarEmailService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
         // Determine the email template ID
-        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
+        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow);
 
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
@@ -47,7 +48,29 @@ class CarEmailService extends BaseService
             }
         }
 
-        $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+        // trigger SIC workflow
+        if ($triggerSICWorkFlow) {
+            if (! $lead->sic_flow_enabled) {
+                $sicEventName = ApplicationStorage::where('key_name', 'SIC_WORKFLOW_NAME')->first();
+                if ($sicEventName) {
+                    $apiResponse = SIBService::createWorkflowEvent($sicEventName->value, $lead, [], $emailData);
+                    $lead->sic_flow_enabled = true;
+                    $lead->save();
+                    info('SIC workflow event triggered for lead: '.$lead->uuid.' and sic_flow_enabled: '.$lead->sic_flow_enabled);
+                    info('SIC workflow response: '.$apiResponse);
+                } else {
+                    info('SIC workflow key not found');
+                }
+            } else {
+                info('SIC workflow already enabled for lead: '.$lead->uuid);
+            }
+        }
+
+        if ($lead->advisor_id) {
+            $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+        } else {
+            $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
+        }
 
         return $responseCode;
     }
@@ -64,6 +87,7 @@ class CarEmailService extends BaseService
             $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
             $emailData->renewalDueDate = $carbonDate;
         }
+        info('emailData: '.json_encode($emailData));
 
         return $emailData;
     }
@@ -103,32 +127,48 @@ class CarEmailService extends BaseService
 
     private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
-        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
-        //$whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
+        $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
-        $emailData = (object) [
+
+        $isRevivalLead = $carQuote->source == LeadSourceEnum::REVIVAL || $carQuote->source == LeadSourceEnum::REVIVAL_PAID || $carQuote->source == LeadSourceEnum::REVIVAL_REPLIED;
+        $wfsBanner = null;
+        $wfsBannerRedirectUrl = null;
+
+        $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
+        if ($campaign) {
+            if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
+                $wfsBanner = $campaign->banners->buyPolicy;
+            }
+            if (property_exists($campaign, 'landingPage')) {
+                $wfsBannerRedirectUrl = $campaign->landingPage;
+            }
+        }
+
+        info('wfsBanner: '.$wfsBanner.' wfsBannerRedirectUrl: '.$wfsBannerRedirectUrl);
+
+        return (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
             'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
             'whatsAppNumber' => $whatsAppNumber,
             'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
-            'advisorEmail' => $advisor->email,
-            'advisorName' => $advisor->name,
-            'documentUrl' => [$documentUrl],
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'documentUrl' => ! $wfsBanner ? [$documentUrl] : [],
             'carQuoteId' => $carQuote->code,
             'yearOfManufacture' => $carQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.($isRevivalLead ? '?dla=true' : ''), // DLA = Disable Lead Assignment
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.'/?assignAdvisor=true',
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor),
+            'wfsBanner' => $wfsBanner,
+            'wfsBannerRedirectUrl' => $wfsBannerRedirectUrl,
         ];
-
-        return $emailData;
     }
 
     private function getAssignmentTypeText($assignmentType)
@@ -183,19 +223,6 @@ class CarEmailService extends BaseService
         return $buyNowLink;
     }
 
-    private function getAppStorageValueByKey($keyName)
-    {
-        $query = ApplicationStorage::select('value')
-            ->where('key_name', $keyName)
-            ->first();
-
-        if (! $query) {
-            return false;
-        }
-
-        return $query->value;
-    }
-
     private function getVehicleName($lead)
     {
         $vehicleName = '';
@@ -246,8 +273,17 @@ class CarEmailService extends BaseService
         return $result;
     }
 
-    private function getEmailTemplateId($lead, $plans, $tierR)
+    private function getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow = false)
     {
+        if ($triggerSICWorkFlow) {
+            info('Inside sic flow enabled: '.$lead->uuid);
+            $noAdvisorTemplateId = ApplicationStorage::where('key_name', 'SIC_NO_ADVISOR_TEMPLATE_ID')->first();
+            if ($noAdvisorTemplateId) {
+                return (int) $noAdvisorTemplateId->value;
+            } else {
+                return 605; // keeping it as a fallback
+            }
+        }
         if (count($plans) == 0) {
             // No plans with available ratings, send a specific email template
             return $lead->tier_id == $tierR->id ? 492 : 494;
@@ -279,9 +315,9 @@ class CarEmailService extends BaseService
         $compPlans = array_filter($plans, function ($plan) {
             // Check if the 'repairType' and 'isRatingAvailable' properties exist and meet the conditions.
             return property_exists($plan, 'repairType') &&
-                   property_exists($plan, 'isRatingAvailable') &&
-                   ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
-                   $plan->isRatingAvailable === true;
+                property_exists($plan, 'isRatingAvailable') &&
+                ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
+                $plan->isRatingAvailable === true;
         });
 
         if (count($compPlans) > 0) {
@@ -298,5 +334,10 @@ class CarEmailService extends BaseService
 
         // return $top6Plans if $top6Plans is not empty otherwise return $plans
         return ! empty($top6Plans) ? $top6Plans : [];
+    }
+
+    public function sendSICNotificationToAdvisor($lead, $user)
+    {
+        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
     }
 }

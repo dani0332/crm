@@ -85,8 +85,17 @@ const memberForm = useForm({
   from_aml_model: true,
 });
 
+
+const rules = {
+    nameCheck: v => {
+        const pattern = /^[a-zA-Z0-9\s]+$/;
+        if(v == null || v == '') return true;
+        return pattern.test(v) || 'Special characters are not allowed in Payer Name';
+    }
+};
+
 function onMemberSubmit(isValid) {
-  if (!isValid) return;
+    if (!isValid) return;
 
   isLoading.value = true;
   if (editMemberDetails.value) {
@@ -214,7 +223,7 @@ function onMemberSubmit(isValid) {
           <x-field label="Payer Name" required>
             <x-input
               v-model="memberForm.first_name"
-              :rules="[isRequired]"
+              :rules="[isRequired , rules.nameCheck]"
               placeholder="Payer Name"
               type="text"
               class="w-full"

@@ -15,7 +15,7 @@ class QuoteDocument extends Model
     protected $casts = [
         'deleted_at' => 'datetime',
     ];
-    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name', 'member_detail_id'];
+    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name', 'member_detail_id', 'payment_split_type', 'payment_split_id'];
     protected $hidden = [''];
 
     public function getCreatedAtAttribute($table)
@@ -45,5 +45,15 @@ class QuoteDocument extends Model
     public function quoteDocumentable()
     {
         return $this->morphTo();
+    }
+
+    public function notes()
+    {
+        return $this->belongsToMany(QuoteNote::class, 'document_note', 'document_id', 'note_id');
+    }
+
+    public function paymentDocuments()
+    {
+        return $this->belongsTo(PaymentSplits::class, 'payment_split_id', 'id');
     }
 }

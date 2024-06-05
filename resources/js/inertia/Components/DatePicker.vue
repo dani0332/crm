@@ -10,7 +10,7 @@ const props = defineProps({
     default: '',
   },
   modelValue: {
-    type: [String, Date, Array],
+    type: [String, Date, Array, Object],
     default: '',
   },
   placeholder: {
@@ -41,6 +41,22 @@ const props = defineProps({
     type: Date,
     default: null,
   },
+  onlySelect: {
+    type: Boolean,
+    default: false,
+  },
+  maxDate: {
+    type: Date,
+    default: null,
+  },
+  monthPicker: {
+    type: Boolean,
+    default: false,
+  },
+  disableYear: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const selectedData = computed({
@@ -52,21 +68,38 @@ const selectedData = computed({
     return;
   },
 });
+
+const monthPicker = computed(() => {
+  return props.monthPicker;
+});
+const onlyCurentYear = () => {
+  if (props.disableYear && props.monthPicker)
+    return [new Date().getFullYear(), new Date().getFullYear()];
+  else return [1900, 2100];
+};
 </script>
 <template>
   <VueDatePicker
     v-model="selectedData"
     auto-apply
-    :format="props.withTime ? `dd-MM-yyyy HH:mm` : `dd-MM-yyyy`"
+    :format="
+      props.withTime
+        ? 'dd-MM-yyyy HH:mm'
+          ? props.monthPicker
+          : 'MM/yyyy'
+        : 'dd-MM-yyyy'
+    "
     :teleport="true"
     :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
     :clearable="false"
     :disabled="props.disabled"
     :min-date="props.minDate"
+    :max-date="props.maxDate"
     utc="preserve"
     :is-24="false"
     text-input
+    :month-picker="monthPicker"
   >
     <template #dp-input="{ value, onClear, onInput, onBlur }">
       <x-input
@@ -80,6 +113,7 @@ const selectedData = computed({
         :error="props.customError ? props.customError : ''"
         @update:modelValue="onInput"
         @blur="onBlur"
+        :readonly="props.onlySelect"
       />
       <div
         v-if="!props.disabled"

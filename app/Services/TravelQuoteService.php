@@ -13,6 +13,8 @@ use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
 use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
+use App\Models\Payment;
+use App\Models\QuoteBatches;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
@@ -73,10 +75,13 @@ class TravelQuoteService extends BaseService
             'ps.text AS payment_status_id_text',
             'tqr.plan_id',
             'tp.text AS plan_id_text',
+            'tpip.text AS travel_plan_provider_text',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
+            'lu.text as transaction_type_text',
             'tqrd.transapp_code',
+            'tqrd.insly_id',
             'ls.text as lost_reason',
             'tqrd.notes',
             'tqr.currently_located_in_id',
@@ -104,6 +109,7 @@ class TravelQuoteService extends BaseService
             'tqr.primary_member_id',
             'tqr.risk_score',
             'tqr.kyc_decision',
+            //'tqr.prefill_plan_id',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -126,6 +132,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
@@ -134,6 +141,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
+            ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
             ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
@@ -191,8 +199,8 @@ class TravelQuoteService extends BaseService
             }
         }
 
-        if (! Auth::user()->hasRole(RolesEnum::Admin) && ! Auth::user()->hasRole(RolesEnum::CallDesk)) {
-            $travelQuote['advisorId'] = Auth::user()->id;
+        if (! auth()->user()->hasRole(RolesEnum::Admin) && ! auth()->user()->hasRole(RolesEnum::CallDesk)) {
+            $travelQuote['advisorId'] = auth()->user()->id;
         }
 
         if ($request->uuid != null) {
@@ -205,7 +213,6 @@ class TravelQuoteService extends BaseService
             $response = Ken::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
 
             return $response;
-
         }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
 
@@ -270,7 +277,6 @@ class TravelQuoteService extends BaseService
                         if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP || $request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP) {
                             $qInner->where('days_cover_for', '>', 92);
                         }
-
                     });
             });
         }
@@ -498,7 +504,9 @@ class TravelQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return TravelQuote::where('id', $id)->first();
+        return TravelQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
+            $query->orderBy('sr_no', 'asc');
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'child', 'parent'])->first();
     }
 
     public function getSelectedLostReason($id)
@@ -804,11 +812,13 @@ class TravelQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $quoteBatch = QuoteBatches::latest()->first();
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
+            $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
             $this->updateChildRecord($lead->id);
         }
@@ -948,4 +958,38 @@ class TravelQuoteService extends BaseService
         $travelQuote->quote_updated_at = Carbon::now();
         $travelQuote->save();
     }
+
+    public function createDuplicateLead($leadModal)
+    {
+        if (! $leadModal) {
+            return false; // Add validation to avoid failure if $leadModal is null
+        }
+        $newLeadCode = $leadModal->code.'-1';
+        $leadExists = TravelQuote::where('code', $newLeadCode)->exists();
+        if ($leadExists) {
+            // Lead with the code already exists
+            return false;
+        }
+        $duplicateLead = $leadModal->replicate();
+        $duplicateLead->parent_id = $leadModal->id;
+        $duplicateLead->uuid = $leadModal->uuid.'-1';
+        $duplicateLead->code = $newLeadCode;
+        $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
+        $duplicateLead->save();
+
+        if ($duplicateLead) {
+            //update morph relation in payments table
+            $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
+
+            //update morph relation in quote_documents table,which are associated with split payments
+            Payment::where('code', $newLeadCode)->with('paymentSplits')->get()->each(function ($payment) use ($duplicateLead) {
+                $payment->paymentSplits->each(function ($split) use ($duplicateLead) {
+                    $split->documents()->update(['quote_documentable_id' => $duplicateLead->id]);
+                });
+            });
+        }
+
+        return true;
+    }
+
 }

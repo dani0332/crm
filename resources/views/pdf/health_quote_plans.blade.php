@@ -207,9 +207,9 @@
             font-size: 12px;
         }
         .provider-logo {
-            width: 100px;
+            width: 150px;
             position: absolute;
-            top: 50%;
+            top: 55%;
             left: 50%;
             transform: translate(-50%, -50%);
             max-width: 100%;
@@ -365,22 +365,115 @@
 
             ["code" => "heading", "title" => "Co‐pay or Co‐insurance"],
             ["code" => "coPayment", "title" => "Outpatient co-pay", "type" => 'coInsurance'],
-            // ["code" => "consultation", "title" => "Outpatient Consultation", "type" => 'coInsurance'],
-            // ["code" => "diagnostics", "title" => "Outpatient Diagnostics", "type" => 'coInsurance'],
             ["code" => "physiotherapy", "title" => "Outpatient Physiotherapy", "type" => 'coInsurance'],
-            // ["code" => "medicine", "title" => "Outpatient Medicine", "type" => 'coInsurance'],
             ["code" => "dentalCover", "title" => "Routine Dental", "type" => 'coInsurance'],
             ["code" => "opticalCover", "title" => "Routine Optical", "type" => 'coInsurance'],
             ["code" => "inpatient", "title" => "Inpatient", "type" => 'coInsurance'],
+            ["code" => "spacer"],
+      ];
 
-            ["code" => "spacer"],
-            ["code" => "discountPremium", "title" => "Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-            ["code" => "spacer"],
+        $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
+        $plans = [];
+        $benefits = ['feature', 'inpatient', 'outpatient', 'exclusion', 'coInsurance', 'regionCover', 'maternityCover', 'networkList'];
+
+        $first = true;
+
+        foreach ($quotePlans->quote->plans as &$quotePlan){
+            $addonsPrice = $addonsVat =
+            // $quotePlan->discountPremium =
+            $quotePlan->vat =
+            $quotePlan->total= 0;
+
+            if ($first) {
+                foreach ($quotePlan->memberPremiumBreakdown as $key => $memberPremiumBreakdown) {
+                    $key = "discountPremium".$key;
+                    $features[]= ["code" =>$key, "title" => \App\Models\HealthQuote::getCustomerMemberName($memberPremiumBreakdown->memberId), "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'];
+                }
+            }
+            $first= false;
+
+            if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
+                continue;
+            }
+
+            $firstMember= true;
+            $vatValue = 0;
+            $totalValue = 0;
+
+            foreach ($quotePlan->memberPremiumBreakdown as $key => $memberPremiumBreakdown) {
+                $key = "discountPremium".$key;
+                $discountPremiumValue= 0;
+                if (isset($quotePlan->addons['coPayment'])) {
+                    $coPayId = $quotePlan->addons['coPayment']['id'];
+                    // Check if ratesPerCopay exists and is an array
+                    if (isset($memberPremiumBreakdown->ratesPerCopay) && is_array($memberPremiumBreakdown->ratesPerCopay)) {
+                        foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
+                            if ($coPayVal->healthPlanCoPaymentId == $coPayId) {
+                                $discountPremiumValue = $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice ?? 0);
+                                $vatValue += $coPayVal->vat;
+                                $totalValue += $discountPremiumValue;
+                            }
+                        }
+                    }
+                } else {
+                    $discountPremium = $vat = [];
+                    // Check if ratesPerCopay exists and is an array
+                    if (isset($memberPremiumBreakdown->ratesPerCopay) && is_array($memberPremiumBreakdown->ratesPerCopay)) {
+                        foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
+                            $discountPremium[] = $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice ?? 0);
+                            $vat[] = $coPayVal->vat;
+                        }
+                        $discountPremiumValue = collect($discountPremium)->min();
+                        $vatValue += collect($vat)->min();
+                        $totalValue += $discountPremiumValue;
+                    }
+                }
+                if ($firstMember){
+                    $discountPremiumValue += $quotePlan->policyFee;
+                    $firstMember= false;
+                }
+                $value = $discountPremiumValue;
+                $quotePlan->{$key} = $value;
+            }
+
+            $quotePlan->vat= $vatValue;
+            $quotePlan->total = ($totalValue + $vatValue);
+
+            foreach ($benefits as $benefit) {
+                $quotePlan->{$benefit} = [];
+                if(isset($quotePlan->benefits->{$benefit})) {
+                    $quotePlan->{$benefit} = json_decode(collect(@$quotePlan->benefits->{$benefit})->keyBy('code')->toJson());
+                }
+            }
+            $quotePlan->addons = isset($addons[$quotePlan->id]) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+
+            foreach ($quotePlan->benefits as &$benefit) {
+                $benefit = (object) $benefit;
+                $benefit->value = "Excluded";
+                //set default values
+                $benefit->price = 0;
+                $benefit->vat = 0;
+                $plans[$quotePlan->id] = $quotePlan;
+            }
+            // Add Basma Price
+            if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
+                $quotePlan->discountPremium += $quotePlan->basmah;
+            }
+            // Add Policy Price
+            $policyFee = (isset($providers[$quotePlan->providerId]['health_policy_fee'])) ? $providers[$quotePlan->providerId]['health_policy_fee'] : 0;
+            $quotePlan->discountPremium += $policyFee;
+            $quotePlan->total += $policyFee;
+        }
+
+        $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
+
+        $featureItems= [
             ["code" => "vat", "title" => "VAT", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
             ["code" => "spacer"],
-            ["code" => "total", "title" => "Total", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-        ];
+            ["code" => "total", "title" => "Total Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing']
+       ];
 
+       $features= array_merge($features, $featureItems);
     @endphp
 
     {{-- PDF Page Header --}}
@@ -510,7 +603,7 @@
                     <td class="{{@$feature['col_class']}}">
                         <p>
                             @if($feature['type'] == 'info')
-                                {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
+                                {!!  isset($plans[$planId]->{$feature['code']}) ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
 
                             @elseif($feature['type'] == 'prop')
                                 {!!  $plans[$planId]->{$feature['code']} !!}

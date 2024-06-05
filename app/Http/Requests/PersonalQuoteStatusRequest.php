@@ -35,10 +35,6 @@ class PersonalQuoteStatusRequest extends FormRequest
         ];
 
         if (! empty($data['quote_status_id'])) {
-            if ($data['quote_status_id'] == QuoteStatusEnum::TransactionApproved) {
-                $rules['transapp_code'] = 'required';
-            }
-
             if ($data['quote_status_id'] == QuoteStatusEnum::Lost) {
                 $rules['lost_reason_id'] = 'required';
             }

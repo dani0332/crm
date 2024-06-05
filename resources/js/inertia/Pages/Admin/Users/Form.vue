@@ -57,6 +57,13 @@ const userForm = useForm({
       : true,
   primary_product: props.userProductIds ? props?.userProductIds[0] : null,
   permissions: props?.userPermissions ?? null,
+  calendar_link: props.user?.calendar_link ?? null,
+  phone_calendar_link: props.user?.phone_calendar_link ?? null,
+});
+
+const isAdvisor = computed(() => {
+  const regex = /\badvisor|ADVISOR\b/i;
+  return userForm.roles.some(role => regex.test(role));
 });
 
 const isEdit = computed(() => {
@@ -100,8 +107,13 @@ const loadTeamsByProduct = async e => {
     let response = await axios.post('/get-product-teams', {
       productIds: userForm.products,
     });
-    if (response.data.length > 0) teams.value = [...response.data];
-    else teams.value = [];
+    if (response.data.length > 0) {
+      let newTeams = response.data.filter(
+        x => !teams.value.some(item => item.id === x.id),
+      );
+      teams.value.unshift(...newTeams);
+      loadManagerByTeam();
+    }
 
     loader.teamLoader = false;
   } catch (e) {
@@ -115,8 +127,12 @@ const loadManagerByTeam = async () => {
     let response = await axios.post('/get-team-managers', {
       teamId: userForm.products,
     });
-    if (response.data.length > 0) managers.value = [...response.data];
-    else managers.value = [];
+    if (response.data.length > 0) {
+      let newManagers = response.data.filter(
+        x => !managers.value.some(item => item.id === x.id),
+      );
+      managers.value.unshift(...newManagers);
+    }
     loader.managers = false;
   } catch (e) {
     loader.managers = false;
@@ -129,7 +145,6 @@ const loadSubTeams = async () => {
     let response = await axios.post('/get-sub-teams', {
       teamId: userForm.teams,
     });
-    console.log(response.data);
     if (response.data.length > 0) subTeams.value = [...response.data];
     else subTeams.value = [];
 
@@ -166,11 +181,6 @@ function onSubmit(isValid) {
         });
       },
       onSuccess: response => {
-        console.log(response);
-        // notification.success({
-        //   title: response.message,
-        //   position: 'top',
-        // });
         userForm.reset();
       },
     });
@@ -181,11 +191,18 @@ const setInitialState = async () => {
   if (isEdit.value) {
     await loadTeamsByProduct();
     await loadSubTeams();
-    await loadManagerByTeam();
   }
 };
 
 onMounted(() => setInitialState());
+
+watch(
+  () => userForm.teams,
+  () => {
+    loadSubTeams();
+  },
+  { deep: true },
+);
 </script>
 <template>
   <Head :title="isEdit ? 'Edit Users' : 'Create Users'" />
@@ -216,14 +233,6 @@ onMounted(() => setInitialState());
       width="150"
     />
   </div>
-  <!-- <div class="grid sm:grid-cols-1 justify-center my-2" v-if="isEdit">
-    <x-toggle
-      class="mx-auto"
-      size="xs"
-      v-model="userForm.is_active"
-      color="primary"
-    />
-  </div> -->
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="NAME" required>
@@ -263,19 +272,6 @@ onMounted(() => setInitialState());
         />
       </x-field>
       <x-field label="ROLES" required>
-        <!-- <x-select
-          :multiple="true"
-          :options="
-            roles.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-          :rules="[isRequired]"
-          v-model="userForm.roles"
-          placeholder="Select role"
-        /> -->
         <ComboBox
           v-model="userForm.roles"
           :options="
@@ -300,24 +296,9 @@ onMounted(() => setInitialState());
               label: item.name,
             }))
           "
-          @update:modelValue="loadTeamsByProduct($event), loadManagerByTeam()"
           autocomplete
+          @update:modelValue="loadTeamsByProduct"
         />
-
-        <!-- <x-select
-          :multiple="true"
-          :options="
-            props.products.map(item => ({
-              value: item.id,
-              label: item.name,
-            }))
-          "
-          class="w-full"
-          :rules="[isRequired]"
-          v-model="userForm.products"
-          placeholder="Select products"
-          @update:modelValue="loadTeamsByProduct($event), loadManagerByTeam()"
-        /> -->
       </x-field>
       <x-field label="TEAMS" required>
         <ComboBox
@@ -326,20 +307,8 @@ onMounted(() => setInitialState());
           :loading="loader.teamLoader"
           :rules="[isRequired]"
           :hasError="validTeams"
-          @update:modelValue="loadSubTeams($event)"
           autocomplete
         />
-
-        <!-- <x-select
-          :multiple="true"
-          v-model="userForm.teams"
-          :options="computedTeams"
-          :loading="loader.teamLoader"
-          :rules="[isRequired]"
-          class="w-full"
-          placeholder="Select teams for MyLeads Tab visiblity"
-          @update:modelValue="loadSubTeams($event)"
-        /> -->
       </x-field>
       <x-field label="SUB TEAM">
         <x-select
@@ -351,17 +320,17 @@ onMounted(() => setInitialState());
         ></x-select>
       </x-field>
       <x-field label="LOB VISIBILITY">
-        <x-select
+        <ComboBox
           :multiple="true"
+          v-model="userForm.additionalTeams"
           :options="
-            props.products.map(item => ({
-              value: item.id,
-              label: item.name,
+            props.products.map(x => ({
+              value: x.id,
+              label: x.name,
             }))
           "
           class="w-full"
-          v-model="userForm.additionalTeams"
-          placeholder="Select teams "
+          autocomplete
         />
       </x-field>
       <x-field label="PERMISSIONS" v-if="hasRole(rolesEnum.Admin)">
@@ -377,19 +346,6 @@ onMounted(() => setInitialState());
           class="w-full"
           autocomplete
         />
-
-        <!-- <x-select
-          :multiple="true"
-          v-model="userForm.permissions"
-          :options="
-            props.permissions.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-          class="w-full"
-          placeholder="Select premissions"
-        /> -->
       </x-field>
       <x-field label="ACTIVE">
         <x-select
@@ -414,20 +370,30 @@ onMounted(() => setInitialState());
           :loading="loader.managers"
           autocomplete
         />
-
-        <!-- <x-select
-          :multiple="true"
-          v-model="userForm.manager"
-          :options="
-            managers.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-          :loading="loader.managers"
-          class="w-full"
-          placeholder="Select manager"
-        /> -->
+      </x-field>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4 mt-2">
+      <x-field
+        label="GOOGLE MEET CALENDAR (EMBEDDED LINK)"
+        :required="isAdvisor"
+      >
+        <x-textarea
+          class="w-full text-md"
+          v-model="userForm.calendar_link"
+          :rules="isAdvisor ? [isRequired] : []"
+        >
+        </x-textarea>
+      </x-field>
+      <x-field
+        label="PHONE CALL CALENDAR (EMBEDDED LINK)"
+        :required="isAdvisor"
+      >
+        <x-textarea
+          class="w-full text-md"
+          v-model="userForm.phone_calendar_link"
+          :rules="isAdvisor ? [isRequired] : []"
+        >
+        </x-textarea>
       </x-field>
     </div>
 

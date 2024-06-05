@@ -27,6 +27,8 @@ class UserService extends BaseService
         $user->email = $request->email;
         $user->mobile_no = $request->mobile_no;
         $user->landline_no = $request->landline_no;
+        $user->calendar_link = $request->calendar_link;
+        $user->phone_calendar_link = $request->phone_calendar_link;
         $user->password = bcrypt($request->password);
         $user->is_active = true;
         if ((! empty($request->additionalTeams) && $request->sub_team_id != '0')) {

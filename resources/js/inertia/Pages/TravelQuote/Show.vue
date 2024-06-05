@@ -1,7 +1,10 @@
 <script setup>
+import PaymentTableNew from './../../Components/PaymentTableNew.vue';
+import MigratePayment from './../../Components/MigratePayment.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import { computed } from 'vue';
 
 const page = usePage();
 defineProps({
@@ -13,6 +16,7 @@ defineProps({
   isManualAllocationAllowed: Boolean,
   genderOptions: Object,
   leadStatuses: Array,
+  permissions: Object,
   enums: Object,
   lostReasons: Array,
   ecomDetails: Object,
@@ -46,8 +50,15 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  paymentTooltipEnum: Object,
+  storageUrl: String,
+  isNewPaymentStructure: Boolean,
+  hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
 });
+
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
@@ -115,7 +126,6 @@ const memberActionEdit = ref(false),
       reason => reason.text === page.props.quote.lost_reason,
     )?.id || null,
   );
-
 const leadDuplicateForm = useForm({
   modelType: 'travel',
   parentType: 'travel',
@@ -140,9 +150,9 @@ const onCreateDuplicate = isValid => {
 };
 
 const genderText = gender =>
-    computed(() => {
-      return page.props.genderOptions[gender];
-    });
+  computed(() => {
+    return page.props.genderOptions[gender];
+  });
 
 const lostReasonsOptions = computed(() => {
   return page.props.lostReasons.map(reason => ({
@@ -171,6 +181,7 @@ const travelFields = computed(() => {
     'previous_policy_expiry_date',
     'policy_start_date',
     'renewal_batch',
+    'transapp_code'
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -201,25 +212,25 @@ const leadStatusOptions = computed(() => {
 
 const onLeadStatus = () => {
   leadStatusForm.post(
-      route('updateLeadStatus', {
-        modelType: 'Travel',
-        QuoteUId: page.props.quote.id,
-      }),
-      {
-        preserveScroll: true,
-        onError: errors => {
-          notification.error({title: errors.value, position: 'top'});
-        },
-        onSuccess: response => {
-          const flash_messages = response.props.flash;
-          if (!flash_messages) {
-            notification.success({
-              title: 'Lead Status Updated',
-              position: 'top',
-            });
-          }
-        },
+    route('updateLeadStatus', {
+      modelType: 'Travel',
+      QuoteUId: page.props.quote.id,
+    }),
+    {
+      preserveScroll: true,
+      onError: errors => {
+        notification.error({ title: errors.value, position: 'top' });
       },
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if (!flash_messages) {
+          notification.success({
+            title: 'Lead Status Updated',
+            position: 'top',
+          });
+        }
+      },
+    },
   );
 };
 
@@ -439,9 +450,9 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-      page.props.quote.quote_status_id ==
+    page.props.quote.quote_status_id ==
       page.props.enums.quoteStatusEnum.TransactionApproved &&
-      page.props.permissions.notProductionApproval,
+    page.props.permissions.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
   quote_id: page.props.quote.id,
@@ -454,44 +465,44 @@ const cancelPolicyFrom = () => {
 const submitPolicyDetails = isValid => {
   if (!isValid) return;
   policyDetails
-      .transform(data => ({
-        quote_policy_number: data.policy_number,
-        quote_policy_start_date: data.policy_start_date,
-        quote_policy_expiry_date: data.renewal_expiry_date,
-        quote_policy_issuance_date: data.policy_issuance_date,
-        quote_premium: data.premium,
-        modelType: data.modelType,
-        quote_id: data.quote_id,
-        isInertia: true,
-      }))
-      .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
-        preserveScroll: true,
-        onSuccess: () => {
-          notification.success({
-            title: 'Policy Details Updated',
-            position: 'top',
-          });
-        },
-        onFinish: () => {
-          policyDetails.editMode = false;
-        },
-      });
+    .transform(data => ({
+      quote_policy_number: data.policy_number,
+      quote_policy_start_date: data.policy_start_date,
+      quote_policy_expiry_date: data.renewal_expiry_date,
+      quote_policy_issuance_date: data.policy_issuance_date,
+      quote_premium: data.premium,
+      modelType: data.modelType,
+      quote_id: data.quote_id,
+      isInertia: true,
+    }))
+    .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Policy Details Updated',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        policyDetails.editMode = false;
+      },
+    });
 };
 
 const memberCategoryText = memberCategoryId =>
-    computed(() => {
-      return page.props.memberCategories.find(
-          category => category.id === memberCategoryId,
-      )?.text;
-    });
+  computed(() => {
+    return page.props.memberCategories.find(
+      category => category.id === memberCategoryId,
+    )?.text;
+  });
 
 const memberDataDocs = membersDetail => {
   return membersDetail
-      .map(member => ({
-        id: member.id,
-        name: memberCategoryText(member.member_category_id).value,
-      }))
-      .filter(member => member.name !== undefined);
+    .map(member => ({
+      id: member.id,
+      name: memberCategoryText(member.member_category_id).value,
+    }))
+    .filter(member => member.name !== undefined);
 };
 
 const quoteDocumentsTable = reactive({
@@ -521,7 +532,7 @@ const sendPolicyToClient = () => {
     let quoteType = page.props.modelType;
     let quoteUuId = page.props.quote.uuid;
     let url =
-        '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
+      '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
     axios.post(url).then(response => {
       if (response.status == 200) {
         notification.success({
@@ -559,7 +570,6 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-        onLoadAvailablePlansData();
       router.reload({
         preserveScroll: true,
       });
@@ -597,7 +607,11 @@ const onExportPlans = () => {
         quote_uuid: page.props.quote.uuid,
         modelType: 'travel',
         quoteType: 'travel',
-        hasAdultAndSeniorMember: (availableSeniorPlansTable?.data?.length > 0 && availablePlansTable?.data?.length > 0 )? true : false
+        hasAdultAndSeniorMember:
+          availableSeniorPlansTable?.data?.length > 0 &&
+          availablePlansTable?.data?.length > 0
+            ? true
+            : false,
       },
       {
         responseType: 'json',
@@ -628,41 +642,51 @@ const onDocDelete = name => {
   confirmDeleteData.docs = name;
 };
 
+const normalPlansIds = reactive({
+  ids: [],
+});
+const seniorPlansIds = reactive({
+  ids: [],
+});
+
 const onLoadAvailablePlansData = async () => {
   let data = {
     jsonData: true,
   };
   let url = `/quotes/travel/available-plans/${page.props.quote.uuid}`;
   axios
-      .post(url, data)
-      .then(res => {
-        availablePlansTable.data = res.data.normalPlans
-        availableSeniorPlansTable.data = res.data.seniorPlans
-      })
-      .catch(err => {
-        console.log(err);
-      })
+    .post(url, data)
+    .then(res => {
+      availablePlansTable.data = res.data.normalPlans;
+      availableSeniorPlansTable.data = res.data.seniorPlans;
+
+      normalPlansIds.ids = res.data.normalPlans.map(plan => plan.id);
+      seniorPlansIds.ids = res.data.seniorPlans.map(plan => plan.id);
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const confirmDeleteDoc = () => {
   quoteDocumentsTable.isLoading = true;
   router.post(
-      `/documents/delete`,
-      {
-        docName: confirmDeleteData.docs,
-        quoteId: page.props.quote.id,
+    `/documents/delete`,
+    {
+      docName: confirmDeleteData.docs,
+      quoteId: page.props.quote.id,
+    },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        modals.docConfirm = false;
+        quoteDocumentsTable.isLoading = false;
+        notification.error({
+          title: 'File Deleted',
+          position: 'top',
+        });
       },
-      {
-        preserveScroll: true,
-        onFinish: () => {
-          modals.docConfirm = false;
-          quoteDocumentsTable.isLoading = false;
-          notification.error({
-            title: 'File Deleted',
-            position: 'top',
-          });
-        },
-      },
+    },
   );
 };
 
@@ -733,11 +757,11 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
+      text: 'Total Price',
       value: 'discountPremium',
     },
     {
@@ -780,12 +804,12 @@ const availableSeniorPlansTable = reactive({
 //activities
 
 const activityTable = [
-  {text: 'Done', value: 'status', width: 60, align: 'center'},
-  {text: 'Title', value: 'title'},
-  {text: 'Client Name', value: 'client_name'},
-  {text: 'Followup Date', value: 'due_date'},
-  {text: 'Assigned To', value: 'assignee'},
-  {text: 'Action', value: 'action'},
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Title', value: 'title' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -846,10 +870,10 @@ const activityEdit = data => {
   activityForm.title = data.title;
   activityForm.description = data.description;
   activityForm.due_date = data.due_date
-      ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
+    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
       'T' +
       data.due_date.split(' ')[1]
-      : null;
+    : null;
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -859,9 +883,9 @@ const onActivitySubmit = isValid => {
   if (activityActionEdit.value) {
     let date = new Date(activityForm.due_date);
     date =
-        date.toISOString().split('T')[0] +
-        ' ' +
-        date.toTimeString().split(' ')[0];
+      date.toISOString().split('T')[0] +
+      ' ' +
+      date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
     activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
@@ -878,9 +902,9 @@ const onActivitySubmit = isValid => {
   } else {
     let date = new Date(activityForm.due_date);
     date =
-        date.toISOString().split('T')[0] +
-        ' ' +
-        date.toTimeString().split(' ')[0];
+      date.toISOString().split('T')[0] +
+      ' ' +
+      date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
     activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
@@ -904,23 +928,23 @@ const activityDelete = id => {
 
 const activityDeleteConfirmed = () => {
   router.post(
-      route('activities.destroy', confirmDeleteData.activity),
-      {
-        isInertia: true,
-        quote_uuid: page.props.quote.uuid,
+    route('activities.destroy', confirmDeleteData.activity),
+    {
+      isInertia: true,
+      quote_uuid: page.props.quote.uuid,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.error({
+          title: 'Activity Deleted',
+          position: 'top',
+        });
       },
-      {
-        preserveScroll: true,
-        onSuccess: () => {
-          notification.error({
-            title: 'Activity Deleted',
-            position: 'top',
-          });
-        },
-        onFinish: () => {
-          modals.activityConfirm = false;
-        },
+      onFinish: () => {
+        modals.activityConfirm = false;
       },
+    },
   );
 };
 
@@ -936,10 +960,10 @@ const historyData = ref(null);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-      route('getLeadHistory', {
-        modelType: 'travel',
-        recordId: page.props.quote.id,
-      }),
+    route('getLeadHistory', {
+      modelType: 'travel',
+      recordId: page.props.quote.id,
+    }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -947,10 +971,10 @@ const onLoadHistoryData = async () => {
 };
 
 const historyDataTable = [
-  {text: 'Modified At', value: 'ModifiedAt'},
-  {text: 'Modified By', value: 'ModifiedBy'},
-  {text: 'Notes', value: 'NewNotes'},
-  {text: 'Lead Status', value: 'NewStatus'},
+  { text: 'Modified At', value: 'ModifiedAt' },
+  { text: 'Modified By', value: 'ModifiedBy' },
+  { text: 'Notes', value: 'NewNotes' },
+  { text: 'Lead Status', value: 'NewStatus' },
 ];
 
 // selected tab
@@ -960,19 +984,19 @@ const planDetails = ref(null);
 const getPlanDetails = id => {
   try {
     axios
-        .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
-        .then(res => {
-          planDetails.value = res.data;
-          modals.planDetails = true;
-        })
-        .catch(err => {
-          notification.error({
-            title: 'Error',
-            message: 'Plan Details Not Found',
-            position: 'top',
-          });
-          console.log(err);
+      .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
+      .then(res => {
+        planDetails.value = res.data;
+        modals.planDetails = true;
+      })
+      .catch(err => {
+        notification.error({
+          title: 'Error',
+          message: 'Plan Details Not Found',
+          position: 'top',
         });
+        console.log(err);
+      });
   } catch (err) {
     console.log(err);
     notification.error({
@@ -983,7 +1007,7 @@ const getPlanDetails = id => {
   }
 };
 
-const {copy, copied} = useClipboard();
+const { copy, copied } = useClipboard();
 const onCopyText = text => {
   copy(text);
   if (copied)
@@ -1020,7 +1044,7 @@ const customerProfileForm = useForm({
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
   industry_type_code: page.props.quote.industry_type_code ?? null,
   emirate_of_registration_id:
-      page.props.quote.emirate_of_registration_id ?? null,
+    page.props.quote.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
@@ -1064,31 +1088,31 @@ const entityTypeChange = event => {
 const searchByTradeLicense = trigger => {
   let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license_no}`;
   axios
-      .get(url)
-      .then(res => {
-        if (res.data.status) {
-          let response = res.data.response;
-          entityDetailsFound.value = true;
-          tradeLicenseEntity.entity_id = response.id;
-          tradeLicenseEntity.trade_license = response.trade_license_no;
-          tradeLicenseEntity.company_name = response.company_name;
-          tradeLicenseEntity.company_address = response.company_address;
-          tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
+    .get(url)
+    .then(res => {
+      if (res.data.status) {
+        let response = res.data.response;
+        entityDetailsFound.value = true;
+        tradeLicenseEntity.entity_id = response.id;
+        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.company_name = response.company_name;
+        tradeLicenseEntity.company_address = response.company_address;
+        tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
 
-          notification.success({
-            title: res.data.message,
-            position: 'top',
-          });
-        } else {
-          notification.error({
-            title: res.data.message,
-            position: 'top',
-          });
-        }
-      })
-      .catch(err => {
-        console.log(err);
-      });
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: res.data.message,
+          position: 'top',
+        });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const linkEntity = () => {
@@ -1099,31 +1123,31 @@ const linkEntity = () => {
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
-      .post(route('link-entity-details'), entityDetails)
-      .then(res => {
-        if (res.data.status) {
-          let response = res.data.response;
+    .post(route('link-entity-details'), entityDetails)
+    .then(res => {
+      if (res.data.status) {
+        let response = res.data.response;
 
-          // Append Entity data in fields
-          customerProfileForm.trade_license_no = response.trade_license_no;
-          customerProfileForm.company_name = response.company_name;
-          customerProfileForm.company_address = response.company_address;
-          customerProfileForm.entity_type_code =
-              response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
-          customerProfileForm.industry_type_code = response.industry_type_code;
-          customerProfileForm.emirate_of_registration_id =
-              response.emirate_of_registration_id;
+        // Append Entity data in fields
+        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.company_name = response.company_name;
+        customerProfileForm.company_address = response.company_address;
+        customerProfileForm.entity_type_code =
+          response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
+        customerProfileForm.industry_type_code = response.industry_type_code;
+        customerProfileForm.emirate_of_registration_id =
+          response.emirate_of_registration_id;
 
-          notification.success({
-            title: res.data.message,
-            position: 'top',
-          });
-          entityDetailsFound.value = false;
-        }
-      })
-      .catch(err => {
-        console.log(err);
-      });
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+        entityDetailsFound.value = false;
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 onMounted(() => {
@@ -1137,9 +1161,29 @@ onMounted(() => {
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+const selectedPlanIds = computed(() => {
+  return page.props.payments.length > 0
+    ? page.props.payments.map(plan => plan.plan_id)
+    : [];
+});
 
-const handleChildUpdate = planId => {
-  prefillPlanId.value = planId;
+const selectedProviderPlan = ref({
+  id: page.props.quote.plan_id,
+  planName: page.props.ecomDetails.planName,
+  providerName: page.props.ecomDetails.providerName,
+  premium: page.props.ecomDetails.premium,
+});
+
+const handlePlanSelected = plan => {
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments', 'quoteRequest'],
+  });
 };
 
 const genderList = [
@@ -1147,23 +1191,7 @@ const genderList = [
   { value: 'F', label: 'Female' },
 ];
 
-const handleSelectionChange = (tableType, selectedItems) => {
-  if (tableType === 'adult' && selectedSeniorPlans.value.length > 0) {
-    modals.mixInquiryConfirm= true
-    selectedAdultPlans.value = [];
-  } else if (tableType === 'senior' && selectedAdultPlans.value.length > 0) {
-    modals.mixInquiryConfirm= true
-    selectedSeniorPlans.value = [];
-  } else {
-      if (tableType === 'adult') {
-        selectedAdultPlans.value = selectedItems;
-        selectedPlans.value = selectedItems;
-      } else if (tableType === 'senior') {
-        selectedSeniorPlans.value = selectedItems;
-        selectedPlans.value = selectedItems;
-      }
-  }
-};
+const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 </script>
 
 <template>
@@ -1172,6 +1200,15 @@ const handleSelectionChange = (tableType, selectedItems) => {
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Travel Detail</h2>
       <div class="flex gap-2">
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <x-button
           size="sm"
           color="#ff5e00"
@@ -1296,17 +1333,17 @@ const handleSelectionChange = (tableType, selectedItems) => {
                 quote.direction_code != null
                   ? quote.direction_code
                   : quote?.currently_located_in_id_text ==
-                      enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                    quote?.region_cover_for_id !=
-                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                  ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                  : quote?.destination_id_text ==
-                      enums.travelQuoteEnum
-                        .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                    quote?.region_cover_for_id ==
-                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                  ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                  : ''
+                        enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                      quote?.region_cover_for_id !=
+                        enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                    ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                    : quote?.destination_id_text ==
+                          enums.travelQuoteEnum
+                            .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                        quote?.region_cover_for_id ==
+                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                      ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                      : ''
               }}
             </dt>
           </div>
@@ -1412,10 +1449,10 @@ const handleSelectionChange = (tableType, selectedItems) => {
                 quote.coverage_code != null
                   ? quote.coverage_code
                   : quote.days_cover_for <= 92
-                  ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                  : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                    '/' +
-                    enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                    ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                    : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                      '/' +
+                      enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
               }}
             </dt>
           </div>
@@ -1431,6 +1468,39 @@ const handleSelectionChange = (tableType, selectedItems) => {
               </x-tooltip>
             </dt>
             <dt class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
+          </div>
+
+          <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
+            <template v-if="quoteRequest.child">
+              <dt>
+                <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                    CHILD REF ID
+                  </label>
+                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
+                </x-tooltip>
+              </dt>
+              <dt class="font-medium">
+                <a :href="'/quotes/travel/' + quoteRequest.child.uuid" target="_blank" class="text-primary-600">
+                  {{ quoteRequest.child?.code }}
+                </a>
+              </dt>
+            </template>
+            <template v-if="quoteRequest.parent">
+              <dt>
+                <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                    PARENT REF ID
+                  </label>
+                  <template #tooltip>Parent Ref Id</template>
+                </x-tooltip>
+              </dt>
+              <dt class="font-medium">
+                <a :href="'/quotes/travel/' + quoteRequest.parent.uuid" target="_blank" class="text-primary-600">
+                  {{ quoteRequest.parent.code }}
+                </a>
+              </dt>
+            </template>
           </div>
         </dl>
       </div>
@@ -1726,27 +1796,27 @@ const handleSelectionChange = (tableType, selectedItems) => {
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
-    <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Member Details
-        <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
-      </h3>
-      <div class="flex flex-wrap gap-3">
-        <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
-          Add Member
-        </x-button>
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Member Details
+          <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+        </h3>
+        <div class="flex flex-wrap gap-3">
+          <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
+            Add Member
+          </x-button>
+        </div>
       </div>
-    </div>
-    <DataTable
-      table-class-name="tablefixed compact"
-      :headers="travelerTable.columns"
-      :items="travelers || []"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="travelers.length < 15"
-      show-index
-    >
+      <DataTable
+        table-class-name="tablefixed compact"
+        :headers="travelerTable.columns"
+        :items="travelers || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="travelers.length < 15"
+        show-index
+      >
         <template #item-index="{ index, code }">
           <div>{{ code ?? 'Member ' + index }}</div>
         </template>
@@ -1881,7 +1951,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
       </template>
     </x-modal>
 
-    <CustomerAdditionalContacts
+    <customerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -1896,6 +1966,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
       "
       modelType="Travel"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -1935,24 +2006,6 @@ const handleSelectionChange = (tableType, selectedItems) => {
         </div>
         <div class="w-full md:w-2/3">
           <x-field
-            label="TRANSAPP CODE"
-            v-if="
-              leadStatusForm.leadStatus ==
-              enums.quoteStatusEnum.TransactionApproved
-            "
-          >
-            <x-input
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              v-model="leadStatusForm.trans_code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-          </x-field>
-          <x-field
             label="LOST REASON"
             v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
           >
@@ -1962,6 +2015,14 @@ const handleSelectionChange = (tableType, selectedItems) => {
               placeholder="Lost Reason is required"
               class="w-full"
               :error="leadStatusForm.errors.lostReason"
+            />
+          </x-field>
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
             />
           </x-field>
         </div>
@@ -1991,7 +2052,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ ecomDetails.premium }}</dd>
+            <dd>{{ selectedProviderPlan.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
@@ -2003,7 +2064,11 @@ const handleSelectionChange = (tableType, selectedItems) => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ ecomDetails.planName }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN NAME</dt>
+            <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
           </div>
         </dl>
       </div>
@@ -2122,27 +2187,33 @@ const handleSelectionChange = (tableType, selectedItems) => {
       </DataTable>
     </div>
 
-    <div
-      class="p-4 rounded shadow mb-6 bg-white"
-
-    >
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-          <x-button
-            @click.prevent="modals.doc = true"
-            size="sm"
-            color="orange"
-          >
+            <Link
+                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
+          <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
             Upload Documents
           </x-button>
           <x-button
             size="sm"
             color="red"
-            v-if="displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled"
+            v-if="
+              displaySendPolicyButton &&
+              permissions.notProductionApproval &&
+              permissions.isQuoteDocumentEnabled
+            "
             @click="sendPolicyToClient"
           >
             Send Policy
@@ -2215,7 +2286,261 @@ const handleSelectionChange = (tableType, selectedItems) => {
       </x-modal>
     </div>
 
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Available Plans
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
+                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                  age 0-64
+                </h6>
+              </div>
+            <div class="flex gap-2 mb-4">
+              <x-button-group
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                class="mr-2"
+              >
+                <x-button
+                  @click.prevent="onTogglePlans(false)"
+                  :loading="toggleLoader"
+                >
+                  Show
+                </x-button>
+                <x-button
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                >
+                  Hide
+                </x-button>
+              </x-button-group>
+              <x-button
+                v-if="
+                  availablePlansTable.data.length > 0 ||
+                  availableSeniorPlansTable.data.length > 0
+                "
+                size="sm"
+                color="orange"
+                class="mr-2"
+                @click.prevent="
+                  onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
+                "
+              >
+                Copy Link
+              </x-button>
+              <x-button
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                color="emerald"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
+              >
+                Download PDF
+              </x-button>
+            </div>
+          </div>
+
+          <div
+            v-if="
+              availablePlansTable.data &&
+              typeof availablePlansTable.data == 'string'
+            "
+          >
+            <p
+              class="text-center text-primary-600 uppercase"
+              v-if="typeof availablePlansTable.data == 'string'"
+            >
+              {{ availablePlansTable.data }}
+            </p>
+          </div>
+          <div v-else>
+            <DataTable
+                v-model:items-selected="selectedPlans"
+              table-class-name="tablefixed compact"
+              :headers="availablePlansTable.columns"
+              :items="availablePlansTable.data || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              :hide-footer="availablePlansTable.data.length < 15"
+            >
+              <template #item-providerName="item">
+                <p class="text-primary-600 uppercase">
+                  {{ item.providerName }}
+                </p>
+                <div class="flex gap-1">
+                  <x-tag
+                    v-if="item.isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Hidden
+                  </x-tag>
+                </div>
+              </template>
+              <template #item-name="item">
+                <span class="text-primary-600 uppercase">{{ item.name }}</span>
+              </template>
+              <template #item-discountPremium="item">
+                <span class="text-primary-600">{{
+                  item.discountPremium + item.vat
+                }}</span>
+              </template>
+              <template #item-action="item">
+                <div>
+                  <x-button
+                    size="xs"
+                    color="error"
+                    outlined
+                    @click.prevent="getPlanDetails(item.id)"
+                  >
+                    View
+                  </x-button>
+
+                  <span>
+                    <SelectPlan
+                      class="ml-1"
+                      v-if="!selectedPlanIds.includes(item.id)"
+                      @update:selectedPlanChanged="handlePlanSelected"
+                      :plan="item"
+                      :quoteType="modelType"
+                      :uuid="quote.uuid"
+                      :extraDetails="{
+                        normalPlansIds: normalPlansIds.ids,
+                        seniorPlansIds: seniorPlansIds.ids,
+                        selectedPlansIds: selectedPlanIds,
+                        planType: 'normalPlans',
+                      }"
+                    />
+                    <x-button
+                      class="ml-1"
+                      v-else
+                      size="xs"
+                      color="orange"
+                      outlined
+                      :disabled="true"
+                    >
+                      Selected
+                    </x-button>
+                  </span>
+                </div>
+              </template>
+            </DataTable>
+          </div>
+
+          <div v-if="aboveAgeMembers > 0" class="mt-5">
+            <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+              <h6 class="font-semibold text-primary-600 text-ms mb-1">
+                Travel plans for {{ aboveAgeMembers }} member age 65 and above
+              </h6>
+            </div>
+            <div>
+              <DataTable
+                  v-model:items-selected="selectedPlans"
+                table-class-name="tablefixed compact"
+                :headers="availableSeniorPlansTable.columns"
+                :items="availableSeniorPlansTable.data || []"
+                border-cell
+                hide-rows-per-page
+                :rows-per-page="15"
+                :hide-footer="availableSeniorPlansTable.data.length < 15"
+              >
+                <template #item-providerName="item">
+                  <span class="text-primary-600 uppercase">{{
+                    item.providerName
+                  }}</span>
+                </template>
+                <template #item-name="item">
+                  <span class="text-primary-600 uppercase">{{
+                    item.name
+                  }}</span>
+                </template>
+                <template #item-discountPremium="item">
+                  <span class="text-primary-600">{{
+                    item.discountPremium + item.vat
+                  }}</span>
+                </template>
+                <template #item-action="item">
+                  <div>
+                    <x-button
+                      size="xs"
+                      color="error"
+                      outlined
+                      @click.prevent="getPlanDetails(item.id)"
+                    >
+                      View
+                    </x-button>
+                    <span>
+                      <SelectPlan
+                        class="ml-1"
+                        v-if="!selectedPlanIds.includes(item.id)"
+                        @update:selectedPlanChanged="handlePlanSelected"
+                        :plan="item"
+                        :quoteType="modelType"
+                        :uuid="quote.uuid"
+                        :extraDetails="{
+                          normalPlansIds: normalPlansIds.ids,
+                          seniorPlansIds: seniorPlansIds.ids,
+                          selectedPlansIds: selectedPlanIds,
+                          planType: 'seniorPlans',
+                        }"
+                      />
+                      <x-button
+                        class="ml-1"
+                        v-else
+                        size="xs"
+                        color="orange"
+                        outlined
+                        :disabled="true"
+                      >
+                        Selected
+                      </x-button>
+                    </span>
+                  </div>
+                </template>
+              </DataTable>
+            </div>
+          </div>
+
+          <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>
+            <template #header> {{ planDetails.providerName }} </template>
+            <LazyAvailablePlan :plan="planDetails" />
+          </x-modal>
+        </template>
+      </Collapsible>
+    </div>
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      quoteType="Travel"
+      :payments="payments"
+    />
+
+    <PaymentTableNew
+			v-if="isNewPaymentStructure"
+			quoteType="Travel"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="enums.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <PaymentTable
+      v-else
       :payments="payments"
       :can="permissions"
       :isBetaUser="isBetaUser"
@@ -2224,196 +2549,6 @@ const handleSelectionChange = (tableType, selectedItems) => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
-          <div>
-              <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
-                  <x-button
-                        @click.prevent="onTogglePlans(false)"
-                        :loading="toggleLoader"
-                    >
-                        Show
-                    </x-button>
-                    <x-button
-                        @click.prevent="onTogglePlans(true)"
-                        :loading="toggleLoader"
-                    >
-                        Hide
-                    </x-button>
-              </x-button-group>
-        <x-button
-            v-if="availablePlansTable.data.length > 0 || availableSeniorPlansTable.data.length > 0"
-            size="sm"
-            color="orange"
-            class="mr-2"
-            @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
-        >
-          Copy Link
-        </x-button>
-          <x-button
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              color="emerald"
-              @click.prevent="onExportPlans"
-              :loading="exportLoader"
-          >
-              Download PDF
-          </x-button>
-          </div>
-      </div>
-      <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-        Travel plans for {{ travelers.length - aboveAgeMembers }} member age 0-64
-      </h6>
-
-      <div
-        v-if="
-          availablePlansTable.data &&
-          typeof availablePlansTable.data == 'string'
-        "
-      >
-        <p
-          class="text-center text-primary-600 uppercase"
-          v-if="typeof availablePlansTable.data == 'string'"
-        >
-          {{ availablePlansTable.data }}
-        </p>
-      </div>
-      <div v-else-if="availablePlansTable.data.length > 0">
-        <!-- for future use   -->
-        <DataTable
-          table-class-name="tablefixed compact"
-          :headers="availablePlansTable.columns"
-          :items="availablePlansTable.data || []"
-          v-model:items-selected="selectedAdultPlans"
-          border-cell
-          hide-rows-per-page
-          :rows-per-page="15"
-          :hide-footer="availablePlansTable.data.length < 15"
-          @update:items-selected="handleSelectionChange('adult', $event)"
-        >
-          <template #item-providerName="item">
-            <p class="text-primary-600 uppercase">{{
-              item.providerName
-            }}</p>
-              <div class="flex gap-1">
-              <x-tag
-                  v-if="item.isDisabled"
-                  size="xs"
-                  color="error"
-                  class="mt-0.5 text-[10px]"
-              >
-                  Hidden
-              </x-tag>
-              </div>
-          </template>
-          <template #item-name="item">
-            <span class="text-primary-600 uppercase">{{ item.name }}</span>
-          </template>
-          <template #item-discountPremium="item">
-            <span class="text-primary-600">{{
-              item.discountPremium + item.vat
-            }}</span>
-          </template>
-          <template #item-action="item">
-            <div>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="getPlanDetails(item.id)"
-              >
-                View
-              </x-button>
-
-              <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
-              <span>
-                <SelectPlan
-                  class="ml-1"
-                  v-if="prefillPlanId != item.id"
-                  @update:updatePlanId="handleChildUpdate"
-                  :plan="item"
-                  :quoteType="modelType"
-                  :uuid="quote.uuid"
-                />
-
-                <x-button
-                  class="ml-1"
-                  v-else
-                  size="xs"
-                  color="orange"
-                  outlined
-                  :disabled="true"
-                >
-                  Selected
-                </x-button>
-              </span>
-            </div>
-          </template>
-        </DataTable>
-      </div>
-
-      <div v-if="aboveAgeMembers > 0" class="mt-5">
-        <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-          Travel plans for {{ aboveAgeMembers }} member age 65 and above
-        </h6>
-        <div>
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="availableSeniorPlansTable.columns"
-            :items="availableSeniorPlansTable.data || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="availableSeniorPlansTable.data.length < 15"
-            v-model:items-selected="selectedSeniorPlans"
-            @update:items-selected="handleSelectionChange('senior', $event)"
-          >
-            <template #item-providerName="item">
-            <p class="text-primary-600 uppercase">{{
-                item.providerName
-              }}</p>
-                <div class="flex gap-1">
-                <x-tag
-                    v-if="item.isDisabled"
-                    size="xs"
-                    color="error"
-                    class="mt-0.5 text-[10px]"
-                >
-                    Hidden
-                </x-tag>
-        </div>
-            </template>
-            <template #item-name="item">
-              <span class="text-primary-600 uppercase">{{ item.name }}</span>
-            </template>
-            <template #item-discountPremium="item">
-            <span class="text-primary-600">{{
-                item.discountPremium + item.vat
-              }}</span>
-            </template>
-            <template #item-action="item">
-              <div>
-                <x-button
-                    size="xs"
-                    color="error"
-                    outlined
-                    @click.prevent="getPlanDetails(item.id)"
-                >
-                  View
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </div>
-      </div>
-
-      <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>
-        <template #header> {{ planDetails.providerName }} </template>
-        <LazyAvailablePlan :plan="planDetails" />
-      </x-modal>
-    </div>
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -2585,12 +2720,11 @@ const handleSelectionChange = (tableType, selectedItems) => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    
     <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
-        <template #header> 
+        <template #header>
           <div class="text-center">
             SORRY!
-          </div>  
+          </div>
         </template>
         <p>Please choose quotes from the same age group for a correct comparison.</p>
         <template #actions>
@@ -2605,7 +2739,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
           </div>
         </template>
       </x-modal>
-    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
   </div>
 </template>
 <style>

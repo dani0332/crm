@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -21,9 +22,9 @@ class CycleQuoteRepository extends BaseRepository
     }
 
     /**
-     * create new personal quote
+     * create new personal quote.
      *
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -57,8 +58,13 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
+        $request = request();
+
+        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
+        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
+
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
@@ -67,11 +73,21 @@ class CycleQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->when(isset(request()->advisors) && ! empty(request()->advisors), function ($query) {
+                $advisors = request()->advisors;
+                $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
+            })
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->orderBy($sort_by, $sort_type);
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        if ($forTotalLeadsCount) {
+            //PD Revert
+            return 0;
+            // return $query->count();
+        }
+
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchExport()
@@ -100,14 +116,17 @@ class CycleQuoteRepository extends BaseRepository
 
             $quote->update($quoteData);
 
-            $quote->cycleQuote->update(Arr::only($data, ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition']));
+            $quote->cycleQuote()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                Arr::only($data, (new CycleQuote())->allowedColumns())
+            );
 
             return $quote;
         });
     }
 
     /**
-     * get all dropdown options required for form
+     * get all dropdown options required for form.
      *
      * @return array
      */
@@ -135,8 +154,18 @@ class CycleQuoteRepository extends BaseRepository
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
+                'transactionType',
+                'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                    $q->with([
+                        'paymentSplits' => function ($query) {
+                            $query->orderBy('sr_no', 'asc');
+                        },
+                        'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
+                    ]);
                 },
                 'customer',
                 'createdBy',
@@ -162,6 +191,7 @@ class CycleQuoteRepository extends BaseRepository
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         return $quote;
     }

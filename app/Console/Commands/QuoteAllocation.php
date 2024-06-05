@@ -6,11 +6,10 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\TiersEnum;
+use App\Enums\TiersIdEnum;
 use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
-use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use Illuminate\Console\Command;
 
@@ -54,38 +53,11 @@ class QuoteAllocation extends Command
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
         $allocationStartDate = now()->subWeek()->startOfDay()->toDateTimeString();
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
-            $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-            $to = now()->subMinutes(7)->toDateTimeString();
+            $to = now()->subMinutes(5)->toDateTimeString();
             $chunkSize = 200;
-            $linesOfBusiness = [
-                QuoteTypeId::Car => [
-                    'model' => CarQuote::class,
-                    'allocationKey' => 'advisor_id',
-                    'conditions' => function ($lead) use ($tierR) {
-                        return $lead instanceof CarQuote
-                            && ! in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                            && ! in_array($lead->source, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-                            && ($lead->tier_id != $tierR->id) // exclude tier R
-                            && $lead->is_renewal_tier_email_sent === 0;
-                    },
-                ],
-                QuoteTypeId::Health => [
-                    'model' => HealthQuote::class,
-                    'allocationKey' => 'advisor_id',
-                    'conditions' => function ($lead) {
-                        return $lead instanceof HealthQuote
-                            && $lead->quote_status_id === QuoteStatusEnum::Qualified
-                            && $lead->health_quote_request->price_starting_from !== null
-                            && ! $lead->health_quote_request->is_error_email_sent
-                            && $lead->health_quote_request->advisor_id === null;
-                    },
-                ],
-            ];
-
-            foreach ($linesOfBusiness as $quoteType => $config) {
-                $this->executeQuoteAllocation($quoteType, $config, $to, $chunkSize, $allocationStartDate);
-            }
-
+            info('start and end dates are : '.$allocationStartDate.' and '.$to);
+            $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
+            $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
         } else {
             info('Quote Allocation Command is turned Off');
         }
@@ -93,24 +65,61 @@ class QuoteAllocation extends Command
         info("------------------- Quote Allocation Command Finished for $currentIteration -------------------");
     }
 
-    public function executeQuoteAllocation($quoteType, $config, $to, $chunkSize, $allocationStartDate)
+    public function executeCarAllocation($quoteType, $to, $chunkSize, $allocationStartDate, $applicationStorageService)
     {
-        $quoteModel = $config['model'];
-        $allocationKey = $config['allocationKey'];
-        $conditions = $config['conditions'];
         $processedRecords = 0;
-        $quoteModel::whereNull($allocationKey)
+        $shouldIncludeDubaiNow = $applicationStorageService->getValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
+
+        if ($shouldIncludeDubaiNow) {
+            $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
+        }
+
+        $leads = CarQuote::whereNull('advisor_id')
             ->select('uuid')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
-            ->when($conditions, fn ($query) => $query->where($conditions))
-            ->chunk($chunkSize, function ($leads) use ($quoteType, $processedRecords) {
-                foreach ($leads as $lead) {
-                    $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
-                    $allocationStrategy->executeSteps();
-                    $processedRecords++;
-                }
-            });
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', $exemptedLeadSources)
+            ->where('is_renewal_tier_email_sent', 0)
+            ->where('sic_flow_enabled', 0)
+            ->take($chunkSize);
+
+        info('leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
+
+        foreach ($leads->get() as $lead) {
+            if ($lead->tier_id == TiersIdEnum::TIER_R) {
+                continue;
+            }
+            info('Processing record for Quote Allocation with uuid: '.$lead->uuid);
+            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
+            $allocationStrategy->executeSteps();
+            $processedRecords++;
+            info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
+        }
+        if ($processedRecords === 0) {
+            info('No records found for '.QuoteTypeId::getDescription($quoteType));
+        }
+    }
+
+    public function executeHealthAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
+    {
+        $processedRecords = 0;
+        $leads = HealthQuote::whereNull('advisor_id')
+            ->select('uuid')
+            ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->orderBy('created_at', 'desc')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->where('health_quote_request.price_starting_from', '!=', null)
+            ->where('health_quote_request.is_error_email_sent', 0)
+            ->where('health_quote_request.advisor_id', null)
+            ->take($chunkSize);
+
+        foreach ($leads->get() as $lead) {
+            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
+            $allocationStrategy->executeSteps();
+            $processedRecords++;
+        }
         if ($processedRecords === 0) {
             info('No records found for '.QuoteTypeId::getDescription($quoteType));
         }

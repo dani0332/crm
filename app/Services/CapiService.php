@@ -35,7 +35,14 @@ class CapiService
     public function request($path, $method = 'post', $data = [])
     {
         $url = $this->baseUrl.$path;
-        $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url);
+        $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) use ($data, $url) {
+            info('CAPI Service Exception', ['data' => $data, 'url' => $url]);
+            if (isset($response->json()['msg'])) {
+                vAbort($response->json()['msg']);
+            } else {
+                vAbort('CAPI Service Exception');
+            }
+        });
 
         return (object) $response->json();
     }

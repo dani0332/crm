@@ -12,4 +12,16 @@ use BenSampo\Enum\Enum;
 class DocumentTypeCode extends Enum
 {
     const KYCDOC = 'KYCDOC';
+    const OD = 'OD';
+    const CPD = 'CPD';
+    const BPD = 'BPD';
+    const TPD = 'TPD';
+    const HPD = 'HPD';
+    const LPD = 'LPD';
+    const HOMPD = 'HOMPD';
+    const CYCPD = 'CYCPD';
+    const CLPD = 'CLPD';
+    const GMQPD = 'GMQPD';
+    const PPD = 'PPD';
+    const YPD = 'YPD';
 }

@@ -1,4 +1,8 @@
 <script setup>
+defineOptions({
+  inheritAttrs: false,
+});
+
 const props = defineProps({
   modelValue: {
     type: Boolean,
@@ -20,6 +24,14 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  width: {
+    type: String,
+    default: 'md:min-w-[35%] max-w-[70%]',
+  },
+  hideoverflow: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -28,7 +40,7 @@ const closeModal = () => emit('update:modelValue', !props.backdropClose);
 </script>
 <template>
   <div
-    class="fixed w-full h-full flex justify-center items-center left-0 top-0 z-30"
+    class="fixed w-full h-full flex justify-center items-center left-0 top-0 z-40"
     v-if="modelValue"
   >
     <div
@@ -36,7 +48,8 @@ const closeModal = () => emit('update:modelValue', !props.backdropClose);
       class="fixed inset-0 bg-gray-500 dark:bg-black transition-opacity ease-out duration-200 opacity-30 dark:opacity-70"
     ></div>
     <div
-      class="relative flex flex-col z-10 bg-white dark:bg-gray-900 rounded-md shadow-lg transform transition-all overflow-hidden max-h-[80%] w-full w-max ease-out duration-200 opacity-100 translate-y-0 sm:scale-100"
+      :class="width"
+      class="relative flex flex-col z-10 bg-white dark:bg-gray-900 rounded-md shadow-lg transform transition-all max-h-[80%] ease-out duration-200 opacity-100 translate-y-0 sm:scale-100"
     >
       <header
         class="text-lg font-semibold px-6 py-4 border-b"
@@ -62,8 +75,9 @@ const closeModal = () => emit('update:modelValue', !props.backdropClose);
         </div>
       </header>
       <main
-        class="overflow-auto px-6 py-4 max-w-5xl"
-        :class="{ 'rounded-full': !showHeader }"
+        v-bind="$attrs"
+        class="px-6 py-4"
+        :class="{ 'rounded-full': !showHeader, 'overflow-auto': hideoverflow }"
       >
         <slot></slot>
       </main>

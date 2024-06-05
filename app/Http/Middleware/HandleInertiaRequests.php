@@ -6,9 +6,12 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Services\LeadsCountService;
+use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -70,7 +73,10 @@ class HandleInertiaRequests extends Middleware
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
+            'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
+            'quoteSegments' => QuoteSegmentEnum::withLabels(),
+            'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
         ];
     }
 
@@ -96,25 +102,18 @@ class HandleInertiaRequests extends Middleware
         $nav = app(Navigation::class)
             ->add('Home', url('/home'));
 
-        if (auth()->user()->hasAnyPermission([
+        if (auth()->user()->hasAnyPermission(array_merge([
             PermissionsEnum::DashboardView,
             PermissionsEnum::TPL_DASHBOARD_VIEW,
-            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
             PermissionsEnum::MAIN_DASHBOARD_VIEW,
             PermissionsEnum::UtmLeadsSalesReport,
-        ])) {
+        ], PermissionsEnum::getComprehensiveDashboardPermissions()))) {
             $nav = $nav->add('Dashboard', '', function (Section $section) {
                 $section
                     ->add('Car Conversion', url('dashboard/car-conversion'), fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Travel Conversion', url('dashboard/travel-conversion'), fn ($s) => $s->attributes(['icon' => 'travel']))
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TPL_DASHBOARD_VIEW),
-                        'TPL Conversion',
-                        url('/tpl-conversion-dashboard'),
-                        fn ($s) => $s->attributes(['icon' => 'graph'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW),
+                        auth()->user()->hasAnyPermission(PermissionsEnum::getComprehensiveDashboardPermissions()),
                         'Comprehensive Conversion',
                         url('/comprehensive-conversion-dashboard'),
                         fn ($s) => $s->attributes(['icon' => 'graph'])
@@ -128,23 +127,33 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasAnyPermission([
-            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
+        if (auth()->user()->hasAnyPermission(array_merge([
             PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
             PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
             PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
+            PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW,
             PermissionsEnum::UtmLeadsSalesReport,
             PermissionsEnum::RENEWAL_BATCH_REPORT,
-        ])) {
+            PermissionsEnum::CONVERSION_AS_AT_REPORT,
+            PermissionsEnum::MANAGEMENT_REPORT,
+        ],
+            PermissionsEnum::getAdvisorConverionReportPermissions(),
+            PermissionsEnum::getAdvisorDistributionReportPermissions()))) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
-                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW), 'Advisor Conversion', route('advisor-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::CONVERSION_AS_AT_REPORT), 'Conversion As At Report', route('conversion-as-at-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission(PermissionsEnum::getAdvisorConverionReportPermissions()), 'Advisor Conversion', route('advisor-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW), 'Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission(PermissionsEnum::getAdvisorDistributionReportPermissions()), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW), 'Revival Conversion', route('revival-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::MANAGEMENT_REPORT), 'Management Report', route('management-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::STALE_LEADS_REPORT), 'Stale Leads Report', route('stale-leads-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::PIPELINE_REPORT), 'Pipeline Report', route('pipeline-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT), 'Total Premium Report', route('total-premium-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
@@ -178,7 +187,7 @@ class HandleInertiaRequests extends Middleware
         $nav = $nav->add('Personal Quotes', '', function (Section $section) {
             $section
                 ->addIf(
-                    auth()->user()->hasAnyPermission([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch]),
+                    auth()->user()->hasAnyPermission([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch, PermissionsEnum::CAR_REVIVAL_QUOTE_LIST]),
                     'Car',
                     '/quotes/car',
                     fn ($s) => $s
@@ -193,6 +202,12 @@ class HandleInertiaRequests extends Middleware
                             auth()->user()->can(PermissionsEnum::CarQuotesList),
                             'Lead List',
                             '/quotes/car',
+                            fn ($s) => $s->attributes(['icon' => 'car'])
+                        )
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::CAR_REVIVAL_QUOTE_LIST),
+                            'Revival Quotes',
+                            '/quotes/revival',
                             fn ($s) => $s->attributes(['icon' => 'car'])
                         ),
                 )
@@ -285,7 +300,7 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->can(PermissionsEnum::TransAppList)) {
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -312,36 +327,11 @@ class HandleInertiaRequests extends Middleware
                         '/transapp/cancel-transaction',
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Transaction List', '/transapp/transaction', fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Admin',
-                        route('insurancecompany.index'),
-                        fn ($s) => $s
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::InsuranceCompanyList),
-                                'Insurance Companies',
-                                route('insurancecompany.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::ReasonList),
-                                'Reasons',
-                                route('reason.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::StatusList),
-                                'Status',
-                                route('status.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::PaymentModeList),
-                                'Payment Modes',
-                                route('paymentmode.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
+                        auth()->user()->can(PermissionsEnum::TransAppList),
+                        'Transaction List',
+                        '/transapp/transaction',
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
@@ -415,7 +405,11 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::EmbeddedProductView)) {
+        if (
+            auth()->user()->hasAnyPermission([
+                PermissionsEnum::EMBEDDED_PRODUCT_CONFIG,
+            ])
+        ) {
             $nav = $nav->add('Embedded Products', '', function (Section $section) {
                 $section
                     ->add('All Products', route('embedded-products.index'), fn ($s) => $s->attributes(['icon' => 'box']))
@@ -423,7 +417,7 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policy', url('legacy-policy'));
+        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policies', url('legacy-policy'));
 
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
@@ -460,10 +454,17 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::TeamThresholdView,
             PermissionsEnum::COMMERCIAL_KEYWORDS,
             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+            PermissionsEnum::QUOTE_SYNC_LOGS,
         ];
         if (auth()->user()->hasAnyPermission($adminMenuPermissions)) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::QUOTE_SYNC_LOGS),
+                        'Quote Sync',
+                        url('admin/quote-sync'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::UsersList),
                         'Users',
@@ -539,6 +540,10 @@ class HandleInertiaRequests extends Middleware
                             )
                     );
             });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
+            $nav = $nav->add('InstantAlfred Chat Logs', route('instant-alfred.logs'));
         }
 
         return $nav;

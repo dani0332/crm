@@ -22,6 +22,7 @@ class CustomerMembersRepository extends BaseRepository
             'quote_type' => ltrim($quoteModelObject, '\\'),
             'quote_id' => $quote_request_id,
             'customer_type' => $customerType,
+            'deleted_at' => null,
         ])->with([
             'relation',
             'emirate',

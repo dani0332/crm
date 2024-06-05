@@ -2,20 +2,29 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Facades\Marshall;
 use App\Jobs\SendEPDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
+use App\Models\PaymentAction;
+use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use finfo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
@@ -41,7 +50,7 @@ class EmbeddedProductRepository extends BaseRepository
     }
 
     /**
-     * @param    $quoteType
+     * @param  $quoteType
      * @return mixed
      */
     public function fetchCreate($data)
@@ -72,7 +81,13 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($prices as $price) {
                 if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
-                    $price->delete();
+                    if (EmbeddedTransaction::where('product_id', $price->id)->exists()) {
+                        $price->is_active = 0;
+                        $price->save();
+                    } else {
+                        // only delete options which are not used in any transaction
+                        $price->delete();
+                    }
                 }
             }
 
@@ -93,7 +108,9 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->where($column, $value)->with(['insuranceProvider', 'placements.quoteType', 'prices'])->firstOrFail();
+        return $this->where($column, $value)->with(['insuranceProvider', 'placements.quoteType', 'prices' => function ($query) {
+            $query->where('is_active', 1);
+        }])->firstOrFail();
     }
 
     /**
@@ -142,12 +159,14 @@ class EmbeddedProductRepository extends BaseRepository
         ])->whereIn('product_id', $optionsIds)->get();
 
         $certificate_number = '';
+        $capturedAt = null;
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
+            $capturedAt = $transaction[0]['payment_status_date'];
         }
         $short_code = $ep->short_code;
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
 
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Salama_Certificate']);
     }
@@ -200,10 +219,12 @@ class EmbeddedProductRepository extends BaseRepository
                     $query->where('quote_request_id', $quoteRequestId);
                 },
             ])
+            ->whereHas('prices.transactions', function ($query) use ($quoteRequestId) {
+                $query->where('quote_request_id', $quoteRequestId);
+            })
             ->get();
         $modelType = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
-
             $item->send_document_button = false;
             $optionsIds = $item->prices->pluck('id');
 
@@ -214,24 +235,56 @@ class EmbeddedProductRepository extends BaseRepository
                 ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
             ])->whereIn('product_id', $optionsIds)->get();
 
-            if ($item->product_category == EpCategoryEnum::BOLT_ON) {
-                $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
-
-                if ($quoteObject->payment_status_id == PaymentStatusEnum::CAPTURED) {
-
-                    if ($transaction->isNotEmpty()) {
-                        $item->send_document_button = true;
-                    }
-                }
-            } elseif ($item->product_category == EpCategoryEnum::STAND_ALONE) {
-
-                if ($transaction->isNotEmpty()) {
-                    $item->send_document_button = true;
-                }
-            }
+            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
+            $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
         });
 
         return $ep;
+    }
+
+    private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
+    {
+        $canSend = false;
+        if ($productCategory == EpCategoryEnum::BOLT_ON) {
+            if ($quoteStatusId == QuoteStatusEnum::TransactionApproved) {
+                if ($transaction->isNotEmpty()) {
+                    $canSend = true;
+                }
+            }
+        } elseif ($productCategory == EpCategoryEnum::STAND_ALONE) {
+            if ($transaction->isNotEmpty()) {
+                $canSend = true;
+            }
+        }
+
+        return $canSend;
+    }
+
+    public function fetchSendDocumentsByLead($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if ($quoteTypeId !== QuoteTypeId::Car) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+        ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
+
+        if ($epTransaction->isNotEmpty()) {
+            foreach ($epTransaction as $item) {
+                $product_id = $item->product_id;
+                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                // EP Send documents
+                $data = [];
+                $data['quoteId'] = $leadId;
+                $data['modelType'] = $modelType;
+                $data['epId'] = $embedded_product_id;
+                $this->fetchSendDocument($data);
+            }
+        }
     }
 
     public function fetchSendDocument($data)
@@ -250,11 +303,9 @@ class EmbeddedProductRepository extends BaseRepository
             $documents = json_decode($ep->company_documents);
             if (! empty($documents)) {
                 foreach ($documents as $item) {
-
                     $path = $item->path;
                     $pwDoc = $path !== '' ? $websiteURL.$path : '';
                     if (! empty($path)) {
-
                         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
 
                         $file = file_get_contents($pwDoc);
@@ -298,13 +349,22 @@ class EmbeddedProductRepository extends BaseRepository
             ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->whereIn('product_id', $optionsIds)->get();
 
+        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        if (! $canSendDocuments) {
+            info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+
+            return 'Documents cannot be sent';
+        }
+
         $certificate_number = '';
+        $capturedAt = null;
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
+            $capturedAt = $transaction[0]['payment_status_date'];
         }
         // send certificate only for medex
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
         if ($pdf) {
             $attachments[] = [
                 'Content' => base64_encode($pdf->output()),
@@ -317,6 +377,7 @@ class EmbeddedProductRepository extends BaseRepository
             'From' => config('constants.MA_FROM_EMAIL'),
             'ReplyTo' => isset($advisorData['email']) ? $advisorData['email'] : null,
             'To' => $quoteObject->email,
+            'Cc' => isset($advisorData['email']) ? $advisorData['email'] : '',
             'Tag' => '',
             'TemplateAlias' => 'embedded-products-payment-auth',
             'Attachments' => isset($attachments) ? $attachments : null,
@@ -331,7 +392,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
                 'subject' => 'Thank you for your purchase of '.$product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
             ],
-            'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
+            'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
         SendEPDocumentsJob::dispatch($body);
@@ -346,17 +407,32 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  object  $quoteObject
      * @param  string  $certificate_number
      * @param  float  $premium
-     * @return \PDF|null The PDF document or null if the short code is not defined in config.
+     * @param  null|Carbon  capturedAt
+     * @return PDF|null The PDF document or null if the short code is not defined in config.
      */
     private function getPDF(
         $short_code,
         $quoteObject,
         $certificate_number,
-        $premium
+        $premium,
+        $capturedAt
     ) {
         $pdf = null;
+        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
+        $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
+            $viewFile = $certificatesConfig[$short_code]['view_file'];
+
+            if ($epMdxV3From && ! empty($capturedAt)
+                && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV3From->value))) {
+                $viewFile = $certificatesConfig[$short_code]['view_file_v3'];
+
+            } elseif ($epMdxV2From && ! empty($capturedAt)
+            && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
+                $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
+            }
+
             $strategy = $this->createStrategy($short_code);
             $viewData = $strategy->getPDFData($quoteObject, $certificate_number, $premium);
             $pdf = PDF::setOption(
@@ -365,7 +441,7 @@ class EmbeddedProductRepository extends BaseRepository
                     'dpi' => 150,
                 ]
             )
-                ->loadView($certificatesConfig[$short_code]['view_file'], compact('viewData'));
+                ->loadView($viewFile, compact('viewData'));
         }
 
         return $pdf;
@@ -379,8 +455,19 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
-        $dataset = DB::table('embedded_products')
-            ->where('embedded_products.id', $ep->id)
+        $dataset = EmbeddedTransaction::with(
+            'quoteRequest.customer',
+            'quoteRequest.carMake',
+            'quoteRequest.carModel',
+            'quoteRequest.quoteStatus',
+            'quoteRequest.advisor',
+        )
+            ->join('embedded_product_options', function ($join) use ($ep) {
+                $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
+                    ->where('embedded_product_options.embedded_product_id', $ep->id);
+            })
+            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->where('embedded_transactions.is_selected', true)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
             })
@@ -389,67 +476,50 @@ class EmbeddedProductRepository extends BaseRepository
                 $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
                 $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
             })
-            ->join('embedded_product_options', 'embedded_products.id', '=', 'embedded_product_options.embedded_product_id')
-            ->join('embedded_transactions', function ($join) {
-                $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
-                    ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
-                    ->where('embedded_transactions.is_selected', true);
+            ->when(isset($filters['name']), function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
+                    $name = $filters['name'];
+                    $query->where('first_name', 'like', "%{$name}%")
+                        ->orWhere('last_name', 'like', "%{$name}%");
+                });
             })
-            ->join('quote_type', 'embedded_transactions.quote_type_id', '=', 'quote_type.id')
-            ->select(
-                'embedded_transactions.id',
-                'embedded_transactions.code',
-                'embedded_transactions.quote_request_id',
-                'embedded_transactions.paid_at',
-                'embedded_transactions.certificate_number',
-                'embedded_transactions.price_with_vat',
-                'quote_type.code as model_type',
-            )->get();
+            ->when(isset($filters['email']), function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
+                    $email = $filters['email'];
+                    $query->where('email', 'like', "%{$email}%");
+                });
+            })
+            ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
+                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
+                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
+                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
+                });
+            });
+
+        $sortBy = 'embedded_transactions.id';
+        $sortOrder = 'desc';
+        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
+            $sortableColumns = [
+                'payment_date' => 'embedded_transactions.paid_at',
+                'contribution_amount' => 'embedded_transactions.price_with_vat',
+            ];
+            $sortBy = $sortableColumns[$filters['sortBy']] ?? 'embedded_transactions.id';
+            $sortOrder = $filters['sortType'] ?? 'desc';
+        }
+
+        $dataset = $dataset->orderBy($sortBy, $sortOrder);
+
+        if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
+            $dataset = $dataset->get();
+        } else {
+            $dataset = $dataset->simplePaginate()->withQueryString();
+        }
 
         $strategy = $this->createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset);
 
-        if (isset($filters['date_of_purchase']) && ! empty($filters['date_of_purchase'])) {
-            $dataset = $dataset->filter(function ($item) use ($filters) {
-                if (! empty($item['policy_issuance_date'])) {
-                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
-                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
-                    $isBetween = Carbon::parse($item['policy_issuance_date'])->between($startDate, $endDate);
-
-                    return $isBetween;
-                }
-
-                return false;
-            });
-        }
-
-        if (isset($filters['email']) && ! empty($filters['email'])) {
-            $dataset = $dataset->filter(function ($item) use ($filters) {
-                if (! empty($item['email'])) {
-                    $emailMatch = stripos($item['email'], $filters['email']) !== false;
-
-                    return $emailMatch;
-                }
-
-                return false;
-            });
-        }
-
-        if (isset($filters['name']) && ! empty($filters['name'])) {
-            $dataset = $dataset->filter(function ($item) use ($filters) {
-                if (! empty($item['name'])) {
-                    $nameParts = explode(' ', $item['name']);
-                    $firstName = $nameParts[0];
-                    $lastName = $nameParts[1] ?? '';
-
-                    return stripos($firstName, $filters['name']) !== false || stripos($lastName, $filters['name']) !== false;
-                }
-
-                return false;
-            });
-        }
-
-        return $dataset->values()->all();
+        return $dataset;
     }
 
     public function createStrategy($shortCode)
@@ -463,5 +533,167 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return $strategy;
+    }
+
+    public function fetchCancelPayment($data)
+    {
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
+        $type = QuoteType::where('code', $data['modelType'])->first();
+
+        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $data['quote_id'])
+            ->where('quote_type_id', $type->id)
+            ->where('is_selected', true)
+            ->whereIn('product_id', $embeddedProductOptionsIds)
+            ->get();
+
+        if ($embededTransaction->isNotEmpty()) {
+            if (! empty($embededTransaction[0]['payments'][0])) {
+                $transaction = $embededTransaction[0];
+
+                $payment = $transaction['payments'][0];
+                $paymentStatus = $payment['payment_status_id'];
+
+                $maxAmount = 0;
+                $errorMessage = 'Cancel amount should not exceeded from transaction amount';
+                if (in_array($paymentStatus, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])) {
+                    $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+                } elseif ($paymentStatus === PaymentStatusEnum::AUTHORISED) {
+                    $maxAmount = $payment->premium_authorized - $payment->premium_refunded;
+                } else {
+                    $errorMessage = 'Invalid Payment status';
+                }
+
+                if ($maxAmount >= $data['amount']) {
+
+                    // Remove all previous refund actions
+                    PaymentAction::where('payment_code', $transaction->code)
+                        ->where('is_fulfilled', 0)
+                        ->where('action_type', 'REFUND')
+                        ->where('is_manager_approved', 1)
+                        ->delete();
+
+                    $paymentSplit = PaymentSplits::where('code', $transaction->code)->orderBy('sr_no', 'desc')->first();
+                    $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
+                    PaymentAction::create([
+                        'payment_code' => $transaction->code,
+                        'is_fulfilled' => 0,
+                        'action_type' => 'REFUND',
+                        'reason' => $data['reason'],
+                        'amount' => $data['amount'],
+                        'created_by' => auth()->user()->email,
+                        'is_manager_approved' => 1,
+                        'sr_no' => $sr,
+                    ]);
+                    $data = [
+                        'uuid' => $data['uuid'],
+                        'type_id' => $type->id,
+                        'code' => $transaction->code,
+
+                    ];
+                    $processResponse = $this->processCancelPayment($data);
+
+                    return [
+                        'data' => $processResponse,
+                        'code' => 200,
+                    ];
+                } else {
+                    return [
+                        'data' => [$errorMessage],
+                        'code' => 403,
+                    ];
+                }
+            } else {
+                return [
+                    'data' => ['Payment not exist'],
+                    'code' => 403,
+                ];
+            }
+        }
+
+        return [
+            'data' => ['Transaction does not exist'],
+            'code' => 403,
+        ];
+    }
+
+    private function processCancelPayment($data)
+    {
+        $planData = [
+            'quoteUID' => $data['uuid'],
+            'quoteTypeId' => $data['type_id'],
+            'payments' => [
+                [
+                    'codeRef' => $data['code'],
+                ],
+            ],
+        ];
+
+        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+
+        return $response;
+    }
+
+    public function fetchCapturePayment($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if ($quoteTypeId !== QuoteTypeId::Car) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+            ['payment_status_id', PaymentStatusEnum::AUTHORISED],
+        ])->with(['quoteRequest', 'product.embeddedProduct' => function ($query) {
+            $query->where('product_category', EpCategoryEnum::BOLT_ON);
+        }])
+            ->get();
+
+        $payload = [];
+        if ($epTransaction->isNotEmpty()) {
+            foreach ($epTransaction as $item) {
+                if (empty($payload)) {
+                    $payload = [
+                        'quoteUID' => $item->quoteRequest->uuid,
+                        'quoteTypeId' => $quoteTypeId,
+                    ];
+                }
+
+                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
+                $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
+                $payload['payments'][] = [
+                    'codeRef' => $item->code.'-'.$sr,
+                ];
+
+                PaymentAction::where('payment_code', $item->code)
+                    ->where('action_type', 'CAPTURE')
+                    ->where('is_fulfilled', 0)
+                    ->where('is_manager_approved', 1)
+                    ->delete();
+
+                PaymentAction::create([
+                    'payment_code' => $item->code,
+                    'action_type' => 'CAPTURE',
+                    'amount' => $item->price_with_vat,
+                    'is_fulfilled' => 0,
+                    'created_by' => auth()->user()->email,
+                    'reason' => 'Payment Captured',
+                    'is_manager_approved' => 1,
+                    'sr_no' => $sr,
+                ]);
+            }
+        }
+
+        if (empty($payload)) {
+            return false;
+        }
+
+        try {
+            Marshall::request('/payment/checkout/capture', 'post', $payload);
+            $this->fetchSendDocumentsByLead($leadId, $modelType);
+        } catch (Exception $e) {
+            Log::error('Capture Payment Error: '.$e->getMessage());
+        }
     }
 }

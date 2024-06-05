@@ -99,10 +99,6 @@ class UpdateLeadStatusRequest extends FormRequest
             $rules['lostReason'] = 'required';
         }
 
-        if (request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            $rules['trans_code'] = 'required';
-        }
-
         if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)) {
             if (in_array(request()->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
                 $rules['next_followup_date'] = 'required|date_format:'.config('constants.DATETIME_DISPLAY_FORMAT').'|after_or_equal:'.date(config('constants.DATETIME_DISPLAY_FORMAT'));
@@ -131,6 +127,10 @@ class UpdateLeadStatusRequest extends FormRequest
 
             if (! $quoteObject) {
                 $validator->errors()->add('value', 'Lead not found please try again.');
+            }
+
+            if ($quoteObject->quote_status_id == QuoteStatusEnum::Lost) {
+                $validator->errors()->add('value', 'The lead is marked as '.quoteStatusCode::LOST.' and cannot be changed.');
             }
 
             $fetchLastAMLCheck = KycLog::withTrashed()->where([

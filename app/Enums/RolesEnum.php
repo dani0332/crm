@@ -91,13 +91,26 @@ final class RolesEnum extends Enum
     public const BikeManager = 'BIKE_MANAGER';
     public const CycleAdvisor = 'CYCLE_ADVISOR';
     public const CycleManager = 'CYCLE_MANAGER';
+    public const CycleNewBusinessAdvisor = 'CYCLE_NEW_BUSINESS_ADVISOR';
+    public const CycleRenewalAdvisor = 'CYCLE_RENEWAL_ADVISOR';
     public const YachtAdvisor = 'YACHT_ADVISOR';
     public const YachtManager = 'YACHT_MANAGER';
+    public const YachtNewBusinessAdvisor = 'YACHT_NEW_BUSINESS_ADVISOR';
+    public const YachtRenewalAdvisor = 'YACHT_RENEWAL_ADVISOR';
     public const JetskiAdvisor = 'JETSKI_ADVISOR';
     public const JetskiManager = 'JETSKI_MANAGER';
+    public const CarRevivalAdvisor = 'CARREVIVAL_ADVISOR';
+    public const CarRevivalManager = 'CARREVIVAL_MANAGER';
     public const SeniorManagement = 'SENIOR_MANAGEMENT';
     public const Accounts = 'ACCOUNTS';
     public const CallDesk = 'CALL_DESK';
     public const NRA = 'NON_RETAIL_ACCOUNTS';
     public const EpAdmin = 'EP_ADMIN';
+    public const CorplineSalesCoordinator = 'CORPLINE_SALES_COORDINATOR';
+    public const HomeSalesCoordinator = 'HOME_SALES_COORDINATOR';
+    public const PetSalesCoordinator = 'PET_SALES_COORDINATOR';
+    public const CycleSalesCoordinator = 'CYCLE_SALES_COORDINATOR';
+    public const ServiceExecutive = 'SERVICE_EXECUTIVE';
+    public const Production = 'PRODUCTION';
+    public const MotorHead = 'MOTOR_HEAD';
 }

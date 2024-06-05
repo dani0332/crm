@@ -10,7 +10,6 @@ use App\Models\Slab;
 use App\Models\Team;
 use App\Services\CRUDService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
 
 class RenewalBatchController extends Controller
 {
@@ -28,19 +27,12 @@ class RenewalBatchController extends Controller
      */
     public function index(Request $request)
     {
-        $gridData = RenewalBatch::orderByDesc('id')->get();
+        $gridData = RenewalBatch::orderByDesc('id')->paginate(15);
 
-        if ($request->ajax()) {
+        return inertia('Admin/RenewalBatches/Index', [
+            'batches' => $gridData,
+        ]);
 
-            return DataTables::of($gridData)
-                ->addIndexColumn()
-                ->addColumn('action', function ($gridData) {
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-        }
-
-        return view('renewalbatch.index');
     }
 
     /**
@@ -60,15 +52,15 @@ class RenewalBatchController extends Controller
         $carAdvisors = $params['carAdvisors'];
         $slabs = $params['slabs'];
 
-        return view('renewalbatch.config-views.create',
-            compact(
-                'teams',
-                'volumeSegmentAdvisorsId',
-                'valueSegmentAdvisorsId',
-                'lastBatchSlabs',
-                'carAdvisors',
-                'slabs'
-            ));
+        return inertia('Admin/RenewalBatches/Form', [
+            'teams' => $teams,
+            'volumeSegmentAdvisorsId' => $volumeSegmentAdvisorsId,
+            'valueSegmentAdvisorsId' => $valueSegmentAdvisorsId,
+            'lastBatchSlabs' => $lastBatchSlabs,
+            'carAdvisors' => $carAdvisors,
+            'slabs' => $slabs,
+            'quoteStatus' => QuoteStatusEnum::asArray(),
+        ]);
 
     }
 
@@ -79,6 +71,7 @@ class RenewalBatchController extends Controller
      */
     public function store(RenewalBatchRequest $request)
     {
+
         $attributes = $request->validated();
 
         RenewalBatch::create($attributes);
@@ -105,6 +98,7 @@ class RenewalBatchController extends Controller
      */
     public function edit(RenewalBatch $renewalBatch)
     {
+
         $params = $this->getProcessedBatchData($renewalBatch);
 
         $teams = $params['teams'];
@@ -117,18 +111,19 @@ class RenewalBatchController extends Controller
         $carSoldDeadline = $params['carSoldDeadline'];
         $uncontactableDeadline = $params['uncontactableDeadline'];
 
-        return view('renewalbatch.config-views.edit',
-            compact(
-                'teams',
-                'renewalBatch',
-                'volumeSegmentAdvisorsId',
-                'valueSegmentAdvisorsId',
-                'lastBatchSlabs',
-                'carAdvisors',
-                'slabs',
-                'carSoldDeadline',
-                'uncontactableDeadline'
-            ));
+        return inertia('Admin/RenewalBatches/Form', [
+            'teams' => $teams,
+            'volumeSegmentAdvisorsId' => $volumeSegmentAdvisorsId,
+            'valueSegmentAdvisorsId' => $valueSegmentAdvisorsId,
+            'lastBatchSlabs' => $lastBatchSlabs,
+            'carAdvisors' => $carAdvisors,
+            'slabs' => $slabs,
+            'carSoldDeadline' => $carSoldDeadline,
+            'uncontactableDeadline' => $uncontactableDeadline,
+            'renewalBatch' => $renewalBatch,
+            'quoteStatus' => QuoteStatusEnum::asArray(),
+        ]);
+
     }
 
     /**

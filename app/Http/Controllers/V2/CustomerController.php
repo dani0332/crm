@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerAdditionalContactRequest;
@@ -57,8 +58,8 @@ class CustomerController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
-     * @param    $quoteId
+     * @param  $quoteTypeCode
+     * @param  $quoteId
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function update($uuid, CustomerRequest $customerRequest)
@@ -71,7 +72,15 @@ class CustomerController extends Controller
         $customer->update($customerRequest->validated());
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            dispatch(new MAWelcomeJob($customer, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
+            MAWelcomeJob::dispatchUnless(
+                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
+                $customer->first_name,
+                $customer->last_name,
+                $customer->email,
+                $customer->mobile_no,
+                'CUSTOMER_UPDATE',
+                'customer-update-myalfred-we'
+            );
         }
 
         return redirect('customer/'.$uuid)->with('message', 'Customer information has been updated');
