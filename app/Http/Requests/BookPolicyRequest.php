@@ -31,7 +31,6 @@ class BookPolicyRequest extends FormRequest
             'insurer_commmission_invoice_number' => 'required|max:22|different:insurer_tax_invoice_number',
             'discount' => 'nullable',
             'transaction_payment_status' => 'nullable',
-            'commission_percentage' => 'nullable',
             'broker_invoice_number' => 'nullable',
             'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|numeric|between:0,9999999.99',
             'commission_vat_applicable' => 'nullable|numeric|between:0,9999999.99',
