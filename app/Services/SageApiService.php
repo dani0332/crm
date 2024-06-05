@@ -648,7 +648,7 @@ class SageApiService
 
             return ['status' => false, 'message' => 'No Invoices found for Reverse and Correction'];
         }
-        
+
         $reverseSendUpdateTypes = collect($invoicesForReverse)->pluck('sage_request_type')->toArray();
 
         // First we reverse Ivnoices and then we create correction invoices
