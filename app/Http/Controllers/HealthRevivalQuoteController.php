@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\Emirate;
+use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
@@ -75,7 +76,7 @@ class HealthRevivalQuoteController extends Controller
         $documentTypes = collect($documentTypes)->groupBy('category');
 
         $paymentMethods = app(LookupService::class)->getPaymentMethods();
-
+        $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocuments($quoteType, $record->id);
         $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
@@ -116,7 +117,7 @@ class HealthRevivalQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
-        if (! empty($insuranceProviders)) {
+        if (!empty($insuranceProviders)) {
             $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->id,
@@ -124,6 +125,7 @@ class HealthRevivalQuoteController extends Controller
                 ];
             })->sortBy('label')->values();
         }
+
 
         return inertia('HealthRevivalQuote/Show', [
             'quote' => $record,
@@ -152,6 +154,7 @@ class HealthRevivalQuoteController extends Controller
             'activities' => $activities,
             'advisors' => $advisors,
             'insuranceProviders' => $insuranceProviders,
+            'healthPlanTypes' => $healthPlanTypes,
         ]);
     }
 

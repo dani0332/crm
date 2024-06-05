@@ -27,6 +27,7 @@ const props = defineProps({
   activities: Array,
   advisors: Array,
   insuranceProviders: Array,
+  healthPlanTypes: Array,
 });
 
 const page = usePage();
@@ -115,6 +116,10 @@ const activityEdit = data => {
     : null;
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
+};
+
+const checkPlanType = id => {
+  return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
 
 const onActivitySubmit = isValid => {
@@ -1176,7 +1181,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TYPE OF PLAN</dt>
-            <dd>---</dd>
+            <dd>{{ checkPlanType(props.quoteRequest.health_plan_type_id) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
