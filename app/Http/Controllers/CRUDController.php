@@ -1703,7 +1703,7 @@ class CRUDController extends Controller
             'policy_start_date' => isset($request->quote_policy_start_date) ? Carbon::parse($request->quote_policy_start_date)->format('Y-m-d') : null,
             'renewal_expiry_date' => isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : null,
             'price_vat_not_applicable' => $request->price_vat_notapplicable ?? '',
-            'price_vat_applicable' => $request->amount ?? '',
+            'price_vat_applicable' => $request->price_vat_applicable ?? '',
             'price_with_vat' => $request->amount_with_vat ?? '',
             'vat' => $request->vat ?? '',
             'insurer_quote_number' => $request->quote_plan_insurer_quote_number ?? '',
