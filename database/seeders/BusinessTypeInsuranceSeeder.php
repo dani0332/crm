@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\quoteBusinessTypeCode;
 use App\Models\BusinessInsuranceType;
 use Illuminate\Database\Seeder;
 
@@ -12,7 +13,7 @@ class BusinessTypeInsuranceSeeder extends Seeder
      */
     public function run(): void
     {
-        $newBusinessInsuranceTypes = ['Money Insurance', 'Livestock Insurance', 'Marine Cargo - Open Cover', 'Marine Cargo (Individual Shipment) Insurance', 'Holiday Homes', 'Medical Malpractice', 'Fidelity Guarantee', 'Goods In Transit'];
+        $newBusinessInsuranceTypes = [quoteBusinessTypeCode::moneyInsurance, quoteBusinessTypeCode::liveStock, quoteBusinessTypeCode::marineCargoOpenCover, quoteBusinessTypeCode::holidayHomes, quoteBusinessTypeCode::medicalMalpractices, quoteBusinessTypeCode::fidelityGuarantee, quoteBusinessTypeCode::goodsInTransit];
         foreach ($newBusinessInsuranceTypes as $newType) {
             $sme = BusinessInsuranceType::updateOrCreate([
                 'code' => $newType,
