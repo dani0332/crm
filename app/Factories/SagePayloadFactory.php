@@ -1176,7 +1176,8 @@ class SagePayloadFactory
 
         if (count($splitPayments) == 1) {
             $response['sage_reciept_id'] = $splitPayments[0]['sage_reciept_id'];
-            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']); + $response['discount'];
+            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']);
+            +$response['discount'];
         } else {
             $response['invoicePaymentStatus'] = $splitPayments[0]['payment_status_id'];
         }
