@@ -117,7 +117,7 @@ class HealthRevivalQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
-        if (!empty($insuranceProviders)) {
+        if (! empty($insuranceProviders)) {
             $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->id,
@@ -125,7 +125,6 @@ class HealthRevivalQuoteController extends Controller
                 ];
             })->sortBy('label')->values();
         }
-
 
         return inertia('HealthRevivalQuote/Show', [
             'quote' => $record,
