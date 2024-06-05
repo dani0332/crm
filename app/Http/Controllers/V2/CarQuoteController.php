@@ -12,6 +12,7 @@ use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
 use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
+use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
 use Illuminate\Http\Request;
 
@@ -204,7 +205,7 @@ class CarQuoteController extends Controller
             $quotePlanId[] = $quotePlan->id;
         }
 
-        $carPlans = app(CarQuoteService::class)->getNonQuotedCarPlans($insuranceProviderId, $quotePlanId);
+        $carPlans = app(CarPlanService::class)->getNonQuotedCarPlans($insuranceProviderId, $quotePlanId);
 
         return response()->json($carPlans);
     }
