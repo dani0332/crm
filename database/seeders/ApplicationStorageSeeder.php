@@ -92,6 +92,17 @@ class ApplicationStorageSeeder extends Seeder
             ]);
         }
 
+        $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
+        if (! $epMdxV3From) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::EP_MDX_V3_FROM,
+                'value' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
         if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::EMAIL_CAMPAIGN)->exists()) {
             ApplicationStorage::create([
                 'key_name' => ApplicationStorageEnums::EMAIL_CAMPAIGN,
