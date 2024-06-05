@@ -1152,7 +1152,7 @@ class SagePayloadFactory
             'advisorName' => ! empty($quoteDetails['advisor_id']) ? User::where('id', $quoteDetails['advisor_id'])->value('name') : '',
             'manager' => implode(',', getManagersByUser(User::where('id', ($quoteDetails['advisor_id'] ?? ''))->value('id'))->pluck('name')->toArray()),
             'vatOnPremium' => isset($quoteDetails['vat']) ?: (isset($quoteDetails['price_with_vat']) ? (floatval($quoteDetails['price_with_vat']) - floatval($quoteDetails['price_vat_applicable'] ?? 0)) : 0),
-            'premiumWithoutTax' => floatval($quoteDetails['price_without_vat']),
+            'premiumWithoutTax' => floatval($quoteDetails['price_vat_applicable'] ?? 0) + floatval($quoteDetails['price_vat_not_applicable'] ?? 0),
             'premiumWithTax' => floatval($quoteDetails['price_with_vat']),
             'vatOnCommission' => floatval($payment->commission_vat),
             'totalAmount' => roundNumber(floatval($payment->total_amount)),

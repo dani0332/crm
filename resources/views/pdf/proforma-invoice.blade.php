@@ -402,7 +402,7 @@
         }else{
             $subTotal =  floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0 );
             $totalAmount =  $quote->price_with_vat;
-            $vat =  $vatPercentage && $quote->price_vat_applicable ? ($quote->price_vat_applicable * $vatPercentage / 100) : 0; // if amount with vat then vat = total - subTotal else 0
+            $vat =  $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0; // if amount with vat then vat = total - subTotal else 0
         }
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
             $entity = $quote?->quoteRequestEntityMapping?->entity;
