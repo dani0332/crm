@@ -20,9 +20,12 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\UserManager;
+use App\Traits\GetUserTreeTrait;
 
 class DashboardController extends Controller
 {
+    use GetUserTreeTrait;
     use TeamHierarchyTrait;
 
     protected $dashboardService;
@@ -344,6 +347,18 @@ class DashboardController extends Controller
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
+
+        if (auth()->user()->isManagerORDeputy()) {
+            $userIds = $this->walkTree(auth()->user()->id, quoteTypeCode::Car);
+            $userIds = UserManager::where('manager_id', auth()->user()->id)
+                ->get()
+                ->filter(function ($user) use ($userIds) {
+                    return in_array($user->user_id, $userIds);
+                })
+                ->pluck('user_id')
+                ->toArray();
+            $records = $records->whereIn('car_quote_request.advisor_id', $userIds);
+        }
 
         if (isset($request->tiers) && $request->tiers != 'undefined') {
             $records->whereIn('tiers.id', $request->tiers);

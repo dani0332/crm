@@ -18,6 +18,7 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\UserManager;
 
 class ComprehensiveConversionDashboardService extends BaseService
 {
@@ -56,6 +57,18 @@ class ComprehensiveConversionDashboardService extends BaseService
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->groupBy('personal_quotes.advisor_id', 'personal_quotes.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
+
+        if (auth()->user()->isManagerORDeputy()) {
+            $userIds = $this->walkTree(auth()->user()->id, $lob);
+            $userIds = UserManager::where('manager_id', auth()->user()->id)
+                ->get()
+                ->filter(function ($user) use ($userIds) {
+                    return in_array($user->user_id, $userIds);
+                })
+                ->pluck('user_id')
+                ->toArray();
+            $records = $records->whereIn('personal_quotes.advisor_id', $userIds);
+        }
 
         $records = $this->applyFilters($records, $request->all());
         $records = $records->get();

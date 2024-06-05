@@ -23,6 +23,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\UserManager;
 
 class AdvisorDistributionReportService extends BaseService
 {
@@ -96,6 +97,13 @@ class AdvisorDistributionReportService extends BaseService
                 $query = $query->where('users.id', auth()->user()->id);
             } else {
                 $userIds = $this->walkTree(auth()->user()->id);
+                $userIds = UserManager::where('manager_id', auth()->user()->id)
+                    ->get()
+                    ->filter(function ($user) use ($userIds) {
+                        return in_array($user->user_id, $userIds);
+                    })
+                    ->pluck('user_id')
+                    ->toArray();
                 $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
             }
         }
@@ -162,6 +170,13 @@ class AdvisorDistributionReportService extends BaseService
                 $query = $query->where('users.id', auth()->user()->id);
             } else {
                 $userIds = $this->walkTree(auth()->user()->id, $lob);
+                $userIds = UserManager::where('manager_id', auth()->user()->id)
+                    ->get()
+                    ->filter(function ($user) use ($userIds) {
+                        return in_array($user->user_id, $userIds);
+                    })
+                    ->pluck('user_id')
+                    ->toArray();
                 $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
             }
         }
