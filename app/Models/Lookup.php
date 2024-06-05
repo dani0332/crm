@@ -12,14 +12,14 @@ class Lookup extends Model
     public function scopeWithChildTree($query, $quoteTypeId, $removeOptions = [])
     {
         return $query->with('childs', function ($query) use ($quoteTypeId, $removeOptions) {
-            $query->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id', 'quote_type_id')
+            $query->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id')
                 ->with('childs', function ($query) use ($quoteTypeId, $removeOptions) {
-                    $query->where('quote_type_id', $quoteTypeId)->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id', 'quote_type_id');
+                    $query->where('quote_type_id', $quoteTypeId)->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id');
                     $query->when(count($removeOptions), function ($query) use ($removeOptions) {
                         $query->whereNotIn('code', $removeOptions);
                     });
                 });
-        })->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id', 'quote_type_id');
+        })->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id');
 
         return $query->with('childs');
     }

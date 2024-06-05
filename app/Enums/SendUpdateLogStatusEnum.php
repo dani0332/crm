@@ -63,8 +63,8 @@ final class SendUpdateLogStatusEnum extends Enum
     const AL = 'AL'; // Additional location
     const EA = 'EA'; // Employee addition
     const EFMP = 'EFMP'; // Extension for maintenance period
-    const ICOLOIALOLR = 'I/COLOIALOLR'; // Increase / Change of limit of indemnity and limit of liability required
-    const IIEAFT = 'IIEAF/T'; // Increase in estimated annual fees / turnover
+    const I_CLILLR = 'I_CLILLR'; // Increase / Change of limit of indemnity and limit of liability required
+    const IEAF_T = 'IEAF_T'; // Increase in estimated annual fees / turnover
     const IISI = 'IISI'; // Increase in sum Insured
     const RFTC = 'RFTC'; // Request for travel certificate
     const AAI = 'AAI'; // Add additional insured
@@ -76,4 +76,5 @@ final class SendUpdateLogStatusEnum extends Enum
     const CISC_NFI = 'CISC(NFI'; // Change in seating capacity (with no financial impact)
     const COE_NFI = 'COE(NFI'; // Change of Emirates (with no financial impact)
     const ADD_OPTIONAL_COVER = 'Add optional cover';
+    const CIED_EOP = 'CIED_EOP'; // Change in expiry date / Extension of policy
 }

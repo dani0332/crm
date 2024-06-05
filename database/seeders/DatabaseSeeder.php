@@ -48,7 +48,7 @@ class DatabaseSeeder extends Seeder
             MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
-            AddSendUpdatesCategoriesInLookups::class,
+            // AddSendUpdatesCategoriesInLookups::class,
             InslyRoles::class,
             InslyPermissions::class,
             QuoteStatusMapSeeder::class,
