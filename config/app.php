@@ -165,6 +165,8 @@ return [
         Laravel\Socialite\SocialiteServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
         App\Providers\PostMarkServiceProvider::class,
+        App\Providers\CustomFileTypeServiceProvider::class,
+
         /*
          * Package Service Providers...
          */
