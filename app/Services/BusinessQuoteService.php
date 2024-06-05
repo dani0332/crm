@@ -96,7 +96,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.price_with_vat',
                 'bqr.company_name as business_company_name',
                 'ent.emirate_of_registration_id',
-                'bqr.price_without_vat',
+                'bqr.price_vat_applicable',
                 'bqr.vat',
                 'bqr.insurer_quote_number',
                 'bqr.policy_issuance_status_id',
