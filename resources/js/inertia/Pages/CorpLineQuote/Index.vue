@@ -69,6 +69,18 @@ const filters = reactive({
   is_stale: false,
 });
 
+watch(
+    () => filters,
+    () => {
+        if (filters.created_at_start && filters.created_at_end) {
+            canExport.value = true;
+        } else {
+            canExport.value = false;
+        }
+    },
+    { deep: true, immediate: true },
+);
+
 const leadStatusOptions = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(status => ({
     value: status.id,
