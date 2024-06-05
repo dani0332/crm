@@ -224,15 +224,19 @@ watch(
   },
 );
 
+const setQuotePlanInsurerNumber = () => {
+  policyDetailsForm.quote_plan_insurer_quote_number =
+    planQuoteInsurerNumber.value ||
+    page.props.record.insurer_quote_number ||
+    props.availablePlans?.find(item => item.id == page.props.record?.plan_id)
+      ?.insurerQuoteNo ||
+    '';
+};
+
 watch(
   () => props.availablePlans,
   availablePlans => {
-    policyDetailsForm.quote_plan_insurer_quote_number =
-      planQuoteInsurerNumber.value ||
-      page.props.record.insurer_quote_number ||
-      availablePlans.find(item => item.id == page.props.record?.plan_id)
-        ?.insurerQuoteNo ||
-      '';
+    setQuotePlanInsurerNumber();
   },
 );
 </script>
@@ -519,6 +523,7 @@ watch(
                       policyDetailsState.isEditing = false;
                       policyDetailsForm.reset();
                       caculateVatAmount();
+                      setQuotePlanInsurerNumber();
                     }
                   "
                 >

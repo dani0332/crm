@@ -33,6 +33,7 @@ class EmbeddedProductReport
     {
         return [
             'EP REF-ID',
+            'ADVISOR NAME',
             'PAYMENT DATE',
             'PLAN COMMENCEMENT DATE',
             'PLAN END DATE',
@@ -51,6 +52,7 @@ class EmbeddedProductReport
     {
         return [
             $certificate->ref_id,
+            $certificate->advisor_name,
             $certificate->payment_date,
             $certificate->plan_start_date,
             $certificate->plan_end_date,
