@@ -242,145 +242,269 @@ function onReset() {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Report Category" required>
-        <x-select
-          v-model="filters.reportCategory"
-          placeholder="Select Report Category"
-          :options="reportCategories"
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
-      <x-field label="Report Type" required>
-        <x-select
-          v-model="filters.reportType"
-          placeholder="Select Report Type"
-          :options="computedReportTypes"
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
-      <x-field v-if="showBookingDate" label="Booking Date" required>
-        <DatePicker
-          v-model="filters.policyBookDate"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
-          size="sm"
-          model-type="yyyy-MM-dd"
-          :rules="[isRequired]"
-          :onlySelect="true"
-        />
-      </x-field>
-      <x-field v-if="showPaymentDueDate" label="Payment Due Date" required>
-        <DatePicker
-          v-model="filters.paymentDueDate"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
-          size="sm"
-          model-type="yyyy-MM-dd"
-          :rules="[isRequired]"
-          :onlySelect="true"
-        />
-      </x-field>
-      <x-field v-if="showExpiryDate" label="Policy Expiry Date" required>
-        <DatePicker
-          v-model="filters.policyExpiredDate"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
-          size="sm"
-          model-type="yyyy-MM-dd"
-          :rules="[isRequired]"
-          :onlySelect="true"
-        />
-      </x-field>
-      <x-field v-if="showDateTo" label="Date To" required>
-        <DatePicker
-          :single="true"
-          v-model="filters.createdAt"
-          placeholder="Select Date"
-          size="sm"
-          model-type="yyyy-MM-dd"
-          :rules="[isRequired]"
-          :onlySelect="true"
-        />
-      </x-field>
-      <x-field label="Transaction Type">
-        <x-select
-          v-model="filters.transactionType"
-          placeholder="Search by Transaction"
-          :options="transactionTypes"
-          class="w-full"
-        />
-      </x-field>
+        <div>
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Report Category <span class="text-red-500">*</span>
+            </label>
+            <template #tooltip>
+                What kind of report do you want to generate?
+            </template>
+            </x-tooltip>
+            <x-select
+            v-model="filters.reportCategory"
+            placeholder="Select Report Category"
+            :options="reportCategories"
+            class="w-full"
+            :rules="[isRequired]"
+            />
+        </div>
+        <div>
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Report Type <span class="text-red-500">*</span>
+            </label>
+            <template #tooltip>
+                What specific report type are you trying to generate from your selected report category?
+            </template>
+            </x-tooltip>
+            <x-select
+            v-model="filters.reportType"
+            placeholder="Select Report Type"
+            :options="computedReportTypes"
+            class="w-full"
+            :rules="[isRequired]"
+            />
+        </div>
+        <div v-if="showBookingDate">
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Booking Date <span class="text-red-500">*</span>
+            </label>
+            <template #tooltip>
+               Select the booking date range
+            </template>
+            </x-tooltip>
+            <DatePicker
+            v-model="filters.policyBookDate"
+            placeholder="Select Start & End Date"
+            range
+            :max-range="92"
+            size="sm"
+            model-type="yyyy-MM-dd"
+            :rules="[isRequired]"
+            :onlySelect="true"
+            />
+        </div>
+        <div v-if="showPaymentDueDate">
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Payment Due Date <span class="text-red-500">*</span>
+            </label>
+            <template #tooltip>
+                Select the payment due date range
+            </template>
+            </x-tooltip>
+            <DatePicker
+            v-model="filters.paymentDueDate"
+            placeholder="Select Start & End Date"
+            range
+            :max-range="92"
+            size="sm"
+            model-type="yyyy-MM-dd"
+            :rules="[isRequired]"
+            :onlySelect="true"
+            />
+        </div>
+        <div v-if="showExpiryDate">
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Policy Expiry Date <span class="text-red-500">*</span>
+            </label>
+            <template #tooltip>
+                Select the policy expiry date range
+            </template>
+            </x-tooltip>
+            <DatePicker
+            v-model="filters.policyExpiredDate"
+            placeholder="Select Start & End Date"
+            range
+            :max-range="92"
+            size="sm"
+            model-type="yyyy-MM-dd"
+            :rules="[isRequired]"
+            :onlySelect="true"
+            />
+        </div>
+        <div v-if="showDateTo">
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Date To <span class="text-red-500">*</span>
+            </label>
+            <template #tooltip>
+                When is the end date of your selected report type?
+            </template>
+            </x-tooltip>
+            <DatePicker
+            :single="true"
+            v-model="filters.createdAt"
+            placeholder="Select Date"
+            size="sm"
+            model-type="yyyy-MM-dd"
+            :rules="[isRequired]"
+            :onlySelect="true"
+            />
+        </div>
+        <div>
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Transaction Type
+            </label>
+            <template #tooltip>
+                What is the transaction type you want to see?
+            </template>
+            </x-tooltip>
+            <x-select
+            v-model="filters.transactionType"
+            placeholder="Search by Transaction"
+            :options="transactionTypes"
+            class="w-full"
+            />
+        </div>
     </div>
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Teams">
-        <ComboBox
-          v-model="filters.teams"
-          placeholder="Search By Teams"
-          :options="teams"
-          deselect-all
-          @update:modelValue="onTeamChange($event)"
-        />
-      </x-field>
-      <x-field label="Sub Teams">
-        <ComboBox
-          v-model="filters.subTeams"
-          placeholder="Search By Teams"
-          :options="subTeams"
-          :maxLimit="3"
-          deselect-all
-          :loading="loaders.subTeams"
-        />
-      </x-field>
-      <x-field label="Lead Source">
-        <ComboBox
-          v-model="filters.leadSources"
-          placeholder="Search by Lead Source"
-          :options="leadSource"
-          :maxLimit="3"
-          deselect-all
-        />
-      </x-field>
-      <x-field label="Include Cancelled Policies">
-        <x-select
-          v-model="filters.includeCancelledPolicies"
-          placeholder="Search by Cancelled Policies"
-          :options="[
-            { label: 'Yes', value: 'Yes' },
-            { label: 'No', value: 'No' },
-          ]"
-          class="w-full"
-        />
-      </x-field>
+        <div>
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Teams
+            </label>
+            <template #tooltip>
+                What is the department you want to see?
+            </template>
+            </x-tooltip>
+            <ComboBox
+            v-model="filters.teams"
+            placeholder="Search By Teams"
+            :options="teams"
+            deselect-all
+            @update:modelValue="onTeamChange($event)"
+            />
+        </div>
+        <div>
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Sub Teams
+            </label>
+            <template #tooltip>
+                What is the team you want to see?
+            </template>
+            </x-tooltip>
+            <ComboBox
+            v-model="filters.subTeams"
+            placeholder="Search By Teams"
+            :options="subTeams"
+            :maxLimit="3"
+            deselect-all
+            :loading="loaders.subTeams"
+            />
+        </div>
+        <div>
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Lead Source
+            </label>
+            <template #tooltip>
+                What is the lead source you want to see?
+            </template>
+            </x-tooltip>
+            <ComboBox
+            v-model="filters.leadSources"
+            placeholder="Search by Lead Source"
+            :options="leadSource"
+            :maxLimit="3"
+            deselect-all
+            />
+        </div>
+        <div>
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Include Cancelled Policies
+            </label>
+            <template #tooltip>
+                Do you want to include cancelled policies in the report?
+            </template>
+            </x-tooltip>
+            <x-select
+            v-model="filters.includeCancelledPolicies"
+            placeholder="Search by Cancelled Policies"
+            :options="[
+                { label: 'Yes', value: 'Yes' },
+                { label: 'No', value: 'No' },
+            ]"
+            class="w-full"
+            />
+        </div>
     </div>
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Group By" v-if="disabledGroupBy">
-        <x-select
-          v-model="filters.groupBy"
-          placeholder="Search by Group"
-          :options="groupBy"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="UTM" v-if="!hideUmtGroup">
-        <ComboBox
-          :single="true"
-          v-model="filters.utmGroupBy"
-          placeholder="Search by Lead Source"
-          :options="umtGroup"
-          deselect-all
-        />
-        <!-- <x-select
-          v-model="filters.utmGroupBy"
-          placeholder="Search by UTM Group"
-          :options="umtGroup"
-          class="w-full"
-        /> -->
-      </x-field>
+        <div v-if="disabledGroupBy">
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                Group By
+            </label>
+            <template #tooltip>
+                Based on how will the report be presented?
+            </template>
+            </x-tooltip>
+            <x-select
+            v-model="filters.groupBy"
+            placeholder="Search by Group"
+            :options="groupBy"
+            class="w-full"
+            />
+        </div>
+        <div v-if="!hideUmtGroup">
+            <x-tooltip position="top">
+            <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+                UTM
+            </label>
+            <template #tooltip>
+                Based on which UTM source will the report be presented?
+            </template>
+            </x-tooltip>
+            <ComboBox
+            :single="true"
+            v-model="filters.utmGroupBy"
+            placeholder="Search by Lead Source"
+            :options="umtGroup"
+            deselect-all
+            />
+        </div>
     </div>
 
     <div class="flex gap-3 justify-end">
