@@ -86,7 +86,7 @@ const policyDetailsForm = useForm({
     dateToYMD(page.props.record.policy_issuance_date) ||
     new Date().toJSON().slice(0, 10),
   price_vat_notapplicable: page.props.record.price_vat_not_applicable || '',
-  amount: page.props.record.price_without_vat || '',
+  price_vat_applicable: page.props.record.price_vat_applicable || '',
   vat: page.props.record.vat || '',
   quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
   quote_policy_expiry_date:
@@ -110,22 +110,33 @@ watch(
   },
 );
 
+watch(
+  () => page.props.record?.price_with_vat,
+  (newValue, oldValue) => {
+    policyDetailsForm.price_vat_notapplicable =  page.props.record.price_vat_not_applicable || '';
+    policyDetailsForm.price_vat_applicable =  page.props.record.price_vat_applicable || '';
+    policyDetailsForm.vat= page.props.record.vat || '';
+
+    caculateVatAmount();
+  },
+);
+
 const caculateVatAmount = () => {
-  let amount = Number(policyDetailsForm.amount);
+  let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
   // if price vat applicable and not applicable both are there
-  if (amount > 0 && priceVatNotApplicable > 0) {
-    let vat = amount * page.props.vat.toFixed(2);
+  if (priceVatApplicable > 0 && priceVatNotApplicable > 0) {
+    let vat = priceVatApplicable * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
     policyDetailsForm.amount_with_vat = (
       Number(vat) +
-      Number(amount) +
+      Number(priceVatApplicable) +
       Number(priceVatNotApplicable)
     ).toFixed(2);
-  } else if (amount > 0) {
-    let vat = amount * page.props.vat.toFixed(2);
+  } else if (priceVatApplicable > 0) {
+    let vat = priceVatApplicable * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
-    policyDetailsForm.amount_with_vat = (Number(vat) + Number(amount)).toFixed(
+    policyDetailsForm.amount_with_vat = (Number(vat) + Number(priceVatApplicable)).toFixed(
       2,
     );
   } else if (priceVatNotApplicable > 0) {
@@ -357,7 +368,7 @@ watch(
                   </template>
                 </x-tooltip>
                 <x-textarea
-                  v-model="policyDetailsForm.amount"
+                  v-model="policyDetailsForm.price_vat_applicable"
                   @change="caculateVatAmount"
                   :rules="[price_vat_applicable, isNumber]"
                   type="number"
