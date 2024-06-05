@@ -231,7 +231,7 @@ class CarAllocationService extends AllocationService
     public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
-        info('Users against tierID' . $tierId . ' are: ' . json_encode($tierUserIds->toArray()));
+        info('Users against tierID ' . $tierId . ' are: ' . json_encode($tierUserIds->toArray()));
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
@@ -242,7 +242,7 @@ class CarAllocationService extends AllocationService
             } else {
                 $teamUserIds = [];
             }
-            info('TeamID is:' . $teamId . ' and available users for this team are: ' . json_encode($teamUserIds->pluck('user_id')->toArray()));
+            info('TeamID is: ' . $teamId . ' and available users for this team are: ' . json_encode($teamUserIds));
             $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
         }
 
