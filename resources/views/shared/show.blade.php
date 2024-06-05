@@ -172,12 +172,12 @@ use App\Enums\LeadSourceEnum;
                                 <div class="col-md-4">
                                     <select class="form-control" id="assign_team" name="assign_team">
                                         <option value="">Select Team</option>
-                                        <option @if ($record->health_team_type == 'EBP') selected="selected" @endif value="EBP">EBP
+                                        <option @if ($record->health_team_type == 'Entry-Level') selected="selected" @endif value="Entry-Level">Entry-Level
                                         </option>
-                                        <option @if ($record->health_team_type == 'RM-NB') selected="selected" @endif value="RM-NB">RM-NB
+                                        <option @if ($record->health_team_type == 'Best') selected="selected" @endif value="Best">Best
                                         </option>
-                                        <option @if ($record->health_team_type == 'RM-Speed') selected="selected" @endif value="RM-Speed">
-                                            RM-Speed</option>
+                                        <option @if ($record->health_team_type == 'Good') selected="selected" @endif value="Good">
+                                            Good</option>
                                         <option @if ($record->health_team_type == 'GM') selected="selected" @endif value="GM">Group
                                             Medical</option>
                                     </select>
@@ -403,7 +403,7 @@ use App\Enums\LeadSourceEnum;
 
     @if (strtolower($model->modelType) != 'team' && strtolower($model->modelType) != 'leadstatus')
         @if ($model->modelType == quoteTypeCode::Car && ($record->source == LeadSourceEnum::RENEWAL_UPLOAD ||  $record->source == LeadSourceEnum::INSLY))
-        
+
             <x-quote-renewal-card :record="$record" :modeltype="$model->modelType" />
         @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
