@@ -5,8 +5,8 @@ namespace App\Http\Requests;
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Traits\GenericQueriesAllLobs;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class QuotesDocumentRequest extends FormRequest
@@ -38,7 +38,7 @@ class QuotesDocumentRequest extends FormRequest
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->where('quote_type_id', request()->quote_type_id ?? 0)->first())) {
-            $rules['file'] .= '|custom_file_type:' . $this->documentType->accepted_files;
+            $rules['file'] .= '|custom_file_type:'.$this->documentType->accepted_files;
         }
 
         return $rules;
@@ -76,12 +76,12 @@ class QuotesDocumentRequest extends FormRequest
             $message = 'The file must be a file of type: '.$this->documentType->accepted_files;
             throw new HttpResponseException(response()->json([
                 'errors' => $errors,
-                'message' => $message
+                'message' => $message,
             ], 422));
         } else {
             throw new HttpResponseException(response()->json([
                 'errors' => $errors,
-                'message' =>$errors->first()
+                'message' => $errors->first(),
             ], 422));
         }
 
