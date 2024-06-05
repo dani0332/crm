@@ -73,8 +73,11 @@ final class SendUpdateLogStatusEnum extends Enum
     const AOCOV = 'AOCOV'; // Add optional cover, it's for car lob
     const COE = 'COE'; // Change of Emirate
     const CISC = 'CISC'; // Change in seating capacity
-    const CISC_NFI = 'CISC(NFI'; // Change in seating capacity (with no financial impact)
-    const COE_NFI = 'COE(NFI'; // Change of Emirates (with no financial impact)
+    const CISC_NFI = 'CISC_NFI'; // Change in seating capacity (with no financial impact)
+    const COE_NFI = 'COE_NFI'; // Change of Emirates (with no financial impact)
     const ADD_OPTIONAL_COVER = 'Add optional cover';
     const CIED_EOP = 'CIED_EOP'; // Change in expiry date / Extension of policy
+    const RF_SOAC = 'RF_SOAC'; // Request for statement of account (SOA)
+    const MSC_NFI = 'MSC_NFI'; // Marital status change (with no financial impact)
+    const CTD_NFI = 'CTD_NFI'; // Change travel dates (with no financial impact)
 }
