@@ -419,12 +419,17 @@ class EmbeddedProductRepository extends BaseRepository
     ) {
         $pdf = null;
         $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
+        $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
             $viewFile = $certificatesConfig[$short_code]['view_file'];
-            if ($epMdxV2From &&
-            ! empty($capturedAt) &&
-            Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
+
+            if ($epMdxV3From && ! empty($capturedAt)
+                && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV3From->value))) {
+                $viewFile = $certificatesConfig[$short_code]['view_file_v3'];
+
+            } elseif ($epMdxV2From && ! empty($capturedAt)
+            && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
                 $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
             }
 
