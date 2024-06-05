@@ -10,6 +10,7 @@ use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
+use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -27,9 +28,11 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
+     * function renamed from fetchUpdateStatus, because updateStatus named function already in GenericQueriesAllLobs
+     *
      * @return mixed
      */
-    public function fetchUpdateStatus($quoteType, $quoteId, $data)
+    public function fetchUpdateStatuses($quoteType, $quoteId, $data)
     {
         return DB::transaction(function () use ($quoteId, $data) {
             $quote = $this->where('id', $quoteId)->firstOrFail();
@@ -74,12 +77,22 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
+        $quoteType = '';
         $query = DocumentTypeRepository::where('code', $data['document_type_code']);
         if (request()->quote_type_id) {
             $query->where('quote_type_id', request()->quote_type_id);
         }
+        if (isset(request()->quote_type)) {
+            $quoteType = request()->quote_type;
+        }
+
         $documentType = $query->first();
-        $quote = $this->getQuoteObject(request()->folder_path ?? '', $id);
+
+        if (request()->is_send_update) {
+            $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+        } else {
+            $quote = $this->getQuoteObject($quoteType ?? '', $id);
+        }
 
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
@@ -217,5 +230,10 @@ class PersonalQuoteRepository extends BaseRepository
         $dataArr['quoteTypeId'] = intval(array_search($quoteTypeId, QuoteTypeId::getOptions()));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
+    }
+
+    public function fetchGetById($quoteId)
+    {
+        return $this->where('id', $quoteId)->first();
     }
 }

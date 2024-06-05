@@ -5,6 +5,11 @@ defineProps({
   can: Object,
   advisors: Object,
   quoteType: String,
+  expanded: {
+    type: Boolean,
+    required: false,
+    default: true
+  }
 });
 
 const notification = useNotifications('toast');
@@ -145,217 +150,69 @@ const onDeleteConfirmation = () => {
 </script>
 
 <template>
-  <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
-    <h3 class="font-semibold text-primary-800 text-lg">
-      New Lead Activity
-      <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-    </h3>
-    <template #content>
-      <x-divider class="mb-4 mt-1" />
-      <div class="flex justify-end items-center mb-4">
-        <x-button size="sm" color="orange" @click.prevent="addActivity">
-          Add Activity
-        </x-button>
-      </div>
-      <DataTable
-        table-class-name="overflow-hidden-table"
-        :headers="activityTable"
-        :items="activities"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="activities.length < 15"
-      >
-        <template #item-code="{ code }">
-          {{ code }}
-        </template>
-        <template #item-due_date="{ due_date, is_cold }">
-          <template v-if="is_cold">
-            <x-tooltip align="right" position="top">
-              <p :class="is_cold ? 'bg-error-300 rounded p-1' : ''">
-                {{ due_date }}
-              </p>
-              <template #tooltip>
-                <span
-                  >Pending overdue task! <br />Please complete immediately</span
-                >
-              </template>
-            </x-tooltip>
-          </template>
-          <span v-else>{{ due_date }}</span>
-        </template>
-        <template #item-status="{ status, id }">
-          <x-checkbox
-            color="emerald"
-            size="xl"
-            :modelValue="status === 1"
-            :disabled="status === 1"
-            @change="onStatusUpdate(id)"
-            :loading="activityLoader"
-          />
-        </template>
-        <template #item-action="item">
-          <div class="space-x-4">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              :disabled="item.status === 1"
-              @click.prevent="onEdit(item)"
-            >
-              Edit
-            </x-button>
-
-            <x-button
-              size="xs"
-              color="error"
-              :disabled="item.status === 1"
-              outlined
-              @click.prevent="confirmDelete(item.id)"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </DataTable>
-      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-        <template #header>
-          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-        </template>
-
-        <x-form @submit="onSubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-input
-              v-model="activityForm.title"
-              label="Title*"
-              :rules="[rules.isRequired]"
-              class="w-full"
-            />
-
-            <x-textarea
-              v-model="activityForm.description"
-              label="Description*"
-              :rules="[rules.isRequired]"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee*"
-              :options="advisorOptions"
-              :rules="[rules.isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
-
-            <x-input
-              v-model="activityForm.due_date"
-              label="Due Date*"
-              type="datetime-local"
-              :rules="[rules.isRequired]"
-              class="w-full"
-            />
-          </div>
-
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.activity = false">
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="activityForm.processing"
-              type="submit"
-            >
-              {{ activityActionEdit ? 'Update' : 'Save' }}
-            </x-button>
-          </div>
-        </x-form>
-      </x-modal>
-
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
-        <template #header> Delete Activity </template>
-        <p>Are you sure you want to delete this activity?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.activityConfirm = false"
-            >
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="error"
-              :loading="activityForm.processing"
-              @click.prevent="onDeleteConfirmation"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    </template>
-  </x-collapse>
-  <!-- <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        New Lead Activity
-        <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-      </h3>
-      <x-button size="sm" color="orange" @click.prevent="addActivity">
-        Add Activity
-      </x-button>
-    </div>
-    <x-divider class="my-4" />
-
-    <DataTable
-      table-class-name="compact"
-      :headers="activityTable"
-      :items="activities"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="activities.length < 15"
-    >
-      <template #item-status="{ status, id }">
-        <x-checkbox
-          color="emerald"
-          size="xl"
-          :modelValue="status === 1"
-          :disabled="status === 1"
-          @change="onStatusUpdate(id)"
-          :loading="activityLoader"
-        />
-      </template>
-      <template #item-action="item">
-        <div class="space-x-4">
-          <x-button
-            size="xs"
-            color="primary"
-            outlined
-            :disabled="item.status === 1"
-            @click.prevent="onEdit(item)"
-          >
-            Edit
-          </x-button>
-
-          <x-button
-            size="xs"
-            color="error"
-            :disabled="item.status === 1"
-            outlined
-            @click.prevent="confirmDelete(item.id)"
-          >
-            Delete
-          </x-button>
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            New Lead Activity
+            <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+          </h3>
         </div>
       </template>
-    </DataTable>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="mb-4 flex justify-end">
+          <x-button size="sm" color="orange" @click.prevent="addActivity">
+            Add Activity
+          </x-button>
+        </div>
+
+        <DataTable
+          table-class-name="compact"
+          :headers="activityTable"
+          :items="activities"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="activities.length < 15"
+        >
+          <template #item-status="{ status, id }">
+            <x-checkbox
+              color="emerald"
+              size="xl"
+              :modelValue="status === 1"
+              :disabled="status === 1"
+              @change="onStatusUpdate(id)"
+              :loading="activityLoader"
+            />
+          </template>
+          <template #item-action="item">
+            <div class="space-x-4">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                :disabled="item.status === 1"
+                @click.prevent="onEdit(item)"
+              >
+                Edit
+              </x-button>
+
+              <x-button
+                size="xs"
+                color="error"
+                :disabled="item.status === 1"
+                outlined
+                @click.prevent="confirmDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+      </template>
+    </Collapsible>
     <x-modal v-model="modals.activity" size="lg" show-close backdrop>
       <template #header>
         {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
@@ -437,5 +294,5 @@ const onDeleteConfirmation = () => {
         </div>
       </template>
     </x-modal>
-  </div> -->
+  </div>
 </template>

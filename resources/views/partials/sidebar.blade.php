@@ -289,39 +289,6 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                <!-- // Scheduled to delete 15th April 2024
-                @can(PermissionsEnum::ClaimList)
-                <ul class="nav side-menu">
-                    <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            <li><a href="{{ url('claim/claims') }}">Claims</a></li>
-
-                            @can(PermissionsEnum::CRMAdmin)
-                            <li><a href="#">Admin <span class="fa fa-chevron-down"></span></a>
-                                <ul class="nav child_menu">
-                                    @can(PermissionsEnum::TypeOfInsuranceList)
-                                    <li><a href="{{ url('claim/typeofinsurance') }}">Type of Insurance</a></li>
-                                    @endcan
-                                    @can(PermissionsEnum::SubTypeOfInsuranceList)
-                                    <li><a href="{{ url('claim/subtypeofinsurance') }}">Sub Type of Insurance</a>
-                                    </li>
-                                    @endcan
-                                    @can(PermissionsEnum::ClaimStatusList)
-                                    <li><a href="{{ url('claim/claimsstatus') }}">Claim Status</a></li>
-                                    @endcan
-                                    @can(PermissionsEnum::CarRepairCoverageList)
-                                    <li><a href="{{ url('claim/carrepaircoverage') }}">Car Repair Coverage</a></li>
-                                    @endcan
-                                    @can(PermissionsEnum::CarRepairTypeList)
-                                    <li><a href="{{ url('claim/carrepairtype') }}">Car Repair Type</a></li>
-                                    @endcan
-                                </ul>
-                            </li>
-                            @endcan
-                        </ul>
-                    </li>
-                </ul>
-                @endcan -->
                 @can(PermissionsEnum::AMLList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
