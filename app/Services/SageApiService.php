@@ -105,9 +105,9 @@ class SageApiService
 
         //calculate vat
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
-        $sageRequest->vatOnPremium  =  $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0; 
+        $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
 
-        $sageRequest->premiumWithoutTax = floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0 );
+        $sageRequest->premiumWithoutTax = floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
         $sageRequest->vatOnCommission = floatval($payment->commission_vat);
         $sageRequest->totalAmount = floatval($payment->total_amount);
@@ -641,7 +641,7 @@ class SageApiService
                 SageEnum::SRT_CREATE_AR_SPPAY_INV,
                 SageEnum::SRT_CREATE_AP_PREM_INV,
                 SageEnum::SRT_CREATE_AP_SPPAY_INV,
-                SageEnum::SRT_CREATE_AR_DISC_INV
+                SageEnum::SRT_CREATE_AR_DISC_INV,
             ]) && $sageApiLog['status'] == 'success';
         })->values()->toArray();
 
@@ -672,7 +672,7 @@ class SageApiService
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
                     ]);
                 }
-                
+
                 if (in_array($reverseSendUpdateType, $checkAPInvoices)) {
                     info('Book Update - Create AP Reverse and Correction Invoice for Upfront Payment');
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
@@ -778,7 +778,6 @@ class SageApiService
         $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
         $quoteObject = ! empty($extraParams['sendUpdateLog']) ? $extraParams['sendUpdateLog'] : $quote;
 
-
         if (isset($extraParams['invoiceType'])) {
             $sageInvResponse = SageApiLogRepository::getInvoiceResponse([
                 'reverseInvoiceDetails' => $extraParams['reversalInvoice'],
@@ -789,10 +788,10 @@ class SageApiService
         }
 
         // This case added for Split Payment patch
-        if (isset($extraParams['payment']) && $extraParams['payment']->total_payments > 1 && 
-            ((in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV])) || 
+        if (isset($extraParams['payment']) && $extraParams['payment']->total_payments > 1 &&
+            ((in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV])) ||
             (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) && ($extraParams['revCorrSplitPayment'] ?? false)))) {
-            
+
             $invoiceType = in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV]) ? SageEnum::AR_INVOICE : SageEnum::AP_INVOICE;
             info('Book Update - Sage APIs - '.$invoiceType.' Split Payment Patch Call');
             $splitPaymentResponse = $this->splitPaymentsPatch($quote, $sageRequestPayload, $sageLogArray, $extraParams, $sageInvResponse);
@@ -924,7 +923,7 @@ class SageApiService
                 $sageEntryType = $extraParams['iterator'] >= 4 ? SageEnum::SCT_CORRECTION : SageEnum::SCT_REVERSAL;
                 $arrayKey = ($extraParams['iterator'] == 4) ? 1 : $arrayKey;
 
-                if (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) ) {
+                if (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV])) {
                     $extraParams['revCorrSplitPayment'] = ($sageEntryType == SageEnum::SCT_CORRECTION && $arrayKey == 1) ? true : false;
                     $arrayKey = ($sageEntryType == SageEnum::SCT_CORRECTION && $arrayKey == 1) ? ++$arrayKey : $arrayKey;
                     $extraParams['iterator'] = ($sageEntryType == SageEnum::SCT_CORRECTION && $arrayKey == 1) ? ++$extraParams['iterator'] : $extraParams['iterator'];
