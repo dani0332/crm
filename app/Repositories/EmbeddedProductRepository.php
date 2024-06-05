@@ -2,12 +2,14 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Marshall;
 use App\Jobs\SendEPDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
@@ -19,8 +21,10 @@ use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use finfo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
@@ -155,12 +159,14 @@ class EmbeddedProductRepository extends BaseRepository
         ])->whereIn('product_id', $optionsIds)->get();
 
         $certificate_number = '';
+        $capturedAt = null;
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
+            $capturedAt = $transaction[0]['payment_status_date'];
         }
         $short_code = $ep->short_code;
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
 
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Salama_Certificate']);
     }
@@ -351,12 +357,14 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         $certificate_number = '';
+        $capturedAt = null;
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
+            $capturedAt = $transaction[0]['payment_status_date'];
         }
         // send certificate only for medex
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
         if ($pdf) {
             $attachments[] = [
                 'Content' => base64_encode($pdf->output()),
@@ -399,17 +407,32 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  object  $quoteObject
      * @param  string  $certificate_number
      * @param  float  $premium
+     * @param  null|Carbon  capturedAt
      * @return PDF|null The PDF document or null if the short code is not defined in config.
      */
     private function getPDF(
         $short_code,
         $quoteObject,
         $certificate_number,
-        $premium
+        $premium,
+        $capturedAt
     ) {
         $pdf = null;
+        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
+        $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
+            $viewFile = $certificatesConfig[$short_code]['view_file'];
+
+            if ($epMdxV3From && ! empty($capturedAt)
+                && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV3From->value))) {
+                $viewFile = $certificatesConfig[$short_code]['view_file_v3'];
+
+            } elseif ($epMdxV2From && ! empty($capturedAt)
+            && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
+                $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
+            }
+
             $strategy = $this->createStrategy($short_code);
             $viewData = $strategy->getPDFData($quoteObject, $certificate_number, $premium);
             $pdf = PDF::setOption(
@@ -418,7 +441,7 @@ class EmbeddedProductRepository extends BaseRepository
                     'dpi' => 150,
                 ]
             )
-                ->loadView($certificatesConfig[$short_code]['view_file'], compact('viewData'));
+                ->loadView($viewFile, compact('viewData'));
         }
 
         return $pdf;
@@ -432,7 +455,13 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
-        $dataset = EmbeddedTransaction::with('quoteRequest.customer', 'quoteRequest.carMake', 'quoteRequest.carModel', 'quoteRequest.quoteStatus')
+        $dataset = EmbeddedTransaction::with(
+            'quoteRequest.customer',
+            'quoteRequest.carMake',
+            'quoteRequest.carModel',
+            'quoteRequest.quoteStatus',
+            'quoteRequest.advisor',
+        )
             ->join('embedded_product_options', function ($join) use ($ep) {
                 $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
                     ->where('embedded_product_options.embedded_product_id', $ep->id);
@@ -602,5 +631,69 @@ class EmbeddedProductRepository extends BaseRepository
         $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
 
         return $response;
+    }
+
+    public function fetchCapturePayment($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if ($quoteTypeId !== QuoteTypeId::Car) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+            ['payment_status_id', PaymentStatusEnum::AUTHORISED],
+        ])->with(['quoteRequest', 'product.embeddedProduct' => function ($query) {
+            $query->where('product_category', EpCategoryEnum::BOLT_ON);
+        }])
+            ->get();
+
+        $payload = [];
+        if ($epTransaction->isNotEmpty()) {
+            foreach ($epTransaction as $item) {
+                if (empty($payload)) {
+                    $payload = [
+                        'quoteUID' => $item->quoteRequest->uuid,
+                        'quoteTypeId' => $quoteTypeId,
+                    ];
+                }
+
+                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
+                $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
+                $payload['payments'][] = [
+                    'codeRef' => $item->code.'-'.$sr,
+                ];
+
+                PaymentAction::where('payment_code', $item->code)
+                    ->where('action_type', 'CAPTURE')
+                    ->where('is_fulfilled', 0)
+                    ->where('is_manager_approved', 1)
+                    ->delete();
+
+                PaymentAction::create([
+                    'payment_code' => $item->code,
+                    'action_type' => 'CAPTURE',
+                    'amount' => $item->price_with_vat,
+                    'is_fulfilled' => 0,
+                    'created_by' => auth()->user()->email,
+                    'reason' => 'Payment Captured',
+                    'is_manager_approved' => 1,
+                    'sr_no' => $sr,
+                ]);
+            }
+        }
+
+        if (empty($payload)) {
+            return false;
+        }
+
+        try {
+            Marshall::request('/payment/checkout/capture', 'post', $payload);
+            $this->fetchSendDocumentsByLead($leadId, $modelType);
+        } catch (Exception $e) {
+            Log::error('Capture Payment Error: '.$e->getMessage());
+        }
     }
 }

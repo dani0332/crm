@@ -18,6 +18,8 @@ const form = useForm({
   insurance_provider_id: props.embeddedProduct?.insurance_provider_id || '',
   product_name: props.embeddedProduct?.product_name || '',
   short_code: props.embeddedProduct?.short_code || '',
+  min_age: props.embeddedProduct?.min_age || '',
+  max_age: props.embeddedProduct?.max_age || '',
   display_name: props.embeddedProduct?.display_name || '',
   description: props.embeddedProduct?.description || '',
 
@@ -268,13 +270,33 @@ function onSubmit(isValid) {
             :error="form.errors.short_code"
           />
         </x-field>
+
+        <x-field label="Age">
+          <x-input
+            v-model="form.min_age"
+            type="number"
+            min="0"
+            class="w-1/2 pr-2"
+            placeholder="Minimum Age"
+            :error="form.errors.min_age"
+          />
+          <x-input
+            v-model="form.max_age"
+            type="number"
+            min="0"
+            class="w-1/2"
+            placeholder="Maximum Age"
+            :error="form.errors.max_age"
+          />
+        </x-field>
+
       </div>
 
       <x-divider class="my-4" />
 
       <div class="grid gap-4 sm:grid-cols-3">
         <div class="sm:col-span-2">
-          <x-field label="Product Description">
+          <x-field label="Tooltip /Help text">
             <x-markdown-editor
               id="product_description"
               v-model="form.description"

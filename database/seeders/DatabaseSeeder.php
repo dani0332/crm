@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,39 +15,15 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            // RenewalsPermissionSeeder::class,
-            // addCarQuoteSearchPermission::class,
-            // QuoteStatusTableSeeder::class,
-            // UtmLeadsSalesReportSeeder::class,
-            // CarLostStorageSeeder::class,
-            // AddPersonalLobsProducts::class,
-            // addCarQuoteNewStatuses::class,
-            // CommercialKeywordsSeeder::class,
-            // RuleTypeSeeder::class,
-            // CommercialMakeModelKeywordsPermissionsSeeder::class,
-            // FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
-            // ApplicationStorageSeeder::class,
-            // SlabsTableSeeder::class,
-            // AddPersonalLobsProducts::class,
-            // addTeamThresholdViewPermission::class,
-            // PetBikeMigrationSeeder::class
-            // InsurerQuoteTypeMappingSeeder::class,
-            // addTeamAllocationThresholdViewPermission::class,
-            // addQuoteAllocationSwitch::class,
-            // CreateAndAssignSubTeamsToAdvisors::class,
-            // AddApiLogViewToPermssion::class,
-            // AutofollowupSeeder::class,
-            // addReassignmentTime::class,
-            // GenericPermissionSeeder::class,
-            // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
-            //            AddNewDocumentTypesSeeder::class,
-            // UpdateCustomerToHealthAndTravelMemberDetails::class,
+            // LostReasonsTableSeeder::class,
+            // AddGenericRolePermissionSeeder::class,
+            // addDubaiNowEmailGroup::class,
+            // DubaiLeadSource::class,
+            // ActivitySchedulesSeeder::class,
             GenericPermissionSeeder::class,
-            AddLegacyPaymentsPermssion::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
-            ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,*/
             // AddNewDocumentTypesSeeder::class,
@@ -63,10 +40,21 @@ class DatabaseSeeder extends Seeder
             TotalPremiumReportPermissionSeeder::class,*/
 
             // dtt seeder
-            AddDttFlagApplicationStorage::class,
-            DttOCBNewBusinessSeeder::class,
-            RevivalConversionReportPermissionSeeder::class,
+            // AddDttFlagApplicationStorage::class,
+            // DttOCBNewBusinessSeeder::class,
+            // RevivalConversionReportPermissionSeeder::class,
             // end
+            // AddCrossLOBSeeder::class,
+            MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
+            AddPaymentPermissions::class,
+            AddCreateSendUpdatePermissionToAllRoles::class,
+            AddSendUpdatesCategoriesInLookups::class,
+            InslyRoles::class,
+            InslyPermissions::class,
+            QuoteStatusMapSeeder::class,
+            QuoteStatusSeeder::class,
+            ApplicationStorageSeeder::class,
+            addInsuranceProvidersConfiguration::class,
         ]);
     }
 }

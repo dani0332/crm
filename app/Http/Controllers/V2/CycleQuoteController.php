@@ -4,12 +4,19 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TeamNameEnum;
+use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
 use App\Models\ApplicationStorage;
@@ -25,14 +32,25 @@ use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
+use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\Request;
 
 class CycleQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -41,11 +59,18 @@ class CycleQuoteController extends Controller
         $personalQuotes = CycleQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CYCLE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return $value['id'] != QuoteStatusEnum::Lost;
+        })->values();
+
+        $count = $personalQuotes->count();
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
 
         return inertia('CycleQuote/Index', [
-            'quotes' => $personalQuotes,
+            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : CycleQuoteRepository::getData(true, true),
         ]);
     }
 
@@ -70,6 +95,8 @@ class CycleQuoteController extends Controller
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
+
+        event(new LeadsCount(CycleQuoteRepository::getData(true, true)));
 
         return redirect('personal-quotes/cycle/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
@@ -110,11 +137,14 @@ class CycleQuoteController extends Controller
     {
         $quote = CycleQuoteRepository::getBy('uuid', $uuid);
 
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::CYCLE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
 
         $quote->load('documents.createdBy:id,name,email');
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Cycle);
+
+        $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::CYCLE->name);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CYCLE->id());
@@ -141,15 +171,31 @@ class CycleQuoteController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::CYCLE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Cycle);
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::CYCLE->value);
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::CYCLE->value, $quote->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::CYCLE->value, $quote->payments, $quoteDocuments);
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::CYCLE->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
-            'quote' => $quote,
+            'quote' => fn () => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'quoteTypeId' => QuoteTypes::CYCLE->id(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
             'paymentMethods' => $paymentMethods,
@@ -170,9 +216,76 @@ class CycleQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
+            'record' => fn () => $quote,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'bookPolicyDetails' => $bookPolicyDetails,
+            'payments' => $quote->payments->toArray() ?? [],
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'documentTypeCodes' => $documentTypeCodes,
+            'noteDocumentType' => $noteDocumentType,
+            'quoteDocuments' => $quoteNotes,
+            'cdnPath' => $cdnPath,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+        ]);
+    }
+
+    public function cardsView(Request $request)
+    {
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::NewLead, $request)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::Allocated, $request)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::FollowedUp, $request)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::InNegotiation, $request)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::PaymentPending, $request)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::PolicyIssued, $request)],
+        ];
+
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        if (array_intersect([TeamNameEnum::CYCLE], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::Allocated,
+                QuoteStatusEnum::InNegotiation,
+            ])->values()->toArray();
+        } elseif (array_intersect([TeamNameEnum::CYCLE_RENEWALS], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::NewLead,
+                QuoteStatusEnum::InNegotiation, ])->values()->toArray();
+        }
+
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
+
+        $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Cycle);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Cycle);
+
+        return inertia('CycleQuote/Cards', [
+            'quotes' => $quotes,
+            'quoteStatusEnum' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
+            'quoteTypeId' => QuoteTypes::CYCLE->id(),
+            'quoteType' => QuoteTypes::CYCLE->value,
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : CycleQuoteRepository::getData(true, true),
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
         ]);
     }
 }

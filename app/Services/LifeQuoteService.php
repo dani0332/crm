@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
+use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -75,12 +76,14 @@ class LifeQuoteService extends BaseService
                 'lqr.renewal_expiry_date',
                 'lqr.device',
                 DB::raw('DATE_FORMAT(lqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
-                DB::raw('DATE_FORMAT(lqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
+                'lqr.policy_start_date',
                 'lqr.previous_quote_policy_premium',
                 'lqr.customer_id',
                 'lqr.parent_duplicate_quote_id',
                 'lqr.risk_score',
                 'lqr.kyc_decision',
+                'lqr.insurance_provider_id',
+                'ip.text AS insurance_provider_text',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -92,7 +95,8 @@ class LifeQuoteService extends BaseService
             ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
-            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id');
+            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'lqr.insurance_provider_id');
     }
 
     public function saveLifeQuote(Request $request)
@@ -609,11 +613,13 @@ class LifeQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $quoteBatch = QuoteBatches::latest()->first();
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
+            $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
             $this->updateChildRecord($lead->id);
         }
