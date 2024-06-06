@@ -117,7 +117,7 @@ class ApiController extends Controller
     /**
      * Format error response in json.
      *
-     * @param  $e:  Exception
+     * @param    $e:  Exception
      * @return json.
      */
     public function getExceptionErrors($e)

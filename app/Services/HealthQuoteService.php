@@ -1531,7 +1531,7 @@ class HealthQuoteService extends BaseService
     /**
      * create health plan for upload & create process.
      *
-     * @param  $data
+     * @param    $data
      * @return false
      */
     public function renewalCreatePlan($planData)
