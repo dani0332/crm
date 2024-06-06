@@ -43,7 +43,10 @@ class CarQuoteObserver
                 'customer-update-myalfred-we'
             );
             CarQuote::withoutEvents(function () use ($lead) {
-                $lead->update(['transaction_approved_at' => now()]);
+                $lead->update([
+                    'transaction_approved_at' => now(),
+                    'quote_status_date' => now()
+                ]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $lead->transaction_approved_at];
         }
