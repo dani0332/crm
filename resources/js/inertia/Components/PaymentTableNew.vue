@@ -2528,11 +2528,15 @@ const fetchPlans = () => {
 };
 
 watch(() => props.sendUpdate?.plan_id, () => {
+  if (props.sendUpdate?.plan_id) {
     fetchPlans();
+  }
 });
 
 onMounted(() => {
-  fetchPlans();
+  if (props.sendUpdate?.plan_id) {
+    fetchPlans();
+  }
 })
 
 const getPlanName = computed(() => {
