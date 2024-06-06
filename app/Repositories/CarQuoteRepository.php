@@ -125,7 +125,7 @@ class CarQuoteRepository extends BaseRepository
      *
      * @return void
      */
-    public function fetchUpdateQuoteStatus($data)
+    public function fetchQuoteStatusHandler($data)
     {
         return DB::transaction(function () use ($data) {
             $quote = $this->where('uuid', $data['quote_uuid'])->first();
