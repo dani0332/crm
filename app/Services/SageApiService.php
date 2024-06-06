@@ -1137,7 +1137,7 @@ class SageApiService
         info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
         info('Sage API - Payment frequency : '.$payment->frequency.' for '.$quote->uuid);
         // frequency  is 'upfront'
-        if ($payment->frequency == 'upfront') {
+        if ($payment->frequency == PaymentFrequency::UPFRONT) {
             /* createARInvoicePremAndComm */
             $isLiveApiCallStep2 = true;
             if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {
@@ -1414,7 +1414,7 @@ class SageApiService
 
         // total_payments = 1 means upfront payment
 
-        if ($payment->frequency == 'upfront') {
+        if ($payment->frequency == PaymentFrequency::UPFRONT) {
             info('########## Start of Upfront createAPInvoicePrem for : '.$quote->code.'##########');
             $isLiveApiCallStep5 = true;
             if (isset($sageLogArray[5]) && $sageLogArray[5]['status'] == 'success') {
