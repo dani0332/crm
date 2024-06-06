@@ -242,8 +242,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::post('/payments/{quoteType}/split-update', [CentralController::class, 'splitPaymentUpdate'])->name('approve-payments')->middleware('check_route_access');
-    // Route::post('/payments/{quoteType}/split-payments-approve', [CentralController::class, 'splitPaymentsApprove'])->name('approve-payments')->middleware('check_route_access');
-    // Route::post('/payments/{quoteType}/migrate-payment', [CentralController::class, 'migratePayment'])->name('payment-edit')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/split-payments-approve', [CentralController::class, 'splitPaymentsApprove'])->name('approve-payments')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/migrate-payment', [CentralController::class, 'migratePayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/update-total-price', [CentralController::class, 'updateTotalPrice'])->name('temp-update-totalprice')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store-new', [CentralController::class, 'storeNewPayment'])->name('payment-create')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/update-new', [CentralController::class, 'updateNewPayment'])->name('payment-edit')->middleware('check_route_access');
