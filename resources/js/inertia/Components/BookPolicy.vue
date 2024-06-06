@@ -253,72 +253,41 @@ const calculateCommissionPercentage = (
 };
 
 const calculateCommission = () => {
-  let isBothTypeOfCommission =
-    bpForm.commission_vat_applicable > 0 &&
-    bpForm.commission_vat_not_applicable > 0;
+  let totalPriceWithoutVat =
+    Number(props.quote?.price_vat_applicable) +
+    Number(props.quote?.price_vat_not_applicable);
 
-  if (isBothTypeOfCommission) {
-    bpForm.vat_on_commission = calculateVatOnCommission(
-      bpForm.commission_vat_applicable,
-    );
-
+  if (totalPriceWithoutVat > 0) {
     let totalCommissionWithoutVat =
       Number(bpForm.commission_vat_not_applicable) +
       Number(bpForm.commission_vat_applicable);
 
-    bpForm.total_commission = (
-      totalCommissionWithoutVat + Number(bpForm.vat_on_commission)
-    ).toFixed(2);
-
-    bpForm.commission_percentage = calculateCommissionPercentage(
-      totalCommissionWithoutVat,
-      Number(props.quote?.price_vat_not_applicable) +
-        Number(props.quote?.price_vat_applicable),
-    );
-  } else if (bpForm.commission_vat_applicable > 0) {
-    if (Number(props.quote?.price_vat_applicable) > 0) {
-      bpForm.commission_percentage = calculateCommissionPercentage(
-        bpForm.commission_vat_applicable,
-        Number(props.quote?.price_vat_not_applicable) +
-          Number(props.quote?.price_vat_applicable),
-      );
-
+    if (totalCommissionWithoutVat > 0) {
       bpForm.vat_on_commission = calculateVatOnCommission(
         bpForm.commission_vat_applicable,
       );
-      bpForm.total_commission = (
-        Number(bpForm.vat_on_commission) +
-        Number(bpForm.commission_vat_applicable)
-      ).toFixed(2);
-    } else {
-      bpForm.commission_vat_applicable = '';
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT APPLICABLE)',
-        position: 'top',
-      });
-    }
-  } else if (bpForm.commission_vat_not_applicable > 0) {
-    if (Number(props.quote?.price_vat_not_applicable) > 0) {
-      bpForm.commission_percentage = calculateCommissionPercentage(
-        bpForm.commission_vat_not_applicable,
-        Number(props.quote?.price_vat_not_applicable) +
-          Number(props.quote?.price_vat_applicable),
-      );
 
-      bpForm.total_commission = Number(
-        bpForm.commission_vat_not_applicable,
+      bpForm.total_commission = (
+        totalCommissionWithoutVat + Number(bpForm.vat_on_commission)
       ).toFixed(2);
+
+      bpForm.commission_percentage = calculateCommissionPercentage(
+        totalCommissionWithoutVat,
+        totalPriceWithoutVat,
+      );
     } else {
-      bpForm.commission_vat_not_applicable = '';
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
-        position: 'top',
-      });
+      bpForm.commission_percentage = '';
+      bpForm.vat_on_commission = '';
+      bpForm.total_commission = '';
     }
   } else {
-    bpForm.commission_percentage = '';
-    bpForm.vat_on_commission = '';
-    bpForm.total_commission = '';
+    bpForm.commission_vat_applicable = '';
+    bpForm.commission_vat_not_applicable = '';
+    notification.error({
+      title:
+        'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
+      position: 'top',
+    });
   }
 };
 
