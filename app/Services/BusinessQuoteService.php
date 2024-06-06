@@ -241,6 +241,7 @@ class BusinessQuoteService extends BaseService
 
     public function getGridData($model, $request)
     {
+
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
@@ -353,6 +354,8 @@ class BusinessQuoteService extends BaseService
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
                     }
+                } elseif ($item == 'business_type_of_insurance_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    $this->query->whereIn('bqr.business_type_of_insurance_id', $request[$item]);
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
                 } else {
@@ -364,7 +367,6 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($request->sortBy, $request->sortType);
