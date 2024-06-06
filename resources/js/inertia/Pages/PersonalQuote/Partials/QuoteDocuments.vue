@@ -18,7 +18,7 @@ const props = defineProps({
     required: false,
     default: () => ({}),
   },
-  selectedCategory: {
+  sendUpdateLog: {
     type: Object,
     required: true,
   },
@@ -158,14 +158,14 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
 const isEN = computed(() => {
   return (
     isSendUpdatePage &&
-    props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.EN
+    props.sendUpdateLog.category.code === sendUpdateStatusEnum.EN
   );
 });
 
 const isCPU = computed(() => {
   return (
     isSendUpdatePage &&
-    props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPU
+    props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPU
   );
 });
 
