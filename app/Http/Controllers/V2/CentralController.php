@@ -287,6 +287,7 @@ class CentralController extends Controller
             (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
 
             $this->updatePaymentAllocationStatus($quote);
+
             return response()->json(['message' => $response['message']], 200);
         }
     }
