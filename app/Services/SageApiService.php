@@ -716,16 +716,18 @@ class SageApiService
                     // This Split Invoice for Reverse and Correction need to be tested
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
-                        'lastIteration' => 7, // This should be updated accordingly
+                        'lastIteration' => $extras['ap_patch_call_enable'] ? 7 : 4, // TODO :: This is temporary solution, this after AP Split patch working fine
                         'startingStep' => 9,
                         'totalSteps' => 21,
+                        'batchNumber' => $invoiceResponse->BatchNumber,
                         'entryType' => SageEnum::SCT_STRAIGHT,
+                        'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
                         'requestType' => SageEnum::SRT_REV_CORR_AP_SPPAY_INV,
                         'payment' => $payment,
                         'splitPayments' => $splitPayments,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
-                        'apPatchCallEnable' => $extras['ap_patch_call_enable'] 
+                        'apPatchCallEnable' => $extras['ap_patch_call_enable'] // TODO :: This is temporary solution, this after AP Split patch working fine
                     ]);
                 }
 
@@ -812,7 +814,8 @@ class SageApiService
             $extraParams['startingStep'] = $extraParams['startingStep'] + 2;
             $extraParams['iterator'] = $extraParams['iterator'] + 1;
 
-            if (isset($extraParams['apPatchCallEnable']) && !$extraParams['apPatchCallEnable'] && $extraParams['requestType'] == SageEnum::SRT_CREATE_AP_SPPAY_INV) {
+            // TODO :: This is temporary solution, this after AP Split patch working fine
+            if (isset($extraParams['apPatchCallEnable']) && !$extraParams['apPatchCallEnable'] && in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AP_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV])) {
                 return true;
             }
             
@@ -958,6 +961,7 @@ class SageApiService
                 'recursiveCall' => true,
                 'revCorrSplitPayment' => $extraParams['revCorrSplitPayment'] ?? false,
                 'paymentDetails' => $paymentDetails ?? [],
+                'apPatchCallEnable' => $extraParams['apPatchCallEnable'] ?? true, // TODO :: This is temporary solution, this after AP Split patch working fine
             ];
 
             if (isset($extraParams['batchNumber']) && isset($extraParams['invoiceType'])) {
@@ -1036,7 +1040,7 @@ class SageApiService
                     $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date']));
                 }
 
-                if ($extras['requestType'] == SageEnum::SRT_CREATE_AR_SPPAY_INV) {
+                if (in_array($extras['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV])) {
                     info('Book Update - Prepare Patch payload for Commission Split Payments');
                     $vatOnCommission = floatval($extras['payment']->commission_vat);
                     $commission = floatval($extras['payment']->commission);
@@ -1064,7 +1068,8 @@ class SageApiService
                     }
                 }
 
-                if (isset($extras['apPatchCallEnable']) && $extras['apPatchCallEnable'] || $extras['requestType'] == SageEnum::SRT_CREATE_AR_SPPAY_INV) {
+                // TODO :: This is temporary solution, this after AP Split patch working fine
+                if (isset($extras['apPatchCallEnable']) && $extras['apPatchCallEnable'] || in_array($extras['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV])) {
                     if (isset($sageLogArray[$extras['startingStep']]) && $sageLogArray[$extras['startingStep']]['status'] == SageEnum::STATUS_SUCCESS) {
                         $isLiveApiCall = false;
                         $payLoadOptions =
