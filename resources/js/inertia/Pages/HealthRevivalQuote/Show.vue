@@ -28,6 +28,10 @@ const props = defineProps({
   advisors: Array,
   insuranceProviders: Array,
   healthPlanTypes: Array,
+  quoteNotes: Array,
+  noteDocumentType: Array,
+  allowedDuplicateLOB: Array,
+  cdnPath: String,
 });
 
 const page = usePage();
@@ -1052,6 +1056,109 @@ onMounted(() => {
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   isMounted.value = true;
 });
+const onAssignLead = () => {
+  if (!assignLead.value) {
+    notification.error({
+      title: 'Please select a lead',
+      position: 'top',
+    });
+    return;
+  }
+  router.post(
+    route('manualLeadAssign', { quoteType: 'Health' }),
+    {
+      modelType: 'Health',
+      entityId: page.props.quote.id,
+      assigned_to_id_new: assignLead.value,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        isDisabled.value = true;
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Lead Assigned',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        isDisabled.value = false;
+      },
+    },
+  );
+};
+const onTeamAssign = () => {
+  if (!assignSubteam.value) {
+    notification.error({
+      title: 'Please select a subteam',
+      position: 'top',
+    });
+    return;
+  }
+  router.post(
+    route('healthTeamAssign'),
+    {
+      modelType: 'Health',
+      entityId: page.props.quote.id,
+      assign_team: assignSubteam.value,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        isDisabled.value = true;
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Team Assigned',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        isDisabled.value = false;
+      },
+    },
+  );
+};
+const subTeamOptions = [
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Best', label: 'Best' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Entry-Level', label: 'Entry-Level' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
+];
+const openDuplicate = () => {
+  modals.duplicate = true;
+  leadDuplicateForm.reset();
+};
+const leadDuplicateForm = useForm({
+  modelType: 'health',
+  parentType: 'health',
+  entityId: page.props.quote.id,
+  entityCode: page.props.quote.code,
+  entityUId: page.props.quote.uid,
+  lob_team: [],
+  lob_team_sub_selection: null,
+});
+
+const onCreateDuplicate = isValid => {
+  if (!isValid) return;
+  leadDuplicateForm.post(route('createDuplicate'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Quote duplicated successfully',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.duplicate = false;
+    },
+  });
+};
 </script>
 
 <template>
@@ -1063,12 +1170,16 @@ onMounted(() => {
       </template>
       <template #default>
         <LeadNotes
-          :documentType="noteDocumentType"
+          :documentType="props?.noteDocumentType"
           :notes="quoteNotes"
-          :modelType="modelType"
-          :quote="quote"
+          modelType="Health"
+          :quote="props.quote"
           :cdn="cdnPath"
         />
+
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
         <Link :href="route('healthrevival-quotes-list')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div">
             Health Revival List
@@ -1082,7 +1193,116 @@ onMounted(() => {
     </StickyHeader>
 
     <x-divider class="my-4" />
+    <div
+      v-if="
+        !hasAnyRole([
+          rolesEnum.EBPAdvisor,
+          rolesEnum.HealthAdvisor,
+          rolesEnum.RMAdvisor,
+        ])
+      "
+      class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
+    >
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Assign Team & Advisor
+            </h3>
+          </div>
+        </template>
 
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+            <div class="w-full md:w-1/2 flex gap-2 items-end">
+              <x-select
+                v-model="assignSubteam"
+                label="Assign Subteam"
+                :options="subTeamOptions"
+                placeholder="Select Subteam"
+                class="w-auto flex-1 !mb-2"
+              />
+              <div>
+                <x-button
+                  color="orange"
+                  size="sm"
+                  class="mb-2"
+                  @click.prevent="onTeamAssign"
+                  :loading="isDisabled"
+                >
+                  Assign Team
+                </x-button>
+              </div>
+            </div>
+            <div
+              v-if="!hasRole(rolesEnum.HealthWCUAdvisor)"
+              class="w-full md:w-1/2 flex gap-2 items-end"
+            >
+              <ComboBox
+                v-model="assignLead"
+                label="Assign Lead"
+                :options="advisorOptions"
+                placeholder="Select Lead"
+                class="w-auto flex-1 mt-1"
+                :single="true"
+              />
+              <div>
+                <x-button
+                  color="orange"
+                  size="sm"
+                  class="mb-2"
+                  @click.prevent="onAssignLead"
+                  :loading="isDisabled"
+                >
+                  Assign
+                </x-button>
+              </div>
+            </div>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
+
+    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
+      <template #header> Duplicate Lead </template>
+      <x-form @submit="onCreateDuplicate" :auto-focus="false">
+        <div class="grid gap-4">
+          <x-select
+            v-model="leadDuplicateForm.lob_team"
+            label="LOBs"
+            :options="
+              allowedDuplicateLOB.map(lob => ({
+                value: lob,
+                label: lob,
+              }))
+            "
+            :rules="[isRequired]"
+            placeholder="Select LOB For Duplication"
+            class="w-full"
+            multiple
+          />
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            label="Reason"
+            :rules="[isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
+          />
+
+          <x-button
+            color="orange"
+            type="submit"
+            :loading="leadDuplicateForm.processing"
+          >
+            Create Duplicate
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">

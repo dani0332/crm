@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\HealthTeamType;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -10,6 +11,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\HealthPlanType;
 use App\Models\Nationality;
@@ -18,6 +20,7 @@ use App\Repositories\CustomerMembersRepository;
 use App\Repositories\HealthRevivalQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -117,7 +120,7 @@ class HealthRevivalQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
-        if (! empty($insuranceProviders)) {
+        if (!empty($insuranceProviders)) {
             $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->id,
@@ -125,6 +128,14 @@ class HealthRevivalQuoteController extends Controller
                 ];
             })->sortBy('label')->values();
         }
+        $allowedDuplicateLOB = app(CRUDService::class)->getAllowedDuplicateLOB($quoteType, $record->code);
+
+        $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
+
+        $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
+
+
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
 
         return inertia('HealthRevivalQuote/Show', [
             'quote' => $record,
@@ -154,6 +165,10 @@ class HealthRevivalQuoteController extends Controller
             'advisors' => $advisors,
             'insuranceProviders' => $insuranceProviders,
             'healthPlanTypes' => $healthPlanTypes,
+            'allowedDuplicateLOB' => $allowedDuplicateLOB,
+            'noteDocumentType' => $noteDocumentType,
+            'quoteNotes' => $quoteNotes,
+            'cdnPath ' => $cdnPath,
         ]);
     }
 
