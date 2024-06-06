@@ -617,26 +617,23 @@ watch(
                     value: key,
                     label: filterOptions.batches[key],
                 }))
-                    " :max-limit="15" deselect-all />
+                    " :max-limit="15" />
 
                 <ComboBox v-if="hasAnyRole([rolesEnum.SeniorManagement, rolesEnum.Accounts])" v-model="filters.teams"
                     label="Teams" placeholder="Search by Teams" :options="Object.keys(filterOptions.teams).map(key => ({
                         value: key,
                         label: filterOptions.teams[key],
                     }))
-                        " @update:model-value="onTeamChange" :select-all="filters.teams?.length > 0"
-                    :deselect-all="filters.teams?.length > 0" />
+                        " @update:model-value="onTeamChange" />
 
                 <ComboBox
                     v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                     v-model="filters.advisors" label="Advisors" placeholder="Search by Advisors" :options="advisorOptions"
-                    :loading="loaders.advisorOptions" :select-all="filters.advisors?.length > 0"
-                    :deselect-all="filters.advisors?.length > 0" />
+                    :loading="loaders.advisorOptions" />
 
                 <ComboBox v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement])"
                     v-model="filters.subTeams" label="Sub Team" placeholder="Search by Sub Team" class="w-full"
-                    :options="subTeamsOptions" :select-all="filters.subTeams?.length > 0"
-                    :deselect-all="filters.subTeams?.length > 0" />
+                    :options="subTeamsOptions" />
 
                 <x-select v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager])" v-model="filters.segment"
                     label="Segment" placeholder="Search by Segment" class="w-full" :options="Object.keys(filterOptions.segments).map(key => ({
