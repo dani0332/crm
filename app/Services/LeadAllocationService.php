@@ -93,7 +93,7 @@ class LeadAllocationService extends BaseService
     public function createLeadAllocationRecord($userId, $allocationRequest = null)
     {
         $isAllocation = LeadAllocation::where('user_id', $userId);
-        if (!empty($allocationRequest->quoteTypeId)) {
+        if (! empty($allocationRequest->quoteTypeId)) {
             $isAllocation = $isAllocation->where('quote_type_id', $allocationRequest->quoteTypeId);
         }
 
