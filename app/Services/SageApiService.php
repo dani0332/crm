@@ -2059,6 +2059,7 @@ class SageApiService
         if (is_array($response)) {
             return $response;
         }
+
         return json_decode($response, true);
     }
 }
