@@ -233,8 +233,10 @@ const submitPolicy = () => {
 };
 
 const calculateVatOnCommission = commissionVatApplicable => {
-  if (commissionVatApplicable > 0) {
-    return Number(commissionVatApplicable * page.props.vat).toFixed(2);
+  if (Number(commissionVatApplicable) > 0) {
+    return Number(
+      Number(commissionVatApplicable) * Number(page.props.vat),
+    ).toFixed(2);
   } else {
     return 0;
   }
@@ -276,8 +278,8 @@ const calculateCommission = () => {
         totalPriceWithoutVat,
       );
     } else {
-      bpForm.commission_percentage = '';
-      bpForm.vat_on_commission = '';
+      bpForm.commission_percentage = 0;
+      bpForm.vat_on_commission = 0;
       bpForm.total_commission = '';
     }
   } else {
