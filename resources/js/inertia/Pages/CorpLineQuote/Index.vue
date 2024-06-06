@@ -56,9 +56,9 @@ const filters = reactive({
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  quote_status_id: '',
-  advisor_id: '',
-  business_type_of_insurance_id: '',
+  quote_status_id: [],
+  advisor_id: [],
+  business_type_of_insurance_id: [],
   company_name: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -68,6 +68,18 @@ const filters = reactive({
   is_cold: false,
   is_stale: false,
 });
+
+watch(
+    () => filters,
+    () => {
+        if (filters.created_at_start && filters.created_at_end) {
+            canExport.value = true;
+        } else {
+            canExport.value = false;
+        }
+    },
+    { deep: true, immediate: true },
+);
 
 const leadStatusOptions = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(status => ({
@@ -144,9 +156,9 @@ const setIntialState = () => {
     mobile_no: '',
     created_at_start: '',
     created_at_end: '',
-    quote_status_id: '',
-    advisor_id: '',
-    business_type_of_insurance_id: '',
+    quote_status_id: [],
+    advisor_id: [],
+    business_type_of_insurance_id: [],
     company_name: '',
     page: 1,
     previous_quote_policy_number: '',
@@ -211,8 +223,8 @@ const handleSelectedFilters = selectedFilters => {
     filters.created_at_end = selectedFilters.created_at_end;
   }
 
-  if (selectedFilters.quote_status) {
-    filters.quote_status = selectedFilters.quote_status;
+  if (selectedFilters.quote_status_id) {
+    filters.quote_status_id = selectedFilters.quote_status_id;
   }
 
   if (selectedFilters.payment_status) {
@@ -273,11 +285,11 @@ const onDataExport = () => {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+      filters[key.substring(0, key.length - 2)] = params[key].map(value => isNaN(parseInt(value))? value: parseInt(value));
     } else {
       filters[key] = params[key];
     }
-  }
+ }
 }
 
 onMounted(() => {
@@ -452,21 +464,18 @@ watch(
           />
         </x-field>
         <x-field label="Lead Status">
-          <x-select
-            v-model="filters.quote_status_id"
-            name="quote_status_id"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-            class="w-full"
-          />
+            <ComboBox
+                v-model="filters.quote_status_id"
+                placeholder="Search by Lead Status"
+                :options="leadStatusOptions"
+            />
         </x-field>
         <x-field label="BUSINESS INSURANCE TYPE">
-          <x-select
-            v-model="filters.business_type_of_insurance_id"
-            placeholder="INSURANCE TYPE"
-            :options="insuranceTypeOptions"
-            class="w-full"
-          />
+            <ComboBox
+                v-model="filters.business_type_of_insurance_id"
+                placeholder="Search by Insurance Type"
+                :options="insuranceTypeOptions"
+            />
         </x-field>
         <x-field
           label="Advisor"
@@ -478,12 +487,11 @@ watch(
             ])
           "
         >
-          <x-select
+           <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-            class="w-full"
-          />
+            />
         </x-field>
         <x-input
           v-model="filters.previous_quote_policy_number"
