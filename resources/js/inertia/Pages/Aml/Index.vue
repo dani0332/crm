@@ -26,7 +26,7 @@ const tableHeader = [
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss');
 
 let availableFilters = {
-  quoteType: null,
+  quoteType: '',
   searchType: '',
   searchField: '',
   matchFound: '',
@@ -37,6 +37,7 @@ let availableFilters = {
 
 const isDateMandatory = ref(true);
 const isSearchValueRequired = ref(false);
+const isQuoteTypeEmpty = ref(false);
 const filtersForm = useForm({
   quoteType: null,
   searchType: '',
@@ -62,7 +63,8 @@ function checkDateValidation() {
 }
 
 function onSubmit(isValid) {
-    if (!isValid) return;
+    isQuoteTypeEmpty.value = !filtersForm.quoteType;
+    if (!isValid || !filtersForm.quoteType) return;
 
     //remove empty fields
     Object.keys(filtersForm).forEach(
@@ -114,12 +116,10 @@ watch(() => filtersForm, () => {
 
 const quoteTypeOptions = computed(() =>
   ref(
-    [{ value: '', label: 'Select' }].concat(
-      page.props.quoteTypes.map(item => ({
+    page.props.quoteTypes.map(item => ({
         value: item.code,
         label: item.text,
-      })),
-    ),
+    }))
   ),
 );
 
@@ -137,13 +137,13 @@ onMounted(() => {
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-        <x-select
-          v-model="filtersForm.quoteType"
-          :rules="[isRequired]"
-          label="Quote Type"
-          placeholder=""
-          :options="quoteTypeOptions.value"
-          class="w-full"
+        <ComboBox
+            v-model="filtersForm.quoteType"
+            label="Quote Type"
+            placeholder="Search by Quote Type"
+            :options="quoteTypeOptions.value"
+            :single="true"
+            :hasError="isQuoteTypeEmpty"
         />
 
         <x-select

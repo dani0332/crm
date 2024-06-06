@@ -135,7 +135,7 @@ class AmtController extends Controller
             $data->where('bqr.mobile_no', '=', $request->mobile_no);
         }
         if (isset($request->leadStatus) && $request->leadStatus != '') {
-            $data->where('qs.id', '=', $request->leadStatus);
+            $data->whereIn('qs.id', $request->leadStatus);
         }
         if (isset($request->advisor_id) && is_array($request->advisor_id) && count($request->advisor_id) > 0) {
             if (count($request->advisor_id) === 1 && $request->advisor_id[0] == '-1') {

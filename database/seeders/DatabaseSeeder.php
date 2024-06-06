@@ -46,6 +46,8 @@ class DatabaseSeeder extends Seeder
             // end
             // AddCrossLOBSeeder::class,
             MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
+            BusinessTypeInsuranceSeeder::class,
+
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
             AddSendUpdatesCategoriesInLookups::class,

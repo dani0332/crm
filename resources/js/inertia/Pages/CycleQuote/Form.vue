@@ -110,7 +110,7 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.email"
           />
         </x-field>
-        <x-field label="Phone Number" required>
+        <x-field label="Mobile Number" required>
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
