@@ -813,6 +813,83 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+        }
+    }
+    public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
+    {
+        try {
+            info('sendBookPolicyDocumentsEmail  , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
+
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $documents = $emailData->quoteDocuments;
+            $attachments = [];
+            if (! empty($documents)) {
+                foreach ($documents as $document) {
+                    $path = $document->doc_url;
+                    $documentURL = $path !== '' ? $websiteURL.$path : '';
+                    $attachments[] = [
+                        'url' => $documentURL,
+                        'name' => basename($documentURL),
+                    ];
+                }
+            }
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => config('constants.SENDINBLUE_KEY'),
+                'Content-Type' => 'application/json',
+            ];
+
+            $bodyData = [
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->clientFullName,
+                ]],
+                'templateId' => (int) $emailData->emailTemplateId,
+                'params' => [
+                    'clientFullName' => $emailData->clientFullName,
+                    'carQuoteId' => $emailData->code,
+                    'currentInsurer' => $emailData->currentInsurer,
+                    'renewalDueDate' => $emailData->renewalDueDate,
+                    'policyNumber' => $emailData->policy_number,
+                    'advisor' => (object) [
+                        'name' => $emailData->advisorName,
+                        'email' => $emailData->advisorEmail,
+                    ],
+                ],
+                'tags' => [
+                    $tag,
+                ],
+                'attachment' => isset($attachments) ? $attachments : null,
+            ];
+
+            if ($emailData->advisorEmail) {
+                $bodyData['cc'] = [
+                    [
+                        'email' => $emailData->advisorEmail,
+                        'name' => $emailData->advisorName,
+                    ],
+                ];
+            }
+            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                config('constants.SIB_URL'),
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 20,
+                ]
+            );
+
+            $response = json_decode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents(), true);
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendBookPolicyDocumentsEmail ---- Request Sent '.$emailData->code);
+            info('sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
             Log::error($responseDetail);
         }
 
