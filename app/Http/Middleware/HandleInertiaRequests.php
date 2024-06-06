@@ -69,7 +69,7 @@ class HandleInertiaRequests extends Middleware
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
@@ -95,7 +95,7 @@ class HandleInertiaRequests extends Middleware
 
     protected function buildNavigation()
     {
-        if (! auth()->check()) {
+        if (!auth()->check()) {
             return redirect()->route('login');
         }
 
@@ -127,18 +127,20 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasAnyPermission(array_merge([
-            PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
-            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
-            PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
-            PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW,
-            PermissionsEnum::UtmLeadsSalesReport,
-            PermissionsEnum::RENEWAL_BATCH_REPORT,
-            PermissionsEnum::CONVERSION_AS_AT_REPORT,
-            PermissionsEnum::MANAGEMENT_REPORT,
-        ],
+        if (auth()->user()->hasAnyPermission(array_merge(
+            [
+                PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
+                PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+                PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
+                PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW,
+                PermissionsEnum::UtmLeadsSalesReport,
+                PermissionsEnum::RENEWAL_BATCH_REPORT,
+                PermissionsEnum::CONVERSION_AS_AT_REPORT,
+                PermissionsEnum::MANAGEMENT_REPORT,
+            ],
             PermissionsEnum::getAdvisorConverionReportPermissions(),
-            PermissionsEnum::getAdvisorDistributionReportPermissions()))) {
+            PermissionsEnum::getAdvisorDistributionReportPermissions()
+        ))) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
                     ->addIf(auth()->user()->can(PermissionsEnum::CONVERSION_AS_AT_REPORT), 'Conversion As At Report', route('conversion-as-at-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
@@ -511,7 +513,7 @@ class HandleInertiaRequests extends Middleware
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::QUAD_CONFIG_LIST),
                                 'Quadrants',
-                                url('generic/quadrant'),
+                                url('generic/quadrants'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(
