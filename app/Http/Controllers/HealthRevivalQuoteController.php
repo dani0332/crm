@@ -120,7 +120,7 @@ class HealthRevivalQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
-        if (!empty($insuranceProviders)) {
+        if (! empty($insuranceProviders)) {
             $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->id,
@@ -134,8 +134,7 @@ class HealthRevivalQuoteController extends Controller
 
         $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
 
-
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         return inertia('HealthRevivalQuote/Show', [
             'quote' => $record,
