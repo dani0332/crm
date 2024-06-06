@@ -188,6 +188,43 @@ const authenticatedSendUpdateOptions = computed(() => {
 //     .catch(err => console.log('err', err))
 // }
 
+const optionLoader = ref(false);
+const parentId = ref();
+
+const sendUpdateOptions = ref([]);
+
+const getSendUpdateOptions = () => {
+  optionLoader.value = true;
+  axios
+    .post(route('send-update.get-options'), {
+      quoteTypeId: props.quote_type_id,
+      parentId: parentId.value,
+      businessInsuranceTypeId: props.reportable?.business_type_of_insurance_id || null,
+      status: form.childCategory?.slug || null,
+    })
+    .then(response => {
+      if (response.status == 200) {
+        sendUpdateOptions.value = response.data.options;
+        modals.step = 'step3';
+      }
+    })
+    .catch(function (errors) {
+      console.error(errors);
+      if (errors.response.data.errors.error) {
+        let responseError = errors.response.data.errors.error;
+        Object.keys(responseError).forEach(function (key) {
+          notification.error({
+            title: responseError[key],
+            position: 'top',
+          });
+        });
+      }
+    })
+    .finally(() => {
+      optionLoader.value = false;
+    });
+};
+
 const setOption = (next_step, value) => {
   switch (next_step) {
     case 'step1':
@@ -199,8 +236,9 @@ const setOption = (next_step, value) => {
       modals.step = next_step;
       break;
     case 'step3':
+      parentId.value = value.id;
       form.childCategory = value;
-      modals.step = next_step;
+      getSendUpdateOptions();
 
       if (['CPD', 'CPU'].includes(form.childCategory.slug)) {
         modals.step = 'step1';
@@ -262,9 +300,9 @@ const onAddUpdate = autoSubmit => {
   form
     .transform(data => {
       let childCatgeory = { ...data.childCategory };
-      let option = childCatgeory.childs.find(item => item.id === data.option);
+      let option = sendUpdateOptions.value.find(item => item.id === data.option);
       childCatgeory.option = option || null;
-      delete childCatgeory.childs;
+      delete sendUpdateOptions.value;
 
       return {
         quote_type_id: props.quote_type_id,
@@ -491,6 +529,7 @@ const findOption = (item, key) => {
               color="primary"
               class="py-8 px-6 rounded-xl w-[200px] min-h-[150px] whitespace-break-spaces underline decoration-dotted"
               @click="setOption('step3', category)"
+              :loading="optionLoader"
             >
               {{ category.title }}
             </x-button>
@@ -505,7 +544,7 @@ const findOption = (item, key) => {
       <div
         class="w-full flex gap-5 mb-10"
         v-else-if="
-          modals.step === 'step3' && form.childCategory?.childs?.length > 0
+          modals.step === 'step3' && sendUpdateOptions
         "
       >
         <div class="flex flex-col gap-2 flex-grow w-75">
@@ -515,7 +554,7 @@ const findOption = (item, key) => {
               :single="true"
               :hasError="optionError"
               :options="
-                form.childCategory.childs.map(item => ({
+                sendUpdateOptions.map(item => ({
                   label: item.title,
                   value: item.id,
                   tooltip: item.description,

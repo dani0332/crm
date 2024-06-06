@@ -65,7 +65,6 @@ const renderMarkdown = markdownString => {
             placeholder="Select a source"
             class="w-full"
             single
-            deselectAll
           >
           </combo-box>
         </x-field>

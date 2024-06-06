@@ -351,13 +351,12 @@ onMounted(() => {
           />
         </x-field>
         <x-field label="Payment Status">
-          <x-select
-            name="payment_status_id"
-            v-model="filters.payment_status_id"
-            placeholder="Search by Payment Status"
-            :options="paymentStatusOptions"
-            class="w-full"
-          />
+            <ComboBox
+                v-model="filters.payment_status_id"
+                placeholder="Search by Payment Status"
+                :options="paymentStatusOptions"
+                :single="true"
+            />
         </x-field>
         <x-field label="Travel Type" required>
           <x-select
