@@ -84,7 +84,7 @@ class UpdateStaleLeads extends Command
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
                 })->chunkById(1000, function ($quoteDetails) {
                     foreach ($quoteDetails as $quoteDetail) {
-                        if ($quoteDetail->quote_status_date > Carbon::parse('2023-05-23')->startOfDay()) {
+                        if ($quoteDetail->quote_status_date >= Carbon::parse('2023-05-23')->startOfDay()) {
                             if (! isset($quoteDetail->stale_at)) {
                                 $quoteDetail->update([
                                     'stale_at' => now(),
