@@ -359,9 +359,13 @@ class CentralService
         return $isAmlClearedForPayment;
     }
 
-    public function getQuoteWiseProviderPlans($quoteType, $providerId): object
+    public function getQuoteWiseProviderPlans($quoteType, $providerId, $plandId = null): object
     {
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
+
+        if ($plandId) {
+            return $planModel::find($plandId);
+        }
 
         return $planModel::where('provider_id', $providerId)->get();
     }

@@ -335,9 +335,9 @@ class CentralController extends Controller
         return back()->with('success', $successMessage);
     }
 
-    public function getQuoteWisePlans($quoteType, $providerId): object
+    public function getQuoteWisePlans($quoteType, $providerId, $plandId = null): object
     {
-        return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId));
+        return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId, $plandId));
     }
 
     private function handleInsufficientPayment($request, $payment)

@@ -203,19 +203,13 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSavePolicyDetails($data)
     {
         try {
-            if (! empty($data['insurance_provider_id'])) {
-                $insuranceProvider = InsuranceProviderRepository::getById($data['insurance_provider_id']);
-            }
-            if (! empty($data['plan_id'])) {
-                $plan = app(CentralService::class)->getPlanById($data['quote_type'], $data['plan_id']);
-            }
             $result = $this->where('id', $data['id'])->update([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : $data['provider_name'],
+                // 'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : $data['provider_name'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'plan_id' => $data['plan_id'],
-                'plan_name' => $plan->text ?? $data['plan_name'],
+                // 'plan_name' => $plan->text ?? $data['plan_name'],
                 'policy_number' => $data['policy_number'],
                 'issuance_date' => $data['issuance_date'],
                 'start_date' => $data['start_date'],
