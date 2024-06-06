@@ -1359,7 +1359,7 @@ class SagePayloadFactory
                 ];
                 break;
 
-            // Sage Call for Non-Upfront Cases
+                // Sage Call for Non-Upfront Cases
             case SageEnum::SRT_CREATE_AR_SPPAY_INV:
                 $response = [
                     'recursiveCalls' => [
@@ -1408,7 +1408,7 @@ class SagePayloadFactory
                 ];
                 break;
 
-            // Sage Calls for Reversal Cases with Upfront Correction
+                // Sage Calls for Reversal Cases with Upfront Correction
             case SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV:
                 $response = [
                     'recursiveCalls' => [
@@ -1478,7 +1478,7 @@ class SagePayloadFactory
                 ];
                 break;
 
-            // Sage Calls for Reversal Cases with Non-Upfront Correction
+                // Sage Calls for Reversal Cases with Non-Upfront Correction
             case SageEnum::SRT_REV_CORR_AR_SPPAY_INV:
                 $response = [
                     'recursiveCalls' => [
@@ -1550,7 +1550,7 @@ class SagePayloadFactory
                 ];
                 break;
 
-            // Sage Calls for Reversal Cases with Upfront/Non-Upfront Correction
+                // Sage Calls for Reversal Cases with Upfront/Non-Upfront Correction
             case SageEnum::SRT_REV_CORR_AR_DIS_INV:
                 $response = [
                     'recursiveCalls' => [
@@ -1585,7 +1585,7 @@ class SagePayloadFactory
                 ];
                 break;
 
-            // Apply Payment and Receipts Invoices
+                // Apply Payment and Receipts Invoices
             case SageEnum::SRT_CREATE_PAY_REC_ONE_INV:
                 $response = [
                     'recursiveCalls' => [
@@ -1646,11 +1646,6 @@ class SagePayloadFactory
                 ];
                 break;
 
-            
-
-                
-
-            
         }
 
         return $response;
