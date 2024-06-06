@@ -9,7 +9,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendBookPolicyRequest extends FormRequest
@@ -92,14 +91,6 @@ class SendBookPolicyRequest extends FormRequest
                                         $validator->errors()->add('value', 'Payment sage reciept id can not be null');
                                     }
                                 }
-                            }
-                        }
-                        if (! empty($payment->insurer_invoice_date) && ! empty($paymentSplit->due_date)) {
-                            $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->startOfDay();
-                            $paymentDueDate = Carbon::parse($paymentSplit->due_date)->startOfDay();
-
-                            if ($invoiceDate->gt($paymentDueDate)) {
-                                $validator->errors()->add('value', 'Payment Due date cannot be earlier than Insurer Invoice date');
                             }
                         }
                     } else {

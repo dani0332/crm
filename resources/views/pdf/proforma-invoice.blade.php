@@ -210,7 +210,7 @@
         table.tbl-footer tr td, table.tbl-footer tr td a {
             color: #ffffff;
             border: none;
-            font-size: 15px;
+            font-size: 12px !important;
         }
 
         table.tbl-disclaimer {
@@ -444,7 +444,7 @@
                 <tr>
                     <th></th>
                     <td class="payment-heading">
-                        Discount:
+                        DISCOUNT:
                     </td>
                     <td class="amount">
                         - {{ number_format( $proformaPaymentRequest->discount_value, 2, '.', ',') }}
@@ -508,7 +508,7 @@
             </td>
         </tr>
         <tr>
-            <td class="text-left">UAE Central Bank Registration number 85</td>
+            <td class="text-left left-column">UAE Central Bank Registration number 85</td>
             <td class="text-right">Insurance Advisor: {{ $advisor?->name }}</td>
             <td class="text-right advisor-image" rowspan="4">
                 @if($advisor?->profile_photo_path)
@@ -518,25 +518,21 @@
             </td>
         </tr>
         <tr>
-            <td class="text-left">Registered member of the Emirates Insurance Association</td>
+            <td class="text-left left-column">Registered member of the Emirates Insurance Association</td>
             <td class="text-right">Email: <a href="mailto:{{ $advisor?->email }}">{{ $advisor?->email }} </a>
             </td>
         </tr>
         <tr>
-            <td class="text-left">Department of Economy & Tourism in Dubai Trade License number 238534</td>
+            <td class="text-left left-column">Department of Economy & Tourism in Dubai Trade License number 238534</td>
             <td class="text-right">Mobile Number: <a
                     href="tel:{{ $advisor?->mobile_no }}">{{ $advisor?->mobile_no }}</a></td>
         </tr>
         <tr>
-            <td class="text-left">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health
-                Authority
-            </td>
+            <td class="text-left left-column">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority  </td>
             <td class="text-right">Direct Line: <a href="tel:048185663">048185663</a></td>
         </tr>
         <tr>
-            <td class="text-left">Registered member of the Insurance Business Group under the Dubai Chamber of Commerce
-                and Industry.
-            </td>
+            <td class="text-left left-column">Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry. </td>
         </tr>
     </table>
 </footer>
@@ -637,9 +633,7 @@
                     @else
                         {{ $quoteType?->text }} <br />
                     @endif
-
                     {{ $insuranceProvider?->text }}
-
                 </td>
                 <td>
                     {{ number_format($subTotal, 2 , '.', ',') }}
