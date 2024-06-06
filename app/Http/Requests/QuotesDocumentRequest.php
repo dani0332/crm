@@ -6,9 +6,7 @@ use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Rules\CustomFileType;
 use App\Traits\GenericQueriesAllLobs;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
 class QuotesDocumentRequest extends FormRequest
 {
@@ -40,7 +38,7 @@ class QuotesDocumentRequest extends FormRequest
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->where('quote_type_id', request()->quote_type_id ?? 0)->first())) {
             $rules['file'][] = new CustomFileType($this->documentType->accepted_files);
-            $rules['file'][] = 'max:' . $this->documentType->max_size * 1024;
+            $rules['file'][] = 'max:'.$this->documentType->max_size * 1024;
         }
 
         return $rules;
