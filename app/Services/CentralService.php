@@ -220,7 +220,12 @@ class CentralService
 
                         foreach ($listQuotePlans as $plans) {
                             foreach ($plans as $plan) {
-                                $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
+                                if (isset($plan->planTypeId)) {
+                                    $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
+
+                                } else {
+                                    $plan->plan_type = 'N/A';
+                                }
                             }
                         }
                     }
