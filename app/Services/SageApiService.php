@@ -696,7 +696,7 @@ class SageApiService
                     info('Book Update - Create AR Split Payment Invoice for Split Payment and marked as posted');
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
-                        'lastIteration' => 8,
+                        'lastIteration' => 7,
                         'startingStep' => 1,
                         'totalSteps' => 21,
                         'batchNumber' => $invoiceResponse->BatchNumber,
@@ -714,7 +714,7 @@ class SageApiService
                     info('Book Update - Create AP Split Payment Invoice for Split Payment and marked as posted');
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
-                        'lastIteration' => 8,
+                        'lastIteration' => 7,
                         'startingStep' => 9,
                         'totalSteps' => 21,
                         'entryType' => SageEnum::SCT_STRAIGHT,
@@ -727,7 +727,7 @@ class SageApiService
                 }
 
                 $startingStep = 17;
-                $totalSteps = 24;
+                $totalSteps = 23;
             }
 
             if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AR_DISC_INV && $sendUpdateLog && $sendUpdateLog->discount > 0) {
@@ -778,7 +778,6 @@ class SageApiService
         $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
         $quoteObject = ! empty($extraParams['sendUpdateLog']) ? $extraParams['sendUpdateLog'] : $quote;
 
-
         if (isset($extraParams['invoiceType'])) {
             $sageInvResponse = SageApiLogRepository::getInvoiceResponse([
                 'reverseInvoiceDetails' => $extraParams['reversalInvoice'],
@@ -809,8 +808,13 @@ class SageApiService
             $sageLogKey =
             $extraParams['startingStep'] = $extraParams['startingStep'] + 2;
             $extraParams['iterator'] = $extraParams['iterator'] + 1;
-            $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
+            
+            if (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) && ($extraParams['revCorrSplitPayment'] ?? false)) {
+                $arrayKey = $arrayKey + 1;
+                $extraParams['iterator'] = $extraParams['iterator'] + 1;
+            }
 
+            $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
         }
 
         if (method_exists(SagePayloadFactory::class, $methodName)) {
@@ -926,8 +930,6 @@ class SageApiService
 
                 if (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) ) {
                     $extraParams['revCorrSplitPayment'] = ($sageEntryType == SageEnum::SCT_CORRECTION && $arrayKey == 1) ? true : false;
-                    $arrayKey = ($sageEntryType == SageEnum::SCT_CORRECTION && $arrayKey == 1) ? ++$arrayKey : $arrayKey;
-                    $extraParams['iterator'] = ($sageEntryType == SageEnum::SCT_CORRECTION && $arrayKey == 1) ? ++$extraParams['iterator'] : $extraParams['iterator'];
                 }
             }
 
