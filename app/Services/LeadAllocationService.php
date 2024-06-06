@@ -92,8 +92,8 @@ class LeadAllocationService extends BaseService
 
     public function createLeadAllocationRecord($userId, $allocationRequest = null)
     {
-        $isAllocation = LeadAllocation::where('user_id', $userId);
-        if (! empty($allocationRequest->quoteTypeId)) {
+        $isAllocation = LeadAllocation::latest()->where('user_id', $userId);
+        if (!empty($allocationRequest->quoteTypeId)) {
             $isAllocation = $isAllocation->where('quote_type_id', $allocationRequest->quoteTypeId);
         }
 
@@ -104,7 +104,6 @@ class LeadAllocationService extends BaseService
             return false;
         }
         try {
-            DB::beginTransaction();
             $leadAllocation = new LeadAllocation();
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
@@ -113,26 +112,20 @@ class LeadAllocationService extends BaseService
             $leadAllocation->quote_type_id = $allocationRequest->quoteTypeId ?? null;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
-
-            DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
         }
     }
 
     public function updateUserAllocationRecord($userId, $allocationCount, $maxCapacity, $isAvailable, $quoteTypeId = null)
     {
         try {
-            DB::beginTransaction();
-            $leadAllocation = LeadAllocation::where('user_id', $userId);
+            $leadAllocation = LeadAllocation::latest()->where('user_id', $userId);
             if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
             $leadAllocation = $leadAllocation->first();
             if (! $leadAllocation) {
-                DB::commit();
-
                 return false;
             }
             if (isset($allocationCount)) {
@@ -149,10 +142,9 @@ class LeadAllocationService extends BaseService
             }
 
             $leadAllocation->save();
-            DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
+
         }
     }
 
