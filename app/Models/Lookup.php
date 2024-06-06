@@ -20,12 +20,25 @@ class Lookup extends Model
                     });
                 });
         })->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id');
+    }
 
-        return $query->with('childs');
+    public function scopeSendUpdateOptions($query, $quoteTypeId, $parentId, $businessInsuranceTypeId = null)
+    {
+        return $query->where('quote_type_id', $quoteTypeId)
+            ->where('parent_id', $parentId)
+            ->when($businessInsuranceTypeId, function ($query) use ($businessInsuranceTypeId) {
+                return $query->where('business_insurance_type_id', $businessInsuranceTypeId);
+            })
+            ->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id');
     }
 
     public function childs()
     {
         return $this->hasMany('App\Models\Lookup', 'parent_id', 'id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo('App\Models\Lookup', 'parent_id', 'id');
     }
 }
