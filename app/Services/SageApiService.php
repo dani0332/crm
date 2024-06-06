@@ -1173,6 +1173,11 @@ class SageApiService
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making Ar invoice & prem ready to post to sage';
 
+                    $readyToPostResponseArray = $this->convertResponseToArray($readyToPostResponse);
+                    $errorMessage = $readyToPostResponseArray['error']['message']['value'] ?? null;
+                    Log::error('SAGE API : '.$errorMessage);
+                    $returnMessage['error'] = $errorMessage;
+
                     return $returnMessage;
                 }
                 info('SAGE API: '.$quote->uuid.' : readyToPostInvoiceAr - '.$sageResponse['BatchNumber'].' completed successfully');
@@ -1196,10 +1201,14 @@ class SageApiService
                     Log::error('SAGE API: '.$quote->uuid.' : aRPostInvoices - '.$sageResponse['BatchNumber'].' failed');
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making Ar invoice & prem Posted to sage';
+                    $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                    Log::error('SAGE API : '.$errorMessage);
+                    $returnMessage['error'] = $errorMessage;
                     $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, 4, 13, 'fail');
 
                     return $returnMessage;
                 }
+                info('SAGE API: '.$quote->uuid.' : aRPostInvoices - '.$sageResponse['BatchNumber'].' completed successfully');
                 if ($isLiveApiCallStep4) {
                     $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, 4, 13);
                 }
@@ -1208,6 +1217,10 @@ class SageApiService
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, 2, 13, 'fail');
                 $returnMessage['message'] = 'Ar invoice & prem failed from sage';
                 $returnMessage['status'] = false;
+
+                $errorMessage = $sageResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
 
                 return $returnMessage;
             }
@@ -1231,6 +1244,10 @@ class SageApiService
                 $returnMessage['message'] = 'ar split payment failed from sage';
                 $returnMessage['status'] = false;
 
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
+
                 return $returnMessage;
             }
             info('SAGE API: '.$quote->uuid.' : createARInvoiceSplitPayments - BatchNumber : '.$postedResponse['BatchNumber'].' completed successfully');
@@ -1248,6 +1265,10 @@ class SageApiService
                 Log::error($quote->uuid.' : Post AR/ARInvoiceBatches for batchNumber : '.$batchNumber.' failed');
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while get ar2 split paymets from sage';
+
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
 
                 return $returnMessage;
             }
@@ -1319,6 +1340,10 @@ class SageApiService
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making ar2 split paymets patch to sage';
 
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
+
                 return $returnMessage;
             }
             if ($isLiveApiCallStep3) {
@@ -1342,6 +1367,10 @@ class SageApiService
                 $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, 4, 13, 'fail');
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making ar2 Apply split payment ready to post to sage';
+
+                $errorMessage = $readyToPostResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
 
                 return $returnMessage;
             }
@@ -1367,6 +1396,10 @@ class SageApiService
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making ar2 Apply split payment Posted to sage';
                 $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, 5, 13, 'fail');
+
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
 
                 return $returnMessage;
             } else {
@@ -1418,6 +1451,11 @@ class SageApiService
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making AP invoice ready to post to sage';
 
+                    $readyToPostResponseArray = $this->convertResponseToArray($readyToPostResponse);
+                    $errorMessage = $readyToPostResponseArray['error']['message']['value'] ?? null;
+                    Log::error('SAGE API : '.$errorMessage);
+                    $returnMessage['error'] = $errorMessage;
+
                     return $returnMessage;
                 } else {
                     info('SAGE API: '.$quote->uuid.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' completed successfully');
@@ -1444,6 +1482,10 @@ class SageApiService
                     $returnMessage['message'] = 'Error while making AP invoices Posted to sage';
                     $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, 7, 13, 'fail');
 
+                    $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                    Log::error('SAGE API : '.$errorMessage);
+                    $returnMessage['error'] = $errorMessage;
+
                     return $returnMessage;
                 } else {
                     info('SAGE API: '.$quote->uuid.' : aPPostInvoices completed successfully');
@@ -1456,6 +1498,10 @@ class SageApiService
                 $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 5, 13, 'fail');
                 $returnMessage['message'] = 'Ap invoice prem failed from sage';
                 $returnMessage['status'] = false;
+
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
 
                 return $returnMessage;
             }
@@ -1515,6 +1561,10 @@ class SageApiService
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making AP split paymets patch to sage';
 
+                    $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                    Log::error('SAGE API : '.$errorMessage);
+                    $returnMessage['error'] = $errorMessage;
+
                     return $returnMessage;
                 }
                 info('SAGE API: '.$quote->uuid.' : Patch Request completed successfully');
@@ -1538,6 +1588,11 @@ class SageApiService
                     $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, 8, 15, 'fail');
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making AP invoice ready to post to sage';
+
+                    $readyToPostResponseArray = $this->convertResponseToArray($readyToPostResponse);
+                    $errorMessage = $readyToPostResponseArray['error']['message']['value'] ?? null;
+                    Log::error('SAGE API : '.$errorMessage);
+                    $returnMessage['error'] = $errorMessage;
 
                     return $returnMessage;
                 } else {
@@ -1565,6 +1620,10 @@ class SageApiService
                     $returnMessage['message'] = 'Error while making AP invoices Posted to sage';
                     $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, 9, 15, 'fail');
 
+                    $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                    Log::error('SAGE API : '.$errorMessage);
+                    $returnMessage['error'] = $errorMessage;
+
                     return $returnMessage;
                 } else {
                     info('SAGE API: '.$quote->uuid.' : aPPostInvoices completed successfully');
@@ -1577,6 +1636,10 @@ class SageApiService
                 $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 6, 14, 'fail');
                 $returnMessage['message'] = 'Ap invoice prem failed from sage';
                 $returnMessage['status'] = false;
+
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
 
                 return $returnMessage;
             }
@@ -1621,6 +1684,11 @@ class SageApiService
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making Ar discount invoice ready to post to sage';
 
+                    $readyToPostResponseArray = $this->convertResponseToArray($readyToPostResponse);
+                    $errorMessage = $readyToPostResponseArray['error']['message']['value'] ?? null;
+                    Log::error('SAGE API : '.$errorMessage);
+                    $returnMessage['error'] = $errorMessage;
+
                     return $returnMessage;
                 } else {
                     info('SAGE API: '.$quote->uuid.' : readyToPostInvoiceAr completed successfully');
@@ -1647,6 +1715,10 @@ class SageApiService
                     $returnMessage['message'] = 'Error while making Ar discount invoice Posted to sage';
                     $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, 12, 15, 'fail');
 
+                    $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                    Log::error('SAGE API : '.$errorMessage);
+                    $returnMessage['error'] = $errorMessage;
+
                     return $returnMessage;
                 } else {
                     info('SAGE API: '.$quote->uuid.' : aRPostInvoices  completed successfully');
@@ -1659,6 +1731,10 @@ class SageApiService
                 $this->logSageApiCall($createARInvoiceDis, $postedResponse, $quote, 10, 15, 'fail');
                 $returnMessage['message'] = 'Ar discount invoice failed from sage';
                 $returnMessage['status'] = false;
+
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
 
                 return $returnMessage;
             }
@@ -1696,6 +1772,10 @@ class SageApiService
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making split prepayments to sage';
 
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
+
                 return $returnMessage;
             }
 
@@ -1720,6 +1800,11 @@ class SageApiService
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making Apply payment ready to post to sage';
 
+                $readyToPostResponseArray = $this->convertResponseToArray($readyToPostResponse);
+                $errorMessage = $readyToPostResponseArray['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
+
                 return $returnMessage;
             } else {
                 info('SAGE API: '.$quote->uuid.' : readyToPostReceiptAr completed successfully');
@@ -1741,12 +1826,18 @@ class SageApiService
             }
 
             if (isset($postedResponse['error'])) {
+                Log::error(('SAGE API: '.$quote->uuid.' : aRPostReceipts failed'));
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making Apply payment Posted to sage';
                 $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps, 'fail');
 
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
+
                 return $returnMessage;
             }
+            info('SAGE API: '.$quote->uuid.' : aRPostReceipts completed successfully');
             if ($isLiveApiCallStep15) {
                 $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps);
             }
@@ -1780,6 +1871,10 @@ class SageApiService
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making Apply split prepayments to sage';
 
+                $errorMessage = $response['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
+
                 return $returnMessage;
             }
 
@@ -1808,6 +1903,11 @@ class SageApiService
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making Apply payment ready to post to sage';
 
+                $readyToPostResponseArray = $this->convertResponseToArray($readyToPostResponse);
+                $errorMessage = $readyToPostResponseArray['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
+
                 return $returnMessage;
             } else {
                 info('SAGE API: '.$quote->uuid.' :  readyToPostReceiptAr - BatchNumber : '.$batchNumber.' completed successfully');
@@ -1835,6 +1935,10 @@ class SageApiService
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making Apply payment Posted to sage';
                 $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps, 'fail');
+
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
 
                 return $returnMessage;
             }
@@ -1870,12 +1974,15 @@ class SageApiService
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making Apply split prepayments to sage';
 
+                $errorMessage = $response['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
+
                 return $returnMessage;
             }
             if ($isLiveApiCallStep16) {
                 $this->logSageApiCall($readyToPostReceiptAr, $response, $quote, $currentStep, $totalSteps);
             }
-
             $batchNumber = $response['BatchNumber'];
             info('SAGE API: '.$quote->uuid.' : readyToPostInvoiceAr - BatchNumber : '.$batchNumber.' completed successfully');
             //16
@@ -1896,6 +2003,11 @@ class SageApiService
                 $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $currentStep, $totalSteps, 'fail');
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while making Apply payment ready to post to sage';
+
+                $readyToPostResponseArray = $this->convertResponseToArray($readyToPostResponse);
+                $errorMessage = $readyToPostResponseArray['error']['message']['value'] ?? null;
+                Log::error('SAGE API : '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
 
                 return $returnMessage;
             } else {
@@ -1925,6 +2037,10 @@ class SageApiService
                 $returnMessage['message'] = 'Error while making Apply payment Posted to sage';
                 $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps, 'fail');
 
+                $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                Log::error('SAGE API: '.$errorMessage);
+                $returnMessage['error'] = $errorMessage;
+
                 return $returnMessage;
             }
             if ($isLiveApiCallStep18) {
@@ -1936,5 +2052,13 @@ class SageApiService
         info('################################## Sage Policy Booked for : '.$quote->code.'##################################');
 
         return ['status' => true, 'message' => 'Policy Booked'];
+    }
+
+    private function convertResponseToArray($response)
+    {
+        if (is_array($response)) {
+            return $response;
+        }
+        return json_decode($response, true);
     }
 }
