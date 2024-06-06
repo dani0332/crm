@@ -165,7 +165,6 @@ const subTeamOptions = [
 ];
 
 const assignmentTypeOptions = [
-  { value: '', label: 'Please select is assignment type' },
   { value: 1, label: 'System Assigned' },
   { value: 2, label: 'System ReAssigned' },
   { value: 3, label: 'Manual Assigned' },
@@ -462,12 +461,12 @@ watch(
           name="created_at_end"
           label="Created Date End"
         />
-        <x-select
+        <ComboBox
           v-model="filters.sub_team"
           label="Sub Team"
-          :options="subTeamOptions"
           placeholder="Search by Sub Team"
-          class="w-full"
+          :options="subTeamOptions"
+          :single="true"
         />
 
         <ComboBox
@@ -515,7 +514,8 @@ watch(
           ]"
           class="w-full"
         />
-        <x-select
+
+        <ComboBox
           v-if="
             !hasAnyRole([
               rolesEnum.RMAdvisor,
@@ -525,10 +525,9 @@ watch(
           "
           v-model="filters.assignment_type"
           label="Assignment Type"
-          name="assignment_type"
+          placeholder="Search by Assignment Type"
           :options="assignmentTypeOptions"
-          placeholder="Please select assignment type"
-          class="w-full"
+          :single="true"
         />
         <x-input
           v-model="filters.previous_quote_policy_number"
