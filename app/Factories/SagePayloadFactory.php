@@ -126,7 +126,6 @@ class SagePayloadFactory
 
         if (! empty($extras['mainLeadDetails'])) {
             $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
-            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
 
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
@@ -311,13 +310,9 @@ class SagePayloadFactory
 
         if (! empty($extras['mainLeadDetails'])) {
             $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
-            $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
 
             $payLoad['Invoices'][0]['DocumentType'] = 'DebitNote';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
-
-            $payLoad['Invoices'][1]['DocumentType'] = 'DebitNote';
-            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
         }
 
         $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_INV;
