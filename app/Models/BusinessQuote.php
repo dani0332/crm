@@ -29,6 +29,7 @@ class BusinessQuote extends Model implements AuditableContract
         'quote_status_id' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
         'source' => FilterTypes::EXACT,
+        'business_type_of_insurance_id' => FilterTypes::IN,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'previous_quote_policy_number' => FilterTypes::EXACT,
     ];

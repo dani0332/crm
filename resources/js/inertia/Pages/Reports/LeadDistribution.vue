@@ -145,8 +145,6 @@ const calculateTotalSum = (data, key) => {
               label: filterOptions.tiers[key],
             }))
           "
-           deselect-all
-          select-all
         />
         <x-select
           v-model="filters.isCommercial"
@@ -158,7 +156,8 @@ const calculateTotalSum = (data, key) => {
             { value: false, label: 'No' },
           ]"
         />
-        <x-select
+
+        <ComboBox
           v-model="filters.assignmentTypes"
           label="Assignment Type"
           placeholder="Select any option"
@@ -169,13 +168,16 @@ const calculateTotalSum = (data, key) => {
             { value: 3, label: 'Manual Assigned' },
             { value: 4, label: 'Manual ReAssigned' },
           ]"
+          :single="true"
         />
-        <x-select
+
+        <ComboBox
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          :single="true"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
