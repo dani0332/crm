@@ -92,7 +92,7 @@ class LeadAllocationService extends BaseService
 
     public function createLeadAllocationRecord($userId, $allocationRequest = null)
     {
-        $isAllocation = LeadAllocation::latest()->where('user_id', $userId);
+        $isAllocation = LeadAllocation::where('user_id', $userId);
         if (!empty($allocationRequest->quoteTypeId)) {
             $isAllocation = $isAllocation->where('quote_type_id', $allocationRequest->quoteTypeId);
         }
@@ -120,7 +120,7 @@ class LeadAllocationService extends BaseService
     public function updateUserAllocationRecord($userId, $allocationCount, $maxCapacity, $isAvailable, $quoteTypeId = null)
     {
         try {
-            $leadAllocation = LeadAllocation::latest()->where('user_id', $userId);
+            $leadAllocation = LeadAllocation::where('user_id', $userId);
             if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
@@ -448,7 +448,7 @@ class LeadAllocationService extends BaseService
     public function getLeadAllocationRecordByUserId($userId, $quoteTypeId = null)
     {
         try {
-            $leadAllocation = LeadAllocation::latest()->where('user_id', $userId);
+            $leadAllocation = LeadAllocation::where('user_id', $userId);
             if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
