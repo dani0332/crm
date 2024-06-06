@@ -1,11 +1,11 @@
 <script setup>
-import PaymentTableNew from './../../Components/PaymentTableNew.vue';
-import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyCreatePlan from './Partials/CreatePlan.vue';
+import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
+import MigratePayment from './../../Components/MigratePayment.vue';
+import PaymentTableNew from './../../Components/PaymentTableNew.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
 
 const props = defineProps({
   quote: Object,
@@ -65,6 +65,7 @@ const props = defineProps({
   documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   clientInquiryLogs: Array,
+  quoteNotes: Object,
 });
 
 const isManualPlansCount = ref(0);
@@ -978,15 +979,16 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(
-      function callback(breakDown, index) {
-        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-          if (ratePerCopay.notifyAgent) {
-            element.needPriceUpdate = true;
-          }
-        });
-      },
-    );
+    element.memberPremiumBreakdown?.forEach(function callback(
+      breakDown,
+      index,
+    ) {
+      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+        if (ratePerCopay.notifyAgent) {
+          element.needPriceUpdate = true;
+        }
+      });
+    });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -2417,12 +2419,14 @@ watch(
                 v-model="memberForm.first_name"
                 label="First Name"
                 placeholder="First Name"
+                :rules="[isRequired]"
               />
               <x-input
                 maxLength="60"
                 v-model="memberForm.last_name"
                 label="Last Name"
                 placeholder="Last Name"
+                :rules="[isRequired]"
               />
               <ComboBox
                 v-model="memberForm.nationality_id"
@@ -2465,14 +2469,6 @@ watch(
                 :max-date="new Date()"
                 :rules="[isRequired]"
                 :hasError="memberFieldReq.dob"
-              />
-              <x-select
-                v-model="memberForm.member_category_id"
-                label="Member Category*"
-                :options="memberCategoriesOptions"
-                :rules="[isRequired]"
-                placeholder="Select Member Category"
-                class="w-full"
               />
               <x-select
                 v-model="memberForm.relation_code"
@@ -3315,10 +3311,22 @@ watch(
                 </div>
               </template>
 
-              <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+              <template
+                #item-total="{
+                  actualPremium,
+                  policyFee,
+                  basmah,
+                  vat,
+                  loadingPrice,
+                }"
+              >
                 {{
                   fixedValue(
-                    actualPremium + (policyFee || 0) + (basmah || 0) + vat,
+                    actualPremium +
+                      (policyFee || 0) +
+                      (basmah || 0) +
+                      vat +
+                      (loadingPrice || 0),
                   )
                 }}
               </template>
@@ -3615,7 +3623,6 @@ watch(
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
     />
-
 
     <BookPolicy
       v-if="
