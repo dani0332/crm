@@ -39,11 +39,11 @@ class UpdateStaleLeads extends Command
      */
     public function handle()
     {
-        $specifiedDate = Carbon::parse('2024-06-24 23:59:59');
+        $specifiedDate = Carbon::parse('2024-06-22 23:59:59');
         $currentDate = Carbon::now();
 
         if ($currentDate->lessThan($specifiedDate)) {
-            info('UpdateStaleLeads Command will run after 2024-06-24 23:59:59');
+            info('UpdateStaleLeads Command will run after 2024-06-22 23:59:59');
 
             return;
         }
@@ -84,10 +84,12 @@ class UpdateStaleLeads extends Command
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
                 })->chunkById(1000, function ($quoteDetails) {
                     foreach ($quoteDetails as $quoteDetail) {
-                        if (! isset($quoteDetail->stale_at)) {
-                            $quoteDetail->update([
-                                'stale_at' => now(),
-                            ]);
+                        if ($quoteDetail->quote_status_date > Carbon::parse('2023-05-23')->startOfDay()) {
+                            if (! isset($quoteDetail->stale_at)) {
+                                $quoteDetail->update([
+                                    'stale_at' => now(),
+                                ]);
+                            }
                         }
                     }
                 });
