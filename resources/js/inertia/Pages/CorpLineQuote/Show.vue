@@ -43,7 +43,6 @@ const props = defineProps({
   documentTypeCodes: Array,
   parentLeadDetails: Object,
   linkedQuoteDetails: Array,
-  record: Object,
   bookPolicyDetails: Array,
 });
 
@@ -1208,7 +1207,7 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Business"
       :expanded="sectionExpanded"
     />
@@ -1229,7 +1228,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Business"
       modelType="Corpline"
       :bookPolicyDetails="bookPolicyDetails"
