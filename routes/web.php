@@ -55,6 +55,7 @@ use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
