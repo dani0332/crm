@@ -547,7 +547,7 @@ class SageApiService
             info('Book Update - Create AP Invoice Split Payment and marked as posted for Split Payment');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
-                'lastIteration' => 2,
+                'lastIteration' => $extras['ap_patch_call_enable'] ? 2 : 0,
                 'startingStep' => ($startingStep + 4),
                 'totalSteps' => $totalSteps,
                 'entryType' => SageEnum::SCT_STRAIGHT,
@@ -555,6 +555,7 @@ class SageApiService
                 'payment' => $payment,
                 'splitPayments' => $splitPayments,
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
+                'apPatchCallEnable' => $extras['ap_patch_call_enable'] 
             ]);
 
             $startingStep = 10;
@@ -712,9 +713,10 @@ class SageApiService
 
                 if (in_array($reverseSendUpdateType, $checkAPInvoices)) {
                     info('Book Update - Create AP Split Payment Invoice for Split Payment and marked as posted');
+                    // This Split Invoice for Reverse and Correction need to be tested
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
-                        'lastIteration' => 7,
+                        'lastIteration' => 7, // This should be updated accordingly
                         'startingStep' => 9,
                         'totalSteps' => 21,
                         'entryType' => SageEnum::SCT_STRAIGHT,
@@ -723,6 +725,7 @@ class SageApiService
                         'splitPayments' => $splitPayments,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
+                        'apPatchCallEnable' => $extras['ap_patch_call_enable'] 
                     ]);
                 }
 
@@ -804,11 +807,15 @@ class SageApiService
 
                 return $_REQUEST;
             }
-
+            
             $sageLogKey =
             $extraParams['startingStep'] = $extraParams['startingStep'] + 2;
             $extraParams['iterator'] = $extraParams['iterator'] + 1;
 
+            if (isset($extraParams['apPatchCallEnable']) && !$extraParams['apPatchCallEnable'] && $extraParams['requestType'] == SageEnum::SRT_CREATE_AP_SPPAY_INV) {
+                return true;
+            }
+            
             if (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) && ($extraParams['revCorrSplitPayment'] ?? false)) {
                 $arrayKey = $arrayKey + 1;
                 $extraParams['iterator'] = $extraParams['iterator'] + 1;
@@ -1057,37 +1064,39 @@ class SageApiService
                     }
                 }
 
-                if (isset($sageLogArray[$extras['startingStep']]) && $sageLogArray[$extras['startingStep']]['status'] == SageEnum::STATUS_SUCCESS) {
-                    $isLiveApiCall = false;
-                    $payLoadOptions =
-                    $postedResponse = json_decode($sageLogArray[$extras['startingStep']]['response'], true);
-                } else {
-                    $payLoadOptions = $postedResponse;
-                    $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
-                    $postedResponse = json_decode($resp, true);
-                }
+                if (isset($extras['apPatchCallEnable']) && $extras['apPatchCallEnable'] || $extras['requestType'] == SageEnum::SRT_CREATE_AR_SPPAY_INV) {
+                    if (isset($sageLogArray[$extras['startingStep']]) && $sageLogArray[$extras['startingStep']]['status'] == SageEnum::STATUS_SUCCESS) {
+                        $isLiveApiCall = false;
+                        $payLoadOptions =
+                        $postedResponse = json_decode($sageLogArray[$extras['startingStep']]['response'], true);
+                    } else {
+                        $payLoadOptions = $postedResponse;
+                        $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
+                        $postedResponse = json_decode($resp, true);
+                    }
 
-                $postedResponse = ($postedResponse == '') ? [] : $postedResponse;
-                $postedResponse['endPoint'] = $url;
-                $postedResponse['payload'] = $payLoadOptions;
-                $postedResponse['sage_request_type'] = $processDetails['requestType'];
-                $postedResponse['entry_type'] = $processDetails['entryType'];
+                    $postedResponse = ($postedResponse == '') ? [] : $postedResponse;
+                    $postedResponse['endPoint'] = $url;
+                    $postedResponse['payload'] = $payLoadOptions;
+                    $postedResponse['sage_request_type'] = $processDetails['requestType'];
+                    $postedResponse['entry_type'] = $processDetails['entryType'];
 
-                if (isset($postedResponse['error'])) {
-                    $this->logSageApiCall($postedResponse, $resp, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
+                    if (isset($postedResponse['error'])) {
+                        $this->logSageApiCall($postedResponse, $resp, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
 
-                    $responseMessage = isset($postedResponse['error']['message']['value']) ?
-                        $postedResponse['error']['message']['value'] : 'Error while making '.$processDetails['invoiceType'].' Split paymets patch to sage';
-                    $returnMessage['status'] = false;
-                    $returnMessage['message'] = 'Error while making '.$processDetails['invoiceType'].' Split paymets patch to sage';
-                    logger()->error('Book Update - Sage API Failed - Response:'.json_encode($resp));
+                        $responseMessage = isset($postedResponse['error']['message']['value']) ?
+                            $postedResponse['error']['message']['value'] : 'Error while making '.$processDetails['invoiceType'].' Split paymets patch to sage';
+                        $returnMessage['status'] = false;
+                        $returnMessage['message'] = 'Error while making '.$processDetails['invoiceType'].' Split paymets patch to sage';
+                        logger()->error('Book Update - Sage API Failed - Response:'.json_encode($resp));
 
-                    return $returnMessage;
-                }
+                        return $returnMessage;
+                    }
 
-                if ($isLiveApiCall) {
-                    $this->logSageApiCall($postedResponse, $resp, $quoteObject, $extras['startingStep'], $extras['totalSteps']);
-                    info('Book Update - Sage API Success - Response: '.json_encode($resp));
+                    if ($isLiveApiCall) {
+                        $this->logSageApiCall($postedResponse, $resp, $quoteObject, $extras['startingStep'], $extras['totalSteps']);
+                        info('Book Update - Sage API Success - Response: '.json_encode($resp));
+                    }
                 }
             }
 
