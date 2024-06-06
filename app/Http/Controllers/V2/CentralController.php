@@ -272,6 +272,7 @@ class CentralController extends Controller
             if ($response['status'] === false) {
                 return response()->json(['errors' => [
                     'message' => $response['message'],
+                    'sageError' => $response['error'] ? 'SAGE API : '.$response['error'] : null,
                 ]], 500);
             }
 
