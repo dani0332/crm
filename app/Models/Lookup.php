@@ -34,11 +34,11 @@ class Lookup extends Model
 
     public function childs()
     {
-        return $this->hasMany('App\Models\Lookup', 'parent_id', 'id');
+        return $this->hasMany(Lookup::class, 'parent_id', 'id');
     }
 
     public function parent()
     {
-        return $this->belongsTo('App\Models\Lookup', 'parent_id', 'id');
+        return $this->belongsTo(Lookup::class, 'parent_id', 'id');
     }
 }
