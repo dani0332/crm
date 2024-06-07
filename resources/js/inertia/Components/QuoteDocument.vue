@@ -84,6 +84,7 @@ const uploadFile = (doc, filesWithInfo) => {
 
   const url = '/personal-quotes/' + docForm.quote_id + '/documents';
   const formData = new FormData();
+  formData.append('quote_id', docForm.quote_id);
   formData.append('quote_type_id', doc.quote_type_id);
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
