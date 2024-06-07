@@ -1028,13 +1028,13 @@ class SageApiService
                     // Add discount value to the first installment of payment in sage for balancing the amount
                     $amountDue = roundNumber($extras['splitPayments'][$key]['payment_amount'] + ($extras['splitPayments'][$key]['sr_no'] == 1 ? $extras['payment']->discount_value : 0));
                     $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date'])), $sageRequestPayload->insurerInvoiceDate);
-                    
+
                     if ($extras['payment']->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                         $dueDate = $invoicePaymentSchedulesDueDate;
                     } else {
                         $dueDate = $extras['splitPayments'][$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date']));
                     }
-                    
+
                     $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $amountDue;
                     $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
                 }
