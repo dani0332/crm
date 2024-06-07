@@ -117,7 +117,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
 
-    Route::post('get-lob-raw-data', [QueryController::class, 'executeQuery'])->name('getRawData');
+   
 
     Route::post('get-alfred-chat', [AlfredChatController::class, 'index']);
     Route::post('get-alfred-chat-by-date', [AlfredChatController::class, 'getChatByDate'])->name('getChatByDate');

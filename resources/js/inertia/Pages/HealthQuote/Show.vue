@@ -3461,7 +3461,5 @@ watch(
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
     />
-
-    <lob-query-data :code="$page.props.quote.code"></lob-query-data>
   </div>
 </template>
