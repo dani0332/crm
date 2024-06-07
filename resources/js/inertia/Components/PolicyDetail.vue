@@ -3,8 +3,6 @@ import moment from 'moment';
 
 const page = usePage();
 
-const { price_vat_notapplicable, price_vat_applicable, isNumber } = useRules();
-
 const props = defineProps({
   record: {
     type: Object,
@@ -113,9 +111,11 @@ watch(
 watch(
   () => page.props.record?.price_with_vat,
   (newValue, oldValue) => {
-    policyDetailsForm.price_vat_notapplicable =  page.props.record.price_vat_not_applicable || '';
-    policyDetailsForm.price_vat_applicable =  page.props.record.price_vat_applicable || '';
-    policyDetailsForm.vat= page.props.record.vat || '';
+    policyDetailsForm.price_vat_notapplicable =
+      page.props.record.price_vat_not_applicable || '';
+    policyDetailsForm.price_vat_applicable =
+      page.props.record.price_vat_applicable || '';
+    policyDetailsForm.vat = page.props.record.vat || '';
 
     caculateVatAmount();
   },
@@ -136,9 +136,9 @@ const caculateVatAmount = () => {
   } else if (priceVatApplicable > 0) {
     let vat = priceVatApplicable * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
-    policyDetailsForm.amount_with_vat = (Number(vat) + Number(priceVatApplicable)).toFixed(
-      2,
-    );
+    policyDetailsForm.amount_with_vat = (
+      Number(vat) + Number(priceVatApplicable)
+    ).toFixed(2);
   } else if (priceVatNotApplicable > 0) {
     policyDetailsForm.amount_with_vat = Number(priceVatNotApplicable).toFixed(
       2,
@@ -151,12 +151,76 @@ const caculateVatAmount = () => {
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
+  quote_policy_number: v => {
+    return !!v || 'This field is required';
+  },
+  price_vat_applicable: v => {
+    //for life, price vat applicable is not required
+    let isLifeQuote = page.props.quoteType == quoteTypeCodeEnum.Life;
+    if (isLifeQuote) return true;
+    if (v) {
+      return (
+        /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
+      );
+    }
+    return !!v || 'This field is required';
+  },
+  price_vat_not_applicable: v => {
+    let quoteType = page.props.quoteType.toLowerCase();
+    let isLifeQuote = quoteType == quoteTypeCodeEnum.Life.toLowerCase();
+    //for life, price vat not applicable is required
+    if (isLifeQuote) {
+      if (v) {
+        return (
+          /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
+        );
+      }
+      return !!v || 'This field is required';
+    } else if (
+      [
+        quoteTypeCodeEnum.Health.toLowerCase(),
+        quoteTypeCodeEnum.Yacht.toLowerCase(),
+        quoteTypeCodeEnum.GroupMedical.toLowerCase(),
+        quoteTypeCodeEnum.CORPLINE.toLowerCase(),
+        quoteTypeCodeEnum.BusinessQuote.toLowerCase(),
+      ].includes(quoteType) &&
+      Number(policyDetailsForm.price_vat_applicable) == 0
+    ) {
+      //for health, corpline, groupmedical, yatch, price vat not applicable is required when price vat applicable is empty
+      if (v) {
+        return (
+          /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
+        );
+      }
+      return !!v || 'This field is required';
+    }
+    return true;
+  },
+  quote_plan_insurer_quote_number: v => {
+    let quoteType = page.props.quoteType.toLowerCase();
+    let isCarOrBikeQuote = [
+      quoteTypeCodeEnum.Car.toLowerCase(),
+      quoteTypeCodeEnum.Bike.toLowerCase(),
+    ].includes(quoteType);
+    console.log('quoteType', quoteType, isCarOrBikeQuote);
+    if (isCarOrBikeQuote) {
+      return !!v || 'This field is required';
+    }
+    return true;
+  },
+  quote_policy_issuance_date: v => {
+    if (v) {
+      const date = new Date(v);
+      return isNaN(date.getTime());
+    }
+    return !!v || 'This field is required';
+  },
   start_date: v => {
     if (v) {
       const date = new Date(v);
-      return !isNaN(date.getTime());
+      return isNaN(date.getTime());
     }
-    return true;
+    return !!v || 'This field is required';
   },
   expiry_date: v => {
     if (v) {
@@ -167,7 +231,7 @@ const rules = {
       }
       return isNaN(date.getTime());
     }
-    return false;
+    return !!v || 'This field is required';
   },
 };
 
@@ -281,6 +345,12 @@ watch(
                   type="text"
                   placeholder="Policy Number"
                   class="w-full"
+                  :custom-error="
+                    rules.quote_policy_number(
+                      policyDetailsForm.quote_policy_number,
+                    )
+                  "
+                  :rules="[rules.quote_policy_number]"
                   :disabled="!policyDetailsState.isEditing"
                 />
               </div>
@@ -299,6 +369,12 @@ watch(
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_issuance_date"
                   :disabled="!policyDetailsState.isEditing"
+                  :custom-error="
+                    rules.quote_policy_issuance_date(
+                      policyDetailsForm.quote_policy_issuance_date,
+                    )
+                  "
+                  :rules="[rules.quote_policy_issuance_date]"
                   type="date"
                   class="w-full"
                 />
@@ -321,7 +397,12 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_notapplicable"
                   @change="caculateVatAmount"
-                  :rules="[price_vat_notapplicable, isNumber]"
+                  :custom-error="
+                    rules.price_vat_not_applicable(
+                      policyDetailsForm.price_vat_notapplicable,
+                    )
+                  "
+                  :rules="[rules.price_vat_not_applicable]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
                   class="w-full"
@@ -370,7 +451,12 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_applicable"
                   @change="caculateVatAmount"
-                  :rules="[price_vat_applicable, isNumber]"
+                  :custom-error="
+                    rules.price_vat_applicable(
+                      policyDetailsForm.price_vat_applicable,
+                    )
+                  "
+                  :rules="[rules.price_vat_applicable]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"
                   class="w-full"
@@ -394,11 +480,7 @@ watch(
                 </x-tooltip>
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_expiry_date"
-                  :custom-error="
-                    rules.expiry_date(
-                      policyDetailsForm.quote_policy_expiry_date,
-                    )
-                  "
+                  :rules="[rules.expiry_date]"
                   type="date"
                   placeholder="Expiry Date"
                   class="w-full"
@@ -466,6 +548,12 @@ watch(
                   v-model="policyDetailsForm.quote_plan_insurer_quote_number"
                   type="text"
                   placeholder="Insurer Quote Number"
+                  :custom-error="
+                    rules.quote_plan_insurer_quote_number(
+                      policyDetailsForm.quote_plan_insurer_quote_number,
+                    )
+                  "
+                  :rules="[rules.quote_plan_insurer_quote_number]"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
                 />
