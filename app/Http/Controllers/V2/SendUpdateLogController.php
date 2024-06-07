@@ -420,9 +420,9 @@ class SendUpdateLogController extends Controller
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            info('Book Update - Sending Update to Sage300 Process Start. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
+            // SendUpdateToSagae 3rd parameter: False: Without AP Patch, True: With AP Patch
+            // TODO :: This is temporary solution, need to remove third param, this after AP Split patch working fine
+            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate, false);
             if ($sageResponse['status'] === false) {
                 logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
 
