@@ -827,10 +827,7 @@ class SendUpdateLogService
 
     /**
      * it will check for Indicative Additional Price section, if the option relation not available means it is Correction of Policy.
-     * @param $sendUpdateLog
-     * @return bool
      */
-
     public function isPlanDetailAvailable($sendUpdateLog): bool
     {
         if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
