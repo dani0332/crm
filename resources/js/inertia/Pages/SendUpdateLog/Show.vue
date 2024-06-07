@@ -432,6 +432,7 @@ const onKeyPress = (event) => {
 
     <!-- Indicative additional price & Plan details comp -->
     <LazyPlanDetails
+      v-if="props.isPlanDetailAvailable"
       :sendUpdateLog="sendUpdateLog"
       :updateLogOptions="updateLogOptions"
       :insuranceProviders="props.insuranceProviders"
