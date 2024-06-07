@@ -668,13 +668,11 @@ watch(
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white mt-6">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">
-              Business Quote Detail
-            </h3>
+          
           </div>
         </template>
         <template #body>
