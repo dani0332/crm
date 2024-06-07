@@ -120,4 +120,14 @@ class CapiRequestService
             return false;
         }
     }
+
+    public static function getPersonalQuoteUUID($type)
+    {
+        $response = self::sendCAPIRequest('/api/v1-get-personal-quote-uuid', ['quoteTypeId' => $type]);
+        if ($response) {
+            return $response;
+        } else {
+            return false;
+        }
+    }
 }

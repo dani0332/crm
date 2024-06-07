@@ -129,7 +129,7 @@ class TravelQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             'tqr.price_vat_not_applicable',
-            'tqr.price_without_vat',
+            'tqr.price_vat_applicable',
             'tqr.price_with_vat',
             'tqr.vat',
             'tqr.insurer_quote_number',

@@ -2458,6 +2458,16 @@ watch(
                   <span class="text-primary-600 uppercase">{{
                     item.providerName
                   }}</span>
+                    <div class="flex gap-1">
+                        <x-tag
+                            v-if="item.isDisabled"
+                            size="xs"
+                            color="error"
+                            class="mt-0.5 text-[10px]"
+                        >
+                            Hidden
+                        </x-tag>
+                    </div>
                 </template>
                 <template #item-name="item">
                   <span class="text-primary-600 uppercase">{{
