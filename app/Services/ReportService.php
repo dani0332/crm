@@ -275,7 +275,6 @@ class ReportService extends BaseService
         $userRole = auth()->user();
         $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
 
-
         if ($userRole->hasRole(RolesEnum::CarManager)) {
 
             $query = DB::table('car_quote_request');

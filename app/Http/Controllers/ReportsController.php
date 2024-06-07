@@ -393,7 +393,6 @@ class ReportsController extends Controller
         ]);
     }
 
-
     public function renderPaymentSummary(Request $request, ReportService $reportService)
     {
         return inertia('Reports/AuthorisedPaymentSummary', [
