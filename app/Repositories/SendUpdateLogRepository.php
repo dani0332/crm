@@ -4,12 +4,14 @@ namespace App\Repositories;
 
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuote;
+use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
@@ -351,5 +353,19 @@ class SendUpdateLogRepository extends BaseRepository
             $sendUpdate->is_policy_filled = SendUpdateLogStatusEnum::POLICY_FILLED;
             $sendUpdate->save();
         }
+    }
+
+    public function fetchSendUpdateOptions($quoteTypeId, $parentId, $status, $businessInsuranceTypeId = null)
+    {
+        $query = Lookup::where('quote_type_id', $quoteTypeId)->where('parent_id', $parentId);
+        if ($quoteTypeId == QuoteTypeId::Business && in_array($status, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN])) {
+            if (! in_array($businessInsuranceTypeId, [quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet), quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)])) {
+                $businessInsuranceTypeId = null;
+            }
+        } else {
+            $businessInsuranceTypeId = null;
+        }
+
+        return $query->sendUpdateOptions($quoteTypeId, $parentId, $businessInsuranceTypeId)->get();
     }
 }

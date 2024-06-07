@@ -40,7 +40,7 @@ const props = defineProps({
     default: null,
   },
   sendUpdateStatusEnum: {
-    type: Object,
+    type: Array,
     default: null,
   },
   insuranceProviders: {
@@ -55,18 +55,6 @@ const props = defineProps({
     required: false,
     type: Boolean,
     default: true,
-  },
-  sendUpdate: {
-    type: Object,
-    default: null,
-  },
-  sendUpdateStatusEnum: {
-    type: Object,
-    default: null,
-  },
-  insuranceProviders: {
-    type: Array,
-    required: false,
   },
   isPlanDetailEnabled: {
     type: Boolean,

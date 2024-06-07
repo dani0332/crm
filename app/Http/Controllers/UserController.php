@@ -142,8 +142,6 @@ class UserController extends Controller
                         $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
                         if (empty($isLead)) {
                             $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
-                        } else {
-                            $this->leadAllocationService->createLeadAllocationRecord($user->id);
                         }
                     }
                 }
@@ -286,8 +284,6 @@ class UserController extends Controller
                         $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($user->id, $quoteTypeId);
                         if (empty($isLead)) {
                             $this->leadAllocationService->createLeadAllocationRecord($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
-                        } else {
-                            $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active, $quoteTypeId);
                         }
                     }
                 }

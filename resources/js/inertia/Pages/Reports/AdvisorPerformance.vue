@@ -160,8 +160,6 @@ onMounted(() => {
               label: filterOptions.tiers[key],
             }))
           "
-          deselect-all
-          select-all
         />
         <ComboBox
           v-model="filters.teams"
@@ -173,8 +171,6 @@ onMounted(() => {
               label: filterOptions.teams[key],
             }))
           "
-           deselect-all
-          select-all
         />
         <ComboBox
           v-model="filters.leadSources"
@@ -187,7 +183,6 @@ onMounted(() => {
             }))
           "
           :max-limit="3"
-          deselect-all
         />
         <x-select
           v-model="filters.isCommercial"
@@ -211,12 +206,13 @@ onMounted(() => {
             { value: 4, label: 'Manual ReAssigned' },
           ]"
         />
-        <x-select
+        <ComboBox
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          :single="true"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">

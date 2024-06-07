@@ -85,8 +85,8 @@ class SendUpdateRequest extends FormRequest
                             SendUpdateLogStatusEnum::EA,
                             SendUpdateLogStatusEnum::ED,
                             SendUpdateLogStatusEnum::EFMP,
-                            SendUpdateLogStatusEnum::ICOLOIALOLR,
-                            SendUpdateLogStatusEnum::IIEAFT,
+                            SendUpdateLogStatusEnum::I_CLILLR,
+                            SendUpdateLogStatusEnum::IEAF_T,
                             SendUpdateLogStatusEnum::IISI,
                             SendUpdateLogStatusEnum::PPE,
                         ])) {

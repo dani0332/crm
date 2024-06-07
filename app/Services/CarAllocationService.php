@@ -231,6 +231,7 @@ class CarAllocationService extends AllocationService
     public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
+        info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
@@ -241,6 +242,7 @@ class CarAllocationService extends AllocationService
             } else {
                 $teamUserIds = [];
             }
+            info('TeamID is: '.$teamId.' and available users for this team are: '.json_encode($teamUserIds));
             $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
         }
 
@@ -265,6 +267,7 @@ class CarAllocationService extends AllocationService
 
                 return $eligibleUsers->toArray();
             }
+            info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
         }
 
         // If no eligible users are found, return an empty array.
@@ -274,6 +277,8 @@ class CarAllocationService extends AllocationService
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
     {
         $excludedUserIds = $this->getExcludedUserIds($teamId);
+
+        $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
 
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::with('leadAllocationUser')
@@ -287,7 +292,9 @@ class CarAllocationService extends AllocationService
                     ->orWhere('max_capacity', -1);
             })
             ->whereIn('user_id', $tierUserIds)
-            ->whereNotIn('user_id', $excludedUserIds)
+            ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
+                $query->whereNotIn('user_id', $excludedUserIds);
+            })
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->orderBy('last_allocated');
 
@@ -295,6 +302,8 @@ class CarAllocationService extends AllocationService
         if (! empty($advisorId)) {
             $query->where('user_id', '!=', $advisorId);
         }
+
+        info('getAdvisorsByStatus fetch query is : '.$query->toSql().' with params : '.json_encode($query->getBindings()));
 
         // Return the resulting collection of advisors.
         return $query->get();
