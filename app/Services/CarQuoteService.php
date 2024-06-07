@@ -409,9 +409,6 @@ class CarQuoteService extends BaseService
         if ($request->trim) {
             $carQuote->car_model_detail_id = $request->trim;
         }
-        if ($request->policy_start_date) {
-            $carQuote->policy_start_date = $request->policy_start_date;
-        }
         if ($request->renewal_batch) {
             $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
         }

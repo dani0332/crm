@@ -287,7 +287,7 @@ class CentralController extends Controller
 
             (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
 
-            $this->handleInSufficientPayment($request, $payment);
+            $this->updatePaymentAllocationStatus($quote);
 
             return response()->json(['message' => $response['message']], 200);
         }
@@ -339,14 +339,6 @@ class CentralController extends Controller
     public function getQuoteWisePlans($quoteType, $providerId): object
     {
         return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId));
-    }
-
-    private function handleInsufficientPayment($request, $payment)
-    {
-        if ($request->is_send_policy && $payment) {
-            $payment->transaction_payment_status = $request->transaction_payment_status;
-            $payment->save();
-        }
     }
 
     // Update total price
