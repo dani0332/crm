@@ -267,7 +267,7 @@ class CentralController extends Controller
             $data['id'] = $quote->id;
 
             $sageService = new SageApiService();
-            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
+            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data, true, false);
 
             if ($response['status'] === false) {
                 return response()->json(['errors' => [
@@ -336,9 +336,9 @@ class CentralController extends Controller
         return back()->with('success', $successMessage);
     }
 
-    public function getQuoteWisePlans($quoteType, $providerId): object
+    public function getQuoteWisePlans($quoteType, $providerId, $plandId = null): object
     {
-        return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId));
+        return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId, $plandId));
     }
 
     // Update total price
