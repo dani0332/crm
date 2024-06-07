@@ -18,6 +18,7 @@ defineEmits(['update:expanded']);
         <x-icon icon="carrot_down" class="mt-2" v-else />
       </div>
     </div>
+    <x-divider class="my-4"></x-divider>
     <transition name="fade">
       <div v-if="expanded">
         <slot name="body" />

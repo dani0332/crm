@@ -30,6 +30,7 @@ use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
+use App\Http\Controllers\QueryController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
@@ -115,6 +116,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
+
+    Route::post('get-lob-raw-data', [QueryController::class, 'executeQuery'])->name('getRawData');
 
     Route::post('get-alfred-chat', [AlfredChatController::class, 'index']);
     Route::post('get-alfred-chat-by-date', [AlfredChatController::class, 'getChatByDate'])->name('getChatByDate');
