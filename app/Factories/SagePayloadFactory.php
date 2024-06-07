@@ -1137,10 +1137,11 @@ class SagePayloadFactory
 
     private static function createReceiptData($item, $sage_customer_number, $payment, $paymentNumber = 1)
     {
+        $documentNumber = substr($payment->insurer_tax_number, -18);
         $receiptData = [
             'BatchType' => 'CA',
             'CustomerNumber' => $sage_customer_number,
-            'DocumentNumber' => $payment->insurer_tax_number,
+            'DocumentNumber' => $documentNumber,
             'PaymentNumber' => $paymentNumber,
             'ReceiptTransactionType' => 'Receipt',
             'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
@@ -1160,7 +1161,7 @@ class SagePayloadFactory
             $discountData = [
                 'BatchType' => 'CA',
                 'CustomerNumber' => $sage_customer_number,
-                'DocumentNumber' => $payment->insurer_tax_number.'-DIS',
+                'DocumentNumber' => $documentNumber.'-DIS',
                 'PaymentNumber' => 1,
                 'ReceiptTransactionType' => 'Receipt',
                 'CustomerReceiptAmount' => -roundNumber($payment->discount_value),
