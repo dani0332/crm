@@ -21,6 +21,7 @@ const reportComponents = {
 };
 
 const subTeams = ref([]);
+const isReportCategoryEmpty = ref(false);
 
 const { isRequired } = useRules();
 
@@ -211,8 +212,10 @@ const onTeamChange = e => {
 };
 
 const onSubmit = isValid => {
+  isReportCategoryEmpty.value = !filters.reportCategory;
+
   filterkeys();
-  if (!isValid) return;
+  if (!isValid || !filters.reportCategory) return;
   filters.page = 1;
   router.visit(route('management-report'), {
     method: 'get',
@@ -243,12 +246,12 @@ function onReset() {
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <x-field label="Report Category" required>
-        <x-select
+        <ComboBox
           v-model="filters.reportCategory"
-          placeholder="Select Report Category"
+          placeholder="Search by Report Category"
           :options="reportCategories"
-          class="w-full"
-          :rules="[isRequired]"
+          :single="true"
+          :hasError="isReportCategoryEmpty"
         />
       </x-field>
       <x-field label="Report Type" required>
@@ -308,11 +311,11 @@ function onReset() {
         />
       </x-field>
       <x-field label="Transaction Type">
-        <x-select
+        <ComboBox
           v-model="filters.transactionType"
-          placeholder="Search by Transaction"
+          placeholder="Search by Transaction Type"
           :options="transactionTypes"
-          class="w-full"
+          :single="true"
         />
       </x-field>
     </div>
@@ -322,7 +325,6 @@ function onReset() {
           v-model="filters.teams"
           placeholder="Search By Teams"
           :options="teams"
-          deselect-all
           @update:modelValue="onTeamChange($event)"
         />
       </x-field>
@@ -332,7 +334,6 @@ function onReset() {
           placeholder="Search By Teams"
           :options="subTeams"
           :maxLimit="3"
-          deselect-all
           :loading="loaders.subTeams"
         />
       </x-field>
@@ -342,7 +343,6 @@ function onReset() {
           placeholder="Search by Lead Source"
           :options="leadSource"
           :maxLimit="3"
-          deselect-all
         />
       </x-field>
       <x-field label="Include Cancelled Policies">
@@ -359,11 +359,11 @@ function onReset() {
     </div>
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <x-field label="Group By" v-if="disabledGroupBy">
-        <x-select
+        <ComboBox
           v-model="filters.groupBy"
           placeholder="Search by Group"
           :options="groupBy"
-          class="w-full"
+          :single="true"
         />
       </x-field>
       <x-field label="UTM" v-if="!hideUmtGroup">
@@ -372,7 +372,6 @@ function onReset() {
           v-model="filters.utmGroupBy"
           placeholder="Search by Lead Source"
           :options="umtGroup"
-          deselect-all
         />
         <!-- <x-select
           v-model="filters.utmGroupBy"

@@ -78,6 +78,9 @@ class DatabaseSeeder extends Seeder
             // RevivalConversionReportPermissionSeeder::class,
             // end
             // AddCrossLOBSeeder::class,
+            MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
+            BusinessTypeInsuranceSeeder::class,
+
         ]);
     }
 }

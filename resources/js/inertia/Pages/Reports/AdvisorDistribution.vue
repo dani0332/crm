@@ -538,13 +538,14 @@ const travelCoverageOptions = computed(() => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
 
-        <x-select
-            label="LOB"
-            v-model="filters.lob"
-            placeholder="Select LOB"
-            :options="quoteTypesOptions"
-            size="sm"
-            @update:model-value="onLobChange"
+        <ComboBox
+          v-model="filters.lob"
+          label="LOB"
+          placeholder="Select LOB"
+          :options="quoteTypesOptions"
+          class="w-full"
+          :single="true"
+          @update:modelValue="onLobChange"
         />
 
         <DatePicker
@@ -600,8 +601,6 @@ const travelCoverageOptions = computed(() => {
           placeholder="Search by SubTeams"
           :options="subteamOptions"
           @update:model-value="onSubTeamChange"
-          select-all
-          deselect-all
           :loading="loaders.subteamOptions"
         />
 
@@ -614,8 +613,6 @@ const travelCoverageOptions = computed(() => {
           v-model="filters.advisors"
           :label="getAdvisorLabel()"
           :options="advisorOptions"
-          :select-all="filters.advisors?.length > 0"
-          :deselect-all="filters.advisors?.length > 0"
           :loading="loaders.advisorOptions"
         />
 
@@ -642,7 +639,6 @@ const travelCoverageOptions = computed(() => {
           }))
         "
           :max-limit="3"
-          deselect-all
         />
         <x-select
           v-if="canShow('insurance_type')"
@@ -672,12 +668,13 @@ const travelCoverageOptions = computed(() => {
 
           class="w-full"
         />
-        <x-select
+        <ComboBox
           v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          :single="true"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
@@ -701,7 +698,7 @@ const travelCoverageOptions = computed(() => {
         <span class="font-bold"> {{ item.advisor_name }} </span>
       </template>
       <template #body-append>
-        <tr v-if="reportData.length > 0 && reportData.data.length > 0" class="total-row">
+        <tr v-if="reportData?.data?.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData.data, 'total_leads') }}
