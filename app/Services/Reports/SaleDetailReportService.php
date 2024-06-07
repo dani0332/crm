@@ -18,11 +18,11 @@ class SaleDetailReportService extends ManagementReport
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_DETAIL;
-        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
+        $request['reportType']  = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $query = PersonalQuote::query()
             ->select(
                 DB::raw('DISTINCT(personal_quotes.policy_number)'),
-                DB::raw("CONCAT(p.reference, ' ', p.insurer_tax_number) as transactions"),
+                DB::raw("CONCAT(p.reference, ' ', p.insurer_tax_number) as transactions" ),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
                 DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
@@ -86,7 +86,7 @@ class SaleDetailReportService extends ManagementReport
         return [
             'policyBookDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::SALE_DETAIL,
-            'reportType' => ManagementReportTypeEnum::BOOKED_POLICIES,
+            'reportType' =>  ManagementReportTypeEnum::BOOKED_POLICIES,
         ];
     }
 }

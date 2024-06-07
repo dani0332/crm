@@ -43,7 +43,7 @@ const filterkeys = () => {
   if (
     (filters.reportCategory == 'Sales Summary' ||
       filters.reportCategory == 'Sales Detail') &&
-    filters.reportType == 'Booked Policies'
+     filters.reportType == 'Booked Policies'
   ) {
     delete filters.paymentDueDate;
   }
@@ -121,7 +121,7 @@ const showPaymentDueDate = computed(() => {
 });
 
 const showBookingDate = computed(() => {
-  return filters.reportType == 'Booked Policies' ?? false;
+  return filters.reportType  == 'Booked Policies' ?? false;
 });
 
 const showExpiryDate = computed(() => {
@@ -154,7 +154,7 @@ const reportTypes = ref([
   {
     label: 'Booked Policies',
     value: 'Booked Policies',
-    report: ['Sales Summary', 'Sales Detail', 'Transaction'],
+    report: ['Sales Summary', 'Sales Detail', 'Transaction'], 
   },
   {
     label: 'Transaction Payments',
