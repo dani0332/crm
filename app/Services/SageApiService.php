@@ -327,7 +327,7 @@ class SageApiService
                     'policy_number' => $sendUpdateLog->policy_number,
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
-                    'price_without_vat' => $getingPaymentDetails['payment']->total_price,
+                    'price_vat_applicable' => $getingPaymentDetails['payment']->total_price,
                     'price_with_vat' => $getingPaymentDetails['payment']->total_amount,
                 ];
 
