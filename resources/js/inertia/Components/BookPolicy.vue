@@ -273,14 +273,14 @@ const calculateCommission = () => {
     bpForm.commission_percentage = calculateCommissionPercentage(
       totalCommissionWithoutVat,
       Number(props.quote?.price_vat_not_applicable) +
-        Number(props.quote?.price_without_vat),
+        Number(props.quote?.price_vat_applicable),
     );
   } else if (bpForm.commission_vat_applicable > 0) {
-    if (Number(props.quote?.price_without_vat) > 0) {
+    if (Number(props.quote?.price_vat_applicable) > 0) {
       bpForm.commission_percentage = calculateCommissionPercentage(
         bpForm.commission_vat_applicable,
         Number(props.quote?.price_vat_not_applicable) +
-          Number(props.quote?.price_without_vat),
+          Number(props.quote?.price_vat_applicable),
       );
 
       bpForm.vat_on_commission = calculateVatOnCommission(
@@ -302,7 +302,7 @@ const calculateCommission = () => {
       bpForm.commission_percentage = calculateCommissionPercentage(
         bpForm.commission_vat_not_applicable,
         Number(props.quote?.price_vat_not_applicable) +
-          Number(props.quote?.price_without_vat),
+          Number(props.quote?.price_vat_applicable),
       );
 
       bpForm.total_commission = Number(

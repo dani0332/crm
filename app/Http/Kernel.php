@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\SetReadDbConnection;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -72,5 +73,6 @@ class Kernel extends HttpKernel
         'basicAuth' => \App\Http\Middleware\BasicAuth::class,
         'check_route_access' => \App\Http\Middleware\CheckRouteAccess::class,
         'check_lead_report_access' => \App\Http\Middleware\CheckReportPermission::class,
+        'readonly_db' => SetReadDbConnection::class,
     ];
 }

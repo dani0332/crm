@@ -14,10 +14,6 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  selectedCategory: {
-    type: Object,
-    required: true,
-  },
   quoteType: {
     type: String,
     required: true,
@@ -32,6 +28,7 @@ const page = usePage();
 const notification = useToast();
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const sendUpdateEnums = page.props.sendUpdateStatusEnum;
 
 const state = reactive({
   isEdit: false,
@@ -50,19 +47,19 @@ const isIndicativeAdditionalPrice = computed(() => {
   let hasRestrictedSubType = false;
   props.updateLogOptions?.forEach(option => {
     if (
-      ['MDOM', 'MDOV', 'MPC', 'ED', 'DM'].includes(option.slug) &&
+      [sendUpdateEnums.MDOM, sendUpdateEnums.MDOV, sendUpdateEnums.MPC, sendUpdateEnums.ED, sendUpdateEnums.DM].includes(option.slug) &&
       props.sendUpdateLog.option_id === option.value
     ) {
       hasRestrictedSubType = true;
     }
   });
   return (
-    props.selectedCategory?.subCategory.slug === 'EF' && !hasRestrictedSubType
+    props.sendUpdateLog.category.code === 'EF' && !hasRestrictedSubType
   );
 });
 
 const isPlanDetails = computed(() => {
-  return props.selectedCategory?.subCategory.slug === 'CPD';
+  return props.sendUpdateLog.category.code === 'CPD';
 });
 
 const insuranceProvidersOptions = computed(() => {
@@ -204,7 +201,7 @@ const onCancel = () => {
             <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
-                  isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
+                  isPlanDetails && props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
                 "
               >
                 <dt>
@@ -279,7 +276,7 @@ const onCancel = () => {
             <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
-                  isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
+                  isPlanDetails && props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
                 "
               >
                 <dt>

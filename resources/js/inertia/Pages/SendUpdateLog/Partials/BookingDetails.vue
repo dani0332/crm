@@ -12,10 +12,6 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  selectedCategory: {
-    type: Object,
-    required: true,
-  },
   quote: {
     type: Object,
     required: true,
@@ -72,19 +68,11 @@ const dateToYMD = date => {
 };
 
 const isEF = computed(() => {
-  return props.selectedCategory.subCategory.slug === sendUpdateStatusEnum.EF;
-});
-
-const isCI = computed(() => {
-  return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CI;
-});
-
-const isCIR = computed(() => {
-  return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CIR;
+  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.EF;
 });
 
 const isCPD = computed(() => {
-  return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPD;
+  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPD;
 });
 
 const hasTaxDocuments = computed(() => {
@@ -103,7 +91,7 @@ const checkSectionTwoEdit = () => {
     sendUpdateStatusEnum.CPD,
   ];
   const checkTaxInvoiceDoc = taxInvoiceDoc.includes(
-    props.selectedCategory.subCategory.slug,
+    props.sendUpdateLog.category.code,
   );
 
   if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
@@ -147,7 +135,7 @@ function isNotZero(value) {
 
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
-  send_update_type: props.selectedCategory.subCategory.slug,
+  send_update_type: props.sendUpdateLog.category.code,
   booking_date: props.bookingDetails?.booking_date,
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
@@ -287,7 +275,7 @@ const saveBookingDetail = isValid => {
   ];
   if (
     isEF.value &&
-    !childOptions.includes(props.selectedCategory.subCategory.option.slug)
+    !childOptions.includes(props.sendUpdateLog.option.code)
   ) {
     /* alert('payment condition will goes here. ');
     return; */
