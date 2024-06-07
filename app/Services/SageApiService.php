@@ -727,7 +727,7 @@ class SageApiService
                         'splitPayments' => $splitPayments,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
-                        'apPatchCallEnable' => $extras['ap_patch_call_enable'] // TODO :: This is temporary solution, this after AP Split patch working fine
+                        'apPatchCallEnable' => $extras['ap_patch_call_enable'], // TODO :: This is temporary solution, this after AP Split patch working fine
                     ]);
                 }
 
@@ -815,7 +815,7 @@ class SageApiService
             $extraParams['iterator'] = $extraParams['iterator'] + 1;
 
             // TODO :: This is temporary solution, this after AP Split patch working fine
-            if (isset($extraParams['apPatchCallEnable']) && !$extraParams['apPatchCallEnable'] && in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AP_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV])) {
+            if (isset($extraParams['apPatchCallEnable']) && ! $extraParams['apPatchCallEnable'] && in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AP_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV])) {
                 return true;
             }
 
