@@ -278,6 +278,8 @@ class CarAllocationService extends AllocationService
     {
         $excludedUserIds = $this->getExcludedUserIds($teamId);
 
+        $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
+
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
@@ -290,7 +292,9 @@ class CarAllocationService extends AllocationService
                     ->orWhere('max_capacity', -1);
             })
             ->whereIn('user_id', $tierUserIds)
-            ->whereNotIn('user_id', $excludedUserIds)
+            ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
+                $query->whereNotIn('user_id', $excludedUserIds);
+            })
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->orderBy('last_allocated');
 

@@ -220,7 +220,12 @@ class CentralService
 
                         foreach ($listQuotePlans as $plans) {
                             foreach ($plans as $plan) {
-                                $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
+                                if (isset($plan->planTypeId)) {
+                                    $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
+
+                                } else {
+                                    $plan->plan_type = 'N/A';
+                                }
                             }
                         }
                     }
@@ -359,9 +364,13 @@ class CentralService
         return $isAmlClearedForPayment;
     }
 
-    public function getQuoteWiseProviderPlans($quoteType, $providerId): object
+    public function getQuoteWiseProviderPlans($quoteType, $providerId, $plandId = null): object
     {
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
+
+        if ($plandId) {
+            return $planModel::find($plandId);
+        }
 
         return $planModel::where('provider_id', $providerId)->get();
     }
