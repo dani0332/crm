@@ -117,8 +117,12 @@ class SageApiService
         $sageRequest->commissionWithOutVat = $payment->commission_vat_not_applicable ? floatval($payment->commission_vat_not_applicable) : floatval($payment->commission_without_vat);
         $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
 
-        $sageRequest->insurerPremiumNumber = (string) $payment['insurer_tax_number'];
-        $sageRequest->insurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
+        // Slice the last 18 characters from the string to avoid sage document number length issue and store the original values in optional fields
+        $sageRequest->insurerPremiumNumber = (string) substr($payment['insurer_tax_number'], -18);
+        $sageRequest->insurerCommissionNumber = (string) substr($payment['insurer_commmission_invoice_number'], -18);
+        $sageRequest->originalInsurerPremiumNumber = (string) $payment['insurer_tax_number'];
+        $sageRequest->originalInsurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
+
         if (count($paymentSplits) == 1) {
             $sageRequest->sage_reciept_id = $paymentSplits[0]['sage_reciept_id'];
             $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'] + $sageRequest->discount;
@@ -327,7 +331,7 @@ class SageApiService
                     'policy_number' => $sendUpdateLog->policy_number,
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
-                    'price_without_vat' => $getingPaymentDetails['payment']->total_price,
+                    'price_vat_applicable' => $getingPaymentDetails['payment']->total_price,
                     'price_with_vat' => $getingPaymentDetails['payment']->total_amount,
                 ];
 
@@ -503,7 +507,7 @@ class SageApiService
         $totalSteps = 13;
 
         if ($payment->frequency == PaymentFrequency::UPFRONT) {
-            info('Book Update - Create AR Invoice and marked as posted for Upfront Payment');
+            info('Book Update - Creating AR Invoice and mark as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -515,7 +519,7 @@ class SageApiService
                 'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
             ]);
 
-            info('Book Update - Create AP Invoice and marked as posted for Upfront Payment');
+            info('Book Update - Creating AP Invoice and mark as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -531,7 +535,7 @@ class SageApiService
             $totalSteps = 13;
 
         } else {
-            info('Book Update - Create AR Invoice Split Payment and marked as posted for Split Payment');
+            info('Book Update - Creating AR Split Payment Invoice and mark as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -544,7 +548,7 @@ class SageApiService
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
             ]);
 
-            info('Book Update - Create AP Invoice Split Payment and marked as posted for Split Payment');
+            info('Book Update - Creating AP Split Payment Invoice and mark as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => $extras['ap_patch_call_enable'] ? 2 : 0,
@@ -562,7 +566,7 @@ class SageApiService
         }
 
         if ($sageRequestPayload->discount > 0) {
-            info('Book Update - Create AR Discount Invoice and marked as posted');
+            info('Book Update - Creating AR Discount Invoice and mark as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -581,7 +585,7 @@ class SageApiService
             $totalSteps = 15;
             if (strtolower($sageRequestPayload->invoicePaymentStatus) == PaymentStatusEnum::PAID && $payment->send_update_log_id !== null) {
                 if ($payment->frequency == PaymentFrequency::UPFRONT) {
-                    info('Book Update - Create Apply Payment Invoices - Receipt One for Upfront Payment with Invoice Payment Status Paid');
+                    info('Book Update - Creating Apply Payment Invoices - Receipt One for Upfront Payment with Invoice Payment Status Paid');
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
                         'lastIteration' => 2,
@@ -594,7 +598,7 @@ class SageApiService
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                     ]);
                 } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                    info('Book Update - Create Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
+                    info('Book Update - Creating Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
                         'lastIteration' => 2,
@@ -611,7 +615,7 @@ class SageApiService
             }
 
             if (! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]) && in_array($splitPayments[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
-                info('Book Update - Create AR Split Pre Payment for Split/Upfront Payment with Payment Status Paid/Captured');
+                info('Book Update - Creating AR Split Pre Payment for Upfront/Split Payment with Payment Status Paid/Captured');
                 $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                     'iterator' => 0,
                     'lastIteration' => 2,
@@ -798,7 +802,6 @@ class SageApiService
             (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) && ($extraParams['revCorrSplitPayment'] ?? false)))) {
 
             $invoiceType = in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV]) ? SageEnum::AR_INVOICE : SageEnum::AP_INVOICE;
-            info('Book Update - Sage APIs - '.$invoiceType.' Split Payment Patch Call');
             $splitPaymentResponse = $this->splitPaymentsPatch($quote, $sageRequestPayload, $sageLogArray, $extraParams, $sageInvResponse);
 
             if (isset($splitPaymentResponse['status']) && $splitPaymentResponse['status'] == false) {
@@ -906,7 +909,7 @@ class SageApiService
             } else {
                 if ($isLiveApiCall) {
                     $this->logSageApiCall($payLoadOptions, $respParams, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps']);
-                    info('Book Update - Sage API Success - Response: '.json_encode($respParams));
+                    info('Book Update - Sage API Success - Function called: '.$methodName);
                 }
             }
         }
@@ -924,7 +927,6 @@ class SageApiService
         if ($isFollowUpCondition) {
             if ($isLiveApiCall) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps']);
-                info('Book Update - Sage API Success - Response: '.json_encode($sageResponse));
             }
 
             // Need to add split cases for reversal and correction

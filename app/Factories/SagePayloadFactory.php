@@ -1099,6 +1099,14 @@ class SagePayloadFactory
                 'OptionalField' => 'STATE',
                 'Value' => 'DXB',
             ],
+            [
+                'OptionalField' => 'ORITAXNUM',
+                'Value' => $request->originalInsurerPremiumNumber,
+            ],
+            [
+                'OptionalField' => 'ORICOMTAXNUM',
+                'Value' => $request->originalInsurerCommissionNumber,
+            ],
         ];
 
         return $optionalArray;
@@ -1129,10 +1137,11 @@ class SagePayloadFactory
 
     private static function createReceiptData($item, $sage_customer_number, $payment, $paymentNumber = 1)
     {
+        $documentNumber = substr($payment->insurer_tax_number, -18);
         $receiptData = [
             'BatchType' => 'CA',
             'CustomerNumber' => $sage_customer_number,
-            'DocumentNumber' => $payment->insurer_tax_number,
+            'DocumentNumber' => $documentNumber,
             'PaymentNumber' => $paymentNumber,
             'ReceiptTransactionType' => 'Receipt',
             'CustomerReceiptAmount' => roundNumber(floatval($item->payment_amount) + ($item->sr_no == 1 ? floatval($payment->discount_value) : 0)),
@@ -1152,7 +1161,7 @@ class SagePayloadFactory
             $discountData = [
                 'BatchType' => 'CA',
                 'CustomerNumber' => $sage_customer_number,
-                'DocumentNumber' => $payment->insurer_tax_number.'-DIS',
+                'DocumentNumber' => $documentNumber.'-DIS',
                 'PaymentNumber' => 1,
                 'ReceiptTransactionType' => 'Receipt',
                 'CustomerReceiptAmount' => -roundNumber($payment->discount_value),
@@ -1225,8 +1234,10 @@ class SagePayloadFactory
             'commissionIncludingVat' => roundNumber(floatval($payment->commission_vat_applicable)),
             'commissionWithOutVat' => $payment->commission_vat_not_applicable ? roundNumber(floatval($payment->commission_vat_not_applicable)) : roundNumber(floatval($payment->commission_without_vat)),
             'commissionPercentage' => strval($payment->commmission_percentage),
-            'insurerPremiumNumber' => (string) $payment['insurer_tax_number'],
-            'insurerCommissionNumber' => (string) $payment['insurer_commmission_invoice_number'],
+            'insurerPremiumNumber' => (string) substr($payment['insurer_tax_number'], -18),
+            'insurerCommissionNumber' => (string) substr($payment['insurer_commmission_invoice_number'], -18),
+            'originalInsurerPremiumNumber' => (string) $payment['insurer_tax_number'],
+            'originalInsurerCommissionNumber' => (string) $payment['insurer_commmission_invoice_number'],
             'insurerGlLiaiblityAccount' => $payment->insuranceProvider?->gl_liaiblity_account,
             'sageVenderId' => $payment->insuranceProvider?->sage_vendor_id,
         ];
