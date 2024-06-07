@@ -28,14 +28,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  selectAll: {
-    type: Boolean,
-    default: false,
-  },
-  deselectAll: {
-    type: Boolean,
-    default: false,
-  },
   maxLimit: {
     type: Number,
     default: 0,
@@ -65,14 +57,14 @@ const selectedValue = computed({
     );
   },
   set(newValue) {
-    const { single, maxLimit, selectAll } = props;
+    const { single, maxLimit } = props;
     if (single) {
       emit('update:modelValue', newValue.value);
       return;
     }
     const values = newValue.map(item => item.value);
 
-    if (maxLimit > 0 && values.length > maxLimit && !selectAll) {
+    if (maxLimit > 0 && values.length > maxLimit) {
       values.splice(0, values.length - maxLimit);
     }
     emit('update:modelValue', values);
@@ -160,7 +152,7 @@ const removeSelected = item => {
               ? props.options.find(option => option.value === props.modelValue)
                   ?.label
               : `${selectedValue.length} Selected ${
-                  props.maxLimit && !props.selectAll
+                  props.maxLimit
                     ? '| max: ' + props.maxLimit
                     : ''
                 }`
@@ -241,10 +233,10 @@ const removeSelected = item => {
               </ComboboxOption>
             </div>
           </div>
-          <div v-if="props.selectAll || props.deselectAll" class="p-2">
+          <div class="p-2" v-if="!props.single">
             <div class="flex flex-row justify-between gap-2">
               <x-button
-                v-if="props.selectAll"
+                v-if="!props.maxLimit && props.options.length > 0"
                 size="xs"
                 color="primary"
                 light
@@ -253,7 +245,7 @@ const removeSelected = item => {
                 Select All
               </x-button>
               <x-button
-                v-if="props.deselectAll"
+                v-if="props.modelValue.length > 0"
                 size="xs"
                 color="error"
                 light

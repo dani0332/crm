@@ -8,6 +8,7 @@ const loader = reactive({
 });
 
 const page = usePage();
+const isQuoteTypeEmpty = ref(false);
 
 let availableFilters = {
   date_range: [],
@@ -15,7 +16,7 @@ let availableFilters = {
   group_by_one: '',
   group_by_two: '',
 };
-const { isRequired, isEmail } = useRules();
+const { isRequired } = useRules();
 const filters = reactive(availableFilters);
 
 const quoteTypesOptions = computed(() => {
@@ -61,7 +62,9 @@ const tableHeader = [
 ];
 
 function onSubmit(isValid) {
-  if (isValid) {
+  isQuoteTypeEmpty.value = !filters.quote_type_id;
+
+  if (isValid && filters.quote_type_id) {
     Object.keys(filters).forEach(
       key => filters[key] === '' && delete filters[key],
     );
@@ -122,12 +125,13 @@ onMounted(() => {
           multi-calendars-solo
           max-range="30"
         />
-        <x-select
+        <ComboBox
           v-model="filters.quote_type_id"
-          label=" Quote Type"
-          :rules="[isRequired]"
+          label="Quote Type"
           placeholder="Search by Quote Type"
           :options="quoteTypesOptions"
+          :single="true"
+          :hasError="isQuoteTypeEmpty"
         />
         <x-select
           v-model="filters.group_by_one"

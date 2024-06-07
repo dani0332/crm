@@ -140,7 +140,6 @@ onMounted(() => {
           placeholder="Select a Quote Type"
           class="w-full"
           single
-          deselectAll
         >
         </combo-box>
       </x-field>
