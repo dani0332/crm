@@ -33,7 +33,7 @@ class BookPolicyRequest extends FormRequest
             'transaction_payment_status' => 'nullable',
             'broker_invoice_number' => 'nullable',
             'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|numeric|between:0,9999999.99',
-            'commission_vat_applicable' => 'nullable|numeric|between:0,9999999.99',
+            'commission_vat_applicable' => 'required|numeric|between:0,9999999.99',
             'total_commission' => 'nullable',
             'invoice_description' => 'required|max:60',
             'vat_on_commission' => 'nullable',

@@ -1,11 +1,11 @@
 <script setup>
-import PaymentTableNew from './../../Components/PaymentTableNew.vue';
-import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyCreatePlan from './Partials/CreatePlan.vue';
+import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
+import MigratePayment from './../../Components/MigratePayment.vue';
+import PaymentTableNew from './../../Components/PaymentTableNew.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
 
 const props = defineProps({
   quote: Object,
@@ -65,6 +65,7 @@ const props = defineProps({
   documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   clientInquiryLogs: Array,
+  quoteNotes: Object,
 });
 
 const isManualPlansCount = ref(0);
@@ -978,15 +979,16 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(
-      function callback(breakDown, index) {
-        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-          if (ratePerCopay.notifyAgent) {
-            element.needPriceUpdate = true;
-          }
-        });
-      },
-    );
+    element.memberPremiumBreakdown?.forEach(function callback(
+      breakDown,
+      index,
+    ) {
+      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+        if (ratePerCopay.notifyAgent) {
+          element.needPriceUpdate = true;
+        }
+      });
+    });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -2406,10 +2408,36 @@ watch(
 
         <x-modal v-model="modals.member" size="lg" show-close backdrop>
           <template #header>
-            {{ memberActionEdit ? 'Edit' : 'Add' }} Member
+            <span>{{ memberActionEdit ? 'Edit' : 'Add' }} Member</span>
           </template>
 
           <x-form @submit="onMemberSubmit" :auto-focus="false">
+            <div
+              v-if="isManualPlansCount > 0"
+              class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+              role="alert"
+            >
+              <div class="flex">
+                <div class="py-1">
+                  <svg
+                    class="fill-current h-6 w-6 text-read-900 mr-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+                  <p class="text-sm">
+                    Please revist all manual plan(s) and update the per member
+                    price
+                  </p>
+                </div>
+              </div>
+            </div>
             <div class="grid md:grid-cols-2 gap-4 md:pb-16">
               <input type="hidden" :value="memberForm.id" />
               <x-input
@@ -2417,12 +2445,14 @@ watch(
                 v-model="memberForm.first_name"
                 label="First Name"
                 placeholder="First Name"
+                :rules="[isRequired]"
               />
               <x-input
                 maxLength="60"
                 v-model="memberForm.last_name"
                 label="Last Name"
                 placeholder="Last Name"
+                :rules="[isRequired]"
               />
               <ComboBox
                 v-model="memberForm.nationality_id"
@@ -2465,14 +2495,6 @@ watch(
                 :max-date="new Date()"
                 :rules="[isRequired]"
                 :hasError="memberFieldReq.dob"
-              />
-              <x-select
-                v-model="memberForm.member_category_id"
-                label="Member Category*"
-                :options="memberCategoriesOptions"
-                :rules="[isRequired]"
-                placeholder="Select Member Category"
-                class="w-full"
               />
               <x-select
                 v-model="memberForm.relation_code"
@@ -3315,10 +3337,22 @@ watch(
                 </div>
               </template>
 
-              <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+              <template
+                #item-total="{
+                  actualPremium,
+                  policyFee,
+                  basmah,
+                  vat,
+                  loadingPrice,
+                }"
+              >
                 {{
                   fixedValue(
-                    actualPremium + (policyFee || 0) + (basmah || 0) + vat,
+                    actualPremium +
+                      (policyFee || 0) +
+                      (basmah || 0) +
+                      vat +
+                      (loadingPrice || 0),
                   )
                 }}
               </template>
@@ -3615,7 +3649,6 @@ watch(
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
     />
-
 
     <BookPolicy
       v-if="

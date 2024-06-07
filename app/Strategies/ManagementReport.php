@@ -13,10 +13,18 @@ use App\Models\Team;
 use App\Services\ApplicationStorageService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ManagementReport
 {
     use TeamHierarchyTrait;
+
+    // each report will have its own implementation of this method
+    public function map($quote): array
+    {
+        return [];
+    }
 
     public function getFilterOptions()
     {
@@ -150,12 +158,12 @@ class ManagementReport
                 $type = $transactionTypes->where('text', $typeCode)->first();
                 if ($type !== null) {
                     $typeId = $type->id;
-                    $query->where('transaction_type_id', $typeId);
+                    $query->where('personal_quotes.transaction_type_id', $typeId);
                 }
             }
         }
 
-        if (isset($request['teams']) && count($request['teams']) > 0) {
+        if (isset($request['teams']) && ! empty($request['teams']) && count($request['teams']) > 0) {
             $value = $request['teams'];
             $query->whereIn('t.id', $value);
         } else {
@@ -178,6 +186,8 @@ class ManagementReport
                 $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyBooked);
             }
         }
+
+        return $query;
     }
 
     public function getUtmGroup($request, $query)
@@ -204,5 +214,79 @@ class ManagementReport
                     break;
             }
         }
+    }
+
+    /**
+     * download csv export file function
+     *
+     * @param [type] $fileName
+     * @param [type] $data
+     * @param  array  $headers
+     * @param  array  $nonIntegarIndexes
+     * @return void
+     */
+    public function download($fileName, $data, $headers = [], $nonIntegarIndexes = [])
+    {
+        return new StreamedResponse(function () use ($data, $headers, $nonIntegarIndexes) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, $headers);
+
+            // Prepare an array to hold the sums
+            $sums = array_fill(0, count($headers), 0.00);
+
+            $data = collect($data);
+            foreach ($data as $index => $quote) {
+                fputcsv($handle, $this->map($quote));
+
+                // Update sums
+                foreach ($this->map($quote) as $index => $value) {
+                    if (! in_array($index, $nonIntegarIndexes)) {
+                        $floatValue = (float) str_replace(',', '', $value);
+                        $sums[$index] += $floatValue;
+                    } elseif ($index == 0) {
+                        $sums[$index] = 'TOTAL';
+                    } else {
+                        $sums[$index] = 'N/A';
+                    }
+                }
+
+            }
+
+            $formattedSums = [];
+
+            // Format the sums to always show up to two decimal places
+            foreach ($sums as $index => &$sum) {
+                if (! in_array($index, $nonIntegarIndexes)) {
+                    $formattedSums[$index] = number_format($sum, 2);
+                } else {
+                    $formattedSums[$index] = $sum;
+                }
+            }
+            // Add a row for the sums
+            fputcsv($handle, $formattedSums);
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'.csv"',
+        ]);
+    }
+
+    /**
+     * mapper sub query to get sub type of business quotes function
+     *
+     * @param [type] $item
+     * @return void
+     */
+    public function businessSubTypeMapper($item)
+    {
+        $businessTypeOfInsurance = DB::table('business_quote_request')
+            ->join('business_type_of_insurance', 'business_quote_request.business_type_of_insurance_id', '=', 'business_type_of_insurance.id')
+            ->where('business_quote_request.code', $item->code)
+            ->select('business_type_of_insurance.text')
+            ->first();
+        $item->sub_type_line_of_business = $businessTypeOfInsurance ? $businessTypeOfInsurance->text : 'N/A';
+
+        return $item;
     }
 }

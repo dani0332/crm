@@ -15,11 +15,25 @@ class SaleSummaryReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
 
+    private $groupByColumn;
+    private $reportDateRange;
+
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType']  = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
         $request['groupBy'] = $request->groupBy ?? 'advisor';
+        $this->groupByColumn = $request['groupBy'];
+
+        if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
+            $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
+                .' - '.
+                Carbon::parse($request['policyBookDate'][1])->toDateString();
+        } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
+            $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
+            .' - '.
+            Carbon::parse($request['paymentDueDate'][1])->toDateString();
+        }
 
         $query = PersonalQuote::query()
             ->leftJoin('send_update_logs as sul', 'personal_quotes.id', '=', 'sul.personal_quote_id')
@@ -88,8 +102,20 @@ class SaleSummaryReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
 
+        if ($request->export == 1) {
+            $data = $query->get();
 
-        return $query->simplePaginate(10)->withQueryString();
+            // Columns that are not integar and should not be summed
+            $nonIntegarIndexes = [0];
+
+            return $this->download(
+                'Sale Summary Report '.$this->reportDateRange,
+                $data,
+                $this->headings(),
+                $nonIntegarIndexes);
+        } else {
+            return $query->simplePaginate(10)->withQueryString();
+        }
     }
 
     private function resolveGroupByColumn($groupBy)
@@ -117,6 +143,40 @@ class SaleSummaryReportService extends ManagementReport
             'policyBookDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::SALE_SUMMARY,
             'reportType' =>  ManagementReportTypeEnum::BOOKED_POLICIES,
+        ];
+    }
+
+    public function headings(): array
+    {
+        return [
+            ucwords(str_replace('_', ' ', $this->groupByColumn)),
+            'Total Policies',
+            'Total Endorsements',
+            'Total Transactions',
+            'Price (VAT applicable)',
+            'Total VAT',
+            'Price (VAT not applicable)',
+            'Discount',
+            'Commission',
+            'Total Price',
+        ];
+    }
+
+    public function map($quote): array
+    {
+        $groupBy = $this->groupByColumn;
+
+        return [
+            $quote->$groupBy ?? 'N/A',
+            $quote->total_policies ?? 0,
+            $quote->total_endorsements ?? 0,
+            $quote->total_transaction ?? 0,
+            $quote->price_vat_applicable ?? '0.00',
+            $quote->total_vat ?? '0.00',
+            $quote->price_vat_not_applicable ?? '0.00',
+            $quote->discount ?? '0.00',
+            $quote->commission_vat_applicable ?? '0.00',
+            $quote->total_price ?? '0.00',
         ];
     }
 }
