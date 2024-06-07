@@ -484,11 +484,11 @@ class ReportsController extends Controller
     }
 
     /**
-     * export method for management reports
+     * export method for management reports.
      *
      * @return void
      */
-    public function exportSaleManagementReport(Request $request)
+    public function exportManagementReport(Request $request)
     {
         $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);

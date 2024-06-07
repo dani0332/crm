@@ -204,7 +204,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['middleware' => ['permission:'.PermissionsEnum::DATA_EXTRACTION]], function () {
-        Route::get('/reports/management-report/export', [ReportsController::class, 'exportSaleManagementReport'])->name('management-report-export');
+        Route::get('/reports/management-report/export', [ReportsController::class, 'exportManagementReport'])->name('management-report-export');
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
 
