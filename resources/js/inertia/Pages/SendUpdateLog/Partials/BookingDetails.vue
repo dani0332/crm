@@ -558,6 +558,7 @@ function sendUpdate(prePaymentCheck = true) {
       loader.sendUpdate = false;
       loader.sendUpdateSectionBtn = false;
       modals.attestRecord = false;
+      modals.paymentConfirmation = false;
       router.reload({ preserveState: true });
       notification.success({
         title: response.data.message,
