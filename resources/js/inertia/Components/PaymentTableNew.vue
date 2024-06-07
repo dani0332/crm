@@ -1673,7 +1673,7 @@ const editPaymentModal = (
 
     
     if (isPaymentLocked.value) {
-      isFieldReadonly.value = false;
+      isFieldReadonly.value = true;
     } else if (
       isAnyPaid &&
       payment.total_price <= payment.total_amount + payment.discount_value
@@ -3240,8 +3240,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 v-if="!isFieldReadonly"
                 name="collection_date"
                 v-model="paymentMethodsForm.collection_date"
-                :rules="[rules.isRequired]"
-                :disabled="isPaymentLocked"
+                :rules="[rules.isRequired]"                
               />
             </x-field>
           </div>
@@ -3286,9 +3285,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 v-model="paymentMethodsForm.collection_type"
                 :rules="[rules.isRequired]"
                 @change="handleCollectionTypeChange"
-                :disabled="isTotalPriceUpdated || isPaymentLocked"
-                :class="{'disabled-select': isPaymentLocked}"
-                :title="isPaymentLocked ? paymentTooltipEnum.PAYMENT_LOCKED : ''"          
+                :disabled="isTotalPriceUpdated"                
               >
                 <template v-for="option in collectionTypes" :key="option.value">
                   <option :value="option.value" :title="option.tooltip">
@@ -3345,8 +3342,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 class="custom-select"
                 v-model="paymentMethodsForm.frequency"
                 :rules="[rules.isRequired]"
-                @change="handleFrequencyChange"
-                :disabled="isPaymentLocked"
+                @change="handleFrequencyChange"                
               >
                 <template v-for="option in frequencyTypes" :key="option.value">
                   <option :value="option.value" :title="option.tooltip">
@@ -3403,7 +3399,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 class="custom-select"
                 v-model="paymentMethodsForm.payment_no"
                 :rules="[rules.isRequired]"
-                :disabled="!isPaymentNoEnabled || isPaymentLocked"
+                :disabled="!isPaymentNoEnabled"
                 @change="calculatePaymentBreakup()"
               >
                 <template v-for="option in totalPayments" :key="option.value">
@@ -3436,13 +3432,13 @@ const lookupsEnum = page.props.lookupsEnum;
             </x-field>
           </div>
 
-          <div v-if="isCreditApprovalAllowed && !isFieldReadonly">
+          <div v-if="isCreditApprovalAllowed && (!isFieldReadonly  || isPaymentLocked)">
             <ToolTip
               title="CREDIT APPROVAL"
               :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"
             />
             <x-field class="w-full">
-              <div v-if="!isFieldReadonly" class="custom-dropdown">
+              <div class="custom-dropdown">
                 <span
                   v-if="paymentMethodsForm.credit_approval != ''"
                   class="close-icon"
@@ -3468,7 +3464,7 @@ const lookupsEnum = page.props.lookupsEnum;
               </div>
             </x-field>
           </div>
-          <div v-if="isFieldReadonly">
+          <div v-if="isFieldReadonly && !isPaymentLocked">
             <ToolTip
               title="CREDIT APPROVAL"
               :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"
@@ -3487,7 +3483,7 @@ const lookupsEnum = page.props.lookupsEnum;
             v-if="
               isCustomReasonEnabled &&
               isCreditApprovalAllowed &&
-              !isFieldReadonly
+              (!isFieldReadonly || isPaymentLocked)
             "
             label="CUSTOM REASON"
             required
@@ -3531,8 +3527,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 <select
                   class="custom-select"
                   v-model="paymentMethodsForm.discount"
-                  @change="handleDiscountChange"
-                  :disabled="isPaymentLocked"
+                  @change="handleDiscountChange"                  
                 >
                   <template v-for="option in discountTypes" :key="option.value">
                     <option
@@ -3591,8 +3586,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 class="custom-select"
                 v-model="paymentMethodsForm.discount_reason"
                 :rules="[rules.isRequired]"
-                @change="handleDiscountReasonChange"
-                :disabled="isPaymentLocked"
+                @change="handleDiscountReasonChange"                
               >
                 <template v-for="option in discountReasons" :key="option.value">
                   <option :value="option.value" :title="option.tooltip">
@@ -3639,8 +3633,7 @@ const lookupsEnum = page.props.lookupsEnum;
             "
             label="CUSTOM DISCOUNT REASON"
             :required="!isFieldReadonly"
-            class="w-full"
-            :disabled="isPaymentLocked"
+            class="w-full"            
           >
             <span v-if="isFieldReadonly">{{
               paymentMethodsForm.discount_custom_reason
@@ -3688,8 +3681,7 @@ const lookupsEnum = page.props.lookupsEnum;
                     :max-files="discountProofDocument.max_files"
                     :max-size="discountProofDocument.max_size"
                     :loading="documentForm.processing"
-                    @change="uploadDocument(discountProofDocument, $event, 0)"
-                    :disabled="isPaymentLocked"
+                    @change="uploadDocument(discountProofDocument, $event, 0)"                    
                   />
                 </span>
                 <div
@@ -3788,8 +3780,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 :class="{ 'custom-select-error': isDiscountError }"
                 v-model="discountValue"
                 name="discount_value"
-                @keyup="calculateTotalAmount()"
-                :disabled="isPaymentLocked"
+                @keyup="calculateTotalAmount()"                
               />
               <sup
                 v-if="isDiscountError"
@@ -3904,6 +3895,28 @@ const lookupsEnum = page.props.lookupsEnum;
             up, you're good to proceed.
           </div>
         </div>
+
+        <div
+          v-if="isPaymentLocked"
+          class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500"
+          role="alert"
+        >
+          <svg
+            class="flex-shrink-0 inline w-4 h-4 mr-3"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+            />
+          </svg>
+          <div>
+            {{ paymentTooltipEnum.PAYMENT_LOCKED }}
+          </div>
+        </div>
+
         <div
           v-if="isFileError"
           class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500"
