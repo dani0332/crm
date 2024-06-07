@@ -117,8 +117,12 @@ class SageApiService
         $sageRequest->commissionWithOutVat = $payment->commission_vat_not_applicable ? floatval($payment->commission_vat_not_applicable) : floatval($payment->commission_without_vat);
         $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
 
-        $sageRequest->insurerPremiumNumber = (string) $payment['insurer_tax_number'];
-        $sageRequest->insurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
+        // Slice the last 18 characters from the string to avoid sage document number length issue and store the original values in optional fields
+        $sageRequest->insurerPremiumNumber = (string) substr($payment['insurer_tax_number'], -18);
+        $sageRequest->insurerCommissionNumber = (string) substr($payment['insurer_commmission_invoice_number'], -18);
+        $sageRequest->originalInsurerPremiumNumber = (string) $payment['insurer_tax_number'];
+        $sageRequest->originalInsurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
+
         if (count($paymentSplits) == 1) {
             $sageRequest->sage_reciept_id = $paymentSplits[0]['sage_reciept_id'];
             $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'] + $sageRequest->discount;
