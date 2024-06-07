@@ -55,7 +55,6 @@ const quoteForm = useForm({
     props.quote?.back_home_license_held_for_id || null,
   gender: props.quote?.gender || null,
   currently_insured_with: props.quote?.currently_insured_with || null,
-  policy_start_date: props.quote?.policy_start_date || null,
   is_ecommerce: props.quote?.is_ecommerce || null,
   car_make_id: props.quote?.car_make_id || null,
   vehicle_type_id: props.quote?.vehicle_type_id || null,
