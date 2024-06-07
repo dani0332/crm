@@ -35,6 +35,7 @@ const props = defineProps({
     type: Object,
     default: [],
   },
+  isPlanDetailAvailable: Boolean,
 });
 
 const page = usePage();

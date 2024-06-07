@@ -109,6 +109,7 @@ class SendUpdateLogController extends Controller
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
+        $isPlanDetailAvailable = $this->sendUpdateLogService->isPlanDetailAvailable($sendUpdateLog); // check Indicative Additional Price section.
         if ($this->sendUpdateLogService->checkSendUpdatePermission($sendUpdateLog->category->code)) {
             return redirect()->back()->with('error', 'You don\'t have permission to this. ');
         }
@@ -218,6 +219,7 @@ class SendUpdateLogController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'additionalField' => $additionalField ?? [],
             'issuanceStatuses' => $issuanceStatuses,
+            'isPlanDetailAvailable' => $isPlanDetailAvailable,
         ]);
     }
 
