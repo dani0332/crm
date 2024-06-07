@@ -258,7 +258,6 @@ class SagePayloadFactory
                 $payLoad->Invoices[0]->InvoiceDetails[0]->DistributedAmount = roundNumber($request->totalPrice); // Need to be verify with denber
                 $payLoad->Invoices[0]->InvoiceDetails[0]->DistributedAmountBeforeTaxes = roundNumber($request->totalPrice); // Need to be verify with denber
 
-
                 $sageRequestType = SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV;
             }
         }
