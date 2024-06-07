@@ -19,6 +19,7 @@ use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 trait GenericQueriesAllLobs
 {
@@ -280,6 +281,7 @@ trait GenericQueriesAllLobs
 
     public function updateQuoteStatus($type, $id)
     {
+
         if ($type == 'send-update') {
             return true;
         }
@@ -287,16 +289,22 @@ trait GenericQueriesAllLobs
             $type = request()->quote_type;
         }
         $quote = $this->getQuoteObject($type, $id);
+        Log::info('Updating quote_status_id && policy_issuance_status_id for  : '. $quote->id);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
-            if ($this->isFilledPolicyDetails($type, $quote)) {
+            $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
+            Log::info('Is policy details filled for  : '. $quote->id . ' ' . $isPolicyDetailsFilled);
+            if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
-                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote)) {
+                $isAllRequiredDocumentAreUploaded= $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
+                Log::info('Is all required documens filled for  : '. $quote->id . ' ' . $isAllRequiredDocumentAreUploaded);
+                if ($isAllRequiredDocumentAreUploaded) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
                         'policy_issuance_status_other' => '',
                     ]);
                 }
+                Log::info('Update done for quote_status_id && policy_issuance_status_id for  : '. $quote->id);
             }
         }
     }
@@ -342,6 +350,8 @@ trait GenericQueriesAllLobs
 
     public function updatePriceAndDiscount($quoteModel): bool
     {
+        Log::info('Updating price & discount for: '. $quoteModel->id);
+
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         $priceWithVat = $quoteModel->price_with_vat;
         $paymentTotalPrice = $payment->total_price;
@@ -457,6 +467,7 @@ trait GenericQueriesAllLobs
      */
     public function handleSmallAmountDifference(mixed $payment, mixed $priceWithVat): mixed
     {
+        $infoMessage = '';
         $capturedAmount = $payment->captured_amount;
         $discountValue = $payment->discount_value;
 
@@ -465,8 +476,11 @@ trait GenericQueriesAllLobs
 
         $difference = (float) number_format($initialDifference, 2);
 
+        $infoMessage = 'Captured Amount: ' . $capturedAmount . ' Discount Value: '. $discountValue . ' Total Amount: '. $totalPaymentAmount.' ';
+        $infoMessage .= 'Initial Difference: '. $difference.' ';
         if ($payment->system_adjusted_discount != null) {
             $difference += $payment->system_adjusted_discount;
+            $infoMessage .= 'System adjusted discount: '.  $payment->system_adjusted_discount. ' discount after system adjusted discount ' . $difference; 
         }
         // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
         if ($difference <= 0.99 && $difference > 0) {
@@ -487,6 +501,7 @@ trait GenericQueriesAllLobs
             }
         }
 
+        Log::info($infoMessage);
         return $difference;
     }
 

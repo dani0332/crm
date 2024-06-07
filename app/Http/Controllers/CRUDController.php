@@ -1716,6 +1716,8 @@ class CRUDController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyPending,
             ]);
         }
+        Log::info('Updating policy_issuer_id  : '. auth()->id());
+
         // store policy issuer
         $payment = $quoteModel->payments->first();
         $payment->policy_issuer_id = auth()->id();
@@ -1724,6 +1726,8 @@ class CRUDController extends Controller
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
         $this->updatePriceAndDiscount($quoteModel);
+
+        Log::info('Policy details update successfully for : '. $request->quote_id);
 
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',
