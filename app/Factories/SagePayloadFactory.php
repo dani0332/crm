@@ -237,7 +237,7 @@ class SagePayloadFactory
                 $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $payLoad->Invoices[0]->DocumentType = 'CreditNote';
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
-                $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_REV_INV;
+                $sageRequestType = SageEnum::SRT_CREATE_AP_SPPAY_REV_INV;
             }
 
             if ($type == SageEnum::SCT_CORRECTION) {
@@ -259,7 +259,7 @@ class SagePayloadFactory
                 $payLoad->Invoices[0]->InvoiceDetails[0]->DistributedAmountBeforeTaxes = roundNumber($request->totalPrice); // Need to be verify with denber
                 
 
-                $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_CORR_INV;
+                $sageRequestType = SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV;
             }
         }
 
@@ -1756,6 +1756,42 @@ class SagePayloadFactory
                     ],
                     'aPPostInvoices' => [
                         'error' => 'Error while making AP Invoice correction posted to Sage',
+                    ],
+                ],
+            ],
+            // Need to update messaages
+            SageEnum::SRT_REV_CORR_AP_SPPAY_INV => [
+                SageEnum::SCT_STRAIGHT => [
+                    'createAPInvoicePrem' => [
+                        'error' => 'AP Invoice & prem failed from Sage',
+                    ],
+                    'readyToPostInvoiceAP' => [
+                        'error' => 'Error while making AP Invoice & prem ready to post to Sage',
+                    ],
+                    'aPPostInvoices' => [
+                        'error' => 'Error while making AP Invoice & prem Posted to Sage',
+                    ],
+                ],
+                SageEnum::SCT_REVERSAL => [
+                    'createAPInvoicePrem' => [
+                        'error' => 'AR Invoice & prem reversal failed from Sage',
+                    ],
+                    'readyToPostInvoiceAP' => [
+                        'error' => 'Error while making AP Invoice & prem reversal ready to post to Sage',
+                    ],
+                    'aPPostInvoices' => [
+                        'error' => 'Error while making AP Invoice & prem reversal Posted to Sage',
+                    ],
+                ],
+                SageEnum::SCT_CORRECTION => [
+                    'createAPInvoicePrem' => [
+                        'error' => 'AR Invoice & prem correction failed from Sage',
+                    ],
+                    'readyToPostInvoiceAP' => [
+                        'error' => 'Error while making AP Invoice & prem correction ready to post to Sage',
+                    ],
+                    'aPPostInvoices' => [
+                        'error' => 'Error while making AP Invoice & prem correction Posted to Sage',
                     ],
                 ],
             ],
