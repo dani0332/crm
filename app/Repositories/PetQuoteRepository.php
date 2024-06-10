@@ -58,8 +58,6 @@ class PetQuoteRepository extends BaseRepository
 
         if (isset($response->quoteUID)) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
-
-            $quote->update(['premium' => $request['premium']]);
         }
 
         return $response;
