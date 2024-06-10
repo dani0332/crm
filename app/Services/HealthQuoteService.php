@@ -133,6 +133,7 @@ class HealthQuoteService extends BaseService
             'hqr.kyc_decision',
             'hqr.risk_score',
             'hqr.enquiry_count',
+            'hqr.policy_booking_date',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -161,6 +162,13 @@ class HealthQuoteService extends BaseService
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
+            'hqr.price_vat_not_applicable',
+            'hqr.price_vat_applicable',
+            'hqr.price_with_vat',
+            'hqr.vat',
+            'hqr.insurer_quote_number',
+            'hqr.policy_issuance_status_id',
+            'hqr.policy_issuance_status_other',
             'hqr.stale_at'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -196,9 +204,23 @@ class HealthQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HealthQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        return HealthQuote::where('id', $id)->with([
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                // This condition added to get the latest payment first for fetching Booking Details accordingly
+                $payment->orderBy('created_at', 'desc');
+            },
+        ])->first();
     }
 
     public function getSelectedLostReason($id)

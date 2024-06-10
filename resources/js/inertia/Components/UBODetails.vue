@@ -16,6 +16,11 @@ const props = defineProps({
     required: true,
     type: String,
   },
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true,
+  },
 });
 
 const page = usePage();
@@ -185,69 +190,75 @@ const UBODeleteConfirmed = () => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        UBO Details
-        <x-tag size="sm">{{
-          (computedUboMembers && computedUboMembers.length) || 0
-        }}</x-tag>
-      </h3>
-      <x-button
-        v-if="
-          page.props.quote?.quote_request_entity_mapping?.entity_id ??
-          page.props.quote.entity_id
-        "
-        @click.prevent="addUBOModal"
-        size="sm"
-        color="orange"
-        :loading="isLoading"
-      >
-        Add UBO
-      </x-button>
-    </div>
-
-    <DataTable
-      table-class-name="tablefixed compact"
-      :headers="UBODetailsTable.columns"
-      :items="computedUboMembers || []"
-      show-index
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-index="{ index, code }">
-        <div>{{ code ?? 'UBO ' + index }}</div>
-      </template>
-      <template #item-dob="{ dob }">
-        {{ dateFormat(dob) }}
-      </template>
-      <template #item-relation="{ relation }">
-        {{ relation?.text }}
-      </template>
-      <template #item-nationality="{ nationality }">
-        {{ nationality?.text }}
-      </template>
-      <template #item-action="item">
-        <div class="flex gap-2">
-          <x-button
-            size="xs"
-            color="primary"
-            outlined
-            @click.prevent="onEditUBO(item)"
-          >
-            Edit
-          </x-button>
-          <x-button
-            size="xs"
-            color="error"
-            outlined
-            @click.prevent="UBODelete(item.id)"
-          >
-            Delete
-          </x-button>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            UBO Details
+            <x-tag size="sm">{{ computedUboMembers && computedUboMembers.length || 0 }}</x-tag>
+          </h3>
         </div>
       </template>
-    </DataTable>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="flex mb-3 justify-end">
+          <x-button
+            v-if="
+              page.props.quote?.quote_request_entity_mapping?.entity_id ??
+              page.props.quote.entity_id
+            "
+            @click.prevent="addUBOModal"
+            size="sm"
+            color="orange"
+            :loading="isLoading"
+          >
+            Add UBO
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="tablefixed compact"
+          :headers="UBODetailsTable.columns"
+          :items="computedUboMembers || []"
+          show-index
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-index="{ index, code }">
+            <div>{{ code ?? 'UBO ' + index }}</div>
+          </template>
+          <template #item-dob="{ dob }">
+            {{ dateFormat(dob) }}
+          </template>
+          <template #item-relation="{ relation }">
+            {{ relation?.text }}
+          </template>
+          <template #item-nationality="{ nationality }">
+            {{ nationality?.text }}
+          </template>
+          <template #item-action="item">
+            <div class="flex gap-2">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                @click.prevent="onEditUBO(item)"
+              >
+                Edit
+              </x-button>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="UBODelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+      </template>
+    </Collapsible>
 
     <x-modal v-model="modals.UBO" size="lg" show-close backdrop>
       <template #header> {{ UBOActionEdit ? 'Edit' : 'Add' }} UBO </template>
