@@ -483,7 +483,6 @@ watch(
               rolesEnum.EBPAdvisor,
               rolesEnum.CarAdvisor,
               rolesEnum.HealthRenewalAdvisor,
-              rolesEnum.HealthNewBusinessAdvisor,
               rolesEnum.HealthAdvisor,
             ])
           "

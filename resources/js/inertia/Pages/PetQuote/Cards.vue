@@ -25,7 +25,6 @@ const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.PetAdvisor,
     rolesEnum.PetRenewalAdvisor,
-    rolesEnum.PetNewBusinessAdvisor,
   ]);
 });
 
