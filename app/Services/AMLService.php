@@ -8,10 +8,13 @@ use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\AML;
+use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\JetskiQuote;
 use App\Models\KycLog;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
@@ -19,6 +22,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -73,11 +77,11 @@ class AMLService
         $updateData = empty($updateData) ? ['pa_id' => auth()->id()] : $updateData;
 
         return match ($quoteTypeId) {
-            QuoteTypes::BIKE->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData),
-            QuoteTypes::CYCLE->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->touch(),
-            QuoteTypes::JETSKI->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->touch(),
-            QuoteTypes::PET->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData),
-            QuoteTypes::YACHT->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData)
+            QuoteTypes::BIKE->id() => BikeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::CYCLE->id() => CycleQuote::where($filterColumn, $quoteRequestId)->touch(),
+            QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
+            QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData)
         };
     }
 
