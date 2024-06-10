@@ -149,8 +149,8 @@ class LeadAllocationController extends Controller
         $updateLogString = '----- Update done successfully to change the';
         $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
         foreach ($request->all() as $item) {
-            if(!empty($quoteTypeId)){
-            $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('quote_type_id', $quoteTypeId)->where('id', $item['id'])->first();
+            if(!$quoteTypeId){
+            $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('id', $item['id'])->first();
             if (isset($item['reason'])) {
                 if ($item['reason'] != UserStatusEnum::OFFLINE && $item['reason'] != UserStatusEnum::ONLINE) {
                     $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
@@ -180,7 +180,7 @@ class LeadAllocationController extends Controller
             }
 
 
-            if (! empty($quoteTypeId) && isset($item['max_cap'])) {
+            if (! $quoteTypeId && isset($item['max_cap'])) {
                 $updateLogString = $updateLogString.' max_cap to : '.$item['max_cap'];
                 $leadAllocationUser->max_capacity = (int) $item['max_cap'];
             }
@@ -198,7 +198,7 @@ class LeadAllocationController extends Controller
             $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
             foreach ($request->max_cap as $item) {
                 if ($item['userId'] && $item['maxCap']) {
-                    if(!empty($quoteTypeId)) {
+                    if(! $quoteTypeId) {
                     $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('quote_type_id', $quoteTypeId)->where('user_id', $item['userId'])->first();
                     $leadAllocationObj->max_capacity = (int) $item['maxCap'];
                     $leadAllocationObj->save();
