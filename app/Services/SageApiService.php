@@ -598,7 +598,7 @@ class SageApiService
         //                 'splitPayments' => $splitPayments,
         //                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
         //             ]);
-        //         } 
+        //         }
         //         // Apply prepayment mapping manually on sage
         //         elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
         //             info('Book Update - Creating Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
