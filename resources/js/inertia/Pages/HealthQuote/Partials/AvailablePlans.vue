@@ -243,7 +243,7 @@ const getDefaultVaues = () => {
   if (defaultCopayId.value != undefined || defaultCopayId != null) {
     props.plan?.ratesPerCopay?.forEach(function callback(element, index) {
       if (element.healthPlanCoPaymentId == defaultCopayId.value) {
-        smallestCopayValue = element.premium;
+        smallestCopayValue = element.discountPremium;
       }
     });
     newActualPremium.value = smallestCopayValue;
