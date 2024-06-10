@@ -18,6 +18,7 @@ use App\Models\LeadSource;
 use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
+use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
@@ -27,7 +28,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\UserManager;
 
 class AdvisorConversionReportService extends BaseService
 {
@@ -136,11 +136,11 @@ class AdvisorConversionReportService extends BaseService
                     ->get()
                     ->filter(function ($user) use ($userIds) {
                         return in_array($user->user_id, $userIds);
-                })
-                ->pluck('user_id')
-                ->toArray();
+                    })
+                    ->pluck('user_id')
+                    ->toArray();
             }
-            
+
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
@@ -199,8 +199,8 @@ class AdvisorConversionReportService extends BaseService
                     ->filter(function ($user) use ($userIds) {
                         return in_array($user->user_id, $userIds);
                     })
-                ->pluck('user_id')
-                ->toArray();
+                    ->pluck('user_id')
+                    ->toArray();
             }
 
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);

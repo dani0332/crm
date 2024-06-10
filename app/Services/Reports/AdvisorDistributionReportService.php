@@ -14,6 +14,7 @@ use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
+use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
@@ -23,7 +24,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\UserManager;
 
 class AdvisorDistributionReportService extends BaseService
 {

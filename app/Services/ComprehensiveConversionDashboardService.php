@@ -13,12 +13,12 @@ use App\Enums\TravelQuoteEnum;
 use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Models\Tier;
+use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\UserManager;
 
 class ComprehensiveConversionDashboardService extends BaseService
 {

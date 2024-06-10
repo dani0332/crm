@@ -13,15 +13,15 @@ use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Team;
 use App\Models\Tier;
+use App\Models\UserManager;
 use App\Services\ComprehensiveConversionDashboardService;
 use App\Services\DashboardService;
 use App\Services\TierService;
+use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\UserManager;
-use App\Traits\GetUserTreeTrait;
 
 class DashboardController extends Controller
 {

@@ -167,10 +167,10 @@ class ReportsController extends Controller
     {
         $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
         if (! auth()->user()->hasAnyRole([
-                RolesEnum::SeniorManagement,
-                RolesEnum::Admin,
-                RolesEnum::Engineering,
-            ])) {
+            RolesEnum::SeniorManagement,
+            RolesEnum::Admin,
+            RolesEnum::Engineering,
+        ])) {
             $usersReportToLoggedInUser = UserManager::where('manager_id', auth()->user()->id)
                 ->whereIn('user_id', $usersReportToLoggedInUser)->pluck('user_id')->toArray();
         }
