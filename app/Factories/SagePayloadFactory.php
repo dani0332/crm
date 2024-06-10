@@ -203,7 +203,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTaxes' => roundNumber($request->totalPrice),
                     'DocumentTotalIncludingTax' => roundNumber($request->totalPrice),
-                    'Terms' => 'SPLIT'.count($paymentSplits),
+                    'Terms' => self::getTermsCode(count($paymentSplits)),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
@@ -552,7 +552,7 @@ class SagePayloadFactory
                     'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
-                    'Terms' => 'SPLIT'.count($splitPayments),
+                    'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
@@ -580,7 +580,7 @@ class SagePayloadFactory
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat),
                     'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
-                    'Terms' => 'SPLIT'.count($splitPayments),
+                    'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
@@ -1874,5 +1874,10 @@ class SagePayloadFactory
         } else {
             return SagePaymentMethodsEnum::SAGE_BANK_TRANSFER;
         }
+    }
+
+    private static function getTermsCode($splitPaymentsCount)
+    {
+        return $splitPaymentsCount >= 10 ? 'SPLI'.$splitPaymentsCount : 'SPLIT'.$splitPaymentsCount;
     }
 }
