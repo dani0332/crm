@@ -333,17 +333,15 @@ const rules = {
 };
 
 const isPaymentLocked = computed(() => {
-  /*if (
-    can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
-    (
-      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved ||
-      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyIssued ||
-      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicySentToCustomer
-    )  
-  ) {
+  if (
+      paymentMethodsForm.status == 'edit' &&
+      (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.CancellationPending ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.CancellationPending ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked)
+      ) {
     return true;
-  } */ 
-  return true;
+  }  
+  return false;
 });
 
 const handleDeclinedChange = () => {
@@ -845,7 +843,7 @@ const resetCreditApproval = () => {
   isCustomReasonEnabled.value = false;
   handleApprovalReasonChange();
   handleFrequencyChange(false);
-  if (isPaymentLocked.value) { // If payment is locked, reset the payment method for split payments
+  if (isPaymentLocked.value && paymentMethodsForm.status == 'edit') { // If payment is locked, reset the payment method for split payments
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
       if (readOnlyPayments.value[i] === true) {
         continue;
@@ -2044,6 +2042,7 @@ const addPayment = isValid => {
       ...data,
       paymentCode: paymentMethodsForm.paymentCode,
       trashedFilesModal: trashedFilesModal.value,
+      isPaymentLocked: isPaymentLocked.value,
     };
     paymentMethodsForm
       .transform(data => editData)
@@ -3432,7 +3431,7 @@ const lookupsEnum = page.props.lookupsEnum;
             </x-field>
           </div>
 
-          <div v-if="isCreditApprovalAllowed && (!isFieldReadonly  || isPaymentLocked)">
+          <div v-if="isCreditApprovalAllowed && (!isFieldReadonly  || (isPaymentLocked && paymentMethodsForm.status == 'edit'))">
             <ToolTip
               title="CREDIT APPROVAL"
               :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"
@@ -3464,7 +3463,7 @@ const lookupsEnum = page.props.lookupsEnum;
               </div>
             </x-field>
           </div>
-          <div v-if="isFieldReadonly && !isPaymentLocked">
+          <div v-if="isFieldReadonly && !(isPaymentLocked && paymentMethodsForm.status == 'edit')">
             <ToolTip
               title="CREDIT APPROVAL"
               :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"
@@ -3483,7 +3482,7 @@ const lookupsEnum = page.props.lookupsEnum;
             v-if="
               isCustomReasonEnabled &&
               isCreditApprovalAllowed &&
-              (!isFieldReadonly || isPaymentLocked)
+              (!isFieldReadonly || (isPaymentLocked && paymentMethodsForm.status == 'edit'))
             "
             label="CUSTOM REASON"
             required
@@ -3496,7 +3495,7 @@ const lookupsEnum = page.props.lookupsEnum;
             />
           </x-field>
           <x-field
-            v-if="isCustomReasonEnabled && isFieldReadonly"
+            v-if="isCustomReasonEnabled && isFieldReadonly && !(isPaymentLocked && paymentMethodsForm.status == 'edit')"
             label="CUSTOM REASON"
             class="w-full"
           >
@@ -3897,7 +3896,7 @@ const lookupsEnum = page.props.lookupsEnum;
         </div>
 
         <div
-          v-if="isPaymentLocked"
+          v-if="isPaymentLocked && paymentMethodsForm.status == 'edit'"
           class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500"
           role="alert"
         >
