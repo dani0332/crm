@@ -65,6 +65,9 @@ class ApiController extends Controller
 
     public function quotePaymentStatusUpdated(Request $request)
     {
+        if (is_numeric($request->quoteType)) {
+            return response()->json(['message' => 'Quote Type Not Valid'], 403);
+        }
         $model = $this->getModelObject(strtolower($request->quoteType));
         $url = url('/');
 
@@ -82,6 +85,9 @@ class ApiController extends Controller
             }
         } else {
             $url .= '/quotes/'.strtolower($request->quoteType).'/'.$model->uuid;
+        }
+        if ($model->advisor_id === null) {
+            return response()->json(['message' => 'No Advisor Assign to this Lead.'], 403);
         }
 
         event(new PaymentNotifications($model, $url));
