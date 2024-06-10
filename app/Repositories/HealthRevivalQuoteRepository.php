@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\Emirate;
@@ -41,32 +40,31 @@ class HealthRevivalQuoteRepository extends BaseRepository
             'healthQuoteRequestDetail.lostReason',
         ])->where('source', LeadSourceEnum::REVIVAL)->filter();
 
-
-        if (!empty($request->assignment_type)) {
+        if (! empty($request->assignment_type)) {
             $query->where('assignment_type', $request->assignment_type);
         }
-        if (!empty($request->advisors)) {
+        if (! empty($request->advisors)) {
             $query->whereIn('advisor_id', $request->advisors);
         }
-        if (!empty($request->sub_team)) {
+        if (! empty($request->sub_team)) {
             $query->where('health_team_type', $request->sub_team);
         }
-        if (!empty($request->quote_status)) {
+        if (! empty($request->quote_status)) {
             $query->whereIn('quote_status_id', $request->quote_status);
         }
-        if (!empty($request->is_ecommerce)) {
+        if (! empty($request->is_ecommerce)) {
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
             $query->where('is_ecommerce', $isEcommerce);
         }
 
-        if (!empty($request->previous_quote_policy_number)) {
+        if (! empty($request->previous_quote_policy_number)) {
             $query->where('previous_quote_policy_number', $request->previous_quote_policy_number);
         }
-        if (!empty($request->renewal_batch)) {
+        if (! empty($request->renewal_batch)) {
             $query->where('renewal_batch', $request->renewal_batch);
         }
 
-        if (!empty($request->is_renewal)) {
+        if (! empty($request->is_renewal)) {
             if ($request->is_renewal == quoteTypeCode::yesText) {
                 $query->whereNotNull('previous_quote_policy_number');
             }
@@ -83,7 +81,6 @@ class HealthRevivalQuoteRepository extends BaseRepository
                 }
             });
         });
-
 
         $query->orderBy('created_at', 'desc');
 
