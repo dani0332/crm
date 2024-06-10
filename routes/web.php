@@ -55,6 +55,7 @@ use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
@@ -467,7 +468,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             ->names(generateRouteNames('renewal-batches'))
             ->middleware('check_route_access');
         Route::resource('tier', GenericCrudController::class);
-        Route::resource('quadrant', GenericCrudController::class);
+        Route::resource('quadrants', QuadrantController::class);
         Route::resource('rule', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');

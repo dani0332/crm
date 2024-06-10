@@ -1,6 +1,10 @@
 {
   "resources/js/inertia/inertia.js": {
+<<<<<<< feat/pet-create-fields
     "file": "assets/inertia-DQOT8hN6.js",
+=======
+    "file": "assets/inertia-D9_pgQ2n.js",
+>>>>>>> main
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
