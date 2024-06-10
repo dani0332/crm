@@ -12,7 +12,6 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
-use App\Models\JetskiQuote;
 use App\Models\KycLog;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
@@ -76,7 +75,7 @@ class AMLService
         return match ($quoteTypeId) {
             QuoteTypes::BIKE->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::CYCLE->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->touch(),
-            QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
+            QuoteTypes::JETSKI->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::PET->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::YACHT->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData)
         };
