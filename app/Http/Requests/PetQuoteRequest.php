@@ -29,8 +29,6 @@ class PetQuoteRequest extends FormRequest
             'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required|max:20',
-            'premium' => 'nullable|numeric',
-            'policy_number' => 'nullable|max:200',
             'pet_type_id' => 'required|exists:lookups,id',
             'breed_of_pet1' => 'required|max:200',
             'pet_age_id' => 'required|exists:lookups,id',
