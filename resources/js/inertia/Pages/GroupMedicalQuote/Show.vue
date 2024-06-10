@@ -369,6 +369,60 @@ watch(
 
 <template>
   <div>
+    <Head title="Group Medical Lead Detail" />
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+      <div class="flex gap-2 mb-3 justify-end">
+        <Link
+          v-if="
+            quoteDetails?.insly_id &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="`/legacy-policy/${quoteDetails?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          v-if="isDuplicateAllowed"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link :href="route('amt.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div">
+            Group Medical List
+          </x-button>
+        </Link>
+        <Link
+          v-if="!can(permissionsEnum.canEditQuote)"
+          :href="route('amt.edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div>
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -412,61 +466,9 @@ watch(
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="
-                quoteDetails?.insly_id &&
-                can(permissionsEnum.VIEW_LEGACY_DETAILS)
-              "
-              :href="`/legacy-policy/${quoteDetails?.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <Link
-              v-else-if="
-                quote.source == leadSource.RENEWAL_UPLOAD &&
-                can(permissionsEnum.VIEW_LEGACY_DETAILS)
-              "
-              :href="
-                route(
-                  'view-legacy-policy.renewal-uploads',
-                  quote.previous_quote_policy_number,
-                )
-              "
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button
-              v-if="isDuplicateAllowed"
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openDuplicate"
-            >
-              Duplicate Lead
-            </x-button>
-            <Link :href="route('amt.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Group Medical List
-              </x-button>
-            </Link>
-            <Link
-              v-if="!can(permissionsEnum.canEditQuote)"
-              :href="route('amt.edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-          </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
