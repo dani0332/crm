@@ -401,22 +401,24 @@ watch(
         />
       </x-field>
       <x-field label="Line Of Bussiness">
-        <x-select
+        <ComboBox
           v-model="filters.lob"
           placeholder="Search by Bussiness"
           :options="lobs"
           class="w-full"
+          :single="true"
           @update:modelValue="onLobChange"
         />
       </x-field>
       <x-field label="Teams">
-        <x-select
+        <ComboBox
           v-model="filters.team"
           placeholder="Select Team"
           :options="teamOptions"
           :loading="loaders.advisorOptions"
           class="w-full"
-          @update:modelValue="onTeamChange($event)"
+          :single="true"
+          @update:modelValue="onTeamChange"
         />
       </x-field>
       <x-field
@@ -430,8 +432,6 @@ watch(
           v-model="filters.advisors"
           placeholder="Search by Advisor Name"
           :options="advisorOptions"
-          :select-all="filters.advisors?.length > 0"
-          :deselect-all="filters.advisors?.length > 0"
           class="w-full"
           :loading="loaders.advisorOptions"
         />
