@@ -77,10 +77,10 @@ class AMLService
         $updateData = empty($updateData) ? ['pa_id' => auth()->id()] : $updateData;
 
         return match ($quoteTypeId) {
-            QuoteTypes::BIKE->id() => BikeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
-            QuoteTypes::CYCLE->id() => CycleQuote::where($filterColumn, $quoteRequestId)->touch(),
+            QuoteTypes::BIKE->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::CYCLE->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
-            QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::PET->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData),
             QuoteTypes::YACHT->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData)
         };
     }
