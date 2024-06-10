@@ -197,11 +197,12 @@ class LeadAllocationController extends Controller
             $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
             foreach ($request->max_cap as $item) {
                 if ($item['userId'] && $item['maxCap']) {
-                    $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $item['userId'])->first();
+                    if(!empty($quoteTypeId)) {
+                    $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('quote_type_id', $quoteTypeId)->where('user_id', $item['userId'])->first();
                     $leadAllocationObj->max_capacity = (int) $item['maxCap'];
-                    $leadAllocationObj->quote_type_id = $quoteTypeId;
                     $leadAllocationObj->save();
                     info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
+                    }
                 }
             }
         } else {
