@@ -34,6 +34,7 @@ const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const dateToYMD = date => {
@@ -113,6 +114,26 @@ const transactionPaymentStatus = computed(() => {
     return 'Paid';
   }
 });
+
+// use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
+const binAsInsurerCommissionTaxInvoiceNumber = computed(() => {
+  let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
+  const insuranceProviderCode = page.props.quote?.insurance_provider?.code;
+  let allowedInsuranceProvider = [
+    insuranceProviderCodeEnum.AAIC,
+    insuranceProviderCodeEnum.ALNC,
+    insuranceProviderCodeEnum.OALLIANZ,
+    insuranceProviderCodeEnum.CIG,
+    insuranceProviderCodeEnum.FPIL,
+    insuranceProviderCodeEnum.MTL,
+    insuranceProviderCodeEnum.NHICD,
+    insuranceProviderCodeEnum.ZILL,
+  ];
+  if (allowedInsuranceProvider.includes(insuranceProviderCode)) {
+    return brokerInvoiceNo;
+  }
+  return '';
+});
 const bpForm = useForm({
   booking_date:
     dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
@@ -124,7 +145,8 @@ const bpForm = useForm({
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
   insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
   insurer_commmission_invoice_number:
-    page.props?.payments[0]?.insurer_commmission_invoice_number || '',
+    page.props?.payments[0]?.insurer_commmission_invoice_number ||
+    binAsInsurerCommissionTaxInvoiceNumber,
   commission_vat_not_applicable:
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
