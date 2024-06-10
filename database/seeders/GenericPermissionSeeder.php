@@ -181,7 +181,7 @@ class GenericPermissionSeeder extends Seeder
     private function createAndAssignManulHealthPlanPermission()
     {
         $healthPlanPermission = Permission::where('name', PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)->first();
-        if (!$healthPlanPermission) {
+        if (! $healthPlanPermission) {
             Permission::create([
                 'name' => PermissionsEnum::ADD_MANUAL_HEALTH_PLAN,
                 'guard_name' => 'web',
@@ -191,7 +191,7 @@ class GenericPermissionSeeder extends Seeder
         // Add Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        if (!$role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
+        if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
             $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
         }
     }
