@@ -35,6 +35,7 @@ const props = defineProps({
     type: Object,
     default: [],
   },
+  isPlanDetailAvailable: Boolean,
 });
 
 const page = usePage();
@@ -431,6 +432,7 @@ const onKeyPress = (event) => {
 
     <!-- Indicative additional price & Plan details comp -->
     <LazyPlanDetails
+      v-if="props.isPlanDetailAvailable"
       :sendUpdateLog="sendUpdateLog"
       :updateLogOptions="updateLogOptions"
       :insuranceProviders="props.insuranceProviders"
