@@ -174,7 +174,7 @@ const onCoPaySelect = copayId => {
   });
 
   props.plan?.memberPremiumBreakdown?.forEach(members => {
-    members.ratesPerCopay.forEach(data => {
+    members?.ratesPerCopay?.forEach(data => {
       if (
         data.healthPlanCoPaymentId == copayId &&
         data.loadingPrice != undefined
@@ -435,7 +435,7 @@ onUpdated(() => {
   coPay.value = defaultCopayId.value; // get the default selected value for coPay
 
   props.plan?.memberPremiumBreakdown?.forEach(members => {
-    members.ratesPerCopay.forEach(data => {
+    members?.ratesPerCopay?.forEach(data => {
       if (
         data.healthPlanCoPaymentId == selectedCopay.value.id &&
         (!data.premium || data.premium == undefined)
