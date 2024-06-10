@@ -2513,14 +2513,36 @@ const getCaptureOption = computed(() => {
   };
 });
 
+const planText = ref();
+const fetchPlans = () => {
+  let providerId = props.sendUpdate?.insurance_provider_id;
+  let planId = props.sendUpdate?.plan_id;
+  let url = `/get-plans/${props.quoteType}/${providerId}/${planId}`;
+  axios.get(url)
+    .then(res => {
+      planText.value = res.data.text;
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+watch(() => props.sendUpdate?.plan_id, () => {
+  if (props.sendUpdate?.plan_id) {
+    fetchPlans();
+  }
+});
+
+onMounted(() => {
+  if (props.sendUpdate?.plan_id) {
+    fetchPlans();
+  }
+})
+
 const getPlanName = computed(() => {
   const plan = planDetail.value;
   if (props.sendUpdate) {
-    return (
-      props.sendUpdate?.plan_name ||
-      props.quoteRequest?.plan?.text ||
-      'Not Available'
-    );
+    return planText.value || 'Not Available';
   }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan
@@ -2553,11 +2575,7 @@ const providerName = computed(() => {
       provider => provider.id === providerId.value,
     );
 
-    return (
-      props.sendUpdate?.provider_name ||
-      (provider ? provider.text : null) ||
-      'Not Available'
-    );
+    return provider.text || 'Not Available';
   } else if (
     quoteTypesToCheck.includes(props.quoteType) &&
     plan.insurance_provider
