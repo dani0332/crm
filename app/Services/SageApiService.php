@@ -580,58 +580,57 @@ class SageApiService
             $startingStep = ($startingStep + 3);
         }
 
-        // For payment adjustments in Send Update, there should be payment in Send update.
-        if ($payment->send_update_log_id !== null) {
-            $totalSteps = 15;
-            if (strtolower($sageRequestPayload->invoicePaymentStatus) == PaymentStatusEnum::PAID && $payment->send_update_log_id !== null) {
-                if ($payment->frequency == PaymentFrequency::UPFRONT) {
-                    info('Book Update - Creating Apply Payment Invoices - Receipt One for Upfront Payment with Invoice Payment Status Paid');
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                        'iterator' => 0,
-                        'lastIteration' => 2,
-                        'startingStep' => $startingStep,
-                        'totalSteps' => $totalSteps,
-                        'entryType' => SageEnum::SCT_STRAIGHT,
-                        'requestType' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
-                        'payment' => $payment,
-                        'splitPayments' => $splitPayments,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                    ]);
-                } 
-                // Apply prepayment mapping manually on sage
-                // elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                //     info('Book Update - Creating Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
-                //     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                //         'iterator' => 0,
-                //         'lastIteration' => 2,
-                //         'startingStep' => $startingStep,
-                //         'totalSteps' => $totalSteps,
-                //         'entryType' => SageEnum::SCT_STRAIGHT,
-                //         'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
-                //         'payment' => $payment,
-                //         'splitPayments' => $splitPayments,
-                //         'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                //     ]);
-                // }
-                $totalSteps = 18;
-            }
+        // For Apply Pre-payment adjustments they should do it manually on Sage
+        // if ($payment->send_update_log_id !== null) {
+        //     $totalSteps = 15;
+        //     if (strtolower($sageRequestPayload->invoicePaymentStatus) == PaymentStatusEnum::PAID && $payment->send_update_log_id !== null) {
+        //         if ($payment->frequency == PaymentFrequency::UPFRONT) {
+        //             info('Book Update - Creating Apply Payment Invoices - Receipt One for Upfront Payment with Invoice Payment Status Paid');
+        //             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+        //                 'iterator' => 0,
+        //                 'lastIteration' => 2,
+        //                 'startingStep' => $startingStep,
+        //                 'totalSteps' => $totalSteps,
+        //                 'entryType' => SageEnum::SCT_STRAIGHT,
+        //                 'requestType' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
+        //                 'payment' => $payment,
+        //                 'splitPayments' => $splitPayments,
+        //                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
+        //             ]);
+        //         } 
+        //         // Apply prepayment mapping manually on sage
+        //         elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+        //             info('Book Update - Creating Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
+        //             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+        //                 'iterator' => 0,
+        //                 'lastIteration' => 2,
+        //                 'startingStep' => $startingStep,
+        //                 'totalSteps' => $totalSteps,
+        //                 'entryType' => SageEnum::SCT_STRAIGHT,
+        //                 'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
+        //                 'payment' => $payment,
+        //                 'splitPayments' => $splitPayments,
+        //                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
+        //             ]);
+        //         }
+        //         $totalSteps = 18;
+        //     }
 
-            // Apply prepayment mapping manually on sage
-            // if (! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]) && in_array($splitPayments[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
-            //     info('Book Update - Creating AR Split Pre Payment for Upfront/Split Payment with Payment Status Paid/Captured');
-            //     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-            //         'iterator' => 0,
-            //         'lastIteration' => 2,
-            //         'startingStep' => $startingStep,
-            //         'totalSteps' => $totalSteps,
-            //         'entryType' => SageEnum::SCT_STRAIGHT,
-            //         'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
-            //         'payment' => $payment,
-            //         'splitPayments' => $splitPayments,
-            //         'sendUpdateLog' => $extras['send_update_log'] ?? [],
-            //     ]);
-            // }
-        }
+        //     if (! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]) && in_array($splitPayments[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
+        //         info('Book Update - Creating AR Split Pre Payment for Upfront/Split Payment with Payment Status Paid/Captured');
+        //         $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+        //             'iterator' => 0,
+        //             'lastIteration' => 2,
+        //             'startingStep' => $startingStep,
+        //             'totalSteps' => $totalSteps,
+        //             'entryType' => SageEnum::SCT_STRAIGHT,
+        //             'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
+        //             'payment' => $payment,
+        //             'splitPayments' => $splitPayments,
+        //             'sendUpdateLog' => $extras['send_update_log'] ?? [],
+        //         ]);
+        //     }
+        // }
 
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices created successfully'];
         info('Book Update - Response: '.$response['message']);
