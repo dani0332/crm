@@ -3553,16 +3553,6 @@ watch(
       :payments="payments"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="modelType"
-      :paymentLink="paymentLink"
-      :expanded="sectionExpanded"
-    />
-
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Health"
@@ -3604,6 +3594,16 @@ watch(
       :quote="quote"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="modelType"
+      :paymentLink="paymentLink"
+      :expanded="sectionExpanded"
+    />
+    
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
