@@ -81,7 +81,7 @@ class AMLService
             QuoteTypes::CYCLE->id() => CycleQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
-            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData)
+            QuoteTypes::YACHT->id() => PersonalQuote::where($filterColumn, $quoteRequestId)->update($updateData)
         };
     }
 
