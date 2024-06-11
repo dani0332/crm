@@ -87,7 +87,6 @@ class AppServiceProvider extends ServiceProvider
         CycleQuote::observe(CycleQuoteObserver::class);
         BikeQuote::observe(BikeQuoteObserver::class);
         PersonalQuote::observe(PersonalQuoteObserver::class);
-
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,
