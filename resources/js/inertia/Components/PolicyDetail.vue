@@ -6,7 +6,7 @@ const page = usePage();
 const { price_vat_notapplicable, price_vat_applicable, isNumber } = useRules();
 
 const props = defineProps({
-  record: {
+  quote: {
     type: Object,
     default: {},
   },
@@ -51,7 +51,7 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 const policyIssuanceStatusOptions = computed(() => {
   let policyIssuanceStatus = page.props.policyIssuanceStatus;
   if (
-    page.props.record.policy_issuance_status_id !=
+    page.props.quote.policy_issuance_status_id !=
     page.props.policyIssuanceStatusEnum.PolicyIssued
   ) {
     policyIssuanceStatus = policyIssuanceStatus.filter(
@@ -69,7 +69,7 @@ const policyIssuanceStatusOptions = computed(() => {
 const planQuoteInsurerNumber = computed(() => {
   let quotePlanList = page.props?.listQuotePlans;
   if (!quotePlanList || typeof quotePlanList === 'string') return null;
-  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
+  let obj = quotePlanList?.filter(item => item.id == page.props.quote.plan_id);
   return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
 });
 
@@ -78,31 +78,31 @@ const policyDetailsState = reactive({
 });
 const policyDetailsForm = useForm({
   quote_policy_number:
-    page.props.record.policy_number == 'NULL'
+    page.props.quote.policy_number == 'NULL'
       ? ''
-      : page.props.record.policy_number || '',
+      : page.props.quote.policy_number || '',
 
   quote_policy_issuance_date:
-    dateToYMD(page.props.record.policy_issuance_date) ||
+    dateToYMD(page.props.quote.policy_issuance_date) ||
     new Date().toJSON().slice(0, 10),
-  price_vat_notapplicable: page.props.record.price_vat_not_applicable || '',
-  price_vat_applicable: page.props.record.price_vat_applicable || '',
-  vat: page.props.record.vat || '',
-  quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
+  price_vat_notapplicable: page.props.quote.price_vat_not_applicable || '',
+  price_vat_applicable: page.props.quote.price_vat_applicable || '',
+  vat: page.props.quote.vat || '',
+  quote_policy_start_date: dateToYMD(page.props.quote.policy_start_date) || '',
   quote_policy_expiry_date:
-    dateToYMD(page.props.record.renewal_expiry_date) || '',
+    dateToYMD(page.props.quote.renewal_expiry_date) || '',
   amount_with_vat: '',
   quote_plan_insurer_quote_number:
-    planQuoteInsurerNumber.value || page.props.record.insurer_quote_number,
-  quote_policy_issuance_status: page.props.record.policy_issuance_status_id,
+    planQuoteInsurerNumber.value || page.props.quote.insurer_quote_number,
+  quote_policy_issuance_status: page.props.quote.policy_issuance_status_id,
   quote_policy_issuance_status_other:
-    page.props.record.policy_issuance_status_other || '',
+    page.props.quote.policy_issuance_status_other || '',
   modelType: props.modelType,
-  quote_id: page.props.record.id,
+  quote_id: page.props.quote.id,
 });
 
 watch(
-  () => page.props.record.policy_issuance_status_id,
+  () => page.props.quote.policy_issuance_status_id,
   (newValue, oldValue) => {
     if (newValue !== oldValue) {
       policyDetailsForm.quote_policy_issuance_status = newValue;
@@ -111,11 +111,11 @@ watch(
 );
 
 watch(
-  () => page.props.record?.price_with_vat,
+  () => page.props.quote?.price_with_vat,
   (newValue, oldValue) => {
-    policyDetailsForm.price_vat_notapplicable =  page.props.record.price_vat_not_applicable || '';
-    policyDetailsForm.price_vat_applicable =  page.props.record.price_vat_applicable || '';
-    policyDetailsForm.vat= page.props.record.vat || '';
+    policyDetailsForm.price_vat_notapplicable =  page.props.quote.price_vat_not_applicable || '';
+    policyDetailsForm.price_vat_applicable =  page.props.quote.price_vat_applicable || '';
+    policyDetailsForm.vat= page.props.quote.vat || '';
 
     caculateVatAmount();
   },
@@ -196,7 +196,7 @@ const onUpdatePolicyDetails = isValid => {
     },
     onFinish: () => {
       policyDetailsState.isEditing = false;
-      router.visit(route(route().current(), props?.record.uuid), {
+      router.visit(route(route().current(), props?.quote.uuid), {
         method: 'get',
         preserveScroll: true,
       });
@@ -238,8 +238,8 @@ watch(
 const setQuotePlanInsurerNumber = () => {
   policyDetailsForm.quote_plan_insurer_quote_number =
     planQuoteInsurerNumber.value ||
-    page.props.record.insurer_quote_number ||
-    props.availablePlans?.find(item => item.id == page.props.record?.plan_id)
+    page.props.quote.insurer_quote_number ||
+    props.availablePlans?.find(item => item.id == page.props.quote?.plan_id)
       ?.insurerQuoteNo ||
     '';
 };
@@ -516,11 +516,11 @@ watch(
               <template
                 class="flex justify-end"
                 v-if="
-                  record.quote_status_id ==
+                  quote.quote_status_id ==
                     quoteStatusEnum.TransactionApproved ||
-                  record.quote_status_id == quoteStatusEnum.PolicyPending ||
-                  record.quote_status_id == quoteStatusEnum.PolicyIssued ||
-                  record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
+                  quote.quote_status_id == quoteStatusEnum.PolicyPending ||
+                  quote.quote_status_id == quoteStatusEnum.PolicyIssued ||
+                  quote.quote_status_id == quoteStatusEnum.PolicySentToCustomer
                 "
               >
                 <x-button
@@ -587,7 +587,7 @@ watch(
                 <x-tooltip>
                   <x-button
                     v-if="
-                      record.quote_status_id == quoteStatusEnum.PolicyBooked
+                      quote.quote_status_id == quoteStatusEnum.PolicyBooked
                     "
                     size="sm"
                     color="emerald"

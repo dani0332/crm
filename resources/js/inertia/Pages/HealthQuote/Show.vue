@@ -9,7 +9,6 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 
 const props = defineProps({
   quote: Object,
-  record: Object,
   leadStatuses: Array,
   ecomDetails: Object,
   coPayment: Object,
@@ -3636,7 +3635,7 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="health"
       :expanded="sectionExpanded"
       :payments="payments"
@@ -3646,7 +3645,7 @@ watch(
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
-      :quote="record"
+      :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Health"
@@ -3661,7 +3660,7 @@ watch(
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="health"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
