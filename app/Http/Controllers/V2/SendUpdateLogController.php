@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -16,6 +17,7 @@ use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
@@ -224,6 +226,7 @@ class SendUpdateLogController extends Controller
             'additionalField' => $additionalField ?? [],
             'issuanceStatuses' => $issuanceStatuses,
             'isPlanDetailAvailable' => $isPlanDetailAvailable,
+            'vatValue' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0,
         ]);
     }
 

@@ -58,6 +58,7 @@ const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const vat = page.props.vatValue;
 
 const dateToYMD = date => {
   if (date) {
@@ -192,7 +193,7 @@ const calculateCommission = () => {
   if (bookingDetailsForm.commission_vat_applicable > 0) {
     if (Number(bookingDetailsForm.price_vat_applicable > 0)) {
       let vat_on_commission =
-        bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
+        bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
       bookingDetailsForm.vat_on_commission =
         convertToNegative(vat_on_commission);
 
@@ -207,7 +208,7 @@ const calculateCommission = () => {
         Number(bookingDetailsForm.price_vat_applicable) +
         Number(bookingDetailsForm.price_vat_not_applicable);
       let total_vat_amount =
-        Number(bookingDetailsForm.price_vat_applicable) * Number(5 / 100);
+        Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
       bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
 
       let total_price =
