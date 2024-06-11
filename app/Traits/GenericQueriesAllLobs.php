@@ -218,7 +218,7 @@ trait GenericQueriesAllLobs
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
-        $infoMessage = 'Quote code '.$record->code.' ';
+        $infoMessage = 'QC '.$record->code.' ';
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
@@ -245,12 +245,12 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
-        $infoMessage .= 'Quote status id: '.$record->quote_status_id.' Is policy details filled: '.$isFilledPolicyDetails;
+        $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if (! in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
                 $isAllRequiredDocumentUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record);
-                $infoMessage .= ' Is all required documents are uploaded: '.$isAllRequiredDocumentUploaded;
+                $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
                 if ($isAllRequiredDocumentUploaded) {
                     $bookPolicyDetails['sendButton'] = true;
                     $bookPolicyDetails['text'] = 'Send Policy To Customer';
@@ -259,11 +259,11 @@ trait GenericQueriesAllLobs
                 if ($bookPolicyDetails['sendButton']) {
                     $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
-                    $infoMessage .= ' Tax document count: '.count($taxDocuments).' Uploaded document count: '.$taxDocumentsCount;
+                    $infoMessage .= ' TDC: '.count($taxDocuments).' UDC: '.$taxDocumentsCount;
                     if ($taxDocumentsCount == count($taxDocuments)) {
                         $bookPolicyDetails['editButton'] = true;
                         $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
-                        $infoMessage .= ' Booking details section filled '.$areBookingDetailsFilled;
+                        $infoMessage .= ' BDS '.$areBookingDetailsFilled;
                         if ($areBookingDetailsFilled) {
                             $bookPolicyDetails['bookButton'] = true;
                             $bookPolicyDetails['text'] = 'Send and Book Policy';
@@ -491,11 +491,11 @@ trait GenericQueriesAllLobs
 
         $difference = (float) number_format($initialDifference, 2);
 
-        $infoMessage = 'Captured Amount: '.$capturedAmount.' Discount Value: '.$discountValue.' Total Amount: '.$totalPaymentAmount.' ';
-        $infoMessage .= 'Initial Difference: '.$difference.' ';
+        $infoMessage = 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
+        $infoMessage .= 'ID: '.$difference.' ';
         if ($payment->system_adjusted_discount != null) {
             $difference += $payment->system_adjusted_discount;
-            $infoMessage .= 'System adjusted discount: '.$payment->system_adjusted_discount.' discount after system adjusted discount '.$difference;
+            $infoMessage .= 'SAD: '.$payment->system_adjusted_discount.' DASA '.$difference;
         }
         // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
         if ($difference <= 0.99 && $difference > 0) {
