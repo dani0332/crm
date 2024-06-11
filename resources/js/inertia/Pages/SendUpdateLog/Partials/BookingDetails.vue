@@ -59,6 +59,7 @@ const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const vat = page.props.vatValue;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -1377,10 +1378,24 @@ watch(() => props?.payments[0]?.discount_value,
                     </template>
                   </x-tooltip>
                 </div>
-                <div>
+                <div v-if="props.quoteType !== quoteTypeCodeEnum.Business">
                   <span>{{
                     bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
                   }}</span>
+                </div>
+                <div v-else>
+                  <x-input
+                      type="number"
+                      min="0"
+                      add step="any"
+                      v-model="bookingDetailsForm.price_vat_not_applicable"
+                      @change="calculateCommission"
+                      class="!mb-0 w-full"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter Price"
+                      :rules="[isRequired]"
+                      size="xs"
+                  />
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
