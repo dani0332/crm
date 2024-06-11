@@ -383,7 +383,8 @@ trait GenericQueriesAllLobs
         return $this->isLackingPayment($payment);
     }
 
-    private function updateTotalAmount($payment){
+    private function updateTotalAmount($payment)
+    {
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
             Log::info('Updating TA for PC: '.$payment->code);
             $captureAmount = $payment->captured_amount;
@@ -396,10 +397,10 @@ trait GenericQueriesAllLobs
             }
             $payment->total_amount = $totalAmount;
             $payment->save();
-            
-            if ($payment->paymentSplits){
+
+            if ($payment->paymentSplits) {
                 $splitPayment = $payment->paymentSplits()->first();
-                Log::info('Updating PA for PC: '.$payment->code . ' BTA: ' . $splitPayment->payment_amount  . ' WTA: '.$totalAmount);
+                Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$splitPayment->payment_amount.' WTA: '.$totalAmount);
                 $splitPayment->payment_amount = $totalAmount;
                 $splitPayment->save();
             }
@@ -438,6 +439,7 @@ trait GenericQueriesAllLobs
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
             Log::info('isLackingPayment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' Split payment count '.$sumOfSplitPayment);
+
             return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
 
