@@ -372,7 +372,7 @@ function updateReversalEntries(response) {
   reversalEntry.broker_invoice_number = (response.broker_invoice_number !== '') ? response.broker_invoice_number + '-REV' : '';
   reversalEntry.insurer_commission_invoice_number = (response.insurer_commmission_invoice_number !== '') ? response.insurer_commmission_invoice_number + '-REV' : '';
   reversalEntry.discount = response.discount_value || null;
-  reversalEntry.price_vat_applicable = response.send_update_log?.price_vat_applicable || response.paymentable?.price_without_vat;
+  reversalEntry.price_vat_applicable = response.send_update_log?.price_vat_applicable || response.paymentable?.price_vat_applicable;
   reversalEntry.commission_percentage = ((response.commmission_percentage !== null) ? response.commmission_percentage : response.send_update_log?.commission_percentage) ?? null;
   reversalEntry.price_vat_not_applicable = response.send_update_log?.price_vat_not_applicable || response.paymentable?.price_vat_not_applicable;
   reversalEntry.vat_on_commission = ((response.commission_vat !== null) ? response.commission_vat : response.send_update_log?.vat_on_commission) ?? null;
@@ -399,7 +399,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
-  bookingDetailsForm.discount = reversalEntry.discount || null;
+  bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
   bookingDetailsForm.price_vat_applicable = reversalEntry.price_vat_applicable || null;
   bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
   bookingDetailsForm.price_vat_not_applicable = reversalEntry.price_vat_not_applicable || null;
@@ -558,6 +558,7 @@ function sendUpdate(prePaymentCheck = true) {
       loader.sendUpdate = false;
       loader.sendUpdateSectionBtn = false;
       modals.attestRecord = false;
+      modals.paymentConfirmation = false;
       router.reload({ preserveState: true });
       notification.success({
         title: response.data.message,
@@ -646,6 +647,12 @@ const onCancel = () => {
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] = createReusableTemplate();
 const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusableTemplate();
+
+watch(() => props?.payments[0]?.discount_value,
+    (newValue, oldValue) => {
+      bookingDetailsForm.discount = newValue;
+    },
+);
 
 </script>
 

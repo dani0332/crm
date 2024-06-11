@@ -43,23 +43,8 @@ const planDetailsForm = useForm({
   id: props.sendUpdateLog?.id,
 });
 
-const isIndicativeAdditionalPrice = computed(() => {
-  let hasRestrictedSubType = false;
-  props.updateLogOptions?.forEach(option => {
-    if (
-      [sendUpdateEnums.MDOM, sendUpdateEnums.MDOV, sendUpdateEnums.MPC, sendUpdateEnums.ED, sendUpdateEnums.DM].includes(option.slug) &&
-      props.sendUpdateLog.option_id === option.value
-    ) {
-      hasRestrictedSubType = true;
-    }
-  });
-  return (
-    props.sendUpdateLog.category.code === 'EF' && !hasRestrictedSubType
-  );
-});
-
 const isPlanDetails = computed(() => {
-  return props.sendUpdateLog.category.code === 'CPD';
+  return props.sendUpdateLog.category.code === sendUpdateEnums.CPD;
 });
 
 const insuranceProvidersOptions = computed(() => {
@@ -138,12 +123,12 @@ const onCancel = () => {
 <template>
   <div
     class="p-4 rounded shadow mb-6 bg-white"
-    v-if="isPlanDetails || isIndicativeAdditionalPrice"
+    v-if="props.sendUpdateLog.category.code !== sendUpdateEnums.CIR"
   >
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <x-tooltip position="left" v-if="!isPlanDetails">
+          <x-tooltip v-if="!isPlanDetails" position="left">
             <label
               class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700"
             >

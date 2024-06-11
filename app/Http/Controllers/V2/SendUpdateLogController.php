@@ -108,7 +108,12 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        // we don't need to push this on production, need to remove this before production.
+        if (! SendUPdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
+            return redirect()->back()->with('error', 'Send update log not found');
+        }
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
+        $isPlanDetailAvailable = $this->sendUpdateLogService->isPlanDetailAvailable($sendUpdateLog); // check Indicative Additional Price section.
         if ($this->sendUpdateLogService->checkSendUpdatePermission($sendUpdateLog->category->code)) {
             return redirect()->back()->with('error', 'You don\'t have permission to this. ');
         }
@@ -218,6 +223,7 @@ class SendUpdateLogController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'additionalField' => $additionalField ?? [],
             'issuanceStatuses' => $issuanceStatuses,
+            'isPlanDetailAvailable' => $isPlanDetailAvailable,
         ]);
     }
 
@@ -418,11 +424,10 @@ class SendUpdateLogController extends Controller
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            info('Book Update - Sending Update to Sage300 Process Start. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
+            // SendUpdateToSagae 3rd parameter: False: Without AP Patch, True: With AP Patch
+            // TODO :: This is temporary solution, need to remove third param, this after AP Split patch working fine
+            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate, false);
             if ($sageResponse['status'] === false) {
-                logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
 
                 return response()->json(['message' => $sageResponse['message']], 500);
             }

@@ -92,7 +92,7 @@ class YachtQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
                         'paymentSplits.verifiedByUser',

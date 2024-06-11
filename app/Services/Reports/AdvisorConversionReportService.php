@@ -18,6 +18,7 @@ use App\Models\LeadSource;
 use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
+use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
@@ -131,6 +132,16 @@ class AdvisorConversionReportService extends BaseService
             ])
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
+            if (auth()->user()->isManagerORDeputy()) {
+                $userIds = UserManager::where('manager_id', auth()->user()->id)
+                    ->get()
+                    ->filter(function ($user) use ($userIds) {
+                        return in_array($user->user_id, $userIds);
+                    })
+                    ->pluck('user_id')
+                    ->toArray();
+            }
+
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
@@ -183,6 +194,16 @@ class AdvisorConversionReportService extends BaseService
             ])
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
+            if (auth()->user()->isManagerORDeputy()) {
+                $userIds = UserManager::where('manager_id', auth()->user()->id)
+                    ->get()
+                    ->filter(function ($user) use ($userIds) {
+                        return in_array($user->user_id, $userIds);
+                    })
+                    ->pluck('user_id')
+                    ->toArray();
+            }
+
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
 

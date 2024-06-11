@@ -135,6 +135,7 @@ class TravelQuoteService extends BaseService
             'tqr.insurer_quote_number',
             'tqr.policy_issuance_status_id',
             'tqr.policy_issuance_status_other',
+            'tqr.policy_booking_date',
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')

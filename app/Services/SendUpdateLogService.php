@@ -627,7 +627,7 @@ class SendUpdateLogService
         return $payment->update($sendUpdatePaymentDetails);
     }
 
-    public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
+    public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog, $apPatchCallEnable = true)
     {
         $categoryCode = $sendUpdateLog->category?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
@@ -642,6 +642,7 @@ class SendUpdateLogService
                     'category' => $categoryCode,
                     'option' => $sendUpdateLog->option->code,
                     'send_update_log' => $sendUpdateLog,
+                    'ap_patch_call_enable' => $apPatchCallEnable, // TODO :: This is temporary solution, this after AP Split patch working fine
                 ]
             );
 
@@ -657,6 +658,7 @@ class SendUpdateLogService
                     'category' => $categoryCode,
                     'send_update_log' => $sendUpdateLog,
                     'reverse_invoice' => $sendUpdateRequest->reversalInvoice,
+                    'ap_patch_call_enable' => $apPatchCallEnable, // TODO :: This is temporary solution, this after AP Split patch working fine
                 ]
             );
 
@@ -728,7 +730,7 @@ class SendUpdateLogService
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
                     $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'quote_batch_id' => null,
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
@@ -750,13 +752,6 @@ class SendUpdateLogService
                     } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity.
                         $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                     }
-                }
-                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-                        'quote_batch_id' => null,
-                    ]);
-                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
             }
 
@@ -823,5 +818,17 @@ class SendUpdateLogService
         $carQuote = CarQuote::where('uuid', $quoteUuid)->first();
 
         return $carQuote->plan->carAddons->toArray();
+    }
+
+    /**
+     * it will check for Indicative Additional Price section, if the option relation not available means it is Correction of Policy.
+     */
+    public function isPlanDetailAvailable($sendUpdateLog): bool
+    {
+        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -206,7 +206,6 @@ class YachtQuoteController extends Controller
             'sendUpdateEnum' => $sendUpdateEnum,
             'documentTypeCodes' => $documentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
-            'record' => $quote,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],

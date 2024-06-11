@@ -214,7 +214,6 @@ class TravelController extends Controller
         }
 
         return inertia('TravelQuote/Show', [
-            'record' => $record,
             'quote' => $record,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
