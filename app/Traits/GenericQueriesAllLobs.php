@@ -346,7 +346,7 @@ trait GenericQueriesAllLobs
         $priceWithVat = $quoteModel->price_with_vat;
         $paymentTotalPrice = $payment->total_price;
 
-        if ($payment && $priceWithVat != $paymentTotalPrice) {
+        if ($payment) {
 
             $difference = $this->handleSmallAmountDifference($payment, $priceWithVat);
 
@@ -388,7 +388,6 @@ trait GenericQueriesAllLobs
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
-
             return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
 
