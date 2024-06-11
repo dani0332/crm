@@ -5,7 +5,6 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 
 const props = defineProps({
   quote: Object,
-  record: Object,
   quoteType: String,
   quoteTypeId: Number,
   leadStatuses: Array,
@@ -1304,7 +1303,7 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="home"
       :expanded="sectionExpanded"
       :policyIssuanceStatus="policyIssuanceStatus"
@@ -1327,7 +1326,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="home"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

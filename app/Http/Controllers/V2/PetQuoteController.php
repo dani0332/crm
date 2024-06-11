@@ -197,7 +197,6 @@ class PetQuoteController extends Controller
             'cdnPath' => $cdnPath,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'record' => fn () => $quote,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
