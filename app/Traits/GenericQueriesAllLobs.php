@@ -300,14 +300,14 @@ trait GenericQueriesAllLobs
             $type = request()->quote_type;
         }
         $quote = $this->getQuoteObject($type, $id);
-        Log::info('Updating quote_status_id && policy_issuance_status_id for  : '.$quote->id);
+        Log::info('Updating quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-            Log::info('Is policy details filled for  : '.$quote->id.' '.$isPolicyDetailsFilled);
+            Log::info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
                 $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
-                Log::info('Is all required documens filled for  : '.$quote->id.' '.$isAllRequiredDocumentAreUploaded);
+                Log::info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
                 if ($isAllRequiredDocumentAreUploaded) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
@@ -315,7 +315,7 @@ trait GenericQueriesAllLobs
                         'policy_issuance_status_other' => '',
                     ]);
                 }
-                Log::info('Update done for quote_status_id && policy_issuance_status_id for  : '.$quote->id);
+                Log::info('Update done for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
             }
         }
     }
@@ -361,7 +361,7 @@ trait GenericQueriesAllLobs
 
     public function updatePriceAndDiscount($quoteModel): bool
     {
-        Log::info('Updating price & discount for: '.$quoteModel->id);
+        Log::info('Updating price & discount for: '.$quoteModel->uuid);
 
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         $priceWithVat = $quoteModel->price_with_vat;

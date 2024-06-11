@@ -1727,7 +1727,7 @@ class CRUDController extends Controller
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
         $this->updatePriceAndDiscount($quoteModel);
 
-        Log::info('Policy details update successfully for : '.$request->quote_id);
+        Log::info('Policy details update successfully for : '.$quoteModel->uuid);
 
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',
