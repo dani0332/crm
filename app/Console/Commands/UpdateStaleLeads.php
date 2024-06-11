@@ -44,6 +44,7 @@ class UpdateStaleLeads extends Command
 
         if ($currentDate->lessThan($specifiedDate)) {
             info('UpdateStaleLeads Command will run after 2024-06-22 23:59:59');
+
             return;
         }
 
