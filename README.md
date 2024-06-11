@@ -7,7 +7,6 @@ IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
 
 URLs:
 
-
 - [Live](https://imcrm.alfred.ae/)    
 - [Stage](https://imcrmstage.alfred.ae/)
 - [UAT](https://imcrmuat.alfred.ae)
@@ -174,4 +173,6 @@ I have created separate Docker files and configurations for local environments. 
 
 ## Conclusion
 By following these steps, you can easily run the project locally on Docker. Docker provides a convenient and isolated environment for development, ensuring consistency across different systems. If you encounter any issues, refer to the Docker documentation or seek assistance from the project team.
+
+
 
