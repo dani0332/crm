@@ -44,7 +44,6 @@ class UpdateStaleLeads extends Command
 
         if ($currentDate->lessThan($specifiedDate)) {
             info('UpdateStaleLeads Command will run after 2024-06-22 23:59:59');
-
             return;
         }
 
@@ -77,6 +76,7 @@ class UpdateStaleLeads extends Command
             info('------------------- Update Stale Leads Command - Updating - '.now().' : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))->endOfDay())
+                ->where('quote_status_date', '>=', Carbon::parse('2023-05-23')->startOfDay())
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
                     $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
                 })
@@ -84,12 +84,10 @@ class UpdateStaleLeads extends Command
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
                 })->chunkById(1000, function ($quoteDetails) {
                     foreach ($quoteDetails as $quoteDetail) {
-                        if ($quoteDetail->quote_status_date >= Carbon::parse('2023-05-23')->startOfDay()) {
-                            if (! isset($quoteDetail->stale_at)) {
-                                $quoteDetail->update([
-                                    'stale_at' => now(),
-                                ]);
-                            }
+                        if (! isset($quoteDetail->stale_at)) {
+                            $quoteDetail->update([
+                                'stale_at' => now(),
+                            ]);
                         }
                     }
                 });
