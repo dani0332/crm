@@ -359,4 +359,23 @@ class SendUpdateLogRepository extends BaseRepository
 
         return $query->sendUpdateOptions($quoteTypeId, $parentId, $businessInsuranceTypeId)->get();
     }
+
+    /*
+     * we don't need to push this on production, need to remove this before production.
+     */
+    public function fetchIsCategoryOrOptionAvailable($categoryId, $optionId): bool
+    {
+
+        if (! Lookup::find($categoryId)) {
+            return false;
+        }
+
+        if (! empty($optionId)) {
+            if (! Lookup::find($optionId)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
