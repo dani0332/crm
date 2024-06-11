@@ -47,11 +47,11 @@ class AMLService
         }
         $dateForNonMigratedPersonalQuotes = Carbon::parse($parseDate)->format(config('constants.DATE_FORMAT_ONLY'));
         $dataMigrationDate = match ((int) $quoteTypeId) {
-            (int) QuoteTypes::BIKE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
-            (int) QuoteTypes::YACHT->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            (int) QuoteTypes::BIKE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-12'),
+            (int) QuoteTypes::YACHT->id() => Carbon::createFromFormat('Y-m-d', '2023-08-15'),
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
-            (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
-            (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
         };
 
         return Carbon::createFromFormat(
