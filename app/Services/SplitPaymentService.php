@@ -7,6 +7,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentStatusTextEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -522,11 +523,11 @@ class SplitPaymentService
     {
         $paymentStatusText = $quotePaymentStatusText;
         if ($quotePaymentStatusId == PaymentStatusEnum::CAPTURED) {
-            $paymentStatusText = PaymentStatusEnum::PAID_TEXT;
+            $paymentStatusText = PaymentStatusTextEnum::PAID_TEXT;
         } elseif ($quotePaymentStatusId == PaymentStatusEnum::DRAFT) {
-            $paymentStatusText = PaymentStatusEnum::NEW_TEXT;
+            $paymentStatusText = PaymentStatusTextEnum::NEW_TEXT;
         } elseif ($quotePaymentStatusId == PaymentStatusEnum::PARTIAL_CAPTURED) {
-            $paymentStatusText = PaymentStatusEnum::PARTIALLY_PAID_TEXT;
+            $paymentStatusText = PaymentStatusTextEnum::PARTIALLY_PAID_TEXT;
         }
 
         return $paymentStatusText;

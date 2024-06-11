@@ -26,8 +26,5 @@ final class PaymentStatusEnum extends Enum
     public const NEW = 14;
     public const OVERDUE = 15;
     public const CREDIT_APPROVED = 16;
-    public const PARTIALLY_PAID = 17;
-    const PAID_TEXT = 'PAID';
-    const NEW_TEXT = 'NEW';
-    const PARTIALLY_PAID_TEXT = 'PARTIALLY_PAID';
+    public const PARTIALLY_PAID = 17;    
 }
