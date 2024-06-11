@@ -31,7 +31,6 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
   linkedQuoteDetails: Object,
-  record: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
@@ -1034,7 +1033,7 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Business"
       :expanded="sectionExpanded"
     />
@@ -1056,7 +1055,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Business"
       modelType="Group Medical"
       :bookPolicyDetails="bookPolicyDetails"

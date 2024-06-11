@@ -219,6 +219,7 @@ trait GenericQueriesAllLobs
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
+        $infoMessage = 'QC '.$record->code.' ';
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
@@ -244,10 +245,14 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isInsufficientPayment'] = $isInsufficientPayment;
         $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
+        $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
+        $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
-        if (! in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $this->isFilledPolicyDetails($quoteType, $record)) {
+        if (! in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
-                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)) {
+                $isAllRequiredDocumentUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record);
+                $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
+                if ($isAllRequiredDocumentUploaded) {
                     $bookPolicyDetails['sendButton'] = true;
                     $bookPolicyDetails['text'] = 'Send Policy To Customer';
                     $bookPolicyDetails['sendPolicyType'] = 'customer';
@@ -255,9 +260,12 @@ trait GenericQueriesAllLobs
                 if ($bookPolicyDetails['sendButton']) {
                     $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
+                    $infoMessage .= ' TDC: '.count($taxDocuments).' UDC: '.$taxDocumentsCount;
                     if ($taxDocumentsCount == count($taxDocuments)) {
                         $bookPolicyDetails['editButton'] = true;
-                        if ($this->areBookingDetailsFilled($payment)) {
+                        $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
+                        $infoMessage .= ' BDS '.$areBookingDetailsFilled;
+                        if ($areBookingDetailsFilled) {
                             $bookPolicyDetails['bookButton'] = true;
                             $bookPolicyDetails['text'] = 'Send and Book Policy';
                             $bookPolicyDetails['sendPolicyType'] = 'sage';
@@ -266,6 +274,9 @@ trait GenericQueriesAllLobs
                 }
             }
         }
+
+        Log::info($infoMessage);
+        Log::info('Book Policy Details: ', $bookPolicyDetails);
 
         return $bookPolicyDetails;
     }
@@ -282,6 +293,7 @@ trait GenericQueriesAllLobs
 
     public function updateQuoteStatus($type, $id)
     {
+
         if ($type == 'send-update') {
             return true;
         }
@@ -289,16 +301,22 @@ trait GenericQueriesAllLobs
             $type = request()->quote_type;
         }
         $quote = $this->getQuoteObject($type, $id);
+        Log::info('Updating quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
-            if ($this->isFilledPolicyDetails($type, $quote)) {
+            $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
+            Log::info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
+            if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
-                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote)) {
+                $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
+                Log::info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
+                if ($isAllRequiredDocumentAreUploaded) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
                         'policy_issuance_status_other' => '',
                     ]);
                 }
+                Log::info('Update done for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
             }
         }
     }
@@ -344,6 +362,8 @@ trait GenericQueriesAllLobs
 
     public function updatePriceAndDiscount($quoteModel): bool
     {
+        Log::info('Updating price & discount for: '.$quoteModel->uuid);
+
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         $priceWithVat = $quoteModel->price_with_vat;
         $paymentTotalPrice = $payment->total_price;
@@ -406,6 +426,9 @@ trait GenericQueriesAllLobs
         $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
 
+        info('isAllRequiredDocumentAreUploaded: '.$record->code.' Total number of document required: '.count($documentTypeCodes).' Upload nber of document: '.$quoteDocumentsCount);
+        info('documentTypeCodes: ', $documentTypeCodes);
+
         return $quoteDocumentsCount == count($documentTypeCodes);
     }
 
@@ -414,6 +437,7 @@ trait GenericQueriesAllLobs
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
+            Log::info('isLackingPayment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' Split payment count '.$sumOfSplitPayment);
             return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
 
@@ -482,6 +506,7 @@ trait GenericQueriesAllLobs
      */
     public function handleSmallAmountDifference(mixed $payment, mixed $priceWithVat): mixed
     {
+        $infoMessage = '';
         $capturedAmount = $payment->captured_amount;
         $discountValue = $payment->discount_value;
 
@@ -490,8 +515,11 @@ trait GenericQueriesAllLobs
 
         $difference = (float) number_format($initialDifference, 2);
 
+        $infoMessage = 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
+        $infoMessage .= 'ID: '.$difference.' ';
         if ($payment->system_adjusted_discount != null) {
             $difference += $payment->system_adjusted_discount;
+            $infoMessage .= 'SAD: '.$payment->system_adjusted_discount.' DASA '.$difference;
         }
         // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
         if ($difference <= 0.99 && $difference > 0) {
@@ -511,6 +539,8 @@ trait GenericQueriesAllLobs
                 $payment->discount_type = null;
             }
         }
+
+        Log::info($infoMessage);
 
         return $difference;
     }
