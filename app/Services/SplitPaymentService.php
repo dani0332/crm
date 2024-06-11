@@ -518,16 +518,17 @@ class SplitPaymentService
     }
 
     // function to map payment status text to quote payment status text
-    public function mapQuotePaymentStatus($quotePaymentStatusId,$quotePaymentStatusText)
+    public function mapQuotePaymentStatus($quotePaymentStatusId, $quotePaymentStatusText)
     {
         $paymentStatusText = $quotePaymentStatusText;
-        if($quotePaymentStatusId == PaymentStatusEnum::CAPTURED ){
+        if ($quotePaymentStatusId == PaymentStatusEnum::CAPTURED) {
             $paymentStatusText = PaymentStatusEnum::PAID_TEXT;
-        } else if ($quotePaymentStatusId == PaymentStatusEnum::DRAFT){
+        } elseif ($quotePaymentStatusId == PaymentStatusEnum::DRAFT) {
             $paymentStatusText = PaymentStatusEnum::NEW_TEXT;
-        } else if ($quotePaymentStatusId == PaymentStatusEnum::PARTIAL_CAPTURED) {
+        } elseif ($quotePaymentStatusId == PaymentStatusEnum::PARTIAL_CAPTURED) {
             $paymentStatusText = PaymentStatusEnum::PARTIALLY_PAID_TEXT;
         }
+
         return $paymentStatusText;
     }
 
