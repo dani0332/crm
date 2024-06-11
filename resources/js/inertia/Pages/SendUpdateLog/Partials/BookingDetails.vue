@@ -399,7 +399,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
-  bookingDetailsForm.discount = reversalEntry.discount || null;
+  bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
   bookingDetailsForm.price_vat_applicable = reversalEntry.price_vat_applicable || null;
   bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
   bookingDetailsForm.price_vat_not_applicable = reversalEntry.price_vat_not_applicable || null;
@@ -647,6 +647,12 @@ const onCancel = () => {
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] = createReusableTemplate();
 const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusableTemplate();
+
+watch(() => props?.payments[0]?.discount_value,
+    (newValue, oldValue) => {
+      bookingDetailsForm.discount = newValue;
+    },
+);
 
 </script>
 

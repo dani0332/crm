@@ -901,17 +901,6 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
             $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Health);
-            $listQuotePlans = [];
-            $quotePlans = $this->healthQuoteService->getQuotePlans($id);
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = [];
-            } else {
-                if (gettype($quotePlans) != 'string') {
-                    $listQuotePlans = $quotePlans->quote->plans;
-                } else {
-                    $listQuotePlans = [];
-                }
-            }
             $coPayment = $this->healthQuoteService->getCoPayment($id);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
             $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
@@ -985,7 +974,6 @@ class CRUDController extends Controller
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
-                'record' => $record,
                 'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -1716,6 +1704,8 @@ class CRUDController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyPending,
             ]);
         }
+        Log::info('Updating policy_issuer_id  : '.auth()->id());
+
         // store policy issuer
         $payment = $quoteModel->payments->first();
         $payment->policy_issuer_id = auth()->id();
@@ -1724,6 +1714,8 @@ class CRUDController extends Controller
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
         $this->updatePriceAndDiscount($quoteModel);
+
+        Log::info('Policy details update successfully for : '.$quoteModel->uuid);
 
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',

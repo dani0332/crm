@@ -108,7 +108,12 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        // we don't need to push this on production, need to remove this before production.
+        if (! SendUPdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
+            return redirect()->back()->with('error', 'Send update log not found');
+        }
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
+        $isPlanDetailAvailable = $this->sendUpdateLogService->isPlanDetailAvailable($sendUpdateLog); // check Indicative Additional Price section.
         if ($this->sendUpdateLogService->checkSendUpdatePermission($sendUpdateLog->category->code)) {
             return redirect()->back()->with('error', 'You don\'t have permission to this. ');
         }
@@ -218,6 +223,7 @@ class SendUpdateLogController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'additionalField' => $additionalField ?? [],
             'issuanceStatuses' => $issuanceStatuses,
+            'isPlanDetailAvailable' => $isPlanDetailAvailable,
         ]);
     }
 
