@@ -43,7 +43,6 @@ const props = defineProps({
   cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
-  record: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
@@ -998,7 +997,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       :quoteStatusEnum="quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="pet"
@@ -1023,7 +1022,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="pet"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

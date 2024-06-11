@@ -3469,7 +3469,7 @@ watch(
 
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
       :payments="payments"
@@ -3493,7 +3493,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       :quoteType="quoteType"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
