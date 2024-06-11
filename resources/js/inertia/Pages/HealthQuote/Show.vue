@@ -687,6 +687,10 @@ const onLoadAvailablePlansData = async () => {
         }
       });
 
+      if (selectedPlan.value?.id) {
+        let plans = plansTable.data.filter(x => x.id == selectedPlan.value?.id);
+        selectedPlan.value = { ...plans[0] };
+      }
       setTimeout(() => {
         onPlanFiltersSubmit();
       }, 800);

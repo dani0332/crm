@@ -101,6 +101,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.insurer_quote_number',
                 'bqr.policy_issuance_status_id',
                 'bqr.policy_issuance_status_other',
+                'bqr.policy_booking_date',
                 'policy_start_date',
                 'policy_issuance_date',
             )

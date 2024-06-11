@@ -268,7 +268,7 @@ class CentralController extends Controller
             $data['id'] = $quote->id;
 
             $sageService = new SageApiService();
-            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
+            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data, true, false);
 
             if ($response['status'] === false) {
                 return response()->json(['errors' => [
@@ -284,6 +284,7 @@ class CentralController extends Controller
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                'policy_booking_date' => Carbon::now(),
             ]);
 
             (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
