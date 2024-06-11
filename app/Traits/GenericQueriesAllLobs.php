@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
@@ -19,6 +20,7 @@ use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 trait GenericQueriesAllLobs
 {
@@ -355,13 +357,33 @@ trait GenericQueriesAllLobs
             // total price is actual price without discount
             $payment->total_price = $quoteModel->price_with_vat;
             $payment->save();
+            $this->updateTotalAmount($payment);
         }
 
         return $this->isLackingPayment($payment);
     }
 
     private function updateTotalAmount($payment){
-        
+        if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            Log::info('Updating TA for PC: '.$payment->code);
+            $captureAmount = $payment->captured_amount;
+            $totalPrice = $payment->total_price;
+            $discountValue = $payment->discount_value;
+            if ($captureAmount < ($totalPrice - $discountValue)) {
+                $totalAmount = $captureAmount;
+            } else {
+                $totalAmount = $totalPrice - $discountValue;
+            }
+            $payment->total_amount = $totalAmount;
+            $payment->save();
+            
+            if ($payment->paymentSplits){
+                $splitPayment = $payment->paymentSplits()->first();
+                Log::info('Updating PA for PC: '.$payment->code . ' BTA: ' . $splitPayment->payment_amount  . ' WTA: '.$totalAmount);
+                $splitPayment->payment_amount = $totalAmount;
+                $splitPayment->save();
+            }
+        }
     }
 
     private function isFilledPolicyDetails($type, $quote)
