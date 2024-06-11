@@ -1240,6 +1240,7 @@ class SagePayloadFactory
             'originalInsurerCommissionNumber' => (string) $payment['insurer_commmission_invoice_number'],
             'insurerGlLiaiblityAccount' => $payment->insuranceProvider?->gl_liaiblity_account,
             'sageVenderId' => $payment->insuranceProvider?->sage_vendor_id,
+            'sageInsurerCustomerId' => $payment->insuranceProvider?->sage_insurer_customer_id,
         ];
 
         if (! empty($splitPayments)) {
