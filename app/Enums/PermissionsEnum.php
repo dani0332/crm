@@ -241,23 +241,132 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
-    public const EMBEDDED_PRODUCT_ADVISOR = 'embedded-product-view';
-    public const EMBEDDED_PRODUCT_ADMIN = 'embedded-product-payment-cancel';
+    public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
+    public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
+    public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
+    public const LEAD_CARD_SEARCH = 'lead-card-search';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
+    public const STALE_LEADS_REPORT = 'stale-leads-report-view';
+    public const PIPELINE_REPORT = 'pipeline-report-view';
+    public const PET_CARD_VIEW = 'pet-quotes-card';
+    public const HEALTH_CARD_VIEW = 'health-cards';
+    public const HOME_CARD_VIEW = 'home-cardView';
+    public const YACHT_CARD_VIEW = 'yacht-quotes-card';
+    public const CYCLE_CARD_VIEW = 'cycle-quotes-card';
+    public const CORPLINE_CARD_VIEW = 'business-cards';
+    public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
     public const MANAGEMENT_REPORT = 'management-report';
     public const SEGMENT_FILTER = 'segment-filter';
     public const TEMP_UPDATE_TOTALPRICE = 'temp-update-totalprice';
     public const PLAN_DETAILS_ADD = 'plan-details-add';
     public const AVAILABLE_PLANS_SELECT_BUTTON = 'available-plans-select-button';
     public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
+    public const SAVE_QUOTE_NOTES = 'save-quote-notes';
+    public const UPDATE_QUOTE_NOTES = 'update-quote-notes';
+    public const DELETE_QUOTE_NOTES = 'delete-quote-notes';
     public const TOTAL_PREMIUM_LEADS_SALES_REPORT = 'total-premium-leads-sales-report';
     public const LEGACY_INSTALLMENTS = 'legacy-installments';
     public const LEGACY_INVOICES = 'legacy-invoices';
     public const LEGACY_PAYMENTS = 'legacy-payments';
     public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
     public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
+    public const BIKE_CONVERSION_REPORT = 'bike-conversion-report';
+    public const HEALTH_CONVERSION_REPORT = 'health-conversion-report';
+    public const TRAVEL_CONVERSION_REPORT = 'travel-conversion-report';
+    public const LIFE_CONVERSION_REPORT = 'life-conversion-report';
+    public const HOME_CONVERSION_REPORT = 'home-conversion-report';
+    public const PET_CONVERSION_REPORT = 'pet-conversion-report';
+    public const CYCLE_CONVERSION_REPORT = 'cycle-conversion-report';
+    public const YACHT_CONVERSION_REPORT = 'yacht-conversion-report';
+    public const CORPLINE_CONVERSION_REPORT = 'corpline-conversion-report';
+    public const GROUPMEDICAL_CONVERSION_REPORT = 'groupmedicals-conversion-report';
+    public const BIKE_COMPREHENSIVE_DASHBOARD = 'bike-comprehensive-dashboard';
+    public const HEALTH_COMPREHENSIVE_DASHBOARD = 'health-comprehensive-dashboard';
+    public const TRAVEL_COMPREHENSIVE_DASHBOARD = 'travel-comprehensive-dashboard';
+    public const LIFE_COMPREHENSIVE_DASHBOARD = 'life-comprehensive-dashboard';
+    public const HOME_COMPREHENSIVE_DASHBOARD = 'home-comprehensive-dashboard';
+    public const PET_COMPREHENSIVE_DASHBOARD = 'pet-comprehensive-dashboard';
+    public const CYCLE_COMPREHENSIVE_DASHBOARD = 'cycle-comprehensive-dashboard';
+    public const YACHT_COMPREHENSIVE_DASHBOARD = 'yacht-comprehensive-dashboard';
+    public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
+    public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
+    public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
+    public const CONVERSION_AS_AT_REPORT = 'conversion-as-at-report';
+    public const MOTOR_AS_AT_REPORT_MANAGER = 'motor-as-at-report-manager';
+    public const HEALTH_AS_AT_REPORT_MANAGER = 'health-as-at-report-manager';
+    public const TRAVEL_AS_AT_REPORT_MANAGER = 'travel-as-at-report-manager';
+    public const LIFE_AS_AT_REPORT_MANAGER = 'life-as-at-report-manager';
+    public const HOME_AS_AT_REPORT_MANAGER = 'home-as-at-report-manager';
+    public const PET_AS_AT_REPORT_MANAGER = 'pet-as-at-report-manager';
+    public const CYCLE_AS_AT_REPORT_MANAGER = 'cycle-as-at-report-manager';
+    public const YACHT_AS_AT_REPORT_MANAGER = 'yacht-as-at-report-manager';
+    public const BUSINESS_AS_AT_REPORT_MANAGER = 'business-as-at-report-manager';
+    public const GROUPMEDICALS_AS_AT_REPORT_MANAGER = 'groupmedicals-as-at-report-manager';
+    public const ACCESS_REPORT_SM = 'access-report-sm';
+    public const BIKE_DISTRIBUTION_REPORT = 'bike-distribution-report';
+    public const HEALTH_DISTRIBUTION_REPORT = 'health-distribution-report';
+    public const TRAVEL_DISTRIBUTION_REPORT = 'travel-distribution-report';
+    public const LIFE_DISTRIBUTION_REPORT = 'life-distribution-report';
+    public const HOME_DISTRIBUTION_REPORT = 'home-distribution-report';
+    public const PET_DISTRIBUTION_REPORT = 'pet-distribution-report';
+    public const CYCLE_DISTRIBUTION_REPORT = 'cycle-distribution-report';
+    public const YACHT_DISTRIBUTION_REPORT = 'yacht-distribution-report';
+    public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
+    public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
+    public const ADD_MANUAL_HEALTH_PLAN = 'add-manual-health-plan';
+
+    public static function getAdvisorConverionReportPermissions()
+    {
+        return [
+            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
+            PermissionsEnum::BIKE_CONVERSION_REPORT,
+            PermissionsEnum::HEALTH_CONVERSION_REPORT,
+            PermissionsEnum::TRAVEL_CONVERSION_REPORT,
+            PermissionsEnum::LIFE_CONVERSION_REPORT,
+            PermissionsEnum::HOME_CONVERSION_REPORT,
+            PermissionsEnum::PET_CONVERSION_REPORT,
+            PermissionsEnum::CYCLE_CONVERSION_REPORT,
+            PermissionsEnum::YACHT_CONVERSION_REPORT,
+            PermissionsEnum::CORPLINE_CONVERSION_REPORT,
+            PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT,
+        ];
+    }
+
+    public static function getComprehensiveDashboardPermissions()
+    {
+        return [
+            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
+            PermissionsEnum::BIKE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::HEALTH_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::TRAVEL_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+        ];
+    }
+
+    public static function getAdvisorDistributionReportPermissions()
+    {
+        return [
+            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+            PermissionsEnum::BIKE_DISTRIBUTION_REPORT,
+            PermissionsEnum::HEALTH_DISTRIBUTION_REPORT,
+            PermissionsEnum::TRAVEL_DISTRIBUTION_REPORT,
+            PermissionsEnum::LIFE_DISTRIBUTION_REPORT,
+            PermissionsEnum::HOME_DISTRIBUTION_REPORT,
+            PermissionsEnum::PET_DISTRIBUTION_REPORT,
+            PermissionsEnum::CYCLE_DISTRIBUTION_REPORT,
+            PermissionsEnum::YACHT_DISTRIBUTION_REPORT,
+            PermissionsEnum::CORPLINE_DISTRIBUTION_REPORT,
+            PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT,
+        ];
+    }
 }

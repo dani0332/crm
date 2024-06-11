@@ -22,11 +22,11 @@ class SaleDetailReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->select(
                 DB::raw('DISTINCT(personal_quotes.policy_number)'),
-                DB::raw("CONCAT(p.reference, ' ', p.tax_invoice_number) as transactions"),
+                DB::raw("CONCAT(p.reference, ' ', p.insurer_tax_number) as transactions"),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
                 DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
-                'personal_quotes.source',
+                'personal_quotes.source', 'personal_quotes.code',
                 't.name as team',
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
@@ -38,7 +38,7 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw('FORMAT(p.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
                 DB::raw('FORMAT((commission_vat_applicable + commission_vat),2) as total_commission'),
                 DB::raw('UPPER(p.collection_type) as collects'),
-                'tax_invoice_number as insurer_tax_invoice_number',
+                'p.insurer_tax_number as insurer_tax_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
@@ -47,12 +47,12 @@ class SaleDetailReportService extends ManagementReport
                 'cm.code as customer_type',
                 'ip.code as insurer',
                 'quote_type.text as line_of_business',
-                'btoi.text as sub_type_line_of_business',
                 'u.name as advisor',
                 'pi.name as policy_issuer',
+                'btoi.text as sub_type_line_of_business',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->join('payment_splits as ps', 'personal_quotes.code', '=', 'ps.code')
+            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
@@ -62,8 +62,7 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
             ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id')
-            ->leftJoin('business_quote_request as bqr', 'bqr.code', '=', 'personal_quotes.code')
-            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'bqr.business_type_of_insurance_id');
+            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id');
 
         $this->applyFilters($query, $request);
 

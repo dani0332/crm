@@ -58,6 +58,7 @@ const outboundCoverageCode = [
   { value: 'singleTrip', label: 'Single Trip' },
   { value: 'annualTrip', label: 'Annual Trip' },
 ];
+
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
@@ -114,7 +115,7 @@ const subTeamOptions = [
   { value: 'travelUaeOutbound', label: 'Outside UAE (OutBound)' },
 ];
 
-function filterQuotes(isValid) {
+function onSubmit(isValid) {
   if (!isValid) {
     return;
   }
@@ -127,7 +128,6 @@ function filterQuotes(isValid) {
   router.visit(route('travel.index'), {
     method: 'get',
     data: filters,
-
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -243,7 +243,7 @@ onMounted(() => {
     <Head title="Travel List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
-      <div class="space-x-3">
+      <div class="flex space-x-2 items-center">
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
           <x-button size="sm" color="#1d83bc" tag="div">
             Upload Expired Leads
@@ -258,7 +258,7 @@ onMounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="filterQuotes" :auto-focus="false">
+    <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
@@ -351,13 +351,12 @@ onMounted(() => {
           />
         </x-field>
         <x-field label="Payment Status">
-          <x-select
-            name="payment_status_id"
-            v-model="filters.payment_status_id"
-            placeholder="Search by Payment Status"
-            :options="paymentStatusOptions"
-            class="w-full"
-          />
+            <ComboBox
+                v-model="filters.payment_status_id"
+                placeholder="Search by Payment Status"
+                :options="paymentStatusOptions"
+                :single="true"
+            />
         </x-field>
         <x-field label="Travel Type" required>
           <x-select

@@ -266,41 +266,57 @@ function getMonthName(monthNumber) {
 }
 
 function calculateValuesAndHighlight() {
-    lastMonthSummedIndex = 0;
-    lastMonthSummedIndexForSuperRetention = 0;
-    currentRowSpan = 0;
-
+    lastMonthSummedIndex = 0;  // to track till which month the sum has been calculated
+    lastMonthSummedIndexForSuperRetention = 0; // to track till which month the sum has been calculated for super retention
+    currentRowSpan = 0; // to determine the rowspan of the monthly retention column
 
     let segmentFilter = filters.segment ? filters.segment : '';
 
+    // process the data to get the correct values for the retention report
     reportDataRef.forEach((item, index) => {
+        let dynamicIndexForRenewedByVolumeSegment = 'renewed_by_volume_segment_advisors_for_' + item.name;
+        let dynamicIndexForRenewedByValueSegment = 'renewed_by_value_segment_advisors_for_' + item.name;
+        let dynamicIndexForTotalByVolumeSegment = 'total_by_volume_segment_advisors_for_' + item.name;
+        let dynamicIndexForTotalByValueSegment = 'total_by_value_segment_advisors_for_' + item.name;
+
+        let dynamicIndexForCarSoldByVolumeSegment = 'car_sold_by_volume_segment_for_' + item.name;
+        let dynamicIndexForCarSoldByValueSegment = 'car_sold_by_value_segment_for_' + item.name;
 
         if (segmentFilter == 'volume') {
-            item.total_allocated_leads = item.total_by_volume_segment_advisors
-            item.renewed = item.renewed_by_volume_segment_advisors
-            item.car_sold = item.car_sold_by_volume_segment
-            // item.uncontactable = item.uncontactable_by_volume_segment
+            item.total_allocated_leads = item[dynamicIndexForTotalByVolumeSegment]
+            item.renewed = item[dynamicIndexForRenewedByVolumeSegment]
+            item.car_sold = item[dynamicIndexForCarSoldByVolumeSegment]
+            // item.early_renewal = item.early_renewal_by_volume_segment    // tempory hidden don't remove
         } else if (segmentFilter == 'value') {
-            item.total_allocated_leads = item.total_by_value_segment_advisors
-            item.renewed = item.renewed_by_value_segment_advisors
-            item.car_sold = item.car_sold_by_value_segment
-            // item.uncontactable = item.uncontactable_by_value_segment
+            item.total_allocated_leads = item[dynamicIndexForTotalByValueSegment]
+            item.renewed = item[dynamicIndexForRenewedByValueSegment]
+            item.car_sold = item[dynamicIndexForCarSoldByValueSegment]
+            // item.early_renewal = item.early_renewal_by_value_segment   // tempory hidden don't remove
         }
     });
-
+    // process the data to get the correct values for the super retention report
     superRetentionDataRef.forEach((superItem, superIndex) => {
-        if (segmentFilter == 'volume') {
-            superItem.health_converted = superItem.health_converted_by_volume_segment_advisors
-        } else if (segmentFilter == 'value') {
-            superItem.health_converted = superItem.health_converted_by_value_segment_advisors
-        }
+        let dynamicIndexForConvertedByVolumeSegment = 'health_converted_by_volume_segment_advisors_for_' + superItem.name;
+        let dynamicIndexForConvertedByValueSegment = 'health_converted_by_value_segment_advisors_for_' + superItem.name;
 
+        if (segmentFilter == 'volume') {
+            superItem.health_converted = superItem[dynamicIndexForConvertedByVolumeSegment]
+        } else if (segmentFilter == 'value') {
+            superItem.health_converted = superItem[dynamicIndexForConvertedByValueSegment]
+        }
         superItem.monthlyHealthRenewed = calculateMonthlyHealthRenewed(superRetentionDataRef, superIndex);
         superItem.rowSpan = currentRowSpanForSuperRetention;
-
     });
 
     reportDataRef.forEach((item, index) => {
+        let dynamicIndexForRenewedByVolumeSegment = 'renewed_by_volume_segment_advisors_for_' + item.name;
+        let dynamicIndexForRenewedByValueSegment = 'renewed_by_value_segment_advisors_for_' + item.name;
+        let dynamicIndexForTotalByVolumeSegment = 'total_by_volume_segment_advisors_for_' + item.name;
+        let dynamicIndexForTotalByValueSegment = 'total_by_value_segment_advisors_for_' + item.name;
+
+        let dynamicIndexForCarSoldByVolumeSegment = 'car_sold_by_volume_segment_for_' + item.name;
+        let dynamicIndexForCarSoldByValueSegment = 'car_sold_by_value_segment_for_' + item.name;
+
         let fontColorAssigned = false;
         let advisorRetention =
             (
@@ -309,7 +325,7 @@ function calculateValuesAndHighlight() {
                     (
                         parseInt(item.total_allocated_leads) -
                         parseInt(item.car_sold)
-                        // - parseInt(item.uncontactable)
+                        // - parseInt(item.early_renewal) // tempory hidden don't remove
                     )) * 100
 
             ).toFixed(2);
@@ -326,13 +342,12 @@ function calculateValuesAndHighlight() {
                     (
                         parseInt(item.total_allocated_leads_by_all_advisors) -
                         parseInt(item.car_sold_by_all_advisors)
-                        // - parseInt(item.uncontactable_by_all_advisors)
+                        // - parseInt(item.early_renewal_by_all_advisors) // tempory hidden don't remove
                     )) * 100
 
             ).toFixed(2);
 
             rawRetention = ((item.renewed_by_all_advisors / item.total_allocated_leads_by_all_advisors) * 100).toFixed(2);
-
         }
         else {
             imRetention = (
@@ -341,34 +356,34 @@ function calculateValuesAndHighlight() {
                     (
                         parseInt(item.total_allocated_leads) -
                         parseInt(item.car_sold)
-                        // - parseInt(item.uncontactable)
+                        // - parseInt(item.early_renewal) // tempory hidden don't remove
                     )) * 100
 
             ).toFixed(2);
 
             rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(2);
-
         }
         imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
 
         let valueSegmentConversion = (
             (
-                parseInt(item.renewed_by_value_segment_advisors) /
+                parseInt(item[dynamicIndexForRenewedByValueSegment]
+                ) /
                 (
-                    parseInt(item.total_by_value_segment_advisors) -
-                    parseInt(item.car_sold_by_value_segment)
-                    // - parseInt(item.uncontactable_by_value_segment)
+                    parseInt(item[dynamicIndexForTotalByValueSegment]) -
+                    parseInt(item[dynamicIndexForCarSoldByValueSegment])
+                    // - parseInt(item.early_renewal_by_value_segment) // tempory hidden don't remove
                 )) * 100
         ).toFixed(2);
         valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
 
         let volumeSegmentConversion = (
             (
-                parseInt(item.renewed_by_volume_segment_advisors) /
+                parseInt(item[dynamicIndexForRenewedByVolumeSegment]) /
                 (
-                    parseInt(item.total_by_volume_segment_advisors) -
-                    parseInt(item.car_sold_by_volume_segment)
-                    // - parseInt(item.uncontactable_by_volume_segment)
+                    parseInt(item[dynamicIndexForTotalByVolumeSegment]) -
+                    parseInt(item[dynamicIndexForCarSoldByVolumeSegment])
+                    // - parseInt(item.early_renewal_by_volume_segment) // tempory hidden don't remove
                 )) * 100
         ).toFixed(2);
         volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
@@ -384,11 +399,10 @@ function calculateValuesAndHighlight() {
                 parseInt(item.total_allocated_leads)
             ) * 100
         ).toFixed(2);
-        ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
 
+        ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
         item.ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
         item.advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
-
         item.volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
         item.valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
         item.imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
@@ -477,14 +491,11 @@ function calculateValuesAndHighlight() {
             });
         }
     });
-
     monthlyIMAverages = calculateMonthlyAverages(avgImRetentionArr);
     monthlyRawAverages = calculateMonthlyAverages(avgRawRetentionArr);
-
     // reset arrays
     avgImRetentionArr = {};
     avgRawRetentionArr = {};
-
 }
 
 const calculateMonthlyHealthRenewed = (data, index) =>{
@@ -533,7 +544,7 @@ const calculateMonthlySum = (data, index) => {
     let totalRenewed = 0;
     let totalAllocated = 0;
     let totalCarSold = 0;
-    // let totalCarUncontactable = 0;
+    // let totalEarlyRenewal = 0; // tempory hidden don't remove
     currentRowSpan = 0;
 
     let currentMonthValue = data[index].month;
@@ -544,17 +555,19 @@ const calculateMonthlySum = (data, index) => {
             totalRenewed = parseInt(totalRenewed) + parseInt(data[index].renewed);
             totalAllocated = parseInt(totalAllocated) + parseInt(data[index].total_allocated_leads);
             totalCarSold = parseInt(totalCarSold) + parseInt(data[index].car_sold);
-            // totalCarUncontactable = parseInt(totalCarUncontactable) + parseInt(data[index].uncontactable);
+            // totalEarlyRenewal = parseInt(totalEarlyRenewal) + parseInt(data[index].early_renewal); // tempory hidden don't remove
             index++;
             lastMonthSummedIndex = index;
             currentRowSpan++;
         }
 
         renewedCountsList[currentMonthValue] = totalRenewed;
-        totalAllocationList[currentMonthValue] = ( totalAllocated - totalCarSold );
+        totalAllocationList[currentMonthValue] = ( totalAllocated - (totalCarSold
+        // + totalEarlyRenewal // tempory hidden don't remove
+        ) );
 
         let result = totalRenewed / (totalAllocated - totalCarSold
-        // - totalCarUncontactable
+        // - totalEarlyRenewal // tempory hidden don't remove
         ) * 100;
 
         return (result).toFixed(2);
@@ -604,26 +617,23 @@ watch(
                     value: key,
                     label: filterOptions.batches[key],
                 }))
-                    " :max-limit="15" deselect-all />
+                    " :max-limit="15" />
 
                 <ComboBox v-if="hasAnyRole([rolesEnum.SeniorManagement, rolesEnum.Accounts])" v-model="filters.teams"
                     label="Teams" placeholder="Search by Teams" :options="Object.keys(filterOptions.teams).map(key => ({
                         value: key,
                         label: filterOptions.teams[key],
                     }))
-                        " @update:model-value="onTeamChange" :select-all="filters.teams?.length > 0"
-                    :deselect-all="filters.teams?.length > 0" />
+                        " @update:model-value="onTeamChange" />
 
                 <ComboBox
                     v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                     v-model="filters.advisors" label="Advisors" placeholder="Search by Advisors" :options="advisorOptions"
-                    :loading="loaders.advisorOptions" :select-all="filters.advisors?.length > 0"
-                    :deselect-all="filters.advisors?.length > 0" />
+                    :loading="loaders.advisorOptions" />
 
                 <ComboBox v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement])"
                     v-model="filters.subTeams" label="Sub Team" placeholder="Search by Sub Team" class="w-full"
-                    :options="subTeamsOptions" :select-all="filters.subTeams?.length > 0"
-                    :deselect-all="filters.subTeams?.length > 0" />
+                    :options="subTeamsOptions" />
 
                 <x-select v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager])" v-model="filters.segment"
                     label="Segment" placeholder="Search by Segment" class="w-full" :options="Object.keys(filterOptions.segments).map(key => ({
@@ -674,11 +684,9 @@ watch(
                                 <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                     Approved Car Sold
                                 </th>
-
                                 <!-- <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                    Approved Uncontactable
+                                    Approved Early Renewals  // tempory hidden don't remove
                                 </th> -->
-
                                 <th v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                     Ratio - Approved Car Sold
@@ -717,9 +725,12 @@ watch(
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.car_sold.toLocaleString() }}
                                 </td>
+                                <!-- // tempory hidden don't remove -->
+
                                 <!-- <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.uncontactable.toLocaleString() }}
+                                    {{ item.early_renewal.toLocaleString() }} // tempory hidden don't remove
                                 </td> -->
+
                                 <td v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.ratioCarSoldUncontactable }}%
@@ -728,7 +739,7 @@ watch(
                                     <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
                                     <p v-if="item.total_allocated_leads == 0"> 0 </p>
                                     <p v-else>{{ (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold)
-                                        // + parseInt(item.uncontactable)
+                                        // + parseInt(item.early_renewal) // tempory hidden don't remove
                                         )).toLocaleString() }} </p>
                                 </td>
                                 <td :class="item.advisorRetentionClass" class="x-table-cell px-3 py-4 align-middle">

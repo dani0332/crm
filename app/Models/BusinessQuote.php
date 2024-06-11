@@ -29,6 +29,7 @@ class BusinessQuote extends Model implements AuditableContract
         'quote_status_id' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
         'source' => FilterTypes::EXACT,
+        'business_type_of_insurance_id' => FilterTypes::IN,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'previous_quote_policy_number' => FilterTypes::EXACT,
     ];
@@ -107,6 +108,17 @@ class BusinessQuote extends Model implements AuditableContract
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Business);
+    }
+
+    public function notes()
+    {
+        return $this->morphMany(QuoteNote::class, 'quote_noteable');
     }
 
     public function insuranceProviderDetails()
