@@ -11,7 +11,7 @@ const props = defineProps({
   },
 });
 
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, maxValue } = useRules();
 const isEmptyField = ref(false);
 const isError = ref(false);
 const page = usePage();
@@ -197,6 +197,12 @@ const setCarMake = id => {
     props.dropdownSource.car_make_id = data;
   });
 };
+
+const cylinderValidation = event => {
+  if (quoteForm.cylinder && quoteForm.cylinder.length >= 5) {
+    event.preventDefault();
+  }
+};
 </script>
 
 <template>
@@ -370,6 +376,7 @@ const setCarMake = id => {
             type="number"
             :rules="[isRequired]"
             :error="quoteForm.errors.cylinder"
+            @keypress="cylinderValidation"
           />
         </x-field>
 

@@ -133,6 +133,7 @@ class HealthQuoteService extends BaseService
             'hqr.kyc_decision',
             'hqr.risk_score',
             'hqr.enquiry_count',
+            'hqr.policy_booking_date',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
