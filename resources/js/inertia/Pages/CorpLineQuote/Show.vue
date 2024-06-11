@@ -41,7 +41,6 @@ const props = defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
-  parentLeadDetails: Object,
   linkedQuoteDetails: Array,
   bookPolicyDetails: Array,
 });
@@ -817,8 +816,8 @@ watch(
                     v-if="quote.parent_duplicate_quote_id"
                     :href="
                       getDetailPageRoute(
-                        parentLeadDetails.uuid,
-                        parentLeadDetails.quote_type_id,
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
                       )
                     "
                     class="text-primary-500 hover:underline"
