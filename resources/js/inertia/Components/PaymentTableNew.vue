@@ -336,7 +336,7 @@ const isPaymentLocked = computed(() => {
   if (
       paymentMethodsForm.status == 'edit' &&
       (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.CancellationPending ||
-      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.CancellationPending ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyCancelled ||
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked)
       ) {
     return true;
