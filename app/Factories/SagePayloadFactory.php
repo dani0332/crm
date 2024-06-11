@@ -406,7 +406,7 @@ class SagePayloadFactory
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
                 [
-                    'CustomerNumber' => $request->customerId,
+                    'CustomerNumber' => $request->sageInsurerCustomerId,
                     'DocumentNumber' => $request->insurerCommissionNumber,
                     'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
@@ -567,7 +567,7 @@ class SagePayloadFactory
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
                 [
-                    'CustomerNumber' => $request->customerId,
+                    'CustomerNumber' => $request->sageInsurerCustomerId,
                     'DocumentNumber' => $request->insurerCommissionNumber,
                     'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
