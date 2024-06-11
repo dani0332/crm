@@ -51,6 +51,7 @@ final class quoteBusinessTypeCode extends Enum
     {
         return match ($value) {
             quoteBusinessTypeCode::groupMedical => 5,
+            quoteBusinessTypeCode::carFleet => 9,
         };
     }
 }

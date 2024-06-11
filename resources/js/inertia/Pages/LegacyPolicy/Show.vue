@@ -13,6 +13,7 @@ const props = defineProps({
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
+const notification = useNotifications('toast');
 const moveToImcrmModal = ref(false);
 const can = permission => useCan(permission);
 const itemCount = ref(false);
@@ -80,7 +81,6 @@ const submitLead = policy => {
   }
 };
 
-const notification = useNotifications('toast');
 const single = ref(true);
 const lobLink = ref('');
 const lobCode = ref('');
