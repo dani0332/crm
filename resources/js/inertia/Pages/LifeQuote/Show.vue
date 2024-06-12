@@ -8,7 +8,6 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 const page = usePage();
 defineProps({
   quote: Object,
-  record: Object,
   quoteStatuses: Object,
   quoteType: String,
   quoteTypeId: Number,
@@ -1252,7 +1251,7 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
@@ -1276,7 +1275,7 @@ watch(
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="life"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

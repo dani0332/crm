@@ -58,6 +58,8 @@ const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const vat = page.props.vatValue;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -192,7 +194,7 @@ const calculateCommission = () => {
   if (bookingDetailsForm.commission_vat_applicable > 0) {
     if (Number(bookingDetailsForm.price_vat_applicable > 0)) {
       let vat_on_commission =
-        bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
+        bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
       bookingDetailsForm.vat_on_commission =
         convertToNegative(vat_on_commission);
 
@@ -207,7 +209,7 @@ const calculateCommission = () => {
         Number(bookingDetailsForm.price_vat_applicable) +
         Number(bookingDetailsForm.price_vat_not_applicable);
       let total_vat_amount =
-        Number(bookingDetailsForm.price_vat_applicable) * Number(5 / 100);
+        Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
       bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
 
       let total_price =
@@ -240,9 +242,9 @@ const calculateCommission = () => {
       });
     }
   } else {
-    bookingDetailsForm.commission_percentage = '';
-    bookingDetailsForm.vat_on_commission = '';
-    bookingDetailsForm.total_commission = '';
+    bookingDetailsForm.commission_percentage = '0.00';
+    bookingDetailsForm.vat_on_commission = '0.00';
+    bookingDetailsForm.total_commission = '0.00';
   }
 };
 
@@ -372,7 +374,7 @@ function updateReversalEntries(response) {
   reversalEntry.broker_invoice_number = (response.broker_invoice_number !== '') ? response.broker_invoice_number + '-REV' : '';
   reversalEntry.insurer_commission_invoice_number = (response.insurer_commmission_invoice_number !== '') ? response.insurer_commmission_invoice_number + '-REV' : '';
   reversalEntry.discount = response.discount_value || null;
-  reversalEntry.price_vat_applicable = response.send_update_log?.price_vat_applicable || response.paymentable?.price_without_vat;
+  reversalEntry.price_vat_applicable = response.send_update_log?.price_vat_applicable || response.paymentable?.price_vat_applicable;
   reversalEntry.commission_percentage = ((response.commmission_percentage !== null) ? response.commmission_percentage : response.send_update_log?.commission_percentage) ?? null;
   reversalEntry.price_vat_not_applicable = response.send_update_log?.price_vat_not_applicable || response.paymentable?.price_vat_not_applicable;
   reversalEntry.vat_on_commission = ((response.commission_vat !== null) ? response.commission_vat : response.send_update_log?.vat_on_commission) ?? null;
@@ -399,7 +401,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
-  bookingDetailsForm.discount = reversalEntry.discount || null;
+  bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
   bookingDetailsForm.price_vat_applicable = reversalEntry.price_vat_applicable || null;
   bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
   bookingDetailsForm.price_vat_not_applicable = reversalEntry.price_vat_not_applicable || null;
@@ -558,6 +560,7 @@ function sendUpdate(prePaymentCheck = true) {
       loader.sendUpdate = false;
       loader.sendUpdateSectionBtn = false;
       modals.attestRecord = false;
+      modals.paymentConfirmation = false;
       router.reload({ preserveState: true });
       notification.success({
         title: response.data.message,
@@ -646,6 +649,12 @@ const onCancel = () => {
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] = createReusableTemplate();
 const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusableTemplate();
+
+watch(() => props?.payments[0]?.discount_value,
+    (newValue, oldValue) => {
+      bookingDetailsForm.discount = newValue;
+    },
+);
 
 </script>
 
@@ -1350,8 +1359,8 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </div>
                 <div>
                   <span>{{ (bookingDetailsForm.commission_percentage !== '') ? 
-                    bookingDetailsForm.commission_percentage + '%' : 
-                    'N/A' 
+                    bookingDetailsForm.commission_percentage + '%' :
+                    'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1369,10 +1378,24 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                     </template>
                   </x-tooltip>
                 </div>
-                <div>
+                <div v-if="props.quoteType !== quoteTypeCodeEnum.Business">
                   <span>{{
                     bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
                   }}</span>
+                </div>
+                <div v-else>
+                  <x-input
+                      type="number"
+                      min="0"
+                      add step="any"
+                      v-model="bookingDetailsForm.price_vat_not_applicable"
+                      @change="calculateCommission"
+                      class="!mb-0 w-full"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter Price"
+                      :rules="[isRequired]"
+                      size="xs"
+                  />
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">

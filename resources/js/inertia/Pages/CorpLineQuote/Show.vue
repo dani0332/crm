@@ -41,9 +41,7 @@ const props = defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
-  parentLeadDetails: Object,
   linkedQuoteDetails: Array,
-  record: Object,
   bookPolicyDetails: Array,
 });
 
@@ -816,8 +814,8 @@ watch(
                     v-if="quote.parent_duplicate_quote_id"
                     :href="
                       getDetailPageRoute(
-                        parentLeadDetails.uuid,
-                        parentLeadDetails.quote_type_id,
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
                       )
                     "
                     class="text-primary-500 hover:underline"
@@ -1206,7 +1204,7 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Business"
       :expanded="sectionExpanded"
     />
@@ -1227,7 +1225,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Business"
       modelType="Corpline"
       :bookPolicyDetails="bookPolicyDetails"

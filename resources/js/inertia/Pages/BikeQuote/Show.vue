@@ -13,7 +13,6 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
-  record: Object,
   documentTypes: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
@@ -864,7 +863,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Bike"
       :expanded="sectionExpanded"
     />
@@ -887,7 +886,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Bike"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

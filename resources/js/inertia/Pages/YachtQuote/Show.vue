@@ -48,7 +48,6 @@ const props = defineProps({
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
   linkedQuoteDetails: Object,
-  record: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
@@ -858,7 +857,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Yacht"
       :expanded="sectionExpanded"
     />
@@ -881,7 +880,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Yacht"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

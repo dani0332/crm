@@ -13,6 +13,7 @@ use App\Factories\ManagementReportServiceFactory;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\UserManager;
 use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ConversionAsAtReportService;
 use App\Services\Reports\AdvisorConversionReportService;
@@ -41,6 +42,8 @@ class ReportsController extends Controller
 
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
+
+        $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -164,23 +167,14 @@ class ReportsController extends Controller
      */
     public function fetchAdvisorsListByLob(Request $request)
     {
-        $loginUserId = auth()->user()->id;
-        if (
-            auth()->user()->hasAnyRole([
-                RolesEnum::SeniorManagement,
-                RolesEnum::Admin,
-                RolesEnum::Engineering,
-            ])
-        ) {
-            $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
-        } else {
-            $usersReportToLoggedInUser = $this->walkTree($loginUserId, $request->lob);
-
-            if (auth()->user()->isManagerOrDeputy()) {
-                $usersReportToLoggedInUser = array_filter($usersReportToLoggedInUser, function ($userId) use ($loginUserId) {
-                    return $userId !== $loginUserId;
-                });
-            }
+        $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
+        if (! auth()->user()->hasAnyRole([
+            RolesEnum::SeniorManagement,
+            RolesEnum::Admin,
+            RolesEnum::Engineering,
+        ])) {
+            $usersReportToLoggedInUser = UserManager::where('manager_id', auth()->user()->id)
+                ->whereIn('user_id', $usersReportToLoggedInUser)->pluck('user_id')->toArray();
         }
 
         return User::whereIn('id', $usersReportToLoggedInUser)
@@ -232,15 +226,10 @@ class ReportsController extends Controller
         ) {
             $advisorIdsByTeam = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
         } else {
-            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
+            // Managers can see only advisors assigned to them
             $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
-            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
-
-            if (auth()->user()->isManagerOrDeputy()) {
-                $advisorIdsByTeam = array_filter($advisorIdsByTeam, function ($userId) {
-                    return $userId !== auth()->user()->id;
-                });
-            }
+            $advisorIdsByTeam = UserManager::where('manager_id', auth()->user()->id)
+                ->whereIn('user_id', $teamUsers)->pluck('user_id')->toArray();
         }
 
         return User::whereIn('id', $advisorIdsByTeam)
@@ -263,14 +252,9 @@ class ReportsController extends Controller
         ) {
             $advisorIdsByTeam = $teamUsers;
         } else {
-            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
-            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
-
-            if (auth()->user()->isManagerOrDeputy()) {
-                $advisorIdsByTeam = array_filter($advisorIdsByTeam, function ($userId) {
-                    return $userId !== auth()->user()->id;
-                });
-            }
+            // Managers can see only advisors assigned to them
+            $advisorIdsByTeam = UserManager::where('manager_id', auth()->user()->id)
+                ->whereIn('user_id', $teamUsers)->pluck('user_id')->toArray();
         }
 
         return User::whereIn('id', $advisorIdsByTeam)
@@ -481,6 +465,19 @@ class ReportsController extends Controller
             'defaultFilters' => $reportInstance->getDefaultFilters(),
             'reportName' => $reportCategory,
         ]);
+    }
+
+    /**
+     * export method for management reports.
+     *
+     * @return void
+     */
+    public function exportManagementReport(Request $request)
+    {
+        $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
+        $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+
+        return $reportInstance->getReportData($request);
     }
 
     public function totalPremiumLeadsSaleReport(Request $request, ReportService $reportService)

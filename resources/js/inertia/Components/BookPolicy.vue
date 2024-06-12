@@ -34,6 +34,7 @@ const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const dateToYMD = date => {
@@ -220,10 +221,12 @@ const submitPolicy = () => {
       const flash_messages = err.response.data.errors;
 
       Object.keys(flash_messages).forEach(function (key) {
-        notification.error({
-          title: flash_messages[key],
-          position: 'top',
-        });
+        if (flash_messages[key]) {
+          notification.error({
+            title: flash_messages[key],
+            position: 'top',
+          });
+        }
       });
     })
     .finally(() => {
@@ -233,8 +236,10 @@ const submitPolicy = () => {
 };
 
 const calculateVatOnCommission = commissionVatApplicable => {
-  if (commissionVatApplicable > 0) {
-    return Number(commissionVatApplicable * page.props.vat).toFixed(2);
+  if (Number(commissionVatApplicable) > 0) {
+    return Number(
+      Number(commissionVatApplicable) * Number(page.props.vat),
+    ).toFixed(2);
   } else {
     return 0;
   }
@@ -253,98 +258,103 @@ const calculateCommissionPercentage = (
 };
 
 const calculateCommission = () => {
-  let isBothTypeOfCommission =
-    bpForm.commission_vat_applicable > 0 &&
-    bpForm.commission_vat_not_applicable > 0;
+  let totalPriceWithoutVat =
+    Number(props.quote?.price_vat_applicable) +
+    Number(props.quote?.price_vat_not_applicable);
 
-  if (isBothTypeOfCommission) {
-    bpForm.vat_on_commission = calculateVatOnCommission(
-      bpForm.commission_vat_applicable,
-    );
-
+  if (totalPriceWithoutVat > 0) {
     let totalCommissionWithoutVat =
       Number(bpForm.commission_vat_not_applicable) +
       Number(bpForm.commission_vat_applicable);
 
-    bpForm.total_commission = (
-      totalCommissionWithoutVat + Number(bpForm.vat_on_commission)
-    ).toFixed(2);
-
-    bpForm.commission_percentage = calculateCommissionPercentage(
-      totalCommissionWithoutVat,
-      Number(props.quote?.price_vat_not_applicable) +
-        Number(props.quote?.price_vat_applicable),
-    );
-  } else if (bpForm.commission_vat_applicable > 0) {
-    if (Number(props.quote?.price_vat_applicable) > 0) {
-      bpForm.commission_percentage = calculateCommissionPercentage(
-        bpForm.commission_vat_applicable,
-        Number(props.quote?.price_vat_not_applicable) +
-          Number(props.quote?.price_vat_applicable),
-      );
-
+    if (totalCommissionWithoutVat > 0) {
       bpForm.vat_on_commission = calculateVatOnCommission(
         bpForm.commission_vat_applicable,
       );
-      bpForm.total_commission = (
-        Number(bpForm.vat_on_commission) +
-        Number(bpForm.commission_vat_applicable)
-      ).toFixed(2);
-    } else {
-      bpForm.commission_vat_applicable = '';
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT APPLICABLE)',
-        position: 'top',
-      });
-    }
-  } else if (bpForm.commission_vat_not_applicable > 0) {
-    if (Number(props.quote?.price_vat_not_applicable) > 0) {
-      bpForm.commission_percentage = calculateCommissionPercentage(
-        bpForm.commission_vat_not_applicable,
-        Number(props.quote?.price_vat_not_applicable) +
-          Number(props.quote?.price_vat_applicable),
-      );
 
-      bpForm.total_commission = Number(
-        bpForm.commission_vat_not_applicable,
+      bpForm.total_commission = (
+        totalCommissionWithoutVat + Number(bpForm.vat_on_commission)
       ).toFixed(2);
+
+      bpForm.commission_percentage = calculateCommissionPercentage(
+        totalCommissionWithoutVat,
+        totalPriceWithoutVat,
+      );
     } else {
-      bpForm.commission_vat_not_applicable = '';
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
-        position: 'top',
-      });
+      bpForm.commission_percentage = 0;
+      bpForm.vat_on_commission = 0;
+      bpForm.total_commission = '';
     }
   } else {
-    bpForm.commission_percentage = '';
-    bpForm.vat_on_commission = '';
-    bpForm.total_commission = '';
+    bpForm.commission_vat_applicable = '';
+    bpForm.commission_vat_not_applicable = '';
+    notification.error({
+      title:
+        'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
+      position: 'top',
+    });
   }
 };
 
+// Disable Commission vat nor applicable for all LOBs
 const disableCommissionVatNotApplicable = computed(() => {
-  return (
-    !bp.isEditing ||
-    (page.props.quoteType != quoteTypeCodeEnum.Life &&
-      page.props.quoteType != quoteTypeCodeEnum.Business &&
-      page.props.quoteType != quoteTypeCodeEnum.Health)
-  );
+  return true;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType != quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
 });
+
+// Enable Commission vat nor applicable for all LOBs
 const disableCommissionVatApplicable = computed(() => {
+  return !bp.isEditing;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType == quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
+});
+const showSendAndBookPolicyButtonBlock = computed(() => {
+  let isPolicyStatusTransactionApproved =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.TransactionApproved;
+
+  let isPolicyStatusPolicyIssued =
+    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued;
+
+  let isPolicyStatusCancellationPending =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.CancellationPending;
   return (
-    !bp.isEditing ||
-    (page.props.quoteType == quoteTypeCodeEnum.Life &&
-      page.props.quoteType != quoteTypeCodeEnum.Business &&
-      page.props.quoteType != quoteTypeCodeEnum.Health)
+    isPolicyStatusTransactionApproved ||
+    isPolicyStatusPolicyIssued ||
+    isPolicyStatusCancellationPending
   );
 });
 const showSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  return props.bookPolicyDetails?.sendButton && can(permission);
+});
+const disableSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  let isPolicyStatusCancellationPending =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.CancellationPending;
   return (
-    props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved ||
-    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued ||
-    props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.CancellationPending
+    !props.bookPolicyDetails?.sendButton &&
+    !isPolicyStatusCancellationPending &&
+    !can(permission)
   );
 });
 const showActionButtons = computed(() => {
@@ -718,7 +728,7 @@ const showInsufficientPaymentAlert = () => {
               <div class="w-full md:w-1/2" />
             </div>
             <div v-if="showActionButtons" class="flex justify-end">
-              <template v-if="showSendAndBookPolicyButton">
+              <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
                   v-if="bp.isEditing"
                   class="mt-4 mr-2"
@@ -763,7 +773,7 @@ const showInsufficientPaymentAlert = () => {
                     color="orange"
                     class="mt-4"
                     disabled
-                    v-if="(!props.bookPolicyDetails?.sendButton && (!props.quote.quote_status_id == page.props.quoteStatusEnum.CancellationPending))"
+                    v-if="disableSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
@@ -779,7 +789,7 @@ const showInsufficientPaymentAlert = () => {
                       class="mt-4"
                       @click.prevent="confirmSendPolicy"
                       :disabled="bp.isEditing || is_lacking_payment"
-                      v-if="props.bookPolicyDetails?.sendButton"
+                      v-if="showSendAndBookPolicyButton"
                     >
                       {{ props.bookPolicyDetails?.text }}
                     </x-button>
@@ -798,13 +808,7 @@ const showInsufficientPaymentAlert = () => {
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
                     :disabled="bp.isEditing || is_lacking_payment"
-                    v-if="
-                      props.bookPolicyDetails?.sendButton &&
-                      canAny([
-                        permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON,
-                        permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON,
-                      ])
-                    "
+                    v-if="showSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
