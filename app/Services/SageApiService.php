@@ -79,7 +79,8 @@ class SageApiService
         }
 
         $sageRequest->mainClassInsurance = $modelType;
-        $sageRequest->policyNumber = $quote->policy_number;
+        $sageRequest->policyNumber = substr($quote->policy_number, 60);
+        $sageRequest->originalPolicyNumber = $quote->policy_number;
         $sageRequest->policyIssuer = $payment->policyIssuer?->name ?? '';
         $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
         $sageRequest->subClass = $businessTypeOfInsuranceCode;
