@@ -34,7 +34,7 @@ class UpdatePolicyDetailRequest extends FormRequest
 
             return [
 
-                'quote_policy_number' => 'required|max:50',
+                'quote_policy_number' => 'required|max:70',
                 'quote_policy_issuance_date' => 'required',
                 'quote_policy_start_date' => 'required',
                 'quote_policy_expiry_date' => 'required|date|after:quote_policy_start_date',

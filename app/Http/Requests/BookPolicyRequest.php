@@ -35,7 +35,7 @@ class BookPolicyRequest extends FormRequest
             'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|numeric|between:0,9999999.99',
             'commission_vat_applicable' => 'required|numeric|between:0,9999999.99',
             'total_commission' => 'nullable',
-            'invoice_description' => 'required|max:60',
+            'invoice_description' => 'required|max:100',
             'vat_on_commission' => 'nullable',
             'commission_percentage' => 'nullable',
             'payment_code' => 'required',
