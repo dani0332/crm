@@ -163,13 +163,16 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchUpdateLogPriceDetails($data)
     {
         try {
-            $result = $this->find($data['id'])->update([
+            $result = $this->find($data['id']);
+
+            $result->update([
                 'total_price' => $data['total_price'],
                 'price_with_vat' => $data['price_with_vat'],
                 'price_without_vat' => $data['price_without_vat'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
-                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
+                'status' => ! in_array($result->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) ?
+                    SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS : $result->status,
             ]);
             $this->updatePayment($data);
         } catch (\Exception $ex) {
