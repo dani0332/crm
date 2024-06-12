@@ -20,6 +20,7 @@ const reportComponents = {
   'Sales Summary': SalesSummary,
 };
 
+const params = useUrlSearchParams('history');
 const subTeams = ref([]);
 const isReportCategoryEmpty = ref(false);
 
@@ -236,6 +237,20 @@ function onReset() {
     onSuccess: () => (loaders.table = false),
   });
 }
+
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 <template>
   <Head title="Management Reports" />
