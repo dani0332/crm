@@ -242,9 +242,9 @@ const calculateCommission = () => {
       });
     }
   } else {
-    bookingDetailsForm.commission_percentage = '';
-    bookingDetailsForm.vat_on_commission = '';
-    bookingDetailsForm.total_commission = '';
+    bookingDetailsForm.commission_percentage = '0.00';
+    bookingDetailsForm.vat_on_commission = '0.00';
+    bookingDetailsForm.total_commission = '0.00';
   }
 };
 
@@ -1359,8 +1359,8 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div>
                   <span>{{ (bookingDetailsForm.commission_percentage !== '') ? 
-                    bookingDetailsForm.commission_percentage + '%' : 
-                    'N/A' 
+                    bookingDetailsForm.commission_percentage + '%' :
+                    'N/A'
                   }}</span>
                 </div>
               </div>
