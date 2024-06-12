@@ -359,11 +359,11 @@ class SendUpdateLogRepository extends BaseRepository
         }
 
         $response = $query->sendUpdateOptions($quoteTypeId, $parentId, $businessInsuranceTypeId)->get();
-        
+
         $checkAdditionalBookingPermission = auth()->user()->hasPermissionTo(PermissionsEnum::SEND_UPDATE_ADD_BOOKING);
-        if (!$checkAdditionalBookingPermission) {
+        if (! $checkAdditionalBookingPermission) {
             $response = $response->filter(function ($item) {
-                return !in_array($item->slug, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]);
+                return ! in_array($item->slug, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]);
             });
         }
 

@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\SendUpdateLog;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest

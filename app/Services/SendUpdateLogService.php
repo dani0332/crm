@@ -507,7 +507,7 @@ class SendUpdateLogService
 
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
-        
+
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
@@ -588,7 +588,7 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
             SendUpdateLogStatusEnum::ACB,
-            SendUpdateLogStatusEnum::ATIB
+            SendUpdateLogStatusEnum::ATIB,
         ];
 
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
@@ -833,13 +833,13 @@ class SendUpdateLogService
     public function isPlanDetailAvailable($sendUpdateLog): bool
     {
         $disAllowedTypes = [
-            SendUpdateLogStatusEnum::MDOM, 
-            SendUpdateLogStatusEnum::MDOV, 
-            SendUpdateLogStatusEnum::MPC, 
-            SendUpdateLogStatusEnum::ED, 
+            SendUpdateLogStatusEnum::MDOM,
+            SendUpdateLogStatusEnum::MDOV,
+            SendUpdateLogStatusEnum::MPC,
+            SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
             SendUpdateLogStatusEnum::ACB,
-            SendUpdateLogStatusEnum::ATIB
+            SendUpdateLogStatusEnum::ATIB,
         ];
 
         if (in_array($sendUpdateLog->option?->code, $disAllowedTypes)) {
