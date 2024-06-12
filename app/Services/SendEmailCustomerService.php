@@ -890,7 +890,7 @@ class SendEmailCustomerService extends BaseService
 
         $emailTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE)->first();
 
-        $apiKey = config('constants.MA_BREVO_KEY');
+        $apiKey = config('constants.SENDINBLUE_KEY');
         $url = config('constants.SIB_URL');
         try {
 
