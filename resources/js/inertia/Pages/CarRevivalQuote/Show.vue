@@ -861,7 +861,7 @@ const sendPolicyToClient = () => {
       </div>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
