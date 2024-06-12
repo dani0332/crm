@@ -57,7 +57,7 @@ class UpdatePaymentRequest extends FormRequest
         $validator->after(function ($validator) {
 
             $payment = Payment::where('code', request()->paymentCode)->first();
-            
+
             // check if the user is authorized to apply discount
             if (request()->input('payment.discount_value') > 0 && $payment->discount_value != request()->input('payment.discount_value') && auth()->user()->cannot(PermissionsEnum::PAYMENTS_DISCOUNT_ADD)) {
                 $validator->errors()->add('value', 'Not Authorized to Add Discount');
