@@ -398,8 +398,8 @@ onMounted(() => {
     </div>
 
     <div class="flex gap-3 justify-end">
-      <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-      <x-button size="sm" color="primary" @click.prevent="onReset">
+      <x-button size="sm" color="#ff5e00" type="submit" :disabled="loaders.table">Search</x-button>
+      <x-button size="sm" color="primary" @click.prevent="onReset" :disabled="loaders.table">
         Reset
       </x-button>
     </div>
