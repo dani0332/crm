@@ -86,6 +86,8 @@ class SaleDetailReportService extends ManagementReport
 
         if ($utmGroupBy) {
             $query->groupBy($utmGroupBy);
+        } else {
+            $query->groupBy('personal_quotes.code');
         }
 
         if ($request->export == 1) {
