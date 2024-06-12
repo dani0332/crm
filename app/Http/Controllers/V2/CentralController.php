@@ -54,6 +54,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CentralController extends Controller
 {
@@ -235,6 +236,7 @@ class CentralController extends Controller
         $payment->update($paymentInformation);
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
         $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
+        Log::info('Book policy details update successfully for : '.$quote->uuid);
 
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
@@ -267,11 +269,12 @@ class CentralController extends Controller
             $data['id'] = $quote->id;
 
             $sageService = new SageApiService();
-            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
+            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data, true, false);
 
             if ($response['status'] === false) {
                 return response()->json(['errors' => [
                     'message' => $response['message'],
+                    'sageError' => $response['error'] ? 'SAGE API : '.$response['error'] : null,
                 ]], 500);
             }
 
@@ -282,11 +285,12 @@ class CentralController extends Controller
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                'policy_booking_date' => Carbon::now(),
             ]);
 
             (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
 
-            $this->handleInSufficientPayment($request, $payment);
+            $this->updatePaymentAllocationStatus($quote);
 
             return response()->json(['message' => $response['message']], 200);
         }
@@ -335,17 +339,9 @@ class CentralController extends Controller
         return back()->with('success', $successMessage);
     }
 
-    public function getQuoteWisePlans($quoteType, $providerId): object
+    public function getQuoteWisePlans($quoteType, $providerId, $plandId = null): object
     {
-        return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId));
-    }
-
-    private function handleInsufficientPayment($request, $payment)
-    {
-        if ($request->is_send_policy && $payment) {
-            $payment->transaction_payment_status = $request->transaction_payment_status;
-            $payment->save();
-        }
+        return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId, $plandId));
     }
 
     // Update total price

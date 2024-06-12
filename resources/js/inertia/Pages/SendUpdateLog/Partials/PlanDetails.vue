@@ -14,10 +14,6 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  selectedCategory: {
-    type: Object,
-    required: true,
-  },
   quoteType: {
     type: String,
     required: true,
@@ -32,6 +28,7 @@ const page = usePage();
 const notification = useToast();
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const sendUpdateEnums = page.props.sendUpdateStatusEnum;
 
 const state = reactive({
   isEdit: false,
@@ -46,23 +43,8 @@ const planDetailsForm = useForm({
   id: props.sendUpdateLog?.id,
 });
 
-const isIndicativeAdditionalPrice = computed(() => {
-  let hasRestrictedSubType = false;
-  props.updateLogOptions?.forEach(option => {
-    if (
-      ['MDOM', 'MDOV', 'MPC', 'ED', 'DM'].includes(option.slug) &&
-      props.sendUpdateLog.option_id === option.value
-    ) {
-      hasRestrictedSubType = true;
-    }
-  });
-  return (
-    props.selectedCategory?.subCategory.slug === 'EF' && !hasRestrictedSubType
-  );
-});
-
 const isPlanDetails = computed(() => {
-  return props.selectedCategory?.subCategory.slug === 'CPD';
+  return props.sendUpdateLog.category.code === sendUpdateEnums.CPD;
 });
 
 const insuranceProvidersOptions = computed(() => {
@@ -141,12 +123,12 @@ const onCancel = () => {
 <template>
   <div
     class="p-4 rounded shadow mb-6 bg-white"
-    v-if="isPlanDetails || isIndicativeAdditionalPrice"
+    v-if="props.sendUpdateLog.category.code !== sendUpdateEnums.CIR"
   >
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <x-tooltip position="left" v-if="!isPlanDetails">
+          <x-tooltip v-if="!isPlanDetails" position="left">
             <label
               class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700"
             >
@@ -204,7 +186,7 @@ const onCancel = () => {
             <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
-                  isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
+                  isPlanDetails && props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
                 "
               >
                 <dt>
@@ -279,7 +261,7 @@ const onCancel = () => {
             <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
-                  isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
+                  isPlanDetails && props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
                 "
               >
                 <dt>

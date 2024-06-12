@@ -52,7 +52,6 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
   storageUrl: String,
-  record: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
@@ -2458,6 +2457,16 @@ watch(
                   <span class="text-primary-600 uppercase">{{
                     item.providerName
                   }}</span>
+                    <div class="flex gap-1">
+                        <x-tag
+                            v-if="item.isDisabled"
+                            size="xs"
+                            color="error"
+                            class="mt-0.5 text-[10px]"
+                        >
+                            Hidden
+                        </x-tag>
+                    </div>
                 </template>
                 <template #item-name="item">
                   <span class="text-primary-600 uppercase">{{
@@ -2568,7 +2577,7 @@ watch(
     
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="travel"
       :expanded="sectionExpanded"
       :payments="payments"
@@ -2580,7 +2589,7 @@ watch(
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
-      :quote="record"
+      :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Travel"
@@ -2595,7 +2604,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="travel"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

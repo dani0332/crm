@@ -42,7 +42,7 @@ const filters = reactive({
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  leadStatus: '',
+  leadStatus: [],
   advisor_id: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -289,13 +289,11 @@ onMounted(() => {
           />
         </x-field>
         <x-field label="Lead Status">
-          <x-select
-            v-model="filters.leadStatus"
-            name="leadStatus"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-            class="w-full"
-          />
+            <ComboBox
+                v-model="filters.leadStatus"
+                placeholder="Search by Lead Status"
+                :options="leadStatusOptions"
+            />
         </x-field>
         <x-field label="Advisor">
           <ComboBox

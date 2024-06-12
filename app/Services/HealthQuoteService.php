@@ -66,6 +66,8 @@ class HealthQuoteService extends BaseService
             'hqr.first_name',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%b-%Y %H:%i:%s") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%b-%Y %H:%i:%s") as updated_at'),
+            DB::raw('DATE_FORMAT(hqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+            DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
             'hqr.last_name',
             'hqr.payment_status_id',
             'hqr.email',
@@ -133,6 +135,7 @@ class HealthQuoteService extends BaseService
             'hqr.kyc_decision',
             'hqr.risk_score',
             'hqr.enquiry_count',
+            'hqr.policy_booking_date',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -162,7 +165,7 @@ class HealthQuoteService extends BaseService
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
             'hqr.price_vat_not_applicable',
-            'hqr.price_without_vat',
+            'hqr.price_vat_applicable',
             'hqr.price_with_vat',
             'hqr.vat',
             'hqr.insurer_quote_number',

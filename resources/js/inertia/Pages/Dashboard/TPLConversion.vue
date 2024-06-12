@@ -89,7 +89,7 @@ onMounted(() => {
     <div class="flex flex-col h-[85vh]">
         <div class="flex gap-3 justify-end">
             <x-field label="Segment" v-if="can(permissionsEnum.SEGMENT_FILTER)">
-                <x-select v-model="filters.segment_filter" placeholder="Select Segment" :options="quoteSegments" class="w-full" />
+                <ComboBox v-model="filters.segment_filter" placeholder="Select Segment" :options="quoteSegments" class="w-full" :single="true" />
             </x-field>
             <x-field label="Teams">
                 <ComboBox v-model="filters.team_filter" name="team_name" placeholder="Select Teams" :options="
