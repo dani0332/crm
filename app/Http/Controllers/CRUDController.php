@@ -761,18 +761,6 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
-            $listQuotePlans = '';
-            $quotePlans = $this->travelQuoteService->getQuotePlans($id);
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = $quotePlans->message;
-            } else {
-                if (gettype($quotePlans) != 'string') {
-                    $listQuotePlans = $quotePlans->quotes->plans;
-                } else {
-                    $listQuotePlans = $quotePlans;
-                }
-            }
-
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
 
             return view('shared.show', compact([

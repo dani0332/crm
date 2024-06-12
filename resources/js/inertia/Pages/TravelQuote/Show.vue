@@ -1278,40 +1278,13 @@ watch(
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">
-              Travel Detail
-            </h3>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 my-3 justify-end">
-            <x-button
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openDuplicate"
-              v-if="permissions.canNotApprovePayments"
-            >
-              Duplicate Lead
-            </x-button>
-            <Link :href="route('travel.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Travel List
-              </x-button>
-            </Link>
-
-            <Link
-              v-if="permissions.canEditQuote == true"
-              :href="route('travel.edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-          </div>
-
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div
@@ -2117,7 +2090,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
