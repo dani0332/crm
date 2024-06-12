@@ -773,7 +773,7 @@ const showInsufficientPaymentAlert = () => {
                     disabled
                     v-if="disableSendAndBookPolicyButton"
                   >
-                    {{ props.bookPolicyDetails?.text }} 1
+                    {{ props.bookPolicyDetails?.text }}
                   </x-button>
                   <template #tooltip>
                     <span>{{ 'Please update the booking details.' }}</span>
@@ -789,7 +789,7 @@ const showInsufficientPaymentAlert = () => {
                       :disabled="bp.isEditing || is_lacking_payment"
                       v-if="showSendAndBookPolicyButton"
                     >
-                      {{ props.bookPolicyDetails?.text }} 2
+                      {{ props.bookPolicyDetails?.text }}
                     </x-button>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
