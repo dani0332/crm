@@ -75,7 +75,7 @@ watch(
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+  <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
