@@ -107,7 +107,7 @@ class JetskiQuoteController extends Controller
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::JETSKI->id(),
             'quote_request_id' => $quote->id,
-        ])->with('assignee')->orderBy('created_at', 'desc')->get();
+        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
