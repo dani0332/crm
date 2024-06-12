@@ -349,7 +349,7 @@ class DashboardController extends Controller
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
         if (
-            !auth()->user()->hasAnyRole([
+            ! auth()->user()->hasAnyRole([
                 RolesEnum::SeniorManagement,
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
