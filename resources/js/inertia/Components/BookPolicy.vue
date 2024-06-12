@@ -221,10 +221,12 @@ const submitPolicy = () => {
       const flash_messages = err.response.data.errors;
 
       Object.keys(flash_messages).forEach(function (key) {
-        notification.error({
-          title: flash_messages[key],
-          position: 'top',
-        });
+        if (flash_messages[key]) {
+          notification.error({
+            title: flash_messages[key],
+            position: 'top',
+          });
+        }
       });
     })
     .finally(() => {
