@@ -11,6 +11,7 @@ use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
@@ -255,8 +256,8 @@ trait GenericQueriesAllLobs
                 $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
                 if ($isAllRequiredDocumentUploaded) {
                     $bookPolicyDetails['sendButton'] = true;
-                    $bookPolicyDetails['text'] = 'Send Policy To Customer';
-                    $bookPolicyDetails['sendPolicyType'] = 'customer';
+                    $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
+                    $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
                 }
                 if ($bookPolicyDetails['sendButton']) {
                     $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
@@ -268,8 +269,8 @@ trait GenericQueriesAllLobs
                         $infoMessage .= ' BDS '.$areBookingDetailsFilled;
                         if ($areBookingDetailsFilled) {
                             $bookPolicyDetails['bookButton'] = true;
-                            $bookPolicyDetails['text'] = 'Send and Book Policy';
-                            $bookPolicyDetails['sendPolicyType'] = 'sage';
+                            $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
+                            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
                         }
                     }
                 }
