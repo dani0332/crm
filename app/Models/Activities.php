@@ -51,4 +51,9 @@ class Activities extends Model implements AuditableContract
     {
         return $this->hasOne(User::class, 'id', 'assignee_id');
     }
+
+    public function quoteStatus()
+    {
+        return $this->belongsTo(QuoteStatus::class);
+    }
 }
