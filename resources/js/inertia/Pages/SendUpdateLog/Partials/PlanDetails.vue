@@ -44,7 +44,7 @@ const planDetailsForm = useForm({
 });
 
 const isPlanDetails = computed(() => {
-  return props.sendUpdateLog.category.code === 'CPD';
+  return props.sendUpdateLog.category.code === sendUpdateEnums.CPD;
 });
 
 const insuranceProvidersOptions = computed(() => {
@@ -123,6 +123,7 @@ const onCancel = () => {
 <template>
   <div
     class="p-4 rounded shadow mb-6 bg-white"
+    v-if="props.sendUpdateLog.category.code !== sendUpdateEnums.CIR"
   >
     <Collapsible expanded>
       <template #header>

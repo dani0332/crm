@@ -732,7 +732,7 @@ class SendUpdateLogService
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
                     $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'quote_batch_id' => null,
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
@@ -754,13 +754,6 @@ class SendUpdateLogService
                     } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity.
                         $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                     }
-                }
-                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-                        'quote_batch_id' => null,
-                    ]);
-                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
             }
 

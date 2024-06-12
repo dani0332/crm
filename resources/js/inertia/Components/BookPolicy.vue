@@ -34,6 +34,7 @@ const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const dateToYMD = date => {
@@ -314,13 +315,44 @@ const disableCommissionVatApplicable = computed(() => {
         page.props.quoteType != quoteTypeCodeEnum.Health)
     );*/
 });
-const showSendAndBookPolicyButton = computed(() => {
+const showSendAndBookPolicyButtonBlock = computed(() => {
+  let isPolicyStatusTransactionApproved =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.TransactionApproved;
+
+  let isPolicyStatusPolicyIssued =
+    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued;
+
+  let isPolicyStatusCancellationPending =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.CancellationPending;
   return (
+    isPolicyStatusTransactionApproved ||
+    isPolicyStatusPolicyIssued ||
+    isPolicyStatusCancellationPending
+  );
+});
+const showSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  return props.bookPolicyDetails?.sendButton && can(permission);
+});
+const disableSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  let isPolicyStatusCancellationPending =
     props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved ||
-    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued ||
-    props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.CancellationPending
+    page.props.quoteStatusEnum.CancellationPending;
+  return (
+    !props.bookPolicyDetails?.sendButton &&
+    !isPolicyStatusCancellationPending &&
+    !can(permission)
   );
 });
 const showActionButtons = computed(() => {
@@ -694,7 +726,7 @@ const showInsufficientPaymentAlert = () => {
               <div class="w-full md:w-1/2" />
             </div>
             <div v-if="showActionButtons" class="flex justify-end">
-              <template v-if="showSendAndBookPolicyButton">
+              <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
                   v-if="bp.isEditing"
                   class="mt-4 mr-2"
@@ -739,11 +771,7 @@ const showInsufficientPaymentAlert = () => {
                     color="orange"
                     class="mt-4"
                     disabled
-                    v-if="
-                      !props.bookPolicyDetails?.sendButton &&
-                      !props.quote.quote_status_id ==
-                        page.props.quoteStatusEnum.CancellationPending
-                    "
+                    v-if="disableSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
@@ -759,7 +787,7 @@ const showInsufficientPaymentAlert = () => {
                       class="mt-4"
                       @click.prevent="confirmSendPolicy"
                       :disabled="bp.isEditing || is_lacking_payment"
-                      v-if="props.bookPolicyDetails?.sendButton"
+                      v-if="showSendAndBookPolicyButton"
                     >
                       {{ props.bookPolicyDetails?.text }}
                     </x-button>
@@ -778,13 +806,7 @@ const showInsufficientPaymentAlert = () => {
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
                     :disabled="bp.isEditing || is_lacking_payment"
-                    v-if="
-                      props.bookPolicyDetails?.sendButton &&
-                      canAny([
-                        permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON,
-                        permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON,
-                      ])
-                    "
+                    v-if="showSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
