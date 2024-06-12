@@ -264,7 +264,7 @@ class SendUpdateLogController extends Controller
 
         if (! isset($data['childCategory']['slug'])) {
             $selectedType = Lookup::find($data['category_id'])->code;
-            $subType['slug'] = Lookup::find($data['option_id'])->code;
+            $subType['slug'] = ! empty($data['option_id']) ? Lookup::find($data['option_id'])->code : '';
         } else {
             $selectedType = $data['childCategory']['slug'];
             $subType = $data['childCategory']['option'];
