@@ -503,6 +503,11 @@ class SendUpdateLogService
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
+        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
+
+            return SendUpdateLogStatusEnum::SU; // Book Update
+        }
+        
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
@@ -582,6 +587,8 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::MDOV,
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::ACB,
+            SendUpdateLogStatusEnum::ATIB
         ];
 
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
@@ -825,7 +832,17 @@ class SendUpdateLogService
      */
     public function isPlanDetailAvailable($sendUpdateLog): bool
     {
-        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
+        $disAllowedTypes = [
+            SendUpdateLogStatusEnum::MDOM, 
+            SendUpdateLogStatusEnum::MDOV, 
+            SendUpdateLogStatusEnum::MPC, 
+            SendUpdateLogStatusEnum::ED, 
+            SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::ACB,
+            SendUpdateLogStatusEnum::ATIB
+        ];
+
+        if (in_array($sendUpdateLog->option?->code, $disAllowedTypes)) {
             return false;
         }
 

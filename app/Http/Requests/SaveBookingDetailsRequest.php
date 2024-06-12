@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\SendUpdateLog;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
@@ -21,7 +23,7 @@ class SaveBookingDetailsRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'commission_vat_applicable' => 'required|numeric|min:1',
             'invoice_description' => 'required|string',
             'invoice_date' => 'required|date',
@@ -37,15 +39,18 @@ class SaveBookingDetailsRequest extends FormRequest
             'price_vat_not_applicable' => 'required|numeric',
             'total_price' => 'required|numeric',
         ];
+
+        if ($this->get('send_update_option') !== null && $this->get('send_update_option') === SendUpdateLogStatusEnum::ACB) {
+            $skipRules = ['insurer_tax_invoice_number', 'total_vat_amount', 'commission_percentage', 'price_vat_applicable', 'price_vat_not_applicable', 'total_price'];
+            $rules = array_diff_key($rules, array_flip($skipRules));
+        }
+
+        if ($this->get('send_update_option') !== null && $this->get('send_update_option') === SendUpdateLogStatusEnum::ATIB) {
+            $skipRules = ['insurer_commission_invoice_number', 'vat_on_commission', 'commission_percentage', 'commission_vat_applicable', 'commission_vat_not_applicable', 'total_commission'];
+            $rules = array_diff_key($rules, array_flip($skipRules));
+        }
+
+        return $rules;
     }
 
-    /**
-     * @return void
-     */
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            // $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
-        });
-    }
 }

@@ -94,6 +94,11 @@ const checkSectionTwoEdit = () => {
     props.sendUpdateLog.category.code,
   );
 
+  const additionalInvoiceTypes = [
+    sendUpdateStatusEnum.ACB,
+    sendUpdateStatusEnum.ATIB,
+  ];
+
   if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
     notification.error({
       title: 'Please select tax invoice number for reversal. ',
@@ -102,12 +107,30 @@ const checkSectionTwoEdit = () => {
     return;
   }
 
-  if (checkTaxInvoiceDoc && !hasTaxDocuments.value) {
+  if (checkTaxInvoiceDoc && !hasTaxDocuments.value && !additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)) {
     notification.error({
       title: 'Please upload tax invoice and tax invoice raised by buyer. ',
       position: 'top',
     });
     return;
+  }
+
+  if (checkTaxInvoiceDoc && additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)) {
+    if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB && !props.uploadedDocuments.includes('SUTAXINVRB')) {
+      notification.error({
+        title: 'Please upload tax invoice raised by buyer',
+        position: 'top',
+      });
+      return;
+    }
+
+    if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB && !props.uploadedDocuments.includes('SUTAXINV')) {
+      notification.error({
+        title: 'Please upload tax invoice',
+        position: 'top',
+      });
+      return;
+    }
   }
 
   state.isEdit = !state.isEdit;
@@ -136,6 +159,7 @@ function isNotZero(value) {
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.sendUpdateLog.category.code,
+  send_update_option: props.sendUpdateLog?.option?.code ?? null,
   booking_date: props.bookingDetails?.booking_date,
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
@@ -188,22 +212,46 @@ const bookingDetailsForm = useForm({
 });
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
-const calculateCommission = () => {
+const calculateCommisionDetailsForACB = () => {
+  if (bookingDetailsForm.commission_vat_applicable == 0 && bookingDetailsForm.commission_vat_not_applicable == 0) {
+    notification.error({
+      title: 'Please add Commision VAT or VAT Not Applicable',
+      position: 'top',
+    });
+    return false;
+  }
+
   if (bookingDetailsForm.commission_vat_applicable > 0) {
-    if (Number(bookingDetailsForm.price_vat_applicable > 0)) {
-      let vat_on_commission =
-        bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
-      bookingDetailsForm.vat_on_commission =
-        convertToNegative(vat_on_commission);
+    let vat_on_commission = bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
+      bookingDetailsForm.vat_on_commission = convertToNegative(vat_on_commission);
 
       let total_commission =
         Number(bookingDetailsForm.commission_vat_not_applicable) +
         Number(bookingDetailsForm.commission_vat_applicable) +
         vat_on_commission;
       bookingDetailsForm.total_commission = convertToNegative(total_commission);
+  }
+  else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
+    bookingDetailsForm.total_commission = bookingDetailsForm.commission_vat_not_applicable;
+  }
+  else {
+    bookingDetailsForm.vat_on_commission = '';
+    bookingDetailsForm.total_commission = '';
+  }
+}
 
-      // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
-      let total_price_with_vat_and_not_vat_applicable =
+const calculatePriceDetailsForATIB = () => {
+  if (bookingDetailsForm.price_vat_applicable == 0 && bookingDetailsForm.price_vat_not_applicable == 0) {
+    notification.error({
+      title: 'Please add Policy Detail Price (VAT APPLICABLE) or Price (VAT NOT APPLICABLE)',
+      position: 'top',
+    });
+    return false;
+  }
+
+  if (bookingDetailsForm.price_vat_applicable > 0) {
+    // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
+    let total_price_with_vat_and_not_vat_applicable =
         Number(bookingDetailsForm.price_vat_applicable) +
         Number(bookingDetailsForm.price_vat_not_applicable);
       let total_vat_amount =
@@ -213,36 +261,70 @@ const calculateCommission = () => {
       let total_price =
         total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
       bookingDetailsForm.total_price = convertToNegative(total_price);
+  }
+}
 
-      bookingDetailsForm.commission_percentage = convertToNegative(
-        (total_commission / total_price) * 100,
-      );
-    } else {
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT APPLICABLE)',
-        position: 'top',
-      });
-    }
-  } else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
-    if (Number(props.sendUpdateLog?.price_vat_not_applicable) > 0) {
-      bookingDetailsForm.commission_percentage = (
-        (bookingDetailsForm.commission_vat_not_applicable /
-          props.sendUpdateLog?.price_vat_not_applicable) *
-        100
-      ).toFixed(2);
-
-      bookingDetailsForm.total_commission =
-        bookingDetailsForm.commission_vat_not_applicable;
-    } else {
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
-        position: 'top',
-      });
-    }
+const calculateCommission = () => {
+  if(props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
+    calculateCommisionDetailsForACB();
+  } else if(props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
+    calculatePriceDetailsForATIB();
   } else {
-    bookingDetailsForm.commission_percentage = '';
-    bookingDetailsForm.vat_on_commission = '';
-    bookingDetailsForm.total_commission = '';
+    if (bookingDetailsForm.commission_vat_applicable > 0) {
+      if (Number(bookingDetailsForm.price_vat_applicable > 0)) {
+        let vat_on_commission =
+          bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
+        bookingDetailsForm.vat_on_commission =
+          convertToNegative(vat_on_commission);
+
+        let total_commission =
+          Number(bookingDetailsForm.commission_vat_not_applicable) +
+          Number(bookingDetailsForm.commission_vat_applicable) +
+          vat_on_commission;
+        bookingDetailsForm.total_commission = convertToNegative(total_commission);
+
+        // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
+        let total_price_with_vat_and_not_vat_applicable =
+          Number(bookingDetailsForm.price_vat_applicable) +
+          Number(bookingDetailsForm.price_vat_not_applicable);
+        let total_vat_amount =
+          Number(bookingDetailsForm.price_vat_applicable) * Number(5 / 100);
+        bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
+
+        let total_price =
+          total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
+        bookingDetailsForm.total_price = convertToNegative(total_price);
+
+        bookingDetailsForm.commission_percentage = convertToNegative(
+          (total_commission / total_price) * 100,
+        );
+      } else {
+        notification.error({
+          title: 'Please add Policy Detail Price (VAT APPLICABLE)',
+          position: 'top',
+        });
+      }
+    } else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
+      if (Number(props.sendUpdateLog?.price_vat_not_applicable) > 0) {
+        bookingDetailsForm.commission_percentage = (
+          (bookingDetailsForm.commission_vat_not_applicable /
+            props.sendUpdateLog?.price_vat_not_applicable) *
+          100
+        ).toFixed(2);
+
+        bookingDetailsForm.total_commission =
+          bookingDetailsForm.commission_vat_not_applicable;
+      } else {
+        notification.error({
+          title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
+          position: 'top',
+        });
+      }
+    } else {
+      bookingDetailsForm.commission_percentage = '';
+      bookingDetailsForm.vat_on_commission = '';
+      bookingDetailsForm.total_commission = '';
+    }
   }
 };
 
@@ -1121,7 +1203,10 @@ watch(() => props?.payments[0]?.discount_value,
                   </span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2 pb-1.5">
+              <div v-if="
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
+                class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
                   <x-tooltip position="left">
                     <label
@@ -1139,7 +1224,10 @@ watch(() => props?.payments[0]?.discount_value,
                   <span>{{ bookingDetailsForm.booking_date ?? 'N/A' }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2 pb-1.5">
+              <div v-if="
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
+                class="grid sm:grid-cols-2 pb-1.5">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1220,7 +1308,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div>N/A</div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1266,7 +1354,7 @@ watch(() => props?.payments[0]?.discount_value,
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1294,7 +1382,10 @@ watch(() => props?.payments[0]?.discount_value,
                   />
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
+                class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1312,7 +1403,7 @@ watch(() => props?.payments[0]?.discount_value,
                   <span>{{ bookingDetailsForm.discount !== null ? bookingDetailsForm.discount : 'N/A' }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1342,7 +1433,10 @@ watch(() => props?.payments[0]?.discount_value,
                   />
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"  
+                class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1362,7 +1456,7 @@ watch(() => props?.payments[0]?.discount_value,
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1382,7 +1476,7 @@ watch(() => props?.payments[0]?.discount_value,
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1401,7 +1495,7 @@ watch(() => props?.payments[0]?.discount_value,
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1432,7 +1526,7 @@ watch(() => props?.payments[0]?.discount_value,
                   />
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1452,7 +1546,7 @@ watch(() => props?.payments[0]?.discount_value,
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1472,7 +1566,7 @@ watch(() => props?.payments[0]?.discount_value,
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1496,7 +1590,7 @@ watch(() => props?.payments[0]?.discount_value,
                 <div class="font-bold text-right"></div>
                 <div></div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
