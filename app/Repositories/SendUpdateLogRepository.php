@@ -273,7 +273,6 @@ class SendUpdateLogRepository extends BaseRepository
                 'total_vat_amount' => $request['total_vat_amount'],
                 'price_vat_applicable' => strToFloat($request['price_vat_applicable']),
                 'price_vat_not_applicable' => $request['price_vat_not_applicable'],
-                'total_price' => $request['total_price'],
             ];
             // it will check if send update type is CPD then it will add reversal_invoice to $data because other send update types don't have 2 kind of
             // booking details, so we don't need to add null reversal_invoice on other options details.
@@ -284,14 +283,15 @@ class SendUpdateLogRepository extends BaseRepository
 
             $payment = Payment::where('send_update_log_id', $request['id'])->firstOrFail();
             if ($payment) {
-                $bookingDetailsTotalPrice = floatval($request['total_price']);
+                $totalPrice = strToFloat($request['price_vat_applicable']) + $request['price_vat_not_applicable'] + $request['total_vat_amount'];
+                $bookingDetailsTotalPrice = floatval($totalPrice);
                 if ($bookingDetailsTotalPrice > $payment->total_amount) {
                     $diff = number_format($bookingDetailsTotalPrice - $payment->total_amount, 2);
                     if ($diff < 1) {
                         $payment->discount_value = $diff;
                         $payment->discount_type = LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT;
                     } else {
-                        $payment->total_price = $request['total_price'];
+                        $payment->total_price = $totalPrice;
                         $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
                 } elseif ($bookingDetailsTotalPrice == $payment->total_amount && $payment->discount_value && $payment->discount_type == LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT->value) {

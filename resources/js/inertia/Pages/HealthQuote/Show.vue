@@ -2938,7 +2938,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -3270,13 +3270,7 @@ watch(
 
             <!-- v-if="isBetaUser" -->
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.BetaUser,
-                  rolesEnum.RMAdvisor,
-                  rolesEnum.HealthManager,
-                ])
-              "
+              v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
               size="sm"
               color="emerald"
               @click.prevent="modals.createPlan = true"
@@ -3582,16 +3576,6 @@ watch(
       :payments="payments"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="modelType"
-      :paymentLink="paymentLink"
-      :expanded="sectionExpanded"
-    />
-
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Health"
@@ -3633,6 +3617,16 @@ watch(
       :quote="quote"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="modelType"
+      :paymentLink="paymentLink"
+      :expanded="sectionExpanded"
+    />
+    
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"

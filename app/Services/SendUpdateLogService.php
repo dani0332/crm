@@ -566,7 +566,7 @@ class SendUpdateLogService
             'total_vat_amount' => $sendUpdateLog->total_vat_amount,
             'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
             'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-            'total_price' => $sendUpdateLog->total_price,
+            'total_price' => $sendUpdateLog->price_vat_applicable + $sendUpdateLog->price_vat_not_applicable + $sendUpdateLog->total_vat_amount,
         ];
 
         return array_merge($bookingDetails, $data);
