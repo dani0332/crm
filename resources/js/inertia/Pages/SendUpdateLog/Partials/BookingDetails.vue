@@ -718,7 +718,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.invoice_description !== '' ? reversalEntry.invoice_description : '0.00' }}</span>
+                <span>{{ reversalEntry.invoice_description !== '' ? reversalEntry.invoice_description : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -736,7 +736,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.booking_date ?? '0.00' }}</span>
+                <span>{{ reversalEntry.booking_date ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -755,7 +755,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.transaction_payment_status ?? '0.00' }}</span>
+                <span>{{ reversalEntry.transaction_payment_status ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -772,7 +772,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ quoteType ?? '0.00' }}</span>
+                <span>{{ quoteType ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -790,7 +790,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.invoice_date ?? '0.00' }}</span>
+                <span>{{ reversalEntry.invoice_date ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -807,7 +807,7 @@ watch(() => props?.payments[0]?.discount_value,
                   </template>
                 </x-tooltip>
               </div>
-              <div>0.00</div>
+              <div>N/A</div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
@@ -825,7 +825,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.insurer_tax_invoice_number ?? '0.00'}}</span>
+                <span>{{ reversalEntry.insurer_tax_invoice_number ?? 'N/A'}}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -842,7 +842,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.broker_invoice_number ?? '0.00' }}</span>
+                <span>{{ reversalEntry.broker_invoice_number ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -861,7 +861,7 @@ watch(() => props?.payments[0]?.discount_value,
               </div>
               <div>
                 <span>{{
-                  reversalEntry.insurer_commission_invoice_number ?? '0.00'
+                  reversalEntry.insurer_commission_invoice_number ?? 'N/A'
                 }}</span>
               </div>
             </div>
@@ -880,7 +880,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.discount !== null) ? reverseValue(reversalEntry.discount) : '0.00' }}</span>
+                <span>{{ (reversalEntry.discount !== null) ? reverseValue(reversalEntry.discount) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -899,7 +899,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.price_vat_applicable !== null) ? reverseValue(reversalEntry.price_vat_applicable) : '0.00' }}</span>
+                <span>{{ (reversalEntry.price_vat_applicable !== null) ? reverseValue(reversalEntry.price_vat_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -916,7 +916,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.commission_percentage !== null) ? reverseValue(reversalEntry.commission_percentage) : '0.00' }}</span>
+                <span>{{ (reversalEntry.commission_percentage !== null) ? reverseValue(reversalEntry.commission_percentage) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -934,7 +934,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.price_vat_not_applicable !== null) ? reverseValue(reversalEntry.price_vat_not_applicable) : '0.00' }}</span>
+                <span>{{ (reversalEntry.price_vat_not_applicable !== null) ? reverseValue(reversalEntry.price_vat_not_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -951,7 +951,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.vat_on_commission !== null) ? reverseValue(reversalEntry.vat_on_commission) : '0.00' }}</span>
+                <span>{{ (reversalEntry.vat_on_commission !== null) ? reverseValue(reversalEntry.vat_on_commission) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -971,7 +971,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.commission_vat_applicable !== null) ? reverseValue(reversalEntry.commission_vat_applicable) : '0.00' }}</span>
+                <span>{{ (reversalEntry.commission_vat_applicable !== null) ? reverseValue(reversalEntry.commission_vat_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -989,7 +989,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.total_commission !== null) ? reverseValue(reversalEntry.total_commission) : '0.00' }}</span>
+                <span>{{ (reversalEntry.total_commission !== null) ? reverseValue(reversalEntry.total_commission) : 'N/A' }}</span>
               </div>
             </div>
 
@@ -1008,7 +1008,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.commission_vat_not_applicable !== null) ? reverseValue(reversalEntry.commission_vat_not_applicable) : '0.00' }}</span>
+                <span>{{ (reversalEntry.commission_vat_not_applicable !== null) ? reverseValue(reversalEntry.commission_vat_not_applicable) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -1026,7 +1026,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.total_vat_amount !== null) ? reverseValue(reversalEntry.total_vat_amount) : '0.00' }}</span>
+                <span>{{ (reversalEntry.total_vat_amount !== null) ? reverseValue(reversalEntry.total_vat_amount) : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2">
@@ -1049,7 +1049,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.total_price !== null) ? reverseValue(reversalEntry.total_price) : '0.00' }}</span>
+                <span>{{ (reversalEntry.total_price !== null) ? reverseValue(reversalEntry.total_price) : 'N/A' }}</span>
               </div>
             </div>
           </div>
@@ -1119,7 +1119,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div>
                   <span>
-                    {{ bookingDetailsForm.invoice_description !== '' ? bookingDetailsForm.invoice_description : '0.00' }}
+                    {{ bookingDetailsForm.invoice_description !== '' ? bookingDetailsForm.invoice_description : 'N/A' }}
                   </span>
                 </div>
               </div>
@@ -1138,7 +1138,7 @@ watch(() => props?.payments[0]?.discount_value,
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ bookingDetailsForm.booking_date ?? '0.00' }}</span>
+                  <span>{{ bookingDetailsForm.booking_date ?? 'N/A' }}</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
@@ -1158,7 +1158,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.transaction_payment_status ?? '0.00'
+                    bookingDetailsForm.transaction_payment_status ?? 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1176,7 +1176,7 @@ watch(() => props?.payments[0]?.discount_value,
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ quoteType ?? '0.00' }}</span>
+                  <span>{{ quoteType ?? 'N/A' }}</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1220,7 +1220,7 @@ watch(() => props?.payments[0]?.discount_value,
                     </template>
                   </x-tooltip>
                 </div>
-                <div>0.00</div>
+                <div>N/A</div>
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
@@ -1264,7 +1264,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.broker_invoice_number !== '' ? bookingDetailsForm.broker_invoice_number : '0.00'
+                    bookingDetailsForm.broker_invoice_number !== '' ? bookingDetailsForm.broker_invoice_number : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1311,7 +1311,7 @@ watch(() => props?.payments[0]?.discount_value,
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ bookingDetailsForm.discount !== null ? bookingDetailsForm.discount : '0.00' }}</span>
+                  <span>{{ bookingDetailsForm.discount !== null ? bookingDetailsForm.discount : 'N/A' }}</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1360,7 +1360,7 @@ watch(() => props?.payments[0]?.discount_value,
                 <div>
                   <span>{{ (bookingDetailsForm.commission_percentage !== '') ? 
                     bookingDetailsForm.commission_percentage + '%' : 
-                    '0.00'
+                    'N/A' 
                   }}</span>
                 </div>
               </div>
@@ -1380,7 +1380,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div v-if="props.quoteType !== quoteTypeCodeEnum.Business">
                   <span>{{
-                    bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : '0.00'
+                    bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
                   }}</span>
                 </div>
                 <div v-else>
@@ -1413,7 +1413,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.vat_on_commission !== '' ? thousandSeparator(bookingDetailsForm.vat_on_commission) : '0.00'
+                    bookingDetailsForm.vat_on_commission !== '' ? thousandSeparator(bookingDetailsForm.vat_on_commission) : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1464,7 +1464,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.total_commission !== '' ? thousandSeparator(bookingDetailsForm.total_commission) : '0.00'
+                    bookingDetailsForm.total_commission !== '' ? thousandSeparator(bookingDetailsForm.total_commission) : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1484,7 +1484,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.commission_vat_not_applicable !== null ? bookingDetailsForm.commission_vat_not_applicable : '0.00'
+                    bookingDetailsForm.commission_vat_not_applicable !== null ? bookingDetailsForm.commission_vat_not_applicable : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1504,7 +1504,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.total_vat_amount !== null ? thousandSeparator(bookingDetailsForm.total_vat_amount) : '0.00'
+                    bookingDetailsForm.total_vat_amount !== null ? thousandSeparator(bookingDetailsForm.total_vat_amount) : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1530,7 +1530,7 @@ watch(() => props?.payments[0]?.discount_value,
                 <div>
                   <span>
                     {{
-                      bookingDetailsForm.total_price !== '0.00' ? thousandSeparator(bookingDetailsForm.total_price) : '0.00'
+                      bookingDetailsForm.total_price !== '0.00' ? thousandSeparator(bookingDetailsForm.total_price) : 'N/A'
                     }}
                   </span>
                 </div>
