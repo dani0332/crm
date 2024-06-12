@@ -699,7 +699,9 @@ if (! function_exists('getCardViewRequestFilters')) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
 
-            $partialQuery->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            $partialQuery->whereHas('healthQuoteRequestDetail', function ($query) use ($dateFrom, $dateTo) {
+                $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+            });
             $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
         if (isset($request->code) && $request->code != '') {
@@ -782,7 +784,10 @@ if (! function_exists('getCardViewRequestFilters')) {
         }
 
         if (isset($request->advisors) && ! empty($request->advisors)) {
-            $partialQuery->whereIn('advisor_id', $request->advisors)->whereNotNull('advisor_id');
+            $advisors = (array) $request->advisors;
+            if (!empty($advisors)) {
+                $partialQuery->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
+            }
         }
     }
 }
