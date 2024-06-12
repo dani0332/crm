@@ -392,6 +392,7 @@ function onReset() {
   <component
     :groupBy="route().params.groupBy ?? 'advisor'"
     :reportData="props.reportData"
+    :loader="loaders.table"
     :is="selectedReport"
   ></component>
 </template>
