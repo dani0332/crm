@@ -133,6 +133,7 @@ class SageApiService
         //Insurer GL Account and Vendor Number
         $sageRequest->insurerGlLiaiblityAccount = $payment->insuranceProvider?->gl_liaiblity_account;
         $sageRequest->sageVenderId = $payment->insuranceProvider?->sage_vendor_id;
+        $sageRequest->sageInsurerCustomerId = $payment->insuranceProvider?->sage_insurer_customer_id;
 
         return $sageRequest;
     }
@@ -343,17 +344,17 @@ class SageApiService
             $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quoteDetails, $getingPaymentDetails['payment'], $getingPaymentDetails['splitPayments']);
             $sageRequestPayload->customerId = $sageCustomerNumber;
 
-            if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId) {
-                info('Book Update - Sage Vendor ID or GL Account for Insurance Provider not found. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+            if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId || ! $sageRequestPayload->sageInsurerCustomerId) {
+                info('Book Update - Sage Vendor ID or GL Account for Insurance Provider or Sage Insurer Customer ID not found. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
 
-                if (! $sageRequestPayload->sageVenderId && ! $sageRequestPayload->insurerGlLiaiblityAccount) {
-                    $message = 'Sage Vendor ID and GL Account for Insurance Provider not found';
-
-                    return ['status' => false, 'message' => $message];
-                } else {
-                    $message = (! $sageRequestPayload->sageVenderId) ? 'Sage Vendor ID' : 'GL Account';
-
-                    return ['status' => false, 'message' => $message.' for Insurance Provider not found'];
+                if (! $sageRequestPayload->insurerGlLiaiblityAccount && ! $sageRequestPayload->sageVenderId && ! $sageRequestPayload->sageInsurerCustomerId) {
+                    return ['status' => false, 'message' => 'Sage Vendor ID, Sage Insurer Customer ID and GL Account for Insurance Provider not found.'];
+                } elseif (! $sageRequestPayload->insurerGlLiaiblityAccount) {
+                    return ['status' => false, 'message' => 'GL Account for Insurance Provider not found.'];
+                } elseif (! $sageRequestPayload->sageVenderId) {
+                    return ['status' => false, 'message' => 'Sage Vendor ID for Insurance Provider not found.'];
+                } elseif (! $sageRequestPayload->sageInsurerCustomerId) {
+                    return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
                 }
             }
 
@@ -581,54 +582,57 @@ class SageApiService
             $startingStep = ($startingStep + 3);
         }
 
-        // For payment adjustments in Send Update, there should be payment in Send update.
-        if ($payment->send_update_log_id !== null) {
-            if (strtolower($sageRequestPayload->invoicePaymentStatus) == PaymentStatusEnum::PAID && $payment->send_update_log_id !== null) {
-                if ($payment->frequency == PaymentFrequency::UPFRONT) {
-                    info('Book Update - Creating Apply Payment Invoices - Receipt One for Upfront Payment with Invoice Payment Status Paid');
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                        'iterator' => 0,
-                        'lastIteration' => 2,
-                        'startingStep' => $startingStep,
-                        'totalSteps' => $totalSteps,
-                        'entryType' => SageEnum::SCT_STRAIGHT,
-                        'requestType' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
-                        'payment' => $payment,
-                        'splitPayments' => $splitPayments,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                    ]);
-                } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                    info('Book Update - Creating Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                        'iterator' => 0,
-                        'lastIteration' => 2,
-                        'startingStep' => $startingStep,
-                        'totalSteps' => $totalSteps,
-                        'entryType' => SageEnum::SCT_STRAIGHT,
-                        'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
-                        'payment' => $payment,
-                        'splitPayments' => $splitPayments,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                    ]);
-                }
-                $totalSteps = $totalSteps + 3;
-            }
+        // For Apply Pre-payment adjustments they should do it manually on Sage
+        // if ($payment->send_update_log_id !== null) {
+        //     $totalSteps = 15;
+        //     if (strtolower($sageRequestPayload->invoicePaymentStatus) == PaymentStatusEnum::PAID && $payment->send_update_log_id !== null) {
+        //         if ($payment->frequency == PaymentFrequency::UPFRONT) {
+        //             info('Book Update - Creating Apply Payment Invoices - Receipt One for Upfront Payment with Invoice Payment Status Paid');
+        //             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+        //                 'iterator' => 0,
+        //                 'lastIteration' => 2,
+        //                 'startingStep' => $startingStep,
+        //                 'totalSteps' => $totalSteps,
+        //                 'entryType' => SageEnum::SCT_STRAIGHT,
+        //                 'requestType' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
+        //                 'payment' => $payment,
+        //                 'splitPayments' => $splitPayments,
+        //                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
+        //             ]);
+        //         }
+        //         // Apply prepayment mapping manually on sage
+        //         elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+        //             info('Book Update - Creating Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
+        //             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+        //                 'iterator' => 0,
+        //                 'lastIteration' => 2,
+        //                 'startingStep' => $startingStep,
+        //                 'totalSteps' => $totalSteps,
+        //                 'entryType' => SageEnum::SCT_STRAIGHT,
+        //                 'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
+        //                 'payment' => $payment,
+        //                 'splitPayments' => $splitPayments,
+        //                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
+        //             ]);
+        //         }
+        //         $totalSteps = 18;
+        //     }
 
-            if (! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]) && in_array($splitPayments[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
-                info('Book Update - Creating AR Split Pre Payment for Upfront/Split Payment with Payment Status Paid/Captured');
-                $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                    'iterator' => 0,
-                    'lastIteration' => 2,
-                    'startingStep' => $startingStep,
-                    'totalSteps' => $totalSteps,
-                    'entryType' => SageEnum::SCT_STRAIGHT,
-                    'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
-                    'payment' => $payment,
-                    'splitPayments' => $splitPayments,
-                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                ]);
-            }
-        }
+        //     if (! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]) && in_array($splitPayments[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
+        //         info('Book Update - Creating AR Split Pre Payment for Upfront/Split Payment with Payment Status Paid/Captured');
+        //         $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+        //             'iterator' => 0,
+        //             'lastIteration' => 2,
+        //             'startingStep' => $startingStep,
+        //             'totalSteps' => $totalSteps,
+        //             'entryType' => SageEnum::SCT_STRAIGHT,
+        //             'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
+        //             'payment' => $payment,
+        //             'splitPayments' => $splitPayments,
+        //             'sendUpdateLog' => $extras['send_update_log'] ?? [],
+        //         ]);
+        //     }
+        // }
 
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices created successfully'];
 
@@ -1156,13 +1160,16 @@ class SageApiService
 
         $sageRequest->customerId = $sageCustomerNumber;
 
-        if (! $sageRequest->insurerGlLiaiblityAccount && ! $sageRequest->sageVenderId) {
-            return ['status' => false, 'message' => 'Sage Vendor ID and GL Account for Insurance Provider not found.'];
+        if (! $sageRequest->insurerGlLiaiblityAccount && ! $sageRequest->sageVenderId && ! $sageRequest->sageInsurerCustomerId) {
+            return ['status' => false, 'message' => 'Sage Vendor ID, Sage Insurer Customer ID and GL Account for Insurance Provider not found.'];
         } elseif (! $sageRequest->insurerGlLiaiblityAccount) {
             return ['status' => false, 'message' => 'GL Account for Insurance Provider not found.'];
         } elseif (! $sageRequest->sageVenderId) {
             return ['status' => false, 'message' => 'Sage Vendor ID for Insurance Provider not found.'];
+        } elseif (! $sageRequest->sageInsurerCustomerId) {
+            return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
         }
+
         info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
         info('Sage API - Payment frequency : '.$payment->frequency.' for '.$quote->uuid);
         if ($aPInvoicePatchAndPostingOnly) {

@@ -14,6 +14,7 @@ use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
+use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
@@ -96,6 +97,13 @@ class AdvisorDistributionReportService extends BaseService
                 $query = $query->where('users.id', auth()->user()->id);
             } else {
                 $userIds = $this->walkTree(auth()->user()->id);
+                $userIds = UserManager::where('manager_id', auth()->user()->id)
+                    ->get()
+                    ->filter(function ($user) use ($userIds) {
+                        return in_array($user->user_id, $userIds);
+                    })
+                    ->pluck('user_id')
+                    ->toArray();
                 $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
             }
         }
@@ -162,6 +170,13 @@ class AdvisorDistributionReportService extends BaseService
                 $query = $query->where('users.id', auth()->user()->id);
             } else {
                 $userIds = $this->walkTree(auth()->user()->id, $lob);
+                $userIds = UserManager::where('manager_id', auth()->user()->id)
+                    ->get()
+                    ->filter(function ($user) use ($userIds) {
+                        return in_array($user->user_id, $userIds);
+                    })
+                    ->pluck('user_id')
+                    ->toArray();
                 $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
             }
         }
@@ -299,7 +314,7 @@ class AdvisorDistributionReportService extends BaseService
 
         $leadSources = LeadSource::query()
             ->select('name')
-            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
+            ->where('is_active', 1)
             ->whereNotNull('name')
             ->orderBy('name')
             ->get()

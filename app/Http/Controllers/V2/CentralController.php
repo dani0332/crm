@@ -54,6 +54,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CentralController extends Controller
 {
@@ -235,6 +236,7 @@ class CentralController extends Controller
         $payment->update($paymentInformation);
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
         $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
+        Log::info('Book policy details update successfully for : '.$quote->uuid);
 
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
@@ -272,7 +274,7 @@ class CentralController extends Controller
             if ($response['status'] === false) {
                 return response()->json(['errors' => [
                     'message' => $response['message'],
-                    'sageError' => $response['error'] ? 'SAGE API : '.$response['error'] : null,
+                    'sageError' => isset($response['error']) ? 'SAGE API : '.$response['error'] : null,
                 ]], 500);
             }
 
@@ -283,6 +285,7 @@ class CentralController extends Controller
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                'policy_booking_date' => Carbon::now(),
             ]);
 
             (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);

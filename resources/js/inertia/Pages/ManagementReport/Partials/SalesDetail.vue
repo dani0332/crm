@@ -138,7 +138,7 @@ const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
   // For example, check if the key corresponds to an integer column
   return [
-    'transactions',
+    // 'transactions',
     'price_vat_applicable',
     'vat',
     'price_vat_not_applicable',
