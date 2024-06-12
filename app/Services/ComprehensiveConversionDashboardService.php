@@ -8,6 +8,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PersonalQuote;
@@ -19,7 +20,6 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Enums\RolesEnum;
 
 class ComprehensiveConversionDashboardService extends BaseService
 {
@@ -60,7 +60,7 @@ class ComprehensiveConversionDashboardService extends BaseService
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
         if (
-            !auth()->user()->hasAnyRole([
+            ! auth()->user()->hasAnyRole([
                 RolesEnum::SeniorManagement,
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
