@@ -137,7 +137,7 @@ class addInsuranceProvidersConfiguration extends Seeder
             ['code' => 'AHAC', 'gl_liaiblity_account' => '55130', 'sage_insurer_customer_id' => 'IC016', 'sage_vendor_id' => 'IP015'],
             ['code' => 'ALJALIL', 'gl_liaiblity_account' => '55070', 'sage_insurer_customer_id' => 'IC014', 'sage_vendor_id' => 'IP009'],
             ['code' => 'AIG', 'gl_liaiblity_account' => '55130', 'sage_insurer_customer_id' => 'IC016', 'sage_vendor_id' => 'IP015'],
-            ['code' => 'ECI', 'gl_liaiblity_account' => '55520', 'sage_insurer_customer_id' => 'IC051', 'sage_vendor_id' => 'IP052']
+            ['code' => 'ECI', 'gl_liaiblity_account' => '55520', 'sage_insurer_customer_id' => 'IC051', 'sage_vendor_id' => 'IP052'],
         ];
 
         foreach ($insuranceProvidersMapping as $providerMapping) {
