@@ -22,6 +22,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\RolesEnum;
 
 class DashboardController extends Controller
 {
