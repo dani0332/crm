@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\quoteBusinessTypeCode;
 use App\Models\BusinessInsuranceType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class MarineSeeder extends Seeder
