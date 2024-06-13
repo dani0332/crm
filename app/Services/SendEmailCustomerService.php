@@ -964,7 +964,7 @@ class SendEmailCustomerService extends BaseService
 
     public function sendPaymentNotificationEmail($user)
     {
-        $emailTemplateId = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_TEMPLATE')->value('value');
+        $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
             $headers = [

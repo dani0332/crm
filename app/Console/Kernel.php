@@ -48,6 +48,8 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
+        $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping();
+
         /*$schedule->job(new UnconSubmissionReminder)
             ->tuesdays()
             ->fridays()
@@ -108,6 +110,7 @@ class Kernel extends ConsoleKernel
         } else {
             $schedule->command('alfred:followupEmails')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
         }
+
     }
 
     /**
