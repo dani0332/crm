@@ -191,7 +191,7 @@ const bookingDetailsForm = useForm({
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
 const calculateCommission = () => {
-  if (bookingDetailsForm.commission_vat_applicable > 0) {
+  if (bookingDetailsForm.commission_vat_applicable > 0 || bookingDetailsForm.price_vat_applicable > 0) {
     if (Number(bookingDetailsForm.price_vat_applicable > 0)) {
       let vat_on_commission =
         bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
