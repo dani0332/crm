@@ -79,6 +79,7 @@ const renderMarkdown = markdownString => {
             :options="[
               { label: 'Whatsapp', value: 'Whatsapp' },
               { label: 'Website', value: 'Website' },
+              { label: 'Email', value: 'Email' },
             ]"
             placeholder="Select a Channel"
             class="w-full"
