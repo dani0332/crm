@@ -19,15 +19,20 @@ const props = defineProps({
 });
 
 const source = ref(null);
+const channel = ref(null);
 
 const md = new markdownit();
 
 const computedMessages = computed(() => {
-  if (source.value && source.value.length > 0)
+  if (source.value && source.value.length > 0) {
     return props.chatMessages.data.filter(
       message => message.role.toLowerCase() === source.value.toLowerCase(),
     );
-  else return props.chatMessages.data;
+  } else if (channel.value && channel.value.length > 0) {
+    return props.chatMessages.data.filter(
+      message => message.channel.toLowerCase() === channel.value.toLowerCase(),
+    );
+  } else return props.chatMessages.data;
 });
 
 const renderMarkdown = markdownString => {
@@ -68,6 +73,19 @@ const renderMarkdown = markdownString => {
           >
           </combo-box>
         </x-field>
+        <x-field label="Message Channel" required>
+          <combo-box
+            v-model="channel"
+            :options="[
+              { label: 'Whatsapp', value: 'Whatsapp' },
+              { label: 'Website', value: 'Website' },
+            ]"
+            placeholder="Select a Channel"
+            class="w-full"
+            single
+          >
+          </combo-box>
+        </x-field>
       </div>
       <x-divider class="my-3" />
       <div v-for="(message, index) in computedMessages" :key="index">
@@ -87,10 +105,26 @@ const renderMarkdown = markdownString => {
           </div>
           <div class="chat-header">
             {{ customerName ?? message.role }}
+            <span
+              class="py-[4px] rounded-md px-4 text-white ml-2 text-xs"
+              :class="
+                message.channel.toLowerCase() == 'website'
+                  ? 'bg-sky-400'
+                  : 'bg-emerald-400'
+              "
+              >{{ message.channel.toLowerCase() }}</span
+            >
           </div>
-          <div class="chat-bubble text-sm">
+          <div class="chat-bubble text-sm relative flex items-center">
             <div v-html="renderMarkdown(message.msg)"></div>
+            <div
+              class="absolute right-[-30px] text-red-600"
+              v-if="message?.whatsapp_request?.type == 'audio'"
+            >
+              <x-icon icon="audio" />
+            </div>
           </div>
+
           <div class="chat-footer opacity-50 text-right">
             {{ message.created_at.split(' ')[1] }}
           </div>

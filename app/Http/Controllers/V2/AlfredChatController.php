@@ -13,7 +13,7 @@ class AlfredChatController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
+        $this->middleware('permission:' . PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
     }
 
     /**
@@ -41,7 +41,7 @@ class AlfredChatController extends Controller
                             ],
                         ],
                         'role' => ['$first' => '$role'], //$first is used to add role field of the first occurrence of the group
-                        'msg' => ['$first' => '$msg'],   //$first is used to add msg field  of the first occurrence of the group
+                        'msg' => ['$first' => '$msg'], //$first is used to add msg field  of the first occurrence of the group
                         'count' => ['$sum' => 1], // $sum is used to count the number of records in the group
                     ],
                 ],
@@ -66,7 +66,7 @@ class AlfredChatController extends Controller
         $chat = AlfredChat::where('quote_id', $request->quoteId)
             ->where('quote_type', $request->quoteType)
             ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->select('role', 'msg', 'created_at')
+        // ->select('role', 'msg', 'created_at')
             ->get();
 
         if ($chat->isEmpty()) {
@@ -128,7 +128,7 @@ class AlfredChatController extends Controller
         $totalPipeline[] = ['$count' => 'total'];
 
         // Execute the aggregation pipeline to get the total count
-        $totalDocuments = AlfredChat::raw(fn ($collection) => $collection->aggregate($totalPipeline))->toArray();
+        $totalDocuments = AlfredChat::raw(fn($collection) => $collection->aggregate($totalPipeline))->toArray();
 
         $totalDocumentsCount = empty($totalDocuments) ? 0 : $totalDocuments[0]['total'];
 
@@ -181,7 +181,7 @@ class AlfredChatController extends Controller
         $chatPipeline[] = ['$limit' => $perPage];
 
         // Execute the aggregation pipeline to fetch paginated chat records
-        $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline));
+        $chat = AlfredChat::raw(fn($collection) => $collection->aggregate($chatPipeline));
 
         // Calculate pagination indices
         $startIndex = ($page - 1) * $perPage;
@@ -194,19 +194,19 @@ class AlfredChatController extends Controller
             'data' => $chat,
             'current_page' => $page,
 
-            'prev_page_url' => $prevPage ? $request->url().'?page='.$prevPage.
-            ($request->start_date ? '&start_date='.$request->start_date : '').
-            ($request->end_date ? '&end_date='.$request->end_date : '').
-            ($request->quoteType ? '&quoteType='.$request->quoteType : '').
-            ($request->quoteId ? '&quoteId='.$request->quoteId : '')
+            'prev_page_url' => $prevPage ? $request->url() . '?page=' . $prevPage .
+            ($request->start_date ? '&start_date=' . $request->start_date : '') .
+            ($request->end_date ? '&end_date=' . $request->end_date : '') .
+            ($request->quoteType ? '&quoteType=' . $request->quoteType : '') .
+            ($request->quoteId ? '&quoteId=' . $request->quoteId : '')
             : null,
 
-            'next_page_url' => $nextPage ? $request->url().'?page='.$nextPage.
-                ($request->start_date ? '&start_date='.$request->start_date : '').
-                ($request->end_date ? '&end_date='.$request->end_date : '').
-                ($request->quoteType ? '&quoteType='.$request->quoteType : '').
-                ($request->quoteId ? '&quoteId='.$request->quoteId : '')
-                : null,
+            'next_page_url' => $nextPage ? $request->url() . '?page=' . $nextPage .
+            ($request->start_date ? '&start_date=' . $request->start_date : '') .
+            ($request->end_date ? '&end_date=' . $request->end_date : '') .
+            ($request->quoteType ? '&quoteType=' . $request->quoteType : '') .
+            ($request->quoteId ? '&quoteId=' . $request->quoteId : '')
+            : null,
 
             'from' => $startIndex + 1,
             'to' => $endIndex,
