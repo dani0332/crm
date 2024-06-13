@@ -18,7 +18,7 @@ class MarineSeeder extends Seeder
         $newBusinessInsuranceTypes = [quoteBusinessTypeCode::marineCargoIndividual];
         foreach ($newBusinessInsuranceTypes as $newType) {
             BusinessInsuranceType::updateOrCreate([
-                'code' => quoteBusinessTypeCode::marineCargo,
+                'code' => 'Marine Cargo',
             ], [
                 'code' => $newType,
                 'text' => $newType,

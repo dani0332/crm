@@ -13,7 +13,7 @@ class BusinessTypeInsuranceSeeder extends Seeder
      */
     public function run(): void
     {
-        $newBusinessInsuranceTypes = [quoteBusinessTypeCode::moneyInsurance, quoteBusinessTypeCode::liveStock, quoteBusinessTypeCode::marineCargoOpenCover, quoteBusinessTypeCode::marineCargoIndividual, quoteBusinessTypeCode::holidayHomes, quoteBusinessTypeCode::medicalMalpractices, quoteBusinessTypeCode::fidelityGuarantee, quoteBusinessTypeCode::goodsInTransit];
+        $newBusinessInsuranceTypes = [quoteBusinessTypeCode::moneyInsurance, quoteBusinessTypeCode::liveStock, quoteBusinessTypeCode::marineCargoOpenCover, quoteBusinessTypeCode::holidayHomes, quoteBusinessTypeCode::medicalMalpractices, quoteBusinessTypeCode::fidelityGuarantee, quoteBusinessTypeCode::goodsInTransit];
         foreach ($newBusinessInsuranceTypes as $newType) {
             $sme = BusinessInsuranceType::updateOrCreate([
                 'code' => $newType,
