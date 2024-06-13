@@ -35,6 +35,7 @@ class Kernel extends ConsoleKernel
     ];
 
     private $appEnv = '';
+
     /**
      * Define the application's command schedule.
      *
@@ -46,7 +47,7 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
 
         /*$schedule->job(new UnconSubmissionReminder)
             ->tuesdays()
@@ -91,11 +92,11 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        // $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
-        $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
+        $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('Dtt')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('09:00');
-        $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('11:45');
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
 
         if ($this->appEnv == EnvEnum::PRODUCTION) {
             $schedule->command('alfred:followupEmails')
@@ -104,9 +105,9 @@ class Kernel extends ConsoleKernel
                 ->mondays()
                 ->at('11:00')
                 ->onOneServer()
-                ->withoutOverlapping(1);
+                ->withoutOverlapping();
         } else {
-            $schedule->command('alfred:followupEmails')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+            $schedule->command('alfred:followupEmails')->everyFiveMinutes()->onOneServer()->withoutOverlapping(10);
         }
     }
 

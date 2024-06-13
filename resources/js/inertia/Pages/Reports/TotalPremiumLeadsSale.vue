@@ -142,8 +142,6 @@ onMounted(() => {
             label: team.name,
           }))"
           @update:modelValue="fetchTeamUsers"
-          select-all
-          deselect-all
         />
 
       <ComboBox
@@ -154,8 +152,6 @@ onMounted(() => {
           value: user.id,
           label: user.name
         }))"
-        select-all
-        deselect-all
       />
       </div>
       <div class="flex justify-end gap-3 mb-4">

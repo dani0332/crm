@@ -802,13 +802,14 @@ const getAdvisorLabel = () => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
 
-        <x-select
-            label="LOB"
-            v-model="filters.lob"
-            placeholder="Select LOB"
-            :options="quoteTypesOptions"
-            size="sm"
-            @update:model-value="onLobChange"
+        <ComboBox
+          v-model="filters.lob"
+          label="LOB"
+          placeholder="Select LOB"
+          :options="quoteTypesOptions"
+          class="w-full"
+          :single="true"
+          @update:modelValue="onLobChange"
         />
 
         <DatePicker
@@ -854,7 +855,6 @@ const getAdvisorLabel = () => {
             }))
           "
           :max-limit="8"
-          deselect-all
         />
 
         <x-tooltip position="top" v-if="canShow('tiers')">
@@ -874,8 +874,6 @@ const getAdvisorLabel = () => {
                 label: filterOptions.tiers[key],
               }))
             "
-            select-all
-            deselect-all
           />
         </x-tooltip>
 
@@ -890,7 +888,6 @@ const getAdvisorLabel = () => {
             }))
         "
         :max-limit="3"
-        deselect-all
         />
 
         <ComboBox
@@ -904,8 +901,6 @@ const getAdvisorLabel = () => {
         placeholder="Search by Teams"
         :options="teamOptions"
         @update:model-value="onTeamChange"
-        select-all
-        deselect-all
         :loading="loaders.teamsOptions"
         />
 
@@ -920,8 +915,6 @@ const getAdvisorLabel = () => {
         placeholder="Search by SubTeams"
         :options="subteamOptions"
         @update:model-value="onSubTeamChange"
-        select-all
-        deselect-all
         :loading="loaders.subteamOptions"
         />
 
@@ -934,8 +927,6 @@ const getAdvisorLabel = () => {
         v-model="filters.advisors"
         :label="getAdvisorLabel()"
         :options="advisorOptions"
-        :select-all="filters.advisors?.length > 0"
-        :deselect-all="filters.advisors?.length > 0"
         :loading="loaders.advisorOptions"
         />
         <x-select
@@ -977,12 +968,13 @@ const getAdvisorLabel = () => {
 
           class="w-full"
         />
-        <x-select
+        <ComboBox
           v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">

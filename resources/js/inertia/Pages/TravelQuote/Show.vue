@@ -2052,23 +2052,27 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium }}</dd>
+            <dd>{{ selectedProviderPlan.premium ?? 'N/A' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AUTHORISED AT</dt>
+            <dd>{{ ecomDetails.paidAt ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ ecomDetails.paidAt }}</dd>
+            <dd>{{ ecomDetails.paidAtPayment ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ ecomDetails.paymentStatus }}</dd>
+            <dd>{{ ecomDetails.paymentStatus ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
           </div>
         </dl>
       </div>
@@ -2459,6 +2463,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   <span class="text-primary-600 uppercase">{{
                     item.providerName
                   }}</span>
+                    <div class="flex gap-1">
+                        <x-tag
+                            v-if="item.isDisabled"
+                            size="xs"
+                            color="error"
+                            class="mt-0.5 text-[10px]"
+                        >
+                            Hidden
+                        </x-tag>
+                    </div>
                 </template>
                 <template #item-name="item">
                   <span class="text-primary-600 uppercase">{{

@@ -270,7 +270,7 @@ function onLobChange(updateDisplayFilter = true) {
   }
 
   if (
-    quote.toLowerCase() == props.quoteTypeCodes.CORPLINE.toLowerCase() ||
+    quote && quote.toLowerCase() == props.quoteTypeCodes.CORPLINE.toLowerCase() ||
     quote == props.quoteTypeCodes.GroupMedical.replace(/ /g, '')
   ) {
     displayBy.value.push({ label: 'Sub Team', value: 'sub_team' });
@@ -355,7 +355,6 @@ const minDate = computed(() => {
           :options="displayBy"
           class="w-full"
           :single="true"
-          deselect-all
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">

@@ -37,7 +37,7 @@ class ActivePoliciesReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
 
-        return $query->simplePaginate(10)->withQueryString();
+        return $query->simplePaginate(100)->withQueryString();
     }
 
     public function getDefaultFilters()
