@@ -14,15 +14,12 @@ class MarineSeeder extends Seeder
     public function run(): void
     {
         //
-        $newBusinessInsuranceTypes = [quoteBusinessTypeCode::marineCargoIndividual];
-        foreach ($newBusinessInsuranceTypes as $newType) {
-            BusinessInsuranceType::updateOrCreate([
-                'code' => 'Marine Cargo',
-            ], [
-                'code' => $newType,
-                'text' => $newType,
-                'is_active' => 1,
-            ]);
-        }
+        BusinessInsuranceType::updateOrCreate([
+            'code' => 'Marine Cargo',
+        ], [
+            'code' => quoteBusinessTypeCode::marineCargoIndividual,
+            'text' => quoteBusinessTypeCode::marineCargoIndividual,
+            'is_active' => 1,
+        ]);
     }
 }
