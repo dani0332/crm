@@ -72,7 +72,7 @@ class SaleDetailReportService extends ManagementReport
             $query->groupBy($utmGroupBy);
         }
 
-        return $query->simplePaginate(10)->withQueryString();
+        return $query->simplePaginate(100)->withQueryString();
     }
 
     public function getDefaultFilters()

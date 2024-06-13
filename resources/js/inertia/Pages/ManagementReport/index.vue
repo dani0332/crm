@@ -20,6 +20,7 @@ const reportComponents = {
   'Sales Summary': SalesSummary,
 };
 
+const params = useUrlSearchParams('history');
 const subTeams = ref([]);
 const isReportCategoryEmpty = ref(false);
 
@@ -236,6 +237,20 @@ function onReset() {
     onSuccess: () => (loaders.table = false),
   });
 }
+
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 <template>
   <Head title="Management Reports" />
@@ -383,8 +398,8 @@ function onReset() {
     </div>
 
     <div class="flex gap-3 justify-end">
-      <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-      <x-button size="sm" color="primary" @click.prevent="onReset">
+      <x-button size="sm" color="#ff5e00" type="submit" :disabled="loaders.table">Search</x-button>
+      <x-button size="sm" color="primary" @click.prevent="onReset" :disabled="loaders.table">
         Reset
       </x-button>
     </div>
@@ -392,6 +407,7 @@ function onReset() {
   <component
     :groupBy="route().params.groupBy ?? 'advisor'"
     :reportData="props.reportData"
+    :loader="loaders.table"
     :is="selectedReport"
   ></component>
 </template>

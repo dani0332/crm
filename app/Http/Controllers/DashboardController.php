@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Team;
@@ -348,7 +349,13 @@ class DashboardController extends Controller
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
-        if (auth()->user()->isManagerORDeputy()) {
+        if (
+            ! auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ]) && auth()->user()->isManagerORDeputy()
+        ) {
             $userIds = $this->walkTree(auth()->user()->id, quoteTypeCode::Car);
             $userIds = UserManager::where('manager_id', auth()->user()->id)
                 ->get()

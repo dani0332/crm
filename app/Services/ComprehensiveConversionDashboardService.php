@@ -8,6 +8,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PersonalQuote;
@@ -28,8 +29,8 @@ class ComprehensiveConversionDashboardService extends BaseService
     public function getReportData($request)
     {
         $lob = $request->lob ?? quoteTypeCode::Car;
-        $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
-        $lobId = QuoteTypeRepository::where('code', $lob)->first();
+        $lobFiltered = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
+        $lobId = QuoteTypeRepository::where('code', $lobFiltered)->first();
 
         $records = PersonalQuote::query()
             ->select(
@@ -58,7 +59,14 @@ class ComprehensiveConversionDashboardService extends BaseService
             ->groupBy('personal_quotes.advisor_id', 'personal_quotes.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
-        if (auth()->user()->isManagerORDeputy()) {
+        if (
+            ! auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ]) && auth()->user()->isManagerORDeputy()
+        ) {
+
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             $userIds = UserManager::where('manager_id', auth()->user()->id)
                 ->get()
