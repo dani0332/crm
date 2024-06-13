@@ -3,7 +3,6 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateManualOffline;
-use App\Enums\EnvEnum;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\CarLost\UnconSubmissionReminder;
 use Carbon\Carbon;
