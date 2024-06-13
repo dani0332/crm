@@ -362,7 +362,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quote.lost_reason_id || null,
 });
 
@@ -2971,14 +2970,6 @@ watch(
             </div>
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                <x-input
-                  v-if="leadStatusForm.leadStatus == 15"
-                  v-model="leadStatusForm.trans_code"
-                  label="TransApp Code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
                 <x-select
                   v-if="leadStatusForm.leadStatus == 17"
                   v-model="leadStatusForm.lostReason"
@@ -3001,32 +2992,10 @@ watch(
                     :disabled="true"
                   />
                 </x-field>
-              </div>
-            </div>
-            <div class="w-full md:w-50">
-              <div class="flex flex-col gap-4">
-                <x-input
-                  v-if="leadStatusForm.leadStatus == 15"
-                  v-model="leadStatusForm.trans_code"
-                  label="TransApp Code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-                <x-select
-                  v-if="leadStatusForm.leadStatus == 17"
-                  v-model="leadStatusForm.lostReason"
-                  label="Lost Reason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                />
+
+                <div class="flex flex-col gap-4">
+                 
+                </div>
               </div>
             </div>
           </div>
