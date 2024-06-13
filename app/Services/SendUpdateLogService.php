@@ -543,7 +543,7 @@ class SendUpdateLogService
 
     public function mergeBookingDetails($bookingDetails, $sendUpdateLog)
     {
-        // using abs function because sometimes it's getting negative value.
+        // using abs function because sometime it's getting negative value.
         $totalPrice = $sendUpdateLog->price_vat_applicable + $sendUpdateLog->price_vat_not_applicable + abs($sendUpdateLog->total_vat_amount);
         if ($this->isNegativeValue($sendUpdateLog)) {
             $totalPrice = -$totalPrice;
