@@ -705,7 +705,7 @@ class SagePayloadFactory
         if ($mapping) {
             $payLoad = [
                 'CustomerNumber' => 'C'.$customer->id,
-                'CustomerName' => $customer->first_name.' '.$customer->last_name,
+                'CustomerName' => $mapping?->entity?->company_name,
                 'GroupCode' => 'PHC',
             ];
         } else {
