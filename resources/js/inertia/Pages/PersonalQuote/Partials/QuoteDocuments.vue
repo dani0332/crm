@@ -170,20 +170,6 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
     });
 };
 
-const isEN = computed(() => {
-  return (
-    isSendUpdatePage &&
-    props.sendUpdateLog.category.code === sendUpdateStatusEnum.EN
-  );
-});
-
-const isCPU = computed(() => {
-  return (
-    isSendUpdatePage &&
-    props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPU
-  );
-});
-
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
   axios
