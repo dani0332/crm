@@ -39,6 +39,8 @@ class DashboardController extends Controller
 
         $comprehensiveDashboardPermissions = implode('|', PermissionsEnum::getComprehensiveDashboardPermissions());
         $this->middleware(['permission:'.$comprehensiveDashboardPermissions], ['only' => ['renderComprehensiveDashboard']]);
+
+        $this->middleware('readonly_db');
     }
 
     /**
