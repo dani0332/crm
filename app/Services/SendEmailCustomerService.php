@@ -958,6 +958,8 @@ class SendEmailCustomerService extends BaseService
                     'clientFullName' => $emailData->first_name.' '.$emailData->last_name],
             ];
             $response = Http::withHeaders($headers)
+                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
+                ->retry(3, 90000)
                 ->post(config('constants.SIB_URL'), $body);
 
             info('SICFollowupEmail ---- Request Sent '.$emailData->email);
