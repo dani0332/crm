@@ -116,6 +116,7 @@ class HomeQuoteService extends BaseService
             'hqr.policy_issuance_status_other',
             'hqr.policy_start_date',
             'hqr.policy_issuance_date',
+            'hqr.policy_booking_date',
         )
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')

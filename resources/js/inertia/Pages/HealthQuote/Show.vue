@@ -9,7 +9,6 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 
 const props = defineProps({
   quote: Object,
-  record: Object,
   leadStatuses: Array,
   ecomDetails: Object,
   coPayment: Object,
@@ -687,6 +686,10 @@ const onLoadAvailablePlansData = async () => {
         }
       });
 
+      if (selectedPlan.value?.id) {
+        let plans = plansTable.data.filter(x => x.id == selectedPlan.value?.id);
+        selectedPlan.value = { ...plans[0] };
+      }
       setTimeout(() => {
         onPlanFiltersSubmit();
       }, 800);
@@ -951,7 +954,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
         element.selectedCopayId &&
         defaultCopayId == value.healthPlanCoPaymentId
       ) {
-        smallestCopayValue = Number(value.premium);
+        smallestCopayValue = Number(value.discountPremium);
         smallestCopayVAT = Number(value.vat);
         smallestCopayLoadingPrice = Number(
           value.loadingPrice ? value.loadingPrice : 0,
@@ -962,14 +965,14 @@ const getSmallestCopayRateAsDefaultValue = () => {
         element.selectedCopayId == null
       ) {
         if (index == 0) {
-          smallestCopayValue = Number(value.premium);
+          smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
           );
           defaultCopayId = value.healthPlanCoPaymentId;
-        } else if (value.premium < smallestCopayValue) {
-          smallestCopayValue = Number(value.premium);
+        } else if (value.discountPremium < smallestCopayValue) {
+          smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
@@ -2408,10 +2411,36 @@ watch(
 
         <x-modal v-model="modals.member" size="lg" show-close backdrop>
           <template #header>
-            {{ memberActionEdit ? 'Edit' : 'Add' }} Member
+            <span>{{ memberActionEdit ? 'Edit' : 'Add' }} Member</span>
           </template>
 
           <x-form @submit="onMemberSubmit" :auto-focus="false">
+            <div
+              v-if="isManualPlansCount > 0"
+              class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+              role="alert"
+            >
+              <div class="flex">
+                <div class="py-1">
+                  <svg
+                    class="fill-current h-6 w-6 text-read-900 mr-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+                  <p class="text-sm">
+                    Please revist all manual plan(s) and update the per member
+                    price
+                  </p>
+                </div>
+              </div>
+            </div>
             <div class="grid md:grid-cols-2 gap-4 md:pb-16">
               <input type="hidden" :value="memberForm.id" />
               <x-input
@@ -2909,7 +2938,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -3241,13 +3270,7 @@ watch(
 
             <!-- v-if="isBetaUser" -->
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.BetaUser,
-                  rolesEnum.RMAdvisor,
-                  rolesEnum.HealthManager,
-                ])
-              "
+              v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
               size="sm"
               color="emerald"
               @click.prevent="modals.createPlan = true"
@@ -3553,16 +3576,6 @@ watch(
       :payments="payments"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="modelType"
-      :paymentLink="paymentLink"
-      :expanded="sectionExpanded"
-    />
-
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Health"
@@ -3604,9 +3617,19 @@ watch(
       :quote="quote"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="modelType"
+      :paymentLink="paymentLink"
+      :expanded="sectionExpanded"
+    />
+    
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="health"
       :expanded="sectionExpanded"
       :payments="payments"
@@ -3616,7 +3639,7 @@ watch(
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
-      :quote="record"
+      :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Health"
@@ -3631,7 +3654,7 @@ watch(
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="health"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

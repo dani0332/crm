@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
+use App\Rules\CustomFileType;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -31,12 +32,13 @@ class QuotesDocumentRequest extends FormRequest
     public function rules()
     {
         $rules = [
-            'file' => 'required|file',
+            'file' => ['required', 'file'],
             'document_type_code' => 'required|exists:document_types,code,is_active,1',
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->where('quote_type_id', request()->quote_type_id ?? 0)->first())) {
-            $rules['file'] .= '|mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
+            $rules['file'][] = new CustomFileType($this->documentType->accepted_files);
+            $rules['file'][] = 'max:'.$this->documentType->max_size * 1024;
         }
 
         return $rules;

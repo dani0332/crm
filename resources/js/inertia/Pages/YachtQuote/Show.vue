@@ -48,7 +48,6 @@ const props = defineProps({
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
   linkedQuoteDetails: Object,
-  record: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
@@ -271,73 +270,21 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         </Link>
       </template>
     </StickyHeader>
-    <!-- <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <div class="flex items-center space-x-2">
-        <h2 class="text-xl font-semibold">Yacht Detail</h2>
-        <p
-          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="countDays !== false"
-        >
-          Stale for {{ countDays }} days
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <LeadNotes
-          :documentType="noteDocumentType"
-          :notes="quoteDocuments"
-          :modelType="quoteType"
-          :quote="quote"
-          :cdn="cdnPath"
-        />
-        <Link
-          v-if="quote.quote_detail?.insly_id"
-          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-
-        <Link
-          v-if="can(permissionsEnum.YachtQuotesEdit)"
-          :href="route('yacht-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-
-        <Link
-          v-if="can(permissionsEnum.YachtQuotesList)"
-          :href="route('yacht-quotes-list')"
-          preserve-scroll
-        >
-          <x-button size="sm" color="primary" tag="div">
-            Yacht Quotes
-          </x-button>
-        </Link>
-      </div>
-    </div> -->
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
+   
+    <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h2 class="text-xl font-semibold">Yacht Detail</h2>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+             <div class="grid sm:grid-cols-2" v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])">
+                <dt class="font-medium">ID</dt>
+                <dd>{{ quote.id }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
-                <div
-                  class="grid sm:grid-cols-2"
-                  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-                >
-                  <dt class="font-medium">ID</dt>
-                  <dd>{{ quote.id }}</dd>
-                </div>
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -910,7 +857,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Yacht"
       :expanded="sectionExpanded"
     />
@@ -933,7 +880,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Yacht"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

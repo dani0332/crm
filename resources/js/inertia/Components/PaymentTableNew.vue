@@ -202,6 +202,20 @@ const calculateTotalAmount = () => {
   calculatePaymentBreakup(false);
 };
 
+const isPolicyIssuanceDiscount = computed(() => {
+  if (
+    can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
+    (
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyIssued ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicySentToCustomer
+    )  
+  ) {
+    return true;
+  }  
+  return false;
+});
+
 const { copy, copied } = useClipboard();
 const onCopyPaymentLink = (paymentLink, paymentStatus) => {
   if (paymentStatus == props.paymentStatusEnum.PAID) {
@@ -371,8 +385,15 @@ const validatePaymentOption = () => {
     }
   }
 
-  if (
-    totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)
+  if (isPolicyIssuanceDiscount.value === true){
+    if ( totalSplitAmount.toFixed(2) === parseFloat(totalAmount.value).toFixed(2) ||  discountValue.value>0) {
+      isPaymentCalculationError.value = false;
+    } else {
+      isPaymentCalculationError.value = true;
+      issueFound = true;
+    }
+  } else if (
+    totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2) 
   ) {
     isPaymentCalculationError.value = true;
     issueFound = true;
@@ -2008,7 +2029,7 @@ const addPayment = isValid => {
   }
 
   if (paymentMethodsForm.status === 'edit') {
-    if (totalPaidAmount.value == paymentMethodsForm.payment_no) {
+    if (totalPaidAmount.value == paymentMethodsForm.payment_no && isPolicyIssuanceDiscount.value === false) {
       notification.error({
         title: 'No further actions allowed to paid payments',
         position: 'top',
@@ -2019,6 +2040,7 @@ const addPayment = isValid => {
       ...data,
       paymentCode: paymentMethodsForm.paymentCode,
       trashedFilesModal: trashedFilesModal.value,
+      isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
     };
     paymentMethodsForm
       .transform(data => editData)
@@ -2513,14 +2535,36 @@ const getCaptureOption = computed(() => {
   };
 });
 
+const planText = ref();
+const fetchPlans = () => {
+  let providerId = props.sendUpdate?.insurance_provider_id;
+  let planId = props.sendUpdate?.plan_id;
+  let url = `/get-plans/${props.quoteType}/${providerId}/${planId}`;
+  axios.get(url)
+    .then(res => {
+      planText.value = res.data.text;
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+watch(() => props.sendUpdate?.plan_id, () => {
+  if (props.sendUpdate?.plan_id) {
+    fetchPlans();
+  }
+});
+
+onMounted(() => {
+  if (props.sendUpdate?.plan_id) {
+    fetchPlans();
+  }
+})
+
 const getPlanName = computed(() => {
   const plan = planDetail.value;
   if (props.sendUpdate) {
-    return (
-      props.sendUpdate?.plan_name ||
-      props.quoteRequest?.plan?.text ||
-      'Not Available'
-    );
+    return planText.value || 'Not Available';
   }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan
@@ -2553,11 +2597,7 @@ const providerName = computed(() => {
       provider => provider.id === providerId.value,
     );
 
-    return (
-      props.sendUpdate?.provider_name ||
-      (provider ? provider.text : null) ||
-      'Not Available'
-    );
+    return provider.text || 'Not Available';
   } else if (
     quoteTypesToCheck.includes(props.quoteType) &&
     plan.insurance_provider
@@ -4465,7 +4505,9 @@ const lookupsEnum = page.props.lookupsEnum;
             splitPaymentRecord.verified_by !== null &&
             paymentMethodsForm.status == 'view' &&
             paymentMethodsModels[splitPaymentNo] !=
-              paymentMethodsEnums.CreditCard
+              paymentMethodsEnums.CreditCard &&
+            paymentMethodsModels[splitPaymentNo] !=
+              paymentMethodsEnums.CreditApproval
           "
         >
           <p class="text-lg font-bold text-blue-400 mr-2">

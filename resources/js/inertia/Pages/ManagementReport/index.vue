@@ -1,4 +1,5 @@
 <script setup>
+import { useObjToUrl } from '../../Composables/utilities';
 import ActivePolicies from './Partials/ActivePolicies.vue';
 import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
@@ -12,6 +13,8 @@ const props = defineProps({
   reportName: String,
 });
 
+const page = usePage();
+
 const reportComponents = {
   'Active Policies': ActivePolicies,
   'Ending Policies': EndingPolicies,
@@ -20,7 +23,10 @@ const reportComponents = {
   'Sales Summary': SalesSummary,
 };
 
+const params = useUrlSearchParams('history');
 const subTeams = ref([]);
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const isReportCategoryEmpty = ref(false);
 
 const { isRequired } = useRules();
@@ -74,6 +80,7 @@ let filters = reactive({
   includeCancelledPolicies: null,
   groupBy: route().params.groupBy ?? 'advisor',
   utmGroupBy: [],
+  export: 0, //false
   page: 1,
 });
 
@@ -174,6 +181,17 @@ const reportTypes = ref([
   },
 ]);
 
+const cleanFilters = filters => {
+    Object.keys(filters).forEach(
+        key =>
+            (filters[key] === '' ||
+                filters[key] == null ||
+                filters[key].length == 0) &&
+            delete filters[key],
+    );
+    return filters;
+};
+
 watch(
   () => filters.reportCategory,
   (newReportCategory, oldReportCategory) => {
@@ -217,6 +235,7 @@ const onSubmit = isValid => {
   filterkeys();
   if (!isValid || !filters.reportCategory) return;
   filters.page = 1;
+  filters.export = 0;
   router.visit(route('management-report'), {
     method: 'get',
     data: useGenerateQueryString(filters),
@@ -225,6 +244,15 @@ const onSubmit = isValid => {
     onBefore: () => (loaders.table = true),
     onFinish: () => (loaders.table = false),
   });
+};
+
+const onDataExport = (flag) => {
+    filterkeys();
+    filters.export = flag;
+    filters.page = 1;
+    const data = useGenerateQueryString(filters);
+    const url = route('management-report-export');
+    window.open(url + '?' + useObjToUrl(data));
 };
 
 function onReset() {
@@ -236,6 +264,20 @@ function onReset() {
     onSuccess: () => (loaders.table = false),
   });
 }
+
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 <template>
   <Head title="Management Reports" />
@@ -383,8 +425,16 @@ function onReset() {
     </div>
 
     <div class="flex gap-3 justify-end">
-      <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-      <x-button size="sm" color="primary" @click.prevent="onReset">
+      <x-button
+        v-if="can(permissionsEnum.DATA_EXTRACTION)"
+        size="sm"
+        color="#48bb78"
+        @click.prevent="onDataExport(1)"
+        >
+        Export to Excel
+      </x-button>
+      <x-button size="sm" color="#ff5e00" type="submit" :disabled="loaders.table">Search</x-button>
+      <x-button size="sm" color="primary" @click.prevent="onReset" :disabled="loaders.table">
         Reset
       </x-button>
     </div>
@@ -392,6 +442,7 @@ function onReset() {
   <component
     :groupBy="route().params.groupBy ?? 'advisor'"
     :reportData="props.reportData"
+    :loader="loaders.table"
     :is="selectedReport"
   ></component>
 </template>

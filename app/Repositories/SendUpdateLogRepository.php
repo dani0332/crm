@@ -15,7 +15,6 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
-use App\Services\CentralService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Support\Str;
 
@@ -164,13 +163,16 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchUpdateLogPriceDetails($data)
     {
         try {
-            $result = $this->find($data['id'])->update([
+            $result = $this->find($data['id']);
+
+            $result->update([
                 'total_price' => $data['total_price'],
                 'price_with_vat' => $data['price_with_vat'],
                 'price_without_vat' => $data['price_without_vat'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
-                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
+                'status' => ! in_array($result->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) ?
+                    SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS : $result->status,
             ]);
             $this->updatePayment($data);
         } catch (\Exception $ex) {
@@ -203,19 +205,11 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSavePolicyDetails($data)
     {
         try {
-            if (! empty($data['insurance_provider_id'])) {
-                $insuranceProvider = InsuranceProviderRepository::getById($data['insurance_provider_id']);
-            }
-            if (! empty($data['plan_id'])) {
-                $plan = app(CentralService::class)->getPlanById($data['quote_type'], $data['plan_id']);
-            }
             $result = $this->where('id', $data['id'])->update([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : $data['provider_name'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'plan_id' => $data['plan_id'],
-                'plan_name' => $plan->text ?? $data['plan_name'],
                 'policy_number' => $data['policy_number'],
                 'issuance_date' => $data['issuance_date'],
                 'start_date' => $data['start_date'],
@@ -281,7 +275,6 @@ class SendUpdateLogRepository extends BaseRepository
                 'total_vat_amount' => $request['total_vat_amount'],
                 'price_vat_applicable' => strToFloat($request['price_vat_applicable']),
                 'price_vat_not_applicable' => $request['price_vat_not_applicable'],
-                'total_price' => $request['total_price'],
             ];
             // it will check if send update type is CPD then it will add reversal_invoice to $data because other send update types don't have 2 kind of
             // booking details, so we don't need to add null reversal_invoice on other options details.
@@ -292,14 +285,15 @@ class SendUpdateLogRepository extends BaseRepository
 
             $payment = Payment::where('send_update_log_id', $request['id'])->firstOrFail();
             if ($payment) {
-                $bookingDetailsTotalPrice = floatval($request['total_price']);
+                $totalPrice = strToFloat($request['price_vat_applicable']) + $request['price_vat_not_applicable'] + $request['total_vat_amount'];
+                $bookingDetailsTotalPrice = floatval($totalPrice);
                 if ($bookingDetailsTotalPrice > $payment->total_amount) {
                     $diff = number_format($bookingDetailsTotalPrice - $payment->total_amount, 2);
                     if ($diff < 1) {
                         $payment->discount_value = $diff;
                         $payment->discount_type = LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT;
                     } else {
-                        $payment->total_price = $request['total_price'];
+                        $payment->total_price = $totalPrice;
                         $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
                 } elseif ($bookingDetailsTotalPrice == $payment->total_amount && $payment->discount_value && $payment->discount_type == LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT->value) {
@@ -367,5 +361,24 @@ class SendUpdateLogRepository extends BaseRepository
         }
 
         return $query->sendUpdateOptions($quoteTypeId, $parentId, $businessInsuranceTypeId)->get();
+    }
+
+    /*
+     * we don't need to push this on production, need to remove this before production.
+     */
+    public function fetchIsCategoryOrOptionAvailable($categoryId, $optionId): bool
+    {
+
+        if (! Lookup::find($categoryId)) {
+            return false;
+        }
+
+        if (! empty($optionId)) {
+            if (! Lookup::find($optionId)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
