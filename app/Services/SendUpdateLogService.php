@@ -543,12 +543,6 @@ class SendUpdateLogService
 
     public function mergeBookingDetails($bookingDetails, $sendUpdateLog)
     {
-        // using abs function because sometime it's getting negative value.
-        $totalPrice = $sendUpdateLog->price_vat_applicable + $sendUpdateLog->price_vat_not_applicable + abs($sendUpdateLog->total_vat_amount);
-        if ($this->isNegativeValue($sendUpdateLog)) {
-            $totalPrice = -$totalPrice;
-        }
-
         $data = [
             'reversal_invoice' => $sendUpdateLog->reversal_invoice ?? null,
             'booking_date' => $sendUpdateLog->booking_date,
@@ -567,7 +561,7 @@ class SendUpdateLogService
             'total_vat_amount' => $sendUpdateLog->total_vat_amount,
             'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
             'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-            'total_price' => $totalPrice,
+            'price_with_vat' => $sendUpdateLog->price_with_vat,
         ];
 
         return array_merge($bookingDetails, $data);

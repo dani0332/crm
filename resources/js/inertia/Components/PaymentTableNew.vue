@@ -143,7 +143,7 @@ const initialAmount = ref(0);
 
 // Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
-  initialAmount.value = props.sendUpdate.total_price;
+  initialAmount.value = props.sendUpdate.price_with_vat;
 } else if (props.quoteType === 'Health') {
   initialAmount.value = props.eCommercePrice;
 } else if (props.isPlanDetailEnabled) {
@@ -1363,14 +1363,14 @@ const isCPD = computed(() => {
 
 const addPaymentModal = () => {
   if (props.sendUpdate) {
-    if (isEF.value && !props.sendUpdate?.total_price) {
+    if (isEF.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
         title: 'Please update indicative additional price.',
         position: 'top',
       });
       return;
     }
-    if (isCPD.value && !props.sendUpdate?.total_price) {
+    if (isCPD.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
         title: 'Please update the Total Price in the Plan Details section.',
         position: 'top',
@@ -2637,7 +2637,7 @@ watch(
       if (props.isPlanDetailEnabled) {
         initialAmount.value = props.quoteRequest.price_with_vat;
       } else if (props.sendUpdate) {
-        initialAmount.value = props.sendUpdate?.total_price;
+        initialAmount.value = props.sendUpdate?.price_with_vat;
       } else if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
       } else {
@@ -2751,7 +2751,7 @@ const isVerifiedEnabled = computed(() => {
 });
 
 watch(
-  () => props.sendUpdate?.total_price,
+  () => props.sendUpdate?.price_with_vat,
   (newValue, oldValue) => {
     totalPrice.value = newValue;
   },

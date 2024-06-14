@@ -35,9 +35,9 @@ const state = reactive({
 });
 
 const planDetailsForm = useForm({
+  price_vat_applicable: props.sendUpdateLog?.price_vat_applicable || null,
+  price_vat_not_applicable: props.sendUpdateLog?.price_vat_not_applicable || null,
   price_with_vat: props.sendUpdateLog?.price_with_vat || null,
-  price_without_vat: props.sendUpdateLog?.price_without_vat || null,
-  total_price: props.sendUpdateLog?.total_price || null,
   insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || null,
   insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || null,
   id: props.sendUpdateLog?.id,
@@ -60,8 +60,8 @@ const roundDecimal = value => {
 
 const updatePriceWithVat = () => {
   let totalPrice = 0;
-  const priceWithVat = parseFloat(planDetailsForm.price_with_vat);
-  const priceWithoutVat = parseFloat(planDetailsForm.price_without_vat);
+  const priceWithVat = parseFloat(planDetailsForm.price_vat_applicable);
+  const priceWithoutVat = parseFloat(planDetailsForm.price_vat_not_applicable);
 
   if (priceWithVat && priceWithoutVat) {
     totalPrice = (priceWithVat / 100) * 5 + priceWithVat + priceWithoutVat;
@@ -71,18 +71,18 @@ const updatePriceWithVat = () => {
     totalPrice = priceWithoutVat;
   }
 
-  planDetailsForm.total_price = roundDecimal(totalPrice);
-  planDetailsForm.price_with_vat = roundDecimal(priceWithVat);
-  planDetailsForm.price_without_vat = roundDecimal(priceWithoutVat);
+  planDetailsForm.price_with_vat = roundDecimal(totalPrice);
+  planDetailsForm.price_vat_applicable = roundDecimal(priceWithVat);
+  planDetailsForm.price_vat_not_applicable = roundDecimal(priceWithoutVat);
 };
 
 const onUpdate = () => {
-  if (!planDetailsForm.price_with_vat && !planDetailsForm.price_without_vat) {
+  if (!planDetailsForm.price_vat_applicable && !planDetailsForm.price_vat_not_applicable) {
     notification.error({
       title: 'Please enter price.',
       position: 'top',
     });
-    planDetailsForm.total_price = null;
+    planDetailsForm.price_with_vat = null;
     return;
   }
   planDetailsForm.post(route('send-update.save-price-details'), {
@@ -113,10 +113,10 @@ const onKeyPress = event => {
 
 const onCancel = () => {
   state.isEdit = false;
+  planDetailsForm.price_vat_applicable = props.sendUpdateLog?.price_vat_applicable || null;
+  planDetailsForm.price_vat_not_applicable =
+    props.sendUpdateLog?.price_vat_not_applicable || null;
   planDetailsForm.price_with_vat = props.sendUpdateLog?.price_with_vat || null;
-  planDetailsForm.price_without_vat =
-    props.sendUpdateLog?.price_without_vat || null;
-  planDetailsForm.total_price = props.sendUpdateLog?.total_price || null;
 };
 </script>
 
@@ -166,13 +166,13 @@ const onCancel = () => {
               </dt>
               <dd>
                 <x-input
-                  v-model="planDetailsForm.price_without_vat"
+                  v-model="planDetailsForm.price_vat_not_applicable"
                   :disabled="
                     !state.isEdit ||
                     (quoteType != quoteTypeCodeEnum.Life &&
                       quoteType != quoteTypeCodeEnum.Business)
                   "
-                  :error="planDetailsForm.errors.price_without_vat"
+                  :error="planDetailsForm.errors.price_vat_not_applicable"
                   placeholder="Enter price (VAT not applicable)"
                   type="number"
                   min="0"
@@ -235,7 +235,7 @@ const onCancel = () => {
               </dt>
               <dd>
                 <x-input
-                  v-model="planDetailsForm.price_with_vat"
+                  v-model="planDetailsForm.price_vat_applicable"
                   :rules="
                     quoteType == quoteTypeCodeEnum.Life
                       ? []
@@ -246,7 +246,7 @@ const onCancel = () => {
                     (quoteType == quoteTypeCodeEnum.Life &&
                       quoteType != quoteTypeCodeEnum.Business)
                   "
-                  :error="planDetailsForm.errors.price_with_vat"
+                  :error="planDetailsForm.errors.price_vat_applicable"
                   placeholder="Enter price (VAT applicable)"
                   type="number"
                   min="0"
@@ -307,7 +307,7 @@ const onCancel = () => {
                   </template>
                 </x-tooltip>
               </dt>
-              <dd>{{ planDetailsForm.total_price }}</dd>
+              <dd>{{ planDetailsForm.price_with_vat }}</dd>
             </div>
           </dl>
         </div>
