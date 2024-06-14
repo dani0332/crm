@@ -2,18 +2,18 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\User;
-use App\Models\CarMake;
-use App\Models\CarModel;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
-use App\Enums\quoteTypeCode;
 use App\Enums\LeadSourceEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
-use App\Models\CarModelDetail;
 use App\Jobs\SICFollowupEmailJob;
 use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;
+use App\Models\CarMake;
+use App\Models\CarModel;
+use App\Models\CarModelDetail;
+use App\Models\User;
+use Carbon\Carbon;
 
 class CarEmailService extends BaseService
 {
