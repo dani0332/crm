@@ -431,6 +431,7 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::MDOV,
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DOV,
             ])) {
                 return true;
             }
