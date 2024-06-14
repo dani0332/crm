@@ -934,7 +934,7 @@ class SendEmailCustomerService extends BaseService
     public function sendSICFollowupEmail($emailData)
     {
         $emailTemplateId = getAppStorageValueByKey(ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID);
-        if (! $emailTemplateId) {
+        if (! $emailTemplateId || ! $emailData || ! $emailData->email) {
             return false;
         }
 
