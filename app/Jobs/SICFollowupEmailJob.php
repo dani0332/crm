@@ -2,9 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Facades\Ken;
-use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
@@ -30,6 +28,7 @@ class SICFollowupEmailJob implements ShouldQueue
     {
         $this->uuid = $uuid;
     }
+
     /**
      * Execute the job.
      */
@@ -38,8 +37,7 @@ class SICFollowupEmailJob implements ShouldQueue
         $carLead = CarQuote::where('uuid', $this->uuid)->first();
 
         if (empty($carLead->advisor_id)) {
-            $emailTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID)->first();
-            $sendEmailCustomerService->sendSICFollowupEmail($emailTemplate->value, $carLead);
+            $sendEmailCustomerService->sendSICFollowupEmail($carLead);
             // $this->sendWhatsAppMessageKenRequest();
         } else {
             info('SICFollowupEmailJob - Car Lead Advisor Available - Ref ID: '.$carLead->uuid.'- Time: '.now());

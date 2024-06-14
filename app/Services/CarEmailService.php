@@ -70,16 +70,13 @@ class CarEmailService extends BaseService
         if ($lead->advisor_id) {
             $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
         } else {
-            info('----sending sendNonAdvisorIntroEmail Time: '.now().'------  Ref ID:'.$lead->uuid);
+            info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
             $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
             if ($responseCode) {
-                $emailTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID)->first();
-                info('----sending SICFollowupEmail  Time: '.now().'------  Ref ID:'.$lead->uuid);
-                $this->sendEmailCustomerService->sendSICFollowupEmail($emailTemplate->value, $lead);
+                $this->sendEmailCustomerService->sendSICFollowupEmail($lead);
                 // Dispatch the job with a 24 hours delay
                 SICFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours(24));
-                info('----dispatch job SICFollowupEmailJob  Time: '.now().'------  Ref ID:'.$lead->uuid);
-
+                info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.' Time: '.now());
             }
         }
 

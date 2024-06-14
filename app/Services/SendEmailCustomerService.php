@@ -887,13 +887,11 @@ class SendEmailCustomerService extends BaseService
 
     public function sendingAlfredFollowupEmail($customer)
     {
-
         $emailTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE)->first();
 
         $apiKey = config('constants.MA_BREVO_KEY');
         $url = config('constants.SIB_URL');
         try {
-
             info('AlfredFollowUpEmail Starting');
             $headers = [
                 'Accept' => 'application/json',
@@ -925,7 +923,6 @@ class SendEmailCustomerService extends BaseService
 
             info('AlfredFollowUpEmail ---- Received Code : '.$responseCode.' '.$customer->email);
             info('AlfredFollowUpEmail ---- response object : '.json_encode($response->object()).'--'.$customer->email);
-
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             Log::error($responseCode);
@@ -934,8 +931,12 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendSICFollowupEmail($emailTemplateId, $emailData)
+    public function sendSICFollowupEmail($emailData)
     {
+        $emailTemplateId = getAppStorageValueByKey(ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID);
+        if (! $emailTemplateId) {
+            return false;
+        }
 
         try {
             $headers = [
@@ -965,7 +966,6 @@ class SendEmailCustomerService extends BaseService
             if ($responseCode == 200 || $responseCode == 201) {
                 info('SICFollowupEmail ---- | Response Code: '.$responseCode.' | Response Received  : '.json_encode($response->object()).'--'.$emailData->email);
             }
-
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             Log::error(sprintf('SICFollowupEmail failed: Brevo API call failed for %s | Exception: %s', $emailData->email, $ex->getMessage()));
@@ -973,5 +973,4 @@ class SendEmailCustomerService extends BaseService
 
         return $responseCode;
     }
-
 }
