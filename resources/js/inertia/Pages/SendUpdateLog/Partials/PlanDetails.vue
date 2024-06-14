@@ -26,6 +26,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const vat = page.props.vatValue;
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const sendUpdateEnums = page.props.sendUpdateStatusEnum;
@@ -64,9 +65,9 @@ const updatePriceWithVat = () => {
   const priceVatNotApplicable = parseFloat(planDetailsForm.price_vat_not_applicable);
 
   if (priceVatApplicable && priceVatNotApplicable) {
-    priceWithVat = (priceVatApplicable / 100) * 5 + priceVatApplicable + priceVatNotApplicable;
+    priceWithVat = (priceVatApplicable / 100) * vat + priceVatApplicable + priceVatNotApplicable;
   } else if (priceVatApplicable) {
-    priceWithVat = (priceVatApplicable / 100) * 5 + priceVatApplicable;
+    priceWithVat = (priceVatApplicable / 100) * vat + priceVatApplicable;
   } else if (priceVatNotApplicable) {
     priceWithVat = priceVatNotApplicable;
   }

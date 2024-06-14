@@ -491,6 +491,7 @@ const onKeyPress = (event) => {
       }"
       :send-update-log="props.sendUpdateLog"
       :update-btn="props.updateBtn"
+      :quote-type="props.quoteType"
     />
 
     <LazyBookingDetails

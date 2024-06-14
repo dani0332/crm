@@ -26,6 +26,10 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  quoteType: {
+    type: String,
+    required: false,
+  },
 });
 
 const page = usePage();
@@ -102,14 +106,25 @@ const confirmDeleteDoc = () => {
   );
 };
 
+const isStating = ref(false);
+const isLoading = ref(false);
+const isNotConfirmed = ref(false);
+const loader = reactive({
+  sendUpdateSectionBtn: false,
+  sendUpdate: false,
+  selectInvoice: false,
+});
+
 const modals = reactive({
+  sendConfirm: false,
+  isConfirmed: false,
   doc: false,
   docConfirm: false,
 });
 
 const docForm = useForm({
-  quote_id: usePage().props.quote.id || null,
-  quote_uuid: usePage().props.quote.code || null,
+  quote_id: page.props.quote.id || null,
+  quote_uuid: page.props.quote.code || null,
   quote_type_id: null,
   document_type_code: null,
   file: null,
@@ -169,26 +184,18 @@ const isCPU = computed(() => {
   );
 });
 
-const sendUpdateButton = computed(() => {
-  return (
-    (isEN.value || isCPU.value) &&
-    props.updateBtn &&
-    props.updateBtn !== 'Send Update' &&
-    can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON)
-  );
-});
 const sendUpdateValidation = () => {
+  loader.sendUpdateSectionBtn = true;
   axios
     .post('send-update-customer-validation', {
       quoteType: props.quoteType,
-      quoteUuid: props.realQuote.uuid,
+      quoteUuid: props.quote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
     })
     .then(response => {
-      if (response.status == 200) {
-        modals.sendConfirm = true;
-        isStating.value = response.data.message;
-      }
+      modals.sendConfirm = true;
+      isStating.value = response.data.message;
+
     })
     .catch(function (errors) {
       let responseError = errors.response.data.errors.error;
@@ -198,10 +205,70 @@ const sendUpdateValidation = () => {
           position: 'top',
         });
       });
+    })
+    .finally(() => {
+      loader.sendUpdateSectionBtn = false;
     });
 };
 
 const permissionEnum = page.props.permissionsEnum;
+
+const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusableTemplate();
+
+const submitToCustomer = () => {
+  if (!modals.isConfirmed) {
+    isNotConfirmed.value = true;
+    return;
+  }
+  isLoading.value = true;
+  let url = 'send-update-to-customer';
+  let data = {
+    sendUpdateId: props.sendUpdateLog.id,
+    quoteType: props.quoteType,
+  };
+  axios
+      .post(url, data)
+      .then(response => {
+        if (response.status == 200) {
+          notification.success({
+            title: 'Update Sent to the Customer',
+            position: 'top',
+          });
+          router.reload({ preserveState: true });
+          modals.sendConfirm = isLoading.value = false;
+        }
+      })
+      .catch(err => {
+        const flash_messages = err.response.data.errors;
+        Object.keys(flash_messages).forEach(function (key) {
+          notification.error({
+            title: flash_messages[key],
+            position: 'top',
+          });
+        });
+      })
+      .finally(() => {
+        modals.sendConfirm = false;
+        isLoading.value = false;
+        isNotConfirmed.value = false;
+      });
+};
+
+const sendUpdatePermissionCheck = computed(() => {
+  if (props.updateBtn === sendUpdateStatusEnum.SUC && props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER) {
+    return true;
+  }
+
+  if (props.updateBtn === sendUpdateStatusEnum.SU) {
+    return ! can(permissionEnum.BOOK_UPDATE_BUTTON);
+  } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
+    return ! can(permissionEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
+  } else if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
+    return ! can(permissionEnum.SEND_AND_BOOK_UPDATE_BUTTON);
+  }
+
+  return true;
+});
 
 </script>
 
@@ -284,8 +351,10 @@ const permissionEnum = page.props.permissionsEnum;
             size="sm"
             color="orange"
             class="mt-5"
-            v-if="sendUpdateButton"
+            v-if="props.updateBtn"
+            :loading="loader.sendUpdateSectionBtn"
             @click="sendUpdateValidation"
+            :disabled="sendUpdatePermissionCheck"
           >
             {{ props.updateBtn }}
           </x-button>
@@ -374,6 +443,56 @@ const permissionEnum = page.props.permissionsEnum;
           >
             Delete
           </x-button>
+        </div>
+      </template>
+    </x-modal>
+
+    <sendUpdateCustConfirmBtnTemp>
+      <x-button
+          size="sm"
+          color="error"
+          @click.prevent="submitToCustomer"
+          :disabled="!modals.isConfirmed"
+          :loading="isLoading"
+      >
+        Confirm
+      </x-button>
+    </sendUpdateCustConfirmBtnTemp>
+
+    <x-modal v-model="modals.sendConfirm" show-close backdrop>
+      <template #header> Send Update </template>
+      <x-alert
+          color="orange"
+          light
+          type="error"
+          class="text-sm mb-4"
+          v-if="isStating"
+      >
+        {{ isStating }}
+      </x-alert>
+      <x-checkbox
+          v-model="modals.isConfirmed"
+          label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
+      />
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+              size="sm"
+              ghost
+              :disabled="isLoading"
+              @click.prevent="modals.sendConfirm = false"
+          >
+            Cancel
+          </x-button>
+          <template v-if="!modals.isConfirmed">
+            <x-tooltip position="left">
+              <SendUpdateCustReuseBtnTemp />
+              <template #tooltip>
+                Please select the checkbox to proceed
+              </template>
+            </x-tooltip>
+          </template>
+          <SendUpdateCustReuseBtnTemp v-else />
         </div>
       </template>
     </x-modal>

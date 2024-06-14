@@ -510,12 +510,12 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SNBU;
         }
 
-        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
+        if (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
             (
                 (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
                 in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
                 ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
-            )
+            )) || in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
         ) {
             return SendUpdateLogStatusEnum::SUC;
         }
@@ -532,7 +532,6 @@ class SendUpdateLogService
         $sendUpdate = SendUpdateLogRepository::getLogByid($sendUpdateId);
 
         $sendUpdateToCustomerValidation = in_array($sendUpdate->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]);
-        $uploadedDocuments = $this->getUploadedDocuments($sendUpdate);
 
         if ($sendUpdateToCustomerValidation) {
             return 'Please note your current action will only send the update to the customer.';

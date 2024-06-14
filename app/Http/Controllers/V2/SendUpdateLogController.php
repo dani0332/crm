@@ -350,8 +350,6 @@ class SendUpdateLogController extends Controller
         return response()->json([
             'message' => $message,
         ], 200);
-
-        return response()->json(['success' => false], 500);
     }
 
     public function sendUpdateToCustomer(Request $request)
