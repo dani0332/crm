@@ -952,7 +952,7 @@ class SendEmailCustomerService extends BaseService
                 'templateId' => (int) $emailTemplateId,
                 'params' => [
                     'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$emailData->uuid.'/?assignAdvisor=true',
-                    'carQuoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').'/?IA=true',
+                    'carQuoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$emailData->uuid.'/?IA=true',
                     'carQuoteId' => $emailData->code,
                     'email' => $emailData->email,
                     'clientFullName' => $emailData->first_name.' '.$emailData->last_name],
