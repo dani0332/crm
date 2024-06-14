@@ -5,10 +5,10 @@ namespace App\Http\Controllers\V2;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityRequest;
-use App\Models\User;
 use App\Repositories\ActivityRepository;
 use App\Traits\GetUserTreeTrait;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ActivityController extends Controller
 {
@@ -19,7 +19,8 @@ class ActivityController extends Controller
     public function index()
     {
         $advisors = [];
-        $advisors = User::whereIn('id', $this->walkTree(Auth::user()->id))->get();
+        $advisorsIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
+        $advisors = DB::table('users')->whereIn('id', $advisorsIds)->get();
         $activities = ActivityRepository::getData();
         $totalActivities = ActivityRepository::countActivities();
         $cannotUseAssignee = auth()->user()->cannot(PermissionsEnum::ActivitiesAssignedToView);

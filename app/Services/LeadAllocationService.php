@@ -10,6 +10,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
@@ -75,13 +76,13 @@ class LeadAllocationService extends BaseService
                 ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
                 ->groupBy('u.name', 'u.id', 'lead_allocation.id')
                 ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
+                ->where('lead_allocation.quote_type_id', QuoteTypes::HEALTH->id())
                 ->where('u.is_active', true)
                 ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);
 
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query = $query->where('u.manager_id', auth()->user()->id);
             }
-            //dd($query->toSql());
 
             return $query->get();
         } catch (\Exception $e) {
@@ -89,33 +90,42 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function createLeadAllocationRecord($userId)
+    public function createLeadAllocationRecord($userId, $allocationRequest = null)
     {
+        $isAllocation = LeadAllocation::where('user_id', $userId);
+        if (! empty($allocationRequest->quoteTypeId)) {
+            $isAllocation = $isAllocation->where('quote_type_id', $allocationRequest->quoteTypeId);
+        }
+
+        $isAllocation = $isAllocation->first();
+        if (! empty($isAllocation)) {
+            info('User is already allocated');
+
+            return false;
+        }
         try {
-            DB::beginTransaction();
             $leadAllocation = new LeadAllocation();
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
             $leadAllocation->last_allocated = now()->timestamp;
-            $leadAllocation->max_capacity = 0;
+            $leadAllocation->max_capacity = $allocationRequest->maxCapacity ?? 0;
+            $leadAllocation->quote_type_id = $allocationRequest->quoteTypeId ?? null;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
-
-            DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
         }
     }
 
-    public function updateUserAllocationRecord($userId, $allocationCount, $maxCapacity, $isAvailable)
+    public function updateUserAllocationRecord($userId, $allocationCount, $maxCapacity, $isAvailable, $quoteTypeId = null)
     {
         try {
-            DB::beginTransaction();
-            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+            $leadAllocation = LeadAllocation::where('user_id', $userId);
+            if (! empty($quoteTypeId)) {
+                $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
+            }
+            $leadAllocation = $leadAllocation->first();
             if (! $leadAllocation) {
-                DB::commit();
-
                 return false;
             }
             if (isset($allocationCount)) {
@@ -127,12 +137,14 @@ class LeadAllocationService extends BaseService
             if (isset($isAvailable)) {
                 $leadAllocation->is_available = $isAvailable;
             }
+            if (isset($quoteTypeId)) {
+                $leadAllocation->quote_type_id = $quoteTypeId;
+            }
 
             $leadAllocation->save();
-            DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
+
         }
     }
 
@@ -433,12 +445,15 @@ class LeadAllocationService extends BaseService
         return $this->getAppStorageValueByKey('LEAD_ALLOCATION_JOB_SWITCH') == '1';
     }
 
-    public function getLeadAllocationRecordByUserId($userId)
+    public function getLeadAllocationRecordByUserId($userId, $quoteTypeId = null)
     {
         try {
-            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+            $leadAllocation = LeadAllocation::where('user_id', $userId);
+            if (! empty($quoteTypeId)) {
+                $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
+            }
 
-            return $leadAllocation;
+            return $leadAllocation->first();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -506,6 +521,11 @@ class LeadAllocationService extends BaseService
                     info('Found tier '.$selectedTier->name.' against car lead : '.$carLead->code);
 
                     $loginAndAvailableUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id); // now we will try to find users based on selected tier
+
+                    if ($carLead->source == LeadSourceEnum::REVIVAL_REPLIED) {
+                        info('Lead source is '.LeadSourceEnum::REVIVAL_REPLIED.' for uuid : '.$carLead->uuid);
+                        $loginAndAvailableUserIds = $this->getUsersForRevivalReplied($loginAndAvailableUserIds);
+                    }
 
                     info('Available and Login users against selected tier are : '.json_encode($loginAndAvailableUserIds));
 
@@ -996,6 +1016,49 @@ class LeadAllocationService extends BaseService
     public function getUnAssignedHealthQuotes($teamType)
     {
         return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
+    }
+
+    public function getAllocationLeads($quoteTypeIds)
+    {
+        try {
+            $query = LeadAllocation::select([
+                'lead_allocation.id as id',
+                'lead_allocation.user_id as userId',
+                'lead_allocation.allocation_count',
+                'lead_allocation.max_capacity',
+                'lead_allocation.reset_cap',
+                'u.status as is_available',
+                'lead_allocation.reset_cap',
+                'lead_allocation.updated_at',
+                'lead_allocation.last_allocated',
+                't.name as teamName',
+                'qt.code as quote_type_code',
+                'u.name as userName',
+            ])
+                ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+                ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
+                ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                ->join('quote_type as qt', 'lead_allocation.quote_type_id', '=', 'qt.id')
+                ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+                ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
+                ->groupBy('u.name', 'u.id', 'lead_allocation.id')
+                ->where('u.is_active', true)
+                ->whereIn('lead_allocation.quote_type_id', (array) $quoteTypeIds);
+
+            $query = $query->when(! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation), function ($query) {
+                return $query->where('u.manager_id', auth()->user()->id);
+            });
+            $query = $query->when(! empty(request('userIds')), function ($query) {
+                return $query->whereIn('u.id', (array) request('userIds'));
+            });
+            $query = $query->when(! empty(request('quoteTypeIds')), function ($query) {
+                return $query->whereIn('lead_allocation.quote_type_id', (array) request('quoteTypeIds'));
+            });
+
+            return $query->simplePaginate(10)->withQueryString();
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
     }
 
 }

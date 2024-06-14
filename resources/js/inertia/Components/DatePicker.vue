@@ -45,6 +45,10 @@ const props = defineProps({
     type: String,
     default: 'md',
   },
+  onlySelect: {
+    type: Boolean,
+    default: false,
+  },
   maxDate: {
     type: Date,
     default: null,
@@ -54,6 +58,10 @@ const props = defineProps({
     default: false,
   },
   disableYear: {
+    type: Boolean,
+    default: false,
+  },
+  noMargin: {
     type: Boolean,
     default: false,
   },
@@ -101,7 +109,7 @@ const onlyCurentYear = () => {
     text-input
     :month-picker="monthPicker"
   >
-    <template #dp-input="{ value, onClear, onInput, onBlur }">
+    <template #dp-input="{ value, onClear, onInput, onBlur, onEnter }">
       <x-input
         type="text"
         :value="value"
@@ -109,11 +117,14 @@ const onlyCurentYear = () => {
         :placeholder="placeholder"
         :disabled="props.disabled"
         :size="props.size"
+        :class="props.noMargin ? '!mb-0' : ''"
         class="w-full"
         :rules="value ? [] : props.rules"
         :error="props.customError ? props.customError : ''"
         @update:modelValue="onInput"
         @blur="onBlur"
+        @keydown.enter.prevent="onEnter"
+        :readonly="props.onlySelect"
       />
       <div
         v-if="!props.disabled"

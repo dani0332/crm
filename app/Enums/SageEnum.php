@@ -39,14 +39,20 @@ final class SageEnum extends Enum
 
     // AR Invoices - Monthly, Quaterly, Semi-Annual, Split, Custom
     const SRT_CREATE_AR_SPPAY_INV = 'CREATE_AR_SPPAY_INV';
+    const SRT_AR_SPPAY_PAY_SCDULE_PATCH = 'SRT_AR_SPPAY_PAY_SCDULE_PATCH';
     const SRT_RTP_AR_SPPAY_INV = 'RTP_AR_SPPAY_INV';
     const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
-    const SRT_AR_SPPAY_INV_PATCH = 'AR_SPPAY_INV_PATCH';
 
     // AP Invoices - Upfront
     const SRT_CREATE_AP_PREM_INV = 'CREATE_AP_PREM_INV';
     const SRT_RTP_AP_PREM_INV = 'RTP_AP_PREM_INV';
     const SRT_POST_AP_PREM_INV = 'POST_AP_PREM_INV';
+
+    // AP Invoices - Monthly, Quaterly, Semi-Annual, Split, Custom
+    const SRT_CREATE_AP_SPPAY_INV = 'SRT_CREATE_AP_SPPAY_INV';
+    const SRT_AP_SPPAY_PAY_SCDULE_PATCH = 'SRT_AP_SPPAY_PAY_SCDULE_PATCH';
+    const SRT_RTP_AP_SPPAY_INV = 'RTP_AR_SPPAY_INV';
+    const SRT_POST_AP_SPPAY_INV = 'POST_AR_SPPAY_INV';
 
     // AR Discount Invoices
     const SRT_CREATE_AR_DISC_INV = 'CREATE_AR_DISC_INV';
@@ -64,8 +70,7 @@ final class SageEnum extends Enum
     const SRT_POST_AR_SP_PRE_PAYMENT = 'POST_AR_SP_PRE_PAYMENT';
 
     // Creation of Reversal & Correction Invoice
-
-    // AR Invoice Reverse and Commission
+    // AR Invoice Reverse and Commission Upfront
     const SRT_CREATE_AR_PREM_COMM_REV_INV = 'CREATE_AR_PREM_COMM_REV_INV';
     const SRT_RTP_AR_PREM_COMM_REV_INV = 'RTP_AR_PREM_COMM_REV_INV';
     const SRT_POST_AR_PREM_COMM_REV_INV = 'POST_AR_PREM_COMM_REV_INV';
@@ -73,13 +78,33 @@ final class SageEnum extends Enum
     const SRT_RTP_AR_PREM_COMM_CORR_INV = 'RTP_AR_PREM_COMM_CORR_INV';
     const SRT_POST_AR_PREM_COMM_CORR_INV = 'POST_AR_PREM_COMM_CORR_INV';
 
-    // AP Invoice Reverse and Commission
+    // AR Invoice Reverse and Commission NonUpfront
+    const SRT_CREATE_AR_SPPAY_REV_INV = 'SRT_CREATE_AR_SPPAY_REV_INV';
+    const SRT_AR_SPPAY_PAY_SCDULE_PATCH_REV_INV = 'SRT_AR_SPPAY_PAY_SCDULE_PATCH_REV_INV';
+    const SRT_RTP_AR_SPPAY_REV_INV = 'RTP_AR_SPPAY_REV_INV';
+    const SRT_POST_AR_SPPAY_REV_INV = 'POST_AR_SPPAY_REV_INV';
+    const SRT_CREATE_AR_SPPAY_CORR_INV = 'CREATE_AR_SPPAY_CORR_INV';
+    const SRT_AR_SPPAY_PAY_SCDULE_PATCH_CORR_INV = 'SRT_AR_SPPAY_PAY_SCDULE_PATCH_CORR_INV';
+    const SRT_RTP_AR_SPPAY_CORR_INV = 'RTP_AR_SPPAY_CORR_INV';
+    const SRT_POST_AR_SPPAY_CORR_INV = 'POST_AR_SPPAY_CORR_INV';
+
+    // AP Invoice Reverse and Commission Upfront
     const SRT_CREATE_AP_PREM_REV_INV = 'CREATE_AP_PREM_REV_INV';
     const SRT_RTP_AP_PREM_REV_INV = 'RTP_AP_PREM_REV_INV';
     const SRT_POST_AP_PREM_REV_INV = 'POST_AP_PREM_REV_INV';
     const SRT_CREATE_AP_PREM_CORR_INV = 'CREATE_AP_PREM_CORR_INV';
     const SRT_RTP_AP_PREM_CORR_INV = 'RTP_AP_PREM_CORR_INV';
     const SRT_POST_AP_PREM_CORR_INV = 'POST_AP_PREM_CORR_INV';
+
+    // AP Invoice Reverse and Commission NonUpfront
+    const SRT_CREATE_AP_SPPAY_REV_INV = 'CREATE_AP_SPPAY_REV_INV';
+    const SRT_AP_SPPAY_PAY_SCDULE_PATCH_REV_INV = 'SRT_AP_SPPAY_PAY_SCDULE_PATCH_REV_INV';
+    const SRT_RTP_AP_SPPAY_REV_INV = 'RTP_AP_SPPAY_REV_INV';
+    const SRT_POST_AP_SPPAY_REV_INV = 'POST_AP_SPPAY_REV_INV';
+    const SRT_CREATE_AP_SPPAY_CORR_INV = 'CREATE_AP_SPPAY_CORR_INV';
+    const SRT_AP_SPPAY_PAY_SCDULE_PATCH_CORR_INV = 'SRT_AP_SPPAY_PAY_SCDULE_PATCH_CORR_INV';
+    const SRT_RTP_AP_SPPAY_CORR_INV = 'RTP_AP_SPPAY_CORR_INV';
+    const SRT_POST_AP_SPPAY_CORR_INV = 'POST_AP_SPPAY_CORR_INV';
 
     // AR Discount Reverse and Correction
     const SRT_CREATE_AR_DISC_REV_INV = 'CREATE_AR_DISC_REV_INV';
@@ -91,7 +116,9 @@ final class SageEnum extends Enum
     const SRT_GET_AR_INVOICE = 'GET_AR_INVOICE';
     const SRT_GET_AP_INVOICE = 'GET_AP_INVOICE';
     const SRT_REV_CORR_AR_PREM_COMM_INV = 'SRT_REV_CORR_AR_PREM_COMM_INV';
+    const SRT_REV_CORR_AR_SPPAY_INV = 'SRT_REV_CORR_AR_SPPAY_INV';
     const SRT_REV_CORR_AP_PREM_INV = 'SRT_REV_CORR_AP_PREM_INV';
+    const SRT_REV_CORR_AP_SPPAY_INV = 'SRT_REV_CORR_AP_SPPAY_INV';
     const SRT_REV_CORR_AR_DIS_INV = 'SRT_REV_CORR_AR_DIS_INV';
 
     // -------------------------------------- Sage Request Types End --------------------------------------------
@@ -113,4 +140,6 @@ final class SageEnum extends Enum
     // Payment Frequencies
     const SF_UPFRONT = 'upfront';
     const SF_SPLIT_PAYMENT = 'split_payments';
+    const AR_INVOICE = 'AR Invoice';
+    const AP_INVOICE = 'AP Invoice';
 }

@@ -1,9 +1,9 @@
 <script setup>
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -26,6 +26,7 @@ defineProps({
   quoteDocuments: Object,
   displaySendPolicyButton: Boolean,
   documentTypes: Object,
+  documentType: Object,
   cdnPath: String,
   memberCategories: Array,
   emailStatuses: Array,
@@ -39,7 +40,6 @@ defineProps({
   isBetaUser: Boolean,
   payments: Array,
   quoteRequest: Object,
-  permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
@@ -52,19 +52,20 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
   storageUrl: String,
-  record: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
 });
 
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -103,6 +104,13 @@ const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+
+const normalPlansIds = reactive({
+  ids: [],
+});
+const seniorPlansIds = reactive({
+  ids: [],
+});
 
 const {
   isRequired,
@@ -182,6 +190,7 @@ const modals = reactive({
   planDetails: false,
   mixInquiryConfirm: false,
 });
+
 const travelFields = computed(() => {
   let skipFields = [
     'previous_quote_policy_number',
@@ -189,7 +198,7 @@ const travelFields = computed(() => {
     'previous_policy_expiry_date',
     'policy_start_date',
     'renewal_batch',
-    'transapp_code'
+    'transapp_code',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -458,8 +467,7 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id ==
-    quoteStatusEnum.TransactionApproved &&
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved &&
     page.props.permissions.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -513,28 +521,6 @@ const memberDataDocs = membersDetail => {
     .filter(member => member.name !== undefined);
 };
 
-const quoteDocumentsTable = reactive({
-  isLoading: false,
-  columns: [
-    {
-      text: 'Document Type',
-      value: 'document_type_text',
-    },
-    {
-      text: 'Document Name',
-      value: 'original_name',
-    },
-    {
-      text: 'Created At',
-      value: 'created_at',
-    },
-    {
-      text: 'Created By',
-      value: 'created_by_name',
-    },
-  ],
-});
-
 const sendPolicyToClient = () => {
   if (confirm('Are you sure you want to send documents to customer?')) {
     let quoteType = page.props.modelType;
@@ -566,33 +552,33 @@ const onTogglePlans = toggle => {
     }),
   ).value;
 
-    axios
-        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
-            modelType: 'Travel',
-            planIds: planIds,
-            quote_uuid: page.props.quote.uuid,
-            toggle: toggle,
-        })
-        .then(response => {
-          notification.success({
-              title: 'Plans has been updated',
-              position: 'top',
-          });
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+      modelType: 'Travel',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
       onLoadAvailablePlansData();
-            router.reload({
-                preserveScroll: true,
-            });
-        })
-        .catch(error => {
-            notification.error({
-                title: error,
-                position: 'top',
-            });
-        })
-        .finally(() => {
-            toggleLoader.value = false;
-            selectedPlans.value = [];
-        });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
 };
 
 const onExportPlans = () => {
@@ -646,18 +632,6 @@ const onExportPlans = () => {
     });
 };
 
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
-const normalPlansIds = reactive({
-  ids: [],
-});
-const seniorPlansIds = reactive({
-  ids: [],
-});
-
 const onLoadAvailablePlansData = async () => {
   let data = {
     jsonData: true,
@@ -677,27 +651,6 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
-const confirmDeleteDoc = () => {
-  quoteDocumentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        quoteDocumentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
-};
 
 const emailStatusesTable = reactive({
   isLoading: false,
@@ -1241,6 +1194,63 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
 <template>
   <div>
     <Head title="Travel Detail" />
+    <div class="flex justify-between items-center flex-wrap gap-2">
+      <h2 class="text-xl font-semibold">Travel Detail</h2>
+      <div class="flex gap-2">
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+          v-if="permissions.canNotApprovePayments"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link :href="route('travel.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
+        </Link>
+
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('travel.edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" />
+        </template>
+        
+      </div>
+    </div>
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -1284,48 +1294,13 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">
-              Travel Detail
-            </h3>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 my-3 justify-end">
-            <x-button
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openDuplicate"
-              v-if="permissions.canNotApprovePayments"
-            >
-              Duplicate Lead
-            </x-button>
-            <Link :href="route('travel.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Travel List
-              </x-button>
-            </Link>
-
-            <LeadEditBtnTemplate v-slot="{ isDisabled }">
-              <Link :href="route('travel.edit', quote.uuid)">
-                <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
-              </Link>
-            </LeadEditBtnTemplate>
-
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-              <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" :isDisabled="true"/>
-              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
-            </x-tooltip>
-            <template v-else>
-              <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" />
-            </template>
-
-          </div>
-
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div
@@ -1394,7 +1369,10 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                 </dt>
               </div>
 
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <dt>
                   <x-tooltip position="bottom">
                     <label
@@ -1402,7 +1380,12 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </dt>
                 <dt class="font-medium">
@@ -1436,17 +1419,17 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                     quote.direction_code != null
                       ? quote.direction_code
                       : quote?.currently_located_in_id_text ==
-                          enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                        quote?.region_cover_for_id !=
-                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                      ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                      : quote?.destination_id_text ==
-                          enums.travelQuoteEnum
-                            .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                        quote?.region_cover_for_id ==
-                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                      ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                      : ''
+                            enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                          quote?.region_cover_for_id !=
+                            enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                        ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                        : quote?.destination_id_text ==
+                              enums.travelQuoteEnum
+                                .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                            quote?.region_cover_for_id ==
+                              enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                          ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                          : ''
                   }}
                 </dt>
               </div>
@@ -1554,10 +1537,10 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                     quote.coverage_code != null
                       ? quote.coverage_code
                       : quote.days_cover_for <= 92
-                      ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                      : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                        '/' +
-                        enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                        ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                        : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                          '/' +
+                          enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
                   }}
                 </dt>
               </div>
@@ -1605,18 +1588,30 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
-          <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="quoteRequest.child || quoteRequest.parent"
+          >
             <template v-if="quoteRequest.child">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     CHILD REF ID
                   </label>
-                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
+                  <template #tooltip
+                    >Navigation key from parent to child in data
+                    hierarchy.</template
+                  >
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.child.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.child.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.child?.code }}
                 </a>
               </dt>
@@ -1624,14 +1619,20 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
             <template v-if="quoteRequest.parent">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     PARENT REF ID
                   </label>
                   <template #tooltip>Parent Ref Id</template>
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.parent.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.parent.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.parent.code }}
                 </a>
               </dt>
@@ -2120,7 +2121,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
       </template>
     </x-modal>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -2142,7 +2143,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -2212,14 +2213,14 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                   :disabled="lockLeadSectionsDetails.lead_status"
                 />
               </x-field>
-          <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
+              <x-field label="Transaction Type">
+                <x-input
+                  type="text"
+                  :value="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
+              </x-field>
             </div>
           </div>
           <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
@@ -2265,7 +2266,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium }}</dd>
+                <dd>{{ selectedProviderPlan.premium }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
@@ -2277,12 +2278,12 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
-          </div>
+                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -2319,157 +2320,8 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         </template>
       </Collapsible>
     </div>
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      modelType="travel"
-      :expanded="sectionExpanded"
-    />
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Documents
-              <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="orange"
-            >
-              Upload Documents
-            </x-button>
-            <x-button
-              size="sm"
-              color="red"
-              v-if="
-                displaySendPolicyButton &&
-                permissions.notProductionApproval &&
-                permissions.isQuoteDocumentEnabled
-              "
-              @click="sendPolicyToClient"
-            >
-              Send Policy
-            </x-button>
-          </div>
-
-          <DataTable
-            table-class-name="compact"
-            :headers="quoteDocumentsTable.columns"
-            :items="quoteDocuments || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="quoteDocuments.length < 15"
-          >
-            <template #item-original_name="item">
-              <a
-                :href="cdnPath + item.doc_url"
-                target="_blank"
-                class="text-primary-600"
-              >
-                {{ item.original_name }}
-              </a>
-            </template>
-            <template #item-action="{ doc_name }">
-              <div>
-                <x-button
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="onDocDelete(doc_name)"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-    </div>
-
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="travel"
-      :bookPolicyDetails="bookPolicyDetails"
-      :payments="payments"
-      :expanded="sectionExpanded"
-    />
-
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-      <LazyDocumentUploader
-        :members="memberDataDocs(travelers)"
-        :doc-types="documentTypes"
-        :docs="quoteDocuments || []"
-        :cdn="cdnPath"
-      />
-    </x-modal>
-
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
-      <p>Are you sure you want to delete this document?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.docConfirm = false"
-          >
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="confirmDeleteDoc"
-            :loading="quoteDocumentsTable.isLoading"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="travel"
-      :expanded="sectionExpanded"
-    />
-
+   
+    
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -2482,10 +2334,12 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-              Travel plans for {{ travelers.length - aboveAgeMembers }} member
-              age 0-64
-            </h6>
+              <div>
+                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
+                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                  age 0-64
+                </h6>
+              </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2545,8 +2399,8 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
             </p>
           </div>
           <div v-else>
-            <!-- for future use  v-model:items-selected="selectedPlans" -->
             <DataTable
+              v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
@@ -2628,6 +2482,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
             </div>
             <div>
               <DataTable
+                v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed compact"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
@@ -2640,6 +2495,16 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                   <span class="text-primary-600 uppercase">{{
                     item.providerName
                   }}</span>
+                    <div class="flex gap-1">
+                        <x-tag
+                            v-if="item.isDisabled"
+                            size="xs"
+                            color="error"
+                            class="mt-0.5 text-[10px]"
+                        >
+                            Hidden
+                        </x-tag>
+                    </div>
                 </template>
                 <template #item-name="item">
                   <span class="text-primary-600 uppercase">{{
@@ -2712,14 +2577,22 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
-			:quoteRequest="quoteRequest"
+      :paymentDocument="documentTypeCodes.filter(item => ['TPD', 'TPDR', 'TDPDR'].includes(item.code))"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quoteRequest"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :bookPolicyDetails="bookPolicyDetails"
 		/>
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -2737,6 +2610,42 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+      :expanded="sectionExpanded"
+    />
+    
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :quote="quote"
+      modelType="travel"
+      :expanded="sectionExpanded"
+      :payments="payments"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+    />
+
+    <QuoteDocument
+      :document-types="documentTypes"
+      :quote-documents="page.props.quoteDocuments || []"
+      :storageUrl="storageUrl"
+      :quote="quote"
+      :expanded="sectionExpanded"
+      :docUploadURL="docUploadURL"
+      quoteType="Travel"
+      :sendPolicy="(displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled)"
+      @sendPolicyToClient="sendPolicyToClient"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="quote"
+      quoteType="travel"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
       :expanded="sectionExpanded"
     />
 
@@ -2916,6 +2825,14 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         </template>
       </Collapsible>
     </div>
+    
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
 
     <AuditLogs
       :type="'App\\Models\\TravelQuote'"

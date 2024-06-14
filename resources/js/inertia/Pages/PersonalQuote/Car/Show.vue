@@ -6,11 +6,10 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
-import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
-
+import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 
 defineProps({
   quote: Object,
@@ -90,17 +89,17 @@ defineProps({
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
+  clientInquiryLogs: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
-
-console.log(page.props);
 
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
@@ -156,8 +155,9 @@ onMounted(() => {
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-const quoteStatusEnum= page.props.quoteStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const leadSource = page.props.leadSourceEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -359,30 +359,6 @@ watch(availablePlansTable, (newPlans) =>  {
 
 }); */
 
-const documentsTable = reactive({
-  columns: [
-    { text: 'Document Type', value: 'document_type_text' },
-    { text: 'Document Name', value: 'document_name_text' },
-    { text: 'Created At', value: 'created_at' },
-    { text: 'Created By', value: 'created_by' },
-  ],
-});
-
-const documentsTableItems = computed(() => {
-  return page.props.quoteDocuments.map(doc => {
-    return {
-      document_type_text:
-        doc.document_type_text.length > 0 ? doc.document_type_text : '',
-      document_name_text: doc.doc_name,
-      document_original_name: doc.original_name,
-      created_at: doc.created_at,
-      doc_uuid: doc.doc_uuid,
-      doc_url: doc.doc_url,
-      created_by: doc.created_by ? doc.created_by.name : '',
-    };
-  });
-});
-
 const notesForCustomersTable = reactive({
   columns: [
     { text: 'Id', value: 'id' },
@@ -511,6 +487,10 @@ const paymentItems = computed(() => {
   });
 });
 
+const isRenewalUpload = computed(() => {
+  return page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD;
+});
+
 const leadStatusOptions = computed(() => {
   const isLeadPool = hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool]);
   const isPA = hasAnyRole([rolesEnum.Admin, rolesEnum.PA]);
@@ -625,9 +605,9 @@ const policyDetailsState = reactive({
 });
 
 const planQuoteInsurerNumber = computed(() => {
-  let obj = page.props?.listQuotePlans?.filter(
-    item => item.id == page.props.record.plan_id,
-  );
+  let quotePlanList = page.props?.listQuotePlans;
+  if (!quotePlanList || typeof quotePlanList === 'string') return null;
+  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
   return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
 });
 const vatAmount = computed(() => {
@@ -1051,100 +1031,9 @@ const copyPlanURL = item => {
     });
 };
 
-const copyUploadURL = () => {
-  copy(page.props.docUploadURL);
-  if (copied)
-    notification.success({
-      title: 'Link copied to clipboard',
-      position: 'top',
-    });
-};
-
 const selectPlan = item => {
   selectedPlan.value = item;
   modals.plan = true;
-};
-
-const isUploading = ref(false);
-
-const docForm = useForm({
-  quote_id: usePage().props.record.id || null,
-  quote_uuid: usePage().props.record.code || null,
-  quote_type_id: null,
-  document_type_code: null,
-  file: null,
-});
-
-const uploadFile = (doc, filesWithInfo) => {
-  let url = '/quotes/car/documents/store';
-  const { files, rejectReason } = filesWithInfo;
-  if (files.length == 0) {
-    notification.error({
-      title: 'File upload failed',
-      position: 'top',
-    });
-    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
-    return false;
-  }
-  isUploading.value = true;
-  docForm
-    .transform(data => ({
-      ...data,
-      quote_type_id: doc.quote_type_id,
-      document_type_code: doc.code,
-      folder_path: doc.folder_path,
-      file: files[0].file,
-    }))
-    .post(url, {
-      preserveScroll: true,
-      preserveState: true,
-      onError: errors => {
-        docForm.setError(errors.error);
-        console.log('errors');
-        console.log(errors);
-        notification.error({
-          title: 'File upload failed',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        isUploading.value = false;
-      },
-    });
-};
-
-const confirmDeleteDocData = reactive({
-  docs: null,
-  member: null,
-  activity: null,
-  contact: null,
-});
-
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteDocData.docs = name;
-};
-
-const confirmDeleteDoc = () => {
-  documentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteDocData.docs,
-      quoteId: page.props.record.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        documentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
 };
 
 const getAddonVat = item => {
@@ -1620,10 +1509,16 @@ const handlePlanSelected = plan => {
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
-const getDetailPageRoute = (
-  uuid,
-  quote_type_id,
-) => useGetShowPageRoute(uuid, quote_type_id, null);
+const copyUploadURL = () => {
+  copy(page.props.docUploadURL);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 
 watch(
   () => page.props.record.quote_status_id,
@@ -1667,7 +1562,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
@@ -1679,7 +1574,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1693,7 +1588,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName }}</dd>
+                <dd>{{ selectedProviderPlan.planName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ECOMMERCE</dt>
@@ -1772,13 +1667,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
             <Link
-                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${record.insly_id}`"
-                preserve-scroll
+              v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+              :href="`/legacy-policy/${record.insly_id}`"
+              preserve-scroll
             >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
             </Link>
             <template
               v-if="
@@ -1786,15 +1681,15 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 allowedDuplicateLOB.length > 0
               "
             >
-            <x-button
-              v-if="hasAnyRole([rolesEnum.LeadPool])"
-              class="mr-2"
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openSendOCBConfirmNB"
-            >
-              Send NB OCB To Customer
-            </x-button>
+              <x-button
+                v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
+                class="mr-2"
+                size="sm"
+                color="#ff5e00"
+                @click.prevent="openSendOCBConfirmNB"
+              >
+                Send NB OCB To Customer
+              </x-button>
               <x-button
                 v-if="
                   !hasAnyRole([
@@ -1985,7 +1880,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                   </Link>
                 </dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <dt>
                   <x-tooltip position="bottom">
                     <label
@@ -1993,7 +1891,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </dt>
                 <dd>
@@ -2017,10 +1920,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 <dt class="font-medium">ID</dt>
                 <dd>{{ record.id }}</dd>
               </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ENQUIRY COUNT</dt>
-            <dd>{{ record.enquiry_count }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ENQUIRY COUNT</dt>
+                <dd>{{ record.enquiry_count }}</dd>
+              </div>
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
@@ -2031,7 +1934,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </Link>
           </LeadEditBtnTemplate>
 
-          <div v-if="linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end mb-4" >
+          <div v-if="quote.quote_status_id !=
+                page.props.quoteStatusEnum.PolicyCancelled || linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end mb-4" >
             <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
               <LeadEditBtnReuseTemplate :isDisabled="true"/>
               <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
@@ -2132,7 +2036,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                       :rules="[isRequired]"
                       placeholder="INSURED FIRST NAME"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow || linkedQuoteDetails.childLeadsCount > 0"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                     />
                   </dd>
                 </div>
@@ -2144,7 +2051,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                       :rules="[isRequired]"
                       placeholder="INSURED LAST NAME"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow  || linkedQuoteDetails.childLeadsCount > 0"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                     />
                   </dd>
                 </div>
@@ -2172,7 +2082,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                       :rules="[isRequired]"
                       placeholder="EMIRATES ID NUMBER"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow  || linkedQuoteDetails.childLeadsCount > 0"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                     />
                   </dd>
                 </div>
@@ -2183,7 +2096,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                       v-model="customerProfileForm.emirates_id_expiry_date"
                       :rules="[isRequired]"
                       placeholder="EMIRATES ID EXPIRY DATE"
-                      :disabled="!isProfileUpdateAllow || linkedQuoteDetails.childLeadsCount > 0"
+                      :disabled="
+                        !isProfileUpdateAllow ||
+                        linkedQuoteDetails.childLeadsCount > 0
+                      "
                       :min-date="new Date()"
                     />
                   </dd>
@@ -2294,7 +2210,14 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                   </dd>
                 </div>
               </dl>
-              <div v-if="linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end">
+              <div
+                v-if="
+                  quote.quote_status_id !=
+                    page.props.quoteStatusEnum.PolicyCancelled ||
+                  linkedQuoteDetails.childLeadsCount == 0
+                "
+                class="flex justify-end"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -2439,13 +2362,14 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                   v-model="leadStatusForm.leadStatus"
                   :single="true"
                   label="Status"
-                  class="w-full"
+                  class="w-full uppercase"
                   placeholder="Please select Lead Status"
                   :disabled="leadStatusDisabled || lockLeadSectionsDetails.lead_status"
                   :options="leadStatusOptions"
                 />
                 <x-field
                   label="TransApp Code"
+                  class="uppercase"
                   required
                   v-if="
                     leadStatusForm.leadStatus ==
@@ -2463,6 +2387,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 </x-field>
                 <x-field
                   label="Lost Reason"
+                  class="uppercase"
                   required
                   v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 >
@@ -2482,6 +2407,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 </x-field>
                 <x-field
                   label="Followup Date"
+                  class="uppercase"
                   v-if="
                     leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
                     leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
@@ -2498,13 +2424,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                     :disabled="lockLeadSectionsDetails.lead_status"
                   />
                   <!-- <x-input
-                    v-model="leadStatusForm.next_followup_date"
-                    :value="new Date(leadStatusForm.next_followup_date).toLocaleDateString('en-US')"
-                    type="datetime-local"
-                    placeholder="Please select follow-up date & time"
-                    class="w-full"
-                    :error="leadStatusForm.errors.next_followup_date"
-                  /> -->
+								v-model="leadStatusForm.next_followup_date"
+								:value="new Date(leadStatusForm.next_followup_date).toLocaleDateString('en-US')"
+								type="datetime-local"
+								placeholder="Please select follow-up date & time"
+								class="w-full"
+								:error="leadStatusForm.errors.next_followup_date"
+							/> -->
                 </x-field>
                 <x-select
                   v-if="leadStatusForm.leadStatus == quoteStatusEnum.IMRenewal"
@@ -2518,12 +2444,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                     })),
                   ]"
                   placeholder="Please Select Tier"
-                  class="w-full"
+                  class="w-full uppercase"
                   :error="leadStatusForm.errors.tier_id"
                   :disabled="lockLeadSectionsDetails.lead_status"
                 />
                 <x-field
                   label="Notes"
+                  class="uppercase"
                   :required="
                     leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
                     leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
@@ -2553,6 +2480,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 </x-field>
                 <x-field
                   label="Car Sold / Uncontactable Proof"
+                  class="uppercase"
                   v-if="
                     leadStatusForm.leadStatus == quoteStatusEnum.CarSold ||
                     leadStatusForm.leadStatus == quoteStatusEnum.Uncontactable
@@ -2571,7 +2499,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                     class="form-control w-full"
                   />
                 </x-field>
-                <x-field class="" label="Transaction Type">
+                <x-field class="uppercase" label="Transaction Type">
                   <x-input
                     type="text"
                     :value="record.transaction_type_text"
@@ -2586,7 +2514,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               v-if="isCarLostStatus(record.quote_status_id)"
             >
               <div class="flex flex-col gap-4">
-                <x-field required label="Approval Status">
+                <x-field required label="Approval Status" class="uppercase">
                   <x-select
                     v-model="leadStatusForm.lost_approval_status"
                     :options="leadApprovalStatusOptions"
@@ -2600,6 +2528,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 <x-field
                   required
                   label="Approval Reasons"
+                  class="uppercase"
                   v-if="
                     leadStatusForm.lost_approval_status ==
                     genericRequestEnum.APPROVED
@@ -2625,6 +2554,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 <x-field
                   required
                   label="Rejection Reasons"
+                  class="uppercase"
                   v-if="
                     leadStatusForm.lost_approval_status ==
                     genericRequestEnum.REJECTED
@@ -2655,7 +2585,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                     ].includes(leadStatusForm.lost_approval_status)
                   "
                 >
-                  <x-field label="Notes">
+                  <x-field class="uppercase" label="Notes">
                     <x-textarea
                       v-model="leadStatusForm.lost_notes"
                       :disabled="!allowQuoteLogAction || lockLeadSectionsDetails.lead_status"
@@ -2663,7 +2593,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                       class="w-full"
                     />
                   </x-field>
-                  <x-field required label="Car Sold / Uncontactable Proof">
+                  <x-field
+                    required
+                    label="Car Sold / Uncontactable Proof"
+                    class="uppercase"
+                  >
                     <input
                       @input="
                         leadStatusForm.mo_proof_document =
@@ -2753,7 +2687,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
-              <x-field label="Cylinder" required>
+              <x-field label="Cylinder" class="uppercase" required>
                 <x-input
                   v-model="assumptionsForm.cylinder"
                   type="number"
@@ -2765,7 +2699,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               </x-field>
             </div>
             <div class="w-full md:w-1/2">
-              <x-field label="Seat Capacity" required>
+              <x-field label="Seat Capacity" class="uppercase" required>
                 <x-input
                   v-model="assumptionsForm.seat_capacity"
                   type="number"
@@ -2780,7 +2714,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Vehicle Body Type" required>
+                <x-field label="Vehicle Body Type" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.vehicle_type_id"
                     :options="vehicleTypeOptions"
@@ -2794,7 +2728,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is Vehicle modified?" required>
+                <x-field
+                  label="Is Vehicle modified?"
+                  class="uppercase"
+                  required
+                >
                   <x-select
                     v-model="assumptionsForm.is_modified"
                     :options="isOptions"
@@ -2810,7 +2748,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is Bank Financed" required>
+                <x-field label="Is Bank Financed" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.is_bank_financed"
                     :options="isOptions"
@@ -2824,7 +2762,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is GCC Standard?" required>
+                <x-field label="Is GCC Standard?" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.is_gcc_standard"
                     :options="isOptions"
@@ -2840,7 +2778,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Current Insurance" required>
+                <x-field label="Current Insurance" class="uppercase" required>
                   <x-select
                     v-model="assumptionsForm.current_insurance_status"
                     :options="currentInsuranceOptions"
@@ -2854,7 +2792,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Year Of First Registration" required>
+                <x-field
+                  label="Year Of First Registration"
+                  class="uppercase"
+                  required
+                >
                   <x-select
                     v-model="assumptionsForm.year_of_first_registration"
                     :options="
@@ -2871,48 +2813,54 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               </div>
             </div>
           </div>
-            <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
-                <div
-                    class="flex justify-end"
-                    v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)"
+          <div
+            v-if="
+              quote.quote_status_id !=
+                page.props.quoteStatusEnum.PolicyCancelled ||
+              page.props.linkedQuoteDetails.childLeadsCount == 0
+            "
+          >
+            <div
+              class="flex justify-end"
+              v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)"
+            >
+              <x-button
+                v-if="assumptionState.isEditing"
+                class="mt-4 mr-2"
+                color="orange"
+                size="sm"
+                @click.prevent="assumptionState.isEditing = false"
+              >
+                Cancel
+              </x-button>
+              <template v-if="!can(permissionEnum.ApprovePayments)">
+                <x-button
+                  v-if="assumptionState.isEditing"
+                  class="mt-4"
+                  color="primary"
+                  size="sm"
+                  :loading="assumptionsForm.processing"
+                  @click.prevent="onUpdateAssumption"
                 >
-                    <x-button
-                        v-if="assumptionState.isEditing"
-                        class="mt-4 mr-2"
-                        color="orange"
-                        size="sm"
-                        @click.prevent="assumptionState.isEditing = false"
-                    >
-                        Cancel
-                    </x-button>
-                    <template v-if="!can(permissionEnum.ApprovePayments)">
-                        <x-button
-                            v-if="assumptionState.isEditing"
-                            class="mt-4"
-                            color="primary"
-                            size="sm"
-                            :loading="assumptionsForm.processing"
-                            @click.prevent="onUpdateAssumption"
-                        >
-                            Update
-                        </x-button>
-                        <x-button
-                            v-if="
-                  !assumptionState.isEditing &&
-                  (access.carManagerCanEdit ||
-                    access.carAdvisorCanEdit ||
-                    !hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager]))
-                "
-                            class="mt-4"
-                            color="emerald"
-                            size="sm"
-                            @click.prevent="assumptionState.isEditing = true"
-                        >
-                            Edit Assumptions
-                        </x-button>
-                    </template>
-                </div>
+                  Update
+                </x-button>
+                <x-button
+                  v-if="
+                    !assumptionState.isEditing &&
+                    (access.carManagerCanEdit ||
+                      access.carAdvisorCanEdit ||
+                      !hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager]))
+                  "
+                  class="mt-4"
+                  color="emerald"
+                  size="sm"
+                  @click.prevent="assumptionState.isEditing = true"
+                >
+                  Edit Assumptions
+                </x-button>
+              </template>
             </div>
+          </div>
         </template>
       </Collapsible>
     </div>
@@ -2980,7 +2928,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               size="sm"
               color="orange"
               class="mr-2"
-              :disabled="record.advisor_id != $page.props.auth.user.id || page.props.linkedQuoteDetails.childLeadsCount > 0"
+              :disabled="
+                record.advisor_id != $page.props.auth.user.id ||
+                page.props.linkedQuoteDetails.childLeadsCount > 0
+              "
             >
               Send OCB Email to Customer
             </x-button>
@@ -3034,6 +2985,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 isRenewal,
                 isDisabled,
                 puaPremium,
+                puaType,
               }"
             >
               <p>{{ providerName }}</p>
@@ -3064,7 +3016,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 </x-tag>
 
                 <x-tag
-                  v-if="puaPremium && puaPremium != null"
+                  v-if="puaPremium && puaPremium != null && puaType"
                   size="xs"
                   class="mt-0.5 text-[10px] text-white"
                   style="background-color: #e00000"
@@ -3080,7 +3032,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                         approval.
                       </span>
                     </template>
-                    PUA
+                    {{ puaType }}
                   </x-tooltip>
                 </x-tag>
               </div>
@@ -3205,7 +3157,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             <template #item-action="item">
               <div class="flex gap-2">
                 <x-button
-                  v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
+                  v-if="
+                    quote.quote_status_id !=
+                      page.props.quoteStatusEnum.PolicyCancelled ||
+                    page.props.linkedQuoteDetails.childLeadsCount == 0
+                  "
                   size="xs"
                   color="primary"
                   outlined
@@ -3223,7 +3179,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 >
                   Copy
                 </x-button>
-                <template
+                <!-- <template
                   v-if="item.actualPremium > 0 && item.id != record.plan_id"
                 >
                   <x-button
@@ -3236,11 +3192,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                     color="error"
                     outlined
                     @click="confirmChangeInsurer(item)"
-                    :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                    :disabled="
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
                   >
                     Change Insurer
                   </x-button>
-                </template>
+                </template> -->
 
                 <span>
                   <SelectPlan
@@ -3271,13 +3229,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       <x-modal v-model="modals.changeInsurer" show-close backdrop>
         <template #header> Change Insurer </template>
         <p>Are you sure to change insurer?</p>
-        <template #actions>
           <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.changeInsurer = false"
-            >
               Cancel
             </x-button>
             <x-button
@@ -3401,16 +3353,21 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
       :paymentCode = "record.code"
-      :quoteType="quoteType"
-      :payments="payments"
+      :quoteType="quoteType"      
     />    
 
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
-			quoteType="Car"
+      quoteType="Car"
 			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :paymentDocument="page.props.documentTypeCodes.filter(item => ['CPD', 'CPDR', 'CDPDR'].includes(item.code))"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -3515,157 +3472,22 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
+      :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
+      :payments="payments"
     />
-
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="my-2 flex justify-end">
-            <x-button
-              class="mr-2"
-              v-if="
-                record.payment_status_id === paymentStatusEnum.AUTHORISED &&
-                !hasRole(rolesEnum.PA)
-              "
-              @click.prevent="copyUploadURL"
-              size="sm"
-              color="primary"
-            >
-              Copy upload Link
-            </x-button>
-            <template v-if="1">
-              <!-- <Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link> -->
-              <x-button
-                @click.prevent="modals.doc = true"
-                size="sm"
-                color="orange"
-              >
-                Upload Documents
-              </x-button>
-              <template v-if="displaySendPolicyButton">
-                <x-button
-                  class="ml-2 mr-2"
-                  size="sm"
-                  color="orange"
-                  @click.prevent="sendQuoteDocumentsToCustomer"
-                >
-                  Send Policy
-                </x-button>
-              </template>
-            </template>
-          </div>
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="documentsTable.columns"
-            :items="documentsTableItems || []"
-            show-index
-            border-cell
-            fixed-checkbox
-            hide-rows-per-page
-            hide-footer
-          >
-            <template #item-document_name_text="item">
-              <a target="_blank" :href="storageUrl + item.doc_url">{{
-                item.document_name_text
-              }}</a>
-            </template>
-            <template #item-action="item">
-              <div class="flex gap-2">
-                <x-button
-                  v-if="
-                    !hasRole(rolesEnum.PA) &&
-                    !can(permissionEnum.ApprovePayments)
-                  "
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="onDocDelete(item.document_name_text)"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-    </div>
-
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
-      <p>Are you sure you want to delete this document?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="confirmDeleteDoc"
-            :loading="documentsTable.isLoading"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-
-      <x-alert
-        color="error"
-        class="mb-5"
-        v-if="Object.keys(docForm.errors).length"
-      >
-        <ul>
-          <li v-for="error in docForm?.errors" :key="error">{{ error }}</li>
-        </ul>
-      </x-alert>
-
-      <div
-        v-for="documentType in documentTypes"
-        :key="documentType.id"
-        class="grid md:grid-cols-2 gap-2 my-4 border-b"
-      >
-        <div class="flex flex-col gap-1">
-          <h5 class="text-sm font-semibold">
-            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}}
-          </h5>
-          <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-          <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-          <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
-        </div>
-        <div class="pb-4">
-          <Dropzone
-            :id="documentType.id"
-            :accept="documentType.accepted_files"
-            :max-files="documentType.max_files"
-            :max-size="documentType.max_size"
-            :loading="docForm.processing"
-            @change="uploadFile(documentType, $event)"
-          />
-          <a
-            v-for="quoteDocument in page.props.quoteDocuments.filter(
-              d => d.document_type_code == documentType.code,
-            )"
-            :key="quoteDocument.id"
-            :href="storageUrl + quoteDocument.doc_url"
-            target="_blank"
-            class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-          >
-            {{ quoteDocument.original_name || quoteDocument.doc_name }}
-          </a>
-        </div>
-      </div>
-    </x-modal>
+  
+    <QuoteDocument
+      :document-types="documentTypes"
+      :quote-documents="page.props.quoteDocuments || []"
+      :storageUrl="storageUrl"
+      :quote="record"
+      :expanded="sectionExpanded"
+      @copyUploadURL="copyUploadURL"
+      quoteType="Car"
+      :paymentStatusEnum="paymentStatusEnum"
+    />
 
     <BookPolicy
       v-if="
@@ -3674,7 +3496,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       :quoteType="quoteType"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
@@ -4028,13 +3850,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       :quoteType="'CAR'"
     />
   </div>
-
   <AuditLogs
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
-/>
+  />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

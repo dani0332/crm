@@ -242,7 +242,7 @@ const rolesEnum = page.props.rolesEnum;
           <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
         </div>
       </template>
-      
+
       <template #body>
         <x-divider class="my-4" />
         <div class="mb-4 flex justify-end">

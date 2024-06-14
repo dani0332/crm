@@ -21,10 +21,10 @@ use App\Models\BusinessQuote;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GroupMedicalType;
+use App\Models\KycLog;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
-use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
@@ -37,8 +37,8 @@ use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
-use App\Services\SendUpdateLogService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -135,10 +135,14 @@ class AmtController extends Controller
             $data->where('bqr.mobile_no', '=', $request->mobile_no);
         }
         if (isset($request->leadStatus) && $request->leadStatus != '') {
-            $data->where('qs.id', '=', $request->leadStatus);
+            $data->whereIn('qs.id', $request->leadStatus);
         }
-        if (isset($request->advisor_id) && $request->advisor_id != '') {
-            $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
+        if (isset($request->advisor_id) && is_array($request->advisor_id) && count($request->advisor_id) > 0) {
+            if (count($request->advisor_id) === 1 && $request->advisor_id[0] == '-1') {
+                $data->whereNull('bqr.advisor_id');
+            } else {
+                $data->whereIn('bqr.advisor_id', $request->advisor_id);
+            }
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
@@ -259,7 +263,7 @@ class AmtController extends Controller
             })->values();
         }
 
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::GROUP_MEDICAL->id());
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
         $countries = Nationality::all();
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
@@ -269,7 +273,8 @@ class AmtController extends Controller
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->active()->get();
+        $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)->latest()->first();
+        @[$documentTypes,, $businessDocumentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id(), $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::GroupMedical);
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $sendUpdateOptions = [];
@@ -286,10 +291,9 @@ class AmtController extends Controller
                 SendUpdateLogStatusEnum::EA,
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::EFMP,
-                SendUpdateLogStatusEnum::ICOLOIALOLR,
-                SendUpdateLogStatusEnum::IIEAFT,
+                SendUpdateLogStatusEnum::I_CLILLR,
+                SendUpdateLogStatusEnum::IEAF_T,
                 SendUpdateLogStatusEnum::IISI,
-                SendUpdateLogStatusEnum::MPC,
                 SendUpdateLogStatusEnum::PPE,
                 // Endorsement non Financial.
                 SendUpdateLogStatusEnum::AAI,
@@ -345,6 +349,7 @@ class AmtController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'documentTypeCodes' => $businessDocumentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'record' => fn () => $record,
             'permissions' => [
@@ -417,8 +422,8 @@ class AmtController extends Controller
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
         })->toArray();
 
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus('Business', $item['id'], $request);
 
             return $item;
         }, $leadStatuses);

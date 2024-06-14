@@ -18,9 +18,9 @@ const props = defineProps({
   },
 });
 
-const md = new markdownit();
-
 const source = ref(null);
+
+const md = new markdownit();
 
 const computedMessages = computed(() => {
   if (source.value && source.value.length > 0)
@@ -65,7 +65,6 @@ const renderMarkdown = markdownString => {
             placeholder="Select a source"
             class="w-full"
             single
-            deselectAll
           >
           </combo-box>
         </x-field>

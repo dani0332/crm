@@ -12,13 +12,13 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\QuoteBatches;
-use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -39,15 +39,18 @@ class CarQuoteService extends BaseService
     protected $leadAllocationService;
     protected $sendEmailCustomerService;
     protected $applicationStorageService;
+    protected $activityService;
+
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->activityService = $activityService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
@@ -103,13 +106,14 @@ class CarQuoteService extends BaseService
                 'cqr.payment_status_id',
                 'ps.text AS payment_status_id_text',
                 'cqr.price_vat_not_applicable',
-                'cqr.price_without_vat',
+                'cqr.price_vat_applicable',
                 'cqr.price_with_vat',
                 'cqr.vat',
                 'cqr.insurer_quote_number',
                 'cqr.policy_issuance_status_id',
                 'cqr.policy_issuance_status_other',
                 'cqr.plan_id',
+                'cqr.payment_paid_at',
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
@@ -188,6 +192,8 @@ class CarQuoteService extends BaseService
                 //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
                 'cqr.policy_booking_date',
+                //'cqr.aml_status_id',
+                DB::raw('GROUP_CONCAT(team.name) as team_name')
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -222,7 +228,10 @@ class CarQuoteService extends BaseService
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
                 $join->on('qvc.user_id', 'cqr.advisor_id');
-            });
+            })
+            ->leftJoin('user_team as ut', 'u.id', '=', 'ut.user_id')
+            ->leftJoin('teams as team', 'team.id', '=', 'ut.team_id')
+            ->groupBy('cqr.id');
 
         $this->exportQuery = DB::table('car_quote_request as cqr')
             ->select(
@@ -401,9 +410,6 @@ class CarQuoteService extends BaseService
         if ($request->trim) {
             $carQuote->car_model_detail_id = $request->trim;
         }
-        if ($request->policy_start_date) {
-            $carQuote->policy_start_date = $request->policy_start_date;
-        }
         if ($request->renewal_batch) {
             $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
         }
@@ -436,9 +442,10 @@ class CarQuoteService extends BaseService
         if ($deleteValuationResponse) {
             $carQuote->save();
 
+            $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';
             // update embedded products list
             if (
-                (isset($request->dob) && $oldDob->format('Y-m-d') != $request->dob) ||
+                (isset($request->dob) && $oldFormattedDate != $request->dob) ||
                 (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)
             ) {
                 Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
@@ -511,8 +518,10 @@ class CarQuoteService extends BaseService
                 $access['carAdvisorCanEditPaymentCancelledRefund'] = true;
             }
 
-            if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
-                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
                 $access['carAdvisorCanEdit'] = true;
                 $access['carAdvisorCanEditInsurer'] = true;
             }
@@ -524,8 +533,10 @@ class CarQuoteService extends BaseService
                 $access['carManagerCanEditInsurer'] = true;
             }
 
-            if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
-                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
                 $access['carManagerCanEdit'] = true;
                 $access['carManagerCanEditInsurer'] = true;
             }
@@ -581,6 +592,7 @@ class CarQuoteService extends BaseService
                             'paymentStatus',
                             'paymentMethod',
                             'documents',
+                            'verifiedByUser',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },
@@ -836,7 +848,7 @@ class CarQuoteService extends BaseService
 
     private function parseDate($date, $isStartOfDay)
     {
-        if ($date != '') {
+        if ($date && $date != '') {
             if ($isStartOfDay) {
                 return Carbon::parse($date)->startOfDay()->toDateTimeString();
             } else {
@@ -928,6 +940,22 @@ class CarQuoteService extends BaseService
 
         if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
             CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr');
+        }
+        if ($request->transaction_approved_dates) {
+
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+            $freshLoad = ! isset($request->page);
+            $startDate = isset($request->transaction_approved_dates) ?
+                Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+
+            $endDate = isset($request->transaction_approved_dates) ?
+                Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+            $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
+        }
+        if (! empty($request->teams) && is_array($request->teams)) {
+            $this->query->whereIn('team.id', $request->teams);
         }
 
         foreach ($searchProperties as $item) {
@@ -1089,6 +1117,7 @@ class CarQuoteService extends BaseService
             )
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('teams as team', 'u.team_id', '=', 'team.id')
             ->orderBy('advisor_id', 'ASC');
 
         if (! empty($CDBID)) {
@@ -1133,7 +1162,7 @@ class CarQuoteService extends BaseService
     }
 
     /**
-     * get car quote details, quote plans and pdf
+     * get car quote details, quote plans and pdf.
      *
      * @return mixed
      */
@@ -1468,6 +1497,7 @@ class CarQuoteService extends BaseService
     public function processManualLeadAssignment($request): array
     {
         $userId = (int) $request->assigned_to_id_new;
+        $quoteType = $request->modelType;
 
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -1494,33 +1524,15 @@ class CarQuoteService extends BaseService
 
             info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType); // update new and previous (if applicable) advisor counts in lead allocation table
 
-            $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
-
+            $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Car, $userId);
             $lead->auto_assigned = false;
 
             $lead->save();
         }
 
         return [];
-    }
-
-    private function updateExistingQuoteViewCount($userId, $leadId)
-    {
-        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->first();
-        if ($quoteViewCount) {
-            $quoteViewCount->user_id = $userId;
-            $quoteViewCount->visit_count = 0;
-            $quoteViewCount->save();
-        } else {
-            QuoteViewCount::create([
-                'quote_id' => $leadId,
-                'quote_type_id' => 1,
-                'user_id' => $userId,
-                'visit_count' => 1,
-            ]);
-        }
     }
 
     public function updateTierAndCost($lead)
@@ -1659,29 +1671,6 @@ class CarQuoteService extends BaseService
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
 
-    public function addOrUpdateQuoteViewCount($record)
-    {
-        if ($record->advisor_id != null && $record->advisor_id == Auth::user()->id) {
-            // Search for an existing record with the same quote_id and user_id
-            $quoteViewCount = QuoteViewCount::where('quote_id', $record->id)
-                ->where('user_id', Auth::user()->id)
-                ->first();
-
-            if ($quoteViewCount) {
-                // If the record exists, increment its visit_count
-                $quoteViewCount->increment('visit_count');
-            } else {
-                // If the record does not exist, create a new one
-                QuoteViewCount::create([
-                    'quote_id' => $record->id,
-                    'quote_type_id' => 1,
-                    'user_id' => Auth::user()->id,
-                    'visit_count' => 1,
-                ]);
-            }
-        }
-    }
-
     private function deleteValuationAPI($oldValue, $currentValue, $quoteUuId)
     {
         if ($oldValue == $currentValue) {
@@ -1774,7 +1763,7 @@ class CarQuoteService extends BaseService
         return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
     }
 
-    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteType = null)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
@@ -1783,13 +1772,16 @@ class CarQuoteService extends BaseService
 
         info('Previous assignment type is : '.$previousAssignmentType);
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
+
         //Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
         // Get the allocation record for the new advisor
-        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
+        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor only if its different from previous advisor
+
         if ($newAdvisorId !== $previousAdvisorId) {
             // Update allocation counts for the new advisor (if applicable)
             $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
@@ -1797,7 +1789,7 @@ class CarQuoteService extends BaseService
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
-            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
+            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
@@ -1930,8 +1922,18 @@ class CarQuoteService extends BaseService
     {
         $request = request();
         $results = DB::table('car_quote_request AS cqr')
-            ->select('cqr.code', 'qb.name AS batch_no', 'cqr.first_name', 'cqr.last_name', 'cqr.email', 'cqr.mobile_no',
-                'cqr.created_at', 'qs.text AS status', 'tr.name AS tier', 'u.name AS assigned_to')
+            ->select(
+                'cqr.code',
+                'qb.name AS batch_no',
+                'cqr.first_name',
+                'cqr.last_name',
+                'cqr.email',
+                'cqr.mobile_no',
+                'cqr.created_at',
+                'qs.text AS status',
+                'tr.name AS tier',
+                'u.name AS assigned_to'
+            )
             ->leftJoin('quote_status AS qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users AS u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('quote_batches AS qb', 'qb.id', '=', 'cqr.quote_batch_id')

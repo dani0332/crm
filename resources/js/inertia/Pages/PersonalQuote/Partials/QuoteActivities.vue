@@ -13,6 +13,7 @@ defineProps({
 });
 
 const notification = useNotifications('toast');
+const compareDueDate = useCompareDueDate;
 
 const page = usePage();
 
@@ -39,6 +40,7 @@ const advisorOptions = computed(() => {
 
 const activityTable = [
   { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
@@ -196,7 +198,7 @@ const onDeleteConfirmation = () => {
               >
                 Edit
               </x-button>
-    
+
               <x-button
                 size="xs"
                 color="error"

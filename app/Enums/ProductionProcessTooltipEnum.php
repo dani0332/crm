@@ -34,4 +34,12 @@ final class ProductionProcessTooltipEnum extends Enum
     const VAT_ON_COMMISSION = 'Value Added Tax (VAT) amount applicable to the commission.';
     const TOTAL_COMMISSION = 'Display the total commission amount including VAT for this transaction. Ensure it matches the calculations.';
     const DISCOUNT_VALUE = 'If applicable, this field indicates the exact amount or percentage reduced from the original price.';
+    const TRANSACTION_PAYMENT_STATUS_NOT_PAID = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
+    const TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID = 'The invoice has received a portion of its total amount due. Please ensure that the remaining balance is collected promptly to prevent potential financial discrepancies.';
+    const TRANSACTION_PAYMENT_STATUS_PAID = 'This insurer tax invoice has been settled in its entirety, with no outstanding amounts. Always review payments to guarantee the accuracy of this status.';
+
+    // Manage payment section
+    const PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED = 'This payment is currently standalone and hasn\'t been associated with any insurer tax invoices. It\'s essential to review and link it to its relevant invoice(s) for accurate accounting.';
+    const PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED = 'This payment is connected to one or more insurer tax invoices, but there\'s a balance remaining. The unallocated portion should be connected to relevant invoices or accounted for.';
+    const PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED = 'This payment is thoroughly associated with insurer tax invoices, ensuring that there are no outstanding amounts or pending links.';
 }

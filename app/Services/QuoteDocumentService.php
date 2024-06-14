@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -223,6 +224,53 @@ class QuoteDocumentService extends BaseService
         }
 
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
+    }
+
+    public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
+    {
+
+        $documentTypes = DocumentType::active()
+            ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
+            ->byQuoteTypeId($quoteTypeId)
+            ->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
+                return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
+            })
+            ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer) {
+                return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer);
+            })->sortDocumentType()->get();
+
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            $businessDocumetTypes = [];
+            if ($quoteType == quoteTypeCode::GroupMedical) {
+                $businessDocumetTypes = [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::PPR];
+            } elseif ($quoteType == quoteTypeCode::CORPLINE) {
+                $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
+            }
+            $businessDocumentTypeCodes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->get();
+        }
+
+        $documentTypesByCategory = $documentTypes->groupBy('category');
+        $orderedDocumentTypesByCategory = collect();
+        if ($documentTypesByCategory->has('QUOTE') || $quoteTypeId == QuoteTypeId::Business) {
+            if ($quoteTypeId == QuoteTypeId::Business) {
+                $quoteDocumentTypes = $documentTypesByCategory->get('QUOTE');
+                if ($quoteDocumentTypes === null) {
+                    $quoteDocumentTypes = collect();
+                }
+                $quoteDocumentTypes = $quoteDocumentTypes->concat($businessDocumentTypeCodes);
+                $orderedDocumentTypesByCategory->put('QUOTE', $quoteDocumentTypes);
+            } else {
+                $orderedDocumentTypesByCategory->put('QUOTE', $documentTypesByCategory->get('QUOTE'));
+            }
+        }
+        if ($documentTypesByCategory->has('MEMBER')) {
+            $orderedDocumentTypesByCategory->put('MEMBER', $documentTypesByCategory->get('MEMBER'));
+        }
+        if ($documentTypesByCategory->has('ISSUING_DOCUMENTS')) {
+            $orderedDocumentTypesByCategory->put('ISSUING_DOCUMENTS', $documentTypesByCategory->get('ISSUING_DOCUMENTS'));
+        }
+
+        return [$orderedDocumentTypesByCategory, $documentTypes, $businessDocumentTypeCodes ?? []];
     }
 
     public function getQuoteDocumentsForSendUpdates($sendUpdateLogId)

@@ -14,13 +14,13 @@ class CommercialKeywordsService extends BaseService
     {
         $latestRecord = CommercialKeyword::select('id')->orderByDesc('id')->first();
 
-        CommercialKeyword::create([
+        $keyword = CommercialKeyword::create([
             'id' => ($latestRecord->id + 1),
             'name' => $attributes['name'],
             'key' => strtoupper(str_replace(' ', '_', $attributes['name'])),
         ]);
 
-        return redirect()->back()->with('success', 'Commercial Keyword has been stored');
+        return redirect()->route('admin.commercial.keywords.show', ($latestRecord->id + 1))->with('success', 'Commercial Keyword has been stored');
     }
 
     /**
@@ -37,6 +37,6 @@ class CommercialKeywordsService extends BaseService
             return redirect()->route('admin.commercial.keywords')->with('message', 'Record not found');
         }
 
-        return redirect()->route('admin.commercial.keywords')->with('success', 'Commercial Keyword has been updated');
+        return redirect()->route('admin.commercial.keywords.show', ($id))->with('success', 'Commercial Keyword has been updated');
     }
 }

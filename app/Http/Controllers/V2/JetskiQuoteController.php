@@ -11,7 +11,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\JetskiQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Repositories\ActivityRepository;
-use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\JetskiQuoteRepository;
@@ -24,6 +23,7 @@ use App\Repositories\UserRepository;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 
 class JetskiQuoteController extends Controller
 {
@@ -99,7 +99,8 @@ class JetskiQuoteController extends Controller
 
         $quote->load('documents.createdBy');
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::JETSKI->id());
+
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::JETSKI->id());
@@ -154,6 +155,7 @@ class JetskiQuoteController extends Controller
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'documentTypeCodes' => $documentTypeCodes,
         ]);
     }
 

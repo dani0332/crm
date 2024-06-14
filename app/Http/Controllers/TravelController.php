@@ -150,7 +150,7 @@ class TravelController extends Controller
                 ];
             })->sortBy('label')->values();
         }
-        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'travelPlan']);
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'travelPlan', 'travelPlan.insuranceProvider']);
 
         $payments->each(function ($payment) {
             $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
@@ -165,21 +165,25 @@ class TravelController extends Controller
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
         $this->travelQuoteService->fillData();
         $nationalities = NationalityRepository::withActive()->get();
+        $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
 
         $ecomDetails = [
             'premium' => $record->premium,
-            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '',
+            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
             'paymentStatus' => $record->payment_status_id_text,
             'planName' => $record->plan_id_text,
             'providerName' => $record->travel_plan_provider_text,
+            'paidAtPayment' => ($record->payment_paid_at) ? Carbon::parse($record->payment_paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
         ];
 
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->travelQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
-        $documentTypes = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
+        $documentTypes = $documentType = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
+
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
 
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
@@ -214,7 +218,6 @@ class TravelController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         return inertia('TravelQuote/Show', [
-            'record' => $record,
             'quote' => $record,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
@@ -230,8 +233,9 @@ class TravelController extends Controller
             'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
             'aboveAgeMembers' => $this->travelQuoteService->getAboveAgeMembers($record->id),
             'ecomDetails' => $ecomDetails,
-            'quoteDocuments' => array_values($quoteDocuments->toArray()),
+            'quoteDocuments' => $quoteDocuments->toArray(),
             'documentTypes' => $documentTypes,
+            'documentType' => $documentType,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
@@ -283,6 +287,7 @@ class TravelController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'documentTypeCodes' => $documentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
         ]);
@@ -489,15 +494,15 @@ class TravelController extends Controller
         $leadStatuses = $leadStatuses->filter(function ($item) {
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING;
         })->toArray();
-
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id']);
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id'], $request);
 
             return $item;
         }, $leadStatuses);
 
         return inertia('TravelQuote/Cards', [
             'quotes' => array_values($leadStatuses),
+            'quoteType' => QuoteTypes::TRAVEL->value,
         ]);
     }
 

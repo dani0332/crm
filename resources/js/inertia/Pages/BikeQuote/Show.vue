@@ -1,5 +1,5 @@
 <script setup>
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -13,7 +13,6 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
-  record: Object,
   documentTypes: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
@@ -47,6 +46,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
 });
@@ -58,6 +58,7 @@ const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const leadSource = page.props.leadSource;
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 const permissionEnum = page.props.permissionsEnum;
@@ -232,53 +233,68 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
   <div>
     <Head title="Bike Quotes" />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Bike Detail</h2>
+      <div class="flex gap-2">
+        <Link
+          v-if="quote.quote_detail?.insly_id"
+          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('bike-quotes-edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.BikeQuotesEdit)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.BikeQuotesEdit)"/>
+        </template>
+
+        <Link
+          v-if="can(permissionsEnum.BikeQuotesList)"
+          :href="route('bike-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div"> Bike Quotes </x-button>
+        </Link>
+      </div>
+    </div>
+
+    <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">Bike Detail</h3>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-4 justify-end">
-            <Link
-              v-if="quote.quote_detail?.insly_id"
-              :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-
-            <LeadEditBtnTemplate v-slot="{ isDisabled }">
-              <Link :href="route('bike-quotes-edit', quote.uuid)">
-                <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
-              </Link>
-            </LeadEditBtnTemplate>
-
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.BikeQuotesEdit)" :isDisabled="true"/>
-              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
-            </x-tooltip>
-            <template v-else>
-              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.BikeQuotesEdit)"/>
-            </template>
-
-            <Link
-              v-if="can(permissionsEnum.BikeQuotesList)"
-              :href="route('bike-quotes-list')"
-              preserve-scroll
-            >
-              <x-button size="sm" color="primary" tag="div">
-                Bike Quotes
-              </x-button>
-            </Link>
-          </div>
-
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -308,133 +324,141 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SOURCE</dt>
-            <dd>{{ quote.source }}</dd>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SOURCE</dt>
+                <dd>{{ quote.source }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED DATE</dt>
+                <dd>{{ quote.created_at }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED BY</dt>
+                <dd class="break-words">{{ quote?.created_by?.email }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UPDATED BY</dt>
+                <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LAST MODIFIED DATE</dt>
+                <dd>{{ quote.updated_at }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LOST REASON</dt>
+                <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">DEVICE</dt>
+                <dd>{{ quote.device }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS ECOMMERCE</dt>
+                <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
+              </div>
+            </dl>
           </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED DATE</dt>
-            <dd>{{ quote.created_at }}</dd>
+          <div class="mt-6">
+            <h3 class="font-semibold text-primary-800">Quote Details</h3>
+            <x-divider class="mb-4 mt-1" />
           </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED BY</dt>
-            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
-          </div>
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UAE licence held for</dt>
+                <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">UPDATED BY</dt>
-            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BIKE(S) TO INSURE</dt>
+                <dd>{{ quote?.bike_quote?.bike_company_to_insure }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST MODIFIED DATE</dt>
-            <dd>{{ quote.updated_at }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BIKE VALUE(AED)</dt>
+                <dd>{{ quote.asset_value }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">YEAR OF MANUFACTURE</dt>
+                <dd>{{ quote?.bike_quote?.year_of_manufacture }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DEVICE</dt>
-            <dd>{{ quote.device }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENTLY WITH</dt>
+                <dd>{{ quote?.currently_insured_with?.text }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">IS ECOMMERCE</dt>
-            <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Quote Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">UAE licence held for</dt>
-            <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BIKE(S) TO INSURE</dt>
-            <dd>{{ quote?.bike_quote?.bike_company_to_insure }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BIKE VALUE(AED)</dt>
-            <dd>{{ quote.asset_value }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">YEAR OF MANUFACTURE</dt>
-            <dd>{{ quote?.bike_quote?.year_of_manufacture }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CURRENTLY WITH</dt>
-            <dd>{{ quote?.currently_insured_with?.text }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <div>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  PARENT REF-ID
-                </label>
-                <template #tooltip> Parent Reference ID </template>
-              </x-tooltip>
-            </div>
-            <div>
-              <Link
-                v-if="quote.parent_duplicate_quote_id"
-                :href="
-                  getDetailPageRoute(
-                    linkedQuoteDetails.uuid,
-                    linkedQuoteDetails.quote_type_id,
-                  )
-                "
-                class="text-primary-500 hover:underline"
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      PARENT REF-ID
+                    </label>
+                    <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </div>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
-                {{ quote.parent_duplicate_quote_id ?? '' }}
-              </Link>
-            </div>
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </div>
+                <div>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </div>
+              </div>
+            </dl>
           </div>
-          <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
-            <div>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  CHILD REF-ID
-                </label>
-                <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
-              </x-tooltip>
-            </div>
-            <div>
-              <Link
-                :href="
-                  getDetailPageRoute(
-                    linkedQuoteDetails.childLeadsUuid,
-                    linkedQuoteDetails.quote_type_id,
-                  )
-                "
-                class="text-primary-500 hover:underline"
-              >
-                {{ linkedQuoteDetails.childLeads ?? '' }}
-              </Link>
-            </div>
-          </div>
-        </dl>
-      </div>
         </template>
       </Collapsible>
     </div>
@@ -467,7 +491,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -783,7 +807,6 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :quote-type="quoteType"
       :expanded="sectionExpanded"
     />
-
     <QuoteStatus
       :quote="quote"
       :quote-type="quoteType"
@@ -803,7 +826,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
     />
 
@@ -811,15 +834,22 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="documentTypes.filter(item => item.code === 'BPD' || item.code === 'BPDR' || item.code === 'BDPDR')"
-			:quoteRequest="quote"
+      :paymentDocument="documentTypeCodes.filter(item => ['BPD', 'BPDR', 'BDPDR'].includes(item.code))"
+      :proformaPayment="
+        quote.payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+      :bookPolicyDetails="bookPolicyDetails"
+    />
 
     <QuotePayments
       v-else
@@ -844,7 +874,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Bike"
       :expanded="sectionExpanded"
     />
@@ -857,6 +887,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :modelType="quoteType"
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
+      quote-type="Bike"
     />
 
     <BookPolicy
@@ -866,13 +897,13 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Bike"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />
-    
+
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
@@ -881,7 +912,12 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :data="sendUpdateLogs"
     />
 
-    <AuditLogs :id="$page.props.quote.id" :quote-type="quoteType" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>
+    <AuditLogs
+      :id="$page.props.quote.id"
+      :quote-type="quoteType"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
   </div>

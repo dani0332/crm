@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
 use Illuminate\Foundation\Http\FormRequest;
@@ -41,14 +42,31 @@ class SendUpdateCustomerRequest extends FormRequest
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
             $this->sendUpdateDocuemnts = $this->sendUpdate?->documents()->pluck('document_type_code');
-            $category = $this->sendUpdate->category->code;
-            $option = $this->sendUpdate->option->code;
+            $category = $this->sendUpdate?->category?->code;
+            $option = $this->sendUpdate?->option?->code;
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
+                return $validator->errors()->add('error', 'Update already booked');
+            }
 
             if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER) {
                 return $validator->errors()->add('error', 'Already sent to customer.');
             }
 
+            if ($this->sendUpdate->quote_type_id == QuoteTypeId::Car) {
+                if ($option == SendUpdateLogStatusEnum::COE_NFI && empty($this->sendUpdate->emirates_id)) {
+                    return $validator->errors()->add('error', 'Please select Emirate');
+                } elseif ($option == SendUpdateLogStatusEnum::CISC_NFI && empty($this->sendUpdate->seating_capacity)) {
+                    return $validator->errors()->add('error', 'Please select Seating capacity');
+                }
+            }
+
             switch ($category) {
+                case SendUpdateLogStatusEnum::CPD:
+                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                        $validator->errors()->add('error', 'Transaction approval is required. ');
+                    }
+                    break;
                 case SendUpdateLogStatusEnum::EF:
                     if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
                         if (! in_array(

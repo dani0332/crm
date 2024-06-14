@@ -1,9 +1,9 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
 import MigratePayment from '../../Components/MigratePayment.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   genderOptions: Object,
   assignedGMType: String,
@@ -29,7 +29,10 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
+  noteDocumentType: Object,
   storageUrl: String,
+  quoteNotes: Object,
+  cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
@@ -37,9 +40,8 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  parentLeadDetails: Object,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Array,
-  record: Object,
   bookPolicyDetails: Array,
   lockLeadSectionsDetails: Object,
 });
@@ -53,12 +55,24 @@ const hasRole = role => useHasRole(role);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+
+const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
+const compareDueDate = useCompareDueDate;
 
 const { copy, copied } = useClipboard();
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
+
+const disableStatusSection = computed(() => {
+  return props.quote?.quote_status_id == props.enums?.quoteStatusEnum?.Lost ||
+    props.quote?.quote_status_id ==
+      props.enums?.quoteStatusEnum?.TransactionApproved
+    ? true
+    : false;
+});
 
 const dateToYMD = date => {
   if (date) {
@@ -141,40 +155,32 @@ const leadStatusForm = useForm({
   lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
+const loaders = ref({
+  leadStatus: false,
+});
+
 const onLeadStatus = () => {
-  let data = {
-    modelType: 'Business',
-    leadId: leadStatusForm.leadId,
-    quote_uuid: leadStatusForm.quote_uuid,
-    assigned_to_user_id: leadStatusForm.assigned_to_user_id,
-    leadStatus: leadStatusForm.leadStatus,
-    notes: leadStatusForm.notes,
-    trans_code: leadStatusForm.trans_code,
-    lostReason: leadStatusForm.lostReason,
-  };
-  axios
-    .post(
-      route('updateLeadStatus', {
-        QuoteUId: page.props.quote.id,
-        modelType: 'Bussiness',
-      }),
-      data,
-    )
-    .then(res => {
-      notification.success({
-        title: 'Lead Status Updated',
-        position: 'top',
-      });
-    })
-    .catch(err => {
-      const flash_messages = err.response.data.errors.value;
-      Object.keys(flash_messages).forEach(function (key) {
-        notification.error({
-          title: flash_messages[key],
+  loaders.value.leadStatus = true;
+  leadStatusForm.post(
+    route('updateLeadStatus', {
+      modelType: 'Business',
+      QuoteUId: page.props.quote.id,
+    }),
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        loaders.value.leadStatus = false;
+        notification.success({
+          title: 'Lead Status Updated',
           position: 'top',
         });
-      });
-    });
+      },
+      onError: errors => {
+        loaders.value.leadStatus = false;
+        notification.error({ title: errors.value, position: 'top' });
+      },
+    },
+  );
 };
 
 // Lead History
@@ -216,6 +222,7 @@ const advisorOptions = computed(() => {
 
 const activityTable = [
   { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
@@ -548,7 +555,11 @@ const linkEntity = () => {
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
-  useGetShowPageRoute(uuid, quote_type_id, page.props.quote.business_type_of_insurance_id);
+  useGetShowPageRoute(
+    uuid,
+    quote_type_id,
+    page.props.quote.business_type_of_insurance_id,
+  );
 
 watch(
   () => page.props.quote.quote_status_id,
@@ -566,6 +577,64 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 <template>
   <div>
     <Head title="Business Quote Detail" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Business Quote Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }}
+        </p>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          modelType="Business"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          v-if="isDuplicateAllowed"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
+          Duplicate Lead
+        </x-button>
+
+        <Link :href="route('business.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div">
+            Business Quote List
+          </x-button>
+        </Link>
+
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('business.edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" />
+        </template>
+      </template>
+    </StickyHeader>
+
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -608,60 +677,16 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white mt-6">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">
-              Business Quote Detail
-            </h3>
+          
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 my-4 justify-end">
-            <Link
-              v-if="quote?.insly_id"
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button
-              v-if="isDuplicateAllowed"
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openDuplicate"
-            >
-              Duplicate Lead
-            </x-button>
-
-            <Link :href="route('business.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Business Quote List
-              </x-button>
-            </Link>
-
-            <LeadEditBtnTemplate v-slot="{ isDisabled }">
-              <Link :href="route('business.edit', quote.uuid)">
-                <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
-              </Link>
-            </LeadEditBtnTemplate>
-
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-              <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" :isDisabled="true"/>
-              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
-            </x-tooltip>
-            <template v-else>
-              <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" />
-            </template>
-
-          </div>
-
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -682,7 +707,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 </div>
                 <div>{{ quote.code }}</div>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -690,7 +718,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </div>
                 <div>
@@ -716,55 +749,55 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 <dd>{{ quote.next_followup_date }}</dd>
               </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SOURCE</dt>
-            <dd>{{ quote.source }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SOURCE</dt>
+                <dd>{{ quote.source }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY NUMBER</dt>
-            <dd>{{ quote.policy_number }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">POLICY NUMBER</dt>
+                <dd>{{ quote.policy_number }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote?.lost_reason }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LOST REASON</dt>
+                <dd>{{ quote?.lost_reason }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote.advisor_id_text }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADVISOR</dt>
+                <dd>{{ quote.advisor_id_text }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED DATE</dt>
-            <dd>{{ quote.created_at }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED DATE</dt>
+                <dd>{{ quote.created_at }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST MODIFIED DATE</dt>
-            <dd>{{ quote.updated_at }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LAST MODIFIED DATE</dt>
+                <dd>{{ quote.updated_at }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PRICE</dt>
-            <dd>{{ quote.premium }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRICE</dt>
+                <dd>{{ quote.premium }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
-            <dd>{{ quote.number_of_employees }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
+                <dd>{{ quote.number_of_employees }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
-            <dd>{{ quote.business_type_of_insurance_id_text }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
+                <dd>{{ quote.business_type_of_insurance_id_text }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BRIEF DETAILS</dt>
-            <dd class="break-words">{{ quote.brief_details }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BRIEF DETAILS</dt>
+                <dd class="break-words">{{ quote.brief_details }}</dd>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
@@ -792,8 +825,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                     v-if="quote.parent_duplicate_quote_id"
                     :href="
                       getDetailPageRoute(
-                        parentLeadDetails.uuid,
-                        parentLeadDetails.quote_type_id,
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
                       )
                     "
                     class="text-primary-500 hover:underline"
@@ -838,7 +871,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -853,56 +886,56 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">COMPANY NAME</dt>
-              <dd class="break-words">
-                {{ customerProfileForm.company_name }}
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">TRADE LICENSE NO</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.trade_license_no"
-                  placeholder="TRADE LICENSE NO"
-                  type="text"
-                  class="w-full"
-                />
-                <x-button
-                  @click.prevent="searchByTradeLicense"
-                  size="xs"
-                  color="primary"
-                  class="mt-1"
-                >
-                  Search
-                </x-button>
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
-              <dd>
-                <ComboBox
-                  v-model="customerProfileForm.emirate_of_registration_id"
-                  :single="true"
-                  placeholder="SELECT EMIRATES OF REGISTRATION"
-                  :options="emiratesOptions"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">COMPANY ADDRESS</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.company_address"
-                  placeholder="COMPANY ADDRESS"
-                  type="text"
-                  class="w-full"
-                />
-              </dd>
-            </div>
+                  <dd class="break-words">{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">COMPANY NAME</dt>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">TRADE LICENSE NO</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.trade_license_no"
+                      placeholder="TRADE LICENSE NO"
+                      type="text"
+                      class="w-full"
+                    />
+                    <x-button
+                      @click.prevent="searchByTradeLicense"
+                      size="xs"
+                      color="primary"
+                      class="mt-1"
+                    >
+                      Search
+                    </x-button>
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+                  <dd>
+                    <ComboBox
+                      v-model="customerProfileForm.emirate_of_registration_id"
+                      :single="true"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      :options="emiratesOptions"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">COMPANY ADDRESS</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.company_address"
+                      placeholder="COMPANY ADDRESS"
+                      type="text"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
 
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
@@ -1057,110 +1090,89 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-1/2">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="leadStatusForm.leadStatus"
-                  label="STATUS"
-                  :options="leadStatusOptions"
-                  :disabled="
-                    (quote.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved) || lockLeadSectionsDetails.lead_status
-                  "
-                  placeholder="Lead Status"
-                  class="w-full"
-                />
-                <x-textarea
-                  v-model="leadStatusForm.notes"
-                  type="text"
-                  label="NOTES"
-                  placeholder="Lead Notes"
-                  class="w-full"
-                  :disabled="
-                    (quote.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved) || lockLeadSectionsDetails.lead_status
-                  "
-                />
-              </div>
-            </div>
-            <div class="w-full md:w-2/3">
-              <x-input
-                v-if="
-                  leadStatusForm.leadStatus ==
-                  quoteStatusEnum.TransactionApproved
-                "
-                :disabled="
-                  (quote.quote_status_id ==
-                  quoteStatusEnum.TransactionApproved) || lockLeadSectionsDetails.lead_status
-                "
-                v-model="leadStatusForm.trans_code"
-                label="TRANSAPP CODE"
-                placeholder="TransApp Code is required"
-                class="w-full"
-                :error="leadStatusForm.errors.trans_code"
-              />
+    <Collapsible expanded class="p-4 rounded shadow mb-6 bg-white">
+      <template #header>
+        <div>
+          <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+        </div>
+      </template>
+
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <div class="flex flex-col gap-4">
               <x-select
-                v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
-                v-model="leadStatusForm.lostReason"
-                label="LOST REASON"
-                :options="
-                  lostReasons?.map(item => ({
-                    value: item.id,
-                    label: item.text,
-                  }))
-                "
-                placeholder="Lost Reason is required"
+                v-model="leadStatusForm.leadStatus"
+                label="STATUS"
+                :options="leadStatusOptions"
+                :disabled="disableStatusSection || lockLeadSectionsDetails.lead_status"
+                placeholder="Lead Status"
                 class="w-full"
-                :error="leadStatusForm.errors.lostReason"
-                :disabled="lockLeadSectionsDetails.lead_status"
               />
-          <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                label="NOTES"
+                placeholder="Lead Notes"
+                class="w-full"
+                :disabled="disableStatusSection || lockLeadSectionsDetails.lead_status"
+              />
             </div>
           </div>
-          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-              :disabled="
-                (quote.quote_status_id ==
-                quoteStatusEnum.TransactionApproved) || isDisabled
+          <div class="w-full md:w-2/3">
+            <x-input
+              v-if="
+                leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved
               "
-            >
-              Change Status
-            </x-button>
-          </StatusUpdateButtonTemplate>
-          <div class="flex justify-end">
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
-              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
-              <template #tooltip>
-                The lead status cannot be manually updated once it has reached 'Transaction Approved'
-              </template>
-            </x-tooltip>
-            <StatusUpdateButtonReuseTemplate v-else />
+              :disabled="disableStatusSection || lockLeadSectionsDetails.lead_status"
+              v-model="leadStatusForm.trans_code"
+              label="TRANSAPP CODE"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+            <x-select
+              v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
+              v-model="leadStatusForm.lostReason"
+              label="LOST REASON"
+              :options="
+                lostReasons?.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+              :disabled="lockLeadSectionsDetails.lead_status"
+            />
           </div>
-        </template>
-      </Collapsible>
-    </div>
+        </div>
+        <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
+          <x-button
+            class="mt-4"
+            color="emerald"
+            size="sm"
+            :loading="loaders.leadStatus"
+            @click.prevent="onLeadStatus"
+            :disabled="disableStatusSection || isDisabled
+            "
+          >
+            Change Status
+          </x-button>
+        </StatusUpdateButtonTemplate>
+        <div class="flex justify-end">
+          <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+            <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+            <template #tooltip>
+              The lead status cannot be manually updated once it has reached 'Transaction Approved'
+            </template>
+          </x-tooltip>
+          <StatusUpdateButtonReuseTemplate v-else />
+        </div>
+      </template>
+    </Collapsible>
 
     <PlanDetails
       :insuranceProviders="insuranceProvidersAll"
@@ -1174,24 +1186,32 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="page.props.quoteType"
       :payments="payments"
     />
+    
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="documentTypes && documentTypes.filter && documentTypes.filter(item => item.code === 'CLPD' || item.code === 'CLPDR' || item.code === 'CLDPDR')"
-			:quoteRequest="quoteRequest"
+      :paymentDocument="documentTypeCodes.filter(item => ['CLPD', 'CLPDR', 'CLDPDR'].includes(item.code))"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quoteRequest"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
-      quoteSubType="Corpline"
+      :quoteSubType="quoteTypeCodeEnum.CORPLINE"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+      :bookPolicyDetails="bookPolicyDetails"
+    />
 
     <PaymentTable
       v-else
@@ -1206,7 +1226,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Business"
       :expanded="sectionExpanded"
     />
@@ -1227,7 +1247,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Business"
       modelType="Corpline"
       :bookPolicyDetails="bookPolicyDetails"
@@ -1386,39 +1406,64 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       </x-modal>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
+    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div v-if="historyData === null" class="text-center py-3">
+          <x-button
+            size="sm"
+            color="primary"
+            outlined
+            @click.prevent="onLoadHistoryData"
+            :loading="historyLoading"
+          >
+            Load History Data
+          </x-button>
+        </div>
+
+        <DataTable
+          v-else
+          table-class-name="compact"
+          :headers="historyDataTable"
+          :items="historyData || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="historyData.length < 15"
+        />
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
     </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div v-if="historyData === null" class="text-center py-3">
+        <x-button
+          size="sm"
+          color="primary"
+          outlined
+          @click.prevent="onLoadHistoryData"
+          :loading="historyLoading"
+        >
+          Load History Data
+        </x-button>
+      </div>
+      <DataTable
+        v-else
+        table-class-name="compact"
+        :headers="historyDataTable"
+        :items="historyData || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="historyData.length < 15"
+      />
+    </div> -->
 
     <AuditLogs
       :type="'App\\Models\\BusinessQuote'"

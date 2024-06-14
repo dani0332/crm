@@ -3,8 +3,14 @@ import moment from 'moment';
 
 const page = usePage();
 
+const { price_vat_notapplicable, price_vat_applicable, isNumber } = useRules();
+
 const props = defineProps({
-  record: {
+  quote: {
+    type: Object,
+    default: {},
+  },
+  availablePlans: {
     type: Object,
     default: {},
   },
@@ -12,15 +18,19 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  payments: {
+    type: Array,
+    default: [],
+  },
   expanded: {
     required: false,
     type: Boolean,
     default: true,
   },
 });
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
-const hasRole = role => useHasRole(role);
-const rolesEnum = page.props.rolesEnum;
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -36,12 +46,17 @@ const dateToYMD = date => {
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
-const quoteStatusEnum= page.props.quoteStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const policyIssuanceStatusOptions = computed(() => {
-  let policyIssuanceStatus= page.props.policyIssuanceStatus;
-  if( props.record.quote_status_id != quoteStatusEnum.PolicyIssued){
-    policyIssuanceStatus = policyIssuanceStatus.filter(item => item.text !== "Policy Issued");
+  let policyIssuanceStatus = page.props.policyIssuanceStatus;
+  if (
+    page.props.quote.policy_issuance_status_id !=
+    page.props.policyIssuanceStatusEnum.PolicyIssued
+  ) {
+    policyIssuanceStatus = policyIssuanceStatus.filter(
+      item => item.text !== 'Policy Issued',
+    );
   }
   return policyIssuanceStatus.map(item => {
     return {
@@ -49,14 +64,12 @@ const policyIssuanceStatusOptions = computed(() => {
       label: item.text,
     };
   });
-
- });
+});
 
 const planQuoteInsurerNumber = computed(() => {
-  let obj = page.props?.listQuotePlans?.filter(
-    item => item.id == page.props.record.plan_id,
-  );
-
+  let quotePlanList = page.props?.listQuotePlans;
+  if (!quotePlanList || typeof quotePlanList === 'string') return null;
+  let obj = quotePlanList?.filter(item => item.id == page.props.quote.plan_id);
   return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
 });
 
@@ -65,31 +78,31 @@ const policyDetailsState = reactive({
 });
 const policyDetailsForm = useForm({
   quote_policy_number:
-    page.props.record.policy_number == 'NULL'
+    page.props.quote.policy_number == 'NULL'
       ? ''
-      : page.props.record.policy_number || '',
+      : page.props.quote.policy_number || '',
 
   quote_policy_issuance_date:
-    dateToYMD(page.props.record.policy_issuance_date) ||
+    dateToYMD(page.props.quote.policy_issuance_date) ||
     new Date().toJSON().slice(0, 10),
-  price_vat_notapplicable: page.props.record.price_vat_not_applicable || '',
-  amount: page.props.record.price_without_vat || '',
-  vat: page.props.record.vat || '',
-  quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
+  price_vat_notapplicable: page.props.quote.price_vat_not_applicable || '',
+  price_vat_applicable: page.props.quote.price_vat_applicable || '',
+  vat: page.props.quote.vat || '',
+  quote_policy_start_date: dateToYMD(page.props.quote.policy_start_date) || '',
   quote_policy_expiry_date:
-    dateToYMD(page.props.record.renewal_expiry_date) || '',
+    dateToYMD(page.props.quote.renewal_expiry_date) || '',
   amount_with_vat: '',
   quote_plan_insurer_quote_number:
-    planQuoteInsurerNumber.value || page.props.record.insurer_quote_number,
-  quote_policy_issuance_status: page.props.record.policy_issuance_status_id,
+    planQuoteInsurerNumber.value || page.props.quote.insurer_quote_number,
+  quote_policy_issuance_status: page.props.quote.policy_issuance_status_id,
   quote_policy_issuance_status_other:
-    page.props.record.policy_issuance_status_other || '',
+    page.props.quote.policy_issuance_status_other || '',
   modelType: props.modelType,
-  quote_id: page.props.record.id,
+  quote_id: page.props.quote.id,
 });
 
 watch(
-  () => page.props.record.policy_issuance_status_id,
+  () => page.props.quote.policy_issuance_status_id,
   (newValue, oldValue) => {
     if (newValue !== oldValue) {
       policyDetailsForm.quote_policy_issuance_status = newValue;
@@ -97,18 +110,39 @@ watch(
   },
 );
 
+watch(
+  () => page.props.quote?.price_with_vat,
+  (newValue, oldValue) => {
+    policyDetailsForm.price_vat_notapplicable =  page.props.quote.price_vat_not_applicable || '';
+    policyDetailsForm.price_vat_applicable =  page.props.quote.price_vat_applicable || '';
+    policyDetailsForm.vat= page.props.quote.vat || '';
+
+    caculateVatAmount();
+  },
+);
+
 const caculateVatAmount = () => {
-  if (policyDetailsForm.amount > 0) {
-    let vat = policyDetailsForm.amount * page.props.vat.toFixed(2);
+  let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
+  let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
+  // if price vat applicable and not applicable both are there
+  if (priceVatApplicable > 0 && priceVatNotApplicable > 0) {
+    let vat = priceVatApplicable * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
     policyDetailsForm.amount_with_vat = (
-      Number(vat) + Number(policyDetailsForm.amount)
+      Number(vat) +
+      Number(priceVatApplicable) +
+      Number(priceVatNotApplicable)
     ).toFixed(2);
-    Number(vat) + Number(policyDetailsForm.amount);
-  } else if (policyDetailsForm.price_vat_notapplicable > 0) {
-    policyDetailsForm.amount_with_vat = Number(
-      policyDetailsForm.price_vat_notapplicable,
-    ).toFixed(2);
+  } else if (priceVatApplicable > 0) {
+    let vat = priceVatApplicable * page.props.vat.toFixed(2);
+    policyDetailsForm.vat = vat.toFixed(2);
+    policyDetailsForm.amount_with_vat = (Number(vat) + Number(priceVatApplicable)).toFixed(
+      2,
+    );
+  } else if (priceVatNotApplicable > 0) {
+    policyDetailsForm.amount_with_vat = Number(priceVatNotApplicable).toFixed(
+      2,
+    );
   } else {
     policyDetailsForm.vat = '';
     policyDetailsForm.amount_with_vat = '';
@@ -142,6 +176,14 @@ const onUpdatePolicyDetails = isValid => {
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
     onSuccess: () => {
+      if (page.props?.bookPolicyDetails?.isLackingOfPayment) {
+        notification.error({
+          title:
+            'Action Needed: Please revise payment details to reflect plan changes.',
+          position: 'top',
+          timeout: 10000,
+        });
+      }
       policyDetailsState.isEditing = false;
     },
     onError: errors => {
@@ -154,7 +196,7 @@ const onUpdatePolicyDetails = isValid => {
     },
     onFinish: () => {
       policyDetailsState.isEditing = false;
-      router.visit(route(route().current(), props?.record.uuid), {
+      router.visit(route(route().current(), props?.quote.uuid), {
         method: 'get',
         preserveScroll: true,
       });
@@ -195,6 +237,21 @@ watch(
 
 const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusableTemplate();
 
+const setQuotePlanInsurerNumber = () => {
+  policyDetailsForm.quote_plan_insurer_quote_number =
+    planQuoteInsurerNumber.value ||
+    page.props.quote.insurer_quote_number ||
+    props.availablePlans?.find(item => item.id == page.props.quote?.plan_id)
+      ?.insurerQuoteNo ||
+    '';
+};
+
+watch(
+  () => props.availablePlans,
+  availablePlans => {
+    setQuotePlanInsurerNumber();
+  },
+);
 </script>
 
 <template>
@@ -212,7 +269,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Policy Number</label
                   >
                   <template #tooltip>
@@ -232,7 +289,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >ISSUANCE DATE</label
                   >
                   <template #tooltip>
@@ -254,7 +311,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Price (VAT NOT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -266,19 +323,22 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_notapplicable"
                   @change="caculateVatAmount"
+                  :rules="[price_vat_notapplicable, isNumber]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
                   class="w-full"
                   :disabled="
                     !policyDetailsState.isEditing ||
-                    policyDetailsForm.amount > 0
+                    (page.props.quoteType != quoteTypeCodeEnum.Life &&
+                      page.props.quoteType != quoteTypeCodeEnum.Business &&
+                      page.props.quoteType != quoteTypeCodeEnum.Health)
                   "
                 />
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Start Date</label
                   >
                   <template #tooltip>
@@ -300,7 +360,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Price (VAT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -310,21 +370,24 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
                   </template>
                 </x-tooltip>
                 <x-textarea
-                  v-model="policyDetailsForm.amount"
+                  v-model="policyDetailsForm.price_vat_applicable"
                   @change="caculateVatAmount"
+                  :rules="[price_vat_applicable, isNumber]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"
                   class="w-full"
                   :disabled="
                     !policyDetailsState.isEditing ||
-                    policyDetailsForm.price_vat_notapplicable > 0
+                    (page.props.quoteType == quoteTypeCodeEnum.Life &&
+                      page.props.quoteType != quoteTypeCodeEnum.Business &&
+                      page.props.quoteType != quoteTypeCodeEnum.Health)
                   "
                 />
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Expiry Date</label
                   >
                   <template #tooltip>
@@ -350,7 +413,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Total VAT Amount</label
                   >
                   <template #tooltip>
@@ -371,7 +434,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Total Price</label
                   >
                   <template #tooltip>
@@ -384,7 +447,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
                   placeholder="Price"
                   class="w-full"
                   readonly
-                  :disabled="!policyDetailsState.isEditing"
+                  :disabled="true"
                 />
               </div>
             </div>
@@ -392,7 +455,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Insurer Quote Number</label
                   >
                   <template #tooltip>
@@ -412,7 +475,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
               <div class="w-full md:w-1/2">
                 <x-tooltip
                   ><label
-                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
                     >Issuance Status</label
                   >
                   <template #tooltip>
@@ -466,10 +529,11 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
             <div class="flex justify-end">
               <template
                 v-if="
-                  record.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                  record.quote_status_id == quoteStatusEnum.PolicyPending ||
-                  record.quote_status_id == quoteStatusEnum.PolicyIssued ||
-                  record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
+                  quote.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
+                  quote.quote_status_id == quoteStatusEnum.PolicyPending ||
+                  quote.quote_status_id == quoteStatusEnum.PolicyIssued ||
+                  quote.quote_status_id == quoteStatusEnum.PolicySentToCustomer
                 "
               >
                 <x-button
@@ -482,6 +546,8 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
                     () => {
                       policyDetailsState.isEditing = false;
                       policyDetailsForm.reset();
+                      caculateVatAmount();
+                      setQuotePlanInsurerNumber();
                     }
                   "
                 >
@@ -494,27 +560,20 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
                   size="sm"
                   :loading="policyDetailsForm.processing"
                   type="submit"
+                  :disabled="!can(permissionsEnum.POLICY_DETAILS_ADD)"
                 >
                   Update
                 </x-button>
 
                 <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
                   <template v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()">
-                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.PA)" :isDisabled="true"/>
-                  </template>
-                  <template v-else>
-                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.NRA)" :isDisabled="true"/>
+                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && can(permissionsEnum.POLICY_DETAILS_ADD)" :isDisabled="true"/>
                   </template>
                   <template #tooltip>TThis lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
                 </x-tooltip>
 
                 <template v-else>
-                  <template v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()">
-                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.PA)"/>
-                  </template>
-                  <template v-else>
-                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.NRA)"/>
-                  </template>
+                  <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && can(permissionsEnum.POLICY_DETAILS_ADD)"/>
                 </template>
 
               </template>
@@ -522,7 +581,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusable
                 <x-tooltip>
                   <x-button
                     v-if="
-                      record.quote_status_id == quoteStatusEnum.PolicyBooked
+                      quote.quote_status_id == quoteStatusEnum.PolicyBooked
                     "
                     size="sm"
                     color="emerald"

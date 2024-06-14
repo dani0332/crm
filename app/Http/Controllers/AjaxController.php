@@ -177,7 +177,6 @@ class AjaxController extends Controller
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
-
     }
 
     public function commercialCarModelBasedOnCarMakeId(Request $request)
@@ -196,13 +195,12 @@ class AjaxController extends Controller
         } else {
             return response()->json([]);
         }
-
     }
 
     public function uploadKycIndividualDocument($quoteType, KycIndividualDocRequest $request)
     {
         try {
-            $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+            $quote = $this->getQuoteObjectBy($quoteType, $request->quote_uuid, 'uuid');
 
             $data = $request->validated();
             $data['nationality_text'] = Nationality::where('id', $data['nationality_id'])->value('text');
@@ -287,7 +285,7 @@ class AjaxController extends Controller
     public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
     {
         try {
-            $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+            $quote = $this->getQuoteObjectBy($quoteType, $request->quote_uuid, 'uuid');
             if (! isset($quote->quoteRequestEntityMapping)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }
@@ -345,7 +343,6 @@ class AjaxController extends Controller
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];
-                $quote->company_name = $data['company_name'];
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
 

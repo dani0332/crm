@@ -16,7 +16,7 @@ const modals = reactive({
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
-  customerAlreadyPrimaryConfirm: false
+  customerAlreadyPrimaryConfirm: false,
 });
 
 const confirmDeleteData = reactive({
@@ -56,13 +56,13 @@ const contactForm = useForm({
 });
 
 const numbersOnly = evt => {
-    const charCode = evt.which || evt.keyCode;
+  const charCode = evt.which || evt.keyCode;
 
-    if (charCode > 31 && (charCode < 48 || charCode > 57) && charCode !== 46) {
-        evt.preventDefault();
-    } else {
-        return true;
-    }
+  if (charCode > 31 && (charCode < 48 || charCode > 57) && charCode !== 46) {
+    evt.preventDefault();
+  } else {
+    return true;
+  }
 };
 
 const additionalContactPrimary = data => {
@@ -124,26 +124,27 @@ const additionalContactDeleteConfirmed = () => {
 };
 
 const customerAlreadyPrimaryCheck = async () => {
-    let data = {
-        isInertial: true,
-        key: confirmData.contactPrimary.key,
-        value: confirmData.contactPrimary.value
-    };
+  let data = {
+    isInertial: true,
+    key: confirmData.contactPrimary.key,
+    value: confirmData.contactPrimary.value,
+  };
 
-    EmailCheckLoader.value = true;
+  EmailCheckLoader.value = true;
 
-    axios.post('/customer-primary-email-check', data)
-        .then(res => {
-            if( res.data.response === true){
-                modals.contactPrimaryConfirm = false;
-                modals.customerAlreadyPrimaryConfirm = true;
-            } else {
-                additionalContactPrimaryConfirmed();
-            }
-        })
-        .catch(err => {
-            console.log(err);
-        })
+  axios
+    .post('/customer-primary-email-check', data)
+    .then(res => {
+      if (res.data.response === true) {
+        modals.contactPrimaryConfirm = false;
+        modals.customerAlreadyPrimaryConfirm = true;
+      } else {
+        additionalContactPrimaryConfirmed();
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const additionalContactPrimaryConfirmed = () => {
@@ -159,7 +160,7 @@ const additionalContactPrimaryConfirmed = () => {
       value: confirmData.contactPrimary.value,
       quote_customer_id: page.props.quote.customer_id,
       quote_primary_email_address: page.props.quote.email,
-      quote_primary_mobile_no: page.props.quote.mobile_no
+      quote_primary_mobile_no: page.props.quote.mobile_no,
     },
     {
       preserveScroll: true,
@@ -173,29 +174,28 @@ const additionalContactPrimaryConfirmed = () => {
         });
       },
       onFinish: () => {
-          contactLoader.value = false;
-          EmailCheckLoader.value = false;
-          modals.contactPrimaryConfirm = false;
-          modals.customerAlreadyPrimaryConfirm = false;
+        contactLoader.value = false;
+        EmailCheckLoader.value = false;
+        modals.contactPrimaryConfirm = false;
+        modals.customerAlreadyPrimaryConfirm = false;
       },
       onError: err => {
-          const firstError = Object.values(err)[0];
-          notification.error({
-              title: firstError,
-              position: 'top',
-          });
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
       },
     },
   );
 };
 
 const additionalContact = computed(() => {
-    if (page.props.quote?.customer?.additional_contact_info) {
-      return page.props.quote?.customer?.additional_contact_info;
-    }
-    return [];
+  if (page.props.quote?.customer?.additional_contact_info) {
+    return page.props.quote?.customer?.additional_contact_info;
+  }
+  return [];
 });
-
 </script>
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">

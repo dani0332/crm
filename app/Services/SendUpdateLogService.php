@@ -12,7 +12,9 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestAddOn;
 use App\Models\CycleQuote;
+use App\Models\Emirate;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
@@ -20,13 +22,14 @@ use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
-use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
 {
@@ -380,11 +383,6 @@ class SendUpdateLogService
                 'quote_type_code' => $quoteTypeCode,
             ]);
         }
-        // Change quote status to Policy Cancelled and remove quote batch id to remove it from batches
-        $quoteObject->update([
-            'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-            'quote_batch_id' => null,
-        ]);
 
         return $childLeadDetails;
     }
@@ -459,8 +457,13 @@ class SendUpdateLogService
             $invoiceDescription = 'C.'.$invoiceDescription;
         }
 
+        $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+        if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
+            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+        }
+
         return [
-            'broker_invoice_number' => $insuranceProviderCode.$insuranceProviderLeadCount,
+            'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
             'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
@@ -476,7 +479,7 @@ class SendUpdateLogService
             $quoteServiceFile = app(getServiceObject($quoteType));
             $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
             if (! is_null($payments)) {
-                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'sendUpdateLog', 'paymentable']);
             }
         }
 
@@ -497,23 +500,31 @@ class SendUpdateLogService
 
     public function getUpdateButtonStatus($sendUpdateLog): string
     {
-        $sendUpdateCode = $sendUpdateLog->category->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
-        // send update to customer button visibility validations.
-        if ($sendUpdateCode != SendUpdateLogStatusEnum::CPD && $requiredDocumentsCheck == count($requiredDocuments)) {
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled) {
+            return SendUpdateLogStatusEnum::SNBU;
+        }
+
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
+            (
+                (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
+                in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
+                ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
+            )
+        ) {
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if ($sendUpdateCode != SendUpdateLogStatusEnum::CPU && $requiredDocumentsCheck == 0) {
-            return SendUpdateLogStatusEnum::SU;
+        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER) {
+            return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
-        return false;
+        return SendUpdateLogStatusEnum::SNBU;
     }
 
     public function getSendToCustomerValidation($sendUpdateId): string
@@ -523,7 +534,7 @@ class SendUpdateLogService
         $sendUpdateToCustomerValidation = in_array($sendUpdate->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]);
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdate);
 
-        if ($sendUpdateToCustomerValidation && ! in_array(DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, $uploadedDocuments)) {
+        if ($sendUpdateToCustomerValidation) {
             return 'Please note your current action will only send the update to the customer.';
         }
 
@@ -532,6 +543,11 @@ class SendUpdateLogService
 
     public function mergeBookingDetails($bookingDetails, $sendUpdateLog)
     {
+        $totalPrice = $sendUpdateLog->price_vat_applicable + $sendUpdateLog->price_vat_not_applicable + $sendUpdateLog->total_vat_amount;
+        if ($this->isNegativeValue($sendUpdateLog)) {
+            $totalPrice = -$totalPrice;
+        }
+
         $data = [
             'reversal_invoice' => $sendUpdateLog->reversal_invoice ?? null,
             'booking_date' => $sendUpdateLog->booking_date,
@@ -550,7 +566,7 @@ class SendUpdateLogService
             'total_vat_amount' => $sendUpdateLog->total_vat_amount,
             'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
             'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-            'total_price' => $sendUpdateLog->total_price,
+            'total_price' => $totalPrice,
         ];
 
         return array_merge($bookingDetails, $data);
@@ -571,6 +587,7 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::MDOV,
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::DOV,
         ];
 
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
@@ -582,20 +599,21 @@ class SendUpdateLogService
                ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE);
     }
 
-    public function getSendUpdatePayments($sendUpdateLog)
+    public function getSendUpdatePayments($sendUpdateLog, $quoteType)
     {
         $payments = $sendUpdateLog->payments;
         if ($payments) {
-            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod']);
+            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser']);
+            if ($quoteType == quoteTypeCode::Travel) {
+                $payments->load(['travelPlan']);
+            }
         }
 
         return $payments;
     }
 
-    public function updatePaymentDetails($sendUpdateLog)
+    public function updatePaymentDetails($payment, $sendUpdateLog)
     {
-        // Update Payment Details
-        $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
         $sendUpdatePaymentDetails = [
             'policy_expiry_date' => $sendUpdateLog->expiry_date,
             'invoice_description' => $sendUpdateLog->invoice_description,
@@ -615,19 +633,22 @@ class SendUpdateLogService
         return $payment->update($sendUpdatePaymentDetails);
     }
 
-    public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
+    public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog, $apPatchCallEnable = true)
     {
-        $categoryCode = $sendUpdateLog->category->code;
+        $categoryCode = $sendUpdateLog->category?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
         if ($categoryCode == SendUpdateLogStatusEnum::EF) {
+            info('Book Update - Sending Update to Sage300 for Endorsement Financial - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
                     'send_update_type' => SageEnum::SUT_NORMAL,
                     'category' => $categoryCode,
                     'option' => $sendUpdateLog->option->code,
+                    'send_update_log' => $sendUpdateLog,
+                    'ap_patch_call_enable' => $apPatchCallEnable, // TODO :: This is temporary solution, this after AP Split patch working fine
                 ]
             );
 
@@ -635,19 +656,24 @@ class SendUpdateLogService
         }
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+            info('Book Update - Sending Update to Sage300 for Correction of Policy Details - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
                     'send_update_type' => SageEnum::SUT_REVE_CORR,
                     'category' => $categoryCode,
                     'send_update_log' => $sendUpdateLog,
+                    'reverse_invoice' => $sendUpdateRequest->reversalInvoice,
+                    'ap_patch_call_enable' => $apPatchCallEnable, // TODO :: This is temporary solution, this after AP Split patch working fine
                 ]
             );
 
             return $sageResponse;
         }
 
-        return ['status' => false, 'message' => 'Something went wrong'];
+        info('Book Update - Skipping Sage APIs for Send Update - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+        return ['status' => true];
     }
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
@@ -658,20 +684,27 @@ class SendUpdateLogService
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
+
+            $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
 
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
 
-                Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
-                    'paymentable_id' => $quote->id,
-                    'paymentable_type' => ltrim($quoteModel, '\\'),
-                ]);
+                if ($payment) {
+                    info('Book Update - Updating Payment Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    $payment->update([
+                        'paymentable_id' => $quote->id,
+                        'paymentable_type' => ltrim($quoteModel, '\\'),
+                    ]);
+                }
 
                 if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
+                    info('Book Update - Updating Renewal Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
                 }
 
                 if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                    info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
@@ -684,53 +717,131 @@ class SendUpdateLogService
                 }
             }
 
-            if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
-                $sendUpdateLog->update([
-                    'booking_date' => now(),
-                    'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
-                ]);
+            if ($payment) {
+                if ($payment->captured_amount < 1) {
+                    $status = SendUpdateLogStatusEnum::UNPAID;
+                } elseif (($payment->captured_amount + $payment->discount_value) < $payment->total_price) {
+                    $status = SendUpdateLogStatusEnum::PARTIALLY_PAID;
+                } elseif (($payment->captured_amount + $payment->discount_value) >= $payment->total_price) {
+                    $status = SendUpdateLogStatusEnum::FULL_PAID;
+                }
             }
 
-            \DB::commit();
+            $sendUpdateLog->update([
+                'booking_date' => now(),
+                'transaction_payment_status' => $status ?? '',
+                'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
+            ]);
+
+            if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
+                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
+                        'quote_batch_id' => null,
+                    ]);
+                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
+                }
+                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
+                    if (! empty($sendUpdateLog->car_addons)) { // will work on Add optional cover.
+                        foreach ($sendUpdateLog->car_addons as $addonId) {
+                            CarQuoteRequestAddOn::updateOrCreate([
+                                'quote_request_id' => $quote->id,
+                                'addon_option_id' => $addonId,
+                            ], [
+                                'quote_request_id' => $quote->id,
+                                'addon_option_id' => $addonId,
+                                'price' => 0,
+                            ]);
+                        }
+                    } elseif (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirate.
+                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
+                    } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity.
+                        $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
+                    }
+                }
+            }
+
+            DB::commit();
 
         } catch (\Exception $exception) {
-            \DB::rollBack();
-            info('Send update Lead impact Failed - Error : '.$exception->getMessage());
+            DB::rollBack();
+            logger()->error('Book Update - Error while moving updates to main lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
             return ['status' => false, 'message' => 'Update not booked'];
         }
 
+        info('Book Update - Update booked successfully - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
         return ['status' => true, 'message' => 'Update booked'];
-    }
-
-    public function getPaymentCode($quoteCode): string
-    {
-        $countPayments = PaymentRepository::getPaymentsByQuoteCode($quoteCode);
-
-        if ($countPayments < 2) {
-            return $quoteCode.'-1';
-        }
-
-        return $quoteCode.'-'.$countPayments;
     }
 
     public function checkSendUpdatePermission($sendUpdateType): bool
     {
         switch ($sendUpdateType) {
             case SendUpdateLogStatusEnum::EF:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD);
             case SendUpdateLogStatusEnum::EN:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD);
             case SendUpdateLogStatusEnum::CI:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD);
             case SendUpdateLogStatusEnum::CIR:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD);
             case SendUpdateLogStatusEnum::CPU:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD);
             case SendUpdateLogStatusEnum::CPD:
-                return !auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD);
+                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD);
             default:
                 return false;
         }
+    }
+
+    public function getAdditionalOptionsForCar($sendUpdateLog): array
+    {
+        $data = [];
+        switch ($sendUpdateLog->category->code) {
+            case SendUpdateLogStatusEnum::EF:
+                switch ($sendUpdateLog->option->code) {
+                    case SendUpdateLogStatusEnum::AOCOV:
+                        $data = $this->getCarAddons($sendUpdateLog->quote_uuid);
+                        break;
+                    case SendUpdateLogStatusEnum::COE:
+                        $data = Emirate::where('is_active', true)->get()->toArray();
+                        break;
+                }
+                break;
+            case SendUpdateLogStatusEnum::EN:
+                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::COE_NFI) {
+                    $data = Emirate::where('is_active', true)->get()->toArray();
+                }
+                break;
+        }
+
+        return $data;
+    }
+
+    public function getCarAddons($quoteUuid): array
+    {
+        $carQuote = CarQuote::where('uuid', $quoteUuid)->first();
+
+        return $carQuote->plan->carAddons->toArray();
+    }
+
+    /**
+     * it will check for Indicative Additional Price section, if the option relation not available means it is Correction of Policy.
+     */
+    public function isPlanDetailAvailable($sendUpdateLog): bool
+    {
+        if (in_array($sendUpdateLog->option?->code, [
+            SendUpdateLogStatusEnum::MDOM,
+            SendUpdateLogStatusEnum::MDOV,
+            SendUpdateLogStatusEnum::MPC,
+            SendUpdateLogStatusEnum::ED,
+            SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::DOV,
+        ])) {
+            return false;
+        }
+
+        return true;
     }
 }

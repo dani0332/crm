@@ -78,7 +78,7 @@ watch(
     if (!value) {
       resetForm();
     }
-  }
+  },
 );
 
 const form = useForm({
@@ -112,39 +112,70 @@ onMounted(() => {
 const authenticatedSendUpdateOptions = computed(() => {
   let filteredOptions = props.options;
 
-  if (!(can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD) || can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD))) {
-    // it will remove the main Button. 
+  if (
+    !(
+      can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD) ||
+      can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)
+    )
+  ) {
+    // it will remove the main Button.
     filteredOptions = filteredOptions.filter((option, index) => index !== 0);
   } else {
     if (!can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD)) {
-      // it will remove only sub button. 
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter((option, index) => index !== 0);
+      // it will remove only sub button.
+      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
+        (option, index) => index !== 0,
+      );
     }
     if (!can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)) {
-      // it will remove only sub button. 
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter((option, index) => index !== 1);
+      // it will remove only sub button.
+      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
+        (option, index) => index !== 1,
+      );
     }
   }
 
-  if (!(can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD) || can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD))) {
+  if (
+    !(
+      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD) ||
+      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
+    )
+  ) {
     filteredOptions = filteredOptions.filter((option, index) => index !== 1);
   } else {
     if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter((option, index) => index !== 0);
+      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
+        (option, index) => index !== 0,
+      );
     }
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter((option, index) => index !== 1);
+    if (
+      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
+    ) {
+      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
+        (option, index) => index !== 1,
+      );
     }
   }
 
-  if (!(can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD) || can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD))) {
+  if (
+    !(
+      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD) ||
+      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD)
+    )
+  ) {
     filteredOptions = filteredOptions.filter((option, index) => index !== 2);
   } else {
     if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter((option, index) => index !== 0);
+      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
+        (option, index) => index !== 0,
+      );
     }
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter((option, index) => index !== 1);
+    if (
+      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
+    ) {
+      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
+        (option, index) => index !== 1,
+      );
     }
   }
 
@@ -152,10 +183,47 @@ const authenticatedSendUpdateOptions = computed(() => {
 });
 
 // const fetchLogs = () => {
-//   axios.get(route('send-update-logs.get-by-id', { id: props.reportableId }))
+//   axios.get(route('send-update.get-by-id', { id: props.reportableId }))
 //     .then(res => sendUpdatesTable.data = res.data.logs)
 //     .catch(err => console.log('err', err))
 // }
+
+const optionLoader = ref(false);
+const parentId = ref();
+
+const sendUpdateOptions = ref([]);
+
+const getSendUpdateOptions = () => {
+  optionLoader.value = true;
+  axios
+    .post(route('send-update.get-options'), {
+      quoteTypeId: props.quote_type_id,
+      parentId: parentId.value,
+      businessInsuranceTypeId: props.reportable?.business_type_of_insurance_id || null,
+      status: form.childCategory?.slug || null,
+    })
+    .then(response => {
+      if (response.status == 200) {
+        sendUpdateOptions.value = response.data.options;
+        modals.step = 'step3';
+      }
+    })
+    .catch(function (errors) {
+      console.error(errors);
+      if (errors.response.data.errors.error) {
+        let responseError = errors.response.data.errors.error;
+        Object.keys(responseError).forEach(function (key) {
+          notification.error({
+            title: responseError[key],
+            position: 'top',
+          });
+        });
+      }
+    })
+    .finally(() => {
+      optionLoader.value = false;
+    });
+};
 
 const setOption = (next_step, value) => {
   switch (next_step) {
@@ -168,8 +236,9 @@ const setOption = (next_step, value) => {
       modals.step = next_step;
       break;
     case 'step3':
+      parentId.value = value.id;
       form.childCategory = value;
-      modals.step = next_step;
+      getSendUpdateOptions();
 
       if (['CPD', 'CPU'].includes(form.childCategory.slug)) {
         modals.step = 'step1';
@@ -203,20 +272,19 @@ const goBack = () => {
 };
 
 const confirmOrAddUpdate = autoSubmit => {
-    if (!autoSubmit) {
-        if (form.option === null) {
-            optionError.value = true;
-            return;
-        }
+  if (!autoSubmit) {
+    if (form.option === null) {
+      optionError.value = true;
+      return;
     }
-    if (!['CIR'].includes(form.childCategory.slug)) {
-        onAddUpdate(true);
-    }else {
-        modals.step = 'step4';
-        modals.confirm = true;
-        optionError.value = false;
-    }
-
+  }
+  if (!['CIR'].includes(form.childCategory.slug)) {
+    onAddUpdate(true);
+  } else {
+    modals.step = 'step4';
+    modals.confirm = true;
+    optionError.value = false;
+  }
 };
 
 const onAddUpdate = autoSubmit => {
@@ -232,9 +300,9 @@ const onAddUpdate = autoSubmit => {
   form
     .transform(data => {
       let childCatgeory = { ...data.childCategory };
-      let option = childCatgeory.childs.find(item => item.id === data.option);
+      let option = sendUpdateOptions.value.find(item => item.id === data.option);
       childCatgeory.option = option || null;
-      delete childCatgeory.childs;
+      delete sendUpdateOptions.value;
 
       return {
         quote_type_id: props.quote_type_id,
@@ -246,7 +314,7 @@ const onAddUpdate = autoSubmit => {
         ref_id: props.reportable.id,
       };
     })
-    .post(route('send-update-logs.store'), {
+    .post(route('send-update.store'), {
       onSuccess: () => {
         modals.step = 'step1';
         form.parentCategory = null;
@@ -294,7 +362,14 @@ const findOption = (item, key) => {
         </div>
       </template>
       <template #body>
-        <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="mt-4 flex justify-end">
+        <div
+          v-if="
+            props.reportable.quote_status_id !=
+              page.props.quoteStatusEnum.PolicyCancelled ||
+            page.props.linkedQuoteDetails.childLeadsCount == 0
+          "
+          class="mt-4 flex justify-end"
+        >
           <x-button
             v-if="can(permissionsEnum.SEND_UPDATE_CREATE)"
             size="sm"
@@ -369,7 +444,7 @@ const findOption = (item, key) => {
           <template #item-code="{ code, uuid }">
             <Link
               :href="
-                route('send-update-logs.show', {
+                route('send-update.show', {
                   uuid: uuid,
                   refURL: $page.url,
                 })
@@ -419,7 +494,10 @@ const findOption = (item, key) => {
         class="w-full flex flex-wrap gap-5 justify-center text-center my-10 mb-20 items-stretch !h-100"
         v-if="modals.step === 'step1'"
       >
-        <template v-for="option in authenticatedSendUpdateOptions" :key="option.title">
+        <template
+          v-for="option in authenticatedSendUpdateOptions"
+          :key="option.title"
+        >
           <x-tooltip align="left" position="bottom" class="arrow-t">
             <x-button
               color="primary"
@@ -451,6 +529,7 @@ const findOption = (item, key) => {
               color="primary"
               class="py-8 px-6 rounded-xl w-[200px] min-h-[150px] whitespace-break-spaces underline decoration-dotted"
               @click="setOption('step3', category)"
+              :loading="optionLoader"
             >
               {{ category.title }}
             </x-button>
@@ -465,7 +544,7 @@ const findOption = (item, key) => {
       <div
         class="w-full flex gap-5 mb-10"
         v-else-if="
-          modals.step === 'step3' && form.childCategory?.childs?.length > 0
+          modals.step === 'step3' && sendUpdateOptions
         "
       >
         <div class="flex flex-col gap-2 flex-grow w-75">
@@ -475,7 +554,7 @@ const findOption = (item, key) => {
               :single="true"
               :hasError="optionError"
               :options="
-                form.childCategory.childs.map(item => ({
+                sendUpdateOptions.map(item => ({
                   label: item.title,
                   value: item.id,
                   tooltip: item.description,
@@ -508,48 +587,53 @@ const findOption = (item, key) => {
           </div>
         </div>
       </div>
-<!--   Modal 4 - Confirmation and causation     -->
-        <div
-            class="w-full flex gap-5 mb-10"
-            v-else-if="modals.step === 'step4' && modals.confirm === true "
-        >
-            <div class="flex flex-col gap-2 flex-grow w-75">
-                <div>
-                    <p class="text-red-600 font-bold text-2xl"> Please note the following when performing these updates:</p>
-                    <div class="my-4">
-                        <ul class="list-disc pl-4 font-medium">
-                            <li>The new lead for the reissued policy counts as a sale only once the lead status is policy issued</li>
-                            <li class="my-2">When a policy is cancelled and reissued or simply cancelled, it will no longer count as sale.</li>
-                            <li>Lead details will be moved to new lead.</li>
-                        </ul>
-                    </div>
-
-                </div>
-                <div class="flex justify-end mt-2">
-                    <x-button
-                        class="mr-2"
-                        size="sm"
-                        color="primary"
-                        @click="onAddUpdate(false)"
-                        :disabled="form.processing"
-                        :loading="form.processing"
-                    >
-                        Confirm
-                    </x-button>
-                    <x-button
-                        size="sm"
-                        color="primary"
-                        :disabled="form.processing"
-                        :loading="form.processing"
-                        @click="setOption('step3', form.childCategory)"
-                    >
-                        Cancel
-                    </x-button>
-
-                </div>
+      <!--   Modal 4 - Confirmation and causation     -->
+      <div
+        class="w-full flex gap-5 mb-10"
+        v-else-if="modals.step === 'step4' && modals.confirm === true"
+      >
+        <div class="flex flex-col gap-2 flex-grow w-75">
+          <div>
+            <p class="text-red-600 font-bold text-2xl">
+              Please note the following when performing these updates:
+            </p>
+            <div class="my-4">
+              <ul class="list-disc pl-4 font-medium">
+                <li>
+                  The new lead for the reissued policy counts as a sale only
+                  once the lead status is policy issued
+                </li>
+                <li class="my-2">
+                  When a policy is cancelled and reissued or simply cancelled,
+                  it will no longer count as sale.
+                </li>
+                <li>Lead details will be moved to new lead.</li>
+              </ul>
             </div>
+          </div>
+          <div class="flex justify-end mt-2">
+            <x-button
+              class="mr-2"
+              size="sm"
+              color="primary"
+              @click="onAddUpdate(false)"
+              :disabled="form.processing"
+              :loading="form.processing"
+            >
+              Confirm
+            </x-button>
+            <x-button
+              size="sm"
+              color="primary"
+              :disabled="form.processing"
+              :loading="form.processing"
+              @click="setOption('step3', form.childCategory)"
+            >
+              Cancel
+            </x-button>
+          </div>
         </div>
-
+      </div>
     </AppModal>
   </div>
 </template>

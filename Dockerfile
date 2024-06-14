@@ -114,5 +114,7 @@ RUN composer install --optimize-autoloader --no-dev
 #RUN yarn
 # RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
+RUN usermod -aG root www-data
+RUN usermod -aG root www
 
 ENTRYPOINT ["/var/www/docker/run.sh"]

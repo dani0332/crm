@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Models\BikeQuote;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -69,7 +70,10 @@ class BikeQuoteRepository extends BaseRepository
             $quoteData['updated_by_id'] = Auth::user()->id;
             $quote->update($quoteData);
 
-            $quote->bikeQuote->update(Arr::only($data, ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id']));
+            $quote->bikeQuote()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                Arr::only($data, (new BikeQuote())->allowedColumns())
+            );
 
             return $quote;
         });
@@ -115,8 +119,10 @@ class BikeQuoteRepository extends BaseRepository
                         'paymentMethod',
                         'paymentStatusLogs',
                         'insuranceProvider',
+                        'paymentable',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
                     ]);
                 },

@@ -42,7 +42,7 @@ const filters = reactive({
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  leadStatus: '',
+  leadStatus: [],
   advisor_id: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -289,16 +289,14 @@ onMounted(() => {
           />
         </x-field>
         <x-field label="Lead Status">
-          <x-select
-            v-model="filters.leadStatus"
-            name="leadStatus"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-            class="w-full"
-          />
+            <ComboBox
+                v-model="filters.leadStatus"
+                placeholder="Search by Lead Status"
+                :options="leadStatusOptions"
+            />
         </x-field>
         <x-field label="Advisor">
-          <x-select
+          <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
@@ -362,13 +360,14 @@ onMounted(() => {
         >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
+              <ComboBox
                 v-model="assignForm.assigned_to_id_new"
                 label="Assign Advisor"
                 :options="advisorOptions"
+                :single="true"
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
-                :rules="[isRequired]"
+                :error="assignForm.errors.assigned_to_id_new"
               />
               <div class="mb-3 md:pt-6">
                 <x-button

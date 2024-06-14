@@ -58,8 +58,8 @@ class LegacyPolicyController extends Controller
         $expiryDate = now()->addMinutes(40);
         $fileName = $request->fileName;
         $temporaryUrl = null;
-        if (Storage::disk('s3')->has($fileName)) {
-            $temporaryUrl = Storage::disk('s3')->temporaryUrl($fileName, $expiryDate);
+        if (Storage::disk('insly_documents')->has($fileName)) {
+            $temporaryUrl = Storage::disk('insly_documents')->temporaryUrl($fileName, $expiryDate);
         }
         // Check if a temporary URL was generated
         if ($temporaryUrl) {
@@ -67,5 +67,11 @@ class LegacyPolicyController extends Controller
         } else {
             return response()->json(['error' => 'File does not exists on server']);
         }
+    }
+    public function getPolicyByPolicyNumber($policyNumber)
+    {
+        $policy = InslyDetailRepository::getBy('policy_no', $policyNumber);
+
+        return redirect()->route('legacy-policy.show', ['legacy_policy' => $policy->_id]);
     }
 }

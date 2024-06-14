@@ -9,6 +9,7 @@ use App\Enums\carTypeInsuranceCode;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
@@ -77,7 +78,6 @@ class RenewalsUploadService
     use GenericQueriesAllLobs;
 
     protected $renewalsAddonService;
-    protected $checkAMLService;
     protected $capiRequestService;
     protected $insuranceProviderService;
     protected $carQuoteService;
@@ -89,7 +89,6 @@ class RenewalsUploadService
 
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
-        CheckAmlService $checkAMLService,
         CapiRequestService $capiRequestService,
         InsuranceProviderService $insuranceProviderService,
         CarQuoteService $carQuoteService,
@@ -100,7 +99,6 @@ class RenewalsUploadService
         HealthQuoteService $healthQuoteService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
-        $this->checkAMLService = $checkAMLService;
         $this->capiRequestService = $capiRequestService;
         $this->insuranceProviderService = $insuranceProviderService;
         $this->carQuoteService = $carQuoteService;
@@ -115,9 +113,14 @@ class RenewalsUploadService
     * @name generateUUID()
     * @returns a 16 character UUIDv4 string
     */
-    public function generateUUID($quoteTypeId)
+    public function generateUUID($quoteType, $quoteTypeId)
     {
-        $response = $this->capiRequestService->getUUID($quoteTypeId);
+        info('UAT FN: generateUUID QuoteTypeId: '.$quoteTypeId);
+        if (checkPersonalQuotes($quoteType)) {
+            $response = $this->capiRequestService->getPersonalQuoteUUID($quoteTypeId);
+        } else {
+            $response = $this->capiRequestService->getUUID($quoteTypeId);
+        }
 
         if ($response) {
             return $response->uuid;
@@ -458,7 +461,7 @@ class RenewalsUploadService
 
             if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (! $aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first())) {
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
-                $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+                app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
             }
 
@@ -572,7 +575,13 @@ class RenewalsUploadService
      */
     public function createQuoteObject($quoteType)
     {
+        info('fn: createQuoteObject QuoteType: '.$quoteType);
         $nameSpace = '\\App\\Models\\';
+
+        if (checkPersonalQuotes($quoteType)) {
+            $quoteType = QuoteTypes::PERSONAL->value;
+        }
+
         $model = $nameSpace.ucfirst(strtolower($quoteType)).'Quote';
 
         return (class_exists($model)) ? $model::query() : false;
@@ -750,6 +759,9 @@ class RenewalsUploadService
         info($logPrefix.' Quote creation started');
 
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType) {
+
+            $detailData = [];
+
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
             $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
@@ -758,7 +770,8 @@ class RenewalsUploadService
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
 
-            $quoteUuid = $this->generateUUID($quoteType->id);
+            $quoteUuid = $this->generateUUID($quoteType->code, $quoteType->id);
+            $isQuotePersonal = checkPersonalQuotes($quoteType->code);
 
             $customerData = $this->buildCustomerData($data);
             $customer = $this->getCustomer($customerData);
@@ -770,9 +783,8 @@ class RenewalsUploadService
                 'email' => $customerData['email'],
                 'mobile_no' => $customerData['mobile_no'],
                 'uuid' => $quoteUuid,
-                'code' => strtoupper($renewalQuoteProcess->quote_type).'-'.$quoteUuid,
-                'source' => 'Renewal_upload',
-                'additional_notes' => $data['notes'].$customerData['notes'],
+                'code' => $renewalQuoteProcess->quote_type.'-'.$quoteUuid,
+                'source' => LeadSourceEnum::RENEWAL_UPLOAD,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
                 'quote_status_id' => $transApprovedId,
@@ -780,8 +792,25 @@ class RenewalsUploadService
                 'previous_quote_policy_number' => $data['policy_number'],
                 'previous_policy_expiry_date' => $this->formatDate($data['end_date']),
                 'previous_quote_policy_premium' => $data['premium'],
-                'previous_advisor_id' => $previousAdvisorId,
             ];
+
+            if ($isQuotePersonal) {
+                $detailData['additional_notes'] = $data['notes'].$customerData['notes'];
+                $detailData['previous_advisor_id'] = $previousAdvisorId;
+                $quoteData['quote_type_id'] = $quoteType->id;
+
+            } else {
+                $quoteData['additional_notes'] = $data['notes'].$customerData['notes'];
+                $quoteData['previous_advisor_id'] = $previousAdvisorId;
+            }
+
+            if (! empty($data['insly_id'])) {
+                $detailData['insly_id'] = $data['insly_id'];
+            }
+
+            if (! empty($data['insly_advisor_name'])) {
+                $detailData['insly_advisor_name'] = $data['insly_advisor_name'];
+            }
 
             $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)->first();
             if ($lookup) {
@@ -826,11 +855,11 @@ class RenewalsUploadService
                 }
             }
 
-            if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
+            if (in_array($quoteType->code, [quoteTypeCode::Car])) {
                 $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
             }
 
-            if ($quoteType->code == quoteTypeCode::Health) {
+            if ($quoteType->code == quoteTypeCode::Health || $isQuotePersonal) {
                 $quoteData['currently_insured_with_id'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->id;
             }
 
@@ -842,7 +871,16 @@ class RenewalsUploadService
             }
 
             $quoteObject = $this->createQuoteObject($quoteType->code);
+
             $quote = $quoteObject->create($quoteData);
+
+            if ($isQuotePersonal) {
+                $quote->quoteDetail()->create($detailData);
+            } else {
+                $quotType = strtolower($quoteType->code);
+                $class = $quotType.'QuoteRequestDetail';
+                $quote->{$class}()->create($detailData);
+            }
 
             //update advisor assign date/time
             if (! empty($advisorId)) {
@@ -860,7 +898,7 @@ class RenewalsUploadService
 
         if ($quote) {
             info($logPrefix.' AML check started for UUID: '.$quote->uuid);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
         }
 
@@ -900,7 +938,7 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
         if ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first()) {
             info($logPrefix.' AML process Started for quote uuid: '.$quote->uuid.' quote_id: '.$renewalQuoteProcess->quote_id);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML process completed for quote uuid: '.$quote->uuid);
 
             return true;
@@ -1078,7 +1116,7 @@ class RenewalsUploadService
 
         if ($quote && $isNameChanged) {
             info($logPrefix.' AML check started for UUID: '.$quote->uuid);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            app(AMLService::class)->checkAml($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
         }
 
@@ -1331,9 +1369,15 @@ class RenewalsUploadService
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)
     {
-        $quoteRequestDetail = '\\App\\Models\\'.ucfirst($quoteType).'QuoteRequestDetail';
+        if (checkPersonalQuotes($quoteType)) {
 
-        $quoteRequestField = strtolower($quoteType).'_quote_request_id';
+            $quoteRequestDetail = '\\App\\Models\\PersonalQuoteDetail';
+            $quoteRequestField = 'personal_quote_id';
+
+        } else {
+            $quoteRequestDetail = '\\App\\Models\\'.ucfirst($quoteType).'QuoteRequestDetail';
+            $quoteRequestField = strtolower($quoteType).'_quote_request_id';
+        }
 
         // check if record exists in model_detail table
         if ($quoteDetail = $quoteRequestDetail::where($quoteRequestField, $quoteId)->first()) {
@@ -1879,7 +1923,7 @@ class RenewalsUploadService
             $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
             //advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
-            $quoteUuid = $this->generateUUID($quoteType->id);
+            $quoteUuid = $this->generateUUID($quoteType->code, $quoteType->id);
             $payment_status_id = $this->getPaymentStatusIdByCode($data['payment_status']);
             $customer = $this->getCustomer($data, $searchByName);
             $currently_located_in_id = $this->getCurrentlyLocatedIdByCode($data['currently_located_in']);

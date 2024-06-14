@@ -79,15 +79,17 @@ class PetQuoteRepository extends BaseRepository
             $quoteData['updated_by_id'] = Auth::user()->id;
             $quote->update($quoteData);
 
-            $quote->petQuote->update(Arr::only($data, ['premium', 'policy_number', 'breed_of_pet1', 'pet_type_id', 'pet_age_id', 'is_neutered', 'is_microchipped', 'microchip_no', 'is_mixed_breed', 'has_injury', 'gender', 'ilivein_accommodation_type_id', 'iam_possesion_type_id']));
+            $quote->petQuote()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                Arr::only($data, (new PetQuote())->allowedColumns())
+            );
 
             return $quote;
         });
     }
 
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
@@ -102,11 +104,25 @@ class PetQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->when(! empty(request()->is_renewal), function ($query) {
+                $isRenewal = request()->is_renewal;
+                if ($isRenewal == quoteTypeCode::yesText) {
+                    $query->whereNotNull('previous_quote_policy_number');
+                } elseif ($isRenewal == quoteTypeCode::noText) {
+                    $query->whereNull('previous_quote_policy_number');
+                }
+            })
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
 
-        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
+        if ($forTotalLeadsCount) {
+            //PD Revert
+            return 0;
+            // return $query->count();
+        }
+
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchGetBy($column, $value)
@@ -125,7 +141,17 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'transactionType',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents']);
+                    $q->with([
+                        'paymentStatus',
+                        'personalPlan',
+                        'paymentMethod',
+                        'paymentStatusLogs',
+                        'insuranceProvider',
+                        'paymentable',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
+                        'paymentSplits.verifiedByUser']);
                 },
                 'createdBy',
                 'updatedBy',
@@ -188,7 +214,7 @@ class PetQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+            ['advisor', 'nationality', 'insuranceProvider']
+        )->orderBy('created_at', 'desc');
     }
-
 }

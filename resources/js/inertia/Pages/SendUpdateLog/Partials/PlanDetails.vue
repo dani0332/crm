@@ -14,10 +14,6 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  selectedCategory: {
-    type: Object,
-    required: true,
-  },
   quoteType: {
     type: String,
     required: true,
@@ -32,6 +28,7 @@ const page = usePage();
 const notification = useToast();
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const sendUpdateEnums = page.props.sendUpdateStatusEnum;
 
 const state = reactive({
   isEdit: false,
@@ -46,23 +43,8 @@ const planDetailsForm = useForm({
   id: props.sendUpdateLog?.id,
 });
 
-const isIndicativeAdditionalPrice = computed(() => {
-  let hasRestrictedSubType = false;
-  props.updateLogOptions?.forEach(option => {
-    if (
-      ['MDOM', 'MDOV', 'MPC', 'ED', 'DM'].includes(option.slug) &&
-      props.sendUpdateLog.option_id === option.value
-    ) {
-      hasRestrictedSubType = true;
-    }
-  });
-  return (
-    props.selectedCategory?.subCategory.slug === 'EF' && !hasRestrictedSubType
-  );
-});
-
 const isPlanDetails = computed(() => {
-  return props.selectedCategory?.subCategory.slug === 'CPD';
+  return props.sendUpdateLog.category.code === sendUpdateEnums.CPD;
 });
 
 const insuranceProvidersOptions = computed(() => {
@@ -72,7 +54,7 @@ const insuranceProvidersOptions = computed(() => {
   }));
 });
 
-const roundDecimal = (value) => {
+const roundDecimal = value => {
   return value ? parseFloat(value.toFixed(2)) : '';
 };
 
@@ -82,7 +64,7 @@ const updatePriceWithVat = () => {
   const priceWithoutVat = parseFloat(planDetailsForm.price_without_vat);
 
   if (priceWithVat && priceWithoutVat) {
-    totalPrice = ((priceWithVat / 100) * 5) + priceWithVat + priceWithoutVat;
+    totalPrice = (priceWithVat / 100) * 5 + priceWithVat + priceWithoutVat;
   } else if (priceWithVat) {
     totalPrice = (priceWithVat / 100) * 5 + priceWithVat;
   } else if (priceWithoutVat) {
@@ -103,7 +85,7 @@ const onUpdate = () => {
     planDetailsForm.total_price = null;
     return;
   }
-  planDetailsForm.post(route('send-update-logs.save-price-details'), {
+  planDetailsForm.post(route('send-update.save-price-details'), {
     preserverScroll: true,
     onSuccess: ({ props }) => {
       notification.success({
@@ -123,7 +105,7 @@ const onUpdate = () => {
   });
 };
 
-const onKeyPress = (event) => {
+const onKeyPress = event => {
   if (event.key === 'e' || event.key === 'E') {
     event.preventDefault();
   }
@@ -132,20 +114,21 @@ const onKeyPress = (event) => {
 const onCancel = () => {
   state.isEdit = false;
   planDetailsForm.price_with_vat = props.sendUpdateLog?.price_with_vat || null;
-  planDetailsForm.price_without_vat = props.sendUpdateLog?.price_without_vat || null;
+  planDetailsForm.price_without_vat =
+    props.sendUpdateLog?.price_without_vat || null;
   planDetailsForm.total_price = props.sendUpdateLog?.total_price || null;
-}
+};
 </script>
 
 <template>
   <div
     class="p-4 rounded shadow mb-6 bg-white"
-    v-if="isPlanDetails || isIndicativeAdditionalPrice"
+    v-if="props.sendUpdateLog.category.code !== sendUpdateEnums.CIR"
   >
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <x-tooltip position="left" v-if="!isPlanDetails">
+          <x-tooltip v-if="!isPlanDetails" position="left">
             <label
               class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700"
             >
@@ -203,7 +186,7 @@ const onCancel = () => {
             <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
-                  isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
+                  isPlanDetails && props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
                 "
               >
                 <dt>
@@ -254,7 +237,9 @@ const onCancel = () => {
                 <x-input
                   v-model="planDetailsForm.price_with_vat"
                   :rules="
-                    quoteType == quoteTypeCodeEnum.Life ? [] : [isRequired]
+                    quoteType == quoteTypeCodeEnum.Life
+                      ? []
+                      : [isRequired, amount]
                   "
                   :disabled="
                     !state.isEdit ||
@@ -276,7 +261,7 @@ const onCancel = () => {
             <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
-                  isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
+                  isPlanDetails && props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
                 "
               >
                 <dt>

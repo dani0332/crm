@@ -7,11 +7,18 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\BikeQuote;
+use App\Models\CycleQuote;
 use App\Models\InslyDetail;
+use App\Models\PetQuote;
 use App\Models\QuoteType;
+use App\Models\YachtQuote;
 use App\Services\CapiRequestService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use MongoDB\BSON\Regex;
+use MongoDB\BSON\UTCDateTime;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -35,15 +42,12 @@ class InslyDetailRepository extends BaseRepository
         }
 
         if (! empty(request()->email)) {
-            $query->where('customer.email', '=', request()->email);
+            $query->where('customer.email', 'like', '%'.request()->email.'%');
         }
 
         if (! empty(request()->mobile_no)) {
-            $phoneNumber = str_replace(' ', '', request()->mobile_no);
-            $regexPattern = implode('.*', str_split($phoneNumber)); // Creating a regex pattern to match phone numbers ignoring spaces
-            $regex = new \MongoDB\BSON\Regex("^$regexPattern$", 'i');
-            $query->where('customer.mobile_phone', '=', request()->mobile_no)
-                ->orWhere('customer.mobile_phone', 'regex', $regex);
+            $query->where('customer.mobile_phone', 'like', '%'.request()->mobile_no.'%')
+                ->orWhere('customer.mobile_phone', 'regex', $this->searchPhoneNumberRegexPattern(request()->mobile_no));
         }
 
         $data = $query->simplePaginate()->withQueryString()->toArray();
@@ -60,6 +64,7 @@ class InslyDetailRepository extends BaseRepository
         $policy = $query->firstOrFail();
         $data = $policy->toArray();
         $policy->quoteType = $this->getQuoteType($data['policy']['coverage']);
+        $policy->imcrm_link = $this->replaceStoredAppURLWithCurrentAppURL($policy->imcrm_link);
 
         if (! empty($data['installments'])) {
             $policy->premium = collect($data['installments'])->sum('gross_premium');
@@ -97,7 +102,7 @@ class InslyDetailRepository extends BaseRepository
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
 
-        $appUrl = env('APP_URL');
+        $appUrl = config('constants.APP_URL');
 
         if (! empty($policy)) {
             $coverage = $policy['policy']['coverage'];
@@ -106,7 +111,7 @@ class InslyDetailRepository extends BaseRepository
             $model = $this->getModelObject($quoteType);
             if ($model) {
                 // quote against policy number
-                $quote = $model::where('policy_number', $policyNumber)->first();
+                $quote = $model::where('policy_number', $policyNumber)->orWhere('previous_quote_policy_number', $policyNumber)->first();
 
                 if (! empty($quote) && $validateAll) {
                     if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
@@ -114,7 +119,6 @@ class InslyDetailRepository extends BaseRepository
                     } else {
                         $quote->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$quote->uuid;
                     }
-                    $quote->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$quote->uuid;
                     $quote->modelType = $quoteType;
                     $data[] = $quote;
 
@@ -204,17 +208,39 @@ class InslyDetailRepository extends BaseRepository
                             $obj->healthQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
                             break;
                         case QuoteTypes::PET->value:
+                            $obj->petQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new PetQuote())->allowedColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
                         case QuoteTypes::BIKE->value:
+                            $obj->bikeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new BikeQuote())->allowedColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
                         case QuoteTypes::CYCLE->value:
+                            $obj->cycleQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new CycleQuote())->allowedColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
                         case QuoteTypes::YACHT->value:
+                            $obj->yachtQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new YachtQuote())->allowedColumns())
+                            );
                             $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
                             break;
                     }
                     $policy->moved_to_imcrm = true;
                     if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
-                        $policy->imcrm_link = $appUrl.'/personal-quotes/'.strtolower($quoteType).'/'.$obj->uuid;
+                        $policy->imcrm_link = '/personal-quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     } else {
-                        $policy->imcrm_link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
+                        $policy->imcrm_link = '/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     }
                     $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
                     $policy->moved_to_imcrm_by = auth()->user()->name;
@@ -355,10 +381,31 @@ class InslyDetailRepository extends BaseRepository
 
     private function formatDate($date)
     {
-        if ($date instanceof \MongoDB\BSON\UTCDateTime) {
+        if ($date instanceof UTCDateTime) {
             return $date->toDateTime()->format('Y-m-d');
         } else {
             return Carbon::parse($date)->format('Y-m-d');
         }
+    }
+    private function replaceStoredAppURLWithCurrentAppURL($url)
+    {
+        $hostUrl = config('constants.APP_URL');
+        if ($url) {
+            $parsedUrl = parse_url($url);
+
+            return $hostUrl.$parsedUrl['path'];
+        }
+
+        return null;
+
+    }
+
+    private function searchPhoneNumberRegexPattern($mobileNo)
+    {
+        $phoneNumber = str_replace(' ', '', $mobileNo);
+        // Creating a regex pattern to match phone numbers ignoring spaces
+        $regexPattern = implode('.*', str_split($phoneNumber));
+
+        return new Regex("$regexPattern", 'i');
     }
 }

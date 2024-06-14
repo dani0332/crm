@@ -1,13 +1,13 @@
 <script setup>
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MemberDetails from "../../Components/MemberDetails.vue";
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
+const page = usePage();
 defineProps({
   quote: Object,
-  record: Object,
   quoteStatuses: Object,
   quoteType: String,
   quoteTypeId: Number,
@@ -40,11 +40,13 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
+const leadSource = page.props.leadSource;
 const hasRole = role => useHasRole(role);
 
 const modals = reactive({
@@ -75,7 +77,6 @@ const emiratesOptions = computed(() => {
   }));
 });
 
-const page = usePage();
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
@@ -501,6 +502,66 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
   <div>
     <Head title="Life Quotes" />
 
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Life Detail</h2>
+      <div class="flex gap-2">
+        <Link
+          v-if="quote.life_quote_request_detail?.insly_id"
+          :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          class="ml-2"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link
+          v-if="can(permissionsEnum.LifeQuotesList)"
+          :href="route('life-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div"> Life Quotes </x-button>
+        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('life-quotes-edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)"/>
+        </template>
+      </div>
+    </div>
+
     <x-modal v-model="modalsDuplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -542,56 +603,15 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-xl font-semibold text-primary-800">Life Detail</h3>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="quote.life_quote_request_detail?.insly_id"
-              :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-              Duplicate Lead
-            </x-button>
-            <Link
-              v-if="can(permissionsEnum.LifeQuotesList)"
-              :href="route('life-quotes-list')"
-              preserve-scroll
-            >
-              <x-button size="sm" color="primary" tag="div">
-                Life Quotes
-              </x-button>
-            </Link>
-
-            <LeadEditBtnTemplate v-slot="{ isDisabled }">
-              <Link :href="route('life-quotes-edit', quote.uuid)">
-                <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
-              </Link>
-            </LeadEditBtnTemplate>
-
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)" :isDisabled="true"/>
-              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
-            </x-tooltip>
-            <template v-else>
-              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)"/>
-            </template>
-            
-          </div>
-
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -706,7 +726,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                   </Link>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -714,7 +737,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </div>
                 <div>
@@ -766,7 +794,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -806,7 +834,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -862,7 +890,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -878,13 +906,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-              <dd class="break-words">
-                {{ customerProfileForm.company_name }}
-              </dd>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -1093,13 +1121,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Status
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           </div>
         </template>
         <template #body>
@@ -1208,10 +1234,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       :expanded="sectionExpanded"
     />
 
-<MigratePayment
+    <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
       :payments="payments"
     />
@@ -1220,15 +1246,22 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
-            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
+      :paymentDocument="page.props.documentTypeCodes.filter(item => ['LPD', 'LPDR', 'LDPDR'].includes(item.code))"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+      :bookPolicyDetails="bookPolicyDetails"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -1241,9 +1274,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <QuoteDocuments
@@ -1258,11 +1294,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
     <BookPolicy
       v-if="
         canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="life"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
@@ -1424,9 +1460,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead History
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
           </div>
         </template>
         <template #body>
@@ -1456,6 +1490,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         </template>
       </Collapsible>
     </div>
-    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
+    <AuditLogs
+      :type="'App\\Models\\LifeQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
   </div>
 </template>

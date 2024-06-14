@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Carbon;
 
 class BookPolicyRequest extends FormRequest
 {
@@ -32,10 +31,9 @@ class BookPolicyRequest extends FormRequest
             'insurer_commmission_invoice_number' => 'required|max:22|different:insurer_tax_invoice_number',
             'discount' => 'nullable',
             'transaction_payment_status' => 'nullable',
-            'commission_percentage' => 'nullable',
             'broker_invoice_number' => 'nullable',
             'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|numeric|between:0,9999999.99',
-            'commission_vat_applicable' => 'nullable|numeric|between:0,9999999.99',
+            'commission_vat_applicable' => 'required|numeric|between:0,9999999.99',
             'total_commission' => 'nullable',
             'invoice_description' => 'required|max:60',
             'vat_on_commission' => 'nullable',
@@ -63,14 +61,6 @@ class BookPolicyRequest extends FormRequest
                 if ($iCIN[0]['paymentable_id'] != request()->quote_id) {
                     $validator->errors()->add('error', 'Insurer Commmission Invoice Number already exists,Please enter a unique value');
                 }
-            }
-
-            // Check invoice_date and invoice_date can not be earlier than Start date of policy
-            $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
-            $policyStartDate = Carbon::parse($quote->policy_start_date);
-            $invoiceDate = Carbon::parse(request()->invoice_date);
-            if ($policyStartDate->gt($invoiceDate)) {
-                $validator->errors()->add('error', 'Insurer Invoice Date can not be earlier than Policy Start Date.');
             }
         });
     }

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,9 +11,12 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable;
 
     protected $guarded = [];
+    protected $casts = [
+        'car_addons' => 'json',
+    ];
 
     public function quoteType(): BelongsTo
     {
@@ -39,5 +41,10 @@ class SendUpdateLog extends Model implements AuditableContract
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
     }
 }

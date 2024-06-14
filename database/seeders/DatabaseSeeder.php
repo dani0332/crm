@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,58 +15,49 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            // RenewalsPermissionSeeder::class,
-            // addCarQuoteSearchPermission::class,
-            QuoteStatusTableSeeder::class,
-            // UtmLeadsSalesReportSeeder::class,
-            // CarLostStorageSeeder::class,
-            // AddPersonalLobsProducts::class,
-            // addCarQuoteNewStatuses::class,
-            // CommercialKeywordsSeeder::class,
-            // RuleTypeSeeder::class,
-            // CommercialMakeModelKeywordsPermissionsSeeder::class,
-            // FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
-            // SlabsTableSeeder::class,
-            // addTeamThresholdViewPermission::class,
-            // PetBikeMigrationSeeder::class
-            // InsurerQuoteTypeMappingSeeder::class,
-            // addTeamAllocationThresholdViewPermission::class,
-            // addQuoteAllocationSwitch::class,
-            // CreateAndAssignSubTeamsToAdvisors::class,
-            // AddApiLogViewToPermssion::class,
-            // AutofollowupSeeder::class,
-            // addReassignmentTime::class,
-            // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
+            // LostReasonsTableSeeder::class,
+            // AddGenericRolePermissionSeeder::class,
+            // addDubaiNowEmailGroup::class,
+            // DubaiLeadSource::class,
+            // ActivitySchedulesSeeder::class,
             GenericPermissionSeeder::class,
-            addSICWorkflow::class,
+            /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
-            AddLegacyPaymentsPermssion::class,
-            ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
-            DubaiLeadSource::class,
+            DubaiLeadSource::class,*/
             // AddNewDocumentTypesSeeder::class,
-            // EmbeddedProductRoleAndPermissionSeeder::class,
-            // LstDocumentsSeeder::class,
-            // SendPolicyApplicationStorageSeeder::class,
-            // BookPolicyPermissionSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            PaymentMethodsAddSeeder::class,
+            /* PaymentMethodsAddSeeder::class,
             AddNewDocumentTypeSeeder::class,
             PaymentStatusAddSeeder::class,
             updateDocTypePayment::class,
             AddSageFlagApplicationStorage::class,
             AddTempUpdateTotalPricePermission::class,
-            PolicyIssuanceStatusSeeder::class,
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
-            TotalPremiumReportPermissionSeeder::class,
-            InsuranceProviderNameSeeder::class,
-            QuoteStatusMapSeeder::class,
-            SendUpdateDocumentTypesSeeder::class,
+            TotalPremiumReportPermissionSeeder::class,*/
+
+            // dtt seeder
+            // AddDttFlagApplicationStorage::class,
+            // DttOCBNewBusinessSeeder::class,
+            // RevivalConversionReportPermissionSeeder::class,
+            // end
+            // AddCrossLOBSeeder::class,
+            MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
+            BusinessTypeInsuranceSeeder::class,
+
+            AddPaymentPermissions::class,
+            AddCreateSendUpdatePermissionToAllRoles::class,
+            // AddSendUpdatesCategoriesInLookups::class, Please don't run this seeder on test and stage env.
             InslyRoles::class,
             InslyPermissions::class,
+            QuoteStatusMapSeeder::class,
+            QuoteStatusSeeder::class,
+            ApplicationStorageSeeder::class,
+            addInsuranceProvidersConfiguration::class,
+            RevokeTempPaymentUpdatePermissionsSeeder::class,
         ]);
     }
 }

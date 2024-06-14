@@ -1,7 +1,9 @@
 <script setup>
+import { useRoundIt } from '../Composables/utilities';
 const page = usePage();
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
+
 const props = defineProps({
   quote: {
     type: Object,
@@ -32,7 +34,11 @@ const props = defineProps({
 
 const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
-
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
+const canAny = permissions => useCanAny(permissions);
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -80,6 +86,7 @@ const currentDate = computed(() => {
   const day = `0${d.getDate()}`.slice(-2);
   return `${day}-${month}-${year}`;
 });
+
 const currentDateTime = computed(() => {
   const d = new Date();
   const year = d.getFullYear();
@@ -113,7 +120,8 @@ const bpForm = useForm({
   booking_date:
     dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
     currentDateTime.value,
-  transaction_payment_status: transactionPaymentStatus.value,
+  transaction_payment_status:
+    page.props.bookPolicyDetails.transactionPaymentStatus,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
   invoice_description: page.props.bookPolicyDetails.invoiceDescription || '',
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
@@ -124,7 +132,7 @@ const bpForm = useForm({
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
     page.props?.payments[0]?.commission_vat_applicable || '',
-  commission_percentage: page.props?.payments[0]?.commmission_percentage || '',
+  commission_percentage: page.props?.payments[0]?.commmission_percentage || 0,
   vat_on_commission: page.props?.payments[0]?.commission_vat || '',
   total_commission: page.props?.payments[0]?.commission || '',
   payment_code: page.props?.payments[0]?.code,
@@ -132,19 +140,29 @@ const bpForm = useForm({
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
   modelType: props.modelType,
+  transaction_payment_status_tool_tip:
+    page.props.bookPolicyDetails.paymentStatusTooltip,
+  line_of_business: page.props?.bookPolicyDetails?.lineOfBusiness,
 });
 
+let is_lacking_payment = ref(
+  page.props.bookPolicyDetails.isLackingOfPayment || false,
+);
+
+watch(
+  () => page.props.bookPolicyDetails.isLackingOfPayment,
+  newVal => {
+    is_lacking_payment.value = newVal || false;
+  },
+);
+
 const onUpdatebookPolicyDetails = isValid => {
+  showInsufficientPaymentAlert();
   if (isValid) {
     bpForm.booking_date = currentDateTime;
     bpForm.post('/quotes/update-booking-policy', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Book policy details update Successfully',
-          position: 'top',
-        });
-
         bp.isEditing = false;
       },
       onError: errors => {
@@ -161,12 +179,20 @@ const onUpdatebookPolicyDetails = isValid => {
   }
 };
 
+const isAllowedToSendPolicy = ref(false);
+
 const modals = reactive({
   sendPolicyConfirm: false,
   isConfirmed: false,
+  sendPolicyPopup: false,
 });
+
 const confirmSendPolicy = () => {
-  modals.sendPolicyConfirm = true;
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
+    modals.sendPolicyPopup = true;
+  } else {
+    modals.sendPolicyConfirm = true;
+  }
 };
 
 const submitPolicy = () => {
@@ -176,6 +202,8 @@ const submitPolicy = () => {
     send_policy_type: props.bookPolicyDetails.sendPolicyType,
     model_type: props?.quoteType,
     quote_id: props?.quote?.id,
+    is_send_policy: isAllowedToSendPolicy.value,
+    transaction_payment_status: bpForm.transaction_payment_status,
     modelType: props.modelType,
   };
   axios
@@ -195,10 +223,12 @@ const submitPolicy = () => {
       const flash_messages = err.response.data.errors;
 
       Object.keys(flash_messages).forEach(function (key) {
-        notification.error({
-          title: flash_messages[key],
-          position: 'top',
-        });
+        if (flash_messages[key]) {
+          notification.error({
+            title: flash_messages[key],
+            position: 'top',
+          });
+        }
       });
     })
     .finally(() => {
@@ -207,50 +237,163 @@ const submitPolicy = () => {
     });
 };
 
+const calculateVatOnCommission = commissionVatApplicable => {
+  if (Number(commissionVatApplicable) > 0) {
+    return useRoundIt(commissionVatApplicable * page.props.vat);
+  } else {
+    return 0;
+  }
+};
+const calculateCommissionPercentage = (
+  totalCommissionWithoutVat,
+  totalPriceWithoutVat,
+) => {
+  if (totalCommissionWithoutVat > 0) {
+    return useRoundIt((totalCommissionWithoutVat / totalPriceWithoutVat) * 100);
+  } else {
+    return 0;
+  }
+};
+
 const calculateCommission = () => {
-  if (bpForm.commission_vat_applicable > 0) {
-    if (Number(props.quote?.price_without_vat > 0)) {
-      bpForm.commission_percentage = (
-        (bpForm.commission_vat_applicable / props.quote?.price_without_vat) *
-        100
-      ).toFixed(2);
+  let totalPriceWithoutVat =
+    Number(props.quote?.price_vat_applicable) +
+    Number(props.quote?.price_vat_not_applicable);
 
-      bpForm.vat_on_commission = (
-        bpForm.commission_vat_applicable * page.props.vat
-      ).toFixed(2);
-      bpForm.total_commission = (
-        Number(bpForm.vat_on_commission) +
-        Number(bpForm.commission_vat_applicable)
-      ).toFixed(2);
-    } else {
-      bpForm.commission_vat_applicable = '';
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT APPLICABLE)',
-        position: 'top',
-      });
-    }
-  } else if (bpForm.commission_vat_not_applicable > 0) {
-    if (Number(props.quote?.price_vat_not_applicable) > 0) {
-      bpForm.commission_percentage = (
-        (bpForm.commission_vat_not_applicable /
-          props.quote?.price_vat_not_applicable) *
-        100
-      ).toFixed(2);
+  if (totalPriceWithoutVat > 0) {
+    let totalCommissionWithoutVat =
+      Number(bpForm.commission_vat_not_applicable) +
+      Number(bpForm.commission_vat_applicable);
 
-      bpForm.total_commission = Number(
-        bpForm.commission_vat_not_applicable,
-      ).toFixed(2);
+    if (totalCommissionWithoutVat > 0) {
+      bpForm.vat_on_commission = calculateVatOnCommission(
+        bpForm.commission_vat_applicable,
+      );
+
+      bpForm.total_commission =
+        totalCommissionWithoutVat + useRoundIt(bpForm.vat_on_commission);
+
+      bpForm.commission_percentage = calculateCommissionPercentage(
+        totalCommissionWithoutVat,
+        totalPriceWithoutVat,
+      );
     } else {
-      bpForm.commission_vat_not_applicable = '';
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
-        position: 'top',
-      });
+      bpForm.commission_percentage = 0;
+      bpForm.vat_on_commission = 0;
+      bpForm.total_commission = '';
     }
   } else {
-    bpForm.commission_percentage = '';
-    bpForm.vat_on_commission = '';
-    bpForm.total_commission = '';
+    bpForm.commission_vat_applicable = '';
+    bpForm.commission_vat_not_applicable = '';
+    notification.error({
+      title:
+        'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
+      position: 'top',
+    });
+  }
+};
+
+// Disable Commission vat nor applicable for all LOBs
+const disableCommissionVatNotApplicable = computed(() => {
+  return true;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType != quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
+});
+
+// Enable Commission vat nor applicable for all LOBs
+const disableCommissionVatApplicable = computed(() => {
+  return !bp.isEditing;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType == quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
+});
+const showSendAndBookPolicyButtonBlock = computed(() => {
+  let isPolicyStatusTransactionApproved =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.TransactionApproved;
+
+  let isPolicyStatusPolicyIssued =
+    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued;
+
+  let isPolicyStatusCancellationPending =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.CancellationPending;
+  return (
+    isPolicyStatusTransactionApproved ||
+    isPolicyStatusPolicyIssued ||
+    isPolicyStatusCancellationPending
+  );
+});
+const showSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  return props.bookPolicyDetails?.sendButton && can(permission);
+});
+const disableSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  let isPolicyStatusCancellationPending =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.CancellationPending;
+  return (
+    !props.bookPolicyDetails?.sendButton &&
+    !isPolicyStatusCancellationPending &&
+    !can(permission)
+  );
+});
+const showActionButtons = computed(() => {
+  // Hide buttons only when policy is cancelled and have a chilrd lead
+  return (
+    props.quote.quote_status_id != page.props.quoteStatusEnum.PolicyCancelled ||
+    page.props.linkedQuoteDetails.childLeadsCount == 0
+  );
+});
+
+// Watch for changes in paymentMethodsForm.collection_date
+watch(
+  () => page.props.bookPolicyDetails.transactionPaymentStatus,
+  (newValue, oldValue) => {
+    if (newValue && oldValue) {
+      bpForm.transaction_payment_status_tool_tip =
+        props.bookPolicyDetails.paymentStatusTooltip;
+      bpForm.transaction_payment_status =
+        props.bookPolicyDetails.transactionPaymentStatus;
+    }
+  },
+);
+
+const sendPolicyConfirmation = () => {
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
+    isAllowedToSendPolicy.value = true;
+  }
+  modals.sendPolicyPopup = false;
+  modals.sendPolicyConfirm = true;
+};
+
+const getPayment = () => {
+  return page.props?.payments[0] ?? null;
+};
+
+const showInsufficientPaymentAlert = () => {
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
+    notification.error({
+      title: 'Insufficient payment',
+      position: 'top',
+      timeout: 30000,
+    });
   }
 };
 const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusableTemplate();
@@ -269,88 +412,119 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <x-form @submit="onUpdatebookPolicyDetails" :auto-focus="false">
+        <x-form @submit.prevent :auto-focus="false">
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Booking Date
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.BOOKING_DATE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Booking Date</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.BOOKING_DATE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.booking_date.split(' ')[0] }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
-                    <x-tooltip>
-                      Invoice Description
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.INVOICE_DESCRIPTION
-                        }}</span>
-                      </template>
-                    </x-tooltip>
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Invoice Description</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.INVOICE_DESCRIPTION
+                      }}</span>
+                    </template>
+                  </x-tooltip>
                 </dt>
                 <dd>{{ bpForm.invoice_description }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
-                    <x-tooltip>
-                      Line of Business
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.LINE_OF_BUSINESS
-                        }}</span>
-                      </template>
-                    </x-tooltip>
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Line of Business</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.LINE_OF_BUSINESS
+                      }}</span>
+                    </template>
+                  </x-tooltip>
                 </dt>
-                <dd>{{ props?.quoteType }}</dd>
+                <dd>{{ bpForm.line_of_business }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <x-tooltip>
+                  <label class="border-b-2 border-dotted border-black uppercase"
+                    >Transaction Payment Status</label
+                  >
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
+                    }}</span>
+                  </template>
+                </x-tooltip>
+                <template
+                  v-if="
+                    props.quote.quote_status_id ==
+                    page.props.quoteStatusEnum.PolicyBooked
+                  "
+                >
+                  <x-tooltip position="center">
+                    <dd class="border-b border-dotted border-black">
+                      {{ bpForm.transaction_payment_status }}
+                    </dd>
+                    <template #tooltip>
+                      {{ bpForm.transaction_payment_status_tool_tip }}</template
+                    >
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <dd>N/A</dd>
+                </template>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
-                    <x-tooltip>
-                      Transaction Payment Status
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Sub Type</label
+                    >
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
-                        }}</span>
-                      </template>
-                    </x-tooltip>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.SUB_TYPE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
                 </dt>
-                <dd>{{ bpForm.transaction_payment_status }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                     Sub Type
-
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.SUB_TYPE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
                 <dd></dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Insurer Invoice Date
+                <dt class="font-medium uppercase">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Insurer Invoice Date</label
+                    >
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.INSURER_INVOICE_DATE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.INSURER_INVOICE_DATE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <DatePicker
                     v-model="bpForm.invoice_date"
@@ -363,30 +537,36 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Broker Invoice No
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Broker Invoice No</label
+                    >
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.BROKER_INVOICE_NUMBER
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.BROKER_INVOICE_NUMBER
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.broker_invoice_number }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Insurer Tax Invoice No
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.INSURER_TAX_INVOICE_NUMBER
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Insurer Tax Invoice No</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.INSURER_TAX_INVOICE_NUMBER
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <x-input
                     v-model="bpForm.insurer_tax_invoice_number"
@@ -398,32 +578,38 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Discount Value
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.DISCOUNT_VALUE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Discount Value</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.DISCOUNT_VALUE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.discount }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Insurer Commission Tax Invoice No
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Insurer Commission Tax Invoice No</label
+                    >
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">
-                          {{
-                            productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
-                          }}
-                        </span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{
+                          productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                        }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <x-input
                     v-model="bpForm.insurer_commmission_invoice_number"
@@ -435,93 +621,104 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Commission(%)
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.COMMISSION_PERCENTAGE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                <dd>{{ bpForm.commission_percentage }}</dd>
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                    >
+                      Commission(%)</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.COMMISSION_PERCENTAGE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ bpForm.commission_percentage }}%</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Commission (VAT NOT APPLICABLE)
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Commission (VAT NOT APPLICABLE)</label
+                    >
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <x-input
                     v-model="bpForm.commission_vat_not_applicable"
                     @change="calculateCommission"
                     placeholder="Commission VAT NOT APPLICABLE"
                     class="w-full"
-                    :disabled="
-                      !bp.isEditing || bpForm.commission_vat_applicable !== ''
-                    "
+                    :disabled="disableCommissionVatNotApplicable"
                   />
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      VAT on Commission
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >VAT on Commission</label
+                    >
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.VAT_ON_COMMISSION
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.VAT_ON_COMMISSION
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.vat_on_commission }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Commission (VAT APPLICABLE)
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Commission (VAT APPLICABLE)</label
+                    >
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>
                   <x-input
                     v-model="bpForm.commission_vat_applicable"
                     @change="calculateCommission"
                     placeholder="Commission VAT APPLICABLE"
                     class="w-full"
-                    :disabled="
-                      !bp.isEditing ||
-                      bpForm.commission_vat_not_applicable !== ''
-                    "
+                    :disabled="disableCommissionVatApplicable"
                   />
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip>
-                      Total Commission
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Total Commission</label
+                    >
 
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          productionProcessTooltipEnum.TOTAL_COMMISSION
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </dt>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.TOTAL_COMMISSION
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
                 <dd>{{ bpForm.total_commission }}</dd>
               </div>
             </dl>
@@ -542,15 +739,8 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                 </x-button>
             </EditBookPolicyBtnTemplate>
 
-            <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end">
-              <template
-                v-if="
-                  props.quote.quote_status_id ==
-                    page.props.quoteStatusEnum.TransactionApproved ||
-                  props.quote.quote_status_id ==
-                    page.props.quoteStatusEnum.PolicyIssued
-                "
-              >
+            <div v-if="showActionButtons" class="flex justify-end">
+              <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
                   v-if="bp.isEditing"
                   class="mt-4 mr-2"
@@ -572,33 +762,67 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                   color="emerald"
                   size="sm"
                   :loading="bpForm.processing"
-                  type="submit"
+                  @click.prevent="onUpdatebookPolicyDetails"
                 >
                   Update
                 </x-button>
-
                 <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
-                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton" :isDisabled="true"/>
+                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="true"/>
                   <template #tooltip>
                     This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
                   </template>
                 </x-tooltip>
 
                 <template v-else>
-                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton"/>
+                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)"/>
                 </template>
-                
-                <x-button
-                  size="sm"
-                  color="orange"
-                  class="mt-4"
-                  @click.prevent="confirmSendPolicy"
-                  :disabled="bp.isEditing"
-                  v-if="props.bookPolicyDetails?.sendButton"
-                >
-                  {{ props.bookPolicyDetails?.text }}
-                </x-button></template
-              >
+                <x-tooltip>
+                  <x-button
+                    size="sm"
+                    color="orange"
+                    class="mt-4"
+                    disabled
+                    v-if="disableSendAndBookPolicyButton"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+                  <template #tooltip>
+                    <span>{{ 'Please update the booking details.' }}</span>
+                  </template>
+                </x-tooltip>
+                <template v-if="is_lacking_payment">
+                  <x-tooltip>
+                    <x-button
+                      size="sm"
+                      color="orange"
+                      class="mt-4"
+                      @click.prevent="confirmSendPolicy"
+                      :disabled="bp.isEditing || is_lacking_payment"
+                      v-if="showSendAndBookPolicyButton"
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        Action Needed: Please revise payment details to reflect
+                        plan changes.
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <x-button
+                    size="sm"
+                    color="orange"
+                    class="mt-4"
+                    @click.prevent="confirmSendPolicy"
+                    :disabled="bp.isEditing || is_lacking_payment"
+                    v-if="showSendAndBookPolicyButton"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+                </template>
+              </template>
 
               <template
                 v-else-if="
@@ -627,11 +851,11 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                     color="orange"
                     :disabled="true"
                   >
-                    Send Policy
+                    Book Policy
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      'The button is not accessable because policy has been booked'
+                      'The button is not accessible because policy has been booked'
                     }}</span>
                   </template>
                 </x-tooltip>
@@ -660,50 +884,58 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
                     color="emerald"
                     size="sm"
                     :loading="bpForm.processing"
-                    type="submit"
+                    @click.prevent="onUpdatebookPolicyDetails"
                   >
                     Update
                   </x-button>
 
                   <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
-                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton" :isDisabled="true"/>
+                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="true"/>
                     <template #tooltip>
                       This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
                     </template>
                   </x-tooltip>
 
                   <template v-else>
-                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton" :isDisabled="!props.bookPolicyDetails?.editButton"/>
+                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="!props.bookPolicyDetails?.editButton"/>
                   </template>
 
-                  <template v-if="props.bookPolicyDetails?.editButton">
+                  <template
+                    v-if="
+                      props.bookPolicyDetails?.bookButton &&
+                      can(permissionsEnum.BOOK_POLICY_BUTTON)
+                    "
+                  >
                     <x-button
                       size="sm"
                       class="mt-4 mr-2"
                       color="orange"
-                      :disabled="!props.bookPolicyDetails?.editButton || bp.isEditing"
+                      :disabled="
+                        !props.bookPolicyDetails?.bookButton ||
+                        bp.isEditing ||
+                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                      "
                       @click.prevent="confirmSendPolicy"
                     >
-                      Send Policy
+                      Book Policy
                     </x-button></template
                   >
                   <template v-else>
                     <x-tooltip>
                       <x-button
+                        v-if="can(permissionsEnum.BOOK_POLICY_BUTTON)"
                         size="sm"
                         class="mt-4 mr-2"
                         color="orange"
-                        :disabled="!props.bookPolicyDetails?.editButton"
+                        :disabled="true"
                       >
-                        Sending Policy To Customer
+                        Book Policy
                       </x-button>
                       <template #tooltip>
-                        <span>{{
-                          'The button is not accessable because policy has been sent to customer'
-                        }}</span>
+                        <span>{{ 'Please update the booking details.' }}</span>
                       </template>
-                    </x-tooltip></template
-                  >
+                    </x-tooltip>
+                  </template>
                 </template>
               </template>
             </div>
@@ -723,10 +955,13 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
         Please be aware that your current action involves sending the policy to
         the customer only.
       </x-alert>
-      <x-checkbox
-        v-model="modals.isConfirmed"
-        label="I confirm and attest that all information recorded is correct."
-      />
+      <div class="flex items-center">
+        <x-checkbox v-model="modals.isConfirmed" />
+        <div class="ml-2">
+          <p>I confirm and attest that all the information is correct.</p>
+          <p>I confirm I am in compliance with the COC.</p>
+        </div>
+      </div>
       <template #actions>
         <div class="text-right space-x-4">
           <x-button
@@ -746,6 +981,33 @@ const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusa
             :loading="isLoading"
           >
             Confirm
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+    <x-modal v-model="modals.sendPolicyPopup" show-close backdrop>
+      <template #header> Are you sure you want to continue? </template>
+      <div class="text-center">
+        <p class="font-semibold pt-3">
+          {{ props.bookPolicyDetails.paymentStatusHeading }}
+        </p>
+        <p>{{ props.bookPolicyDetails.paymentStatusDescription }}</p>
+      </div>
+      <template #actions>
+        <div class="text-center space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.sendPolicyPopup = false"
+          >
+            Go Back
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="sendPolicyConfirmation"
+          >
+            Continue
           </x-button>
         </div>
       </template>

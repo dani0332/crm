@@ -7,6 +7,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -18,7 +19,6 @@ use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
-use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -109,7 +109,8 @@ class BikeQuoteController extends Controller
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BIKE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->active()->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Bike);
+
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
@@ -155,7 +156,6 @@ class BikeQuoteController extends Controller
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
-            'record' => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::BIKE->id(),
@@ -190,6 +190,7 @@ class BikeQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'documentTypeCodes' => $documentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'record' => $quote,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,

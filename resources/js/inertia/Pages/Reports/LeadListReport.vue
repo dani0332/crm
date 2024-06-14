@@ -152,7 +152,6 @@ const tableHeader = reactive([
           placeholder="Search by Tiers"
           :options="tiers"
           :max-limit="3"
-          deselect-all
         />
       </x-field>
       <x-field label="Lead Source">
@@ -161,7 +160,6 @@ const tableHeader = reactive([
           placeholder="Search by Lead Source"
           :options="leadSource"
           :max-limit="3"
-          deselect-all
         />
       </x-field>
     </div>
@@ -172,7 +170,6 @@ const tableHeader = reactive([
           placeholder="Search By Teams"
           :options="teams"
           :max-limit="3"
-          deselect-all
         />
       </x-field>
       <x-field label="Is Ecommerce">
@@ -193,7 +190,6 @@ const tableHeader = reactive([
           placeholder="Search By Payment Status"
           :options="paymentStatus"
           :max-limit="3"
-          deselect-all
         />
       </x-field>
     </div>

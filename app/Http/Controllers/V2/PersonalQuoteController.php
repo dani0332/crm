@@ -9,6 +9,7 @@ use App\Http\Requests\PersonalQuotePolicyRequest;
 use App\Http\Requests\PersonalQuoteStatusRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 
 class PersonalQuoteController extends Controller
@@ -19,9 +20,16 @@ class PersonalQuoteController extends Controller
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
     {
-        PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
+        $response = PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
 
-        return back()->with('message', 'Status updated successfully');
+        // Update payment allocation status when lead status changes when lead status as Policy Issue
+        app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
+
+        if (! $response['activity_created']) {
+            return back()->with('message', 'Status updated successfully');
+        }
+
+        return back()->with('message', 'Status updated successfully & Activity has been created');
     }
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)

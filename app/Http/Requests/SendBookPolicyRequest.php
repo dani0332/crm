@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendBookPolicyRequest extends FormRequest
@@ -31,6 +33,8 @@ class SendBookPolicyRequest extends FormRequest
             'model_type' => 'required',
             'quote_id' => 'required',
             'send_policy_type' => 'required',
+            'is_send_policy' => 'nullable',
+            'transaction_payment_status' => 'nullable',
             'modelType' => 'nullable',
         ];
     }
@@ -39,11 +43,16 @@ class SendBookPolicyRequest extends FormRequest
     {
 
         if (request()->send_policy_type == 'sage') {
+            if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
+                return response()->json(['errors' => [
+                    'message' => 'You are not authorized to perform this action',
+                ]], 403);
+            }
             $validator->after(function ($validator) {
                 //check for quote records if exists
                 $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
                 if ($quote) {
-                    $payment = Payment::where('code', $quote->code)->first();
+                    $payment = Payment::where('code', $quote->code)->whereNull('send_update_log_id')->first();
                     $paymentSplit = PaymentSplits::where('code', $quote->code)->first();
                     $splits = PaymentSplits::where('code', $quote->code)->get();
 
@@ -62,19 +71,26 @@ class SendBookPolicyRequest extends FormRequest
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                             $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
                         }
-                        if (! empty($splits)) {
-                            foreach ($splits as $item) {
-                                if (empty($item->sage_reciept_id)) {
+
+                        $isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+                        $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+                        $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
+                        if ($isPaymentUpfrontOrSplitAndPaidOrCaptured) {
+                            if (! empty($splits)) {
+                                $isSageReceiptIdEmpty = empty($splits[0]->sage_reciept_id);
+                                if ($isSageReceiptIdEmpty) {
                                     $validator->errors()->add('value', 'Payment sage reciept id can not be null');
                                 }
                             }
                         }
-                        if (! empty($payment->insurer_invoice_date) && ! empty($paymentSplit->due_date)) {
-                            $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->startOfDay();
-                            $paymentDueDate = Carbon::parse($paymentSplit->due_date)->startOfDay();
 
-                            if ($invoiceDate->gt($paymentDueDate)) {
-                                $validator->errors()->add('value', 'Payment Due date cannot be earlier than Insurer Invoice date');
+                        if (strtolower($payment->invoicePaymentStatus) == PaymentFrequency::PAID && in_array($payment->frequency, [PaymentFrequency::SPLIT_PAYMENTS, PaymentFrequency::PAID])) {
+                            if (! empty($splits)) {
+                                foreach ($splits as $item) {
+                                    if (empty($item->sage_reciept_id)) {
+                                        $validator->errors()->add('value', 'Payment sage reciept id can not be null');
+                                    }
+                                }
                             }
                         }
                     } else {

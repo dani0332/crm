@@ -14,6 +14,7 @@ use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
+use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
@@ -30,12 +31,14 @@ use App\Observers\HomeQuoteDetailObserver;
 use App\Observers\HomeQuoteObserver;
 use App\Observers\LifeQuoteDetailObserver;
 use App\Observers\LifeQuoteObserver;
+use App\Observers\PersonalQuoteObserver;
 use App\Observers\PetQuoteObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
+use App\Services\LeadsCountService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -53,6 +56,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(HealthAllocationService::class, function ($app) {
             return new HealthAllocationService();
+        });
+
+        $this->app->singletonIf(LeadsCountService::class, function ($app) {
+            return new LeadsCountService();
         });
     }
 
@@ -79,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
         YachtQuote::observe(YachtQuoteObserver::class);
         CycleQuote::observe(CycleQuoteObserver::class);
         BikeQuote::observe(BikeQuoteObserver::class);
-
+        PersonalQuote::observe(PersonalQuoteObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

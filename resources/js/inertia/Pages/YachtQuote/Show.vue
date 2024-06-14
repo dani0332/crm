@@ -1,18 +1,20 @@
 <script setup>
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
-import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MigratePayment from '../../Components/MigratePayment.vue';
+import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';;
 
-defineProps({
+const props = defineProps({
   quote: Object,
   documentTypes: Object,
+  noteDocumentType: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
   insuranceProviders: Object,
@@ -34,6 +36,9 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  quoteRequest: Object,
+  quoteDocuments: Object,
+  cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
@@ -41,8 +46,8 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
-  record: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
@@ -61,6 +66,9 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 
+const countDays = useDaysSinceStale(
+  props.quoteRequest?.stale_at ?? props.quote?.stale_at,
+);
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
@@ -230,20 +238,25 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 <template>
   <div>
     <Head title="Yacht Quotes" />
-
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Yacht Detail</h2>
-      <div class="flex gap-2">
-        <Link
-          v-if="quote.quote_detail?.insly_id"
-          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
-          preserve-scroll
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Yacht Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
         >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-
+          Stale for {{ countDays }}
+        </p>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteDocuments"
+          :modelType="quoteType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
           <Link :href="route('yacht-quotes-edit', quote.uuid)">
             <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
@@ -267,29 +280,23 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
             Yacht Quotes
           </x-button>
         </Link>
-      </div>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
+      </template>
+    </StickyHeader>
+   
+    <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h2 class="text-xl font-semibold">Yacht Detail</h2>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+             <div class="grid sm:grid-cols-2" v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])">
+                <dt class="font-medium">ID</dt>
+                <dd>{{ quote.id }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
-                <div
-                  class="grid sm:grid-cols-2"
-                  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-                >
-                  <dt class="font-medium">ID</dt>
-                  <dd>{{ quote.id }}</dd>
-                </div>
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -323,12 +330,12 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
-            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.created_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
-            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -372,7 +379,10 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                   </Link>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -380,7 +390,12 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                     >
                       CHILD REF-ID
                     </label>
-                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
                   </x-tooltip>
                 </div>
                 <div>
@@ -409,26 +424,28 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
             <x-divider class="mb-4 mt-1" />
           </div>
 
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BOAT DETAILS</dt>
-            <dd class="break-words">{{ quote?.yacht_quote?.boat_details }}</dd>
-          </div>
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BOAT DETAILS</dt>
+                <dd class="break-words">
+                  {{ quote?.yacht_quote?.boat_details }}
+                </dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ENGINE DETAILS</dt>
-            <dd class="break-words">
-              {{ quote?.yacht_quote?.engine_details }}
-            </dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ENGINE DETAILS</dt>
+                <dd class="break-words">
+                  {{ quote?.yacht_quote?.engine_details }}
+                </dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CLAIM EXPERIENCE</dt>
-            <dd class="break-words">
-              {{ quote?.yacht_quote?.claim_experience }}
-            </dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CLAIM EXPERIENCE</dt>
+                <dd class="break-words">
+                  {{ quote?.yacht_quote?.claim_experience }}
+                </dd>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUM INSURED</dt>
@@ -478,7 +495,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -562,7 +579,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -805,7 +822,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
       :payments="quote.payments"
     />
@@ -813,15 +830,22 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
-			:paymentDocument="documentTypes.filter(item => item.code === 'YPD' || item.code === 'YPDR' || item.code === 'YDPDR')"
-			:quoteRequest="quote"
+      :paymentDocument="documentTypeCodes.filter(item => ['YPD', 'YPDR', 'YDPDR'].includes(item.code))"
+      :proformaPayment="
+        quote.payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+      :bookPolicyDetails="bookPolicyDetails"
+    />
 
     <QuotePayments
       v-else
@@ -845,7 +869,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Yacht"
       :expanded="sectionExpanded"
     />
@@ -868,7 +892,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Yacht"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

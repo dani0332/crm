@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
+use App\Models\YachtQuote;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ class YachtQuoteRepository extends BaseRepository
     }
 
     /**
-     * create new personal quote
+     * create new personal quote.
      *
      * @param  $quoteTypeCode
      * @return mixed
@@ -66,7 +67,10 @@ class YachtQuoteRepository extends BaseRepository
 
             $quote->update($quoteData);
 
-            $quote->yachtQuote->update(Arr::only($data, ['boat_details', 'engine_details', 'claim_experience', 'use', 'operator_experience']));
+            $quote->yachtQuote()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                Arr::only($data, (new YachtQuote())->allowedColumns())
+            );
 
             return $quote;
         });
@@ -88,9 +92,10 @@ class YachtQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
                     ]);
                 },
@@ -129,8 +134,13 @@ class YachtQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
+        $request = request();
+
+        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
+        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
+
         $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
             'quoteStatus',
             'currentlyInsuredWith',
@@ -139,11 +149,17 @@ class YachtQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->orderBy($sort_by, $sort_type);
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        if ($forTotalLeadsCount) {
+            //PD Revert
+            // return $query->count();
+            return 0;
+        }
+
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchExport()

@@ -22,19 +22,13 @@ class SaveBookingDetailsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'booking_date' => 'required|date',
+            'commission_vat_applicable' => 'required|numeric',
             'invoice_description' => 'required|string',
-            'broker_invoice_number' => 'required|string',
-            'transaction_payment_status' => 'required|string',
             'invoice_date' => 'required|date',
             'insurer_tax_invoice_number' => 'required|string',
             'insurer_commission_invoice_number' => 'required|string',
             'discount' => 'nullable|numeric',
-            'commission_percentage' => 'required|numeric',
             'commission_vat_not_applicable' => 'nullable|numeric',
-            'vat_on_commission' => 'required|numeric',
-            'commission_vat_applicable' => 'required|numeric',
-            'total_commission' => 'required|numeric',
             'total_vat_amount' => 'required|numeric',
             'price_vat_applicable' => 'required|numeric',
             'price_vat_not_applicable' => 'required|numeric',

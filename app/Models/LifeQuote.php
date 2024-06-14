@@ -50,7 +50,7 @@ class LifeQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->belongsTo(User::class)->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class)->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path']);
     }
     public function previousAdvisor()
     {
@@ -119,6 +119,12 @@ class LifeQuote extends Model implements AuditableContract
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Life);
     }
 
     public function insuranceProvider()

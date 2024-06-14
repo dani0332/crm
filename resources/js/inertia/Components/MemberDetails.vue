@@ -200,7 +200,9 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
         </AddMemberButtonTemplate>
         <div
           class="flex mb-3 justify-end"
-          v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
+          v-if="props.quote.quote_status_id !=
+              page.props.quoteStatusEnum.PolicyCancelled ||
+              page.props.linkedQuoteDetails.childLeadsCount == 0"
         >
           <x-tooltip
             v-if="page.props.lockLeadSectionsDetails.memebr_details"
@@ -263,8 +265,10 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
           </template>
           <template #item-action="item">
             <div
-              v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
-              class="flex gap-2 py-8"
+              v-if="props.quote.quote_status_id !=
+                  page.props.quoteStatusEnum.PolicyCancelled ||
+                  page.props.linkedQuoteDetails.childLeadsCount == 0"
+              class="flex gap-2"
             >
               <x-tooltip
                 v-if="page.props.lockLeadSectionsDetails.memebr_details"
