@@ -2,17 +2,18 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CarPlanType;
-use App\Enums\LeadSourceEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\UserStatusEnum;
-use App\Models\ApplicationStorage;
+use Carbon\Carbon;
+use App\Models\User;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Enums\CarPlanType;
+use App\Enums\quoteTypeCode;
+use App\Enums\LeadSourceEnum;
+use App\Enums\UserStatusEnum;
 use App\Models\CarModelDetail;
-use App\Models\User;
-use Carbon\Carbon;
+use App\Jobs\SICFollowupEmailJob;
+use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
 
 class CarEmailService extends BaseService
 {
@@ -69,7 +70,17 @@ class CarEmailService extends BaseService
         if ($lead->advisor_id) {
             $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
         } else {
+            info('----sending sendNonAdvisorIntroEmail Time: '.now().'------  Ref ID:'.$lead->uuid);
             $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
+            if ($responseCode) {
+                $emailTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID)->first();
+                info('----sending SICFollowupEmail  Time: '.now().'------  Ref ID:'.$lead->uuid);
+                $this->sendEmailCustomerService->sendSICFollowupEmail($emailTemplate->value, $lead);
+                // Dispatch the job with a 24 hours delay
+                SICFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours(24));
+                info('----dispatch job SICFollowupEmailJob  Time: '.now().'------  Ref ID:'.$lead->uuid);
+
+            }
         }
 
         return $responseCode;

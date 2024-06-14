@@ -934,4 +934,44 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
+    public function sendSICFollowupEmail($emailTemplateId, $emailData)
+    {
+
+        try {
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => config('constants.SENDINBLUE_KEY'),
+                'Content-Type' => 'application/json',
+            ];
+            $body = [
+                'to' => [[
+                    'email' => $emailData->email,
+                    'name' => $emailData->first_name.' '.$emailData->last_name,
+                ]],
+                'templateId' => (int) $emailTemplateId,
+                'params' => [
+                    'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$emailData->uuid.'/?assignAdvisor=true',
+                    'carQuoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').'/?IA=true',
+                    'carQuoteId' => $emailData->code,
+                    'email' => $emailData->email,
+                    'clientFullName' => $emailData->first_name.' '.$emailData->last_name],
+            ];
+            $response = Http::withHeaders($headers)
+                ->post(config('constants.SIB_URL'), $body);
+
+            info('SICFollowupEmail ---- Request Sent '.$emailData->email);
+
+            $responseCode = $response->status();
+            if ($responseCode == 200 || $responseCode == 201) {
+                info('SICFollowupEmail ---- | Response Code: '.$responseCode.' | Response Received  : '.json_encode($response->object()).'--'.$emailData->email);
+            }
+
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            Log::error(sprintf('SICFollowupEmail failed: Brevo API call failed for %s | Exception: %s', $emailData->email, $ex->getMessage()));
+        }
+
+        return $responseCode;
+    }
+
 }

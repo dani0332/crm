@@ -73,4 +73,6 @@ final class ApplicationStorageEnums extends Enum
     public const QUOTE_SYNC_CLEANUP_ENABLED = 'QUOTE_SYNC_CLEANUP_ENABLED';
     public const QUOTE_SYNC_CLEANUP_DAYS = 'QUOTE_SYNC_CLEANUP_DAYS';
     public const ALFRED_FOLLOWUP_TEMPLATE = 'ALFRED_FOLLOWUP_TEMPLATE';
+    public const SIC_FOLLOWUP_TEMPLATE_ID = 'SIC_FOLLOWUP_TEMPLATE_ID';
+    
 }

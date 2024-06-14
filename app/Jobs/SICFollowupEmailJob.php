@@ -1,0 +1,60 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Enums\ApplicationStorageEnums;
+use App\Facades\Ken;
+use App\Models\ApplicationStorage;
+use App\Models\CarQuote;
+use App\Services\SendEmailCustomerService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+
+class SICFollowupEmailJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Create a new job instance.
+     */
+    private $uuid;
+
+    public $tries = 3;
+    public $timeout = 15;
+    public $backoff = 60;
+
+    public function __construct($uuid)
+    {
+        $this->uuid = $uuid;
+    }
+    /**
+     * Execute the job.
+     */
+    public function handle(SendEmailCustomerService $sendEmailCustomerService)
+    {
+        $carLead = CarQuote::where('uuid', $this->uuid)->first();
+
+        if (empty($carLead->advisor_id)) {
+            $emailTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID)->first();
+            $sendEmailCustomerService->sendSICFollowupEmail($emailTemplate->value, $carLead);
+            // $this->sendWhatsAppMessageKenRequest();
+        } else {
+            info('SICFollowupEmailJob - Car Lead Advisor Available - Ref ID: '.$carLead->uuid.'- Time: '.now());
+        }
+    }
+
+    private function sendWhatsAppMessageKenRequest()
+    {
+        $response = Ken::request('/send-sic-dedicated-wa-message', 'post', [
+            'quoteUID' => $this->uuid,
+        ]);
+        if ($response) {
+            info('Whatsapp message sent successfully. UUID: '.$this->uuid);
+        } else {
+            info('invaild response from ken| UUID: '.$this->uuid);
+        }
+    }
+}
