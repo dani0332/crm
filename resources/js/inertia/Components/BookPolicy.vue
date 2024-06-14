@@ -1,7 +1,9 @@
 <script setup>
+import { useRoundIt } from '../Composables/utilities';
 const page = usePage();
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
+
 const props = defineProps({
   quote: {
     type: Object,
@@ -237,9 +239,7 @@ const submitPolicy = () => {
 
 const calculateVatOnCommission = commissionVatApplicable => {
   if (Number(commissionVatApplicable) > 0) {
-    return Number(
-      Number(commissionVatApplicable) * Number(page.props.vat),
-    ).toFixed(2);
+    return useRoundIt(commissionVatApplicable * page.props.vat);
   } else {
     return 0;
   }
@@ -249,9 +249,7 @@ const calculateCommissionPercentage = (
   totalPriceWithoutVat,
 ) => {
   if (totalCommissionWithoutVat > 0) {
-    return ((totalCommissionWithoutVat / totalPriceWithoutVat) * 100).toFixed(
-      2,
-    );
+    return useRoundIt((totalCommissionWithoutVat / totalPriceWithoutVat) * 100);
   } else {
     return 0;
   }
@@ -272,9 +270,8 @@ const calculateCommission = () => {
         bpForm.commission_vat_applicable,
       );
 
-      bpForm.total_commission = (
-        totalCommissionWithoutVat + Number(bpForm.vat_on_commission)
-      ).toFixed(2);
+      bpForm.total_commission =
+        totalCommissionWithoutVat + useRoundIt(bpForm.vat_on_commission);
 
       bpForm.commission_percentage = calculateCommissionPercentage(
         totalCommissionWithoutVat,
