@@ -954,7 +954,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
         element.selectedCopayId &&
         defaultCopayId == value.healthPlanCoPaymentId
       ) {
-        smallestCopayValue = Number(value.premium);
+        smallestCopayValue = Number(value.discountPremium);
         smallestCopayVAT = Number(value.vat);
         smallestCopayLoadingPrice = Number(
           value.loadingPrice ? value.loadingPrice : 0,
@@ -965,14 +965,14 @@ const getSmallestCopayRateAsDefaultValue = () => {
         element.selectedCopayId == null
       ) {
         if (index == 0) {
-          smallestCopayValue = Number(value.premium);
+          smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
           );
           defaultCopayId = value.healthPlanCoPaymentId;
-        } else if (value.premium < smallestCopayValue) {
-          smallestCopayValue = Number(value.premium);
+        } else if (value.discountPremium < smallestCopayValue) {
+          smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
