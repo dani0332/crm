@@ -330,7 +330,7 @@ class SagePayloadFactory
             unset($payLoad->BatchStatus);
 
             if ($type == SageEnum::SCT_REVERSAL) {
-                
+
                 $payLoad->Invoices[0]->DocumentNumber = (string) substr($payLoad->Invoices[0]->DocumentNumber, -18).'-REV';
                 $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $payLoad->Invoices[0]->DocumentType = 'DebitNote';
