@@ -170,13 +170,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 return ['status' => 'error', 'message' => 'Payment record not found'];
             }
 
-            if($request->isPaymentLocked) { // Check if payment is locked to update specific fields
+            if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
                 $paymentInformation = [
                     'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
                     'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
                     'credit_approval' => $masterPayment->credit_approval,
                     'updated_by' => $request->user()->id,
-                ];               
+                ];
             } else {
                 $paymentInformation = [
                     'total_price' => $masterPayment->total_price,
@@ -199,13 +199,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
                 if ($masterPayment->reference) {
                     $paymentInformation['reference'] = $masterPayment->reference;
-                }                
+                }
                 if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
                     $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
                 } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
                     $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
                 }
-            }            
+            }
             $payment->update($paymentInformation);
 
             //Update split payments start
@@ -313,10 +313,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
 
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-                
-                if($request->isPaymentLocked) { // Check if payment is locked to update specific fields
+
+                if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
                     $splitPaymentInformation = [
-                        'payment_method' => $splitPayment['payment_method'],                        
+                        'payment_method' => $splitPayment['payment_method'],
                     ];
                 } else {
                     $splitPaymentInformation = [
