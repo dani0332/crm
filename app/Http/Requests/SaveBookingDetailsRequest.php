@@ -32,7 +32,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'total_vat_amount' => 'required|numeric',
             'price_vat_applicable' => 'required|numeric',
             'price_vat_not_applicable' => 'required|numeric',
-            'total_price' => 'required|numeric',
+            'price_with_vat' => 'required|numeric',
         ];
     }
 
