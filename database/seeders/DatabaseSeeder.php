@@ -57,6 +57,7 @@ class DatabaseSeeder extends Seeder
             QuoteStatusSeeder::class,
             ApplicationStorageSeeder::class,
             addInsuranceProvidersConfiguration::class,
+            RevokeTempPaymentUpdatePermissionsSeeder::class,
         ]);
     }
 }
