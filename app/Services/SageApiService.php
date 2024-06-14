@@ -1466,7 +1466,7 @@ class SageApiService
                     // Add Vat on commission to the first installment of commission in sage for balancing the amount
                     $dueCommissionSplitAmount = roundNumber($commissionSplit);
                     if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
-                        $dueCommissionSplitAmount = roundNumber($commissionSplit) + roundNumber($vatOnCommission);
+                        $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
                     }
                     /*
                      to prevent difference in amount due to rounding number, sum all the dueCommissionSplitAmount except the last one,
