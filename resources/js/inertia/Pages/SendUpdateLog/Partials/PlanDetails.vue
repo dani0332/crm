@@ -59,21 +59,21 @@ const roundDecimal = value => {
 };
 
 const updatePriceWithVat = () => {
-  let totalPrice = 0;
-  const priceWithVat = parseFloat(planDetailsForm.price_vat_applicable);
-  const priceWithoutVat = parseFloat(planDetailsForm.price_vat_not_applicable);
+  let priceWithVat = 0;
+  const priceVatApplicable = parseFloat(planDetailsForm.price_vat_applicable);
+  const priceVatNotApplicable = parseFloat(planDetailsForm.price_vat_not_applicable);
 
-  if (priceWithVat && priceWithoutVat) {
-    totalPrice = (priceWithVat / 100) * 5 + priceWithVat + priceWithoutVat;
-  } else if (priceWithVat) {
-    totalPrice = (priceWithVat / 100) * 5 + priceWithVat;
-  } else if (priceWithoutVat) {
-    totalPrice = priceWithoutVat;
+  if (priceVatApplicable && priceVatNotApplicable) {
+    priceWithVat = (priceVatApplicable / 100) * 5 + priceVatApplicable + priceVatNotApplicable;
+  } else if (priceVatApplicable) {
+    priceWithVat = (priceVatApplicable / 100) * 5 + priceVatApplicable;
+  } else if (priceVatNotApplicable) {
+    priceWithVat = priceVatNotApplicable;
   }
 
-  planDetailsForm.price_with_vat = roundDecimal(totalPrice);
-  planDetailsForm.price_vat_applicable = roundDecimal(priceWithVat);
-  planDetailsForm.price_vat_not_applicable = roundDecimal(priceWithoutVat);
+  planDetailsForm.price_with_vat = roundDecimal(priceWithVat);
+  planDetailsForm.price_vat_applicable = roundDecimal(priceVatApplicable);
+  planDetailsForm.price_vat_not_applicable = roundDecimal(priceVatNotApplicable);
 };
 
 const onUpdate = () => {
