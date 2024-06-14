@@ -4505,7 +4505,9 @@ const lookupsEnum = page.props.lookupsEnum;
             splitPaymentRecord.verified_by !== null &&
             paymentMethodsForm.status == 'view' &&
             paymentMethodsModels[splitPaymentNo] !=
-              paymentMethodsEnums.CreditCard
+              paymentMethodsEnums.CreditCard &&
+            paymentMethodsModels[splitPaymentNo] !=
+              paymentMethodsEnums.CreditApproval
           "
         >
           <p class="text-lg font-bold text-blue-400 mr-2">
