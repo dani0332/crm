@@ -113,6 +113,7 @@ class CarQuoteService extends BaseService
                 'cqr.policy_issuance_status_id',
                 'cqr.policy_issuance_status_other',
                 'cqr.plan_id',
+                'cqr.payment_paid_at',
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',

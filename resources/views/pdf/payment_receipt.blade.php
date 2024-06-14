@@ -169,7 +169,7 @@
                 <td style="width=20%; verticle-align:top; text-align:right;">
                     Insurer Advisor: {{ $data['advisor_name'] }}<br>
                     Email: {{ $data['advisor_email'] }}<br>
-                    Mobilel Number: {{ $data['advisor_mobile_no'] }}<br>
+                    Mobile Number: {{ $data['advisor_mobile_no'] }}<br>
                     Direct Line: {{ $data['advisor_landline_no'] }}<br>
                     <br>                
                 </td>

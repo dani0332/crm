@@ -41,9 +41,7 @@ const props = defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
-  parentLeadDetails: Object,
   linkedQuoteDetails: Array,
-  record: Object,
   bookPolicyDetails: Array,
 });
 
@@ -668,13 +666,11 @@ watch(
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white mt-6">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">
-              Business Quote Detail
-            </h3>
+          
           </div>
         </template>
         <template #body>
@@ -818,8 +814,8 @@ watch(
                     v-if="quote.parent_duplicate_quote_id"
                     :href="
                       getDetailPageRoute(
-                        parentLeadDetails.uuid,
-                        parentLeadDetails.quote_type_id,
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
                       )
                     "
                     class="text-primary-500 hover:underline"
@@ -1208,7 +1204,7 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Business"
       :expanded="sectionExpanded"
     />
@@ -1229,7 +1225,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Business"
       modelType="Corpline"
       :bookPolicyDetails="bookPolicyDetails"

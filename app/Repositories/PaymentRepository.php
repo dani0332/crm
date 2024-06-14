@@ -403,8 +403,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
                             $parentPayment = $paymentSplit->payment;
-                            /* Part of milestone 2 */
-                            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER) {
+                            /* Create payment receipt for broker */
+                            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
+                                ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::CreditApproval])
+                            ) {
                                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
                             }
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
@@ -592,7 +594,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     );
                 }
             }
-            /* Part of milestone 2*/
+            /* Create payment receipt for broker*/
             if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);
             }
@@ -706,6 +708,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel = $this->getQuoteObject($quoteType, $payment->paymentable_id);
             if ($quoteModel) {
                 $quoteModel->payment_status_id = $payment->payment_status_id;
+                if ($payment->payment_status_id == PaymentStatusEnum::PAID) {
+                    $quoteModel->payment_paid_at = now();
+                }
                 $quoteModel->save();
             }
         }

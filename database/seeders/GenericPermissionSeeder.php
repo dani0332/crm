@@ -214,6 +214,30 @@ class GenericPermissionSeeder extends Seeder
         $this->quoteSyncSeeds();
         $this->advisorDistributionReportSeeds();
         $this->addMotorHeadNewRole();
+        $this->createAndAssignManulHealthPlanPermission();
+    }
+
+    /**
+     * add manual health plan permission function.
+     *
+     * @return void
+     */
+    private function createAndAssignManulHealthPlanPermission()
+    {
+        $healthPlanPermission = Permission::where('name', PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)->first();
+        if (! $healthPlanPermission) {
+            Permission::create([
+                'name' => PermissionsEnum::ADD_MANUAL_HEALTH_PLAN,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        // Add Permission to Admin
+        $role = Role::where('name', RolesEnum::Admin)->first();
+
+        if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
+            $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
+        }
         $this->syncMasterPermissionList();
     }
 

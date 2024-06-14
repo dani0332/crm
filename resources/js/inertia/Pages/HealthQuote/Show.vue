@@ -9,7 +9,6 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 
 const props = defineProps({
   quote: Object,
-  record: Object,
   leadStatuses: Array,
   ecomDetails: Object,
   coPayment: Object,
@@ -2939,7 +2938,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -3271,13 +3270,7 @@ watch(
 
             <!-- v-if="isBetaUser" -->
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.BetaUser,
-                  rolesEnum.RMAdvisor,
-                  rolesEnum.HealthManager,
-                ])
-              "
+              v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
               size="sm"
               color="emerald"
               @click.prevent="modals.createPlan = true"
@@ -3583,16 +3576,6 @@ watch(
       :payments="payments"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="modelType"
-      :paymentLink="paymentLink"
-      :expanded="sectionExpanded"
-    />
-
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Health"
@@ -3634,9 +3617,19 @@ watch(
       :quote="quote"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="modelType"
+      :paymentLink="paymentLink"
+      :expanded="sectionExpanded"
+    />
+    
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="health"
       :expanded="sectionExpanded"
       :payments="payments"
@@ -3646,7 +3639,7 @@ watch(
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
-      :quote="record"
+      :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Health"
@@ -3661,7 +3654,7 @@ watch(
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="health"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
