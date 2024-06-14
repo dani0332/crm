@@ -346,6 +346,19 @@ const rules = {
   },
 };
 
+const isPaymentLocked = computed(() => {
+  if (
+      paymentMethodsForm.status == 'edit' &&
+      (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.CancellationPending ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyCancelled ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyCancelledReissued)
+      ) {
+    return true;
+  }  
+  return false;
+});
+
 const handleDeclinedChange = () => {
   isDeclineClicked.value = true;
   isApproveClicked.value = false;
@@ -756,7 +769,7 @@ const handleApprovalReasonChange = () => {
     isCustomReasonEnabled.value = false;
   }
   //customize payment method based on collection type
-  if (paymentMethodsForm.credit_approval !== '') {
+  if (paymentMethodsForm.credit_approval !== '') { 
     paymentTypesFiltered.value = paymentTypes.value;
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
@@ -841,7 +854,7 @@ const handleApprovalReasonChange = () => {
         page.props.paymentMethodsEnum?.CreditApproval;
     }
   } else {
-    if (isTotalPriceUpdated.value === false) {
+    if (isTotalPriceUpdated.value === false && isPaymentLocked.value === false) {
       handleCollectionTypeChange();
     }
   }
@@ -852,6 +865,14 @@ const resetCreditApproval = () => {
   isCustomReasonEnabled.value = false;
   handleApprovalReasonChange();
   handleFrequencyChange(false);
+  if (isPaymentLocked.value && paymentMethodsForm.status == 'edit') { // If payment is locked, reset the payment method for split payments
+    for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+      if (readOnlyPayments.value[i] === true) {
+        continue;
+      }
+      paymentMethodsModels.value[i] ='';
+    }  
+  }
 };
 
 const resetDiscount = (callDiscountChang = true) => {
@@ -1670,7 +1691,10 @@ const editPaymentModal = (
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price - payment.discount_value;
 
-    if (
+    
+    if (isPaymentLocked.value) {
+      isFieldReadonly.value = true;
+    } else if (
       isAnyPaid &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
@@ -2040,6 +2064,7 @@ const addPayment = isValid => {
       ...data,
       paymentCode: paymentMethodsForm.paymentCode,
       trashedFilesModal: trashedFilesModal.value,
+      isPaymentLocked: isPaymentLocked.value,
       isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
     };
     paymentMethodsForm
@@ -3255,7 +3280,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 v-if="!isFieldReadonly"
                 name="collection_date"
                 v-model="paymentMethodsForm.collection_date"
-                :rules="[rules.isRequired]"
+                :rules="[rules.isRequired]"                
               />
             </x-field>
           </div>
@@ -3300,7 +3325,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 v-model="paymentMethodsForm.collection_type"
                 :rules="[rules.isRequired]"
                 @change="handleCollectionTypeChange"
-                :disabled="isTotalPriceUpdated"
+                :disabled="isTotalPriceUpdated"                
               >
                 <template v-for="option in collectionTypes" :key="option.value">
                   <option :value="option.value" :title="option.tooltip">
@@ -3357,7 +3382,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 class="custom-select"
                 v-model="paymentMethodsForm.frequency"
                 :rules="[rules.isRequired]"
-                @change="handleFrequencyChange"
+                @change="handleFrequencyChange"                
               >
                 <template v-for="option in frequencyTypes" :key="option.value">
                   <option :value="option.value" :title="option.tooltip">
@@ -3447,13 +3472,13 @@ const lookupsEnum = page.props.lookupsEnum;
             </x-field>
           </div>
 
-          <div v-if="isCreditApprovalAllowed && !isFieldReadonly">
+          <div v-if="isCreditApprovalAllowed && (!isFieldReadonly  || (isPaymentLocked && paymentMethodsForm.status == 'edit'))">
             <ToolTip
               title="CREDIT APPROVAL"
               :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"
             />
             <x-field class="w-full">
-              <div v-if="!isFieldReadonly" class="custom-dropdown">
+              <div class="custom-dropdown">
                 <span
                   v-if="paymentMethodsForm.credit_approval != ''"
                   class="close-icon"
@@ -3479,7 +3504,7 @@ const lookupsEnum = page.props.lookupsEnum;
               </div>
             </x-field>
           </div>
-          <div v-if="isFieldReadonly">
+          <div v-if="isFieldReadonly && !(isPaymentLocked && paymentMethodsForm.status == 'edit')">
             <ToolTip
               title="CREDIT APPROVAL"
               :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"
@@ -3498,7 +3523,7 @@ const lookupsEnum = page.props.lookupsEnum;
             v-if="
               isCustomReasonEnabled &&
               isCreditApprovalAllowed &&
-              !isFieldReadonly
+              (!isFieldReadonly || (isPaymentLocked && paymentMethodsForm.status == 'edit'))
             "
             label="CUSTOM REASON"
             required
@@ -3511,7 +3536,7 @@ const lookupsEnum = page.props.lookupsEnum;
             />
           </x-field>
           <x-field
-            v-if="isCustomReasonEnabled && isFieldReadonly"
+            v-if="isCustomReasonEnabled && isFieldReadonly && !(isPaymentLocked && paymentMethodsForm.status == 'edit')"
             label="CUSTOM REASON"
             class="w-full"
           >
@@ -3542,7 +3567,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 <select
                   class="custom-select"
                   v-model="paymentMethodsForm.discount"
-                  @change="handleDiscountChange"
+                  @change="handleDiscountChange"                  
                 >
                   <template v-for="option in discountTypes" :key="option.value">
                     <option
@@ -3601,7 +3626,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 class="custom-select"
                 v-model="paymentMethodsForm.discount_reason"
                 :rules="[rules.isRequired]"
-                @change="handleDiscountReasonChange"
+                @change="handleDiscountReasonChange"                
               >
                 <template v-for="option in discountReasons" :key="option.value">
                   <option :value="option.value" :title="option.tooltip">
@@ -3648,7 +3673,7 @@ const lookupsEnum = page.props.lookupsEnum;
             "
             label="CUSTOM DISCOUNT REASON"
             :required="!isFieldReadonly"
-            class="w-full"
+            class="w-full"            
           >
             <span v-if="isFieldReadonly">{{
               paymentMethodsForm.discount_custom_reason
@@ -3696,7 +3721,7 @@ const lookupsEnum = page.props.lookupsEnum;
                     :max-files="discountProofDocument.max_files"
                     :max-size="discountProofDocument.max_size"
                     :loading="documentForm.processing"
-                    @change="uploadDocument(discountProofDocument, $event, 0)"
+                    @change="uploadDocument(discountProofDocument, $event, 0)"                    
                   />
                 </span>
                 <div
@@ -3795,7 +3820,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 :class="{ 'custom-select-error': isDiscountError }"
                 v-model="discountValue"
                 name="discount_value"
-                @keyup="calculateTotalAmount()"
+                @keyup="calculateTotalAmount()"                
               />
               <sup
                 v-if="isDiscountError"
@@ -3910,6 +3935,28 @@ const lookupsEnum = page.props.lookupsEnum;
             up, you're good to proceed.
           </div>
         </div>
+
+        <div
+          v-if="isPaymentLocked && paymentMethodsForm.status == 'edit'"
+          class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500"
+          role="alert"
+        >
+          <svg
+            class="flex-shrink-0 inline w-4 h-4 mr-3"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"
+            />
+          </svg>
+          <div>
+            {{ paymentTooltipEnum.PAYMENT_LOCKED }}
+          </div>
+        </div>
+
         <div
           v-if="isFileError"
           class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500"
@@ -4376,6 +4423,7 @@ const lookupsEnum = page.props.lookupsEnum;
                       v-model="splitAmountModels[count]"
                       class="w-full"
                       :rules="[rules.isRequired]"
+                      :disabled="isPaymentLocked"
                     />
                   </template>
                 </div>
@@ -4415,6 +4463,7 @@ const lookupsEnum = page.props.lookupsEnum;
                       class="w-full"
                       :rules="[rules.isRequired]"
                       placeholder="dd-mm-yyyy"
+                      :disabled="isPaymentLocked"
                     />
                   </template>
                 </div>
@@ -5152,6 +5201,11 @@ const lookupsEnum = page.props.lookupsEnum;
   </div>
 </template>
 <style scoped>
+/* Apply cursor: not-allowed when select is disabled */
+.disabled-select {
+  cursor: not-allowed;
+}
+
 .h-80vh {
   height: 85vh;
 }

@@ -130,4 +130,6 @@ final class PaymentTooltip extends Enum
     const DECLINED_REASON_5 = 'No proof of Credit approval';
     const DECLINED_REASON_6 = 'Other reasons';
     const CONFIRM_APPROVE_UNSELECT = 'Select the checkbox to enable the \'Confirm\' button and proceed';
+
+    const PAYMENT_LOCKED = 'This lead is now locked as the policy has been booked. If changes are needed, please make them through the \'Send Update\' section via \'Correction of Policy\'';
 }
