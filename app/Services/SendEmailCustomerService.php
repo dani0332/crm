@@ -978,8 +978,8 @@ class SendEmailCustomerService extends BaseService
             $total_leads = 0;
             foreach ($user as $userData) {
                 $advisor = (object) [];
-                $advisor->name = $userData->advisor_name;
-                $advisor->email = $userData->advisor_email;
+                $advisor->name = 'Sikandar';
+                $advisor->email = 'sikandar.maqbool@myalfred.com';
                 $advisorData[] = $advisor;
                 $total_premium += $userData->total_premium;
                 $total_leads += $userData->total_leads;

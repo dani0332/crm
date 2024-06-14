@@ -85,301 +85,300 @@ class SendPaymentEmail extends Command
                     PaymentNotificationEmailJob::dispatch($user);
 
                 }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::BusinessManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('business_quote_request');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(business_quote_request.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'business_quote_request.code')
+                    ->join('users', 'users.id', 'business_quote_request.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('business_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->whereDate('py.authorized_at', $today)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Business Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+
+                }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::HealthManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('health_quote_request');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(health_quote_request.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'health_quote_request.code')
+                    ->join('users', 'users.id', 'health_quote_request.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('health_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->whereDate('py.authorized_at', $today)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Health Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+
+                }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::TravelManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('personal_quotes');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Travel)
+                    ->whereDate('py.authorized_at', $today)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Travel Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+
+                }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::HomeManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('personal_quotes');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
+                    ->whereDate('py.authorized_at', $today)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Home Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+
+                }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::PetManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('personal_quotes');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Pet)
+                    ->whereDate('py.authorized_at', $today)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Pet Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+                }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::YachtManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('personal_quotes');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Yacht)
+                    ->whereDate('py.authorized_at', $today)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Yacht Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+                }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::LifeManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('personal_quotes');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Life)
+                    ->whereDate('py.authorized_at', $today)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Life Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+                }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::BikeManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('personal_quotes');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Bike)
+                    ->whereDate('py.authorized_at', $today)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Bike Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+                }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::CycleManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('personal_quotes');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Cycle)
+                    ->whereDate('py.authorized_at', $today)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Cycle Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+                }
+            } elseif (isset($userData) && $userData->hasRole(RolesEnum::JetskiManager)) {
+                $teamName = $userData->getUserTeams($userData->id);
+                $query = DB::table('personal_quotes');
+
+                $query
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Jetski)
+                    ->whereIn('teams.name', $teamName)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                $user = $query->get();
+
+                if ($user->isNotEmpty()) {
+                    info('sendPaymentNotification Job Dispatch For Jetski Lead');
+                    PaymentNotificationEmailJob::dispatch($user);
+                }
+            } else {
+                info('User Not Found In Session');
             }
-//            elseif (isset($userData) && $userData->hasRole(RolesEnum::BusinessManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('business_quote_request');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(business_quote_request.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'business_quote_request.code')
-//                    ->join('users', 'users.id', 'business_quote_request.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('business_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->whereDate('py.authorized_at', $today)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Business Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//
-//                }
-//            } elseif (isset($userData) && $userData->hasRole(RolesEnum::HealthManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('health_quote_request');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(health_quote_request.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'health_quote_request.code')
-//                    ->join('users', 'users.id', 'health_quote_request.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('health_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->whereDate('py.authorized_at', $today)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Health Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//
-//                }
-//            } elseif (isset($userData) && $userData->hasRole(RolesEnum::TravelManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('personal_quotes');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-//                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Travel)
-//                    ->whereDate('py.authorized_at', $today)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Travel Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//
-//                }
-//            } elseif (isset($userData) && $userData->hasRole(RolesEnum::HomeManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('personal_quotes');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-//                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
-//                    ->whereDate('py.authorized_at', $today)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Home Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//
-//                }
-//            } elseif (isset($userData) && $userData->hasRole(RolesEnum::PetManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('personal_quotes');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-//                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Pet)
-//                    ->whereDate('py.authorized_at', $today)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Pet Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//                }
-//            } elseif (isset($userData) && $userData->hasRole(RolesEnum::YachtManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('personal_quotes');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-//                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Yacht)
-//                    ->whereDate('py.authorized_at', $today)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Yacht Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//                }
-//            } elseif (isset($userData) && $userData->hasRole(RolesEnum::LifeManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('personal_quotes');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-//                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Life)
-//                    ->whereDate('py.authorized_at', $today)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Life Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//                }
-//            } elseif (isset($userData) && $userData->hasRole(RolesEnum::BikeManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('personal_quotes');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-//                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Bike)
-//                    ->whereDate('py.authorized_at', $today)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Bike Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//                }
-//            } elseif (isset($userData) && $userData->hasRole(RolesEnum::CycleManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('personal_quotes');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-//                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Cycle)
-//                    ->whereDate('py.authorized_at', $today)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Cycle Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//                }
-//            } elseif (isset($userData) && $userData->hasRole(RolesEnum::JetskiManager)) {
-//                $teamName = $userData->getUserTeams($userData->id);
-//                $query = DB::table('personal_quotes');
-//
-//                $query
-//                    ->select(
-//                        'users.id as advisor_id',
-//                        'users.name as advisor_name',
-//                        DB::raw('COUNT(*) as total_leads'),
-//                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
-//                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
-//                    )
-//                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-//                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
-//                    ->join('user_team', 'user_team.user_id', 'users.id')
-//                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-//                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-//                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Jetski)
-//                    ->whereIn('teams.name', $teamName)
-//                    ->groupBy('users.id', 'users.name')
-//                    ->orderBy('total_leads', 'desc');
-//
-//                $user = $query->get();
-//
-//                if ($user->isNotEmpty()) {
-//                    info('sendPaymentNotification Job Dispatch For Jetski Lead');
-//                    PaymentNotificationEmailJob::dispatch($user);
-//                }
-//            } else {
-//                info('User Not Found In Session');
-//            }
         }
     }
 
