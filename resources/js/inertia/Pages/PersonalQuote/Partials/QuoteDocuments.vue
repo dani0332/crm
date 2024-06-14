@@ -170,6 +170,28 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
     });
 };
 
+const isEN = computed(() => {
+  return (
+      isSendUpdatePage &&
+      props.sendUpdateLog.category.code === sendUpdateStatusEnum.EN
+  );
+});
+
+const isCPU = computed(() => {
+  return (
+      isSendUpdatePage &&
+      props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPU
+  );
+});
+
+const sendUpdateButton = computed(() => {
+  return (
+      (isEN.value || isCPU.value) &&
+      props.updateBtn &&
+      props.updateBtn !== sendUpdateStatusEnum.SU
+  );
+});
+
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
   axios
@@ -337,7 +359,7 @@ const sendUpdatePermissionCheck = computed(() => {
             size="sm"
             color="orange"
             class="mt-5"
-            v-if="props.updateBtn"
+            v-if="sendUpdateButton"
             :loading="loader.sendUpdateSectionBtn"
             @click="sendUpdateValidation"
             :disabled="sendUpdatePermissionCheck"

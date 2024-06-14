@@ -431,6 +431,7 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::MDOV,
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DOV,
             ])) {
                 return true;
             }
@@ -520,7 +521,7 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER) {
+        if (in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
