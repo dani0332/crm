@@ -79,7 +79,8 @@ class SageApiService
         }
 
         $sageRequest->mainClassInsurance = $modelType;
-        $sageRequest->policyNumber = $quote->policy_number;
+        $sageRequest->policyNumber = substr($quote->policy_number, 60);
+        $sageRequest->originalPolicyNumber = $quote->policy_number;
         $sageRequest->policyIssuer = $payment->policyIssuer?->name ?? '';
         $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
         $sageRequest->subClass = $businessTypeOfInsuranceCode;
@@ -133,6 +134,7 @@ class SageApiService
         //Insurer GL Account and Vendor Number
         $sageRequest->insurerGlLiaiblityAccount = $payment->insuranceProvider?->gl_liaiblity_account;
         $sageRequest->sageVenderId = $payment->insuranceProvider?->sage_vendor_id;
+        $sageRequest->sageInsurerCustomerId = $payment->insuranceProvider?->sage_insurer_customer_id;
 
         return $sageRequest;
     }
@@ -343,17 +345,17 @@ class SageApiService
             $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quoteDetails, $getingPaymentDetails['payment'], $getingPaymentDetails['splitPayments']);
             $sageRequestPayload->customerId = $sageCustomerNumber;
 
-            if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId) {
-                info('Book Update - Sage Vendor ID or GL Account for Insurance Provider not found. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+            if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId || ! $sageRequestPayload->sageInsurerCustomerId) {
+                info('Book Update - Sage Vendor ID or GL Account for Insurance Provider or Sage Insurer Customer ID not found. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
 
-                if (! $sageRequestPayload->sageVenderId && ! $sageRequestPayload->insurerGlLiaiblityAccount) {
-                    $message = 'Sage Vendor ID and GL Account for Insurance Provider not found';
-
-                    return ['status' => false, 'message' => $message];
-                } else {
-                    $message = (! $sageRequestPayload->sageVenderId) ? 'Sage Vendor ID' : 'GL Account';
-
-                    return ['status' => false, 'message' => $message.' for Insurance Provider not found'];
+                if (! $sageRequestPayload->insurerGlLiaiblityAccount && ! $sageRequestPayload->sageVenderId && ! $sageRequestPayload->sageInsurerCustomerId) {
+                    return ['status' => false, 'message' => 'Sage Vendor ID, Sage Insurer Customer ID and GL Account for Insurance Provider not found.'];
+                } elseif (! $sageRequestPayload->insurerGlLiaiblityAccount) {
+                    return ['status' => false, 'message' => 'GL Account for Insurance Provider not found.'];
+                } elseif (! $sageRequestPayload->sageVenderId) {
+                    return ['status' => false, 'message' => 'Sage Vendor ID for Insurance Provider not found.'];
+                } elseif (! $sageRequestPayload->sageInsurerCustomerId) {
+                    return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
                 }
             }
 
@@ -598,7 +600,7 @@ class SageApiService
         //                 'splitPayments' => $splitPayments,
         //                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
         //             ]);
-        //         } 
+        //         }
         //         // Apply prepayment mapping manually on sage
         //         elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
         //             info('Book Update - Creating Apply Payment - AR Split Pre Payment for Split Payment with Invoice Payment Status Paid');
@@ -1159,13 +1161,16 @@ class SageApiService
 
         $sageRequest->customerId = $sageCustomerNumber;
 
-        if (! $sageRequest->insurerGlLiaiblityAccount && ! $sageRequest->sageVenderId) {
-            return ['status' => false, 'message' => 'Sage Vendor ID and GL Account for Insurance Provider not found.'];
+        if (! $sageRequest->insurerGlLiaiblityAccount && ! $sageRequest->sageVenderId && ! $sageRequest->sageInsurerCustomerId) {
+            return ['status' => false, 'message' => 'Sage Vendor ID, Sage Insurer Customer ID and GL Account for Insurance Provider not found.'];
         } elseif (! $sageRequest->insurerGlLiaiblityAccount) {
             return ['status' => false, 'message' => 'GL Account for Insurance Provider not found.'];
         } elseif (! $sageRequest->sageVenderId) {
             return ['status' => false, 'message' => 'Sage Vendor ID for Insurance Provider not found.'];
+        } elseif (! $sageRequest->sageInsurerCustomerId) {
+            return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
         }
+
         info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
         info('Sage API - Payment frequency : '.$payment->frequency.' for '.$quote->uuid);
         if ($aPInvoicePatchAndPostingOnly) {
@@ -1461,7 +1466,7 @@ class SageApiService
                     // Add Vat on commission to the first installment of commission in sage for balancing the amount
                     $dueCommissionSplitAmount = roundNumber($commissionSplit);
                     if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
-                        $dueCommissionSplitAmount = roundNumber($commissionSplit) + roundNumber($vatOnCommission);
+                        $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
                     }
                     /*
                      to prevent difference in amount due to rounding number, sum all the dueCommissionSplitAmount except the last one,

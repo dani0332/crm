@@ -21,7 +21,7 @@ class AddPaymentPermissionsSeeder extends Seeder
 
         //$permissionPlanDetailsAdd = Permission::findOrCreate(PermissionsEnum::PLAN_DETAILS_ADD, 'web');
         //$permissionAvailablePlanSelect = Permission::findOrCreate(PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON, 'web');
-        $permissionTempUpdate = Permission::findOrCreate(PermissionsEnum::TEMP_UPDATE_TOTALPRICE, 'web');
+        //$permissionTempUpdate = Permission::findOrCreate(PermissionsEnum::TEMP_UPDATE_TOTALPRICE, 'web');
 
         $roles = ['_ADVISOR', '_MANAGER'];
         $lobs = [
@@ -45,7 +45,7 @@ class AddPaymentPermissionsSeeder extends Seeder
                 $role->givePermissionTo($permissionPaymentsEdit->id);
                 //$role->givePermissionTo($permissionPlanDetailsAdd->id);
                 //$role->givePermissionTo($permissionAvailablePlanSelect->id);
-                $role->givePermissionTo($permissionTempUpdate->id);
+                //$role->givePermissionTo($permissionTempUpdate->id);
                 if ($role == '_MANAGER') {
                     $role->givePermissionTo($permissionApprovePayments->id);
                 }

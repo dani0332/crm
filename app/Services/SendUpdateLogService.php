@@ -543,6 +543,11 @@ class SendUpdateLogService
 
     public function mergeBookingDetails($bookingDetails, $sendUpdateLog)
     {
+        $totalPrice = $sendUpdateLog->price_vat_applicable + $sendUpdateLog->price_vat_not_applicable + $sendUpdateLog->total_vat_amount;
+        if ($this->isNegativeValue($sendUpdateLog)) {
+            $totalPrice = -$totalPrice;
+        }
+
         $data = [
             'reversal_invoice' => $sendUpdateLog->reversal_invoice ?? null,
             'booking_date' => $sendUpdateLog->booking_date,
@@ -561,7 +566,7 @@ class SendUpdateLogService
             'total_vat_amount' => $sendUpdateLog->total_vat_amount,
             'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
             'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-            'total_price' => $sendUpdateLog->total_price,
+            'total_price' => $totalPrice,
         ];
 
         return array_merge($bookingDetails, $data);
@@ -582,6 +587,7 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::MDOV,
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::DOV,
         ];
 
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
@@ -730,7 +736,7 @@ class SendUpdateLogService
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
                     $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'quote_batch_id' => null,
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
@@ -752,13 +758,6 @@ class SendUpdateLogService
                     } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity.
                         $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                     }
-                }
-                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-                        'quote_batch_id' => null,
-                    ]);
-                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
             }
 
@@ -832,7 +831,14 @@ class SendUpdateLogService
      */
     public function isPlanDetailAvailable($sendUpdateLog): bool
     {
-        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
+        if (in_array($sendUpdateLog->option?->code, [
+            SendUpdateLogStatusEnum::MDOM,
+            SendUpdateLogStatusEnum::MDOV,
+            SendUpdateLogStatusEnum::MPC,
+            SendUpdateLogStatusEnum::ED,
+            SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::DOV,
+        ])) {
             return false;
         }
 
