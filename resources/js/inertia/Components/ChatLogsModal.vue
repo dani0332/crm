@@ -107,6 +107,7 @@ const renderMarkdown = markdownString => {
           <div class="chat-header">
             {{ customerName ?? message.role }}
             <span
+              v-if="message.channel"
               class="py-[4px] rounded-md px-4 text-white ml-2 text-xs"
               :class="
                 message.channel.toLowerCase() == 'website'
