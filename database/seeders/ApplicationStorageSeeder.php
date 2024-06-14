@@ -216,5 +216,16 @@ class ApplicationStorageSeeder extends Seeder
             ];
             ApplicationStorage::firstOrCreate($conditions, $applicationStorage);
         }
+
+        $sicFollowupEmailTempID = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID)->first();
+        if (empty($sicFollowupEmailTempID)) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID,
+                'value' => 678,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }
