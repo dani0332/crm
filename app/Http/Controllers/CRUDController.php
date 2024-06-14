@@ -102,6 +102,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Artisan;
 
 class CRUDController extends Controller
 {
@@ -1975,5 +1976,13 @@ class CRUDController extends Controller
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
+    }
+    public function runPaymentEmailJob(Request $request)
+    {
+        // Run the SendPaymentEmail:cron job
+        Artisan::call('SendPaymentEmail:cron');
+
+        // You can add a flash message or any other response here
+        return back()->with('status', 'Payment email job has been run successfully!');
     }
 }
