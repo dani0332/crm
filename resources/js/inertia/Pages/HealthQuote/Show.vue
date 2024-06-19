@@ -3149,6 +3149,7 @@ watch(
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :eCommercePriceWithLP="ecomDetails.priceWithVATWithLP ? ecomDetails.priceWithVATWithLP : 0"
     />
     <PaymentTable
       v-else

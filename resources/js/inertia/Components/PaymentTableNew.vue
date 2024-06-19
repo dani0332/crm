@@ -30,6 +30,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  eCommercePriceWithLP: {
+    type: [String, Number],
+    default: '0',
+  },
 });
 
 const createPaymentModal = ref(false);
@@ -222,6 +226,9 @@ const currentFile = computed(() => {
 
 // Define a computed property to calculate the initial total price without VAT
 const initialTotalPriceWithoutVat = computed(() => {
+  if ( props.quoteType === 'Health' ) {
+    return props.eCommercePriceWithLP; // premium with loading price,excluding vat
+  }  
   const vatRate = vatValue ? vatValue / 100 : 0;
   return (totalPrice.value / (1 + vatRate));
 });
