@@ -1334,11 +1334,8 @@ class RenewalsUploadService
                 if ($responseCode == 201) {
 
                     //update quote status to quoted
-                    CarQuoteRepository::quoteStatusHandler([
-                        'quote_uuid' => $carQuote->uuid,
-                        'quote_status_id' => QuoteStatusEnum::Quoted,
-                        'notes' => 'Change quote status to Quoted as OCB sent',
-                    ]);
+                    // Change quote status to Quoted as OCB sent
+                    app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id, $carQuote->uuid, quoteStatusCode::QUOTED);
 
                     //record ocb sent datetime
                     $carQuote->carQuoteRequestDetail->updateOrCreate(

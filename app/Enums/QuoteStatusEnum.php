@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
+use ReflectionClass;
 
 /**
  * @method static static OptionOne()
@@ -76,4 +77,17 @@ final class QuoteStatusEnum extends Enum
 
     // This is use for lost reason id not for Quote status
     public const LOSTREASONID = 34;
+
+
+    public static function getOptions()
+    {
+        $oClass = new ReflectionClass(__CLASS__);
+        $constants = $oClass->getConstants();
+        $retval = [];
+        foreach ($constants as $name => $val) {
+            $retval[$val] = $name;
+        }
+
+        return $retval;
+    }
 }
