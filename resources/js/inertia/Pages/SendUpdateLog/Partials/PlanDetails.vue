@@ -26,6 +26,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const vat = page.props.vatValue;
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const sendUpdateEnums = page.props.sendUpdateStatusEnum;
@@ -35,31 +36,16 @@ const state = reactive({
 });
 
 const planDetailsForm = useForm({
+  price_vat_applicable: props.sendUpdateLog?.price_vat_applicable || null,
+  price_vat_not_applicable: props.sendUpdateLog?.price_vat_not_applicable || null,
   price_with_vat: props.sendUpdateLog?.price_with_vat || null,
-  price_without_vat: props.sendUpdateLog?.price_without_vat || null,
-  total_price: props.sendUpdateLog?.total_price || null,
   insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || null,
   insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || null,
   id: props.sendUpdateLog?.id,
 });
 
-const isIndicativeAdditionalPrice = computed(() => {
-  let hasRestrictedSubType = false;
-  props.updateLogOptions?.forEach(option => {
-    if (
-      [sendUpdateEnums.MDOM, sendUpdateEnums.MDOV, sendUpdateEnums.MPC, sendUpdateEnums.ED, sendUpdateEnums.DM].includes(option.slug) &&
-      props.sendUpdateLog.option_id === option.value
-    ) {
-      hasRestrictedSubType = true;
-    }
-  });
-  return (
-    props.sendUpdateLog.category.code === 'EF' && !hasRestrictedSubType
-  );
-});
-
 const isPlanDetails = computed(() => {
-  return props.sendUpdateLog.category.code === 'CPD';
+  return props.sendUpdateLog.category.code === sendUpdateEnums.CPD;
 });
 
 const insuranceProvidersOptions = computed(() => {
@@ -74,30 +60,30 @@ const roundDecimal = value => {
 };
 
 const updatePriceWithVat = () => {
-  let totalPrice = 0;
-  const priceWithVat = parseFloat(planDetailsForm.price_with_vat);
-  const priceWithoutVat = parseFloat(planDetailsForm.price_without_vat);
+  let priceWithVat = 0;
+  const priceVatApplicable = parseFloat(planDetailsForm.price_vat_applicable);
+  const priceVatNotApplicable = parseFloat(planDetailsForm.price_vat_not_applicable);
 
-  if (priceWithVat && priceWithoutVat) {
-    totalPrice = (priceWithVat / 100) * 5 + priceWithVat + priceWithoutVat;
-  } else if (priceWithVat) {
-    totalPrice = (priceWithVat / 100) * 5 + priceWithVat;
-  } else if (priceWithoutVat) {
-    totalPrice = priceWithoutVat;
+  if (priceVatApplicable && priceVatNotApplicable) {
+    priceWithVat = (priceVatApplicable / 100) * vat + priceVatApplicable + priceVatNotApplicable;
+  } else if (priceVatApplicable) {
+    priceWithVat = (priceVatApplicable / 100) * vat + priceVatApplicable;
+  } else if (priceVatNotApplicable) {
+    priceWithVat = priceVatNotApplicable;
   }
 
-  planDetailsForm.total_price = roundDecimal(totalPrice);
   planDetailsForm.price_with_vat = roundDecimal(priceWithVat);
-  planDetailsForm.price_without_vat = roundDecimal(priceWithoutVat);
+  planDetailsForm.price_vat_applicable = roundDecimal(priceVatApplicable);
+  planDetailsForm.price_vat_not_applicable = roundDecimal(priceVatNotApplicable);
 };
 
 const onUpdate = () => {
-  if (!planDetailsForm.price_with_vat && !planDetailsForm.price_without_vat) {
+  if (!planDetailsForm.price_vat_applicable && !planDetailsForm.price_vat_not_applicable) {
     notification.error({
       title: 'Please enter price.',
       position: 'top',
     });
-    planDetailsForm.total_price = null;
+    planDetailsForm.price_with_vat = null;
     return;
   }
   planDetailsForm.post(route('send-update.save-price-details'), {
@@ -128,22 +114,22 @@ const onKeyPress = event => {
 
 const onCancel = () => {
   state.isEdit = false;
+  planDetailsForm.price_vat_applicable = props.sendUpdateLog?.price_vat_applicable || null;
+  planDetailsForm.price_vat_not_applicable =
+    props.sendUpdateLog?.price_vat_not_applicable || null;
   planDetailsForm.price_with_vat = props.sendUpdateLog?.price_with_vat || null;
-  planDetailsForm.price_without_vat =
-    props.sendUpdateLog?.price_without_vat || null;
-  planDetailsForm.total_price = props.sendUpdateLog?.total_price || null;
 };
 </script>
 
 <template>
   <div
     class="p-4 rounded shadow mb-6 bg-white"
-    v-if="isPlanDetails || isIndicativeAdditionalPrice"
+    v-if="props.sendUpdateLog.category.code !== sendUpdateEnums.CIR"
   >
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <x-tooltip position="left" v-if="!isPlanDetails">
+          <x-tooltip v-if="!isPlanDetails" position="left">
             <label
               class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700"
             >
@@ -181,13 +167,13 @@ const onCancel = () => {
               </dt>
               <dd>
                 <x-input
-                  v-model="planDetailsForm.price_without_vat"
+                  v-model="planDetailsForm.price_vat_not_applicable"
                   :disabled="
                     !state.isEdit ||
                     (quoteType != quoteTypeCodeEnum.Life &&
                       quoteType != quoteTypeCodeEnum.Business)
                   "
-                  :error="planDetailsForm.errors.price_without_vat"
+                  :error="planDetailsForm.errors.price_vat_not_applicable"
                   placeholder="Enter price (VAT not applicable)"
                   type="number"
                   min="0"
@@ -250,7 +236,7 @@ const onCancel = () => {
               </dt>
               <dd>
                 <x-input
-                  v-model="planDetailsForm.price_with_vat"
+                  v-model="planDetailsForm.price_vat_applicable"
                   :rules="
                     quoteType == quoteTypeCodeEnum.Life
                       ? []
@@ -261,7 +247,7 @@ const onCancel = () => {
                     (quoteType == quoteTypeCodeEnum.Life &&
                       quoteType != quoteTypeCodeEnum.Business)
                   "
-                  :error="planDetailsForm.errors.price_with_vat"
+                  :error="planDetailsForm.errors.price_vat_applicable"
                   placeholder="Enter price (VAT applicable)"
                   type="number"
                   min="0"
@@ -322,7 +308,7 @@ const onCancel = () => {
                   </template>
                 </x-tooltip>
               </dt>
-              <dd>{{ planDetailsForm.total_price }}</dd>
+              <dd>{{ planDetailsForm.price_with_vat }}</dd>
             </div>
           </dl>
         </div>

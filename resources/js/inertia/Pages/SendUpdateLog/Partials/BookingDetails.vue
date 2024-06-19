@@ -58,6 +58,8 @@ const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const vat = page.props.vatValue;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -182,17 +184,17 @@ const bookingDetailsForm = useForm({
   price_vat_applicable: props.bookingDetails?.price_vat_applicable || '',
   price_vat_not_applicable:
     props.bookingDetails?.price_vat_not_applicable || '0.00',
-  total_price: props.bookingDetails?.total_price || '0.00',
+  price_with_vat: props.bookingDetails?.price_with_vat || '0.00',
   // new entry section related.
   reversal_invoice: props.bookingDetails?.reversal_invoice || null,
 });
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
 const calculateCommission = () => {
-  if (bookingDetailsForm.commission_vat_applicable > 0) {
+  if (bookingDetailsForm.commission_vat_applicable > 0 || bookingDetailsForm.price_vat_applicable > 0) {
     if (Number(bookingDetailsForm.price_vat_applicable > 0)) {
       let vat_on_commission =
-        bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
+        bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
       bookingDetailsForm.vat_on_commission =
         convertToNegative(vat_on_commission);
 
@@ -207,15 +209,15 @@ const calculateCommission = () => {
         Number(bookingDetailsForm.price_vat_applicable) +
         Number(bookingDetailsForm.price_vat_not_applicable);
       let total_vat_amount =
-        Number(bookingDetailsForm.price_vat_applicable) * Number(5 / 100);
+        Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
       bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
 
-      let total_price =
+      let price_with_vat =
         total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
-      bookingDetailsForm.total_price = convertToNegative(total_price);
+      bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
       bookingDetailsForm.commission_percentage = convertToNegative(
-        (total_commission / total_price) * 100,
+        (total_commission / price_with_vat) * 100,
       );
     } else {
       notification.error({
@@ -240,9 +242,9 @@ const calculateCommission = () => {
       });
     }
   } else {
-    bookingDetailsForm.commission_percentage = '';
-    bookingDetailsForm.vat_on_commission = '';
-    bookingDetailsForm.total_commission = '';
+    bookingDetailsForm.commission_percentage = '0.00';
+    bookingDetailsForm.vat_on_commission = '0.00';
+    bookingDetailsForm.total_commission = '0.00';
   }
 };
 
@@ -380,7 +382,7 @@ function updateReversalEntries(response) {
   reversalEntry.total_commission = response.commission || null;
   reversalEntry.commission_vat_not_applicable = response.commission_vat_not_applicable || null;
   reversalEntry.total_vat_amount = ((response.total_amount !== null) ? response.total_amount : response.send_update_log?.total_vat_amount) ?? null;
-  reversalEntry.total_price = ((response.total_price !== null && response.total_price > 0) ? response.total_price : response.send_update_log?.total_price) ?? null;
+  reversalEntry.price_with_vat = ((response.total_price !== null && response.total_price > 0) ? response.total_price : response.send_update_log?.price_with_vat) ?? null;
 }
 
 onMounted(() => {
@@ -399,7 +401,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
-  bookingDetailsForm.discount = reversalEntry.discount || null;
+  bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
   bookingDetailsForm.price_vat_applicable = reversalEntry.price_vat_applicable || null;
   bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
   bookingDetailsForm.price_vat_not_applicable = reversalEntry.price_vat_not_applicable || null;
@@ -408,7 +410,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.total_commission = reversalEntry.total_commission || null;
   bookingDetailsForm.commission_vat_not_applicable = reversalEntry.commission_vat_not_applicable || null;
   bookingDetailsForm.total_vat_amount = reversalEntry.total_vat_amount || null;
-  bookingDetailsForm.total_price = reversalEntry.total_price;
+  bookingDetailsForm.price_with_vat = reversalEntry.price_with_vat;
 };
 
 function convertToNumber(value) {
@@ -647,6 +649,12 @@ const onCancel = () => {
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] = createReusableTemplate();
 const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusableTemplate();
+
+watch(() => props?.payments[0]?.discount_value,
+    (newValue, oldValue) => {
+      bookingDetailsForm.discount = newValue;
+    },
+);
 
 </script>
 
@@ -1041,7 +1049,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.total_price !== null) ? reverseValue(reversalEntry.total_price) : 'N/A' }}</span>
+                <span>{{ (reversalEntry.price_with_vat !== null) ? reverseValue(reversalEntry.price_with_vat) : 'N/A' }}</span>
               </div>
             </div>
           </div>
@@ -1351,8 +1359,8 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 </div>
                 <div>
                   <span>{{ (bookingDetailsForm.commission_percentage !== '') ? 
-                    bookingDetailsForm.commission_percentage + '%' : 
-                    'N/A' 
+                    bookingDetailsForm.commission_percentage + '%' :
+                    'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1370,10 +1378,24 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                     </template>
                   </x-tooltip>
                 </div>
-                <div>
+                <div v-if="props.quoteType !== quoteTypeCodeEnum.Business">
                   <span>{{
                     bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
                   }}</span>
+                </div>
+                <div v-else>
+                  <x-input
+                      type="number"
+                      min="0"
+                      add step="any"
+                      v-model="bookingDetailsForm.price_vat_not_applicable"
+                      @change="calculateCommission"
+                      class="!mb-0 w-full"
+                      :disabled="!state.isEdit"
+                      placeholder="Enter Price"
+                      :rules="[isRequired]"
+                      size="xs"
+                  />
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1508,7 +1530,7 @@ const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusabl
                 <div>
                   <span>
                     {{
-                      bookingDetailsForm.total_price !== '0.00' ? thousandSeparator(bookingDetailsForm.total_price) : 'N/A'
+                      bookingDetailsForm.price_with_vat!== '0.00' ? thousandSeparator(bookingDetailsForm.price_with_vat) : 'N/A'
                     }}
                   </span>
                 </div>

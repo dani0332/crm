@@ -203,7 +203,7 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTaxes' => roundNumber($request->totalPrice),
                     'DocumentTotalIncludingTax' => roundNumber($request->totalPrice),
-                    'Terms' => 'SPLIT'.count($paymentSplits),
+                    'Terms' => self::getTermsCode(count($paymentSplits)),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
@@ -251,7 +251,7 @@ class SagePayloadFactory
                 $payLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format);
                 $payLoad->Invoices[0]->DocumentType = 'DebitNote';
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
-                $payLoad->Invoices[0]->Terms = 'SPLIT'.count($paymentSplits);
+                $payLoad->Invoices[0]->Terms = self::getTermsCode(count($paymentSplits));
                 $payLoad->Invoices[0]->InvoicePaymentSchedules = self::createPaymentSchedules($paymentSplits, $invoicePaymentSchedulesDueDate);
 
                 $payLoad->Invoices[0]->InvoiceDetails[0]->DistributionDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW'; // Need to be verify with denber
@@ -330,7 +330,8 @@ class SagePayloadFactory
             unset($payLoad->BatchStatus);
 
             if ($type == SageEnum::SCT_REVERSAL) {
-                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-REV';
+
+                $payLoad->Invoices[0]->DocumentNumber = (string) substr($payLoad->Invoices[0]->DocumentNumber, -18).'-REV';
                 $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $payLoad->Invoices[0]->DocumentType = 'DebitNote';
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
@@ -338,7 +339,7 @@ class SagePayloadFactory
             }
 
             if ($type == SageEnum::SCT_CORRECTION) {
-                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW';
+                $payLoad->Invoices[0]->DocumentNumber = (string) substr($payLoad->Invoices[0]->DocumentNumber, -18).'-NEW';
                 $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW';
                 $payLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->DueDate = $invoicePaymentSchedulesDueDate;
@@ -406,7 +407,7 @@ class SagePayloadFactory
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
                 [
-                    'CustomerNumber' => $request->customerId,
+                    'CustomerNumber' => $request->sageInsurerCustomerId,
                     'DocumentNumber' => $request->insurerCommissionNumber,
                     'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
@@ -552,7 +553,7 @@ class SagePayloadFactory
                     'DocumentTotalBeforeTax' => roundNumber($request->premiumWithTax),
                     'DocumentTotalIncludingTax' => roundNumber($request->premiumWithTax),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
-                    'Terms' => 'SPLIT'.count($splitPayments),
+                    'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
@@ -567,7 +568,7 @@ class SagePayloadFactory
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
                 ],
                 [
-                    'CustomerNumber' => $request->customerId,
+                    'CustomerNumber' => $request->sageInsurerCustomerId,
                     'DocumentNumber' => $request->insurerCommissionNumber,
                     'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format),
@@ -580,7 +581,7 @@ class SagePayloadFactory
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat),
                     'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
-                    'Terms' => 'SPLIT'.count($splitPayments),
+                    'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
@@ -635,7 +636,7 @@ class SagePayloadFactory
                 $payLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->DocumentType = 'DebitNote';
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocumentPrem;
-                $payLoad->Invoices[0]->Terms = 'SPLIT'.count($splitPayments);
+                $payLoad->Invoices[0]->Terms = self::getTermsCode(count($splitPayments));
                 $payLoad->Invoices[0]->InvoicePaymentSchedules = self::createPaymentSchedules($splitPayments, $invoicePaymentSchedulesDueDate);
 
                 $payLoad->Invoices[0]->InvoiceDetails[0]->Description = $payLoad->Invoices[0]->InvoiceDescription;
@@ -652,7 +653,7 @@ class SagePayloadFactory
                 $payLoad->Invoices[1]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[1]->DocumentType = 'DebitNote';
                 $payLoad->Invoices[1]->ApplytoDocument = $applyToDocumentComm;
-                $payLoad->Invoices[1]->Terms = 'SPLIT'.count($splitPayments);
+                $payLoad->Invoices[1]->Terms = self::getTermsCode(count($splitPayments));
                 $payLoad->Invoices[1]->InvoicePaymentSchedules = [];
 
                 $payLoad->Invoices[1]->InvoiceDetails[0]->Description = $payLoad->Invoices[1]->InvoiceDescription;
@@ -704,7 +705,7 @@ class SagePayloadFactory
         if ($mapping) {
             $payLoad = [
                 'CustomerNumber' => 'C'.$customer->id,
-                'CustomerName' => $customer->first_name.' '.$customer->last_name,
+                'CustomerName' => $mapping?->entity?->company_name,
                 'GroupCode' => 'PHC',
             ];
         } else {
@@ -1053,7 +1054,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'POLICY',
-                'Value' => $request->policyNumber,
+                'Value' => $request->originalPolicyNumber,
             ],
             [
                 'OptionalField' => 'POLICYHOLDER',
@@ -1210,7 +1211,8 @@ class SagePayloadFactory
             'policyExpiryDate' => date('Ymd', strtotime($quote['renewal_expiry_date'])),
             'insurerInvoiceDate' => date('Y-m-d', strtotime($payment->insurer_invoice_date)),
             'mainClassInsurance' => $quoteType,
-            'policyNumber' => $quoteDetails['policy_number'],
+            'policyNumber' => substr($quoteDetails['policy_number'], 60),
+            'originalPolicyNumber' => $quoteDetails['policy_number'],
             'policyIssuer' => $payment->policyIssuer?->name ?? '',
             'requestType' => Lookup::where('id', $quoteDetails['transaction_type_id'] ?? '')->first()->text ?? '',
             'subClass' => BusinessInsuranceType::where('id', $quoteDetails['business_type_of_insurance_id'] ?? '')->value('code') ?? '',
@@ -1240,6 +1242,7 @@ class SagePayloadFactory
             'originalInsurerCommissionNumber' => (string) $payment['insurer_commmission_invoice_number'],
             'insurerGlLiaiblityAccount' => $payment->insuranceProvider?->gl_liaiblity_account,
             'sageVenderId' => $payment->insuranceProvider?->sage_vendor_id,
+            'sageInsurerCustomerId' => $payment->insuranceProvider?->sage_insurer_customer_id,
         ];
 
         if (! empty($splitPayments)) {
@@ -1874,5 +1877,10 @@ class SagePayloadFactory
         } else {
             return SagePaymentMethodsEnum::SAGE_BANK_TRANSFER;
         }
+    }
+
+    private static function getTermsCode($splitPaymentsCount)
+    {
+        return $splitPaymentsCount >= 10 ? 'SPLI'.$splitPaymentsCount : 'SPLIT'.$splitPaymentsCount;
     }
 }

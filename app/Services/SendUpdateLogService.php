@@ -431,6 +431,7 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::MDOV,
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DOV,
             ])) {
                 return true;
             }
@@ -510,17 +511,17 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SNBU;
         }
 
-        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
+        if (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
             (
                 (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
                 in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
                 ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
-            )
+            )) || in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
         ) {
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER) {
+        if (in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
@@ -532,7 +533,6 @@ class SendUpdateLogService
         $sendUpdate = SendUpdateLogRepository::getLogByid($sendUpdateId);
 
         $sendUpdateToCustomerValidation = in_array($sendUpdate->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]);
-        $uploadedDocuments = $this->getUploadedDocuments($sendUpdate);
 
         if ($sendUpdateToCustomerValidation) {
             return 'Please note your current action will only send the update to the customer.';
@@ -561,7 +561,7 @@ class SendUpdateLogService
             'total_vat_amount' => $sendUpdateLog->total_vat_amount,
             'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
             'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-            'total_price' => $sendUpdateLog->total_price,
+            'price_with_vat' => $sendUpdateLog->price_with_vat,
         ];
 
         return array_merge($bookingDetails, $data);
@@ -582,6 +582,7 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::MDOV,
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::DOV,
         ];
 
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
@@ -730,7 +731,7 @@ class SendUpdateLogService
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
                     $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'quote_batch_id' => null,
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
@@ -752,13 +753,6 @@ class SendUpdateLogService
                     } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity.
                         $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                     }
-                }
-                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-                        'quote_batch_id' => null,
-                    ]);
-                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 }
             }
 
@@ -825,5 +819,24 @@ class SendUpdateLogService
         $carQuote = CarQuote::where('uuid', $quoteUuid)->first();
 
         return $carQuote->plan->carAddons->toArray();
+    }
+
+    /**
+     * it will check for Indicative Additional Price section, if the option relation not available means it is Correction of Policy.
+     */
+    public function isPlanDetailAvailable($sendUpdateLog): bool
+    {
+        if (in_array($sendUpdateLog->option?->code, [
+            SendUpdateLogStatusEnum::MDOM,
+            SendUpdateLogStatusEnum::MDOV,
+            SendUpdateLogStatusEnum::MPC,
+            SendUpdateLogStatusEnum::ED,
+            SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::DOV,
+        ])) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -9,7 +9,6 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 
 const props = defineProps({
   quote: Object,
-  record: Object,
   leadStatuses: Array,
   ecomDetails: Object,
   coPayment: Object,
@@ -363,7 +362,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quote.lost_reason_id || null,
 });
 
@@ -687,6 +685,10 @@ const onLoadAvailablePlansData = async () => {
         }
       });
 
+      if (selectedPlan.value?.id) {
+        let plans = plansTable.data.filter(x => x.id == selectedPlan.value?.id);
+        selectedPlan.value = { ...plans[0] };
+      }
       setTimeout(() => {
         onPlanFiltersSubmit();
       }, 800);
@@ -951,7 +953,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
         element.selectedCopayId &&
         defaultCopayId == value.healthPlanCoPaymentId
       ) {
-        smallestCopayValue = Number(value.premium);
+        smallestCopayValue = Number(value.discountPremium);
         smallestCopayVAT = Number(value.vat);
         smallestCopayLoadingPrice = Number(
           value.loadingPrice ? value.loadingPrice : 0,
@@ -962,14 +964,14 @@ const getSmallestCopayRateAsDefaultValue = () => {
         element.selectedCopayId == null
       ) {
         if (index == 0) {
-          smallestCopayValue = Number(value.premium);
+          smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
           );
           defaultCopayId = value.healthPlanCoPaymentId;
-        } else if (value.premium < smallestCopayValue) {
-          smallestCopayValue = Number(value.premium);
+        } else if (value.discountPremium < smallestCopayValue) {
+          smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
@@ -2935,7 +2937,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -2968,14 +2970,6 @@ watch(
             </div>
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                <x-input
-                  v-if="leadStatusForm.leadStatus == 15"
-                  v-model="leadStatusForm.trans_code"
-                  label="TransApp Code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
                 <x-select
                   v-if="leadStatusForm.leadStatus == 17"
                   v-model="leadStatusForm.lostReason"
@@ -2998,32 +2992,10 @@ watch(
                     :disabled="true"
                   />
                 </x-field>
-              </div>
-            </div>
-            <div class="w-full md:w-50">
-              <div class="flex flex-col gap-4">
-                <x-input
-                  v-if="leadStatusForm.leadStatus == 15"
-                  v-model="leadStatusForm.trans_code"
-                  label="TransApp Code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-                <x-select
-                  v-if="leadStatusForm.leadStatus == 17"
-                  v-model="leadStatusForm.lostReason"
-                  label="Lost Reason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                />
+
+                <div class="flex flex-col gap-4">
+                 
+                </div>
               </div>
             </div>
           </div>
@@ -3267,13 +3239,7 @@ watch(
 
             <!-- v-if="isBetaUser" -->
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.BetaUser,
-                  rolesEnum.RMAdvisor,
-                  rolesEnum.HealthManager,
-                ])
-              "
+              v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
               size="sm"
               color="emerald"
               @click.prevent="modals.createPlan = true"
@@ -3579,16 +3545,6 @@ watch(
       :payments="payments"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="modelType"
-      :paymentLink="paymentLink"
-      :expanded="sectionExpanded"
-    />
-
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Health"
@@ -3630,9 +3586,19 @@ watch(
       :quote="quote"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="modelType"
+      :paymentLink="paymentLink"
+      :expanded="sectionExpanded"
+    />
+    
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="health"
       :expanded="sectionExpanded"
       :payments="payments"
@@ -3642,7 +3608,7 @@ watch(
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
-      :quote="record"
+      :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Health"
@@ -3657,7 +3623,7 @@ watch(
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="health"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

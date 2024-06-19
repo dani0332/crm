@@ -184,7 +184,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.record.advisor_id,
   leadStatus: page.props.record.quote_status_id || null,
   notes: page.props.record.notes || null,
-  trans_code: page.props.record.transapp_code || null,
   lostReason: page.props.record.lost_reason_id || null,
   next_followup_date: page.props.record.next_followup_date
     ? prepareDate(page.props.record.next_followup_date)
@@ -2363,23 +2362,6 @@ watch(
                   :options="leadStatusOptions"
                 />
                 <x-field
-                  label="TransApp Code"
-                  class="uppercase"
-                  required
-                  v-if="
-                    leadStatusForm.leadStatus ==
-                    quoteStatusEnum.TransactionApproved
-                  "
-                >
-                  <x-input
-                    v-model="leadStatusForm.trans_code"
-                    placeholder="TransApp Code is required"
-                    class="w-full"
-                    :rules="[rules.isRequired]"
-                    :error="leadStatusForm.errors.trans_code"
-                  />
-                </x-field>
-                <x-field
                   label="Lost Reason"
                   class="uppercase"
                   required
@@ -3469,7 +3451,7 @@ watch(
 
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
       :payments="payments"
@@ -3493,7 +3475,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       :quoteType="quoteType"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

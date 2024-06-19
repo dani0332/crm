@@ -218,7 +218,6 @@ class CycleQuoteController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
-            'record' => fn () => $quote,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],

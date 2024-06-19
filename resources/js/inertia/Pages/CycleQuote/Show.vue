@@ -45,7 +45,6 @@ const props = defineProps({
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
-  record: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
@@ -315,49 +314,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           :quote="quote"
           :cdn="cdnPath"
         />
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-          Duplicate Lead
-        </x-button>
-        <Link
-          v-if="can(permissionsEnum.CycleQuotesList)"
-          :href="route('cycle-quotes-list')"
-          preserve-scroll
-        >
-          <x-button size="sm" color="primary" tag="div">
-            Cycle Quotes
-          </x-button>
-        </Link>
-        <Link
-          v-if="can(permissionsEnum.CycleQuotesEdit)"
-          :href="route('cycle-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-      </template>
-    </StickyHeader>
-    <!-- <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <div class="flex items-center space-x-2">
-        <h2 class="text-xl font-semibold">Cycle Detail</h2>
-        <p
-          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="countDays !== false"
-        >
-          Stale for {{ countDays }} days
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <LeadNotes
-          :documentType="noteDocumentType"
-          :notes="quoteDocuments"
-          :modelType="quoteType"
-          :quote="quote"
-          :cdn="cdnPath"
-        />
         <Link
           v-if="quote.quote_detail?.insly_id"
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
-        >
+          >
           <x-button size="sm" color="#ff5e00" tag="div">
             View Legacy policy
           </x-button>
@@ -380,8 +341,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
-      </div>
-    </div> -->
+      </template>
+    </StickyHeader>
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -423,55 +384,23 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">Cycle Detail</h3>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-4 justify-end">
-            <Link
-              v-if="quote.quote_detail?.insly_id"
-              :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-              Duplicate Lead
-            </x-button>
-            <Link
-              v-if="can(permissionsEnum.CycleQuotesList)"
-              :href="route('cycle-quotes-list')"
-              preserve-scroll
-            >
-              <x-button size="sm" color="primary" tag="div">
-                Cycle Quotes
-              </x-button>
-            </Link>
-            <Link
-              v-if="can(permissionsEnum.CycleQuotesEdit)"
-              :href="route('cycle-quotes-edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-          </div>
-
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-              <div class="grid sm:grid-cols-2">
-                <div
-                  class="grid sm:grid-cols-2"
-                  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+            <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
                 >
-                  <dt class="font-medium">ID</dt>
-                  <dd>{{ quote.id }}</dd>
-                </div>
+                <dt class="font-medium">ID</dt>
+                <dd>{{ quote.id }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -1041,7 +970,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       :quoteStatusEnum="quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="Cycle"
@@ -1065,7 +994,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Cycle"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
