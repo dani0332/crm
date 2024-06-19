@@ -166,9 +166,9 @@ class SendUpdateLogRepository extends BaseRepository
             $result = $this->find($data['id']);
 
             $result->update([
-                'total_price' => $data['total_price'],
                 'price_with_vat' => $data['price_with_vat'],
-                'price_without_vat' => $data['price_without_vat'],
+                'price_vat_applicable' => $data['price_vat_applicable'],
+                'price_vat_not_applicable' => $data['price_vat_not_applicable'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'status' => ! in_array($result->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) ?
@@ -176,6 +176,7 @@ class SendUpdateLogRepository extends BaseRepository
             ]);
             $this->updatePayment($data);
         } catch (\Exception $ex) {
+            info('SendUpdate id: '.$data['id'].' '.$ex->getMessage());
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
@@ -190,7 +191,7 @@ class SendUpdateLogRepository extends BaseRepository
 
         if ($result->payments->isNotEmpty()) {
             $payments = $result->payments[0];
-            $payments->total_price = $data['total_price'];
+            $payments->total_price = $data['price_with_vat'];
 
             if ($payments->payment_status_id == PaymentStatusEnum::PAID) {
                 $payments->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
@@ -275,6 +276,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'total_vat_amount' => $request['total_vat_amount'],
                 'price_vat_applicable' => strToFloat($request['price_vat_applicable']),
                 'price_vat_not_applicable' => $request['price_vat_not_applicable'],
+                'price_with_vat' => $request['price_with_vat'],
             ];
             // it will check if send update type is CPD then it will add reversal_invoice to $data because other send update types don't have 2 kind of
             // booking details, so we don't need to add null reversal_invoice on other options details.
@@ -285,15 +287,14 @@ class SendUpdateLogRepository extends BaseRepository
 
             $payment = Payment::where('send_update_log_id', $request['id'])->firstOrFail();
             if ($payment) {
-                $totalPrice = strToFloat($request['price_vat_applicable']) + $request['price_vat_not_applicable'] + $request['total_vat_amount'];
-                $bookingDetailsTotalPrice = floatval($totalPrice);
+                $bookingDetailsTotalPrice = floatval($request['price_with_vat']);
                 if ($bookingDetailsTotalPrice > $payment->total_amount) {
                     $diff = number_format($bookingDetailsTotalPrice - $payment->total_amount, 2);
                     if ($diff < 1) {
                         $payment->discount_value = $diff;
                         $payment->discount_type = LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT;
                     } else {
-                        $payment->total_price = $totalPrice;
+                        $payment->total_price = $bookingDetailsTotalPrice;
                         $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
                 } elseif ($bookingDetailsTotalPrice == $payment->total_amount && $payment->discount_value && $payment->discount_type == LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT->value) {
