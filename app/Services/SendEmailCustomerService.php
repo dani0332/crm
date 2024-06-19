@@ -788,7 +788,6 @@ class SendEmailCustomerService extends BaseService
             Log::error($responseDetail);
         }
 
-
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         return $responseCode;
