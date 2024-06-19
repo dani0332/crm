@@ -361,15 +361,18 @@ class SendUpdateLogController extends Controller
         if (! empty($log->message)) {
             vAbort($log->message);
         }
+        $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
 
-        return redirect()->back();
-    }
+        if ($log && $data['buttonText'] == SendUpdateLogStatusEnum::SNBU) {
+            $sendUpdateRequest = new SendUpdateRequest();
 
-    private function getRealQuote($quoteType, $quoteUuid)
-    {
-        $repository = 'App\\Repositories\\'.ucwords($quoteType).'QuoteRepository';
+            $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($request->all()));
+            if ($isSendUpdateSuccess->status() == 200) {
+                $message[] = SendUpdateLogStatusEnum::UPDATE_BOOKED;
+            }
+        }
 
-        return $repository::where('uuid', $quoteUuid)->first();
+        return response()->json($message);
     }
 
     public function isBookingDetailsVisible($categoryCode, $quoteDocuments): bool

@@ -605,14 +605,21 @@ const submitToCustomer = () => {
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
     quoteType: props.quoteType,
+    buttonText: props.updateBtn,
+    quoteUuid: props.realQuote.uuid,
+    quoteRefId: props.realQuote.id,
+    paymentValidated: true,
+    reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
   };
   axios
     .post(url, data)
     .then(response => {
       if (response.status == 200) {
-        notification.success({
-          title: 'Update Sent to the Customer',
-          position: 'top',
+        Object.keys(response.data).forEach(function (key) {
+          notification.success({
+            title: response.data[key],
+            position: 'top',
+          });
         });
         router.reload({ preserveState: true });
         modals.sendConfirm = isLoading.value = false;
