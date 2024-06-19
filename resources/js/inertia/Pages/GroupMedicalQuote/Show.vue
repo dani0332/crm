@@ -123,7 +123,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
@@ -368,6 +367,60 @@ watch(
 
 <template>
   <div>
+    <Head title="Group Medical Lead Detail" />
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+      <div class="flex gap-2 mb-3 justify-end">
+        <Link
+          v-if="
+            quoteDetails?.insly_id &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="`/legacy-policy/${quoteDetails?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          v-if="isDuplicateAllowed"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link :href="route('amt.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div">
+            Group Medical List
+          </x-button>
+        </Link>
+        <Link
+          v-if="!can(permissionsEnum.canEditQuote)"
+          :href="route('amt.edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div>
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -411,61 +464,9 @@ watch(
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="
-                quoteDetails?.insly_id &&
-                can(permissionsEnum.VIEW_LEGACY_DETAILS)
-              "
-              :href="`/legacy-policy/${quoteDetails?.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <Link
-              v-else-if="
-                quote.source == leadSource.RENEWAL_UPLOAD &&
-                can(permissionsEnum.VIEW_LEGACY_DETAILS)
-              "
-              :href="
-                route(
-                  'view-legacy-policy.renewal-uploads',
-                  quote.previous_quote_policy_number,
-                )
-              "
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button
-              v-if="isDuplicateAllowed"
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openDuplicate"
-            >
-              Duplicate Lead
-            </x-button>
-            <Link :href="route('amt.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Group Medical List
-              </x-button>
-            </Link>
-            <Link
-              v-if="!can(permissionsEnum.canEditQuote)"
-              :href="route('amt.edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-          </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -903,7 +904,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -938,20 +939,6 @@ watch(
               </div>
             </div>
             <div class="w-full md:w-2/3">
-              <x-input
-                v-if="
-                  leadStatusForm.leadStatus ==
-                  quoteStatusEnum.TransactionApproved
-                "
-                :disabled="
-                  quote.quote_status_id == quoteStatusEnum.TransactionApproved
-                "
-                v-model="leadStatusForm.trans_code"
-                label="TransApp Code"
-                placeholder="TransApp Code is required"
-                class="w-full"
-                :error="leadStatusForm.errors.trans_code"
-              />
               <x-select
                 v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 v-model="leadStatusForm.lostReason"

@@ -229,10 +229,11 @@ trait GenericQueriesAllLobs
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
 
+        $invoiceDescription = $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number;
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
         $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
-        $bookPolicyDetails['invoiceDescription'] = $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number;
+        $bookPolicyDetails['invoiceDescription'] = substr($invoiceDescription, 0, 60);
         $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;

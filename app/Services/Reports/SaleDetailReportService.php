@@ -39,7 +39,8 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
                 DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
-                'personal_quotes.source', 'personal_quotes.code',
+                'personal_quotes.source',
+                'personal_quotes.code',
                 't.name as team',
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
@@ -105,9 +106,10 @@ class SaleDetailReportService extends ManagementReport
                 'Sale Detail Report '.$this->reportDateRange,
                 $data,
                 $this->headings(),
-                $nonIntegarIndexes);
+                $nonIntegarIndexes
+            );
         } else {
-            return $query->simplePaginate(10)->withQueryString();
+            return $query->simplePaginate(100)->withQueryString();
         }
     }
 
