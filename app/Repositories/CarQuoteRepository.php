@@ -3,12 +3,10 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteStatusLog;
 use App\Services\QuoteStatusService;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Facades\DB;
