@@ -112,9 +112,10 @@ class SaleSummaryReportService extends ManagementReport
                 'Sale Summary Report '.$this->reportDateRange,
                 $data,
                 $this->headings(),
-                $nonIntegarIndexes);
+                $nonIntegarIndexes
+            );
         } else {
-            return $query->simplePaginate(10)->withQueryString();
+            return $query->simplePaginate(100)->withQueryString();
         }
     }
 

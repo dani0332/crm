@@ -68,7 +68,7 @@ class AlfredFollowUpSchedulerCommand extends Command
         PersonalQuote::whereNotNull('transaction_approved_at')
             ->whereBetween('transaction_approved_at', [$currentDate, $leadDataEndDate])
             ->join('customer', 'personal_quotes.customer_id', '=', 'customer.id')
-            ->where('customer.campaign_followups', '<', 4)
+            ->where('customer.campaign_followups', '<', 3)
             ->when($this->appEnv != EnvEnum::PRODUCTION, function ($q) {
                 $q->where('personal_quotes.email', 'like', 'abc_abhipfet%');
             })
