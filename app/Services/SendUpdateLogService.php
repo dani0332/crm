@@ -528,7 +528,7 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if (in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
+        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
