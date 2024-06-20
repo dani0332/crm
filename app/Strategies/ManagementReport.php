@@ -244,9 +244,6 @@ class ManagementReport
 
             $data = collect($data);
             foreach ($data as $index => $quote) {
-                // if ($index == 0) {
-                //     $quote = "=\"" . $quote . "\"";
-                // }
 
                 fputcsv($handle, $this->map($quote));
 

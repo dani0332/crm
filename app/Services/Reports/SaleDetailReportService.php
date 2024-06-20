@@ -94,11 +94,6 @@ class SaleDetailReportService extends ManagementReport
         if ($request->export == 1) {
             $data = $query->get();
 
-            $data = $data->map(function ($item) {
-                $item->payment_due_date = $item->payment_due_date != null ? $item->payment_due_date : ( $item->due_date ? $item->due_date : 'N/A');
-                return $item;
-            });
-
             // Columns that are not integar and should not be summed
             $nonIntegarIndexes = [0, 1, 2, 3, 4, 5, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27];
 
