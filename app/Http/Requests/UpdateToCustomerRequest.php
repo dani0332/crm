@@ -23,11 +23,11 @@ class UpdateToCustomerRequest extends FormRequest
     {
         return [
             'sendUpdateId' => 'required|exists:send_update_logs,id',
-            'quoteType' => 'required|string',
+            'quoteType' => 'string',
             'action' => 'string',
-            'quoteUuid' => 'required|string',
-            'quoteRefId' => 'required|integer',
-            'paymentValidated' => 'required|boolean',
+            'quoteUuid' => 'string',
+            'quoteRefId' => 'integer',
+            'paymentValidated' => 'boolean',
         ];
     }
 }

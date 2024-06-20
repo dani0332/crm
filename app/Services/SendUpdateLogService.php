@@ -833,14 +833,15 @@ class SendUpdateLogService
      */
     public function isPlanDetailAvailable($sendUpdateLog): bool
     {
-        if (in_array($sendUpdateLog->option?->code, [
-            SendUpdateLogStatusEnum::MDOM,
-            SendUpdateLogStatusEnum::MDOV,
-            SendUpdateLogStatusEnum::MPC,
-            SendUpdateLogStatusEnum::ED,
-            SendUpdateLogStatusEnum::DM,
-            SendUpdateLogStatusEnum::DOV,
-        ])) {
+        if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
+            in_array($sendUpdateLog->option?->code, [
+                SendUpdateLogStatusEnum::MDOM,
+                SendUpdateLogStatusEnum::MDOV,
+                SendUpdateLogStatusEnum::MPC,
+                SendUpdateLogStatusEnum::ED,
+                SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DOV,
+            ])) {
             return false;
         }
 
