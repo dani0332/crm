@@ -29,7 +29,6 @@ const quoteStatusForm = useForm({
   quote_uuid: props.quote.uuid,
   quote_status_id: props.quote.quote_status_id,
   notes: props.quote.notes || null,
-  transapp_code: props.quote?.quote_detail?.transapp_code || null,
   lost_reason_id: props.quote?.quote_detail?.lost_reason_id || null,
 });
 
@@ -112,23 +111,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </div>
           </div>
           <div class="w-full md:w-2/3">
-            <x-field
-              label="TransApp Code"
-              class="uppercase"
-              required
-              v-if="
-                quoteStatusForm.quote_status_id ==
-                page.props.quoteStatusEnum.TransactionApproved
-              "
-            >
-              <x-input
-                v-model="quoteStatusForm.transapp_code"
-                placeholder="TransApp Code is required"
-                class="w-full"
-                :disabled="allowStatusUpdate || page.props.lockLeadSectionsDetails.lead_status"
-                :error="quoteStatusForm.errors.transapp_code"
-              />
-            </x-field>
             <x-field
               label="Lost Reason"
               class="uppercase"

@@ -176,7 +176,7 @@ const onCoPaySelect = copayId => {
   });
 
   props.plan?.memberPremiumBreakdown?.forEach(members => {
-    members.ratesPerCopay.forEach(data => {
+    members?.ratesPerCopay?.forEach(data => {
       if (
         data.healthPlanCoPaymentId == copayId &&
         data.loadingPrice != undefined
@@ -245,7 +245,7 @@ const getDefaultVaues = () => {
   if (defaultCopayId.value != undefined || defaultCopayId != null) {
     props.plan?.ratesPerCopay?.forEach(function callback(element, index) {
       if (element.healthPlanCoPaymentId == defaultCopayId.value) {
-        smallestCopayValue = element.premium;
+        smallestCopayValue = Number(element.discountPremium);
       }
     });
     newActualPremium.value = smallestCopayValue;
@@ -255,10 +255,10 @@ const getDefaultVaues = () => {
   ) {
     props.plan?.ratesPerCopay?.forEach(function callback(element, index) {
       if (index == 0) {
-        smallestCopayValue = element.premium;
+        smallestCopayValue = Number(element.discountPremium);
         defaultCopayId.value = element.healthPlanCoPaymentId;
-      } else if (element.premium < smallestCopayValue) {
-        smallestCopayValue = element.premium;
+      } else if (element.discountPremium < smallestCopayValue) {
+        smallestCopayValue = Number(element.discountPremium);
         defaultCopayId.value = element.healthPlanCoPaymentId;
       }
     });
@@ -437,7 +437,7 @@ onUpdated(() => {
   coPay.value = defaultCopayId.value; // get the default selected value for coPay
 
   props.plan?.memberPremiumBreakdown?.forEach(members => {
-    members.ratesPerCopay.forEach(data => {
+    members?.ratesPerCopay?.forEach(data => {
       if (
         data.healthPlanCoPaymentId == selectedCopay.value.id &&
         (!data.premium || data.premium == undefined)
@@ -672,7 +672,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
                 <dd v-else>
                   {{
                     (finalPrice =
-                      selectedCopay.premium +
+                      Number(selectedCopay.discountPremium) +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
                       totalLoadingPrice)?.toLocaleString()
@@ -689,7 +689,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
                 <dt class="font-medium">Total VAT amount</dt>
                 <dd>
                   {{
-                    (vatAmount = Number(finalPrice * 0.05)
+                    (vatAmount = Number(props.plan.vat)
                       .toFixed(2)
                       ?.toLocaleString())
                   }}

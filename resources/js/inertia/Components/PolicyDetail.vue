@@ -85,13 +85,13 @@ const policyDetailsForm = useForm({
   quote_policy_issuance_date:
     dateToYMD(page.props.quote.policy_issuance_date) ||
     new Date().toJSON().slice(0, 10),
-  price_vat_notapplicable: page.props.quote.price_vat_not_applicable || '',
-  price_vat_applicable: page.props.quote.price_vat_applicable || '',
-  vat: page.props.quote.vat || '',
+  price_vat_notapplicable: page.props.quote.price_vat_not_applicable || 0,
+  price_vat_applicable: page.props.quote.price_vat_applicable || 0,
+  vat: page.props.quote.vat || 0,
   quote_policy_start_date: dateToYMD(page.props.quote.policy_start_date) || '',
   quote_policy_expiry_date:
     dateToYMD(page.props.quote.renewal_expiry_date) || '',
-  amount_with_vat: '',
+  amount_with_vat: 0,
   quote_plan_insurer_quote_number:
     planQuoteInsurerNumber.value || page.props.quote.insurer_quote_number,
   quote_policy_issuance_status: page.props.quote.policy_issuance_status_id,
@@ -113,9 +113,11 @@ watch(
 watch(
   () => page.props.quote?.price_with_vat,
   (newValue, oldValue) => {
-    policyDetailsForm.price_vat_notapplicable =  page.props.quote.price_vat_not_applicable || '';
-    policyDetailsForm.price_vat_applicable =  page.props.quote.price_vat_applicable || '';
-    policyDetailsForm.vat= page.props.quote.vat || '';
+    policyDetailsForm.price_vat_notapplicable =
+      page.props.quote.price_vat_not_applicable || '';
+    policyDetailsForm.price_vat_applicable =
+      page.props.quote.price_vat_applicable || '';
+    policyDetailsForm.vat = page.props.quote.vat || '';
 
     caculateVatAmount();
   },
@@ -136,16 +138,16 @@ const caculateVatAmount = () => {
   } else if (priceVatApplicable > 0) {
     let vat = priceVatApplicable * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
-    policyDetailsForm.amount_with_vat = (Number(vat) + Number(priceVatApplicable)).toFixed(
-      2,
-    );
+    policyDetailsForm.amount_with_vat = (
+      Number(vat) + Number(priceVatApplicable)
+    ).toFixed(2);
   } else if (priceVatNotApplicable > 0) {
     policyDetailsForm.amount_with_vat = Number(priceVatNotApplicable).toFixed(
       2,
     );
   } else {
-    policyDetailsForm.vat = '';
-    policyDetailsForm.amount_with_vat = '';
+    policyDetailsForm.vat = 0;
+    policyDetailsForm.amount_with_vat = 0;
   }
 };
 
@@ -580,9 +582,7 @@ watch(
               <template v-else>
                 <x-tooltip>
                   <x-button
-                    v-if="
-                      quote.quote_status_id == quoteStatusEnum.PolicyBooked
-                    "
+                    v-if="quote.quote_status_id == quoteStatusEnum.PolicyBooked"
                     size="sm"
                     color="emerald"
                     :disabled="true"

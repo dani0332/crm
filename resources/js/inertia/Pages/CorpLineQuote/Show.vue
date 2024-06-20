@@ -151,7 +151,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
@@ -1100,7 +1099,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       <template #body>
         <x-divider class="my-4" />
         <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-          <div class="w-full md:w-1/2">
+          <div class="w-full md:w-50">
             <div class="flex flex-col gap-4">
               <x-select
                 v-model="leadStatusForm.leadStatus"
@@ -1118,35 +1117,22 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 class="w-full"
                 :disabled="disableStatusSection || lockLeadSectionsDetails.lead_status"
               />
+              <x-select
+                v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
+                v-model="leadStatusForm.lostReason"
+                label="LOST REASON"
+                :options="
+                  lostReasons?.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                placeholder="Lost Reason is required"
+                class="w-full"
+                :error="leadStatusForm.errors.lostReason"
+                :disabled="lockLeadSectionsDetails.lead_status"
+             />
             </div>
-          </div>
-          <div class="w-full md:w-2/3">
-            <x-input
-              v-if="
-                leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved
-              "
-              :disabled="disableStatusSection || lockLeadSectionsDetails.lead_status"
-              v-model="leadStatusForm.trans_code"
-              label="TRANSAPP CODE"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-            <x-select
-              v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
-              v-model="leadStatusForm.lostReason"
-              label="LOST REASON"
-              :options="
-                lostReasons?.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))
-              "
-              placeholder="Lost Reason is required"
-              class="w-full"
-              :error="leadStatusForm.errors.lostReason"
-              :disabled="lockLeadSectionsDetails.lead_status"
-            />
           </div>
         </div>
         <StatusUpdateButtonTemplate v-slot="{ isDisabled }">

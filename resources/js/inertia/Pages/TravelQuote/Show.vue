@@ -216,7 +216,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: lostReasonId.value || '',
 });
 
@@ -2182,24 +2181,6 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
               </div>
             </div>
             <div class="w-full md:w-2/3">
-              <x-field
-                label="TRANSAPP CODE"
-                v-if="
-                  leadStatusForm.leadStatus ==
-                  quoteStatusEnum.TransactionApproved
-                "
-              >
-                <x-input
-                  :disabled="
-                    (quote.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved) || lockLeadSectionsDetails.lead_status
-                  "
-                  v-model="leadStatusForm.trans_code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-              </x-field>
               <x-field
                 label="LOST REASON"
                 v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"

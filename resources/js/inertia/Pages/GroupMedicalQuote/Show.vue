@@ -124,7 +124,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
@@ -952,20 +951,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               </div>
             </div>
             <div class="w-full md:w-2/3">
-              <x-input
-                v-if="
-                  leadStatusForm.leadStatus ==
-                  quoteStatusEnum.TransactionApproved
-                "
-                :disabled="
-                  (quote.quote_status_id == quoteStatusEnum.TransactionApproved) || lockLeadSectionsDetails.lead_status
-                "
-                v-model="leadStatusForm.trans_code"
-                label="TransApp Code"
-                placeholder="TransApp Code is required"
-                class="w-full"
-                :error="leadStatusForm.errors.trans_code"
-              />
               <x-select
                 v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 v-model="leadStatusForm.lostReason"

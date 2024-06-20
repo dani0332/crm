@@ -185,7 +185,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.record.advisor_id,
   leadStatus: page.props.record.quote_status_id || null,
   notes: page.props.record.notes || null,
-  trans_code: page.props.record.transapp_code || null,
   lostReason: page.props.record.lost_reason_id || null,
   next_followup_date: page.props.record.next_followup_date
     ? prepareDate(page.props.record.next_followup_date)
@@ -2367,24 +2366,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                   :disabled="leadStatusDisabled || lockLeadSectionsDetails.lead_status"
                   :options="leadStatusOptions"
                 />
-                <x-field
-                  label="TransApp Code"
-                  class="uppercase"
-                  required
-                  v-if="
-                    leadStatusForm.leadStatus ==
-                    quoteStatusEnum.TransactionApproved
-                  "
-                >
-                  <x-input
-                    v-model="leadStatusForm.trans_code"
-                    placeholder="TransApp Code is required"
-                    class="w-full"
-                    :rules="[rules.isRequired]"
-                    :error="leadStatusForm.errors.trans_code"
-                    :disabled="lockLeadSectionsDetails.lead_status"
-                  />
-                </x-field>
                 <x-field
                   label="Lost Reason"
                   class="uppercase"

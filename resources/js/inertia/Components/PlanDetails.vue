@@ -21,11 +21,11 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
-  price_vat_applicable: props.quote?.price_vat_applicable ?? null, // price vat applicable
-  price_vat_not_applicable: props.quote?.price_vat_not_applicable ?? null, //price vat not applicable
+  price_vat_applicable: props.quote?.price_vat_applicable ?? 0, // price vat applicable
+  price_vat_not_applicable: props.quote?.price_vat_not_applicable ?? 0, //price vat not applicable
   price_with_vat: props.quote.price_with_vat
     ? useFormatPrice(props.quote.price_with_vat, true)
-    : null,
+    : 0,
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
 });
 
@@ -103,7 +103,7 @@ const submitPlanDetailsForm = isValid => {
 };
 
 const updatePriceWithVat = () => {
-  planDetailsForm.price_with_vat = '';
+  planDetailsForm.price_with_vat = 0;
 
   let priceVatApp = parseFloat(
     planDetailsForm.price_vat_applicable !== null &&
