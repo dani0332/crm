@@ -90,6 +90,7 @@ const filters = reactive({
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  advisors: [],
 });
 
 const serverOptions = ref({
@@ -102,6 +103,13 @@ const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
     value: status.id,
     label: status.text,
+  }));
+});
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
   }));
 });
 
@@ -197,10 +205,11 @@ function onReset() {
     <sticky-header>
       <template #header>
         <h2 class="text-xl font-semibold">Cycle List</h2>
-        <LeadsCount
+        <!-- PD Revert 
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <FiltersButton
@@ -310,6 +319,13 @@ function onReset() {
                 label: item.text,
               }))
             "
+          />
+        </x-field>
+        <x-field label="Advisor" v-if="isAllowed">
+          <ComboBox
+            v-model="filters.advisors"
+            placeholder="Search by Advisor"
+            :options="advisorOptions"
           />
         </x-field>
         <x-field label="Is Ecommerce">

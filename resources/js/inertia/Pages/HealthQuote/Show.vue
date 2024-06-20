@@ -921,7 +921,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
         element.selectedCopayId &&
         defaultCopayId == value.healthPlanCoPaymentId
       ) {
-        smallestCopayValue = Number(value.premium);
+        smallestCopayValue = Number(value.discountPremium);
         smallestCopayVAT = Number(value.vat);
         smallestCopayLoadingPrice = Number(
           value.loadingPrice ? value.loadingPrice : 0,
@@ -932,14 +932,14 @@ const getSmallestCopayRateAsDefaultValue = () => {
         element.selectedCopayId == null
       ) {
         if (index == 0) {
-          smallestCopayValue = Number(value.premium);
+          smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
           );
           defaultCopayId = value.healthPlanCoPaymentId;
-        } else if (value.premium < smallestCopayValue) {
-          smallestCopayValue = Number(value.premium);
+        } else if (value.discountPremium < smallestCopayValue) {
+          smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
@@ -2634,15 +2634,15 @@ watch(
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName }}</dd>
+            <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ quote.payment_status_text }}</dd>
+            <dd>{{ quote.payment_status_text ?? 'N/A' }}</dd>
           </div>
           <div
             class="grid sm:grid-cols-2"
@@ -2654,16 +2654,20 @@ watch(
             <dd>{{ mainPayment?.payment_status_message }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AUTHORISED AT</dt>
+            <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ ecomDetails.paidAt }}</dd>
+            <dd>{{ quote.payment_paid_at ?? 'N/A'}}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NETWORK</dt>
-            <dd>{{ ecomDetails.network }}</dd>
+            <dd>{{ ecomDetails.network!=''? ecomDetails.network : 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-            <dd>{{ fixedValue(selectedProviderPlan.premium) }}</dd>
+            <dd>{{ selectedProviderPlan.premium? fixedValue(selectedProviderPlan.premium) : 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
@@ -2829,13 +2833,7 @@ watch(
             </x-badge>
 
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.BetaUser,
-                  rolesEnum.RMAdvisor,
-                  rolesEnum.HealthManager,
-                ])
-              "
+              v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
               size="sm"
               color="emerald"
               @click.prevent="modals.createPlan = true"

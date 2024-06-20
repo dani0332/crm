@@ -46,6 +46,17 @@ let availableFilters = {
 const filters = reactive(availableFilters);
 const canExport = ref(false);
 const hasRole = role => useHasRole(role);
+watch(
+    () => filters,
+    () => {
+        if (filters.created_at_start && filters.created_at_end) {
+            canExport.value = true;
+        } else {
+            canExport.value = false;
+        }
+    },
+    { deep: true, immediate: true },
+);
 
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -75,7 +86,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
+  { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   { text: 'POLICY NO', value: 'policy_no', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   {
@@ -231,10 +242,11 @@ watch(
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
-        <LeadsCount
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <ColumnSelection

@@ -88,7 +88,7 @@ class SaleSummaryReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
 
-        return $query->simplePaginate(10)->withQueryString();
+        return $query->simplePaginate(100)->withQueryString();
     }
 
     private function resolveGroupByColumn($groupBy)

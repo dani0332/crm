@@ -90,6 +90,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
+
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
@@ -104,12 +105,22 @@ class PetQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
+            ->when(! empty(request()->is_renewal), function ($query) {
+                $isRenewal = request()->is_renewal;
+                if ($isRenewal == quoteTypeCode::yesText) {
+                    $query->whereNotNull('previous_quote_policy_number');
+                } elseif ($isRenewal == quoteTypeCode::noText) {
+                    $query->whereNull('previous_quote_policy_number');
+                }
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            return 0;
+            // return $query->count();
         }
 
         return ($forExport) ? $query->get() : $query;
@@ -189,7 +200,7 @@ class PetQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+            ['advisor', 'nationality', 'insuranceProvider']
+        )->orderBy('created_at', 'desc');
     }
-
 }

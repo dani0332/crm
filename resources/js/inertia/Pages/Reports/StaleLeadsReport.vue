@@ -2,17 +2,63 @@
 const props = defineProps({
   reportData: Object,
   defaultFilters: Object,
+  teams: Array,
+  products: Array,
 });
 
 const loaders = reactive({
   table: false,
 });
 
+const validProdcuts = reactive([
+  'Health',
+  'CorpLine',
+  'Home',
+  'Pet',
+  'Yacht',
+  'Cycle',
+]);
+
 const advisorOptions = ref([]);
 
-const teamOptions = ref([]);
+// const teamOptions = computed(() => {
+//   return props.teams.map(x => ({
+//     value: x.id,
+//     label: x.name,
+//   }));
+// });
 
-const selectedLob = ref('Health');
+const teams = ref(
+  props.teams.map(x => ({
+    value: x.id,
+    lable: x.name,
+  })),
+);
+const teamOptions = computed({
+  get() {
+    return teams.value;
+  },
+
+  set(newValue) {
+    teams.value = newValue;
+  },
+});
+const lobs = computed(() => {
+  return props.products
+    .filter(x => {
+      if (validProdcuts.includes(x)) {
+        return x;
+      }
+    })
+    .map(item => {
+      return {
+        value: item,
+        label: item,
+      };
+    });
+});
+
+const selectedLob = ref(lobs.value[0].value);
 
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -24,7 +70,7 @@ const serverOptions = ref({
 
 const filters = reactive({
   date: null,
-  lob: 'Health',
+  lob: selectedLob.value,
   team: '',
   advisors: [],
   filter_by: null,
@@ -146,13 +192,24 @@ const commonHeaders = ref([
 
 const tableHeader = ref([]);
 
+const computedHeaders = computed(() => {
+  tableHeader.value.push({
+    text: 'TOTAL',
+    value: 'total',
+  });
+  return tableHeader.value;
+});
+
+const tableData = computed(() => {
+  return props.reportData.data || [];
+});
+
 const onSubmit = isValid => {
   if (!isValid) return;
   serverOptions.value.page = 1;
 
   const filtersCleaned = cleanObj(filters);
 
-  tableHeader.value = [];
   router.visit(route('stale-leads-report'), {
     method: 'get',
     data: {
@@ -192,12 +249,18 @@ const fetchTeams = async () => {
     })
     .then(res => {
       if (res.data.teams) {
-        teamOptions.value = Object.entries(res.data.teams).map(
-          ([key, value]) => ({
-            value: key,
-            label: value,
-          }),
-        );
+        teamOptions.value = Object.values(res.data.teams)
+          .filter(x => {
+            if (props.teams.some(item => item.name == x)) return x;
+          })
+          .map(newTeam => ({
+            value: newTeam,
+            label: newTeam,
+          }));
+        // teamOptions.value = Object.entries(teams).map(([key, value]) => ({
+        //   value: key,
+        //   label: value,
+        // }));
       }
     })
     .finally(() => {
@@ -269,7 +332,7 @@ const presetDates = [
 function changeLob() {
   if (filters.lob === 'Health') {
     tableHeader.value = [...commonHeaders.value, ...healthHeaders.value];
-  } else if (filters.lob === 'Corpline') {
+  } else if (filters.lob === 'CorpLine') {
     const commons = commonHeaders.value.filter(
       header =>
         header.value !== 'in_negotiation' && header.value !== 'payment_pending',
@@ -308,7 +371,7 @@ onMounted(() => {
   setQueryStringFilters();
   changeLob();
   fetchTeams();
-  onTeamChange(filters.team);
+  // onTeamChange(filters.team);
 });
 
 watch(
@@ -338,29 +401,24 @@ watch(
         />
       </x-field>
       <x-field label="Line Of Bussiness">
-        <x-select
+        <ComboBox
           v-model="filters.lob"
           placeholder="Search by Bussiness"
-          :options="[
-            { value: 'Health', label: 'Health' },
-            { value: 'Pet', label: 'Pet' },
-            { value: 'Cycle', label: 'Cycle' },
-            { value: 'Home', label: 'Home' },
-            { value: 'Corpline', label: 'Corpline' },
-            { value: 'Yacht', label: 'Yacht' },
-          ]"
+          :options="lobs"
           class="w-full"
+          :single="true"
           @update:modelValue="onLobChange"
         />
       </x-field>
       <x-field label="Teams">
-        <x-select
+        <ComboBox
           v-model="filters.team"
           placeholder="Select Team"
           :options="teamOptions"
           :loading="loaders.advisorOptions"
           class="w-full"
-          @update:modelValue="onTeamChange($event)"
+          :single="true"
+          @update:modelValue="onTeamChange"
         />
       </x-field>
       <x-field
@@ -374,8 +432,6 @@ watch(
           v-model="filters.advisors"
           placeholder="Search by Advisor Name"
           :options="advisorOptions"
-          :select-all="filters.advisors?.length > 0"
-          :deselect-all="filters.advisors?.length > 0"
           class="w-full"
           :loading="loaders.advisorOptions"
         />
@@ -415,16 +471,10 @@ watch(
   </x-form>
   <DataTable
     v-model:server-options="serverOptions"
-    table-class-name="lining-nums mt-4"
+    table-class-name=" mt-4"
     :loading="loaders.table"
-    :headers="[
-      ...tableHeader,
-      {
-        text: 'TOTAL',
-        value: 'total',
-      },
-    ]"
-    :items="props.reportData.data || []"
+    :headers="computedHeaders"
+    :items="tableData"
     border-cell
     :empty-message="'No Records Available'"
     :sort-by="'net_conversion'"

@@ -1251,6 +1251,7 @@ const linkEntity = () => {
       quoteSubType="Corpline"
       :isAmlClearedForPayment="isAmlClearedForPayment"
     />
+    
     <PaymentTable
       v-else
       :payments="payments"
@@ -1264,7 +1265,7 @@ const linkEntity = () => {
 
     <QuoteDocuments
       :document-types="documentTypes"
-      :quote-documents="page.props.documents || []"
+      :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
@@ -1556,22 +1557,8 @@ const linkEntity = () => {
       </x-modal>
     </div> -->
 
-    <PlanDetails
-      :insuranceProviders="insuranceProvidersAll"
-      :quote="quote"
-      :quoteType="page.props.quoteType"
-    />
-
     <!-- Payments -->
-    <PaymentTable
-      :payments="payments"
-      :can="permissions"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
+    
 
     <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
       <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>

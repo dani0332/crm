@@ -8,6 +8,8 @@ use App\Enums\EnvEnum;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
+use App\Models\Customer;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -407,6 +409,7 @@ class SendEmailCustomerService extends BaseService
 
     public function sendMyAlfredWelcomeEmail($emailData, $tag, $source = '')
     {
+        $isEmailSent = 0;
         try {
             $appEnv = config('constants.APP_ENV');
             //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
@@ -877,6 +880,97 @@ class SendEmailCustomerService extends BaseService
             $responseCode = $ex->getCode();
             $responseDetail = 'sendSICNotificationToAdvisor: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
+        }
+
+        return $responseCode;
+    }
+
+    public function sendingAlfredFollowupEmail($customer)
+    {
+        $emailTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE)->first();
+
+        $apiKey = config('constants.SENDINBLUE_KEY');
+        $url = config('constants.SIB_URL');
+        try {
+            info('AlfredFollowUpEmail Starting');
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            $body = [
+                'to' => [[
+                    'email' => $customer->email,
+                    'name' => $customer->name,
+                ]],
+                'templateId' => (int) $emailTemplateId->value,
+                'params' => ['email' => $customer->email, 'customerName' => $customer->name],
+            ];
+            $response = Http::withHeaders($headers)
+                ->post($url, $body);
+
+            info('AlfredFollowUpEmail ---- Request Sent '.$customer->email);
+
+            $responseCode = $response->status();
+            if ($responseCode == 200 || $responseCode == 201) {
+                $isCustomer = Customer::where('id', $customer->customer_id)->first();
+                if ($isCustomer->campaign_followups < 3) {
+                    $isCustomer->increment('campaign_followups');
+                    $isCustomer->last_followup_sent_at = Carbon::now();
+                    $isCustomer->save();
+                }
+            }
+
+            info('AlfredFollowUpEmail ---- Received Code : '.$responseCode.' '.$customer->email);
+            info('AlfredFollowUpEmail ---- response object : '.json_encode($response->object()).'--'.$customer->email);
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            Log::error($responseCode);
+        }
+
+        return $responseCode;
+    }
+
+    public function sendSICFollowupEmail($emailData)
+    {
+        $emailTemplateId = getAppStorageValueByKey(ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID);
+        if (! $emailTemplateId || ! $emailData || ! $emailData->email) {
+            return false;
+        }
+
+        try {
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => config('constants.SENDINBLUE_KEY'),
+                'Content-Type' => 'application/json',
+            ];
+            $body = [
+                'to' => [[
+                    'email' => $emailData->email,
+                    'name' => $emailData->first_name.' '.$emailData->last_name,
+                ]],
+                'templateId' => (int) $emailTemplateId,
+                'params' => [
+                    'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$emailData->uuid.'/?assignAdvisor=true',
+                    'carQuoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$emailData->uuid.'/?IA=true',
+                    'carQuoteId' => $emailData->code,
+                    'email' => $emailData->email,
+                    'clientFullName' => $emailData->first_name.' '.$emailData->last_name],
+            ];
+            $response = Http::withHeaders($headers)
+                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
+                ->retry(3, 90000)
+                ->post(config('constants.SIB_URL'), $body);
+
+            info('SICFollowupEmail ---- Request Sent '.$emailData->email);
+
+            $responseCode = $response->status();
+            if ($responseCode == 200 || $responseCode == 201) {
+                info('SICFollowupEmail ---- | Response Code: '.$responseCode.' | Response Received  : '.json_encode($response->object()).'--'.$emailData->email);
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            Log::error(sprintf('SICFollowupEmail failed: Brevo API call failed for %s | Exception: %s', $emailData->email, $ex->getMessage()));
         }
 
         return $responseCode;

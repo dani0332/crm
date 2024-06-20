@@ -92,6 +92,17 @@ class ApplicationStorageSeeder extends Seeder
             ]);
         }
 
+        $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
+        if (! $epMdxV3From) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::EP_MDX_V3_FROM,
+                'value' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
         if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::EMAIL_CAMPAIGN)->exists()) {
             ApplicationStorage::create([
                 'key_name' => ApplicationStorageEnums::EMAIL_CAMPAIGN,
@@ -109,6 +120,35 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED,
+                'value' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS,
+                'value' => 30,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE,
+                'value' => 117,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
             ]);
         }
     }

@@ -82,12 +82,13 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   quote_status_id: '',
-  advisor_id: '',
+  advisors: '',
   business_type_of_insurance_id: '',
   company_name: '',
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  is_renewal: '',
   payment_status: [],
   is_cold: false,
   is_stale: false,
@@ -164,6 +165,30 @@ function onSubmit(isValid) {
   }
 }
 
+const setIntialState = () => {
+  Object.assign(filters, {
+    code: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    mobile_no: '',
+    created_at_start: '',
+    created_at_end: '',
+    quote_status_id: '',
+    advisors: '',
+    business_type_of_insurance_id: '',
+    company_name: '',
+    page: 1,
+    previous_quote_policy_number: '',
+    renewal_batch: '',
+    is_renewal: '',
+    payment_status: [],
+    is_cold: false,
+    is_stale: false,
+  });
+  filtersCount.value = 0;
+};
+
 function resetFilters() {
   removedSavedParams();
   router.visit(route('business.cards'), {
@@ -177,6 +202,7 @@ function resetFilters() {
       filters.page = 1;
       // loader.table = true;
     },
+    onSuccess: () => setIntialState(),
   });
 }
 
@@ -222,11 +248,12 @@ watch(
     <Head title="Business Quote ~ Card View" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Lead List</h2>
-        <LeadsCount
+        <h2 class="text-xl font-semibold">CorpLine List</h2>
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <FiltersButton
@@ -337,11 +364,10 @@ watch(
           />
         </x-field>
         <x-field label="Advisor" v-if="isAllowed">
-          <x-select
-            v-model="filters.advisor_id"
+          <ComboBox
+            v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-            class="w-full"
           />
         </x-field>
         <x-input
@@ -359,6 +385,17 @@ watch(
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+        <x-select
+          v-model="filters.is_renewal"
+          label="Is Renewal"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

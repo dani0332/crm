@@ -56,17 +56,30 @@ const filters = reactive({
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  quote_status_id: '',
-  advisor_id: '',
-  business_type_of_insurance_id: '',
+  quote_status_id: [],
+  advisor_id: [],
+  business_type_of_insurance_id: [],
   company_name: '',
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  is_renewal: '',
   payment_status: [],
   is_cold: false,
   is_stale: false,
 });
+
+watch(
+    () => filters,
+    () => {
+        if (filters.created_at_start && filters.created_at_end) {
+            canExport.value = true;
+        } else {
+            canExport.value = false;
+        }
+    },
+    { deep: true, immediate: true },
+);
 
 const leadStatusOptions = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(status => ({
@@ -114,7 +127,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
+  { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   {
     text: 'NUMBER OF EMPLOYEES',
     value: 'number_of_employees',
@@ -134,6 +147,30 @@ const tableHeader = ref([
   { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
 ]);
 
+const setIntialState = () => {
+  Object.assign(filters, {
+    code: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    mobile_no: '',
+    created_at_start: '',
+    created_at_end: '',
+    quote_status_id: [],
+    advisor_id: [],
+    business_type_of_insurance_id: [],
+    company_name: '',
+    page: 1,
+    previous_quote_policy_number: '',
+    renewal_batch: '',
+    is_renewal: '',
+    payment_status: [],
+    is_cold: false,
+    is_stale: false,
+  });
+  filtersCount.value = 0;
+};
+
 function resetFilters() {
   removedSavedParams();
   router.visit(route('business.index'), {
@@ -146,6 +183,9 @@ function resetFilters() {
     onBefore: () => {
       filters.page = 1;
       loader.table = true;
+    },
+    onSuccess: () => {
+      setIntialState();
     },
   });
 }
@@ -183,8 +223,8 @@ const handleSelectedFilters = selectedFilters => {
     filters.created_at_end = selectedFilters.created_at_end;
   }
 
-  if (selectedFilters.quote_status) {
-    filters.quote_status = selectedFilters.quote_status;
+  if (selectedFilters.quote_status_id) {
+    filters.quote_status_id = selectedFilters.quote_status_id;
   }
 
   if (selectedFilters.payment_status) {
@@ -245,11 +285,11 @@ const onDataExport = () => {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+      filters[key.substring(0, key.length - 2)] = params[key].map(value => isNaN(parseInt(value))? value: parseInt(value));
     } else {
       filters[key] = params[key];
     }
-  }
+ }
 }
 
 onMounted(() => {
@@ -289,11 +329,12 @@ watch(
     <Head title="Business Quote List" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Lead List</h2>
-        <LeadsCount
+        <h2 class="text-xl font-semibold">CorpLine List</h2>
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <ColumnSelection
@@ -423,21 +464,18 @@ watch(
           />
         </x-field>
         <x-field label="Lead Status">
-          <x-select
-            v-model="filters.quote_status_id"
-            name="quote_status_id"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-            class="w-full"
-          />
+            <ComboBox
+                v-model="filters.quote_status_id"
+                placeholder="Search by Lead Status"
+                :options="leadStatusOptions"
+            />
         </x-field>
         <x-field label="BUSINESS INSURANCE TYPE">
-          <x-select
-            v-model="filters.business_type_of_insurance_id"
-            placeholder="INSURANCE TYPE"
-            :options="insuranceTypeOptions"
-            class="w-full"
-          />
+            <ComboBox
+                v-model="filters.business_type_of_insurance_id"
+                placeholder="Search by Insurance Type"
+                :options="insuranceTypeOptions"
+            />
         </x-field>
         <x-field
           label="Advisor"
@@ -449,12 +487,11 @@ watch(
             ])
           "
         >
-          <x-select
+           <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-            class="w-full"
-          />
+            />
         </x-field>
         <x-input
           v-model="filters.previous_quote_policy_number"
@@ -471,6 +508,17 @@ watch(
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+        <x-select
+          v-model="filters.is_renewal"
+          label="Is Renewal"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -503,7 +551,12 @@ watch(
           >
             Search
           </x-button>
-          <x-button size="sm" color="primary" @click.prevent="resetFilters">
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="resetFilters"
+            :loading="loader.table"
+          >
             Reset
           </x-button>
         </div>

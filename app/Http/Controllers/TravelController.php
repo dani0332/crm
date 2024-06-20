@@ -157,13 +157,15 @@ class TravelController extends Controller
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
         $this->travelQuoteService->fillData();
         $nationalities = NationalityRepository::withActive()->get();
+        $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
 
         $ecomDetails = [
             'premium' => $record->premium,
-            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '',
+            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
             'paymentStatus' => $record->payment_status_id_text,
             'planName' => $record->plan_id_text,
             'providerName' => $record->travel_plan_provider_text,
+            'paidAtPayment' => ($record->payment_paid_at) ? Carbon::parse($record->payment_paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
         ];
 
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
@@ -207,7 +209,7 @@ class TravelController extends Controller
             'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
             'aboveAgeMembers' => $this->travelQuoteService->getAboveAgeMembers($record->id),
             'ecomDetails' => $ecomDetails,
-            'quoteDocuments' => array_values($quoteDocuments->toArray()),
+            'quoteDocuments' => $quoteDocuments->toArray(),
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),

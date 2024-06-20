@@ -241,8 +241,9 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
-    public const EMBEDDED_PRODUCT_ADVISOR = 'embedded-product-view';
-    public const EMBEDDED_PRODUCT_ADMIN = 'embedded-product-payment-cancel';
+    public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
+    public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
+    public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
@@ -293,6 +294,30 @@ final class PermissionsEnum extends Enum
     public const YACHT_COMPREHENSIVE_DASHBOARD = 'yacht-comprehensive-dashboard';
     public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
+    public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
+    public const CONVERSION_AS_AT_REPORT = 'conversion-as-at-report';
+    public const MOTOR_AS_AT_REPORT_MANAGER = 'motor-as-at-report-manager';
+    public const HEALTH_AS_AT_REPORT_MANAGER = 'health-as-at-report-manager';
+    public const TRAVEL_AS_AT_REPORT_MANAGER = 'travel-as-at-report-manager';
+    public const LIFE_AS_AT_REPORT_MANAGER = 'life-as-at-report-manager';
+    public const HOME_AS_AT_REPORT_MANAGER = 'home-as-at-report-manager';
+    public const PET_AS_AT_REPORT_MANAGER = 'pet-as-at-report-manager';
+    public const CYCLE_AS_AT_REPORT_MANAGER = 'cycle-as-at-report-manager';
+    public const YACHT_AS_AT_REPORT_MANAGER = 'yacht-as-at-report-manager';
+    public const BUSINESS_AS_AT_REPORT_MANAGER = 'business-as-at-report-manager';
+    public const GROUPMEDICALS_AS_AT_REPORT_MANAGER = 'groupmedicals-as-at-report-manager';
+    public const ACCESS_REPORT_SM = 'access-report-sm';
+    public const BIKE_DISTRIBUTION_REPORT = 'bike-distribution-report';
+    public const HEALTH_DISTRIBUTION_REPORT = 'health-distribution-report';
+    public const TRAVEL_DISTRIBUTION_REPORT = 'travel-distribution-report';
+    public const LIFE_DISTRIBUTION_REPORT = 'life-distribution-report';
+    public const HOME_DISTRIBUTION_REPORT = 'home-distribution-report';
+    public const PET_DISTRIBUTION_REPORT = 'pet-distribution-report';
+    public const CYCLE_DISTRIBUTION_REPORT = 'cycle-distribution-report';
+    public const YACHT_DISTRIBUTION_REPORT = 'yacht-distribution-report';
+    public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
+    public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
+    public const ADD_MANUAL_HEALTH_PLAN = 'add-manual-health-plan';
 
     public static function getAdvisorConverionReportPermissions()
     {
@@ -325,6 +350,23 @@ final class PermissionsEnum extends Enum
             PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
             PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
             PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+        ];
+    }
+
+    public static function getAdvisorDistributionReportPermissions()
+    {
+        return [
+            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+            PermissionsEnum::BIKE_DISTRIBUTION_REPORT,
+            PermissionsEnum::HEALTH_DISTRIBUTION_REPORT,
+            PermissionsEnum::TRAVEL_DISTRIBUTION_REPORT,
+            PermissionsEnum::LIFE_DISTRIBUTION_REPORT,
+            PermissionsEnum::HOME_DISTRIBUTION_REPORT,
+            PermissionsEnum::PET_DISTRIBUTION_REPORT,
+            PermissionsEnum::CYCLE_DISTRIBUTION_REPORT,
+            PermissionsEnum::YACHT_DISTRIBUTION_REPORT,
+            PermissionsEnum::CORPLINE_DISTRIBUTION_REPORT,
+            PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT,
         ];
     }
 }

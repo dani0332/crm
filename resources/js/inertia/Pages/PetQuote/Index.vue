@@ -1,7 +1,7 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
-defineProps({
+const props = defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
@@ -45,6 +45,18 @@ let availableFilters = {
 const canExport = ref(false);
 const filters = reactive(availableFilters);
 
+watch(
+    () => filters,
+    () => {
+        if (filters.created_at_start && filters.created_at_end) {
+            canExport.value = true;
+        } else {
+            canExport.value = false;
+        }
+    },
+    { deep: true, immediate: true },
+);
+
 let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
@@ -73,10 +85,10 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
+  { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'TYPE OF PET', value: 'type_of_pet', is_active: true },
   { text: 'BREED OF PET', value: 'breed_of_pet1', is_active: true },
@@ -237,10 +249,11 @@ watch(
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Pet Quotes List</h2>
-        <LeadsCount
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <ColumnSelection v-model:columns="tableHeader" storage-key="pet-list" />
@@ -394,6 +407,18 @@ watch(
             :options="advisorOptions"
           />
         </x-field>
+        <x-field label="Is Renewal">
+          <x-select
+            v-model="filters.is_renewal"
+            placeholder="Search by Renewal"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
         <x-field label="Is Ecommerce">
           <x-select
             v-model="filters.is_ecommerce"
@@ -492,10 +517,14 @@ watch(
           :href="route('pet-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
-          <span>{{ code }}</span>
+          <span>{{ code }} </span>
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
         <span v-else>{{ code }}</span>
+      </template>
+
+      <template #item-price_with_vat="{ price_with_vat }">
+        <span>{{ price_with_vat }}</span>
       </template>
 
       <template #item-advisor="{ advisor }">

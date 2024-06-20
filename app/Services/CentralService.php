@@ -217,7 +217,12 @@ class CentralService
 
                         foreach ($listQuotePlans as $plans) {
                             foreach ($plans as $plan) {
-                                $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
+                                if (isset($plan->planTypeId)) {
+                                    $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
+
+                                } else {
+                                    $plan->plan_type = 'N/A';
+                                }
                             }
                         }
                     }
@@ -358,7 +363,6 @@ class CentralService
 
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId, $previousStatusIdChanged = false)
     {
-        $quoteDetails['quote_type_id'] = $quoteTypeId;
         $quoteTypeDetails = [
             CarQuote::class => [
                 'eligible_for_automate' => false,
@@ -400,7 +404,7 @@ class CentralService
 
         $quoteTypeDetail = null;
 
-        switch ($quoteDetails->quote_type_id) {
+        switch ($quoteTypeId) {
             case QuoteTypeId::Car:
                 $quoteTypeDetail = $quoteTypeDetails[CarQuote::class];
                 break;
@@ -503,8 +507,7 @@ class CentralService
                 'updated_at' => Carbon::now(),
                 'assignee_id' => $quoteDetails->advisor_id ?? auth()->user()->id,
                 'uuid' => generateUuid(),
-                // 'due_date' => addDaysExcludeWeekend($getActivitySchedule->due_days),
-                'due_date' => addMinutesExcludeWeekend($getActivitySchedule->due_days),
+                'due_date' => addDaysExcludeWeekend($getActivitySchedule->due_days),
                 'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
                 'client_email' => $quoteDetails->email,
                 'quote_uuid' => $quoteDetails->uuid,

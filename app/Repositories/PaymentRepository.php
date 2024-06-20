@@ -397,6 +397,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
             }
+
+            $canCaptureEp = false;
             // On failure, the capture button will render again and the user can try again
             DB::beginTransaction();
             try {
@@ -426,6 +428,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($totalApproved == $quoteModel->payments()->count()) {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     $quoteModel->save();
+                    $canCaptureEp = true;
                     // Berlin Service - Extend Customer Subscription on Shaji request
                     $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
                     if ($customerData) {
@@ -434,9 +437,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         info('Transaction Approved responseExtend: '.$responseExtend);
                     }
                     //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
-
-                    // send EP documents
-                    EmbeddedProductRepository::sendDocumentsByLead($request->quote_id, $request->modelType);
 
                     //Create duplicate lead for TRAVEL
                     if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
@@ -448,7 +448,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $this->updateLeadStatus($firstPayment); //update lead status
                 DB::commit();
             } catch (Exception $exception) {
+                $canCaptureEp = false;
                 DB::rollBack();
+            }
+
+            if ($canCaptureEp) {
+                // capture EP and send documents
+                EmbeddedProductRepository::capturePayment($request->quote_id, $request->modelType);
             }
         }
 
@@ -636,6 +642,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel = $this->getQuoteObject($quoteType, $payment->paymentable_id);
             if ($quoteModel) {
                 $quoteModel->payment_status_id = $payment->payment_status_id;
+                if ($payment->payment_status_id == PaymentStatusEnum::PAID) {
+                    $quoteModel->payment_paid_at = now();
+                }
                 $quoteModel->save();
             }
         }

@@ -87,7 +87,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   quote_status: [],
-  advisor_id: [],
+  advisors: [],
   is_ecommerce: '',
   is_renewal: '',
   page: 1,
@@ -209,10 +209,11 @@ onUnmounted(() => {
     <sticky-header>
       <template #header>
         <h2 class="text-xl font-semibold">Pet List</h2>
-        <LeadsCount
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <FiltersButton
@@ -312,9 +313,21 @@ onUnmounted(() => {
         </x-field>
         <x-field label="Advisor" v-if="isAllowed">
           <ComboBox
-            v-model="filters.advisor_id"
+            v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
+          />
+        </x-field>
+        <x-field label="Is Renewal">
+          <x-select
+            v-model="filters.is_renewal"
+            placeholder="Search by Renewal"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+            ]"
+            class="w-full"
           />
         </x-field>
         <x-field label="Is Ecommerce">

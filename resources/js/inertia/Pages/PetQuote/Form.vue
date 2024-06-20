@@ -27,9 +27,6 @@ const quoteForm = useForm({
   is_mixed_breed: props.quote ? props.quote?.pet_quote?.is_mixed_breed : null,
   has_injury: props.quote ? props.quote?.pet_quote?.has_injury : null,
   gender: props.quote?.pet_quote?.gender || '',
-  ilivein_accommodation_type_id:
-    props.quote?.pet_quote?.ilivein_accommodation_type_id || '',
-  iam_possesion_type_id: props.quote?.pet_quote?.iam_possesion_type_id || '',
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -110,22 +107,6 @@ function onSubmit(isValid) {
             :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
-        <x-field label="PRICE">
-          <x-input
-            v-model="quoteForm.premium"
-            type="number"
-            class="w-full"
-            :error="quoteForm.errors.premium"
-          />
-        </x-field>
-        <x-field label="POLICY NUMBER">
-          <x-input
-            v-model="quoteForm.policy_number"
-            type="text"
-            class="w-full"
-            :error="quoteForm.errors.policy_number"
           />
         </x-field>
         <x-field label="TYPE OF PET" required>
@@ -230,34 +211,6 @@ function onSubmit(isValid) {
             ]"
             class="w-full"
             :error="quoteForm.errors.gender"
-          />
-        </x-field>
-        <x-field label="ACCOMMODATION TYPE" required>
-          <x-select
-            v-model="quoteForm.ilivein_accommodation_type_id"
-            :rules="[isRequired]"
-            :options="
-              accomodation_types.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.ilivein_accommodation_type_id"
-          />
-        </x-field>
-        <x-field label="POSSESION TYPE" required>
-          <x-select
-            v-model="quoteForm.iam_possesion_type_id"
-            :rules="[isRequired]"
-            :options="
-              possession_types.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.iam_possesion_type_id"
           />
         </x-field>
       </div>

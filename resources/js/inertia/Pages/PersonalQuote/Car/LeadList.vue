@@ -13,6 +13,7 @@ defineProps({
   yesterdayManualCount: Number,
   genericRequestEnum: Array,
   isBetaUser: Boolean,
+  teams: Object,
 });
 
 const page = usePage();
@@ -157,6 +158,13 @@ const batchOptions = computed(() => {
   }));
 });
 
+const teamOptions = computed(() => {
+  return page.props.teams.map(team => ({
+    value: team.id,
+    label: team.name,
+  }));
+});
+
 function formatString(input) {
   const lowercaseString = input.toLowerCase();
   const words = lowercaseString.replace(/_/g, ' ').split(' ');
@@ -167,20 +175,27 @@ function formatString(input) {
   return formattedString;
 }
 const paymentStatusOptions = computed(() => {
-  if ( hasRole(rolesEnum.BetaUser) ) { //FOR NEW PAYMENTS SECTION
-    return page.props.dropdownSource.payment_status_id.
-      filter(status => status.text !== "STARTED" && status.text !== "FAILED" 
-      && status.text !== "DRAFT" && status.text !== "CAPTURED" && status.text !== "PARTIAL CAPTURED").
-      sort((a, b) => a.text.localeCompare(b.text)).
-        map(status => ({
+  if (hasRole(rolesEnum.BetaUser)) {
+    //FOR NEW PAYMENTS SECTION
+    return page.props.dropdownSource.payment_status_id
+      .filter(
+        status =>
+          status.text !== 'STARTED' &&
+          status.text !== 'FAILED' &&
+          status.text !== 'DRAFT' &&
+          status.text !== 'CAPTURED' &&
+          status.text !== 'PARTIAL CAPTURED',
+      )
+      .sort((a, b) => a.text.localeCompare(b.text))
+      .map(status => ({
         value: status.id,
         label: formatString(status.text),
       }));
-  } else {  
+  } else {
     return page.props.dropdownSource.payment_status_id.map(status => ({
       value: status.id,
       label: status.text,
-    }));  
+    }));
   }
 });
 
@@ -211,11 +226,21 @@ const filters = reactive({
   paid_at_start: '',
   paid_at_end: '',
   segment_filter: 'all',
+  teams: [],
+  transaction_approved_dates: page.props.transaction_approved_dates || '',
 });
+
+const teamUsers = hasRole(rolesEnum.LeadPool) || hasRole(rolesEnum.Admin) ? ref([
+{
+    id: -1,
+    name: 'UnAssigned',
+}
+]) :  ref([]);
 
 const loader = reactive({
   table: false,
   export: false,
+  advisorTeamOptions: false,
 });
 
 const quotesSelected = ref([]);
@@ -237,7 +262,6 @@ watch(
     }
   },
   { deep: true, immediate: true },
-
 );
 
 const rules = {
@@ -315,6 +339,24 @@ function setQueryStringFilters() {
     }
   }
 }
+
+const fetchTeamUsers = () => {
+    loader.advisorTeamOptions = true;
+    axios
+    .post('/get-users-by-team', { team_filter: filters.teams })
+    .then(response => {
+        if(response.data.length > 0 && (hasRole(rolesEnum.LeadPool) || hasRole(rolesEnum.Admin))) {
+            response.data.push({
+                id: -1,
+                name: 'UnAssigned',
+            });
+        }
+      teamUsers.value = response.data;
+    })
+    .finally(() => {
+      loader.advisorTeamOptions = false;
+    });
+};
 
 const onConfirmCreateLead = () => {
   if (createLead.type === 'referral') {
@@ -522,19 +564,43 @@ onMounted(() => {
         <ComboBox
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.advisor_id"
-          label="Advisor"
+          label="Advisors (select teams first)"
           name="advisor_id"
           placeholder="Please select Advisor"
-          :options="advisorOptions"
+          :options="
+            teamUsers.map(user => ({
+              value: user.id,
+              label: user.name,
+            }))
+          "
+          :loading="loader.advisorTeamOptions"
         />
-        <x-select
+        <ComboBox
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.assignment_type"
           label="Assignment Type"
-          name="assignment_type"
-          :options="assignmentTypeOptions"
           placeholder="Please select assignment type"
+          :options="assignmentTypeOptions"
+          :single="true"
           class="w-full"
+        />
+        <ComboBox
+          v-if="!hasRole(rolesEnum.CarAdvisor)"
+          v-model="filters.teams"
+          label="Teams"
+          placeholder="Search by Teams"
+          :options="teamOptions"
+          @update:modelValue="fetchTeamUsers"
+        />
+        <DatePicker
+          v-if="!hasRole(rolesEnum.CarAdvisor)"
+          v-model="filters.transaction_approved_dates"
+          label="Transaction Approved Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="30"
         />
 
         <DatePicker
@@ -549,12 +615,13 @@ onMounted(() => {
           label="Paid Date End"
         />
 
-        <x-select
+        <ComboBox
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -582,7 +649,9 @@ onMounted(() => {
             </template>
           </x-tooltip>
           <x-button
-            v-if="canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)"
+            v-if="
+              canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)
+            "
             size="sm"
             color="emerald"
             :href="`/car/leads-export-plan/${
@@ -592,8 +661,15 @@ onMounted(() => {
           >
             Extract leads and plan detail
           </x-button>
-          <x-tooltip v-if="!canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)" position="right">
-            <x-button class="mr-3" tag="div" size="sm" color="emerald"> Extract leads and plan detail</x-button>
+          <x-tooltip
+            v-if="
+              !canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)
+            "
+            position="right"
+          >
+            <x-button class="mr-3" tag="div" size="sm" color="emerald">
+              Extract leads and plan detail</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Paid dates are required to export data.
@@ -602,17 +678,28 @@ onMounted(() => {
           </x-tooltip>
 
           <x-button
-              v-if="canExport && can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)"
-              size="sm"
-              color="emerald"
-              :href="`/car/leads-details-with-email/${genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE}?${objToUrl(filters)}`"
-              class="justify-self-start mr-3"
+            v-if="
+              canExport &&
+              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
+            "
+            size="sm"
+            color="emerald"
+            :href="`/car/leads-details-with-email/${genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE}?${objToUrl(filters)}`"
+            class="justify-self-start mr-3"
           >
-              Extract leads detail with email/mobile_no
+            Extract leads detail with email/mobile_no
           </x-button>
-            <x-tooltip v-if="!canExport && can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)" position="right">
-                <x-button class="mr-3" tag="div" size="sm" color="emerald">Extract leads detail with email/mobile_no</x-button>
-                <template #tooltip>
+          <x-tooltip
+            v-if="
+              !canExport &&
+              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
+            "
+            position="right"
+          >
+            <x-button class="mr-3" tag="div" size="sm" color="emerald"
+              >Extract leads detail with email/mobile_no</x-button
+            >
+            <template #tooltip>
               <span class="font-medium">
                 Created dates are required to export data.
               </span>
@@ -622,9 +709,7 @@ onMounted(() => {
             v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
             size="sm"
             color="emerald"
-            :href="`/car/export-makes-model/${
-              genericRequestEnum.EXPORT_MAKES_MODELS
-            }?${objToUrl(filters)}`"
+            :href="`/car/export-makes-model/${genericRequestEnum.EXPORT_MAKES_MODELS}?${objToUrl(filters)}`"
             class="justify-self-start mr-3"
           >
             Extract makes models trims

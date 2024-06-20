@@ -411,7 +411,7 @@ const insuranceForOptions = computed(() => {
 
       <x-field label="Teams" v-if="canShow('teams')">
         <ComboBox v-model="filters.teams" name="team_name" placeholder="Select Teams" :options="teamOptions"
-          @update:model-value="onTeamChange" :loading="loaders.teamsOptions" select-all deselect-all
+          @update:model-value="onTeamChange" :loading="loaders.teamsOptions"
           :disabled="can(permissionsEnum.ViewTeamsFilters)" />
       </x-field>
       <x-field label="Sub Teams" v-if="canShow('sub_teams')">
@@ -421,8 +421,6 @@ const insuranceForOptions = computed(() => {
           placeholder="Select Sub Teams"
           :options="subteamOptions"
           @update:model-value="onSubTeamChange"
-          select-all
-          deselect-all
           :loading="loaders.subteamOptions"
           :disabled="can(permissionsEnum.ViewTeamsFilters)
           "
@@ -430,14 +428,13 @@ const insuranceForOptions = computed(() => {
 
       </x-field>
       <x-field :label="getAdvisorLabel()">
-        <ComboBox v-model="filters.advisors" placeholder="Select Advisor" :options="advisorOptions" select-all
-          deselect-all :loading="loaders.advisorOptions" />
+        <ComboBox v-model="filters.advisors" placeholder="Select Advisor" :options="advisorOptions" :loading="loaders.advisorOptions" />
       </x-field>
       <x-tooltip position="top" v-if="canShow('tiers')">
           <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike"> Development for Bike Tiers still in progress </template>
           <template #tooltip v-else> Select Tiers </template>
 
-          <x-field 
+          <x-field
           class="w-full"
             label="Tiers">
               <ComboBox
@@ -478,7 +475,7 @@ const insuranceForOptions = computed(() => {
           :options="[ { value: '', label: 'Select insurance for' }, ...insuranceForOptions ]" class="w-full" />
       </x-field>
       <x-field label="Segment" v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')">
-          <x-select v-model="filters.segment_filter" placeholder="Select Segment" :options="quoteSegments" class="w-full" />
+          <ComboBox v-model="filters.segment_filter" placeholder="Select Segment" :options="quoteSegments" class="w-full" :single="true" />
       </x-field>
     </div>
     <ChartsColumn

@@ -592,7 +592,7 @@ const linkEntity = () => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-          <div class="grid sm:grid-cols-2">
+
             <div
               class="grid sm:grid-cols-2"
               v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -600,18 +600,19 @@ const linkEntity = () => {
               <dt class="font-medium">ID</dt>
               <dd>{{ quote.id }}</dd>
             </div>
-            <div>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  Ref-ID
-                </label>
-                <template #tooltip> Reference ID </template>
-              </x-tooltip>
+            <div class="grid sm:grid-cols-2">
+                <x-tooltip position="bottom">
+                    <label
+                        class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                        Ref-ID
+                    </label>
+                    <template #tooltip> Reference ID </template>
+
+                </x-tooltip>
+                <div class="grid sm:grid-cols-1">{{ quote.code }}</div>
+
             </div>
-            <div>{{ quote.code }}</div>
-          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CUSTOMER TYPE</dt>
             <dd>{{ quote.customer_type }}</dd>
@@ -1411,16 +1412,6 @@ const linkEntity = () => {
         </x-modal>
       </template>
     </x-collapse>
-
-    <PaymentTable
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
 
     <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
       <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>

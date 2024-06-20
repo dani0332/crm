@@ -30,10 +30,11 @@ class EmbeddedProduct
             $customer = $quoteObject->customer ?? null;
             $carMake = $quoteObject->carMake->text ?? '';
             $carModel = $quoteObject->carModel->text ?? '';
+            $advisorName = $quoteObject->advisor->name ?? '';
             $age = isset($quoteObject->dob) ?
                 Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now()).' Years'
                 : '';
-            $planStartDate = isset($quoteObject->policy_start_date) ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
+            $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
             if (! empty($planStartDate)) {
                 $planEndDate = Carbon::parse($quoteObject->policy_start_date)->addYear()->format($dateFormat);
@@ -43,6 +44,7 @@ class EmbeddedProduct
 
             $item->id = $item->id;
             $item->ref_id = $item->code;
+            $item->advisor_name = $advisorName;
             $item->payment_date = isset($item->paid_at) ? Carbon::parse($item->paid_at)->format($dateFormat) : '';
             $item->plan_start_date = $planStartDate;
             $item->plan_end_date = $planEndDate;

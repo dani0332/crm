@@ -9,28 +9,28 @@ class LeadsCountService
 {
     public static function getLeadCount()
     {
-
         $allowedLOBs = $totalCount = 0;
         $nameSpace = '\\App\\Models\\';
         $allowedQuoteTypes = [];
         $response = ['is_multiple_lobs_allowed' => false, 'total_count' => 0, 'quote_route' => ''];
         $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
         $quoteTypes = [
-            QuoteTypes::HOME,
-            QuoteTypes::HEALTH,
-            QuoteTypes::YACHT,
-            QuoteTypes::PET,
-            QuoteTypes::CYCLE,
-            QuoteTypes::CORPLINE,
+            // PD Revert
+            // QuoteTypes::HOME,
+            // QuoteTypes::HEALTH,
+            // QuoteTypes::YACHT,
+            // QuoteTypes::PET,
+            // QuoteTypes::CYCLE,
+            // QuoteTypes::CORPLINE,
         ];
 
         $cardViewRoute = [
-            QuoteTypes::HEALTH->name => route('health.cards') ?? '',
-            QuoteTypes::HOME->name => route('home-cardView') ?? '',
-            QuoteTypes::PET->name => route('pet-quotes-card') ?? '',
-            QuoteTypes::YACHT->name => route('yacht-quotes-card') ?? '',
-            QuoteTypes::CYCLE->name => route('cycle-quotes-card') ?? '',
-            QuoteTypes::CORPLINE->name => route('business.cards') ?? '',
+            QuoteTypes::HEALTH->name => route('health.cards', ['is_stale' => true]) ?? '',
+            QuoteTypes::HOME->name => route('home-cardView', ['is_stale' => true]) ?? '',
+            QuoteTypes::PET->name => route('pet-quotes-card', ['is_stale' => true]) ?? '',
+            QuoteTypes::YACHT->name => route('yacht-quotes-card', ['is_stale' => true]) ?? '',
+            QuoteTypes::CYCLE->name => route('cycle-quotes-card', ['is_stale' => true]) ?? '',
+            QuoteTypes::CORPLINE->name => route('business.cards', ['is_stale' => true]) ?? '',
         ];
 
         foreach ($quoteTypes as $quoteType) {
@@ -70,17 +70,15 @@ class LeadsCountService
             $response['quotes_count'][$allowedQuoteType]['quote_route'] = $cardViewRoute[strtoupper($allowedQuoteType)];
             $totalCount = $quoteCount;
 
-            if ($allowedLOBs > 1) {
+            if ($allowedLOBs > 1 || auth()->user()->isManagerOrDeputy()) {
                 $response['is_multiple_lobs_allowed'] = true;
                 $response['total_count'] = $totalCount;
                 $response['quote_route'] = route('stale-leads-report');
-
             } else {
                 $response['is_multiple_lobs_allowed'] = false;
                 $response['total_count'] = $totalCount;
                 $response['quote_route'] = $cardViewRoute[strtoupper($allowedQuoteType)];
             }
-
         }
 
         return $response;

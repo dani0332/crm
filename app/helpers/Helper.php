@@ -11,6 +11,7 @@ use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -204,18 +205,22 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 
     if ($modelType == HealthQuote::class && auth()->user()->isCarAdvisor() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
         $result['total_leads'] = $modelQuery->count();
-        $result['total_premium'] = $modelQuery->sum('price_with_vat');
+        $result['total_premium'] = $modelQuery->sum('premium');
         $result['leads_list'] = $modelQuery->paginate(10);
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif ($modelType == HealthQuote::class && auth()->user()->isCarManager() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
         $ids = app(HealthQuoteService::class)->walkTree(auth()->user()->id);
         $result['total_leads'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->count();
-        $result['total_premium'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->sum('price_with_vat');
+        $result['total_premium'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->sum('premium');
         $result['leads_list'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->paginate(10);
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
     } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
-        $result['total_premium'] = $modelQuery->sum('price_with_vat');
+        if ($modelType == HealthQuote::class || $modelType == TravelQuote::class) {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('premium');
+        } else {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
+        }
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
@@ -223,7 +228,11 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     } else {
 
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
-        $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        if ($modelType == HealthQuote::class || $modelType == TravelQuote::class) {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
+        } else {
+            $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
@@ -646,20 +655,6 @@ if (! function_exists('addDaysExcludeWeekend')) {
     }
 }
 
-if (! function_exists('addMinutesExcludeWeekend')) {
-    function addMinutesExcludeWeekend($minutesToAdd, $date = null)
-    {
-        $date = Carbon::parse($date) ?? Carbon::now();
-        $date = $date->addMinutes(8);
-
-        if ($date->isWeekend()) {
-            $date = $date->addHours(48);
-        }
-
-        return $date;
-    }
-}
-
 if (! function_exists('getIMLogo')) {
     function getIMLogo($isPDF = false)
     {
@@ -704,7 +699,9 @@ if (! function_exists('getCardViewRequestFilters')) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
 
-            $partialQuery->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            $partialQuery->whereHas('healthQuoteRequestDetail', function ($query) use ($dateFrom, $dateTo) {
+                $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+            });
             $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
         if (isset($request->code) && $request->code != '') {
@@ -785,6 +782,13 @@ if (! function_exists('getCardViewRequestFilters')) {
                 $partialQuery->whereNull('previous_quote_policy_number');
             }
         }
+
+        if (isset($request->advisors) && ! empty($request->advisors)) {
+            $advisors = (array) $request->advisors;
+            if (! empty($advisors)) {
+                $partialQuery->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
+            }
+        }
     }
 }
 
@@ -810,6 +814,38 @@ if (! function_exists('getMyAlfredCampaign')) {
     }
 }
 
+if (! function_exists('isMyAlfredCampaignEnabled')) {
+    function isMyAlfredCampaignEnabled($campaignId): bool
+    {
+        $campaign = getMyAlfredCampaign($campaignId);
+        if (! $campaign) {
+            return false;
+        }
+
+        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
+            return today()->between($campaign->data->startDate, $campaign->data->endDate);
+        }
+
+        return false;
+    }
+}
+
+if (! function_exists('isMyAlfredCampaignEnabled')) {
+    function isMyAlfredCampaignEnabled($campaignId): bool
+    {
+        $campaign = getMyAlfredCampaign($campaignId);
+        if (! $campaign) {
+            return false;
+        }
+
+        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
+            return today()->between($campaign->data->startDate, $campaign->data->endDate);
+        }
+
+        return false;
+    }
+}
+
 if (! function_exists('getAppStorageValueByKey')) {
     function getAppStorageValueByKey($keyName)
     {
@@ -820,5 +856,34 @@ if (! function_exists('getAppStorageValueByKey')) {
         }
 
         return $query->value;
+    }
+}
+
+if (! function_exists('getAlfredEligibleCustomers')) {
+    function getAlfredEligibleCustomers($data)
+    {
+        try {
+            $username = config('constants.MA_V1_USERNAME');
+            $password = config('constants.MA_V1_PASSWORD');
+            $basicAuth = base64_encode("$username:$password");
+
+            $response = Http::timeout(20)->retry(2, 3000)
+                ->withHeaders([
+                    'Authorization' => 'Basic '.$basicAuth,
+                ])
+                ->post(config('constants.MA_V1_ENDPOINT').'/internal/wfs/get-remaining-scratches', ['data' => $data]);
+
+            if ($response->ok()) {
+                $response = $response->object();
+
+                if ($response->data) {
+                    return $response;
+                }
+            }
+        } catch (Exception $e) {
+            Log::error('getAlfredEligibleCustomers Error: '.$e->getMessage().$e->getTraceAsString());
+        }
+
+        return null;
     }
 }
