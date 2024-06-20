@@ -51,8 +51,7 @@ class SendPaymentEmail extends Command
     {
         $today = Carbon::now()->toDateString();
         $sessions = $this->getSessions();
-//        $userIds = $sessions->pluck('user_id')->unique()->toArray();
-        $userIds = ['968'];
+        $userIds = $sessions->pluck('user_id')->unique()->toArray();
         foreach ($userIds as $userId) {
             $userData = User::find($userId);
             if (isset($userData) && $userData->hasRole(RolesEnum::CarManager)) {

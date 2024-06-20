@@ -978,33 +978,42 @@ class SendEmailCustomerService extends BaseService
             $total_leads = 0;
             foreach ($user as $userData) {
                 $advisor = (object) [];
-                $advisor->name = 'Sikandar';
-                $advisor->email = 'sikandar.maqbool@myalfred.com';
+                $advisor->name = $userData->advisor_name;
+                $advisor->email = $userData->advisor_email;
                 $advisorData[] = $advisor;
                 $total_premium += $userData->total_premium;
                 $total_leads += $userData->total_leads;
             }
-            $leadData = (object) [
+            $leadData = [
                 'total_leads' => $total_leads,
                 'total_premium' => $total_premium,
                 'date' => Carbon::now()->toDateString(),
             ];
 
-            $totalLeadPremium[] = $leadData;
-            if (isset($totalLeadPremium) && empty($totalLeadPremium)) {
-                return false;
+            $params = [
+                'total_leads' => $leadData['total_leads'],
+                'total_premium' => $leadData['total_premium'],
+                'date' => $leadData['date'],
+            ];
+
+            if (empty($params['total_leads']) || empty($params['total_premium']) || empty($params['date'])) {
+                return;
             }
             if (isset($advisorData) && empty($advisorData)) {
-                return false;
+                return;
             }
+            $replyTo = [
+                'email' => $advisorData[0]->email,
+                'name' => $advisorData[0]->name,
+            ];
 
             $body = json_encode([
-                'sender' => ['name' => $tag.' '.'IMCRM Payment Notification Alert', 'email' => 'no-reply@notify@insurancemarket.ae'],
+                'sender' => ['name' => $tag.' '.'IMCRM Payment Notification Alert', 'email' => 'no-reply@alert.insurancemarket.email'],
                 'to' => $advisorData,
-                'replyTo' => $advisorData,
+                'replyTo' => $replyTo,
                 //  'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => intval($emailTemplateId),
-                'params' => $totalLeadPremium,
+                'params' => $params,
             ], JSON_UNESCAPED_SLASHES);
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(

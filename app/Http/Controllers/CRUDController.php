@@ -1977,15 +1977,4 @@ class CRUDController extends Controller
 
         return $response;
     }
-    public function runPaymentEmailJob(Request $request)
-    {
-        // Run the SendPaymentEmail:cron job
-      $mail =  Artisan::call('SendPaymentEmail:cron');
-      if($mail === 0)
-      {
-          return true;
-      }
-        // You can add a flash message or any other response here
-        return back()->with('status', 'Payment email job has been run successfully!');
-    }
 }
