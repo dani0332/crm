@@ -8,7 +8,6 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 const page = usePage();
 defineProps({
   quote: Object,
-  record: Object,
   quoteStatuses: Object,
   quoteType: String,
   quoteTypeId: Number,
@@ -309,7 +308,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.life_quote_request_detail?.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason:
     page.props.quote.life_quote_request_detail?.lost_reason_id || null,
 });
@@ -592,45 +590,13 @@ watch(
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-xl font-semibold text-primary-800">Life Detail</h3>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="quote.life_quote_request_detail?.insly_id"
-              :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-              Duplicate Lead
-            </x-button>
-            <Link
-              v-if="can(permissionsEnum.LifeQuotesList)"
-              :href="route('life-quotes-list')"
-              preserve-scroll
-            >
-              <x-button size="sm" color="primary" tag="div">
-                Life Quotes
-              </x-button>
-            </Link>
-            <Link
-              v-if="can(permissionsEnum.LifeQuotesEdit)"
-              :href="route('life-quotes-edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-          </div>
-
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -1142,7 +1108,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -1176,20 +1142,6 @@ watch(
             </div>
             <div class="w-full md:w-2/3">
               <div class="flex flex-col gap-4">
-                <x-field
-                  label="TransApp Code"
-                  v-if="
-                    leadStatusForm.leadStatus ==
-                    page.props.quoteStatusEnum.TransactionApproved
-                  "
-                >
-                  <x-input
-                    v-model="leadStatusForm.trans_code"
-                    placeholder="TransApp Code is required"
-                    class="w-full"
-                    :error="leadStatusForm.errors.trans_code"
-                  />
-                </x-field>
                 <x-field
                   label="Lost Reason"
                   v-if="
@@ -1284,7 +1236,7 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
@@ -1308,7 +1260,7 @@ watch(
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="life"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

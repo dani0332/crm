@@ -48,8 +48,6 @@ class PetQuoteRepository extends BaseRepository
             'utmSource' => '',
             'utmMedium' => '',
             'utmCampaign' => '',
-            'iliveinAccommodationTypeId' => $request['ilivein_accommodation_type_id'],
-            'iamPossesionTypeId' => $request['iam_possesion_type_id'],
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
@@ -141,7 +139,17 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'transactionType',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents', 'paymentSplits.verifiedByUser']);
+                    $q->with([
+                        'paymentStatus',
+                        'personalPlan',
+                        'paymentMethod',
+                        'paymentStatusLogs',
+                        'insuranceProvider',
+                        'paymentable',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
+                        'paymentSplits.verifiedByUser']);
                 },
                 'createdBy',
                 'updatedBy',

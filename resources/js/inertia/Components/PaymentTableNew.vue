@@ -40,7 +40,7 @@ const props = defineProps({
     default: null,
   },
   sendUpdateStatusEnum: {
-    type: Object,
+    type: Array,
     default: null,
   },
   insuranceProviders: {
@@ -55,18 +55,6 @@ const props = defineProps({
     required: false,
     type: Boolean,
     default: true,
-  },
-  sendUpdate: {
-    type: Object,
-    default: null,
-  },
-  sendUpdateStatusEnum: {
-    type: Object,
-    default: null,
-  },
-  insuranceProviders: {
-    type: Array,
-    required: false,
   },
   isPlanDetailEnabled: {
     type: Boolean,
@@ -155,7 +143,7 @@ const initialAmount = ref(0);
 
 // Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
-  initialAmount.value = props.sendUpdate.total_price;
+  initialAmount.value = props.sendUpdate.price_with_vat;
 } else if (props.quoteType === 'Health') {
   initialAmount.value = props.eCommercePrice;
 } else if (props.isPlanDetailEnabled) {
@@ -213,6 +201,20 @@ const calculateTotalAmount = () => {
   }
   calculatePaymentBreakup(false);
 };
+
+const isPolicyIssuanceDiscount = computed(() => {
+  if (
+    can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
+    (
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyIssued ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicySentToCustomer
+    )  
+  ) {
+    return true;
+  }  
+  return false;
+});
 
 const { copy, copied } = useClipboard();
 const onCopyPaymentLink = (paymentLink, paymentStatus) => {
@@ -383,8 +385,15 @@ const validatePaymentOption = () => {
     }
   }
 
-  if (
-    totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)
+  if (isPolicyIssuanceDiscount.value === true){
+    if ( totalSplitAmount.toFixed(2) === parseFloat(totalAmount.value).toFixed(2) ||  discountValue.value>0) {
+      isPaymentCalculationError.value = false;
+    } else {
+      isPaymentCalculationError.value = true;
+      issueFound = true;
+    }
+  } else if (
+    totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2) 
   ) {
     isPaymentCalculationError.value = true;
     issueFound = true;
@@ -1354,14 +1363,14 @@ const isCPD = computed(() => {
 
 const addPaymentModal = () => {
   if (props.sendUpdate) {
-    if (isEF.value && !props.sendUpdate?.total_price) {
+    if (isEF.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
         title: 'Please update indicative additional price.',
         position: 'top',
       });
       return;
     }
-    if (isCPD.value && !props.sendUpdate?.total_price) {
+    if (isCPD.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
         title: 'Please update the Total Price in the Plan Details section.',
         position: 'top',
@@ -1422,7 +1431,11 @@ const addPaymentModal = () => {
     'Yacht',
   ];
 
-  if ( (quoteCollectedBy.includes(props.quoteType) && props.quoteSubType != quoteTypeCodeEnum.CORPLINE) || !isBrokerHavePermission()) {
+  if (
+    (quoteCollectedBy.includes(props.quoteType) &&
+      props.quoteSubType != quoteTypeCodeEnum.CORPLINE) ||
+    !isBrokerHavePermission()
+  ) {
     paymentMethodsForm.collection_type = 'insurer';
   } else {
     paymentMethodsForm.collection_type = 'broker';
@@ -1753,7 +1766,7 @@ const validateViewPayment = isValid => {
     } else {
       isApprovedDocumentNotUploaded.value = false;
     }
-  }  
+  }
   if (isApproveConfirmed.value === false && isValid) {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
@@ -1764,7 +1777,7 @@ const validateViewPayment = isValid => {
 
   if (isApproveNotChecked.value === true) {
     return true;
-  }  
+  }
   /*
   // temporary return,not part of M2
   if (isApproveConfirmed.value === false && isValid) {
@@ -2016,7 +2029,7 @@ const addPayment = isValid => {
   }
 
   if (paymentMethodsForm.status === 'edit') {
-    if (totalPaidAmount.value == paymentMethodsForm.payment_no) {
+    if (totalPaidAmount.value == paymentMethodsForm.payment_no && isPolicyIssuanceDiscount.value === false) {
       notification.error({
         title: 'No further actions allowed to paid payments',
         position: 'top',
@@ -2027,6 +2040,7 @@ const addPayment = isValid => {
       ...data,
       paymentCode: paymentMethodsForm.paymentCode,
       trashedFilesModal: trashedFilesModal.value,
+      isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
     };
     paymentMethodsForm
       .transform(data => editData)
@@ -2180,8 +2194,14 @@ const deleteDocument = (docName, count) => {
       );
     }
     trashedFilesModal.value.push(docName);
-  } else if (paymentMethodsForm.status == 'view' && paymentMethodsForm.collection_type==='insurer' && approvedDocumentModel.value[count]) { 
-    approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);    
+  } else if (
+    paymentMethodsForm.status == 'view' &&
+    paymentMethodsForm.collection_type === 'insurer' &&
+    approvedDocumentModel.value[count]
+  ) {
+    approvedDocumentModel.value[count] = approvedDocumentModel.value[
+      count
+    ].filter(item => item.doc_name !== docName);
   } else if (
     paymentMethodsForm.status == 'view' &&
     paymentMethodsForm.collection_type === 'insurer' &&
@@ -2224,13 +2244,13 @@ const deleteDocument = (docName, count) => {
 
 const uploadDocument = (doc, files, count) => {
   files = files.files;
-   // Error if invalid files are selected
-   if (files.length == 0) {
+  // Error if invalid files are selected
+  if (files.length == 0) {
     notification.error({
-            title: 'Document upload failed, invalid file selected',
-            position: 'top',
-          }); 
-    return;  
+      title: 'Document upload failed, invalid file selected',
+      position: 'top',
+    });
+    return;
   }
 
   let url = '/quotes/' + props.quoteType + '/documents/store-multiple';
@@ -2347,12 +2367,18 @@ const uploadDocument = (doc, files, count) => {
 const getCaptureValidation = computed(() => {
   return payment => {
     if (
-      (props.payments.length > 0 && (payment.total_price === (payment.total_amount + payment.discount_value))) &&
-      (((props.isAmlClearedForPayment || (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared) ||
-        (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined) ||
-        (props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved)) && 
-        props.quoteRequest.kyc_decision === 'Complete') || 
-        (props.quoteType === 'Travel') || props.sendUpdate) //Skip AML & KYC for travel and send update
+      props.payments.length > 0 &&
+      payment.total_price === payment.total_amount + payment.discount_value &&
+      (((props.isAmlClearedForPayment ||
+        props.quoteRequest.quote_status_id ===
+          page.props.quoteStatusEnum.AMLScreeningCleared ||
+        props.quoteRequest.quote_status_id ===
+          page.props.quoteStatusEnum.TransactionDeclined ||
+        props.quoteRequest.quote_status_id ===
+          page.props.quoteStatusEnum.TransactionApproved) &&
+        props.quoteRequest.kyc_decision === 'Complete') ||
+        props.quoteType === 'Travel' ||
+        props.sendUpdate) //Skip AML & KYC for travel and send update
     ) {
       if (payment.is_approved === 1) {
         return false;
@@ -2382,13 +2408,17 @@ const getCaptureValidation = computed(() => {
         } else if (
           paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID
         ) {
-            return true;
-          }
+          return true;
+        }
       } else if (paymentRecord.frequency === 'split_payments') {
         const paymentMethodCC = paymentRecord.payment_splits.filter(
           item => item.payment_method.code === 'CC',
         );
-        if (paymentMethodCC.length > 0 && paymentRecord.payment_status_id != props.paymentStatusEnum.CREDIT_APPROVED) {
+        if (
+          paymentMethodCC.length > 0 &&
+          paymentRecord.payment_status_id !=
+            props.paymentStatusEnum.CREDIT_APPROVED
+        ) {
           let totalSplitPayments = paymentRecord.payment_splits.length;
           let paidPaymentStatus = paymentRecord.payment_splits.filter(
             item =>
@@ -2505,14 +2535,36 @@ const getCaptureOption = computed(() => {
   };
 });
 
+const planText = ref();
+const fetchPlans = () => {
+  let providerId = props.sendUpdate?.insurance_provider_id;
+  let planId = props.sendUpdate?.plan_id;
+  let url = `/get-plans/${props.quoteType}/${providerId}/${planId}`;
+  axios.get(url)
+    .then(res => {
+      planText.value = res.data.text;
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+watch(() => props.sendUpdate?.plan_id, () => {
+  if (props.sendUpdate?.plan_id) {
+    fetchPlans();
+  }
+});
+
+onMounted(() => {
+  if (props.sendUpdate?.plan_id) {
+    fetchPlans();
+  }
+})
+
 const getPlanName = computed(() => {
   const plan = planDetail.value;
   if (props.sendUpdate) {
-    return (
-      props.sendUpdate?.plan_name ||
-      props.quoteRequest?.plan?.text ||
-      'Not Available'
-    );
+    return planText.value || 'Not Available';
   }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan
@@ -2545,11 +2597,7 @@ const providerName = computed(() => {
       provider => provider.id === providerId.value,
     );
 
-    return (
-      props.sendUpdate?.provider_name ||
-      (provider ? provider.text : null) ||
-      'Not Available'
-    );
+    return provider.text || 'Not Available';
   } else if (
     quoteTypesToCheck.includes(props.quoteType) &&
     plan.insurance_provider
@@ -2589,7 +2637,7 @@ watch(
       if (props.isPlanDetailEnabled) {
         initialAmount.value = props.quoteRequest.price_with_vat;
       } else if (props.sendUpdate) {
-        initialAmount.value = props.sendUpdate?.total_price;
+        initialAmount.value = props.sendUpdate?.price_with_vat;
       } else if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
       } else {
@@ -2703,7 +2751,7 @@ const isVerifiedEnabled = computed(() => {
 });
 
 watch(
-  () => props.sendUpdate?.total_price,
+  () => props.sendUpdate?.price_with_vat,
   (newValue, oldValue) => {
     totalPrice.value = newValue;
   },
@@ -2995,7 +3043,11 @@ const lookupsEnum = page.props.lookupsEnum;
                   </td>
                   <td>
                     <div class="flex gap-2">
-                      <template v-if="item.send_update_log_id ==null && is_lacking_payment">
+                      <template
+                        v-if="
+                          item.send_update_log_id == null && is_lacking_payment
+                        "
+                      >
                         <x-tooltip position="left" class="arrow-r">
                           <x-badge
                             size="xs"
@@ -3493,7 +3545,13 @@ const lookupsEnum = page.props.lookupsEnum;
                   @change="handleDiscountChange"
                 >
                   <template v-for="option in discountTypes" :key="option.value">
-                    <option :value="option.value" :title="option.tooltip" v-if="option.value !== lookupsEnum.SYSTEM_ADJUSTED_DISCOUNT">
+                    <option
+                      :value="option.value"
+                      :title="option.tooltip"
+                      v-if="
+                        option.value !== lookupsEnum.SYSTEM_ADJUSTED_DISCOUNT
+                      "
+                    >
                       {{ option.label }}
                     </option>
                   </template>
@@ -4446,7 +4504,10 @@ const lookupsEnum = page.props.lookupsEnum;
           v-if="
             splitPaymentRecord.verified_by !== null &&
             paymentMethodsForm.status == 'view' &&
-            paymentMethodsModels[splitPaymentNo] != paymentMethodsEnums.CreditCard
+            paymentMethodsModels[splitPaymentNo] !=
+              paymentMethodsEnums.CreditCard &&
+            paymentMethodsModels[splitPaymentNo] !=
+              paymentMethodsEnums.CreditApproval
           "
         >
           <p class="text-lg font-bold text-blue-400 mr-2">
@@ -4457,7 +4518,7 @@ const lookupsEnum = page.props.lookupsEnum;
             src="/images/payment_verified.jpg"
           />
         </div>
-        
+
         <template
           v-if="(isViewEnabled || isCreditApprovalView) && isDeclineClicked"
         >

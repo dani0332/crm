@@ -582,15 +582,14 @@ onMounted(() => {
             }))
           "
           :loading="loader.advisorTeamOptions"
-          deselect-all
         />
-        <x-select
+        <ComboBox
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.assignment_type"
           label="Assignment Type"
-          name="assignment_type"
-          :options="assignmentTypeOptions"
           placeholder="Please select assignment type"
+          :options="assignmentTypeOptions"
+          :single="true"
           class="w-full"
         />
         <ComboBox
@@ -624,12 +623,13 @@ onMounted(() => {
           label="Paid Date End"
         />
 
-        <x-select
+        <ComboBox
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

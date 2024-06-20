@@ -106,13 +106,14 @@ class CarQuoteService extends BaseService
                 'cqr.payment_status_id',
                 'ps.text AS payment_status_id_text',
                 'cqr.price_vat_not_applicable',
-                'cqr.price_without_vat',
+                'cqr.price_vat_applicable',
                 'cqr.price_with_vat',
                 'cqr.vat',
                 'cqr.insurer_quote_number',
                 'cqr.policy_issuance_status_id',
                 'cqr.policy_issuance_status_other',
                 'cqr.plan_id',
+                'cqr.payment_paid_at',
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
@@ -408,9 +409,6 @@ class CarQuoteService extends BaseService
         $carQuote->is_quote_locked = true;
         if ($request->trim) {
             $carQuote->car_model_detail_id = $request->trim;
-        }
-        if ($request->policy_start_date) {
-            $carQuote->policy_start_date = $request->policy_start_date;
         }
         if ($request->renewal_batch) {
             $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;

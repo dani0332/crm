@@ -666,7 +666,9 @@ class CRUDController extends Controller
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $carMakeText = $record->car_make_id_text ?? '';
             $carModelText = $record->car_model_id_text ?? '';
+
             $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Car);
+            $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
 
             foreach ($payments as $payment) {
                 $payment->payment_status_text = $payment->paymentStatus->text;
@@ -759,18 +761,6 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
-            $listQuotePlans = '';
-            $quotePlans = $this->travelQuoteService->getQuotePlans($id);
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = $quotePlans->message;
-            } else {
-                if (gettype($quotePlans) != 'string') {
-                    $listQuotePlans = $quotePlans->quotes->plans;
-                } else {
-                    $listQuotePlans = $quotePlans;
-                }
-            }
-
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
 
             return view('shared.show', compact([
@@ -901,17 +891,6 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
             $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Health);
-            $listQuotePlans = [];
-            $quotePlans = $this->healthQuoteService->getQuotePlans($id);
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = [];
-            } else {
-                if (gettype($quotePlans) != 'string') {
-                    $listQuotePlans = $quotePlans->quote->plans;
-                } else {
-                    $listQuotePlans = [];
-                }
-            }
             $coPayment = $this->healthQuoteService->getCoPayment($id);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
             $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
@@ -982,10 +961,11 @@ class CRUDController extends Controller
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
             $teams = $this->crudService->getUserTeams(Auth::user()->id);
 
+            $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_text);
+
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
-                'record' => $record,
                 'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -1703,7 +1683,7 @@ class CRUDController extends Controller
             'policy_start_date' => isset($request->quote_policy_start_date) ? Carbon::parse($request->quote_policy_start_date)->format('Y-m-d') : null,
             'renewal_expiry_date' => isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : null,
             'price_vat_not_applicable' => $request->price_vat_notapplicable ?? '',
-            'price_without_vat' => $request->amount ?? '',
+            'price_vat_applicable' => $request->price_vat_applicable ?? '',
             'price_with_vat' => $request->amount_with_vat ?? '',
             'vat' => $request->vat ?? '',
             'insurer_quote_number' => $request->quote_plan_insurer_quote_number ?? '',
@@ -1716,6 +1696,8 @@ class CRUDController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyPending,
             ]);
         }
+        Log::info('Updating policy_issuer_id  : '.auth()->id());
+
         // store policy issuer
         $payment = $quoteModel->payments->first();
         $payment->policy_issuer_id = auth()->id();
@@ -1724,6 +1706,8 @@ class CRUDController extends Controller
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
         $this->updatePriceAndDiscount($quoteModel);
+
+        Log::info('Policy details update successfully for : '.$quoteModel->uuid);
 
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',

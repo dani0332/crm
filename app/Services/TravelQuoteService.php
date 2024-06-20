@@ -61,6 +61,7 @@ class TravelQuoteService extends BaseService
             DB::raw('DATE_FORMAT(tqr.dob, "%d-%m-%Y") as dob'),
             'tqr.premium',
             'tqr.paid_at',
+            'tqr.payment_paid_at',
             'tqr.source',
             'tqr.policy_number',
             'tqr.nationality_id',
@@ -129,12 +130,13 @@ class TravelQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             'tqr.price_vat_not_applicable',
-            'tqr.price_without_vat',
+            'tqr.price_vat_applicable',
             'tqr.price_with_vat',
             'tqr.vat',
             'tqr.insurer_quote_number',
             'tqr.policy_issuance_status_id',
             'tqr.policy_issuance_status_other',
+            'tqr.policy_booking_date',
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')

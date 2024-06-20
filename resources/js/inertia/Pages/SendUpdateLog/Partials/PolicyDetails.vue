@@ -10,8 +10,8 @@ const props = defineProps({
         type: Array,
         required: true,
     },
-    selectedCategory: {
-        type: Object,
+    sendUpdateStatusEnum: {
+        type: Array,
         required: true,
     },
     quote: {
@@ -66,15 +66,15 @@ const issuanceStatusText = computed(() => {
 
 
 const isEndorsementFinancial = computed(() => {
-    return props.selectedCategory.subCategory.slug === 'EF' && props.selectedCategory.subCategory.option.slug === 'PPE'
+    return props.sendUpdateLog.category.code === props.sendUpdateStatusEnum.EF && props.sendUpdateLog.option.code === props.sendUpdateStatusEnum.PPE
 });
 
 const isCIR = computed(() => {
-    return props.selectedCategory?.subCategory.slug === 'CIR';
+    return props.sendUpdateLog.category.code === props.sendUpdateStatusEnum.CIR;
 });
 
 const isCPD = computed(() => {
-    return props.selectedCategory?.subCategory.slug === 'CPD';
+    return props.sendUpdateLog.category.code === props.sendUpdateStatusEnum.CPD;
 });
 
 const dateFormat = date =>

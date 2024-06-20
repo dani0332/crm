@@ -109,13 +109,14 @@ class HomeQuoteService extends BaseService
             'qrem.entity_type_code',
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
-            'hqr.price_without_vat',
+            'hqr.price_vat_applicable',
             'hqr.vat',
             'hqr.insurer_quote_number',
             'hqr.policy_issuance_status_id',
             'hqr.policy_issuance_status_other',
             'hqr.policy_start_date',
             'hqr.policy_issuance_date',
+            'hqr.policy_booking_date',
         )
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')

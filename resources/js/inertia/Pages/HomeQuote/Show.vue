@@ -5,7 +5,6 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 
 const props = defineProps({
   quote: Object,
-  record: Object,
   quoteType: String,
   quoteTypeId: Number,
   leadStatuses: Array,
@@ -159,7 +158,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quote.lost_reason_id || null,
 });
 
@@ -514,37 +512,6 @@ watch(
           :quote="quote"
           :cdn="cdnPath"
         />
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-          Duplicate Lead
-        </x-button>
-
-        <Link :href="route('home.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Home List </x-button>
-        </Link>
-
-        <Link :href="route('home.edit', quote.uuid)">
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-      </template>
-    </StickyHeader>
-    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
-      <div class="flex items-center space-x-2">
-        <h2 class="text-xl font-semibold">Home Detail</h2>
-        <p
-          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="countDays !== false"
-        >
-          Stale for {{ countDays }} days
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <LeadNotes
-          :documentType="noteDocumentType"
-          :notes="quoteNotes"
-          :modelType="modelType"
-          :quote="quote"
-          :cdn="cdnPath"
-        />
         <Link
           v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
@@ -565,8 +532,8 @@ watch(
         <Link :href="route('home.edit', quote.uuid)">
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
-      </div>
-    </div> -->
+      </template>
+    </StickyHeader>
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -608,49 +575,23 @@ watch(
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mt-6 mmmbmb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-xl font-semibold text-primary-800">Home Detail</h3>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="quote?.insly_id"
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-              Duplicate Lead
-            </x-button>
-
-            <Link :href="route('home.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Home List
-              </x-button>
-            </Link>
-
-            <Link :href="route('home.edit', quote.uuid)">
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-          </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <div
+              class="grid sm:grid-cols-2"
+              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+            >
+              <dt class="font-medium">ID</dt>
+              <dd>{{ quote.id }}</dd>
+            </div>
               <div class="grid sm:grid-cols-2">
-                <div
-                  class="grid sm:grid-cols-2"
-                  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-                >
-                  <dt class="font-medium">ID</dt>
-                  <dd>{{ quote.id }}</dd>
-                </div>
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -818,7 +759,7 @@ watch(
       </Collapsible>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -1165,7 +1106,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -1175,62 +1116,41 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-1/3">
+            <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                <x-field label="Status">
-                  <x-select
-                    v-model="leadStatusForm.leadStatus"
-                    :options="leadStatusOptions"
-                    :disabled="allowStatusUpdate"
-                    placeholder="Lead Status"
-                    class="w-full"
-                  />
-                </x-field>
-                <x-field
-                  label="TransApp Code"
-                  v-if="
-                    leadStatusForm.leadStatus ==
-                    quoteStatusEnum.TransactionApproved
-                  "
-                >
-                  <x-input
-                    v-model="leadStatusForm.trans_code"
-                    placeholder="TransApp Code is required"
-                    class="w-full"
-                    :error="leadStatusForm.errors.trans_code"
-                  />
-                </x-field>
-                <x-field
-                  label="Lost Reason"
+                <x-select
+                  v-model="leadStatusForm.leadStatus"
+                  :options="leadStatusOptions"
+                  :disabled="allowStatusUpdate"
+                  placeholder="Lead Status"
+                  class="w-full"
+                  label="Status"
+                />
+
+                <x-select
                   v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
-                >
-                  <x-select
-                    v-model="leadStatusForm.lostReason"
-                    :options="
-                      lostReasons?.map(item => ({
-                        value: item.id,
-                        label: item.text,
-                      }))
-                    "
-                    placeholder="Lost Reason is required"
-                    class="w-full"
-                    :error="leadStatusForm.errors.lostReason"
-                    :disabled="allowStatusUpdate"
-                  />
-                </x-field>
+                  label="Lost Reason"
+                  v-model="leadStatusForm.lostReason"
+                  :options="
+                    lostReasons?.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  placeholder="Lost Reason is required"
+                  class="w-full"
+                  :error="leadStatusForm.errors.lostReason"
+                  :disabled="allowStatusUpdate"
+                />
+                <x-textarea
+                  v-model="leadStatusForm.notes"
+                  type="text"
+                  label="Notes"
+                  placeholder="Lead Notes"
+                  class="w-full"
+                  :disabled="allowStatusUpdate"
+                />
               </div>
-            </div>
-          </div>
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-1/3">
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                label="Notes"
-                placeholder="Lead Notes"
-                class="w-full"
-                :disabled="allowStatusUpdate"
-              />
             </div>
           </div>
           <div class="flex justify-end">
@@ -1304,7 +1224,7 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="home"
       :expanded="sectionExpanded"
       :policyIssuanceStatus="policyIssuanceStatus"
@@ -1327,7 +1247,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="home"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

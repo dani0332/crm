@@ -52,7 +52,6 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
   storageUrl: String,
-  record: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
@@ -216,7 +215,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: lostReasonId.value || '',
 });
 
@@ -1279,40 +1277,13 @@ watch(
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">
-              Travel Detail
-            </h3>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 my-3 justify-end">
-            <x-button
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openDuplicate"
-              v-if="permissions.canNotApprovePayments"
-            >
-              Duplicate Lead
-            </x-button>
-            <Link :href="route('travel.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Travel List
-              </x-button>
-            </Link>
-
-            <Link
-              v-if="permissions.canEditQuote == true"
-              :href="route('travel.edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-          </div>
-
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div
@@ -2118,7 +2089,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -2157,23 +2128,6 @@ watch(
               </div>
             </div>
             <div class="w-full md:w-2/3">
-              <x-field
-                label="TRANSAPP CODE"
-                v-if="
-                  leadStatusForm.leadStatus ==
-                  quoteStatusEnum.TransactionApproved
-                "
-              >
-                <x-input
-                  :disabled="
-                    quote.quote_status_id == quoteStatusEnum.TransactionApproved
-                  "
-                  v-model="leadStatusForm.trans_code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-              </x-field>
               <x-field
                 label="LOST REASON"
                 v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
@@ -2458,6 +2412,16 @@ watch(
                   <span class="text-primary-600 uppercase">{{
                     item.providerName
                   }}</span>
+                    <div class="flex gap-1">
+                        <x-tag
+                            v-if="item.isDisabled"
+                            size="xs"
+                            color="error"
+                            class="mt-0.5 text-[10px]"
+                        >
+                            Hidden
+                        </x-tag>
+                    </div>
                 </template>
                 <template #item-name="item">
                   <span class="text-primary-600 uppercase">{{
@@ -2568,7 +2532,7 @@ watch(
     
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="travel"
       :expanded="sectionExpanded"
       :payments="payments"
@@ -2580,7 +2544,7 @@ watch(
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
-      :quote="record"
+      :quote="quote"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Travel"
@@ -2595,7 +2559,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="travel"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

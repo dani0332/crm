@@ -7,6 +7,7 @@ use App\Enums\CarPlanType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
+use App\Jobs\SICFollowupEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -69,7 +70,14 @@ class CarEmailService extends BaseService
         if ($lead->advisor_id) {
             $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
         } else {
+            info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
             $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
+            if ($responseCode) {
+                $this->sendEmailCustomerService->sendSICFollowupEmail($lead);
+                // Dispatch the job with a 24 hours delay
+                SICFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours(24));
+                info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.' Time: '.now());
+            }
         }
 
         return $responseCode;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -16,6 +17,8 @@ use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
+use App\Models\ApplicationStorage;
+use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
@@ -107,7 +110,12 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        // we don't need to push this on production, need to remove this before production.
+        if (! SendUpdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
+            return redirect()->back()->with('error', 'Send update log not found');
+        }
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
+        $isPlanDetailAvailable = $this->sendUpdateLogService->isPlanDetailAvailable($sendUpdateLog); // check Indicative Additional Price section.
         if ($this->sendUpdateLogService->checkSendUpdatePermission($sendUpdateLog->category->code)) {
             return redirect()->back()->with('error', 'You don\'t have permission to this. ');
         }
@@ -119,8 +127,6 @@ class SendUpdateLogController extends Controller
             }
         }
 
-        $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
-
         $quote = PersonalQuoteRepository::getById($sendUpdateLog->personal_quote_id);
 
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
@@ -130,7 +136,7 @@ class SendUpdateLogController extends Controller
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code ?? null;
         $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
-        $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
+        $quoteDocuments = $sendUpdateLog->documents;
         $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
@@ -140,6 +146,8 @@ class SendUpdateLogController extends Controller
             $quoteServiceFile = app(getServiceObject($quoteType));
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
+
+        $sendUpdateOptions = SendUpdateLogRepository::sendUpdateOptions($quoteTypeId, $sendUpdateLog->category_id, $sendUpdateLog->category->code);
 
         // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
@@ -190,6 +198,7 @@ class SendUpdateLogController extends Controller
             'quote' => $quote,
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
+            'parentText' => $sendUpdateLog->category->parent->text,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
@@ -216,6 +225,8 @@ class SendUpdateLogController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'additionalField' => $additionalField ?? [],
             'issuanceStatuses' => $issuanceStatuses,
+            'isPlanDetailAvailable' => $isPlanDetailAvailable,
+            'vatValue' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0,
         ]);
     }
 
@@ -251,9 +262,13 @@ class SendUpdateLogController extends Controller
 
         $quoteTypeId = $data['quote_type_id'];
 
-        $selectedType = $data['childCategory']['slug'];
-
-        $subType = $data['childCategory']['option'];
+        if (! isset($data['childCategory']['slug'])) {
+            $selectedType = Lookup::find($data['category_id'])->code;
+            $subType['slug'] = ! empty($data['option_id']) ? Lookup::find($data['option_id'])->code : '';
+        } else {
+            $selectedType = $data['childCategory']['slug'];
+            $subType = $data['childCategory']['option'];
+        }
 
         $model = PersonalQuote::class;
 
@@ -335,8 +350,6 @@ class SendUpdateLogController extends Controller
         return response()->json([
             'message' => $message,
         ], 200);
-
-        return response()->json(['success' => false], 500);
     }
 
     public function sendUpdateToCustomer(Request $request)
@@ -412,11 +425,10 @@ class SendUpdateLogController extends Controller
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            info('Book Update - Sending Update to Sage300 Process Start. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
+            // SendUpdateToSagae 3rd parameter: False: Without AP Patch, True: With AP Patch
+            // TODO :: This is temporary solution, need to remove third param, this after AP Split patch working fine
+            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate, false);
             if ($sageResponse['status'] === false) {
-                logger()->error('Book Update - Sage APIs Failed - Response: '.$sageResponse['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
 
                 return response()->json(['message' => $sageResponse['message']], 500);
             }
@@ -435,5 +447,14 @@ class SendUpdateLogController extends Controller
         logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
 
         return response()->json(['message' => $response['message']], 500);
+    }
+
+    public function getOptions(Request $request)
+    {
+        $options = SendUpdateLogRepository::sendUpdateOptions($request->quoteTypeId, $request->parentId, $request->status, $request->businessInsuranceTypeId);
+
+        return response()->json([
+            'options' => $options,
+        ], 200);
     }
 }

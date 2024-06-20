@@ -46,15 +46,19 @@ class DatabaseSeeder extends Seeder
             // end
             // AddCrossLOBSeeder::class,
             MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
+            BusinessTypeInsuranceSeeder::class,
+            MarineSeeder::class,
+
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
-            AddSendUpdatesCategoriesInLookups::class,
+            // AddSendUpdatesCategoriesInLookups::class, Please don't run this seeder on test and stage env.
             InslyRoles::class,
             InslyPermissions::class,
             QuoteStatusMapSeeder::class,
             QuoteStatusSeeder::class,
             ApplicationStorageSeeder::class,
             addInsuranceProvidersConfiguration::class,
+            RevokeTempPaymentUpdatePermissionsSeeder::class,
         ]);
     }
 }

@@ -13,7 +13,6 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
-  record: Object,
   documentTypes: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
@@ -276,43 +275,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       </div>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">Bike Detail</h3>
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-4 justify-end">
-            <Link
-              v-if="quote.quote_detail?.insly_id"
-              :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <Link
-              v-if="can(permissionsEnum.BikeQuotesEdit)"
-              :href="route('bike-quotes-edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-
-            <Link
-              v-if="can(permissionsEnum.BikeQuotesList)"
-              :href="route('bike-quotes-list')"
-              preserve-scroll
-            >
-              <x-button size="sm" color="primary" tag="div">
-                Bike Quotes
-              </x-button>
-            </Link>
-          </div>
-
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -894,7 +863,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Bike"
       :expanded="sectionExpanded"
     />
@@ -917,7 +886,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Bike"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"

@@ -9,7 +9,7 @@ const props = defineProps({
   sendUpdateLog: Object,
   sendUpdateOptions: Array,
   insuranceProviders: Object,
-  sendUpdateStatusEnum: Object,
+  sendUpdateStatusEnum: Array,
   quote: Object,
   indicativePrice: Object,
   isBookingDetailsVisible: Boolean,
@@ -35,6 +35,7 @@ const props = defineProps({
     type: Object,
     default: [],
   },
+  isPlanDetailAvailable: Boolean,
 });
 
 const page = usePage();
@@ -47,43 +48,14 @@ const state = reactive({
   redirectURL: '',
 });
 
-const selectedCategory = computed(() => {
-  let category = null;
-  for (let mainCategory of props.sendUpdateOptions) {
-    for (let subCategory of mainCategory.childs || []) {
-      if (subCategory.id === props.sendUpdateLog.category_id) {
-        category = { ...mainCategory };
-        delete category.childs;
-
-        category.subCategory = { ...subCategory };
-        delete category.subCategory.childs;
-
-        if (subCategory.childs?.length) {
-          for (let option of subCategory.childs || []) {
-            if (option.id === props.sendUpdateLog.option_id) {
-              category.subCategory.option = { ...option };
-            }
-          }
-          category.subCategory.options = [...subCategory.childs];
-        } else {
-          category.subCategory.option = null;
-          category.subCategory.options = [];
-        }
-      }
-    }
-  }
-
-  return category;
-});
-
 // as per the link 'Transaction Type' column -> https://docs.google.com/spreadsheets/d/1TE7RfMpEtL7kenl8s1DUVKRvP_DbUvCJ82XyCFYJ7Rw/edit#gid=803033517
 const transactionType = computed(() => {
   if (
     [
-      page.props.sendUpdateLogStatusEnum.CI,
-      page.props.sendUpdateLogStatusEnum.CIR,
-      page.props.sendUpdateLogStatusEnum.CPD,
-    ].includes(selectedCategory?.value?.subCategory.slug)
+      props.sendUpdateStatusEnum.CI,
+      props.sendUpdateStatusEnum.CIR,
+      props.sendUpdateStatusEnum.CPD,
+    ].includes(props.sendUpdateLog.category.code)
   ) {
     return 'Endorsement';
   }
@@ -92,10 +64,10 @@ const transactionType = computed(() => {
 });
 
 const updateLogOptions = computed(() => {
-  return selectedCategory?.value?.subCategory.options.map(child => ({
+  return props.sendUpdateOptions.map(child => ({
     value: child.id,
     label: child.title,
-    slug: child.slug,
+    slug: child.code,
   }));
 });
 
@@ -103,11 +75,11 @@ const isUpdateBooked = computed(() => {
   return (
     props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED &&
     [
-      page.props.sendUpdateLogStatusEnum.EF,
-      page.props.sendUpdateLogStatusEnum.CI,
-      page.props.sendUpdateLogStatusEnum.CIR,
-      page.props.sendUpdateLogStatusEnum.CPD,
-    ].includes(selectedCategory?.value?.subCategory.slug)
+      props.sendUpdateStatusEnum.EF,
+      props.sendUpdateStatusEnum.CI,
+      props.sendUpdateStatusEnum.CIR,
+      props.sendUpdateStatusEnum.CPD,
+    ].includes(props.sendUpdateLog.category.code)
   );
 });
 
@@ -117,13 +89,13 @@ const changeReasonOptions = computed(() => {
 
 const sendUpdateForm = useForm({
   notes: props.sendUpdateLog?.notes || '',
+  category_id: props.sendUpdateLog?.category_id || null,
   option_id: props.sendUpdateLog?.option_id || null,
   change_reason: props.sendUpdateLog?.change_reason || '',
   reportable_id: props.sendUpdateLog?.reportable_id || null,
   quote_type_id: props.sendUpdateLog?.quote_type_id || null,
   reportable_uuid: props.sendUpdateLog?.reportable_uuid || null,
   personal_quote_id: props.sendUpdateLog?.personal_quote_id || null,
-  childCategory: selectedCategory?.value?.subCategory,
   status: props.sendUpdateLog?.status || '',
   quote_uuid: props.realQuote.uuid,
   car_addons: props.sendUpdateLog?.car_addons || null,
@@ -208,7 +180,7 @@ const isBookingDetailsVisible = computed(() => {
     props.sendUpdateStatusEnum.CPD,
   ];
 
-  return validSlugs.includes(selectedCategory?.value?.subCategory.slug);
+  return validSlugs.includes(props.sendUpdateLog.category.code);
 });
 
 const additionalFieldOptions = computed(() => {
@@ -229,14 +201,14 @@ const onKeyPress = (event) => {
 
 <template>
   <Head>
-    <title>Send Update {{ selectedCategory.subCategory.title }}</title>
+    <title>Send Update {{ sendUpdateLog.category.text }}</title>
   </Head>
   <div>
     <div class="p-4 rounded shadow mb-6 bg-white">
       <x-form @submit="onUpdateLog">
         <div class="flex gap-2 w-100 flex-grow justify-between">
         <h3 class="text-lg font-semibold text-primary-800 capitalize">
-          {{ selectedCategory.subCategory.title }}
+          {{ sendUpdateLog.category.text }}
         </h3>
         <Link :href="state.redirectURL">
           <x-button color="primary" size="sm" class="mr-5"
@@ -276,8 +248,8 @@ const onKeyPress = (event) => {
           <div class="grid sm:grid-cols-2">
             <template
               v-if="
-                selectedCategory.subCategory.slug !== 'EN' &&
-                selectedCategory.subCategory.slug !== 'CPU'
+                props.sendUpdateLog.category.code !== props.sendUpdateStatusEnum.EN &&
+                props.sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPU
               "
             >
               <dt>
@@ -294,7 +266,7 @@ const onKeyPress = (event) => {
                   </template>
                 </x-tooltip>
               </dt>
-              <dd>{{ transactionType || selectedCategory.title }}</dd>
+              <dd>{{ transactionType || page.props.parentText || '' }}</dd>
             </template>
           </div>
           <div class="grid md:grid-cols-2 gap-y-4">
@@ -317,14 +289,14 @@ const onKeyPress = (event) => {
           <div class="grid sm:grid-cols-2">
             <template
               v-if="
-                selectedCategory.subCategory.slug !==
-                  page.props.sendUpdateLogStatusEnum.CI &&
-                selectedCategory.subCategory.slug !==
-                  page.props.sendUpdateLogStatusEnum.CIR &&
-                selectedCategory.subCategory.slug !==
-                  page.props.sendUpdateLogStatusEnum.CPU &&
-                selectedCategory.subCategory.slug !==
-                  page.props.sendUpdateLogStatusEnum.CPD
+                sendUpdateLog.category.code !==
+                  props.sendUpdateStatusEnum.CI &&
+                sendUpdateLog.category.code !==
+                  props.sendUpdateStatusEnum.CIR &&
+                sendUpdateLog.category.code !==
+                  props.sendUpdateStatusEnum.CPU &&
+                sendUpdateLog.category.code !==
+                  props.sendUpdateStatusEnum.CPD
                 "
             >
               <dt>
@@ -351,8 +323,8 @@ const onKeyPress = (event) => {
             </template>
             <template
               v-else-if="
-                selectedCategory.subCategory.slug !== 'CPU' &&
-                selectedCategory.subCategory.slug !== 'CPD'
+                sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPU &&
+                sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPD
                 "
             >
               <!-- <dt class="font-bold text-right mr-10">Reason</dt>
@@ -367,7 +339,7 @@ const onKeyPress = (event) => {
             </template>
           </div>
           <div class="grid sm:grid-cols-2" v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car">
-              <template v-if="props.additionalField && selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.AOCOV">
+              <template v-if="props.additionalField && sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.AOCOV">
                 <dt>
                   <label
                       class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
@@ -388,7 +360,7 @@ const onKeyPress = (event) => {
                     />
                 </dd>
               </template>
-              <template v-else-if="props.additionalField && (selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.COE || selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.COE_NFI)">
+              <template v-else-if="props.additionalField && (sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.COE || sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.COE_NFI)">
                 <dt>
                   <label
                       class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
@@ -407,7 +379,7 @@ const onKeyPress = (event) => {
                     />
                 </dd>
               </template>
-              <template v-else-if="props.additionalField && (selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.CISC || selectedCategory?.subCategory?.option?.slug === props.sendUpdateStatusEnum.CISC_NFI)">
+              <template v-else-if="props.additionalField && (sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.CISC || sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.CISC_NFI)">
                 <dt>
                   <label
                       class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
@@ -460,9 +432,9 @@ const onKeyPress = (event) => {
 
     <!-- Indicative additional price & Plan details comp -->
     <LazyPlanDetails
+      v-if="props.isPlanDetailAvailable"
       :sendUpdateLog="sendUpdateLog"
       :updateLogOptions="updateLogOptions"
-      :selectedCategory="selectedCategory"
       :insuranceProviders="props.insuranceProviders"
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
@@ -490,7 +462,7 @@ const onKeyPress = (event) => {
       "
       :storageUrl="props.storageUrl"
       :send-update="sendUpdateLog"
-      :send-update-status-enum="page.props.sendUpdateStatusEnum"
+      :send-update-status-enum="props.sendUpdateStatusEnum"
       :insuranceProviders="props.insuranceProviders"
       :quoteDocuments="props.quoteDocuments"
     />
@@ -499,7 +471,7 @@ const onKeyPress = (event) => {
       v-if="props.isPolicyDetailsEnabled"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
-      :selectedCategory="selectedCategory"
+      :send-update-status-enum="props.sendUpdateStatusEnum"
       :quote="props.realQuote"
       :isUpdateBooked="isUpdateBooked"
       :quote-type="props.quoteType"
@@ -517,15 +489,15 @@ const onKeyPress = (event) => {
         sendLogId: props.sendUpdateLog.id,
         members: memberDataDocs(props.membersDetail),
       }"
-      :selectedCategory="selectedCategory"
+      :send-update-log="props.sendUpdateLog"
       :update-btn="props.updateBtn"
+      :quote-type="props.quoteType"
     />
 
     <LazyBookingDetails
       v-if="isBookingDetailsVisible"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
-      :selectedCategory="selectedCategory"
       :quote="quote"
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"

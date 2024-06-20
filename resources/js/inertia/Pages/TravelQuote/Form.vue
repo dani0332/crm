@@ -368,7 +368,7 @@ function resetTravelInfo(value) {
             :rules="[isEmail]"
           />
         </x-field>
-        <x-field label="Phone number" required>
+        <x-field label="Mobile number" required>
           <x-input
             v-model="quoteForm.mobile_no"
             class="w-full"
