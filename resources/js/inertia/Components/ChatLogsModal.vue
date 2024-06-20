@@ -18,19 +18,20 @@ const props = defineProps({
   },
 });
 
-const source = ref(null);
-const channel = ref(null);
+const source = ref([]);
+const channel = ref([]);
 
 const md = new markdownit();
 
 const computedMessages = computed(() => {
   if (source.value && source.value.length > 0) {
     return props.chatMessages.data.filter(
-      message => message.role.toLowerCase() === source.value.toLowerCase(),
+      message => message.role.toLowerCase() === source.value[0].toLowerCase(),
     );
   } else if (channel.value && channel.value.length > 0) {
     return props.chatMessages.data.filter(
-      message => message.channel.toLowerCase() === channel.value.toLowerCase(),
+      message =>
+        message.channel.toLowerCase() === channel.value[0].toLowerCase(),
     );
   } else return props.chatMessages.data;
 });
@@ -47,7 +48,7 @@ const renderMarkdown = markdownString => {
 </script>
 <template>
   <AppModal
-    class="max-w-6xl"
+    class="max-w-6xl md:min-w-[1000px]"
     :modelValue="showChatLogs"
     show-close
     :backdropClose="false"
@@ -69,7 +70,7 @@ const renderMarkdown = markdownString => {
             ]"
             placeholder="Select a source"
             class="w-full"
-            single
+            :maxLimit="1"
           >
           </combo-box>
         </x-field>
@@ -83,7 +84,7 @@ const renderMarkdown = markdownString => {
             ]"
             placeholder="Select a Channel"
             class="w-full"
-            single
+            :maxLimit="1"
           >
           </combo-box>
         </x-field>
@@ -108,7 +109,7 @@ const renderMarkdown = markdownString => {
             {{ customerName ?? message.role }}
             <span
               v-if="message.channel"
-              class="py-[4px] rounded-md px-4 text-white ml-2 text-xs"
+              class="py-[4px] rounded-md px-4 text-white ml-2 text-xs capitalize"
               :class="
                 message.channel.toLowerCase() == 'website'
                   ? 'bg-sky-400'
