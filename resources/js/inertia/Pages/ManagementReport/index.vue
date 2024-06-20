@@ -5,6 +5,7 @@ import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
 import SalesSummary from './Partials/SaleSummary.vue';
 import Transaction from './Partials/Transaction.vue';
+import Endorsement from './Partials/Endorsement.vue';
 
 const props = defineProps({
   reportData: Object,
@@ -21,6 +22,7 @@ const reportComponents = {
   'Sales Detail': SalesDetail,
   Transaction: Transaction,
   'Sales Summary': SalesSummary,
+  'Endorsement Report': Endorsement,
 };
 
 const params = useUrlSearchParams('history');
@@ -37,7 +39,8 @@ const filterkeys = () => {
   if (
     filters.reportCategory != 'Sales Summary' &&
     filters.reportCategory != 'Sales Detail' &&
-    filters.reportCategory != 'Transaction'
+    filters.reportCategory != 'Transaction' &&
+    filters.reportCategory != 'Endorsement Report'
   ) {
     delete filters.policyBookDate;
     delete filters.paymentDueDate;
@@ -162,12 +165,12 @@ const reportTypes = ref([
   {
     label: 'Booked Policies',
     value: 'Booked Policies',
-    report: ['Sales Summary', 'Sales Detail', 'Transaction'],
+    report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement Report'],
   },
   {
     label: 'Transaction Payments',
     value: 'Transaction Payments',
-    report: ['Sales Summary', 'Sales Detail', 'Transaction'],
+    report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement Report'],
   },
   {
     label: 'Expiring Policies',
@@ -558,6 +561,7 @@ onMounted(() => {
         size="sm"
         color="#48bb78"
         @click.prevent="onDataExport(1)"
+        :disabled="loaders.table"
         >
         Export to Excel
       </x-button>

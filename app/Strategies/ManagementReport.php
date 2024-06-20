@@ -140,6 +140,14 @@ class ManagementReport
                 }
                 break;
 
+            case ManagementReportCategoriesEnum::ENDORSEMENT_REPORT:
+                if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+                    $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
+                } elseif ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
+                    $dateFilter('send_update_logs.booking_date', 'policyBookDate');
+                }
+                break;
+
             case ManagementReportCategoriesEnum::ACTIVE_POLICIES:
                 if ($request['reportType'] == ManagementReportTypeEnum::ACTIVE_POLICIES) {
                     $dateFilter = $request['createdAt'] ?? now()->startOfDay()->format(config('constants.DATE_FORMAT_ONLY'));
@@ -236,6 +244,10 @@ class ManagementReport
 
             $data = collect($data);
             foreach ($data as $index => $quote) {
+                // if ($index == 0) {
+                //     $quote = "=\"" . $quote . "\"";
+                // }
+
                 fputcsv($handle, $this->map($quote));
 
                 // Update sums
