@@ -115,16 +115,23 @@ const checkSectionTwoEdit = () => {
   state.isEdit = !state.isEdit;
 };
 
+const transactionPaymentStatusTooltip = ref('');
+
 const transactionPaymentStatus = computed(() => {
-  if (Number(props?.quote?.price_with_vat) === 0) {
-    return 'Not Paid';
+  let payment = props.payments[0];
+  if (Number(payment?.captured_amount) < 1) {
+    transactionPaymentStatusTooltip.value = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
+    return sendUpdateStatusEnum.UNPAID;
+  } else if (Number(payment?.captured_amount + payment?.discount_value) < Number(payment?.total_price)) {
+    transactionPaymentStatusTooltip.value = 'The invoice has received a portion of its total amount due. Please ensure that the remaining balance is collected promptly to prevent potential financial discrepancies.';
+    return sendUpdateStatusEnum.PARTIALLY_PAID;
+  } else if (Number(payment?.captured_amount + payment?.discount_value) >= Number(payment?.total_price)) {
+    transactionPaymentStatusTooltip.value = 'This insurer tax invoice has been settled in its entirety, with no outstanding amounts. Always review payments to guarantee the accuracy of this status.';
+    return sendUpdateStatusEnum.FULL_PAID;
   }
-  if (Number(props?.quote?.premium) > Number(props?.quote?.price_with_vat)) {
-    return 'Partially Paid';
-  }
-  if (Number(props?.quote?.premium) === Number(props?.quote?.price_with_vat)) {
-    return 'Paid';
-  }
+
+  transactionPaymentStatusTooltip.value = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
+  return 'N/A';
 });
 
 function isNotZero(value) {
@@ -595,6 +602,13 @@ function sendUpdate(prePaymentCheck = true) {
 const isLoading = ref(false);
 const isNotConfirmed = ref(false);
 
+const SNBU = computed(() => {
+  if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
+    return sendUpdateStatusEnum.ACTION_SNBU;
+  }
+
+  return '';
+});
 const submitToCustomer = () => {
   if (!modals.isConfirmed) {
     isNotConfirmed.value = true;
@@ -605,14 +619,21 @@ const submitToCustomer = () => {
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
     quoteType: props.quoteType,
+    action: SNBU.value,
+    quoteUuid: props.realQuote.uuid,
+    quoteRefId: props.realQuote.id,
+    paymentValidated: true,
+    reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
   };
   axios
     .post(url, data)
     .then(response => {
       if (response.status == 200) {
-        notification.success({
-          title: 'Update Sent to the Customer',
-          position: 'top',
+        Object.keys(response.data).forEach(function (key) {
+          notification.success({
+            title: response.data[key],
+            position: 'top',
+          });
         });
         router.reload({ preserveState: true });
         modals.sendConfirm = isLoading.value = false;
@@ -1150,9 +1171,7 @@ watch(() => props?.payments[0]?.discount_value,
                       TRANSACTION PAYMENT STATUS
                     </label>
                     <template #tooltip>
-                      This status provides a real-time snapshot of the payment
-                      progress for each insurer tax invoice. Make sure to update
-                      these statuses regularly to maintain financial accuracy.
+                      {{ transactionPaymentStatusTooltip }}
                     </template>
                   </x-tooltip>
                 </div>

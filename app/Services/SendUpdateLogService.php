@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
@@ -484,6 +485,12 @@ class SendUpdateLogService
             }
         }
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $sendUpdatePayments = SendUpdateLogRepository::sendUpdateBookedPayments($quoteTypeId, $quoteUuid);
+        if (! empty($sendUpdatePayments)) {
+            $payments = $payments->merge($sendUpdatePayments);
+        }
+
         return $payments;
     }
 
@@ -521,7 +528,7 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if (in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
+        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
@@ -767,7 +774,7 @@ class SendUpdateLogService
 
         info('Book Update - Update booked successfully - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
-        return ['status' => true, 'message' => 'Update booked'];
+        return ['status' => true, 'message' => SendUpdateLogStatusEnum::UPDATE_BOOKED];
     }
 
     public function checkSendUpdatePermission($sendUpdateType): bool

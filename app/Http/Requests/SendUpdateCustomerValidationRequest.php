@@ -9,7 +9,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
 use Illuminate\Foundation\Http\FormRequest;
 
-class SendUpdateCustomerRequest extends FormRequest
+class SendUpdateCustomerValidationRequest extends FormRequest
 {
     protected $sendUpdate;
     protected $sendUpdateDocuemnts;
