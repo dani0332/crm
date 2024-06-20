@@ -15,8 +15,9 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
-use App\Http\Requests\SendUpdateCustomerRequest;
+use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
+use App\Http\Requests\UpdateToCustomerRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Lookup;
 use App\Models\Payment;
@@ -343,18 +344,18 @@ class SendUpdateLogController extends Controller
         return response()->json($reversalEntries);
     }
 
-    public function sendUpdateCustomerValidation(SendUpdateCustomerRequest $sendUpdateCustomerRequest)
+    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest)
     {
-        $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
+        $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($sendUpdateCustomerValidationRequest->sendUpdateId);
 
         return response()->json([
             'message' => $message,
         ]);
     }
 
-    public function sendUpdateToCustomer(Request $request)
+    public function sendUpdateToCustomer(UpdateToCustomerRequest $request)
     {
-        $data = $request->all();
+        $data = $request->validated();
 
         $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
 
@@ -363,10 +364,10 @@ class SendUpdateLogController extends Controller
         }
         $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
 
-        if ($log && $data['buttonText'] == SendUpdateLogStatusEnum::SNBU) {
+        if ($log && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
             $sendUpdateRequest = new SendUpdateRequest();
 
-            $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($request->all()));
+            $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($data));
             if ($isSendUpdateSuccess->status() == 200) {
                 $message[] = SendUpdateLogStatusEnum::UPDATE_BOOKED;
             }

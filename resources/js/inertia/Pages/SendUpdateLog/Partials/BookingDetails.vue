@@ -602,6 +602,13 @@ function sendUpdate(prePaymentCheck = true) {
 const isLoading = ref(false);
 const isNotConfirmed = ref(false);
 
+const SNBU = computed(() => {
+  if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
+    return sendUpdateStatusEnum.ACTION_SNBU;
+  }
+
+  return '';
+});
 const submitToCustomer = () => {
   if (!modals.isConfirmed) {
     isNotConfirmed.value = true;
@@ -612,7 +619,7 @@ const submitToCustomer = () => {
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
     quoteType: props.quoteType,
-    buttonText: props.updateBtn,
+    action: SNBU.value,
     quoteUuid: props.realQuote.uuid,
     quoteRefId: props.realQuote.id,
     paymentValidated: true,
