@@ -710,6 +710,7 @@ class SendEmailCustomerService extends BaseService
     }
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
+        $isEmailSent = 0;
         try {
             info('sendBookPolicyDocumentsEmail  , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
 
@@ -778,6 +779,7 @@ class SendEmailCustomerService extends BaseService
 
             $response = json_decode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents(), true);
             $responseCode = $clientRequest->getStatusCode();
+            $isEmailSent = 1;
             info('sendBookPolicyDocumentsEmail ---- Request Sent '.$emailData->code);
             info('sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
@@ -786,7 +788,7 @@ class SendEmailCustomerService extends BaseService
             Log::error($responseDetail);
         }
 
-        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $advisorEmail);
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         return $responseCode;
     }
