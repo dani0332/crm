@@ -899,22 +899,6 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
     }
 }
 
-if (! function_exists('isMyAlfredCampaignEnabled')) {
-    function isMyAlfredCampaignEnabled($campaignId): bool
-    {
-        $campaign = getMyAlfredCampaign($campaignId);
-        if (! $campaign) {
-            return false;
-        }
-
-        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
-            return today()->between($campaign->data->startDate, $campaign->data->endDate);
-        }
-
-        return false;
-    }
-}
-
 if (! function_exists('getAppStorageValueByKey')) {
     function getAppStorageValueByKey($keyName)
     {
