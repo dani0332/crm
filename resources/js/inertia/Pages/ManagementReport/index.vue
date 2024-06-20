@@ -5,6 +5,7 @@ import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
 import SalesSummary from './Partials/SaleSummary.vue';
 import Transaction from './Partials/Transaction.vue';
+import Installment from './Partials/Installment.vue';
 
 const props = defineProps({
   reportData: Object,
@@ -21,6 +22,7 @@ const reportComponents = {
   'Sales Detail': SalesDetail,
   Transaction: Transaction,
   'Sales Summary': SalesSummary,
+  Installment: Installment,
 };
 
 const params = useUrlSearchParams('history');
@@ -37,7 +39,8 @@ const filterkeys = () => {
   if (
     filters.reportCategory != 'Sales Summary' &&
     filters.reportCategory != 'Sales Detail' &&
-    filters.reportCategory != 'Transaction'
+    filters.reportCategory != 'Transaction' &&
+    filters.reportCategory != 'Installment'
   ) {
     delete filters.policyIssuanceDate;
     delete filters.paymentDueDate;
@@ -90,12 +93,13 @@ const loaders = reactive({
 });
 
 let selectedReport = computed(() => {
-  console.log(props.reportName);
   return reportComponents[props.reportName] ?? SalesSummary;
 });
 
 const computedReportTypes = computed(() => {
   const filterCondition = filters.reportCategory ?? null;
+
+  // console.log(123, filterCondition, reportTypes, reportTypes.value, reportTypes.value.filter(x => x.report.includes(filterCondition)));
 
   return filterCondition
     ? reportTypes.value.filter(x => x.report.includes(filterCondition))
@@ -178,6 +182,11 @@ const reportTypes = ref([
     label: 'Active Policies',
     value: 'Active Policies',
     report: ['Active Policies'],
+  },
+  {
+    label: 'Transaction Payments',
+    value: 'Transaction Payments',
+    report: ['Installment'],
   },
 ]);
 
@@ -430,6 +439,7 @@ onMounted(() => {
         size="sm"
         color="#48bb78"
         @click.prevent="onDataExport(1)"
+        :disabled="loaders.table"
         >
         Export to Excel
       </x-button>
