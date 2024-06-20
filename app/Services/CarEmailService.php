@@ -152,7 +152,7 @@ class CarEmailService extends BaseService
             }
         }
 
-        info('wfsBanner: '.$wfsBanner.' wfsBannerRedirectUrl: '.$wfsBannerRedirectUrl);
+        // info('wfsBanner: '.$wfsBanner.' wfsBannerRedirectUrl: '.$wfsBannerRedirectUrl);
 
         return (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
