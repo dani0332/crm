@@ -349,7 +349,7 @@ class SendUpdateLogController extends Controller
 
         return response()->json([
             'message' => $message,
-        ], 200);
+        ]);
     }
 
     public function sendUpdateToCustomer(Request $request)
@@ -415,7 +415,7 @@ class SendUpdateLogController extends Controller
             return response()->json([
                 'insufficientPaymentCheck' => $insufficientPaymentCheck,
                 'parentPaymentStatus' => $sendUpdate->payments->first()?->payment_status_id ?? null,
-            ], 200);
+            ]);
         }
 
         info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
@@ -444,7 +444,7 @@ class SendUpdateLogController extends Controller
         if ($response['status']) {
             info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
 
-            return response()->json(['message' => $response['message']], 200);
+            return response()->json(['message' => $response['message']]);
         }
 
         logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
@@ -458,6 +458,6 @@ class SendUpdateLogController extends Controller
 
         return response()->json([
             'options' => $options,
-        ], 200);
+        ]);
     }
 }
