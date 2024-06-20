@@ -20,7 +20,7 @@ class SaleDetailReportService extends ManagementReport
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_DETAIL;
-        $request['reportType']  = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
+        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
             $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
@@ -119,7 +119,7 @@ class SaleDetailReportService extends ManagementReport
         return [
             'policyBookDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::SALE_DETAIL,
-            'reportType' =>  ManagementReportTypeEnum::BOOKED_POLICIES,
+            'reportType' => ManagementReportTypeEnum::BOOKED_POLICIES,
         ];
     }
 
@@ -160,7 +160,7 @@ class SaleDetailReportService extends ManagementReport
     public function map($quote): array
     {
         return [
-            $quote->policy_number ? "=\"" . $quote->policy_number . "\"" : 'N/A',
+            $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
             $quote->transactions ?? 0,
             $quote->policy_start_date ?? 'N/A',
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),

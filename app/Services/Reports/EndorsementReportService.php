@@ -165,14 +165,14 @@ class EndorsementReportService extends ManagementReport
             'Insurer Invoice No.',
             'Insurer Invoice Date',
             'Broker Invoice No',
-            'Booking Date'
+            'Booking Date',
         ];
     }
 
     public function map($quote): array
     {
         return [
-            $quote->policy_number ? "=\"" . $quote->policy_number . "\"" : ("=\"" . $quote->main_lead_policy_number . "\"" ?? 'N/A'),
+            $quote->policy_number ? '="'.$quote->policy_number.'"' : ('="'.$quote->main_lead_policy_number.'"' ?? 'N/A'),
             $quote->transactions ?? 0,
             $quote->policy_start_date ? $quote->policy_start_date : ($quote->main_lead_policy_start_date ?? 'N/A'),
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),

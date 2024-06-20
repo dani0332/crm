@@ -134,7 +134,7 @@ class EndingPoliciesReportService extends ManagementReport
     {
         return [
             $quote->customer_name ?? 'N/A',
-            $quote->policy_number ? "=\"" . $quote->policy_number . "\"" : 'N/A',
+            $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
             $quote->insurer ?? 'N/A',
             $quote->line_of_business ?? 'N/A',
             $quote->policy_start_date ?? 'N/A',
