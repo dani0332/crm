@@ -1599,6 +1599,7 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTempla
 const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] = createReusableTemplate();
 const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] = createReusableTemplate();
 const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
 
 const salaryBrandMapping = {
   1: 'AED 4000 and below',
@@ -1671,48 +1672,27 @@ watch(
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
-
         <Link :href="route('health.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Health List </x-button>
+          <x-button size="sm" color="primary" tag="div">
+            Health List
+          </x-button>
         </Link>
 
-        <Link :href="route('health.edit', quote.uuid)">
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('health.edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <LeadEditBtnReuseTemplate v-else/>
       </template>
     </StickyHeader>
     <x-divider class="my-4" />
-    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
-      <div class="flex items-center space-x-2">
-        <h2 class="text-xl font-semibold">Health Detail</h2>
-        <p
-          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="daysSinceStale(quoteRequest?.stale_at) !== false"
-        >
-          Stale for {{ daysSinceStale(quoteRequest?.stale_at) }} days
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <LeadNotes
-          :documentType="noteDocumentType"
-          :notes="quoteNotes"
-          :modelType="modelType"
-          :quote="quote"
-          :cdn="cdnPath"
-        />
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-          Duplicate Lead
-        </x-button>
-
-        <Link :href="route('health.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Health List </x-button>
-        </Link>
-
-        <Link :href="route('health.edit', quote.uuid)">
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-      </div>
-    </div> -->
+    
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -1829,41 +1809,7 @@ watch(
         </template>
 
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-              Duplicate Lead
-            </x-button>
-
-            <Link :href="route('health.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Health List
-              </x-button>
-            </Link>
-
-            <LeadEditBtnTemplate v-slot="{ isDisabled }">
-              <Link :href="route('health.edit', quote.uuid)">
-                <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
-              </Link>
-            </LeadEditBtnTemplate>
-
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-              <LeadEditBtnReuseTemplate :isDisabled="true"/>
-              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
-            </x-tooltip>
-            <LeadEditBtnReuseTemplate v-else/>
-                          
-
-          </div>
+          <x-divider class="my-4 mb-3" />
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -2361,11 +2307,47 @@ watch(
       </h3>
       <template #content>
         <x-divider class="mb-4 mt-1" />
-        <div class="w-full flex flex-wrap gap-3 justify-end items-center mb-4">
-          <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
+        <AddMemberButtonTemplate v-slot="{ isDisabled }">
+          <x-button 
+            @click.prevent="onAddMemberModal" 
+            size="sm" 
+            color="orange"
+            :disabled="isDisabled"
+          >
             Add Member
           </x-button>
+        </AddMemberButtonTemplate>
+        <div class="flex mb-3 justify-end">
+          <x-tooltip v-if="lockLeadSectionsDetails.memebr_details" position="bottom">
+            <AddMemButtonReuseTemplate :isDisabled="true"/>
+            <template #tooltip>
+              This lead is now locked as the policy has been booked. If changes are needed such midterm addition of member, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+            </template>
+          </x-tooltip>
+          <AddMemButtonReuseTemplate v-else />
         </div>
+        <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="primary"
+            outlined
+            @click.prevent="onEditMember(item)"
+            :disabled="isDisabled"
+          >
+            Edit
+          </x-button>
+        </EditMemberButtonTemplate>
+        <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="error"
+            outlined
+            @click.prevent="memberDelete(item.id)"
+            :disabled="isDisabled"
+          >
+            Delete
+          </x-button>
+        </DeleteMemberButtonTemplate>
         <DataTable
           table-class-name="tablefixed compact"
           :headers="memberDetailsTable.columns"
@@ -2404,22 +2386,20 @@ watch(
 
           <template #item-action="item">
             <div class="flex gap-2">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="onEditMember(item)"
-              >
-                Edit
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="memberDelete(item.id)"
-              >
-                Delete
-              </x-button>
+              <x-tooltip v-if="lockLeadSectionsDetails.memebr_details" position="bottom">
+                <EditMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                </template>
+              </x-tooltip>
+              <EditMemberButtonReuseTemplate v-else :item="item"/>
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
+                <DeleteMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                </template>
+              </x-tooltip>
+              <DeleteMemberButtonReuseTemplate v-else :item="item"/>
             </div>
           </template>
         </DataTable>

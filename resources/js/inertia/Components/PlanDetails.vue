@@ -249,6 +249,7 @@ const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] = crea
 
       <SavePlanDetailsButtonTemplate v-slot="{ isDisabled }">
         <x-button
+          class="mt-4"
           color="#26B99A"
           type="submit"
           size="sm"
@@ -259,7 +260,7 @@ const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] = crea
         </x-button>
       </SavePlanDetailsButtonTemplate>
 
-      <div class="text-right space-x-4 mt-12">
+      <div class="flex mb-3 justify-end">
         <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_details" position="bottom">
           <SavePlanDetailsButtonReuseTemplate :isDisabled="true"/>
           <template #tooltip>

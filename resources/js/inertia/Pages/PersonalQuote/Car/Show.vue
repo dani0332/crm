@@ -1537,6 +1537,57 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 <template>
   <div>
     <Head title="Car Detail" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Car Detail</h2>
+      </template>
+      <template #default>
+        <Link
+          v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+          :href="`/legacy-policy/${record.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <template
+          v-if="
+            !can(permissionEnum.ApprovePayments) &&
+            allowedDuplicateLOB.length > 0
+          "
+        >
+          <x-button
+            v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
+            class="mr-2"
+            size="sm"
+            color="#ff5e00"
+            @click.prevent="openSendOCBConfirmNB"
+          >
+            Send NB OCB To Customer
+          </x-button>
+          <x-button
+            v-if="
+              !hasAnyRole([
+                rolesEnum.CarAdvisor,
+                rolesEnum.CarDeputyManager,
+                rolesEnum.CarManager,
+              ])
+            "
+            class="mr-2"
+            size="sm"
+            color="#ff5e00"
+            @click.prevent="openDuplicate"
+          >
+            Duplicate Lead
+          </x-button>
+        </template>
+        <Link :href="route('car.index')">
+          <x-button size="sm" tag="div">Car List</x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <x-divider class="my-4" />
     <AssignTier
       v-if="
         !can(permissionEnum.ApprovePayments) &&
@@ -1663,53 +1714,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex mb-4 justify-end">
-            <Link
-              v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${record.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <template
-              v-if="
-                !can(permissionEnum.ApprovePayments) &&
-                allowedDuplicateLOB.length > 0
-              "
-            >
-              <x-button
-                v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
-                class="mr-2"
-                size="sm"
-                color="#ff5e00"
-                @click.prevent="openSendOCBConfirmNB"
-              >
-                Send NB OCB To Customer
-              </x-button>
-              <x-button
-                v-if="
-                  !hasAnyRole([
-                    rolesEnum.CarAdvisor,
-                    rolesEnum.CarDeputyManager,
-                    rolesEnum.CarManager,
-                  ])
-                "
-                class="mr-2"
-                size="sm"
-                color="#ff5e00"
-                @click.prevent="openDuplicate"
-              >
-                Duplicate Lead
-              </x-button>
-            </template>
-            <Link :href="route('car.index')">
-              <x-button size="sm" tag="div">Car List</x-button>
-            </Link>
-          </div>
-
+          <x-divider class="my-4 mb-3" />
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
