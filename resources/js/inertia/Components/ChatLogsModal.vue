@@ -90,67 +90,75 @@ const renderMarkdown = markdownString => {
         </x-field>
       </div>
       <x-divider class="my-3" />
-      <div v-for="(message, index) in computedMessages" :key="index">
-        <div class="chat chat-start" v-if="message.role == 'USER'">
-          <div class="chat-image avatar">
-            <div
-              class="flex items-center justify-center border rounded-full h-10 w-10 bg-gray-600 text-white"
-            >
-              <span v-if="customerName && customerName != 'User'">
-                {{
-                  customerName.split(' ')[0].charAt(0) +
-                  customerName.split(' ')[1].charAt(0)
-                }}
-              </span>
-              <span v-else>{{ customerName.charAt(0) }}</span>
+      <template v-if="computedMessages.length > 0">
+        <div v-for="(message, index) in computedMessages" :key="index">
+          <div class="chat chat-start" v-if="message.role == 'USER'">
+            <div class="chat-image avatar">
+              <div
+                class="flex items-center justify-center border rounded-full h-10 w-10 bg-gray-600 text-white"
+              >
+                <span v-if="customerName && customerName != 'User'">
+                  {{
+                    customerName.split(' ')[0].charAt(0) +
+                    customerName.split(' ')[1].charAt(0)
+                  }}
+                </span>
+                <span v-else>{{ customerName.charAt(0) }}</span>
+              </div>
             </div>
-          </div>
-          <div class="chat-header">
-            {{ customerName ?? message.role }}
-            <span
-              v-if="message.channel"
-              class="py-[4px] rounded-md px-4 text-white ml-2 text-xs capitalize"
-              :class="
-                message.channel.toLowerCase() == 'website'
-                  ? 'bg-sky-400'
-                  : 'bg-emerald-400'
-              "
-              >{{ message.channel.toLowerCase() }}</span
-            >
-          </div>
-          <div class="chat-bubble text-sm relative flex items-center">
-            <div v-html="renderMarkdown(message.msg)"></div>
-            <div
-              class="absolute right-[-30px] text-red-600"
-              v-if="message?.whatsapp_request?.type == 'audio'"
-            >
-              <x-icon icon="audio" />
+            <div class="chat-header">
+              {{ customerName ?? message.role }}
+              <span
+                v-if="message.channel"
+                class="py-[4px] rounded-md px-4 text-white ml-2 text-xs capitalize"
+                :class="
+                  message.channel.toLowerCase() == 'website'
+                    ? 'bg-sky-400'
+                    : 'bg-emerald-400'
+                "
+                >{{ message.channel.toLowerCase() }}</span
+              >
             </div>
-          </div>
+            <div class="chat-bubble text-sm relative flex items-center">
+              <div v-html="renderMarkdown(message.msg)"></div>
+              <div
+                class="absolute right-[-30px] text-red-600"
+                v-if="message?.whatsapp_request?.type == 'audio'"
+              >
+                <x-icon icon="audio" />
+              </div>
+            </div>
 
-          <div class="chat-footer opacity-50 text-right">
-            {{ message.created_at.split(' ')[1] }}
-          </div>
-        </div>
-        <div class="chat chat-end" v-else>
-          <div class="chat-image avatar">
-            <div class="w-8 rounded-full">
-              <img
-                class="rounded-full"
-                alt="Tailwind CSS chat bubble component"
-                src="/image/alfred-theme.png"
-              />
+            <div class="chat-footer opacity-50 text-right">
+              {{ message.created_at.split(' ')[1] }}
             </div>
           </div>
-          <div class="chat-header">InstantAlfred</div>
-          <div class="chat-bubble text-sm">
-            <div v-html="renderMarkdown(message.msg)"></div>
-          </div>
-          <div class="chat-footer opacity-50">
-            {{ message.created_at.split(' ')[1] }}
+          <div class="chat chat-end" v-else>
+            <div class="chat-image avatar">
+              <div class="w-8 rounded-full">
+                <img
+                  class="rounded-full"
+                  alt="Tailwind CSS chat bubble component"
+                  src="/image/alfred-theme.png"
+                />
+              </div>
+            </div>
+            <div class="chat-header">InstantAlfred</div>
+            <div class="chat-bubble text-sm">
+              <div v-html="renderMarkdown(message.msg)"></div>
+            </div>
+            <div class="chat-footer opacity-50">
+              {{ message.created_at.split(' ')[1] }}
+            </div>
           </div>
         </div>
-      </div>
+      </template>
+      <template v-else>
+        <div class="flex items-center justify-center h-60">
+          <x-icon icon="chat" class="h-12 w-12 text-gray-400" />
+          <span class="text-gray-400 text-lg ml-2">No Chat Logs Found</span>
+        </div>
+      </template>
     </template>
   </AppModal>
 </template>
