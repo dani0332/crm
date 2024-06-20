@@ -3210,7 +3210,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       <x-modal v-model="modals.changeInsurer" show-close backdrop>
         <template #header> Change Insurer </template>
         <p>Are you sure to change insurer?</p>
+        <template #actions>
           <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.changeInsurer = false"
+            >
               Cancel
             </x-button>
             <x-button
