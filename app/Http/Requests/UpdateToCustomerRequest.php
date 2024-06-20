@@ -2,11 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\DocumentTypeCode;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\SendUpdateLog;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateToCustomerRequest extends FormRequest
