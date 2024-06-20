@@ -99,8 +99,6 @@ let selectedReport = computed(() => {
 const computedReportTypes = computed(() => {
   const filterCondition = filters.reportCategory ?? null;
 
-  // console.log(123, filterCondition, reportTypes, reportTypes.value, reportTypes.value.filter(x => x.report.includes(filterCondition)));
-
   return filterCondition
     ? reportTypes.value.filter(x => x.report.includes(filterCondition))
     : reportTypes.value;
