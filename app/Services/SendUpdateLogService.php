@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -913,11 +915,19 @@ class SendUpdateLogService
             }
         }
 
-        // need to confirm CORPLINE_TRADE_SEND_POLICY_TEMPLATE for template id, also test group medical quote object.
-
-        $templateCode = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
-        $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
-        $templateId = getAppStorageValueByKey(constant($constantName));
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE);
+            } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_TRADE_SEND_POLICY_TEMPLATE);
+            } else {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_CAR_SEND_POLICY_TEMPLATE);
+            }
+        } else {
+            $templateCode = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
+            $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
+            $templateId = getAppStorageValueByKey(constant($constantName));
+        }
 
         app(SendEmailCustomerService::class)->sendUpdateToCustomerEmail($templateId, $emailData, 'send-update', $quoteTypeId);
     }
