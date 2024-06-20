@@ -1,5 +1,4 @@
 <script setup>
-import { ref } from 'vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({

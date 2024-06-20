@@ -244,9 +244,13 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
     public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
     public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
+    public const BOOK_POLICY_EDIT = 'book-policy-edit';
+    public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
+    public const VIEW_INSLY_BOOK_POLICY = 'view-insly-book-policy';
+    public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
     public const LEAD_CARD_SEARCH = 'lead-card-search';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
@@ -260,6 +264,8 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_CARD_VIEW = 'business-cards';
     public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
     public const MANAGEMENT_REPORT = 'management-report';
+    public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'proforma-payment-request-add';
+    public const ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON = 'proforma-create';
     public const SEGMENT_FILTER = 'segment-filter';
     public const TEMP_UPDATE_TOTALPRICE = 'temp-update-totalprice';
     public const PLAN_DETAILS_ADD = 'plan-details-add';
@@ -274,6 +280,27 @@ final class PermissionsEnum extends Enum
     public const LEGACY_PAYMENTS = 'legacy-payments';
     public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
     public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
+    public const SEND_UPDATE_ENDO_FIN_ADD = 'send-update-endo-fin-add';
+    public const SEND_UPDATE_ENDO_NON_FIN_ADD = 'send-update-endo-non-fin-add';
+    public const SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD = 'send-update-cancel-from-inception-add';
+    public const SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD = 'send-update-cancel-from-inception-and-reissue-add';
+    public const SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD = 'send-update-correct-policy-upload-add';
+    public const SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD = 'send-update-correct-policy-details-add';
+    public const SEND_UPDATE_TO_CUSTOMER_BUTTON = 'send-update-to-customer-button';
+    public const POLICY_DETAILS_ADD = 'policy-details-add';
+    public const BOOK_POLICY_DETAILS_ADD = 'book-policy-details-add';
+    public const SEND_POLICY_TO_CUSTOMER_BUTTON = 'send-policy-to-customer-button';
+    public const SEND_AND_BOOK_POLICY_BUTTON = 'send-and-book-policy-button';
+    public const BOOK_POLICY_BUTTON = 'book-policy-button';
+    public const SEND_AND_BOOK_UPDATE_BUTTON = 'send-and-book-update-button';
+    public const BOOK_UPDATE_BUTTON = 'book-update-button';
+    public const PAYMENTS_DISCOUNT_ADD = 'payments-discount-add';
+    public const PAYMENTS_CREDIT_APPROVAL_ADD = 'payments-credit-approval-add';
+    public const PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD = 'payments-frequency-upfront-split-collected-by-broker-add';
+    public const PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD = 'payments-frequency-terms-collected-by-broker-add';
+    public const PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD = 'payments-frequency-terms-collected-by-insurer-add';
+    public const PAYMENT_VERIFICATION_COLLECTED_BY_BROKER = 'payment-verification-collected-by-broker';
+    public const PAYMENT_VERIFICATION_COLLECTED_BY_INSURER = 'payment-verification-collected-by-insurer';
     public const BIKE_CONVERSION_REPORT = 'bike-conversion-report';
     public const HEALTH_CONVERSION_REPORT = 'health-conversion-report';
     public const TRAVEL_CONVERSION_REPORT = 'travel-conversion-report';
@@ -318,55 +345,57 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
     public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
     public const ADD_MANUAL_HEALTH_PLAN = 'add-manual-health-plan';
+    public const DOCUMENT_DELETE = 'document-delete';
+    public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
 
-    public static function getAdvisorConverionReportPermissions()
+    public static function getAdvisorConversionReportPermissions()
     {
         return [
-            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
-            PermissionsEnum::BIKE_CONVERSION_REPORT,
-            PermissionsEnum::HEALTH_CONVERSION_REPORT,
-            PermissionsEnum::TRAVEL_CONVERSION_REPORT,
-            PermissionsEnum::LIFE_CONVERSION_REPORT,
-            PermissionsEnum::HOME_CONVERSION_REPORT,
-            PermissionsEnum::PET_CONVERSION_REPORT,
-            PermissionsEnum::CYCLE_CONVERSION_REPORT,
-            PermissionsEnum::YACHT_CONVERSION_REPORT,
-            PermissionsEnum::CORPLINE_CONVERSION_REPORT,
-            PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT,
+            self::ADVISOR_CONVERSION_REPORT_VIEW,
+            self::BIKE_CONVERSION_REPORT,
+            self::HEALTH_CONVERSION_REPORT,
+            self::TRAVEL_CONVERSION_REPORT,
+            self::LIFE_CONVERSION_REPORT,
+            self::HOME_CONVERSION_REPORT,
+            self::PET_CONVERSION_REPORT,
+            self::CYCLE_CONVERSION_REPORT,
+            self::YACHT_CONVERSION_REPORT,
+            self::CORPLINE_CONVERSION_REPORT,
+            self::GROUPMEDICAL_CONVERSION_REPORT,
         ];
     }
 
     public static function getComprehensiveDashboardPermissions()
     {
         return [
-            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
-            PermissionsEnum::BIKE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::HEALTH_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::TRAVEL_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+            self::COMPREHENSIVE_DASHBOARD_VIEW,
+            self::BIKE_COMPREHENSIVE_DASHBOARD,
+            self::HEALTH_COMPREHENSIVE_DASHBOARD,
+            self::TRAVEL_COMPREHENSIVE_DASHBOARD,
+            self::LIFE_COMPREHENSIVE_DASHBOARD,
+            self::HOME_COMPREHENSIVE_DASHBOARD,
+            self::PET_COMPREHENSIVE_DASHBOARD,
+            self::CYCLE_COMPREHENSIVE_DASHBOARD,
+            self::YACHT_COMPREHENSIVE_DASHBOARD,
+            self::CORPLINE_COMPREHENSIVE_DASHBOARD,
+            self::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
         ];
     }
 
     public static function getAdvisorDistributionReportPermissions()
     {
         return [
-            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
-            PermissionsEnum::BIKE_DISTRIBUTION_REPORT,
-            PermissionsEnum::HEALTH_DISTRIBUTION_REPORT,
-            PermissionsEnum::TRAVEL_DISTRIBUTION_REPORT,
-            PermissionsEnum::LIFE_DISTRIBUTION_REPORT,
-            PermissionsEnum::HOME_DISTRIBUTION_REPORT,
-            PermissionsEnum::PET_DISTRIBUTION_REPORT,
-            PermissionsEnum::CYCLE_DISTRIBUTION_REPORT,
-            PermissionsEnum::YACHT_DISTRIBUTION_REPORT,
-            PermissionsEnum::CORPLINE_DISTRIBUTION_REPORT,
-            PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT,
+            self::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+            self::BIKE_DISTRIBUTION_REPORT,
+            self::HEALTH_DISTRIBUTION_REPORT,
+            self::TRAVEL_DISTRIBUTION_REPORT,
+            self::LIFE_DISTRIBUTION_REPORT,
+            self::HOME_DISTRIBUTION_REPORT,
+            self::PET_DISTRIBUTION_REPORT,
+            self::CYCLE_DISTRIBUTION_REPORT,
+            self::YACHT_DISTRIBUTION_REPORT,
+            self::CORPLINE_DISTRIBUTION_REPORT,
+            self::GROUPMEDICAL_DISTRIBUTION_REPORT,
         ];
     }
 }
