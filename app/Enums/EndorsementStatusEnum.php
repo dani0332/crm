@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Enums;
 
@@ -8,10 +10,8 @@ final class EndorsementStatusEnum extends Enum
 {
     public const UPDATE_BOOKED = 'Update Booked';
 
-
     /**
      * LOOKUP IDs
-    */
-
+     */
     public const ENDORSEMENT_FINANCIAL_ID = 8780;
 }
