@@ -119,16 +119,19 @@ const transactionPaymentStatusTooltip = ref('');
 
 const transactionPaymentStatus = computed(() => {
   let payment = props.payments[0];
-  if (Number(payment.captured_amount) < 1) {
+  if (Number(payment?.captured_amount) < 1) {
     transactionPaymentStatusTooltip.value = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
     return sendUpdateStatusEnum.UNPAID;
-  } else if (Number(payment.captured_amount + payment.discount_value) < Number(payment.total_price)) {
+  } else if (Number(payment?.captured_amount + payment?.discount_value) < Number(payment?.total_price)) {
     transactionPaymentStatusTooltip.value = 'The invoice has received a portion of its total amount due. Please ensure that the remaining balance is collected promptly to prevent potential financial discrepancies.';
     return sendUpdateStatusEnum.PARTIALLY_PAID;
-  } else if (Number(payment.captured_amount + payment.discount_value) >= Number(payment.total_price)) {
+  } else if (Number(payment?.captured_amount + payment?.discount_value) >= Number(payment?.total_price)) {
     transactionPaymentStatusTooltip.value = 'This insurer tax invoice has been settled in its entirety, with no outstanding amounts. Always review payments to guarantee the accuracy of this status.';
     return sendUpdateStatusEnum.FULL_PAID;
   }
+
+  transactionPaymentStatusTooltip.value = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
+  return 'N/A';
 });
 
 function isNotZero(value) {
