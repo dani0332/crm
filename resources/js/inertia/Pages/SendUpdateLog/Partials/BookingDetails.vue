@@ -188,9 +188,9 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.commission ||
     '',
   total_vat_amount: props.bookingDetails?.total_vat_amount || null,
-  price_vat_applicable: props.bookingDetails?.price_vat_applicable || '',
+  price_vat_applicable: props.bookingDetails?.price_vat_applicable || props.sendUpdateLog.price_vat_applicable || '',
   price_vat_not_applicable:
-    props.bookingDetails?.price_vat_not_applicable || '0.00',
+    props.bookingDetails?.price_vat_not_applicable || props.sendUpdateLog.price_vat_not_applicable || '0.00',
   price_with_vat: props.bookingDetails?.price_with_vat || '0.00',
   // new entry section related.
   reversal_invoice: props.bookingDetails?.reversal_invoice || null,
