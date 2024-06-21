@@ -319,3 +319,27 @@ export const maskPhone = mobile_no =>
   }
   return null;
 };
+
+export function getQuoteType(id, returnType = 'code') {
+  const types = {
+    1: { code: 'CAR', id: 'car', link: '/quotes' },
+    2: { code: 'HOM', id: 'home', link: '/quotes' },
+    3: { code: 'HEA', id: 'health', link: '/quotes' },
+    4: { code: 'LIF', id: 'life', link: '/quotes' },
+    5: { code: 'BUS', id: 'business', link: '/quotes' },
+    6: { code: 'BIK', id: 'bike', link: '/personal-quotes' },
+    7: { code: 'YAC', id: 'yacht', link: '/personal-quotes' },
+    8: { code: 'TRA', id: 'travel', link: '/quotes' },
+  };
+  return types[id] ? types[id][returnType] : '';
+}
+
+export function buildCdbidLink(quote_uuid, quote_type_id) {
+  if (quote_uuid) {
+    const url = `${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${quote_uuid}`;
+    const CDBID = `${getQuoteType(quote_type_id, 'code')}-${quote_uuid.toUpperCase()}`;
+    return `<a target="_blank" class="text-primary-500 hover:underline flex items-center space-x-1" href="${url}">${CDBID}</a>`;
+  } else {
+    return '';
+  }
+}

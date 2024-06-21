@@ -404,8 +404,9 @@ const notesForCustomersTableItems = computed(() => {
 
 const leadActivities = reactive({
   columns: [
-    { text: 'Title', value: 'title' },
     { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
     { text: 'Followup Date', value: 'due_date' },
     { text: 'Assigned To', value: 'assignee' },
     { text: 'Done', value: 'status', width: 60, align: 'center' },
@@ -1663,7 +1664,7 @@ const handlePlanSelected = plan => {
         </dl>
         <div class="grid sm:grid-cols-1 mt-3">
           <dt class="font-medium mb-3">ADDONS</dt>
-          <dd v-if="carQuotePlanAddons.length>0">            
+          <dd v-if="carQuotePlanAddons.length>0">
             <table style="width: 100%">
               <thead></thead>
               <tbody>
@@ -1700,7 +1701,7 @@ const handlePlanSelected = plan => {
                   </td>
                 </tr>
               </tbody>
-            </table>            
+            </table>
           </dd>
           <dd v-else>N/A</dd>
         </div>

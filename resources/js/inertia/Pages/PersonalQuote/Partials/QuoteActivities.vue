@@ -34,13 +34,13 @@ const advisorOptions = computed(() => {
 });
 
 const activityTable = [
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'Title', value: 'title' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee.email' },
-  { text: 'Action', value: 'action' },
+    { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
+    { text: 'Followup Date', value: 'due_date' },
+    { text: 'Assigned To', value: 'assignee' },
+    { text: 'Done', value: 'status', width: 60, align: 'center' },
+    { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -50,7 +50,7 @@ const activityForm = useForm({
   title: null,
   description: null,
   due_date: null,
-  assignee_id: null,
+  assignee_id: page.props?.auth?.user?.id,
   status: null,
   activity_id: null,
 });
@@ -166,8 +166,8 @@ const onDeleteConfirmation = () => {
         :rows-per-page="15"
         :hide-footer="activities.length < 15"
       >
-        <template #item-code="{ code }">
-          {{ code }}
+        <template #item-assignee="item">
+            {{ item?.assignee?.name || item?.assignee }}
         </template>
         <template #item-due_date="{ due_date, is_cold }">
           <template v-if="is_cold">
