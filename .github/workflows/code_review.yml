@@ -16,11 +16,11 @@ jobs:
         uses: actions/checkout@v3
 
       - name: AI Code Reviewer
-        uses: lukehollenback/ai-codereviewer@main
+        uses: lukehollenback/ai-codereviewer@dev
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}                               
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}                           
-          OPENAI_API_MODEL: "gpt-4"                                               
+          OPENAI_API_MODEL: "gpt-4o"                                               
           exclude: "yarn.lock, dist/**, **/*.json, **/*.md, **/*.yaml, **/*.xml"  # Optional: File patterns, separated by commas, to exclude from analysis
           custom_prompts: |         
              Act as an expert PHP, Laravel Developer 
