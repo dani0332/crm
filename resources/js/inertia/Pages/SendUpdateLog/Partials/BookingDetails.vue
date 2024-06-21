@@ -457,6 +457,18 @@ const sendUpdateValidationURL = computed(() => {
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
 
+const actionButton = computed(() => {
+  if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
+    return sendUpdateStatusEnum.ACTION_SNBU;
+  } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
+    return sendUpdateStatusEnum.ACTION_SUC;
+  } else if (props.updateBtn === sendUpdateStatusEnum.SU) {
+    return sendUpdateStatusEnum.ACTION_SU;
+  }
+
+  return '';
+});
+
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
   axios
@@ -465,6 +477,7 @@ const sendUpdateValidation = () => {
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
       quoteRefId: props.realQuote.id,
+      action: actionButton.value,
     })
     .then(response => {
       if (response.status == 200) {
@@ -476,7 +489,7 @@ const sendUpdateValidation = () => {
           }
         } else {
           modals.sendConfirm = true;
-          isStating.value = response.data.message;
+          isStating.value = response.data?.message;
         }
         loader.sendUpdateSectionBtn = false;
       }
@@ -601,18 +614,6 @@ function sendUpdate(prePaymentCheck = true) {
 
 const isLoading = ref(false);
 const isNotConfirmed = ref(false);
-
-const actionButton = computed(() => {
-  if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
-    return sendUpdateStatusEnum.ACTION_SNBU;
-  } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
-    return sendUpdateStatusEnum.ACTION_SUC;
-  } else if (props.updateBtn === sendUpdateStatusEnum.SU) {
-    return sendUpdateStatusEnum.ACTION_SU;
-  }
-
-  return '';
-});
 
 const submitToCustomer = () => {
   if (!modals.isConfirmed) {

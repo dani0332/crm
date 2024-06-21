@@ -535,13 +535,13 @@ class SendUpdateLogService
         return SendUpdateLogStatusEnum::SNBU;
     }
 
-    public function getSendToCustomerValidation($sendUpdateId): string
+    public function getSendToCustomerValidation($data): string
     {
-        $sendUpdate = SendUpdateLogRepository::getLogByid($sendUpdateId);
+        $sendUpdate = SendUpdateLogRepository::getLogByid($data['sendUpdateId']);
 
         $sendUpdateToCustomerValidation = in_array($sendUpdate->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]);
 
-        if ($sendUpdateToCustomerValidation) {
+        if ($sendUpdateToCustomerValidation && $data['action'] == SendUpdateLogStatusEnum::ACTION_SUC) {
             return 'Please note your current action will only send the update to the customer.';
         }
 
