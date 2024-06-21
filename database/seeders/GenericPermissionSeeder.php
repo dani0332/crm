@@ -36,7 +36,7 @@ class GenericPermissionSeeder extends Seeder
 
         foreach ($conversionReportPermissions as $conversionPermission) {
             $permission = Permission::where('name', $conversionPermission)->first();
-            if (! $permission) {
+            if (!$permission) {
                 Permission::create([
                     'name' => $conversionPermission,
                     'guard_name' => 'web',
@@ -46,9 +46,17 @@ class GenericPermissionSeeder extends Seeder
 
         // Add Permission to Admin
         $healthQuoteAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_ACCESS)->first();
-        if (! $healthQuoteAccess) {
+        if (!$healthQuoteAccess) {
             Permission::create([
                 'name' => PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        $extractReport = Permission::where('name', PermissionsEnum::EXTRACT_REPORT)->first();
+        if (!$extractReport) {
+            Permission::create([
+                'name' => PermissionsEnum::EXTRACT_REPORT,
                 'guard_name' => 'web',
             ]);
         }
@@ -63,24 +71,24 @@ class GenericPermissionSeeder extends Seeder
         foreach ($bookPolicyPermissions as $permission) {
             $permissionRecord = Permission::where('name', $permission['name'])->first();
 
-            if (! $permissionRecord) {
+            if (!$permissionRecord) {
                 $permissionRecord = Permission::create([
                     'name' => $permission['name'],
                     'guard_name' => 'web',
                 ]);
             }
 
-            if (! empty($permission['role'])) {
+            if (!empty($permission['role'])) {
                 $role = Role::where('name', $permission['role'])->first();
 
-                if (! $role) {
+                if (!$role) {
                     $role = Role::create([
                         'name' => $permission['role'],
                         'guard_name' => 'web',
                     ]);
                 }
 
-                if (! $role->hasPermissionTo($permissionRecord->id)) {
+                if (!$role->hasPermissionTo($permissionRecord->id)) {
                     $role->givePermissionTo($permissionRecord->id);
                 }
             }
@@ -91,13 +99,13 @@ class GenericPermissionSeeder extends Seeder
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        if (! $role->hasPermissionTo($conversionPermission)) {
+        if (!$role->hasPermissionTo($conversionPermission)) {
             $role->givePermissionTo($conversionPermission);
         }
 
         // Plans Selection & Plan Details Section Permissions
         $planDetailsAdd = Permission::where('name', PermissionsEnum::PLAN_DETAILS_ADD)->first();
-        if (! $planDetailsAdd) {
+        if (!$planDetailsAdd) {
             Permission::create([
                 'name' => PermissionsEnum::PLAN_DETAILS_ADD,
                 'guard_name' => 'web',
@@ -131,7 +139,7 @@ class GenericPermissionSeeder extends Seeder
         }
 
         $availablePlanSelect = Permission::where('name', PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON)->first();
-        if (! $availablePlanSelect) {
+        if (!$availablePlanSelect) {
             Permission::create([
                 'name' => PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON,
                 'guard_name' => 'web',
@@ -156,14 +164,14 @@ class GenericPermissionSeeder extends Seeder
         }
 
         $instantAlfredChatLogsPermission = Permission::where('name', PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)->first();
-        if (! $instantAlfredChatLogsPermission) {
+        if (!$instantAlfredChatLogsPermission) {
             $instantAlfredChatLogsPermission = Permission::create([
                 'name' => PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS,
                 'guard_name' => 'web',
             ]);
         }
 
-        if ($instantAlfredChatLogsPermission && ! $role->hasPermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
+        if ($instantAlfredChatLogsPermission && !$role->hasPermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
             $role->givePermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS);
         }
 
@@ -176,7 +184,7 @@ class GenericPermissionSeeder extends Seeder
         foreach ($permissions as $permissionName) {
             $permission = Permission::where('name', $permissionName)->first();
 
-            if (! $permission) {
+            if (!$permission) {
                 Permission::create([
                     'name' => $permissionName,
                     'guard_name' => 'web',
@@ -225,7 +233,7 @@ class GenericPermissionSeeder extends Seeder
     private function createAndAssignManulHealthPlanPermission()
     {
         $healthPlanPermission = Permission::where('name', PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)->first();
-        if (! $healthPlanPermission) {
+        if (!$healthPlanPermission) {
             Permission::create([
                 'name' => PermissionsEnum::ADD_MANUAL_HEALTH_PLAN,
                 'guard_name' => 'web',
@@ -235,7 +243,7 @@ class GenericPermissionSeeder extends Seeder
         // Add Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
+        if (!$role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
             $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
         }
         $this->syncMasterPermissionList();
@@ -244,7 +252,7 @@ class GenericPermissionSeeder extends Seeder
     private function generateSegmentFilterPermission()
     {
         $segmentFilterPermission = Permission::where('name', PermissionsEnum::SEGMENT_FILTER)->first();
-        if (! $segmentFilterPermission) {
+        if (!$segmentFilterPermission) {
             Permission::create([
                 'name' => PermissionsEnum::SEGMENT_FILTER,
                 'guard_name' => 'web',
@@ -254,7 +262,7 @@ class GenericPermissionSeeder extends Seeder
         $roles = Role::whereIn('name', [RolesEnum::LeadPool, RolesEnum::CarManager, RolesEnum::Admin])->get();
 
         foreach ($roles as $role) {
-            if (! $role->hasPermissionTo(PermissionsEnum::SEGMENT_FILTER)) {
+            if (!$role->hasPermissionTo(PermissionsEnum::SEGMENT_FILTER)) {
                 $role->givePermissionTo(PermissionsEnum::SEGMENT_FILTER);
             }
         }
@@ -301,11 +309,11 @@ class GenericPermissionSeeder extends Seeder
 
         foreach ($permissionList as $permission => $roles) {
             $dataset = Permission::where(['name' => $permission, 'guard_name' => 'web'])->first();
-            if (! $dataset) {
+            if (!$dataset) {
                 $dataset = Permission::create(['name' => $permission, 'guard_name' => 'web']);
             }
             foreach ($roles as $roleName) {
-                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($dataset->id)) {
+                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($dataset->id)) {
                     $role->givePermissionTo($dataset->id);
                 }
             }
@@ -399,7 +407,7 @@ class GenericPermissionSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
 
             foreach ($roles as $roleName) {
-                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($permission)) {
+                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($permission)) {
                     $role->givePermissionTo($permission);
                 }
             }
@@ -483,7 +491,7 @@ class GenericPermissionSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
 
             foreach ($roles as $roleName) {
-                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($permission)) {
+                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($permission)) {
                     $role->givePermissionTo($permission);
                 }
             }
@@ -577,7 +585,7 @@ class GenericPermissionSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
 
             foreach ($roles as $roleName) {
-                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($permission)) {
+                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($permission)) {
                     $role->givePermissionTo($permission);
                 }
             }
@@ -588,7 +596,7 @@ class GenericPermissionSeeder extends Seeder
     {
         $carManagerRole = Role::findByName('CAR_MANAGER');
 
-        if (! $carManagerRole) {
+        if (!$carManagerRole) {
             Log::warning('CAR_MANAGER role not found. Motor Head role creation skipped.');
 
             return;
@@ -605,7 +613,7 @@ class GenericPermissionSeeder extends Seeder
         try {
             $motorHeadRole->syncPermissions($carManagerRole->permissions);
         } catch (\Exception $e) {
-            Log::error('Error assigning permissions to Motor Head role: '.$e->getMessage());
+            Log::error('Error assigning permissions to Motor Head role: ' . $e->getMessage());
         }
     }
 
@@ -666,7 +674,7 @@ class GenericPermissionSeeder extends Seeder
         foreach ($permissionList as $permission => $roles) {
             $dataset = Permission::findOrCreate($permission, 'web');
             foreach ($roles as $roleName) {
-                if (($role = Role::findOrCreate($roleName, 'web')) && ! $role->hasPermissionTo($dataset->id)) {
+                if (($role = Role::findOrCreate($roleName, 'web')) && !$role->hasPermissionTo($dataset->id)) {
                     $role->givePermissionTo($dataset->id);
                 }
             }
