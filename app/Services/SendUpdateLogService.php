@@ -864,7 +864,7 @@ class SendUpdateLogService
         return $carQuote->plan->carAddons->toArray();
     }
 
-    public function sendUpdateToCustomerEmail($sendUpdateLog, $buttonText): void
+    public function sendUpdateToCustomerEmail($sendUpdateLog, $action): void
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
@@ -882,11 +882,11 @@ class SendUpdateLogService
         if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
             $documentUrl = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->pluck('doc_url')->toArray();
         } elseif (in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
-            if ($buttonText == SendUpdateLogStatusEnum::SNBU) {
+            if ($action == SendUpdateLogStatusEnum::ACTION_SNBU) {
                 $documentUrl = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->pluck('doc_url')->toArray();
-            } elseif ($buttonText == SendUpdateLogStatusEnum::SUC) {
+            } elseif ($action == SendUpdateLogStatusEnum::ACTION_SUC) {
                 $documentUrl = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->pluck('doc_url')->toArray();
-            } elseif ($buttonText == SendUpdateLogStatusEnum::SU) {
+            } elseif ($action == SendUpdateLogStatusEnum::ACTION_SU) {
                 $documentUrl = $sendUpdateLog->documents->where('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)->pluck('doc_url')->toArray();
             }
         }
@@ -894,18 +894,6 @@ class SendUpdateLogService
         // need to add "Car Fleet" for PPE details.
         // need to add "Car Fleet" for CISC_NFI details.
         // need to add "Car Fleet" for COE_NFI details.
-
-        if ($quoteTypeId == QuoteTypeId::Car) {
-            if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
-                $emailData->policyNewExpiry = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
-            } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
-                $emailData->policyNewExpiry = $sendUpdateLog->emirates->text ?? '';
-            } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::CISC, SendUpdateLogStatusEnum::CISC_NFI])) {
-                $emailData->policyNewExpiry = $sendUpdateLog->seating_capacity ?? '';
-            } elseif ($optionCode == SendUpdateLogStatusEnum::PPE) {
-                $emailData->policyNewExpiry = $sendUpdateLog->expiry_date ? 'New Expiry Date: '.Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '';
-            }
-        }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
@@ -939,6 +927,18 @@ class SendUpdateLogService
             'documentUrl' => $documentUrl,
             'isGroupMedical' => $isGroupMedical ?? null,
         ];
+
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
+                $emailData->policyNewExpiry = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
+            } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
+                $emailData->policyNewExpiry = $sendUpdateLog->emirates->text ?? '';
+            } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::CISC, SendUpdateLogStatusEnum::CISC_NFI])) {
+                $emailData->policyNewExpiry = $sendUpdateLog->seating_capacity ?? '';
+            } elseif ($optionCode == SendUpdateLogStatusEnum::PPE) {
+                $emailData->policyNewExpiry = $sendUpdateLog->expiry_date ? 'New Expiry Date: '.Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '';
+            }
+        }
 
         app(SendEmailCustomerService::class)->sendUpdateToCustomerEmail($templateId, $emailData, 'send-update', $quoteTypeId);
     }

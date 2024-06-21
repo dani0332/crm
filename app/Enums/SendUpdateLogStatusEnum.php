@@ -49,7 +49,9 @@ final class SendUpdateLogStatusEnum extends Enum
     const SUC = 'Send update to customer'; // send update to customer.
     const SU = 'Book Update'; // send update.
     const SNBU = 'Send and Book Update'; // send and book update.
-    const ACTION_SNBU = 'SNBU'; // send and book update.
+    const ACTION_SNBU = 'SNBU';
+    const ACTION_SUC = 'SUC';
+    const ACTION_SU = 'SU';
     const PPE = 'PPE'; // Policy Period Extension
     const BOOKING_FILLED = 1;
     const IS_SEND_UPDATE = 1;

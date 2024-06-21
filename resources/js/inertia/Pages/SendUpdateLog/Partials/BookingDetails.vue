@@ -602,9 +602,13 @@ function sendUpdate(prePaymentCheck = true) {
 const isLoading = ref(false);
 const isNotConfirmed = ref(false);
 
-const SNBU = computed(() => {
+const actionButton = computed(() => {
   if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
     return sendUpdateStatusEnum.ACTION_SNBU;
+  } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
+    return sendUpdateStatusEnum.ACTION_SUC;
+  } else if (props.updateBtn === sendUpdateStatusEnum.SU) {
+    return sendUpdateStatusEnum.ACTION_SU;
   }
 
   return '';
@@ -619,7 +623,7 @@ const submitToCustomer = () => {
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
     quoteType: props.quoteType,
-    action: SNBU.value,
+    action: actionButton.value,
     quoteUuid: props.realQuote.uuid,
     quoteRefId: props.realQuote.id,
     paymentValidated: true,
