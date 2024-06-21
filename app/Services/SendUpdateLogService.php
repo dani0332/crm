@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRoadsideAssistanceEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
@@ -937,6 +939,10 @@ class SendUpdateLogService
                 $emailData->policyNewExpiry = $sendUpdateLog->seating_capacity ?? '';
             } elseif ($optionCode == SendUpdateLogStatusEnum::PPE) {
                 $emailData->policyNewExpiry = $sendUpdateLog->expiry_date ? 'New Expiry Date: '.Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '';
+            }
+
+            if (! empty($quote->plan->insuranceProvider->code)) {
+                $emailData->roadsideAssistance = constant(('App\Enums\CarRoadsideAssistanceEnum::'.$quote->plan->insuranceProvider->code));
             }
         }
 
