@@ -81,7 +81,7 @@ class DatabaseSeeder extends Seeder
             // AddCrossLOBSeeder::class,
             MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
             // BusinessTypeInsuranceSeeder::class,
-            MarineSeeder::class,
+            // MarineSeeder::class,
 
         ]);
     }
