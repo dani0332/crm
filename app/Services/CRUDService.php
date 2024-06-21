@@ -20,7 +20,6 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
 use App\Models\GenericModel;
 use App\Models\PaymentAction;
-use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\User;
