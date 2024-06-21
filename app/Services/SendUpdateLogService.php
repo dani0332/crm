@@ -626,7 +626,7 @@ class SendUpdateLogService
             'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
             'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
             'commission' => $sendUpdateLog->total_commission,
-            'insurer_invoice_date' => $sendUpdateLog->invoice_date, 
+            'insurer_invoice_date' => $sendUpdateLog->invoice_date,
             'discount_value' => $sendUpdateLog->discount,
             'commission_vat' => $sendUpdateLog->vat_on_commission,
         ];
