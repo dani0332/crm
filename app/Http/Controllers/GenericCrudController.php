@@ -19,7 +19,6 @@ use App\Services\QuadrantService;
 use App\Services\RuleService;
 use App\Services\TeamService;
 use App\Services\TierService;
-use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
@@ -87,6 +86,7 @@ class GenericCrudController extends Controller
     public function index(Request $request)
     {
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
+        $tiers = $gridData->simplePaginate(10)->withQueryString();
         $dropdownSource = $customTitles = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -98,13 +98,13 @@ class GenericCrudController extends Controller
             }
         }
         $model = $this->genericModel;
-        if ($request->ajax()) {
-            return DataTables::of($gridData)
-                ->addIndexColumn()
-                ->make(true);
-        }
 
-        return view('generic.view', compact('model', 'dropdownSource', 'customTitles'));
+        return inertia('Admin/AllocationConfig/Tiers/Index', [
+            'model' => $model,
+            'tiers' => $tiers,
+            'dropdownSource' => $dropdownSource,
+            'customTitles' => $customTitles,
+        ]);
     }
 
     /**
