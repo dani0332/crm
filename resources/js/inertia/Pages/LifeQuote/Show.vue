@@ -308,7 +308,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.life_quote_request_detail?.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason:
     page.props.quote.life_quote_request_detail?.lost_reason_id || null,
 });
@@ -1143,20 +1142,6 @@ watch(
             </div>
             <div class="w-full md:w-2/3">
               <div class="flex flex-col gap-4">
-                <x-field
-                  label="TransApp Code"
-                  v-if="
-                    leadStatusForm.leadStatus ==
-                    page.props.quoteStatusEnum.TransactionApproved
-                  "
-                >
-                  <x-input
-                    v-model="leadStatusForm.trans_code"
-                    placeholder="TransApp Code is required"
-                    class="w-full"
-                    :error="leadStatusForm.errors.trans_code"
-                  />
-                </x-field>
                 <x-field
                   label="Lost Reason"
                   v-if="

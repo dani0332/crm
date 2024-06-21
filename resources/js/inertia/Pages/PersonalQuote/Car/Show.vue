@@ -90,6 +90,7 @@ defineProps({
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   clientInquiryLogs: Array,
+  puaTypeEnum: Object,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -184,7 +185,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.record.advisor_id,
   leadStatus: page.props.record.quote_status_id || null,
   notes: page.props.record.notes || null,
-  trans_code: page.props.record.transapp_code || null,
   lostReason: page.props.record.lost_reason_id || null,
   next_followup_date: page.props.record.next_followup_date
     ? prepareDate(page.props.record.next_followup_date)
@@ -2363,23 +2363,6 @@ watch(
                   :options="leadStatusOptions"
                 />
                 <x-field
-                  label="TransApp Code"
-                  class="uppercase"
-                  required
-                  v-if="
-                    leadStatusForm.leadStatus ==
-                    quoteStatusEnum.TransactionApproved
-                  "
-                >
-                  <x-input
-                    v-model="leadStatusForm.trans_code"
-                    placeholder="TransApp Code is required"
-                    class="w-full"
-                    :rules="[rules.isRequired]"
-                    :error="leadStatusForm.errors.trans_code"
-                  />
-                </x-field>
-                <x-field
                   label="Lost Reason"
                   class="uppercase"
                   required
@@ -3005,20 +2988,18 @@ watch(
                 </x-tag>
 
                 <x-tag
-                  v-if="puaPremium && puaPremium != null && puaType"
+                  v-if="puaType"
                   size="xs"
                   class="mt-0.5 text-[10px] text-white"
                   style="background-color: #e00000"
                 >
                   <x-tooltip position="right">
                     <template #tooltip>
-                      <span class="font-medium">
-                        Pending Underwriter Approval (PUA) indicates that this
-                        quote is prepared using our internal rating calculator.
-                        Please contact the client to get the required documents,
-                        to proceed with generating a quote on the insurer portal
-                        and connect with the underwriter to obtain their
-                        approval.
+                      <span class="font-medium" v-if="puaType == puaTypeEnum.PPUA">
+                        {{ puaTypeEnum.PPUA_TOOLTIP }}
+                      </span>
+                      <span class="font-medium" v-else>
+                        {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
                       </span>
                     </template>
                     {{ puaType }}

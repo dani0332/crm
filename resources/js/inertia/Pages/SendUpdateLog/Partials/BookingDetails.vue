@@ -115,16 +115,23 @@ const checkSectionTwoEdit = () => {
   state.isEdit = !state.isEdit;
 };
 
+const transactionPaymentStatusTooltip = ref('');
+
 const transactionPaymentStatus = computed(() => {
-  if (Number(props?.quote?.price_with_vat) === 0) {
-    return 'Not Paid';
+  let payment = props.payments[0];
+  if (Number(payment?.captured_amount) < 1) {
+    transactionPaymentStatusTooltip.value = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
+    return sendUpdateStatusEnum.UNPAID;
+  } else if (Number(payment?.captured_amount + payment?.discount_value) < Number(payment?.total_price)) {
+    transactionPaymentStatusTooltip.value = 'The invoice has received a portion of its total amount due. Please ensure that the remaining balance is collected promptly to prevent potential financial discrepancies.';
+    return sendUpdateStatusEnum.PARTIALLY_PAID;
+  } else if (Number(payment?.captured_amount + payment?.discount_value) >= Number(payment?.total_price)) {
+    transactionPaymentStatusTooltip.value = 'This insurer tax invoice has been settled in its entirety, with no outstanding amounts. Always review payments to guarantee the accuracy of this status.';
+    return sendUpdateStatusEnum.FULL_PAID;
   }
-  if (Number(props?.quote?.premium) > Number(props?.quote?.price_with_vat)) {
-    return 'Partially Paid';
-  }
-  if (Number(props?.quote?.premium) === Number(props?.quote?.price_with_vat)) {
-    return 'Paid';
-  }
+
+  transactionPaymentStatusTooltip.value = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
+  return 'N/A';
 });
 
 function isNotZero(value) {
@@ -184,14 +191,14 @@ const bookingDetailsForm = useForm({
   price_vat_applicable: props.bookingDetails?.price_vat_applicable || '',
   price_vat_not_applicable:
     props.bookingDetails?.price_vat_not_applicable || '0.00',
-  total_price: props.bookingDetails?.total_price || '0.00',
+  price_with_vat: props.bookingDetails?.price_with_vat || '0.00',
   // new entry section related.
   reversal_invoice: props.bookingDetails?.reversal_invoice || null,
 });
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
 const calculateCommission = () => {
-  if (bookingDetailsForm.commission_vat_applicable > 0) {
+  if (bookingDetailsForm.commission_vat_applicable > 0 || bookingDetailsForm.price_vat_applicable > 0) {
     if (Number(bookingDetailsForm.price_vat_applicable > 0)) {
       let vat_on_commission =
         bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
@@ -212,12 +219,12 @@ const calculateCommission = () => {
         Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
       bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
 
-      let total_price =
+      let price_with_vat =
         total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
-      bookingDetailsForm.total_price = convertToNegative(total_price);
+      bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
       bookingDetailsForm.commission_percentage = convertToNegative(
-        (total_commission / total_price) * 100,
+        (total_commission / price_with_vat) * 100,
       );
     } else {
       notification.error({
@@ -382,7 +389,7 @@ function updateReversalEntries(response) {
   reversalEntry.total_commission = response.commission || null;
   reversalEntry.commission_vat_not_applicable = response.commission_vat_not_applicable || null;
   reversalEntry.total_vat_amount = ((response.total_amount !== null) ? response.total_amount : response.send_update_log?.total_vat_amount) ?? null;
-  reversalEntry.total_price = ((response.total_price !== null && response.total_price > 0) ? response.total_price : response.send_update_log?.total_price) ?? null;
+  reversalEntry.price_with_vat = ((response.total_price !== null && response.total_price > 0) ? response.total_price : response.send_update_log?.price_with_vat) ?? null;
 }
 
 onMounted(() => {
@@ -410,7 +417,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.total_commission = reversalEntry.total_commission || null;
   bookingDetailsForm.commission_vat_not_applicable = reversalEntry.commission_vat_not_applicable || null;
   bookingDetailsForm.total_vat_amount = reversalEntry.total_vat_amount || null;
-  bookingDetailsForm.total_price = reversalEntry.total_price;
+  bookingDetailsForm.price_with_vat = reversalEntry.price_with_vat;
 };
 
 function convertToNumber(value) {
@@ -595,6 +602,13 @@ function sendUpdate(prePaymentCheck = true) {
 const isLoading = ref(false);
 const isNotConfirmed = ref(false);
 
+const SNBU = computed(() => {
+  if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
+    return sendUpdateStatusEnum.ACTION_SNBU;
+  }
+
+  return '';
+});
 const submitToCustomer = () => {
   if (!modals.isConfirmed) {
     isNotConfirmed.value = true;
@@ -605,14 +619,21 @@ const submitToCustomer = () => {
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
     quoteType: props.quoteType,
+    action: SNBU.value,
+    quoteUuid: props.realQuote.uuid,
+    quoteRefId: props.realQuote.id,
+    paymentValidated: true,
+    reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
   };
   axios
     .post(url, data)
     .then(response => {
       if (response.status == 200) {
-        notification.success({
-          title: 'Update Sent to the Customer',
-          position: 'top',
+        Object.keys(response.data).forEach(function (key) {
+          notification.success({
+            title: response.data[key],
+            position: 'top',
+          });
         });
         router.reload({ preserveState: true });
         modals.sendConfirm = isLoading.value = false;
@@ -1049,7 +1070,7 @@ watch(() => props?.payments[0]?.discount_value,
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.total_price !== null) ? reverseValue(reversalEntry.total_price) : 'N/A' }}</span>
+                <span>{{ (reversalEntry.price_with_vat !== null) ? reverseValue(reversalEntry.price_with_vat) : 'N/A' }}</span>
               </div>
             </div>
           </div>
@@ -1150,9 +1171,7 @@ watch(() => props?.payments[0]?.discount_value,
                       TRANSACTION PAYMENT STATUS
                     </label>
                     <template #tooltip>
-                      This status provides a real-time snapshot of the payment
-                      progress for each insurer tax invoice. Make sure to update
-                      these statuses regularly to maintain financial accuracy.
+                      {{ transactionPaymentStatusTooltip }}
                     </template>
                   </x-tooltip>
                 </div>
@@ -1530,7 +1549,7 @@ watch(() => props?.payments[0]?.discount_value,
                 <div>
                   <span>
                     {{
-                      bookingDetailsForm.total_price !== '0.00' ? thousandSeparator(bookingDetailsForm.total_price) : 'N/A'
+                      bookingDetailsForm.price_with_vat!== '0.00' ? thousandSeparator(bookingDetailsForm.price_with_vat) : 'N/A'
                     }}
                   </span>
                 </div>
