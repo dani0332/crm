@@ -366,7 +366,7 @@ const selectedInvoice = () => {
 
 function reverseValue(value) {
   if (value === null || value === undefined || value === '') {
-    return '';
+    return 'N/A';
   }
   const numericValue = parseFloat(value.toString().replace(/,/g, ''));
   const reversedValue = -numericValue;
