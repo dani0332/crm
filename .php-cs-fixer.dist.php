@@ -33,7 +33,7 @@ $rules = [
         'elements' => [
             'const' => 'one',
             'method' => 'one',
-            'property' => 'one',
+            'property' => 'none',
             'trait_import' => 'none',
         ],
     ],
