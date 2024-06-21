@@ -228,7 +228,7 @@ trait GenericQueriesAllLobs
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         } 
-        if ($payments->first()->send_update_log_id) {
+        if ($payments->first()?->send_update_log_id) {
             $sendUpdateInvoiceDescription = $payments->first()->invoice_description;
             $sendUpdateBrokerInvoice = $payments->first()->broker_invoice_number;
         }
