@@ -684,7 +684,7 @@ watch(() => props?.payments[0]?.discount_value,
 );
 
 const isPriceVatNotApplicableEditable = computed(() => {
-  return props.quoteType === quoteTypeCodeEnum.Business || (props.quoteType === quoteTypeCodeEnum.Health && props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPD);
+  return props.quoteType === quoteTypeCodeEnum.Business || props.quoteType === quoteTypeCodeEnum.Health;
 });
 
 </script>
