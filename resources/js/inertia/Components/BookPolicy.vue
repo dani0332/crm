@@ -788,6 +788,7 @@ const showSageAPILogs = async () => {
                 size="sm"
                 class="mt-4 mr-2"
                 color="orange"
+                :disabled="sageAPILogs.loader"
               >
                 Sage API Logs
               </x-button>
