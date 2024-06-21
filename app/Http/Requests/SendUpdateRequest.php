@@ -40,6 +40,8 @@ class SendUpdateRequest extends FormRequest
 
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
+            } elseif ($sendUpdateLog->status == SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS) {
+                $validator->errors()->add('error', 'Transaction approval is required. ');
             }
 
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';

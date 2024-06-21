@@ -10,6 +10,7 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
@@ -489,6 +490,12 @@ class SendUpdateLogService
             }
         }
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $sendUpdatePayments = SendUpdateLogRepository::sendUpdateBookedPayments($quoteTypeId, $quoteUuid);
+        if (! empty($sendUpdatePayments)) {
+            $payments = $payments->merge($sendUpdatePayments);
+        }
+
         return $payments;
     }
 
@@ -526,7 +533,7 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if (in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
+        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
@@ -625,9 +632,8 @@ class SendUpdateLogService
             'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
             'commission' => $sendUpdateLog->total_commission,
             'insurer_invoice_date' => $sendUpdateLog->invoice_date,
-            // 'commission_vat' => $sendUpdateLog->vat_on_commission, // Didn't find respective column in send_update_log table
-            // 'commission_without_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
-            // 'policy_due_date' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
+            'discount_value' => $sendUpdateLog->discount,
+            'commission_vat' => $sendUpdateLog->vat_on_commission,
         ];
 
         return $payment->update($sendUpdatePaymentDetails);
@@ -740,6 +746,10 @@ class SendUpdateLogService
                         'quote_batch_id' => null,
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
+                } else {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                    ]);
                 }
                 if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
                     if (! empty($sendUpdateLog->car_addons)) { // will work on Add optional cover.
@@ -796,7 +806,7 @@ class SendUpdateLogService
 
         info('Book Update - Update booked successfully - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
-        return ['status' => true, 'message' => 'Update booked'];
+        return ['status' => true, 'message' => SendUpdateLogStatusEnum::UPDATE_BOOKED];
     }
 
     public function checkSendUpdatePermission($sendUpdateType): bool
@@ -936,14 +946,15 @@ class SendUpdateLogService
      */
     public function isPlanDetailAvailable($sendUpdateLog): bool
     {
-        if (in_array($sendUpdateLog->option?->code, [
-            SendUpdateLogStatusEnum::MDOM,
-            SendUpdateLogStatusEnum::MDOV,
-            SendUpdateLogStatusEnum::MPC,
-            SendUpdateLogStatusEnum::ED,
-            SendUpdateLogStatusEnum::DM,
-            SendUpdateLogStatusEnum::DOV,
-        ])) {
+        if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
+            in_array($sendUpdateLog->option?->code, [
+                SendUpdateLogStatusEnum::MDOM,
+                SendUpdateLogStatusEnum::MDOV,
+                SendUpdateLogStatusEnum::MPC,
+                SendUpdateLogStatusEnum::ED,
+                SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DOV,
+            ])) {
             return false;
         }
 
