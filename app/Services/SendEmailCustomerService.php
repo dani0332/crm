@@ -901,9 +901,9 @@ class SendEmailCustomerService extends BaseService
             $checkIsHealthOrGroupMedical = $quoteTypeId == QuoteTypeId::Health || $emailData->isGroupMedical;
 
             $ebServiceTeam = [];
-            $ebServiceEmail = getAppStorageValueByKey(ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL);
-            info('IM EB Service team email fetched. email: '.$ebServiceEmail);
             if ($checkIsHealthOrGroupMedical) {
+                $ebServiceEmail = getAppStorageValueByKey(ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL);
+                info('IM EB Service team email fetched. email: '.$ebServiceEmail);
                 $ebServiceTeam = [[
                     'email' => $ebServiceEmail,
                     'name' => 'IM EB Service',
