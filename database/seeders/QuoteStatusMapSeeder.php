@@ -39,9 +39,9 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
-                ],  
+                ],
             ],
             [
                 'quote_type_id' => QuoteTypeId::Home,
@@ -67,9 +67,9 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
-                    ]
-                ],  
+                        'updated_by' => 'bilal.saeed@myalfred.com',
+                    ],
+                ],
             ],
             [
                 'quote_type_id' => QuoteTypeId::Health,
@@ -95,9 +95,9 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
-                ],  
+                ],
             ],
             [
                 'quote_type_id' => QuoteTypeId::Life,
@@ -129,9 +129,9 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
-                ],  
+                ],
             ],
             [
                 'quote_type_id' => QuoteTypeId::Business,
@@ -157,7 +157,7 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
                 ],
             ],
@@ -185,7 +185,7 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
                 ],
             ],
@@ -213,7 +213,7 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
                 ],
             ],
@@ -241,7 +241,7 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
                 ],
             ],
@@ -254,7 +254,7 @@ class QuoteStatusMapSeeder extends Seeder
                         'created_by' => 'mirza.baig@myalfred.com',
                         'updated_by' => 'mirza.baig@myalfred.com',
                     ],
-                    
+
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'sort_order' => QuoteTypeId::Yacht,
@@ -276,7 +276,7 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
                 ],
             ],
@@ -304,7 +304,7 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
                 ],
             ],
@@ -332,7 +332,7 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
                 ],
             ],
@@ -360,7 +360,7 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
                 ],
             ],
@@ -388,7 +388,7 @@ class QuoteStatusMapSeeder extends Seeder
                     [
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
                         'created_by' => 'bilal.saeed@myalfred.com',
-                        'updated_by' => 'bilal.saeed@myalfred.com'
+                        'updated_by' => 'bilal.saeed@myalfred.com',
                     ],
                 ],
             ],
@@ -400,6 +400,6 @@ class QuoteStatusMapSeeder extends Seeder
                 QuoteStatusMap::firstOrCreate($whereClause, array_merge(['quote_type_id' => $quoteStatuses['quote_type_id']], $quoteStatus));
             }
         }
-        
+
     }
 }
