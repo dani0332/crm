@@ -898,7 +898,7 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
 
-            $checkIsHealthOrGroupMedical = in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::GroupMedical]);
+            $checkIsHealthOrGroupMedical = $quoteTypeId == QuoteTypeId::Health || $emailData->isGroupMedical;
 
             $ebServiceTeam = [];
             $ebServiceEmail = getAppStorageValueByKey(ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL);
@@ -908,10 +908,6 @@ class SendEmailCustomerService extends BaseService
                     'email' => $ebServiceEmail,
                     'name' => 'IM EB Service',
                 ]];
-                $body['replyTo'] = [
-                    'email' => $ebServiceEmail,
-                    'name' => 'IM EB Service',
-                ];
             }
 
             $ccAdvisor = [];
@@ -921,12 +917,10 @@ class SendEmailCustomerService extends BaseService
                     'name' => $emailData->advisor->name,
                 ]];
 
-                if (! $checkIsHealthOrGroupMedical) {
-                    $body['replyTo'] = [
-                        'email' => $emailData->advisor->email,
-                        'name' => $emailData->advisor->name,
-                    ];
-                }
+                $body['replyTo'] = [
+                    'email' => $emailData->advisor->email,
+                    'name' => $emailData->advisor->name,
+                ];
             }
 
             $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
@@ -943,8 +937,7 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            // $body['cc'] = array_merge($ccAdditional, $ccAdvisor, $ebServiceTeam);
-            $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
+            $body['cc'] = array_merge($ccAdditional, $ccAdvisor, $ebServiceTeam);
 
             // need to discuss this.
             $sendPolicyUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL);

@@ -891,23 +891,6 @@ class SendUpdateLogService
             }
         }
 
-        $emailData = (object) [
-            'clientFullName' => $quote->first_name.' '.$quote->last_name,
-            'policyNumber' => $quote->policy_number,
-            'carQuoteId' => $sendUpdateLog->code,
-            'currentInsurer' => $quote->plan->insuranceProvider->text ?? '',
-            'policyUpdate' => $update ?? '',
-            'customerEmail' => $quote->email,
-            'advisor' => (object) [
-                'landLine' => $quote->advisor->landline_no ?? '',
-                'email' => $quote->advisor->email ?? '',
-                'name' => $quote->advisor->name ?? '',
-                'mobileNo' => $quote->advisor->mobile_no ?? '',
-            ],
-            'googleMeet' => $quote->advisor->calendar_link ?? '',
-            'documentUrl' => $documentUrl,
-        ];
-
         // need to add "Car Fleet" for PPE details.
         // need to add "Car Fleet" for CISC_NFI details.
         // need to add "Car Fleet" for COE_NFI details.
@@ -926,6 +909,7 @@ class SendUpdateLogService
 
         if ($quoteTypeId == QuoteTypeId::Business) {
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                $isGroupMedical = true;
                 $templateId = getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE);
             } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
                 $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_TRADE_SEND_POLICY_TEMPLATE);
@@ -937,6 +921,24 @@ class SendUpdateLogService
             $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
             $templateId = getAppStorageValueByKey(constant($constantName));
         }
+
+        $emailData = (object) [
+            'clientFullName' => $quote->first_name.' '.$quote->last_name,
+            'policyNumber' => $quote->policy_number,
+            'carQuoteId' => $sendUpdateLog->code,
+            'currentInsurer' => $quote->plan->insuranceProvider->text ?? '',
+            'policyUpdate' => $update ?? '',
+            'customerEmail' => $quote->email,
+            'advisor' => (object) [
+                'landLine' => $quote->advisor->landline_no ?? '',
+                'email' => $quote->advisor->email ?? '',
+                'name' => $quote->advisor->name ?? '',
+                'mobileNo' => $quote->advisor->mobile_no ?? '',
+            ],
+            'googleMeet' => $quote->advisor->calendar_link ?? '',
+            'documentUrl' => $documentUrl,
+            'isGroupMedical' => $isGroupMedical ?? null,
+        ];
 
         app(SendEmailCustomerService::class)->sendUpdateToCustomerEmail($templateId, $emailData, 'send-update', $quoteTypeId);
     }
