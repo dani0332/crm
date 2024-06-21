@@ -126,16 +126,21 @@ export const useFormatPrice = (price, thousandSeparator = false) => {
 };
 
 export const useFileUploadErrorMessage = (doc, rejectReason) => {
-  let errorMessage = "";
-  if (rejectReason.code == "file-too-large")
-  {
-    errorMessage = "File size must be less than " + doc.max_size + " MB for " + doc.text;
-  } else if (rejectReason.code == "file-invalid-type")
-  {
-    errorMessage = "You can only upload a " + doc.accepted_files + " for " + doc.text;
-  } else
-  {
-    errorMessage = "You can only upload a " + doc.accepted_files + " or File size must be less than " + doc.max_size + " MB for " + doc.text;
+  let errorMessage = '';
+  if (rejectReason.code == 'file-too-large') {
+    errorMessage =
+      'File size must be less than ' + doc.max_size + ' MB for ' + doc.text;
+  } else if (rejectReason.code == 'file-invalid-type') {
+    errorMessage =
+      'You can only upload a ' + doc.accepted_files + ' for ' + doc.text;
+  } else {
+    errorMessage =
+      'You can only upload a ' +
+      doc.accepted_files +
+      ' or File size must be less than ' +
+      doc.max_size +
+      ' MB for ' +
+      doc.text;
   }
   return errorMessage;
 };

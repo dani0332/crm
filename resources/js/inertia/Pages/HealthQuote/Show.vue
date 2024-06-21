@@ -3573,6 +3573,7 @@ watch(
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :eCommercePriceWithLP="ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
