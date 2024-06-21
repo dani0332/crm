@@ -139,11 +139,11 @@ watch(() => {
       can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON);
   }
 });
-const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] = createReusableTemplate();
+const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
-
   <SelectPlanButtonTemplate v-slot="{ isDisabled }">
     <x-button
       v-if="isPlanSelectionEnable"
@@ -158,12 +158,20 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] = createReusable
     </x-button>
   </SelectPlanButtonTemplate>
 
-  <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
-    <SelectPlanButtonReuseTemplate :isDisabled="true"/>
+  <x-tooltip
+    v-if="page.props.lockLeadSectionsDetails.plan_selection"
+    position="left"
+    align="center"
+    class="yoyo-tip"
+  >
+    <SelectPlanButtonReuseTemplate :isDisabled="true" />
     <template #tooltip>
-      No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.
+      <div class="whitespace-normal text-xs">
+        No further actions can be taken on an issued policy. For changes, such
+        as a change in insurer, go to 'Send Update', select 'Add Update', and
+        choose 'Cancellation from inception and reissuance.
+      </div>
     </template>
   </x-tooltip>
-  <SelectPlanButtonReuseTemplate v-else :isDisabled="hasChildLead"/>
-
+  <SelectPlanButtonReuseTemplate v-else :isDisabled="hasChildLead" />
 </template>

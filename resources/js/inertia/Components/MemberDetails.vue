@@ -200,9 +200,11 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
         </AddMemberButtonTemplate>
         <div
           class="flex mb-3 justify-end"
-          v-if="props.quote.quote_status_id !=
+          v-if="
+            props.quote.quote_status_id !=
               page.props.quoteStatusEnum.PolicyCancelled ||
-              page.props.linkedQuoteDetails.childLeadsCount == 0"
+            page.props.linkedQuoteDetails.childLeadsCount == 0
+          "
         >
           <x-tooltip
             v-if="page.props.lockLeadSectionsDetails.memebr_details"
@@ -265,21 +267,24 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
           </template>
           <template #item-action="item">
             <div
-              v-if="props.quote.quote_status_id !=
+              v-if="
+                props.quote.quote_status_id !=
                   page.props.quoteStatusEnum.PolicyCancelled ||
-                  page.props.linkedQuoteDetails.childLeadsCount == 0"
+                page.props.linkedQuoteDetails.childLeadsCount == 0
+              "
               class="flex gap-2"
             >
               <x-tooltip
                 v-if="page.props.lockLeadSectionsDetails.memebr_details"
                 position="left"
+                align="top"
               >
                 <EditMemberButtonReuseTemplate
                   :isDisabled="true"
                   :item="item"
                 />
                 <template #tooltip>
-                  <div class="whitespace-normal text-xs">
+                  <div class="!whitespace-normal text-xs">
                     This lead is now locked as the policy has been booked. If
                     changes are needed such midterm deletion of member or
                     marital status change, go to 'Send Update', select 'Add

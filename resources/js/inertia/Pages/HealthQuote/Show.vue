@@ -982,16 +982,15 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(function callback(
-      breakDown,
-      index,
-    ) {
-      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-        if (ratePerCopay.notifyAgent) {
-          element.needPriceUpdate = true;
-        }
-      });
-    });
+    element.memberPremiumBreakdown?.forEach(
+      function callback(breakDown, index) {
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+          if (ratePerCopay.notifyAgent) {
+            element.needPriceUpdate = true;
+          }
+        });
+      },
+    );
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -1594,12 +1593,18 @@ const memberCategorySalaryMapping = {
   'Employee with salary above AED 4000': 2,
 };
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
-const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
-const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] = createReusableTemplate();
-const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] = createReusableTemplate();
-const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReusableTemplate();
-const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
+  createReusableTemplate();
+const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] =
+  createReusableTemplate();
+const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
 
 const salaryBrandMapping = {
   1: 'AED 4000 and below',
@@ -1673,9 +1678,7 @@ watch(
           Duplicate Lead
         </x-button>
         <Link :href="route('health.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div">
-            Health List
-          </x-button>
+          <x-button size="sm" color="primary" tag="div"> Health List </x-button>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
@@ -1684,15 +1687,22 @@ watch(
           </Link>
         </LeadEditBtnTemplate>
 
-        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-          <LeadEditBtnReuseTemplate :isDisabled="true"/>
-          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          position="bottom"
+        >
+          <LeadEditBtnReuseTemplate :isDisabled="true" />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
         </x-tooltip>
-        <LeadEditBtnReuseTemplate v-else/>
+        <LeadEditBtnReuseTemplate v-else />
       </template>
     </StickyHeader>
     <x-divider class="my-4" />
-    
+
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -2308,9 +2318,9 @@ watch(
       <template #content>
         <x-divider class="mb-4 mt-1" />
         <AddMemberButtonTemplate v-slot="{ isDisabled }">
-          <x-button 
-            @click.prevent="onAddMemberModal" 
-            size="sm" 
+          <x-button
+            @click.prevent="onAddMemberModal"
+            size="sm"
             color="orange"
             :disabled="isDisabled"
           >
@@ -2318,10 +2328,15 @@ watch(
           </x-button>
         </AddMemberButtonTemplate>
         <div class="flex mb-3 justify-end">
-          <x-tooltip v-if="lockLeadSectionsDetails.memebr_details" position="bottom">
-            <AddMemButtonReuseTemplate :isDisabled="true"/>
+          <x-tooltip
+            v-if="lockLeadSectionsDetails.memebr_details"
+            position="bottom"
+          >
+            <AddMemButtonReuseTemplate :isDisabled="true" />
             <template #tooltip>
-              This lead is now locked as the policy has been booked. If changes are needed such midterm addition of member, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+              This lead is now locked as the policy has been booked. If changes
+              are needed such midterm addition of member, go to 'Send Update',
+              select 'Add Update', and choose 'Endorsement Financial'
             </template>
           </x-tooltip>
           <AddMemButtonReuseTemplate v-else />
@@ -2349,7 +2364,7 @@ watch(
           </x-button>
         </DeleteMemberButtonTemplate>
         <DataTable
-          table-class-name="tablefixed compact"
+          table-class-name="tablefixed overflow-auto"
           :headers="memberDetailsTable.columns"
           :items="membersDetail || []"
           border-cell
@@ -2386,20 +2401,46 @@ watch(
 
           <template #item-action="item">
             <div class="flex gap-2">
-              <x-tooltip v-if="lockLeadSectionsDetails.memebr_details" position="bottom">
-                <EditMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+              <x-tooltip
+                v-if="lockLeadSectionsDetails.memebr_details"
+                position="left"
+                align="center"
+                class="yoyo-tip"
+              >
+                <EditMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
                 <template #tooltip>
-                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                  <div class="whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
                 </template>
               </x-tooltip>
-              <EditMemberButtonReuseTemplate v-else :item="item"/>
-              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
-                <DeleteMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+              <EditMemberButtonReuseTemplate v-else :item="item" />
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.memebr_details"
+                position="left"
+                align="center"
+                class="yoyo-tip"
+              >
+                <DeleteMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
                 <template #tooltip>
-                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                  <div class="whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
                 </template>
               </x-tooltip>
-              <DeleteMemberButtonReuseTemplate v-else :item="item"/>
+              <DeleteMemberButtonReuseTemplate v-else :item="item" />
             </div>
           </template>
         </DataTable>
@@ -2745,7 +2786,9 @@ watch(
                   v-model="leadStatusForm.leadStatus"
                   label="Status"
                   :options="leadStatusOptions"
-                  :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
                   placeholder="Lead Status"
                   class="w-full"
                 />
@@ -2755,7 +2798,9 @@ watch(
                   label="Notes"
                   placeholder="Lead Notes"
                   class="w-full"
-                  :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
                 />
               </div>
             </div>
@@ -2785,9 +2830,7 @@ watch(
                   />
                 </x-field>
 
-                <div class="flex flex-col gap-4">
-                 
-                </div>
+                <div class="flex flex-col gap-4"></div>
               </div>
             </div>
           </div>
@@ -2805,10 +2848,14 @@ watch(
             </x-button>
           </StatusUpdateButtonTemplate>
           <div class="flex justify-end">
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
-              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              position="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
               <template #tooltip>
-                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
               </template>
             </x-tooltip>
             <StatusUpdateButtonReuseTemplate v-else />
@@ -2960,10 +3007,22 @@ watch(
                 Add Plan
               </x-button>
             </AddPlanButtonTemplate>
-            
-            <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
-              <AddPlanButtonReuseTemplate :isDisabled="true"/>
-              <template #tooltip>No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.</template>
+
+            <x-tooltip
+              v-if="page.props.lockLeadSectionsDetails.plan_selection"
+              position="left"
+              align="center"
+              class="yoyo-tip"
+            >
+              <AddPlanButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                <div class="whitespace-normal text-xs">
+                  No further actions can be taken on an issued policy. For
+                  changes, such as a change in insurer, go to 'Send Update',
+                  select 'Add Update', and choose 'Cancellation from inception
+                  and reissuance.
+                </div>
+              </template>
             </x-tooltip>
             <AddPlanButtonReuseTemplate v-else />
 
@@ -3301,7 +3360,7 @@ watch(
       :paymentLink="paymentLink"
       :expanded="sectionExpanded"
     />
-    
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"

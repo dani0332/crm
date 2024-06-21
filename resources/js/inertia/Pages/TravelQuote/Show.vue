@@ -650,7 +650,6 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
-
 const emailStatusesTable = reactive({
   isLoading: false,
   columns: [
@@ -1182,12 +1181,16 @@ watch(
   },
 );
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
-const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
-const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] = createReusableTemplate();
-const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] = createReusableTemplate();
-const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReusableTemplate();
-
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
+const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] =
+  createReusableTemplate();
+const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
@@ -1240,14 +1243,23 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
           </Link>
         </LeadEditBtnTemplate>
 
-        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-          <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" :isDisabled="true"/>
-          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          position="bottom"
+        >
+          <LeadEditBtnReuseTemplate
+            v-if="permissions.canEditQuote"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" />
         </template>
-        
       </div>
     </div>
 
@@ -1296,8 +1308,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
     <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
@@ -1929,9 +1940,9 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         <template #body>
           <x-divider class="my-4" />
           <AddMemberButtonTemplate v-slot="{ isDisabled }">
-            <x-button 
-              size="sm" 
-              color="orange" 
+            <x-button
+              size="sm"
+              color="orange"
               @click.prevent="onAddTraveler"
               :disabled="isDisabled"
             >
@@ -1939,10 +1950,15 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
             </x-button>
           </AddMemberButtonTemplate>
           <div class="flex flex-wrap gap-3 mb-3 justify-end">
-            <x-tooltip v-if="lockLeadSectionsDetails.memebr_details" position="bottom">
-              <AddMemButtonReuseTemplate :isDisabled="true"/>
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.memebr_details"
+              position="bottom"
+            >
+              <AddMemButtonReuseTemplate :isDisabled="true" />
               <template #tooltip>
-                This lead is now locked as the policy has been booked. If changes are needed such midterm addition of member, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                This lead is now locked as the policy has been booked. If
+                changes are needed such midterm addition of member, go to 'Send
+                Update', select 'Add Update', and choose 'Endorsement Financial'
               </template>
             </x-tooltip>
             <AddMemButtonReuseTemplate v-else />
@@ -2004,21 +2020,39 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
 
             <template #item-action="item">
               <div class="flex gap-2">
-                <x-tooltip v-if="lockLeadSectionsDetails.memebr_details" position="bottom">
-                <EditMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <x-tooltip
+                  v-if="lockLeadSectionsDetails.memebr_details"
+                  position="bottom"
+                >
+                  <EditMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
                   <template #tooltip>
-                    This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
                   </template>
                 </x-tooltip>
-                <EditMemberButtonReuseTemplate v-else :item="item"/>
+                <EditMemberButtonReuseTemplate v-else :item="item" />
 
-                <x-tooltip v-if="lockLeadSectionsDetails.memebr_details" position="bottom">
-                  <DeleteMemberButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <x-tooltip
+                  v-if="lockLeadSectionsDetails.memebr_details"
+                  position="bottom"
+                >
+                  <DeleteMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
                   <template #tooltip>
-                    This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
                   </template>
                 </x-tooltip>
-                <DeleteMemberButtonReuseTemplate v-else :item="item"/>
+                <DeleteMemberButtonReuseTemplate v-else :item="item" />
               </div>
             </template>
           </DataTable>
@@ -2159,8 +2193,9 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
                     :disabled="
-                      (quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved) || lockLeadSectionsDetails.lead_status
+                      quote.quote_status_id ==
+                        quoteStatusEnum.TransactionApproved ||
+                      lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Lead Status"
                     class="w-full"
@@ -2173,8 +2208,9 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                     placeholder="Lead Notes"
                     class="w-full"
                     :disabled="
-                      (quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved) || lockLeadSectionsDetails.lead_status
+                      quote.quote_status_id ==
+                        quoteStatusEnum.TransactionApproved ||
+                      lockLeadSectionsDetails.lead_status
                     "
                   />
                 </x-field>
@@ -2212,18 +2248,22 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="
-                (quote.quote_status_id ==
-                quoteStatusEnum.TransactionApproved) || isDisabled
+                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                isDisabled
               "
             >
               Change Status
             </x-button>
           </StatusUpdateButtonTemplate>
           <div class="flex justify-end">
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
-              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              position="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
               <template #tooltip>
-                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
               </template>
             </x-tooltip>
             <StatusUpdateButtonReuseTemplate v-else />
@@ -2301,8 +2341,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         </template>
       </Collapsible>
     </div>
-   
-    
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -2315,12 +2354,17 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-              <div>
-                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
-                  age 0-64
-                </h6>
-              </div>
+            <div>
+              <h6
+                v-if="
+                  aboveAgeMembers > 0 && availablePlansTable.data.length > 0
+                "
+                class="font-semibold text-primary-600 text-ms mb-1"
+              >
+                Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                age 0-64
+              </h6>
+            </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2382,7 +2426,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
           <div v-else>
             <DataTable
               v-model:items-selected="selectedPlans"
-              table-class-name="tablefixed compact"
+              table-class-name="tablefixed"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
               border-cell
@@ -2409,12 +2453,12 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
               <template #item-discountPremium="item">
-                <span class="text-primary-600">{{
-                  item.discountPremium + item.vat
-                }}</span>
+                <span class="text-primary-600">
+                  {{ item.discountPremium + item.vat }}
+                </span>
               </template>
               <template #item-action="item">
-                <div>
+                <div class="flex gap-2">
                   <x-button
                     size="xs"
                     color="error"
@@ -2426,7 +2470,6 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
 
                   <span>
                     <SelectPlan
-                      class="ml-1"
                       v-if="!selectedPlanIds.includes(item.id)"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
@@ -2440,7 +2483,6 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                       }"
                     />
                     <x-button
-                      class="ml-1"
                       v-else
                       size="xs"
                       color="orange"
@@ -2464,7 +2506,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
             <div>
               <DataTable
                 v-model:items-selected="selectedPlans"
-                table-class-name="tablefixed compact"
+                table-class-name="tablefixed"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
                 border-cell
@@ -2476,16 +2518,16 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                   <span class="text-primary-600 uppercase">{{
                     item.providerName
                   }}</span>
-                    <div class="flex gap-1">
-                        <x-tag
-                            v-if="item.isDisabled"
-                            size="xs"
-                            color="error"
-                            class="mt-0.5 text-[10px]"
-                        >
-                            Hidden
-                        </x-tag>
-                    </div>
+                  <div class="flex gap-1">
+                    <x-tag
+                      v-if="item.isDisabled"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px]"
+                    >
+                      Hidden
+                    </x-tag>
+                  </div>
                 </template>
                 <template #item-name="item">
                   <span class="text-primary-600 uppercase">{{
@@ -2493,12 +2535,12 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                   }}</span>
                 </template>
                 <template #item-discountPremium="item">
-                  <span class="text-primary-600">{{
-                    item.discountPremium + item.vat
-                  }}</span>
+                  <span class="text-primary-600">
+                    {{ item.discountPremium + item.vat }}
+                  </span>
                 </template>
                 <template #item-action="item">
-                  <div>
+                  <div class="flex gap-2">
                     <x-button
                       size="xs"
                       color="error"
@@ -2509,7 +2551,6 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                     </x-button>
                     <span>
                       <SelectPlan
-                        class="ml-1"
                         v-if="!selectedPlanIds.includes(item.id)"
                         @update:selectedPlanChanged="handlePlanSelected"
                         :plan="item"
@@ -2523,7 +2564,6 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
                         }"
                       />
                       <x-button
-                        class="ml-1"
                         v-else
                         size="xs"
                         color="orange"
@@ -2550,15 +2590,19 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       quoteType="Travel"
       :payments="payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Travel"
-			:payments="payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['TPD', 'TPDR', 'TDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      quoteType="Travel"
+      :payments="payments"
+      :paymentDocument="
+        documentTypeCodes.filter(item =>
+          ['TPD', 'TPDR', 'TDPDR'].includes(item.code),
+        )
+      "
       :proformaPayment="
         payments.find(
           item =>
@@ -2567,12 +2611,16 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         )
       "
       :quoteRequest="quoteRequest"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
 
     <PaymentTable
       v-else
@@ -2593,7 +2641,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
       :modelType="quoteType"
       :expanded="sectionExpanded"
     />
-    
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"
@@ -2612,7 +2660,11 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Travel"
-      :sendPolicy="(displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled)"
+      :sendPolicy="
+        displaySendPolicyButton &&
+        permissions.notProductionApproval &&
+        permissions.isQuoteDocumentEnabled
+      "
       @sendPolicyToClient="sendPolicyToClient"
     />
 
@@ -2806,7 +2858,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] = createReus
         </template>
       </Collapsible>
     </div>
-    
+
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
