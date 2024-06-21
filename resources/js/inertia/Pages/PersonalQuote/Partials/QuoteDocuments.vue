@@ -233,6 +233,7 @@ const submitToCustomer = () => {
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
     quoteType: props.quoteType,
+    action: sendUpdateStatusEnum.SUC
   };
   axios
       .post(url, data)
