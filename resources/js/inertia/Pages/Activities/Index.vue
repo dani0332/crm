@@ -1,4 +1,5 @@
 <script setup>
+import { buildCdbidLink } from '../../Composables/utilities';
 // Component Props and State Initialization
 const props = defineProps({
   activities: Object,
@@ -45,13 +46,14 @@ const loader = reactive({
   export: false,
 });
 const activityTable = [
-  { text: 'Title', value: 'title' },
-  { text: 'REF ID', value: 'cdbid' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee.name' },
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Action', value: 'action' },
+    { text: 'REF ID', value: 'cdbid' },
+    { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
+    { text: 'Followup Date', value: 'due_date' },
+    { text: 'Assigned To', value: 'assignee.name' },
+    { text: 'Done', value: 'status', width: 60, align: 'center' },
+    { text: 'Action', value: 'action' },
 ];
 
 // Filter Functions
@@ -175,31 +177,6 @@ function applyCustomDates() {
     filters.due_date_time_end = customEndDate.value;
     filterActivities(1); // Call the filterActivities function
   }
-}
-
-// Helper Functions
-function buildCdbidLink(quote_uuid, quote_type_id) {
-    if (quote_uuid) {
-        const url = `${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${quote_uuid}`;
-        const CDBID = `${getQuoteType(quote_type_id, 'code')}-${quote_uuid.toUpperCase()}`;
-        return "<a target='_blank' href='" + url + "'>" + CDBID + '</a>';
-    } else {
-        return '';
-    }
-}
-
-function getQuoteType(id, returnType = 'code') {
-    const types = {
-        1: { code: 'CAR', id: 'car', link: '/quotes' },
-        2: { code: 'HOM', id: 'home', link: '/quotes' },
-        3: { code: 'HEA', id: 'health', link: '/quotes' },
-        4: { code: 'LIF', id: 'life', link: '/quotes' },
-        5: { code: 'BUS', id: 'business', link: '/quotes' },
-        6: { code: 'BIK', id: 'bike', link: '/personal-quotes' },
-        7: { code: 'YAC', id: 'yacht', link: '/personal-quotes' },
-        8: { code: 'TRA', id: 'travel', link: '/quotes' },
-    };
-    return types[id] ? types[id][returnType] : '';
 }
 
 // CRUD Functions

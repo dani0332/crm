@@ -70,6 +70,7 @@ const props = defineProps({
 const isManualPlansCount = ref(0);
 
 const page = usePage();
+const authId = computed(() => page.props.auth.user.id);
 
 let countDays = ref(useDaysSinceStale(props.quoteRequest?.stale_at));
 const compareDueDate = useCompareDueDate;
@@ -1090,13 +1091,13 @@ const confirmDeleteDoc = () => {
 
 //activities
 const activityTable = [
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'Title', value: 'title' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee' },
-  { text: 'Action', value: 'action' },
+    { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
+    { text: 'Followup Date', value: 'due_date' },
+    { text: 'Assigned To', value: 'assignee' },
+    { text: 'Done', value: 'status', width: 60, align: 'center' },
+    { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -1108,7 +1109,7 @@ const activityForm = useForm({
   title: null,
   description: null,
   due_date: null,
-  assignee_id: null,
+  assignee_id: page.props?.auth?.user?.id,
   status: null,
   activity_id: null,
   uuid: null,
@@ -2994,7 +2995,7 @@ watch(
                 </x-field>
 
                 <div class="flex flex-col gap-4">
-                 
+
                 </div>
               </div>
             </div>
@@ -3572,6 +3573,7 @@ watch(
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :eCommercePriceWithLP="ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
@@ -3595,7 +3597,7 @@ watch(
       :paymentLink="paymentLink"
       :expanded="sectionExpanded"
     />
-    
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"
@@ -3664,10 +3666,6 @@ watch(
             :rows-per-page="15"
             :hide-footer="activities.length < 15"
           >
-            <template #item-code="{ code }">
-              {{ code }}
-            </template>
-
             <template #item-due_date="{ due_date }">
               <template v-if="compareDueDate(due_date)">
                 <x-tooltip align="right" position="top">

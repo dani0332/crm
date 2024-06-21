@@ -382,8 +382,9 @@ const notesForCustomersTableItems = computed(() => {
 
 const leadActivities = reactive({
   columns: [
-    { text: 'Title', value: 'title' },
     { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
     { text: 'Followup Date', value: 'due_date' },
     { text: 'Assigned To', value: 'assignee' },
     { text: 'Done', value: 'status', width: 60, align: 'center' },
@@ -3331,8 +3332,8 @@ watch(
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
       :paymentCode = "record.code"
-      :quoteType="quoteType"      
-    />    
+      :quoteType="quoteType"
+    />
 
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
@@ -3455,7 +3456,7 @@ watch(
       :modelType="quoteType"
       :payments="payments"
     />
-  
+
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
