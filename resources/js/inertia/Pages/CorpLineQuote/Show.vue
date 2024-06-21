@@ -1,6 +1,6 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
 const props = defineProps({
@@ -60,6 +60,7 @@ const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
 const compareDueDate = useCompareDueDate;
 
 const { copy, copied } = useClipboard();
+const modelClass = 'App\\Models\\BusinessQuote';
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -668,9 +669,7 @@ watch(
     <div class="p-4 rounded shadow mb-6 bg-white mt-6">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
@@ -1119,10 +1118,9 @@ watch(
                 placeholder="Lost Reason is required"
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
-             />
+              />
             </div>
           </div>
-  
         </div>
         <div class="flex justify-end">
           <x-button
@@ -1155,12 +1153,16 @@ watch(
       :quoteType="page.props.quoteType"
       :payments="payments"
     />
-    
+
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="page.props.quoteType"
-			:payments="payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['CLPD', 'CLPDR', 'CLDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      :quoteType="page.props.quoteType"
+      :payments="payments"
+      :paymentDocument="
+        documentTypeCodes.filter(item =>
+          ['CLPD', 'CLPDR', 'CLDPDR'].includes(item.code),
+        )
+      "
       :proformaPayment="
         payments.find(
           item =>
@@ -1169,10 +1171,14 @@ watch(
         )
       "
       :quoteRequest="quoteRequest"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :quoteSubType="quoteTypeCodeEnum.CORPLINE"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
@@ -1215,6 +1221,7 @@ watch(
       :quote="quote"
       quoteType="Business"
       modelType="Corpline"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"

@@ -1,6 +1,6 @@
 <script setup>
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MemberDetails from "../../Components/MemberDetails.vue";
+import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
@@ -55,6 +55,8 @@ const modals = reactive({
   doc: false,
   docConfirm: false,
 });
+
+const modelClass = 'App\\Models\\LifeQuote';
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -593,8 +595,7 @@ watch(
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
@@ -1205,10 +1206,14 @@ watch(
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['LPD', 'LPDR', 'LDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :paymentDocument="
+        page.props.documentTypeCodes.filter(item =>
+          ['LPD', 'LPDR', 'LDPDR'].includes(item.code),
+        )
+      "
       :proformaPayment="
         payments.find(
           item =>
@@ -1216,11 +1221,15 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-			:quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :quoteRequest="quote"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
@@ -1262,6 +1271,7 @@ watch(
       "
       :quote="quote"
       quoteType="life"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
@@ -1453,7 +1463,7 @@ watch(
       </Collapsible>
     </div>
     <AuditLogs
-      :type="'App\\Models\\LifeQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"

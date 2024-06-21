@@ -53,6 +53,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 
+const modelClass = 'App\\Models\\BusinessQuote';
 const historyData = ref(null),
   historyLoading = ref(false);
 
@@ -373,8 +374,7 @@ watch(
       <div class="flex gap-2 mb-3 justify-end">
         <Link
           v-if="
-            quoteDetails?.insly_id &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            quoteDetails?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)
           "
           :href="`/legacy-policy/${quoteDetails?.insly_id}`"
           preserve-scroll
@@ -463,8 +463,7 @@ watch(
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
@@ -995,12 +994,16 @@ watch(
       :quoteType="page.props.quoteType"
       :payments="quote.payments"
     />
-    
+
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="page.props.quoteType"
-			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['GMQPD', 'GMQPDR', 'GMQDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      :quoteType="page.props.quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypeCodes.filter(item =>
+          ['GMQPD', 'GMQPDR', 'GMQDPDR'].includes(item.code),
+        )
+      "
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -1008,11 +1011,15 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       quoteSubType="Group Medical"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
@@ -1045,6 +1052,7 @@ watch(
       :quote="quote"
       quoteType="Business"
       modelType="Group Medical"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"

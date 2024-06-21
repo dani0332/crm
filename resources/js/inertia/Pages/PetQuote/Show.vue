@@ -62,6 +62,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
+const modelClass = 'App\\Models\\PersonalQuote';
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
@@ -293,7 +294,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           :quote="quote"
           :cdn="cdnPath"
         />
-         <Link
+        <Link
           v-if="quote.quote_detail?.insly_id"
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
@@ -366,11 +367,9 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
-
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -928,25 +927,33 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteType="quoteType"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['PPD', 'PPDR', 'PDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypeCodes.filter(item =>
+          ['PPD', 'PPDR', 'PDPDR'].includes(item.code),
+        )
+      "
       :proformaPayment="
         quote.payments.find(
           item =>
             item.payment_methods_code ===
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
-      "			
+      "
       :quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
 
     <QuotePayments
       v-else
@@ -997,6 +1004,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       :quote="quote"
       quoteType="pet"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"

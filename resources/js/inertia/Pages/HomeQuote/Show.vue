@@ -59,6 +59,7 @@ const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const modelClass = 'App\\Models\\HomeQuote';
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
@@ -578,19 +579,18 @@ watch(
     <div class="p-4 rounded shadow mt-6 mmmbmb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-            <div
-              class="grid sm:grid-cols-2"
-              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-            >
-              <dt class="font-medium">ID</dt>
-              <dd>{{ quote.id }}</dd>
-            </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
+                <dt class="font-medium">ID</dt>
+                <dd>{{ quote.id }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="bottom">
@@ -1184,10 +1184,14 @@ watch(
       :payments="payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['HOMPD', 'HOMPDR', 'HOMDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :paymentDocument="
+        page.props.documentTypeCodes.filter(item =>
+          ['HOMPD', 'HOMPDR', 'HOMDPDR'].includes(item.code),
+        )
+      "
       :proformaPayment="
         payments.find(
           item =>
@@ -1195,11 +1199,15 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
@@ -1249,6 +1257,7 @@ watch(
       "
       :quote="quote"
       quoteType="home"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
@@ -1436,7 +1445,7 @@ watch(
     </div>
 
     <AuditLogs
-      :type="'App\\Models\\HomeQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"

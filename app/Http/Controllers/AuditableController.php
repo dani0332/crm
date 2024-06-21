@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CarQuote;
 use App\Models\InsurerRequestResponse;
+use App\Models\SageApiLog;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
@@ -81,5 +82,11 @@ class AuditableController extends Controller
         $audits = AuditRepository::getQuoteAudits();
 
         return ($request->jsonData) ? response()->json($audits) : $audits;
+    }
+
+    public function sageApiLogs(Request $request, $sectionId)
+    {
+        $sageApiLogs = SageApiLog::where(['section_type' => $request->modelClass, 'section_id' => $sectionId])->get();
+        return response()->json(['success' => true, 'sageApiLogs' => $sageApiLogs]);
     }
 }

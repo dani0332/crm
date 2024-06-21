@@ -108,6 +108,8 @@ const selectedProviderPlan = ref({
   premium: page.props.record.premium,
 });
 
+const modelClass = 'App\\Models\\CarQuote';
+
 /*
 * comment for now, will be used in later after confirmation
 
@@ -3331,14 +3333,14 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
-      :paymentCode = "record.code"
-      :quoteType="quoteType"      
-    />    
+      :paymentCode="record.code"
+      :quoteType="quoteType"
+    />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
+      v-if="isNewPaymentStructure"
       quoteType="Car"
-			:payments="payments"
+      :payments="payments"
       :proformaPayment="
         payments.find(
           item =>
@@ -3346,12 +3348,20 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['CPD', 'CPDR', 'CDPDR'].includes(item.code))"
-			:quoteRequest="paymentEntityModel"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentDocument="
+        page.props.documentTypeCodes.filter(item =>
+          ['CPD', 'CPDR', 'CDPDR'].includes(item.code),
+        )
+      "
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
     />
 
@@ -3456,7 +3466,7 @@ watch(
       :modelType="quoteType"
       :payments="payments"
     />
-  
+
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
@@ -3477,6 +3487,7 @@ watch(
       "
       :quote="quote"
       :quoteType="quoteType"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
     />
@@ -3830,14 +3841,14 @@ watch(
     />
   </div>
   <AuditLogs
-    :type="'App\\Models\\CarQuote'"
+    :type="modelClass"
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
   />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
-    :type="'App\\Models\\CarQuote'"
+    :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />

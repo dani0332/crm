@@ -9,7 +9,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';;
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 
 const props = defineProps({
   quote: Object,
@@ -64,6 +64,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const modelClass = 'App\\Models\\PersonalQuote';
 
 const countDays = useDaysSinceStale(
   props.quoteRequest?.stale_at ?? props.quote?.stale_at,
@@ -270,17 +271,19 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         </Link>
       </template>
     </StickyHeader>
-   
+
     <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-             <div class="grid sm:grid-cols-2" v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
@@ -815,10 +818,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :payments="quote.payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['YPD', 'YPDR', 'YDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypeCodes.filter(item =>
+          ['YPD', 'YPDR', 'YDPDR'].includes(item.code),
+        )
+      "
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -827,10 +834,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         )
       "
       :quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
@@ -882,6 +893,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       :quote="quote"
       quoteType="Yacht"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
     />

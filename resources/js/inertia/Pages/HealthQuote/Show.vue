@@ -68,6 +68,7 @@ const props = defineProps({
 });
 
 const isManualPlansCount = ref(0);
+const modelClass = 'App\\Models\\HealthQuote';
 
 const page = usePage();
 
@@ -981,16 +982,15 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(function callback(
-      breakDown,
-      index,
-    ) {
-      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-        if (ratePerCopay.notifyAgent) {
-          element.needPriceUpdate = true;
-        }
-      });
-    });
+    element.memberPremiumBreakdown?.forEach(
+      function callback(breakDown, index) {
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+          if (ratePerCopay.notifyAgent) {
+            element.needPriceUpdate = true;
+          }
+        });
+      },
+    );
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -2993,9 +2993,7 @@ watch(
                   />
                 </x-field>
 
-                <div class="flex flex-col gap-4">
-                 
-                </div>
+                <div class="flex flex-col gap-4"></div>
               </div>
             </div>
           </div>
@@ -3595,7 +3593,7 @@ watch(
       :paymentLink="paymentLink"
       :expanded="sectionExpanded"
     />
-    
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"
@@ -3625,6 +3623,7 @@ watch(
       "
       :quote="quote"
       quoteType="health"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
@@ -3851,7 +3850,7 @@ watch(
     />
 
     <AuditLogs
-      :type="'App\\Models\\HealthQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
     />

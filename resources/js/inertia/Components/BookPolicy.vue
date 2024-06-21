@@ -1,5 +1,8 @@
 <script setup>
 import { useRoundIt } from '../Composables/utilities';
+import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
+import NProgress from 'nprogress';
+
 const page = usePage();
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
@@ -17,6 +20,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  modelClass: {
+    type: String,
+    default: '',
+  },
   bookPolicyDetails: {
     type: Array,
     default: [],
@@ -31,6 +38,9 @@ const props = defineProps({
     default: true,
   },
 });
+
+const showSageAPILogsModal = ref(false);
+provide('showSageAPILogsModal', showSageAPILogsModal);
 
 const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
@@ -396,6 +406,53 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
+
+const sageAPILogs = reactive({
+  data: [],
+  loader: false,
+  table: [
+    { text: 'Id', value: 'id' },
+    { text: 'Request Type', value: 'sage_request_type' },
+    { text: 'API End Point', value: 'sage_end_point' },
+    { text: 'Request Payload', value: 'sage_payload' },
+    { text: 'Request Response', value: 'response' },
+    { text: 'Request Status', value: 'status' },
+    { text: 'Logged At', value: 'created_at' },
+  ],
+});
+provide('sageAPILogs', sageAPILogs);
+const showSageAPILogs = async () => {
+  try {
+    NProgress.start();
+    sageAPILogs.loader = true;
+    const response = await axios.get(route('sage.api.logs', [props.quote.id]), {
+      params: {
+        modelClass: props.modelClass,
+      },
+    });
+    sageAPILogs.loader = false;
+    NProgress.done();
+    if (response.data.success) {
+      let sageApiLogs = response.data.sageApiLogs;
+      if (sageApiLogs.length === 0) {
+        notification.error({
+          title: 'No Sage API Logs Found',
+          position: 'top',
+        });
+        return;
+      }
+      showSageAPILogsModal.value = true;
+      sageAPILogs.data = sageApiLogs;
+    } else {
+      notification.error({
+        title: 'No Sage API Logs Found',
+        position: 'top',
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
 </script>
 
 <template>
@@ -725,6 +782,15 @@ const showInsufficientPaymentAlert = () => {
               <div class="w-full md:w-1/2" />
             </div>
             <div v-if="showActionButtons" class="flex justify-end">
+              <x-button
+                v-if="can(permissionsEnum.VIEW_SAGE_API_LOGS)"
+                @click="showSageAPILogs"
+                size="sm"
+                class="mt-4 mr-2"
+                color="orange"
+              >
+                Sage API Logs
+              </x-button>
               <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
                   v-if="bp.isEditing"
@@ -937,6 +1003,14 @@ const showInsufficientPaymentAlert = () => {
         </x-form>
       </template>
     </Collapsible>
+    <SageAPILogs
+      v-if="can(permissionsEnum.VIEW_SAGE_API_LOGS)"
+      :show-modal="showSageAPILogsModal"
+      :quote="props.quote"
+      :sage-api-logs="sageAPILogs"
+      :quote-type="props.quoteType"
+      :model-type="props.modelType"
+    />
     <x-modal v-model="modals.sendPolicyConfirm" size="lg" show-close backdrop>
       <template #header> Send Policy </template>
       <x-alert

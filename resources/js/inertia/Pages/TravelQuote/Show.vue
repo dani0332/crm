@@ -69,6 +69,7 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const modelClass = 'App\\Models\\TravelQuote';
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
   return true;
@@ -648,7 +649,6 @@ const onLoadAvailablePlansData = async () => {
       console.log(err);
     });
 };
-
 
 const emailStatusesTable = reactive({
   isLoading: false,
@@ -1280,8 +1280,7 @@ watch(
     <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
@@ -2237,8 +2236,7 @@ watch(
         </template>
       </Collapsible>
     </div>
-   
-    
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -2251,12 +2249,17 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-              <div>
-                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
-                  age 0-64
-                </h6>
-              </div>
+            <div>
+              <h6
+                v-if="
+                  aboveAgeMembers > 0 && availablePlansTable.data.length > 0
+                "
+                class="font-semibold text-primary-600 text-ms mb-1"
+              >
+                Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                age 0-64
+              </h6>
+            </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2412,16 +2415,16 @@ watch(
                   <span class="text-primary-600 uppercase">{{
                     item.providerName
                   }}</span>
-                    <div class="flex gap-1">
-                        <x-tag
-                            v-if="item.isDisabled"
-                            size="xs"
-                            color="error"
-                            class="mt-0.5 text-[10px]"
-                        >
-                            Hidden
-                        </x-tag>
-                    </div>
+                  <div class="flex gap-1">
+                    <x-tag
+                      v-if="item.isDisabled"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px]"
+                    >
+                      Hidden
+                    </x-tag>
+                  </div>
                 </template>
                 <template #item-name="item">
                   <span class="text-primary-600 uppercase">{{
@@ -2486,15 +2489,19 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       quoteType="Travel"
       :payments="payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Travel"
-			:payments="payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['TPD', 'TPDR', 'TDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      quoteType="Travel"
+      :payments="payments"
+      :paymentDocument="
+        documentTypeCodes.filter(item =>
+          ['TPD', 'TPDR', 'TDPDR'].includes(item.code),
+        )
+      "
       :proformaPayment="
         payments.find(
           item =>
@@ -2503,12 +2510,16 @@ watch(
         )
       "
       :quoteRequest="quoteRequest"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
-		/>
+    />
 
     <PaymentTable
       v-else
@@ -2529,7 +2540,7 @@ watch(
       :modelType="quoteType"
       :expanded="sectionExpanded"
     />
-    
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"
@@ -2548,7 +2559,11 @@ watch(
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Travel"
-      :sendPolicy="(displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled)"
+      :sendPolicy="
+        displaySendPolicyButton &&
+        permissions.notProductionApproval &&
+        permissions.isQuoteDocumentEnabled
+      "
       @sendPolicyToClient="sendPolicyToClient"
     />
 
@@ -2561,6 +2576,7 @@ watch(
       "
       :quote="quote"
       quoteType="travel"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
@@ -2742,7 +2758,7 @@ watch(
         </template>
       </Collapsible>
     </div>
-    
+
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
@@ -2752,7 +2768,7 @@ watch(
     />
 
     <AuditLogs
-      :type="'App\\Models\\TravelQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"

@@ -561,6 +561,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
+    Route::get('sage-api-logs/{sectionId}', [AuditableController::class, 'sageApiLogs'])->name('sage.api.logs');
 
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);

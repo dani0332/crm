@@ -66,6 +66,8 @@ const canAny = permissions => useCanAny(permissions);
 const modals = reactive({
   duplicate: false,
 });
+const modelClass = 'App\\Models\\PersonalQuote';
+
 const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const countDays = useDaysSinceStale(
@@ -318,7 +320,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           v-if="quote.quote_detail?.insly_id"
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
-          >
+        >
           <x-button size="sm" color="#ff5e00" tag="div">
             View Legacy policy
           </x-button>
@@ -387,16 +389,15 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-            <div
+              <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-                >
+              >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
@@ -923,13 +924,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteId="quote.id"
       :paymentCode="quote.code"
       :quoteType="quoteType"
-      :payments="quote.payments"      
-    />    
- 
+      :payments="quote.payments"
+    />
+
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -937,12 +938,20 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="documentTypeCodes.filter(item => ['CYCPD', 'CYCPDR', 'CYCDPDR'].includes(item.code))"
-			:quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentDocument="
+        documentTypeCodes.filter(item =>
+          ['CYCPD', 'CYCPDR', 'CYCDPDR'].includes(item.code),
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
@@ -996,6 +1005,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       :quote="quote"
       quoteType="Cycle"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"

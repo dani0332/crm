@@ -62,6 +62,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const modelClass = 'App\\Models\\PersonalQuote';
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType?.map(indType => ({
@@ -278,8 +279,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
@@ -820,10 +820,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['BPD', 'BPDR', 'BDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypeCodes.filter(item =>
+          ['BPD', 'BPDR', 'BDPDR'].includes(item.code),
+        )
+      "
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -832,10 +836,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         )
       "
       :quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
@@ -888,6 +896,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       :quote="quote"
       quoteType="Bike"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
