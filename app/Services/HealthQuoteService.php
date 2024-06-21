@@ -1284,6 +1284,7 @@ class HealthQuoteService extends BaseService
         $response['paidAt'] = '';
         $response['planName'] = '';
         $response['priceWithVAT'] = '';
+        $response['priceWithLP'] = ''; // Premium with loading price
 
         $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
         if ($planData) {
@@ -1299,6 +1300,7 @@ class HealthQuoteService extends BaseService
                             foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
                                 if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
                                     $response['priceWithVAT'] = (float) $ratePerCopay['premium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
+                                    $response['priceWithLP'] = (float) $ratePerCopay['premium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
                                 }
                             }
                         }
