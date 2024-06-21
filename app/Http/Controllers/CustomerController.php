@@ -296,17 +296,26 @@ class CustomerController extends Controller
         $key = $request->additional_contact_type;
         $value = $request->additional_contact_val;
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-
         if ($key == GenericRequestEnum::EMAIL) {
-            $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
-
-            if ($isAdditionalEmailExist) {
+            if (strtolower($quoteObject->email) === strtolower($request->additional_contact_val)) {
                 if ($request->isInertia) {
-                    vAbort('Email Address already in use for a customer. Please try another.');
+                    vAbort('Email already Exist in Primary. Please try another.');
                 }
 
                 return response()->json(['error' => [
-                    'message' => 'Email Address already in use for a customer. Please try another.',
+                    'message' => 'Email already Exist in Primary. Please try another.',
+                ]]);
+            }
+            $isExistEmail = CustomerAdditionalContact::where('customer_id', $request->customer_id)
+                ->where('value', $request->additional_contact_val)->where('key', 'email')->first();
+
+            if ($isExistEmail) {
+                if ($request->isInertia) {
+                    vAbort('Email already Exist. Please try another.');
+                }
+
+                return response()->json(['error' => [
+                    'message' => 'Email already Exist. Please try another.',
                 ]]);
             }
         }
