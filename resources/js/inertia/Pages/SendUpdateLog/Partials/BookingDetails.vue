@@ -683,6 +683,10 @@ watch(() => props?.payments[0]?.discount_value,
     },
 );
 
+const isPriceVatNotApplicableEditable = computed(() => {
+  return props.quoteType === quoteTypeCodeEnum.Business || (props.quoteType === quoteTypeCodeEnum.Health && props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPD);
+});
+
 </script>
 
 <template>
@@ -1403,12 +1407,8 @@ watch(() => props?.payments[0]?.discount_value,
                     </template>
                   </x-tooltip>
                 </div>
-                <div v-if="props.quoteType !== quoteTypeCodeEnum.Business">
-                  <span>{{
-                    bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
-                  }}</span>
-                </div>
-                <div v-else>
+
+                <div v-if="isPriceVatNotApplicableEditable">
                   <x-input
                       type="number"
                       min="0"
@@ -1421,6 +1421,11 @@ watch(() => props?.payments[0]?.discount_value,
                       :rules="[isRequired]"
                       size="xs"
                   />
+                </div>
+                <div v-else>
+                  <span>{{
+                      bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
+                    }}</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
