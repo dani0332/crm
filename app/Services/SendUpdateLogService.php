@@ -508,13 +508,25 @@ class SendUpdateLogService
 
     public function getUpdateButtonStatus($sendUpdateLog): string
     {
+        $category = $sendUpdateLog->category->code;
+        $option = $sendUpdateLog?->option?->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
-        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled) {
+        if ($category == SendUpdateLogStatusEnum::CPD ||
+            ($category == SendUpdateLogStatusEnum::EF && in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) ||
+            in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])
+        ) {
+            return SendUpdateLogStatusEnum::SU; // Book Update
+        }
+
+        if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
+            ($category == SendUpdateLogStatusEnum::EF && ! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) ||
+            $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled
+        ) {
             return SendUpdateLogStatusEnum::SNBU;
         }
 
@@ -523,16 +535,12 @@ class SendUpdateLogService
                 (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
                 in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
                 ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
-            )) || in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
+            )) || in_array($category, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
         ) {
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
-            return SendUpdateLogStatusEnum::SU; // Book Update
-        }
-
-        return SendUpdateLogStatusEnum::SNBU;
+        return '';
     }
 
     public function getSendToCustomerValidation($data): string
