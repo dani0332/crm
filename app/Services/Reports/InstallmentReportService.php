@@ -89,7 +89,7 @@ class InstallmentReportService extends ManagementReport
             $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
 
             return $this->download(
-                'Transaction Report '.$this->reportDateRange,
+                'Installment Report '.$this->reportDateRange,
                 $data,
                 $this->headings(),
                 $nonIntegarIndexes
