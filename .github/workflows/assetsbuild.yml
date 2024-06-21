@@ -17,15 +17,15 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      # - name: Install PHP
-      #   uses: shivammathur/setup-php@v2
-      #   with:
-      #     php-version: ${{ matrix.php }}
-      #     extensions: json, dom, curl, libxml, mbstring
-      #     coverage: none
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: json, dom, curl, libxml, mbstring
+          coverage: none
 
-      # - name: Install Composer dependencies
-      #   run: composer install
+      - name: Install Composer dependencies
+        run: composer install
 
       - name: Use Node.js
         uses: actions/setup-node@v3
