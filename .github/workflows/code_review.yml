@@ -25,5 +25,4 @@ jobs:
           custom_prompts: |
             Act as an expert PHP, Laravel Developer 
             Do not worry about the verbosity of variable names, as long as they are somewhat descriptive.
-            Be sure to call out potential null pointer exceptions.
             Be sure to call out concurrency issues and potential race conditions.
