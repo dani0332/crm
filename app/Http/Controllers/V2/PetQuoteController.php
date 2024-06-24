@@ -49,6 +49,7 @@ use Illuminate\Http\Request;
 class PetQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
+
     /**
      * Display a listing of the resource.
      *

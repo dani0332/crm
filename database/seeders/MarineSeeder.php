@@ -14,9 +14,7 @@ class MarineSeeder extends Seeder
     public function run(): void
     {
         //
-        BusinessInsuranceType::updateOrCreate([
-            'code' => 'Marine Cargo',
-        ], [
+        BusinessInsuranceType::where('code', 'Marine Cargo')->update([
             'code' => quoteBusinessTypeCode::marineCargoIndividual,
             'text' => quoteBusinessTypeCode::marineCargoIndividual,
             'is_active' => 1,
