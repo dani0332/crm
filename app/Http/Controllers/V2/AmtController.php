@@ -122,7 +122,7 @@ class AmtController extends Controller
             $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
         }
         if (isset($request->email) && $request->email != '') {
-            $data->where('bqr.email', '=' ,$request->email);
+            $data->where('bqr.email', '=', $request->email);
         }
         if (isset($request->code) && $request->code != '') {
             $data->where('bqr.code', '=', $request->code);
