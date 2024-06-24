@@ -362,8 +362,7 @@ class HealthQuoteService extends BaseService
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
             $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
-        }
-        else{
+        } else {
             //previous_quote_policy_number is null check
             $this->query->whereNull('previous_quote_policy_number');
 
