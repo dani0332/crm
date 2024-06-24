@@ -131,7 +131,7 @@ class YachtQuoteController extends Controller
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'quote_request_id' => $quote->id,
-        ])->with('assignee')->orderBy('created_at', 'desc')->get();
+        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
         if (AMLService::checkAMLStatusFailed(QuoteTypes::YACHT->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {

@@ -804,12 +804,13 @@ const availableSeniorPlansTable = reactive({
 //activities
 
 const activityTable = [
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Title', value: 'title' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee' },
-  { text: 'Action', value: 'action' },
+    { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
+    { text: 'Followup Date', value: 'due_date' },
+    { text: 'Assigned To', value: 'assignee' },
+    { text: 'Done', value: 'status', width: 60, align: 'center' },
+    { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -821,7 +822,7 @@ const activityForm = useForm({
   title: null,
   description: null,
   due_date: '',
-  assignee_id: null,
+  assignee_id: page.props?.auth?.user?.id,
   status: null,
   activity_id: null,
   uuid: null,
@@ -2052,23 +2053,27 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium }}</dd>
+            <dd>{{ selectedProviderPlan.premium ?? 'N/A' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AUTHORISED AT</dt>
+            <dd>{{ ecomDetails.paidAt ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ ecomDetails.paidAt }}</dd>
+            <dd>{{ ecomDetails.paidAtPayment ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ ecomDetails.paymentStatus }}</dd>
+            <dd>{{ ecomDetails.paymentStatus ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
           </div>
         </dl>
       </div>

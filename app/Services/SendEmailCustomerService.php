@@ -887,13 +887,11 @@ class SendEmailCustomerService extends BaseService
 
     public function sendingAlfredFollowupEmail($customer)
     {
-
         $emailTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE)->first();
 
-        $apiKey = config('constants.MA_BREVO_KEY');
+        $apiKey = config('constants.SENDINBLUE_KEY');
         $url = config('constants.SIB_URL');
         try {
-
             info('AlfredFollowUpEmail Starting');
             $headers = [
                 'Accept' => 'application/json',
@@ -925,7 +923,6 @@ class SendEmailCustomerService extends BaseService
 
             info('AlfredFollowUpEmail ---- Received Code : '.$responseCode.' '.$customer->email);
             info('AlfredFollowUpEmail ---- response object : '.json_encode($response->object()).'--'.$customer->email);
-
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             Log::error($responseCode);
@@ -934,4 +931,48 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
+    public function sendSICFollowupEmail($emailData)
+    {
+        $emailTemplateId = getAppStorageValueByKey(ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID);
+        if (! $emailTemplateId || ! $emailData || ! $emailData->email) {
+            return false;
+        }
+
+        try {
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => config('constants.SENDINBLUE_KEY'),
+                'Content-Type' => 'application/json',
+            ];
+            $body = [
+                'to' => [[
+                    'email' => $emailData->email,
+                    'name' => $emailData->first_name.' '.$emailData->last_name,
+                ]],
+                'templateId' => (int) $emailTemplateId,
+                'params' => [
+                    'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$emailData->uuid.'/?assignAdvisor=true',
+                    'carQuoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$emailData->uuid.'/?IA=true',
+                    'carQuoteId' => $emailData->code,
+                    'email' => $emailData->email,
+                    'clientFullName' => $emailData->first_name.' '.$emailData->last_name],
+            ];
+            $response = Http::withHeaders($headers)
+                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
+                ->retry(3, 90000)
+                ->post(config('constants.SIB_URL'), $body);
+
+            info('SICFollowupEmail ---- Request Sent '.$emailData->email);
+
+            $responseCode = $response->status();
+            if ($responseCode == 200 || $responseCode == 201) {
+                info('SICFollowupEmail ---- | Response Code: '.$responseCode.' | Response Received  : '.json_encode($response->object()).'--'.$emailData->email);
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            Log::error(sprintf('SICFollowupEmail failed: Brevo API call failed for %s | Exception: %s', $emailData->email, $ex->getMessage()));
+        }
+
+        return $responseCode;
+    }
 }

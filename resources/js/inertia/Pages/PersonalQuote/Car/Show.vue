@@ -92,6 +92,7 @@ defineProps({
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   clientInquiryLogs: Array,
+  puaTypeEnum: Object,
 });
 
 
@@ -403,8 +404,9 @@ const notesForCustomersTableItems = computed(() => {
 
 const leadActivities = reactive({
   columns: [
-    { text: 'Title', value: 'title' },
     { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
     { text: 'Followup Date', value: 'due_date' },
     { text: 'Assigned To', value: 'assignee' },
     { text: 'Done', value: 'status', width: 60, align: 'center' },
@@ -1611,19 +1613,23 @@ const handlePlanSelected = plan => {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.premium ?? 'N/A' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AUTHORISED AT</dt>
+            <dd>{{ record.paid_at ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ record.paid_at ?? '' }}</dd>
+            <dd>{{ record.payment_paid_at ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ record.payment_status_id_text ?? '' }}</dd>
+            <dd>{{ record.payment_status_id_text ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1631,13 +1637,13 @@ const handlePlanSelected = plan => {
               {{
                 record.payment_gateway === 'NGENIUS'
                   ? 'CREDIT CARD'
-                  : record.payment_gateway
+                  : record.payment_gateway ?? 'N/A'
               }}
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName }}</dd>
+            <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ECOMMERCE</dt>
@@ -1645,20 +1651,20 @@ const handlePlanSelected = plan => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">QUOTE LINK</dt>
-            <dd>{{ record.quote_link ?? '' }}</dd>
+            <dd>{{ record.quote_link ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ORDER REFERENCE</dt>
-            <dd>{{ record.order_reference ?? '' }}</dd>
+            <dd>{{ record.order_reference ?? 'N/A' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT REFERENCE</dt>
-            <dd>{{ record.payment_reference ?? '' }}</dd>
+            <dd>{{ record.payment_reference ?? 'N/A' }}</dd>
           </div>
         </dl>
         <div class="grid sm:grid-cols-1 mt-3">
           <dt class="font-medium mb-3">ADDONS</dt>
-          <dd>
+          <dd v-if="carQuotePlanAddons.length>0">
             <table style="width: 100%">
               <thead></thead>
               <tbody>
@@ -1697,6 +1703,7 @@ const handlePlanSelected = plan => {
               </tbody>
             </table>
           </dd>
+          <dd v-else>N/A</dd>
         </div>
       </div>
     </div>
@@ -2891,19 +2898,18 @@ const handlePlanSelected = plan => {
             </x-tag>
 
             <x-tag
-              v-if="puaPremium && puaPremium != null && puaType"
+              v-if="puaType"
               size="xs"
               class="mt-0.5 text-[10px] text-white"
               style="background-color: #e00000"
             >
               <x-tooltip position="right">
                 <template #tooltip>
-                  <span class="font-medium">
-                    Pending Underwriter Approval (PUA) indicates that this quote
-                    is prepared using our internal rating calculator. Please
-                    contact the client to get the required documents, to proceed
-                    with generating a quote on the insurer portal and connect
-                    with the underwriter to obtain their approval.
+                  <span class="font-medium" v-if="puaType == puaTypeEnum.PPUA">
+                    {{ puaTypeEnum.PPUA_TOOLTIP }}
+                  </span>
+                  <span class="font-medium" v-else>
+                    {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
                   </span>
                 </template>
                 {{ puaType }}
