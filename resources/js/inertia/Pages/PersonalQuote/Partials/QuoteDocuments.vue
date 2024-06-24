@@ -199,11 +199,11 @@ const sendUpdateValidation = () => {
       quoteType: props.quoteType,
       quoteUuid: props.quote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
+      action: sendUpdateStatusEnum?.ACTION_SUC,
     })
     .then(response => {
       modals.sendConfirm = true;
       isStating.value = response.data.message;
-
     })
     .catch(function (errors) {
       let responseError = errors.response.data.errors.error;
@@ -233,6 +233,7 @@ const submitToCustomer = () => {
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
     quoteType: props.quoteType,
+    action: sendUpdateStatusEnum?.ACTION_SUC,
   };
   axios
       .post(url, data)
