@@ -16,7 +16,6 @@ use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
-use App\Jobs\Renewals\RenewalsQuoteAmlJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\AML;
 use App\Models\CarQuote;
@@ -30,7 +29,6 @@ use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Yajra\Datatables\Datatables;
 
 class RenewalsUploadController extends Controller

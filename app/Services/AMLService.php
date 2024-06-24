@@ -19,7 +19,6 @@ use App\Models\KycLog;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
-use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
@@ -27,7 +26,6 @@ use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
 class AMLService
@@ -343,7 +341,6 @@ class AMLService
             return in_array($value, $failedScreeningDecisions);
         });
     }
-
 
     public function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName, $forComplianceSuperUser = false)
     {
