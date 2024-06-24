@@ -523,9 +523,9 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
-        if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
-            ($category == SendUpdateLogStatusEnum::EF && ! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) ||
-            $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled
+        if ((in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) ||
+            (($category == SendUpdateLogStatusEnum::EF) && (! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]))) ||
+            (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) && ($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled))
         ) {
             return SendUpdateLogStatusEnum::SNBU;
         }
