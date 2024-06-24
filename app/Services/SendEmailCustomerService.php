@@ -870,13 +870,6 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            /* if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
-                $attachments[] = [
-                    'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
-                    'name' => $emailData->pdfAttachment->name,
-                ];
-            } */
-
             $sendUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_UPDATE_EMAIL);
             info('send update email fetched. email: '.$sendUpdateEmail);
             info('template id is : '.$emailTemplateId);
