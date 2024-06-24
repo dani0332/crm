@@ -56,6 +56,7 @@ class Dtt extends Command
         }
 
         $dateOne = Carbon::now()->subMonths(11)->toDateString();
+        $dateTwo = Carbon::now()->subMonths(11)->addDay(1)->toDateString();
 
         $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
@@ -69,8 +70,35 @@ class Dtt extends Command
 
         $jobs = [];
         $logPrefix = 'CarRevivalLeadsCreationJob -';
-        $leads = CarQuote::where('is_revived', '=', false)
-            ->whereDate('created_at', '=', $dateOne)
+        $leads = CarQuote::select(
+            'uuid',
+            'first_name',
+            'last_name',
+            'email',
+            'mobile_no',
+            'dob',
+            'nationality_id',
+            'uae_license_held_for_id',
+            'back_home_license_held_for_id',
+            'year_of_manufacture',
+            'emirate_of_registration_id',
+            'car_type_insurance_id',
+            'claim_history_id',
+            'has_ncd_supporting_documents',
+            'additional_notes',
+            'car_value',
+            'car_value_tier',
+            'seat_capacity',
+            'cylinder',
+            'vehicle_type_id',
+            'premium',
+            'car_make_id',
+            'car_model_id',
+            'currently_insured_with',
+        )
+            ->where('is_revived', '=', false)
+            ->where('created_at', '>=', $dateOne)
+            ->where('created_at', '<', $dateTwo)
 
             ->whereNotNull(['email'])
             ->where(function ($q) use ($datethirtyDaysBefore) {
