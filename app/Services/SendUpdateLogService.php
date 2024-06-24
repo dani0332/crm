@@ -498,7 +498,12 @@ class SendUpdateLogService
     {
         $payments = $this->getPayments($data['quoteId'], $data['quoteUuid'], $data['quoteType']);
 
-        return collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first();
+        $sendUpdateLog = SendUpdateLogRepository::getLogByTaxInvoiceNumber($data);
+
+        return (object) [
+            'send_update_log' => $sendUpdateLog,
+            'payment' => collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first(),
+        ];
     }
 
     public function getUploadedDocuments($sendUpdateLog): array
