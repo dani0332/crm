@@ -877,7 +877,7 @@ class SendEmailCustomerService extends BaseService
             $body = [
                 'sender' => [
                     'email' => $sendUpdateEmail,
-                    'name' => $emailData->advisor->name,
+                    'name' => 'InsuranceMarket.ae',
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
