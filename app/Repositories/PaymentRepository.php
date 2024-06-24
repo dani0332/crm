@@ -405,7 +405,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $parentPayment = $paymentSplit->payment;
                             /* Create payment receipt for broker */
                             if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
-                                ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::CreditApproval])
+                                ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::CreditApproval]) &&
+                                in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])
                             ) {
                                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
                             }
