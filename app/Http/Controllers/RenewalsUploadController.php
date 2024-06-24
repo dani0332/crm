@@ -422,56 +422,6 @@ class RenewalsUploadController extends Controller
      *
      * @throws \Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException
      */
-    public function scheduleNonMotorAml()
-    {
-        $logPrefix = 'Renewals AML - fn: scheduleNonMotorAml';
-        $jobs = [];
-
-        $jobNo = 1;
-
-        RenewalQuoteProcess::where([
-            'type' => RenewalsUploadType::CREATE_LEADS,
-            'status' => RenewalProcessStatuses::PROCESSED,
-        ])->whereIn('quote_type', QuoteType::where('short_code', '<>', QuoteTypeShortCode::CAR)->get()->pluck('short_code')->toArray())
-            ->whereNotNull('quote_id')
-            ->groupBy('quote_id')
-            ->chunkById(50, function ($leads) use (&$jobs, &$jobNo) {
-                foreach ($leads as $lead) {
-                    $jobs[] = new RenewalsQuoteAmlJob($lead, $jobNo);
-                    $jobNo++;
-                }
-            });
-
-        info($logPrefix.' totalJobs: '.count($jobs));
-
-        if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->onQueue('renewals')
-                ->addJobs($jobs)
-                ->then(function () use ($logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
-                })
-                ->catch(function () use ($logPrefix) {
-                    info($logPrefix.' one of batch is failed. ');
-                })
-                ->finally(function () use ($logPrefix) {
-                    info($logPrefix.' everything done');
-                })
-                ->allowFailures()
-                ->withDelay(2)
-                ->dispatch();
-        }
-
-        return redirect('/');
-    }
-
-    /**
-     * schedule AML check for non-motor uploaded through renewals process
-     *
-     * @return void
-     *
-     * @throws \Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException
-     */
     public function search(Request $request)
     {
         $personalQuotes = [];
