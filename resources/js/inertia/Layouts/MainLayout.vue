@@ -1,5 +1,6 @@
 <script setup>
 import PaymentNotification from "../Components/PaymentNotification.vue";
+import PaymentExpireNotifications from "../Components/PaymentExpireNotification.vue"
 import OnlineStatusToggle from "../Components/OnlineStatusToggle.vue";
 
 const page = usePage();
@@ -28,6 +29,15 @@ const onLogout = () => {
     window.location.href = '/login';
   });
 };
+
+
+
+const today = new Date().toISOString().split('T')[0];
+
+const urls = computed(()=>{
+    return `/quotes/car?created_at_start=${today}&created_at_end=${today}&page=1&segment_filter=all&payment_status_id=4`;
+
+})
 
 </script>
 
@@ -265,13 +275,15 @@ const onLogout = () => {
                 />
               <!-- <UserStatus /> -->
               <PaymentNotification />
+                <PaymentExpireNotifications/>
 
 <!--                ADD BANER HERE-->
                 <x-button class="w-full"  size="sm">
                 <div class="items-center">
-                    <a href="/quotes/car?created_at_start=2024-04-03&created_at_end=2024-04-03&page=1&payment_status_id=4" style="text-decoration: underline dotted;">
+
+                    <Link :href="urls" style="text-decoration: underline dotted;">
                         Payment Authorised: {{getAuthorisePaymentCount}}
-                    </a>
+                    </Link>
                 </div>
                 </x-button>
 

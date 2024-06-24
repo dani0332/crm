@@ -65,6 +65,8 @@ class AmtController extends Controller
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
+            ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -91,7 +93,9 @@ class AmtController extends Controller
                 'bqr.device',
                 'bqr.previous_quote_policy_premium',
                 'bqr.customer_id',
-                'bqr.parent_duplicate_quote_id'
+                'bqr.parent_duplicate_quote_id',
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                'ps.text AS payment_status_id_text',
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only

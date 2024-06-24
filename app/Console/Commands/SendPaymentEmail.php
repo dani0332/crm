@@ -401,7 +401,6 @@ class SendPaymentEmail extends Command
                     ]);
                 });
             })
-            ->orderBy('last_activity')
             ->groupBy('user_id')
             ->get();
     }

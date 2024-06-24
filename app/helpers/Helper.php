@@ -10,14 +10,21 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
+use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
+use App\Models\CycleQuote;
 use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\JetskiQuote;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
+use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Models\YachtQuote;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -722,19 +729,41 @@ if (! function_exists('getAuthorisePaymentCount')) {
             return 0;
         }
 
-        $CarCount = CarQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('car_quote_request.advisor_id', Auth::user()->id)
+        $carCount = CarQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)
             ->count();
 
-        $HealthCount = HealthQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('health_quote_request.advisor_id', Auth::user()->id)
+        $healthCount = HealthQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)
             ->count();
 
-        $BusinessCount = BusinessQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('business_quote_request.advisor_id', Auth::user()->id)
+        $businessCount = BusinessQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)
             ->count();
 
-        $totalCount = $CarCount + $HealthCount + $BusinessCount;
+        $travelCount = TravelQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)->count();
+
+        $lifeCount = LifeQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)->count();
+
+        $homeCount = HomeQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)->count();
+
+        $petCount = PetQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)->count();
+
+        $bikeCount = BikeQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)->count();
+
+        $cycleCount = PersonalQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)->count();
+
+        $yachtCount = YachtQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('advisor_id', Auth::user()->id)->count();
+
+        $totalCount = $carCount + $healthCount + $businessCount + $travelCount + $lifeCount +
+            $homeCount + $petCount + $bikeCount + $cycleCount + $yachtCount;
 
         return $totalCount;
     }

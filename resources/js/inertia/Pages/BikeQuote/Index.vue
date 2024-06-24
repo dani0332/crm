@@ -99,6 +99,8 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+    { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+    { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DOB', value: 'dob' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
@@ -139,7 +141,41 @@ const onDataExport = () => {
   const url = route('data-extraction', 'bike');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
+function daysAgoFromAuthorizedDate(authorizedDate) {
+    // Check if authorizedDate is null or undefined
+    if (!authorizedDate) {
+        return
+    }
+    const [datePart] = authorizedDate.split(' ');
 
+    const [day, month, year] = datePart.split('-').map(Number);
+
+    const parsedDate = new Date(year, month - 1, day);
+
+    // Check if the parsed date is valid
+    if (isNaN(parsedDate.getTime())) {
+        return "Invalid date";
+    }
+
+    // Calculate the new date by adding 7 days to the authorized date
+    const newDate = new Date(parsedDate);
+    newDate.setDate(parsedDate.getDate() + 7);
+
+    // Get the current date
+    const currentDate = new Date();
+
+    // Calculate the difference in time
+    const differenceInTime = newDate.getTime() - currentDate.getTime();
+    const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+    // Check if the date has expired
+    if (differenceInDays <= 0) {
+        return "Expired";
+    }
+
+    // Return the difference in days
+    return Math.floor(differenceInDays) + " days";
+}
 watch(
   () => filters,
   () => {
@@ -346,7 +382,6 @@ watch(
         />
       </div>
     </Transition>
-
     <DataTable
       v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
@@ -369,6 +404,12 @@ watch(
         </Link>
         <span v-else>{{ code }}</span>
       </template>
+        <template #item-authorized_at="item">
+            <p v-if="item.payment_status.text === 'AUTHORISED'">{{ item?.payments[0]?.authorized_at }}</p>
+        </template>
+        <template #item-expiry_date="item">
+            <p v-if="item.payment_status.text === 'AUTHORISED'">{{daysAgoFromAuthorizedDate(item.payments[0].authorized_at)}}</p>
+        </template>
 
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}

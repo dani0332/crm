@@ -376,19 +376,33 @@ const onConfirmCreateLead = () => {
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
-    const parsedDate = new Date(authorizedDate);
-    const newDate = new Date(parsedDate.setDate(parsedDate.getDate() + 7));
+    if (!authorizedDate) {
+        return
+    }
+    const [day, month, year] = authorizedDate.split('-').map(Number);
+    const parsedDate = new Date(year, month - 1, day);
+    if (isNaN(parsedDate.getTime())) {
+        return "Invalid date";
+    }
+
+    // Calculate the new date by adding 7 days to the authorized date
+    const newDate = new Date(parsedDate);
+    newDate.setDate(parsedDate.getDate() + 7);
+
     const currentDate = new Date();
+
+    // Calculate the difference in time
     const differenceInTime = newDate.getTime() - currentDate.getTime();
     const differenceInDays = differenceInTime / (1000 * 3600 * 24);
 
+    // Check if the date has expired
     if (differenceInDays <= 0) {
         return "Expired";
     }
 
+    // Return the difference in days
     return Math.floor(differenceInDays) + " days";
 }
-
 
 
 

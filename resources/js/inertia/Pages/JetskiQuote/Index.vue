@@ -119,6 +119,8 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+    { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at'},
+    { text: 'PAYMENT EXPIRY', value: 'expiry_date'  },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
@@ -355,6 +357,12 @@ watch(
         </Link>
         <span v-else>{{ code }}</span>
       </template>
+        <template #item-authorized_at="item">
+            <p v-if="item?.payment_status?.text === 'AUTHORISED'">{{ item?.payments[0]?.authorized_at }}</p>
+        </template>
+        <template #item-expiry_date="item">
+            <p v-if="item?.payment_status?.text === 'AUTHORISED'">{{daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at)}}</p>
+        </template>
 
       <template #item-advisor="{ advisor }">
         {{ advisor?.email }}
