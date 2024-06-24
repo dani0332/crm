@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
@@ -484,6 +485,12 @@ class SendUpdateLogService
             }
         }
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $sendUpdatePayments = SendUpdateLogRepository::sendUpdateBookedPayments($quoteTypeId, $quoteUuid);
+        if (! empty($sendUpdatePayments)) {
+            $payments = $payments->merge($sendUpdatePayments);
+        }
+
         return $payments;
     }
 
@@ -501,13 +508,25 @@ class SendUpdateLogService
 
     public function getUpdateButtonStatus($sendUpdateLog): string
     {
+        $category = $sendUpdateLog->category->code;
+        $option = $sendUpdateLog?->option?->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
-        if ($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $requiredDocumentsCheck == 0 && $sendUpdateLog->is_booking_filled) {
+        if ($category == SendUpdateLogStatusEnum::CPD ||
+            ($category == SendUpdateLogStatusEnum::EF && in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) ||
+            in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])
+        ) {
+            return SendUpdateLogStatusEnum::SU; // Book Update
+        }
+
+        if ((in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) ||
+            (($category == SendUpdateLogStatusEnum::EF) && (! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]))) ||
+            (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) && ($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled))
+        ) {
             return SendUpdateLogStatusEnum::SNBU;
         }
 
@@ -516,25 +535,21 @@ class SendUpdateLogService
                 (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
                 in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
                 ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
-            )) || in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
+            )) || in_array($category, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
         ) {
             return SendUpdateLogStatusEnum::SUC;
         }
 
-        if (in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED])) {
-            return SendUpdateLogStatusEnum::SU; // Book Update
-        }
-
-        return SendUpdateLogStatusEnum::SNBU;
+        return '';
     }
 
-    public function getSendToCustomerValidation($sendUpdateId): string
+    public function getSendToCustomerValidation($data): string
     {
-        $sendUpdate = SendUpdateLogRepository::getLogByid($sendUpdateId);
+        $sendUpdate = SendUpdateLogRepository::getLogByid($data['sendUpdateId']);
 
         $sendUpdateToCustomerValidation = in_array($sendUpdate->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]);
 
-        if ($sendUpdateToCustomerValidation) {
+        if ($sendUpdateToCustomerValidation && $data['action'] == SendUpdateLogStatusEnum::ACTION_SUC) {
             return 'Please note your current action will only send the update to the customer.';
         }
 
@@ -620,9 +635,8 @@ class SendUpdateLogService
             'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
             'commission' => $sendUpdateLog->total_commission,
             'insurer_invoice_date' => $sendUpdateLog->invoice_date,
-            // 'commission_vat' => $sendUpdateLog->vat_on_commission, // Didn't find respective column in send_update_log table
-            // 'commission_without_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
-            // 'policy_due_date' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
+            'discount_value' => $sendUpdateLog->discount,
+            'commission_vat' => $sendUpdateLog->vat_on_commission,
         ];
 
         return $payment->update($sendUpdatePaymentDetails);
@@ -735,6 +749,10 @@ class SendUpdateLogService
                         'quote_batch_id' => null,
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
+                } else {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                    ]);
                 }
                 if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
                     if (! empty($sendUpdateLog->car_addons)) { // will work on Add optional cover.
@@ -767,7 +785,7 @@ class SendUpdateLogService
 
         info('Book Update - Update booked successfully - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
-        return ['status' => true, 'message' => 'Update booked'];
+        return ['status' => true, 'message' => SendUpdateLogStatusEnum::UPDATE_BOOKED];
     }
 
     public function checkSendUpdatePermission($sendUpdateType): bool
@@ -826,14 +844,15 @@ class SendUpdateLogService
      */
     public function isPlanDetailAvailable($sendUpdateLog): bool
     {
-        if (in_array($sendUpdateLog->option?->code, [
-            SendUpdateLogStatusEnum::MDOM,
-            SendUpdateLogStatusEnum::MDOV,
-            SendUpdateLogStatusEnum::MPC,
-            SendUpdateLogStatusEnum::ED,
-            SendUpdateLogStatusEnum::DM,
-            SendUpdateLogStatusEnum::DOV,
-        ])) {
+        if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
+            in_array($sendUpdateLog->option?->code, [
+                SendUpdateLogStatusEnum::MDOM,
+                SendUpdateLogStatusEnum::MDOV,
+                SendUpdateLogStatusEnum::MPC,
+                SendUpdateLogStatusEnum::ED,
+                SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DOV,
+            ])) {
             return false;
         }
 

@@ -135,6 +135,7 @@ const isIntegerColumn = key => {
     :sort-by="'net_conversion'"
     :sort-type="'desc'"
     hide-footer
+    :rows-per-page="100"
   >
     <template #item-customer_name="{ customer_name }">
       {{ customer_name ?? 'N/A' }}
