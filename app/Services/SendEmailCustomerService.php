@@ -757,6 +757,13 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
 
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::DIS_INBOX_EMAIL_BCC)->first();
+            if ($additionalBcc) {
+                $bodyData['bcc'][] = [
+                    'email' => $additionalBcc->value
+                ];
+            }
+
             if ($emailData->advisorEmail) {
                 $bodyData['cc'] = [
                     [
