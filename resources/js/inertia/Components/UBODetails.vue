@@ -224,7 +224,7 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTe
         </AddUBOButtonTemplate>
 
         <div class="flex mb-3 justify-end">
-          <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
+          <x-tooltip v-if="page.props.lockLeadSectionsDetails.member_details" position="bottom">
             <AddUBOButtonReuseTemplate :isDisabled="true"/>
             <template #tooltip>
               This lead is now locked as the policy has been booked. If changes are needed such midterm addition of member, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
@@ -280,7 +280,7 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTe
           </template>
           <template #item-action="item">
             <div class="flex gap-2">
-              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.member_details" position="bottom">
                 <EditUBOButtonReuseTemplate :isDisabled="true" :item="item"/>
                 <template #tooltip>
                   This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
@@ -288,7 +288,7 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTe
               </x-tooltip>
               <EditUBOButtonReuseTemplate v-else :item="item"/>
 
-              <x-tooltip v-if="page.props.lockLeadSectionsDetails.memebr_details" position="bottom">
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.member_details" position="bottom">
                 <DeleteUBOButtonReuseTemplate :isDisabled="true" :item="item"/>
                 <template #tooltip>
                   This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'

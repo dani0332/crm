@@ -391,7 +391,7 @@ class CentralService
             'plan_details' => false,
             'lead_status' => false,
             'lead_details' => false,
-            'memebr_details' => false,
+            'member_details' => false,
             'manage_payment' => false,
         ];
 
@@ -401,7 +401,7 @@ class CentralService
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
-        // Lock functioanlity check for Available Plans, Plan Details and Member Details
+        // Lock functionality check for Available Plans, Plan Details and Member Details
         $quoteStatusForPlansAndMembers = array_merge($quoteStatuses, [
             QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::PolicySentToCustomer,
@@ -411,7 +411,7 @@ class CentralService
         if (in_array($quote->quote_status_id, $quoteStatusForPlansAndMembers)) {
             $lockFunctionalities['plan_selection'] = true;
             $lockFunctionalities['plan_details'] = true;
-            $lockFunctionalities['memebr_details'] = true;
+            $lockFunctionalities['member_details'] = true;
         }
 
         // Lock functionality check for Lead status Section

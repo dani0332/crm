@@ -1952,7 +1952,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
           </AddMemberButtonTemplate>
           <div class="flex flex-wrap gap-3 mb-3 justify-end">
             <x-tooltip
-              v-if="lockLeadSectionsDetails.memebr_details"
+              v-if="lockLeadSectionsDetails.member_details"
               position="bottom"
             >
               <AddMemButtonReuseTemplate :isDisabled="true" />
@@ -2022,7 +2022,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             <template #item-action="item">
               <div class="flex gap-2">
                 <x-tooltip
-                  v-if="lockLeadSectionsDetails.memebr_details"
+                  v-if="lockLeadSectionsDetails.member_details"
                   position="bottom"
                 >
                   <EditMemberButtonReuseTemplate
@@ -2039,7 +2039,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
                 <EditMemberButtonReuseTemplate v-else :item="item" />
 
                 <x-tooltip
-                  v-if="lockLeadSectionsDetails.memebr_details"
+                  v-if="lockLeadSectionsDetails.member_details"
                   position="bottom"
                 >
                   <DeleteMemberButtonReuseTemplate

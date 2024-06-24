@@ -2330,7 +2330,7 @@ watch(
         </AddMemberButtonTemplate>
         <div class="flex mb-3 justify-end">
           <x-tooltip
-            v-if="lockLeadSectionsDetails.memebr_details"
+            v-if="lockLeadSectionsDetails.member_details"
             position="bottom"
           >
             <AddMemButtonReuseTemplate :isDisabled="true" />
@@ -2403,7 +2403,7 @@ watch(
           <template #item-action="item">
             <div class="flex gap-2">
               <x-tooltip
-                v-if="lockLeadSectionsDetails.memebr_details"
+                v-if="lockLeadSectionsDetails.member_details"
                 position="left"
                 align="center"
                 class="yoyo-tip"
@@ -2423,7 +2423,7 @@ watch(
               </x-tooltip>
               <EditMemberButtonReuseTemplate v-else :item="item" />
               <x-tooltip
-                v-if="page.props.lockLeadSectionsDetails.memebr_details"
+                v-if="page.props.lockLeadSectionsDetails.member_details"
                 position="left"
                 align="center"
                 class="yoyo-tip"

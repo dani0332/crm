@@ -207,7 +207,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
           "
         >
           <x-tooltip
-            v-if="page.props.lockLeadSectionsDetails.memebr_details"
+            v-if="page.props.lockLeadSectionsDetails.member_details"
             position="bottom"
           >
             <AddMemButtonReuseTemplate :isDisabled="true" />
@@ -275,7 +275,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
               class="flex gap-2"
             >
               <x-tooltip
-                v-if="page.props.lockLeadSectionsDetails.memebr_details"
+                v-if="page.props.lockLeadSectionsDetails.member_details"
                 position="left"
                 align="top"
               >
@@ -296,7 +296,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
               <EditMemberButtonReuseTemplate v-else :item="item" />
 
               <x-tooltip
-                v-if="page.props.lockLeadSectionsDetails.memebr_details"
+                v-if="page.props.lockLeadSectionsDetails.member_details"
                 position="left"
               >
                 <DeleteMemberButtonReuseTemplate
