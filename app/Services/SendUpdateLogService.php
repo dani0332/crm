@@ -882,7 +882,7 @@ class SendUpdateLogService
         $categoryCode = $sendUpdateLog->category->code;
 
         if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN]) && $optionCode != SendUpdateLogStatusEnum::MPC) {
-            $update = $sendUpdateLog?->option->key;
+            $update = $sendUpdateLog?->option->text;
         } elseif (in_array($categoryCode, [SendUPdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
             $update = quoteStatusCode::POLICY_CANCELLED;
         }
