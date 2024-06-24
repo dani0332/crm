@@ -369,7 +369,7 @@ class SplitPaymentService
         }
     }
 
-    public function createReciept($modelType, $quoteId, $splitPayment, $send_update_id = null)
+    public function createReceipt($modelType, $quoteId, $splitPayment, $send_update_id = null)
     {
         try {
             $quote = $this->getQuoteObject($modelType, $quoteId);

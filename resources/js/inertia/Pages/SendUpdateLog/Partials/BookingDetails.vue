@@ -188,9 +188,9 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.commission ||
     '',
   total_vat_amount: props.bookingDetails?.total_vat_amount || null,
-  price_vat_applicable: props.bookingDetails?.price_vat_applicable || '',
+  price_vat_applicable: props.bookingDetails?.price_vat_applicable || props.sendUpdateLog.price_vat_applicable || '',
   price_vat_not_applicable:
-    props.bookingDetails?.price_vat_not_applicable || '0.00',
+    props.bookingDetails?.price_vat_not_applicable || props.sendUpdateLog.price_vat_not_applicable || '0.00',
   price_with_vat: props.bookingDetails?.price_with_vat || '0.00',
   // new entry section related.
   reversal_invoice: props.bookingDetails?.reversal_invoice || null,
@@ -366,7 +366,7 @@ const selectedInvoice = () => {
 
 function reverseValue(value) {
   if (value === null || value === undefined || value === '') {
-    return '';
+    return 'N/A';
   }
   const numericValue = parseFloat(value.toString().replace(/,/g, ''));
   const reversedValue = -numericValue;
@@ -457,6 +457,18 @@ const sendUpdateValidationURL = computed(() => {
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
 
+const actionButton = computed(() => {
+  if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
+    return sendUpdateStatusEnum.ACTION_SNBU;
+  } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
+    return sendUpdateStatusEnum.ACTION_SUC;
+  } else if (props.updateBtn === sendUpdateStatusEnum.SU) {
+    return sendUpdateStatusEnum.ACTION_SU;
+  }
+
+  return '';
+});
+
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
   axios
@@ -465,6 +477,7 @@ const sendUpdateValidation = () => {
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
       quoteRefId: props.realQuote.id,
+      action: actionButton.value,
     })
     .then(response => {
       if (response.status == 200) {
@@ -476,7 +489,7 @@ const sendUpdateValidation = () => {
           }
         } else {
           modals.sendConfirm = true;
-          isStating.value = response.data.message;
+          isStating.value = response.data?.message;
         }
         loader.sendUpdateSectionBtn = false;
       }
@@ -602,17 +615,6 @@ function sendUpdate(prePaymentCheck = true) {
 const isLoading = ref(false);
 const isNotConfirmed = ref(false);
 
-const actionButton = computed(() => {
-  if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
-    return sendUpdateStatusEnum.ACTION_SNBU;
-  } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
-    return sendUpdateStatusEnum.ACTION_SUC;
-  } else if (props.updateBtn === sendUpdateStatusEnum.SU) {
-    return sendUpdateStatusEnum.ACTION_SU;
-  }
-
-  return '';
-});
 const submitToCustomer = () => {
   if (!modals.isConfirmed) {
     isNotConfirmed.value = true;
@@ -680,6 +682,10 @@ watch(() => props?.payments[0]?.discount_value,
       bookingDetailsForm.discount = newValue;
     },
 );
+
+const isPriceVatNotApplicableEditable = computed(() => {
+  return props.quoteType === quoteTypeCodeEnum.Business || props.quoteType === quoteTypeCodeEnum.Health;
+});
 
 </script>
 
@@ -1401,12 +1407,8 @@ watch(() => props?.payments[0]?.discount_value,
                     </template>
                   </x-tooltip>
                 </div>
-                <div v-if="props.quoteType !== quoteTypeCodeEnum.Business">
-                  <span>{{
-                    bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
-                  }}</span>
-                </div>
-                <div v-else>
+
+                <div v-if="isPriceVatNotApplicableEditable">
                   <x-input
                       type="number"
                       min="0"
@@ -1419,6 +1421,11 @@ watch(() => props?.payments[0]?.discount_value,
                       :rules="[isRequired]"
                       size="xs"
                   />
+                </div>
+                <div v-else>
+                  <span>{{
+                      bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
+                    }}</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
