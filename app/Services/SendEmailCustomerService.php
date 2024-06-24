@@ -923,21 +923,7 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
 
-            $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
-            $ccAdditional = [];
-            if ($customer) {
-                $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
-                foreach ($additionalContacts as $additionalContact) {
-                    if (! empty($additionalContact->value)) {
-                        $ccAdditional[] = [
-                            'email' => $additionalContact->value,
-                            'name' => $emailData->clientFullName,
-                        ];
-                    }
-                }
-            }
-
-            $body['cc'] = array_merge($ccAdditional, $ccAdvisor, $ebServiceTeam);
+            $body['cc'] = array_merge($ccAdvisor, $ebServiceTeam);
 
             // need to discuss this.
             $sendPolicyUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL);
