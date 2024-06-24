@@ -19,6 +19,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class AutomateActivitiesCommand extends Command
 {
@@ -46,6 +47,7 @@ class AutomateActivitiesCommand extends Command
         $quoteTypeDetails = [
             CarQuote::class => [
                 'eligible_for_automate' => false,
+                'quote_type_id' => QuoteTypeId::Car,
             ],
             HomeQuote::class => [
                 'eligible_for_automate' => true,
@@ -59,6 +61,7 @@ class AutomateActivitiesCommand extends Command
             ],
             LifeQuote::class => [
                 'eligible_for_automate' => false,
+                'quote_type_id' => QuoteTypeId::Life,
             ],
             BusinessQuote::class => [
                 'eligible_for_automate' => true,
@@ -67,10 +70,16 @@ class AutomateActivitiesCommand extends Command
             ],
             TravelQuote::class => [
                 'eligible_for_automate' => false,
+                'quote_type_id' => QuoteTypeId::Travel,
             ],
             PersonalQuote::class => [
                 'eligible_for_automate' => true,
                 'multiple_lobs' => true,
+                'quote_type_id' => [
+                    QuoteTypeId::Pet,
+                    QuoteTypeId::Cycle,
+                    QuoteTypeId::Yacht,
+                ],
                 'quote_type_details' => [
                     QuoteTypeId::Pet => [
                         'quote_type_id' => QuoteTypeId::Pet,
@@ -89,12 +98,14 @@ class AutomateActivitiesCommand extends Command
         ];
 
         foreach ($quoteTypeDetails as $quoteClass => $quoteTypeDetail) {
+            DB::enableQueryLog();
+            Activities::whereIn('quote_type_id', $quoteTypeDetail['quote_type_id'])
+                ->where('due_date', '<', Carbon::now())
+                ->where('status', false)
+                ->update(['is_cold' => true]);
 
             info('------------------- Updating Cold Activities for : '.$quoteClass.' -------------------');
-            $quoteClass::whereHas('activities', function ($activityQuery) {
-                $activityQuery->where('due_date', '<', Carbon::now());
-                $activityQuery->where('status', false);
-            })->with(['activities' => function ($activities) {
+            $quoteClass::with(['activities' => function ($activities) {
                 $activities->where('due_date', '<', Carbon::now());
                 $activities->where('status', false);
             }])
@@ -110,13 +121,13 @@ class AutomateActivitiesCommand extends Command
                                 PersonalQuote::where('code', $quoteDetail->code)->update(['is_cold' => true]);
                             }
                         }
-
                     }
                 });
+            $query = DB::getQueryLog();
+            info($query);
             info('------------------- Updated Cold Activities for : '.$quoteClass.' -------------------');
 
             if ($quoteTypeDetail['eligible_for_automate'] == true) {
-
                 info('------------------- Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
                 $quoteClass::whereHas('activities', function ($activityQuery) {
                     $activityQuery->where('due_date', '<', Carbon::now());
