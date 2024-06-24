@@ -20,7 +20,8 @@ class HealthQuotesExport
 
     public function collection()
     {
-        return app(HealthQuoteService::class)->getGridData()->get();
+
+        return app(HealthQuoteService::class)->forExportGridData()->get();
     }
 
     public function headings(): array

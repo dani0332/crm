@@ -363,6 +363,11 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
             $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
         }
+        else{
+            //previous_quote_policy_number is null check
+            $this->query->whereNull('previous_quote_policy_number');
+
+        }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
@@ -1834,5 +1839,94 @@ class HealthQuoteService extends BaseService
         $response = Ken::request('/update-notify-agent', 'POST', $dataArray);
 
         return $response;
+    }
+
+    public function forExportGridData($model = null, $request = null)
+    {
+        $searchProperties = [];
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
+        $isRenewalManager = Auth::user()->isRenewalManager();
+        $isNewManager = Auth::user()->isNewBusinessManager();
+        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
+        if ($model != null) {
+            if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
+                $searchProperties = $model->renewalSearchProperties;
+            } elseif ($isNewManager || $isNewAdvisor) {
+                $searchProperties = $model->newBusinessSearchProperties;
+            } else {
+                $searchProperties = $model->searchProperties;
+            }
+        } else {
+            $searchProperties = $this->fillModelSearchProperties();
+            $request = request();
+        }
+        if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
+            $dateFrom = $this->parseDate($request['created_at'], true);
+            $dateTo = $this->parseDate($request['created_at_end'], true);
+            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
+        }
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
+
+            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
+        }
+        foreach ($searchProperties as $item) {
+            if (! empty($request[$item]) && $item != 'created_at') {
+                if ($request[$item] == 'null') {
+                    $this->query->whereNull($item);
+                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    if ($request[$item][0] == 'null') {
+                        $this->query->whereNull('advisor_id');
+                    } else {
+                        $this->query->whereIn('advisor_id', $request[$item])->orWhereIn('wcu_id', $request[$item]);
+                    }
+                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
+                    $this->query->whereIn('quote_status_id', $request[$item]);
+                } else {
+                    $skipped = ['is_ecommerce', 'is_renewal', 'previous_policy_expiry_date', 'next_followup_date'];
+                    if (in_array($item, $skipped)) {
+                        continue;
+                    }
+                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
+                }
+            }
+        }
+        return $this->query->select(
+            'hqr.code',
+            'hqr.first_name',
+            'hqr.last_name',
+            'qs.text as quote_status_id_text',
+            'u.name as advisor_id_text',
+            'wcu.name as wcu_id_text',
+            'hqr.created_at',
+            'hqr.updated_at',
+            'hqr.health_team_type',
+            'hqrd.transapp_code',
+            'ls.text as lost_reason',
+            'hqr.price_starting_from',
+            'hqr.premium',
+            'hqr.policy_number',
+            'hqr.source',
+            'lt.TEXT AS lead_type_id_text',
+            'sb.text as salary_band_id_text',
+            'mc.text as member_category_id_text',
+            'ins_provider.TEXT as currently_insured_with_id_text',
+            'hqr.is_ecommerce',
+            'hqr.device',
+            'hqr.gender',
+            'n.TEXT AS nationality_id_text',
+            'hqr.dob',
+            'e.TEXT AS emirate_of_your_visa_id_text',
+            DB::raw('IF(EXISTS (
+                SELECT *
+                FROM quote_request_entity_mapping
+                WHERE quote_type_id = '.QuoteTypeId::Health.' AND quote_request_id = hqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+            as customer_type'),
+            'hp.text as health_plan_name_text',
+            'ihp.text as plan_provider_name_text'
+        );
     }
 }
