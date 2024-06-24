@@ -20,6 +20,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\PuaEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -633,6 +634,8 @@ class CRUDController extends Controller
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
                 'is_cold' => $activity->is_cold,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
             ];
             array_push($activities, $updatedActivity);
         }
@@ -655,6 +658,7 @@ class CRUDController extends Controller
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
+        $puaTypeEnum = PuaEnum::asArray();
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
@@ -758,6 +762,7 @@ class CRUDController extends Controller
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
                 'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'isAmlClearedForPayment', 'lockLeadSectionsDetails', 'policyIssuanceStatus', 'documentTypeCodes',
+                'puaTypeEnum',
             ]));
         }
 
@@ -1948,9 +1953,7 @@ class CRUDController extends Controller
      * @param  \App\Models\ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
-    public function destroy()
-    {
-    }
+    public function destroy() {}
 
     private function getCarMakeDropdown()
     {

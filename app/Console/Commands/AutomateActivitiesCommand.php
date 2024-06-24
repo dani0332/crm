@@ -183,6 +183,7 @@ class AutomateActivitiesCommand extends Command
                                         'client_name' => $quoteDetail->first_name.' '.$quoteDetail->last_name,
                                         'client_email' => $quoteDetail->email,
                                         'quote_uuid' => $quoteDetail->uuid,
+                                        'quote_status_id' => $quoteDetail->quote_status_id,
                                         'activity_schedule_id' => $activitySchedules->id,
                                     ]);
                                 }

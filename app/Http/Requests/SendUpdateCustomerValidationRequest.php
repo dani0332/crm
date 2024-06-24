@@ -9,7 +9,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
 use Illuminate\Foundation\Http\FormRequest;
 
-class SendUpdateCustomerRequest extends FormRequest
+class SendUpdateCustomerValidationRequest extends FormRequest
 {
     protected $sendUpdate;
     protected $sendUpdateDocuemnts;
@@ -31,6 +31,7 @@ class SendUpdateCustomerRequest extends FormRequest
     {
         return [
             'sendUpdateId' => 'required|exists:send_update_logs,id',
+            'action' => 'required|string',
         ];
     }
 

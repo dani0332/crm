@@ -122,10 +122,7 @@ const onCancel = () => {
 </script>
 
 <template>
-  <div
-    class="p-4 rounded shadow mb-6 bg-white"
-    v-if="props.sendUpdateLog.category.code !== sendUpdateEnums.CIR"
-  >
+  <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">

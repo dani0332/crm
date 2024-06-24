@@ -668,6 +668,7 @@ class CentralService
                 'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
                 'client_email' => $quoteDetails->email,
                 'quote_uuid' => $quoteDetails->uuid,
+                'quote_status_id' => $quoteDetails->quote_status_id,
                 'activity_schedule_id' => $getActivitySchedule->id,
             ]);
 
