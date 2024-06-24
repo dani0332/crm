@@ -34,7 +34,7 @@ class ActivitiesService extends BaseService
 
     public function getActivityByLeadId($id, $type)
     {
-        return Activities::where('quote_request_id', $id)->where('quote_type_id', $this->getQuoteTypeId($type))->orderBy('created_at', 'desc')->get();
+        return Activities::with(['quoteStatus'])->where('quote_request_id', $id)->where('quote_type_id', $this->getQuoteTypeId($type))->orderBy('created_at', 'desc')->get();
     }
 
     public function getGridData(Request $request)
@@ -126,6 +126,7 @@ class ActivitiesService extends BaseService
         $activity->title = $request->title;
         $activity->created_at = Carbon::now();
         $activity->updated_at = Carbon::now();
+        $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->save();
 
         return $activity;

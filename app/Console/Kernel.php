@@ -3,7 +3,6 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateManualOffline;
-use App\Enums\EnvEnum;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\CarLost\UnconSubmissionReminder;
 use Carbon\Carbon;
@@ -47,7 +46,7 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(2);
+        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
 
         /*$schedule->job(new UnconSubmissionReminder)
             ->tuesdays()
@@ -97,18 +96,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
-
-        if ($this->appEnv == EnvEnum::PRODUCTION) {
-            $schedule->command('alfred:followupEmails')
-                ->timezone('Asia/Dubai')
-                ->weekly()
-                ->mondays()
-                ->at('11:00')
-                ->onOneServer()
-                ->withoutOverlapping();
-        } else {
-            $schedule->command('alfred:followupEmails')->everyFiveMinutes()->onOneServer()->withoutOverlapping(10);
-        }
+        $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
     }
 
     /**
