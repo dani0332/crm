@@ -140,7 +140,7 @@ class ManagementReport
                 }
                 break;
 
-            case ManagementReportCategoriesEnum::ENDORSEMENT_REPORT:
+            case ManagementReportCategoriesEnum::ENDORSEMENT:
                 if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
                     $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
                 } elseif ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {

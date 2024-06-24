@@ -161,7 +161,7 @@ class SaleDetailReportService extends ManagementReport
     {
         return [
             $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
-            $quote->transactions ?? 0,
+            $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ?? 'N/A',
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
             $quote->source ?? 'N/A',

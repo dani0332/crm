@@ -20,7 +20,7 @@ class EndorsementReportService extends ManagementReport
 
     public function getReportData(Request $request)
     {
-        $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ENDORSEMENT_REPORT;
+        $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ENDORSEMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
@@ -78,7 +78,7 @@ class EndorsementReportService extends ManagementReport
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
-            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
+            ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'personal_quotes.quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
@@ -129,7 +129,7 @@ class EndorsementReportService extends ManagementReport
 
         return [
             'paymentDueDate' => $defaultDate,
-            'reportCategory' => ManagementReportCategoriesEnum::ENDORSEMENT_REPORT,
+            'reportCategory' => ManagementReportCategoriesEnum::ENDORSEMENT,
             'reportType' => ManagementReportTypeEnum::BOOKED_POLICIES,
         ];
     }
@@ -173,7 +173,7 @@ class EndorsementReportService extends ManagementReport
     {
         return [
             $quote->policy_number ? '="'.$quote->policy_number.'"' : ('="'.$quote->main_lead_policy_number.'"' ?? 'N/A'),
-            $quote->transactions ?? 0,
+            $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ? $quote->policy_start_date : ($quote->main_lead_policy_start_date ?? 'N/A'),
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
             $quote->price_vat_applicable ?? '0.00',

@@ -33,7 +33,7 @@ class ManagementReportServiceFactory
             $strategy = new TransactionReportService();
         } elseif ($reportCategory == ManagementReportCategoriesEnum::ACTIVE_POLICIES) {
             $strategy = new ActivePoliciesReportService();
-        } elseif ($reportCategory == ManagementReportCategoriesEnum::ENDORSEMENT_REPORT) {
+        } elseif ($reportCategory == ManagementReportCategoriesEnum::ENDORSEMENT) {
             $strategy = new EndorsementReportService();
         } else {
             info('No strategy found for report category : '.$reportCategory);

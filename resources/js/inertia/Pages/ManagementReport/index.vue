@@ -22,7 +22,7 @@ const reportComponents = {
   'Sales Detail': SalesDetail,
   Transaction: Transaction,
   'Sales Summary': SalesSummary,
-  'Endorsement Report': Endorsement,
+  'Endorsement': Endorsement,
 };
 
 const params = useUrlSearchParams('history');
@@ -40,7 +40,7 @@ const filterkeys = () => {
     filters.reportCategory != 'Sales Summary' &&
     filters.reportCategory != 'Sales Detail' &&
     filters.reportCategory != 'Transaction' &&
-    filters.reportCategory != 'Endorsement Report'
+    filters.reportCategory != 'Endorsement'
   ) {
     delete filters.policyBookDate;
     delete filters.paymentDueDate;
@@ -165,12 +165,12 @@ const reportTypes = ref([
   {
     label: 'Booked Policies',
     value: 'Booked Policies',
-    report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement Report'],
+    report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement'],
   },
   {
     label: 'Transaction Payments',
     value: 'Transaction Payments',
-    report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement Report'],
+    report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement'],
   },
   {
     label: 'Expiring Policies',
