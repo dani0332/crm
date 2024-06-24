@@ -939,7 +939,8 @@ class SendUpdateLogService
                 $emailData->policyNewExpiry = $sendUpdateLog->expiry_date ? 'New Expiry Date: '.Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '';
             }
 
-            if (! empty($quote->plan->insuranceProvider->code)) {
+            if (! empty($quote->plan->insuranceProvider->code) && ! in_array($categoryCode, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) &&
+                $optionCode != SendUpdateLogStatusEnum::MPC) {
                 $emailData->roadsideAssistance = constant(('App\Enums\CarRoadsideAssistanceEnum::'.$quote->plan->insuranceProvider->code));
             }
         }
