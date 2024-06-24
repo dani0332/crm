@@ -109,7 +109,7 @@ class LifeQuoteController extends Controller
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'quote_request_id' => $quote->id,
-        ])->with('assignee')->orderBy('created_at', 'desc')->get();
+        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
         $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
@@ -136,6 +136,8 @@ class LifeQuoteController extends Controller
                 'assignee' => $activity->assignee->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
             ];
         }
 

@@ -78,7 +78,7 @@ class PetQuoteService extends BaseService
                 'pqr.customer_id',
                 'pqr.parent_duplicate_quote_id',
                 'pqr.renewal_import_code',
-                'prq.risk_score',
+                'pqr.risk_score',
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', 'pqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqrd.lost_reason_id')

@@ -63,6 +63,7 @@ const isIntegerColumn = key => {
     :sort-by="'net_conversion'"
     :sort-type="'desc'"
     hide-footer
+    :rows-per-page="100"
   >
     <template #item-insurer="{ insurer }">
       {{ insurer ?? 'N/A' }}

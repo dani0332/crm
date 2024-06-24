@@ -64,7 +64,7 @@ class EndingPoliciesReportService extends ManagementReport
             $query->groupBy('personal_quotes.code');
         }
 
-        return $query->simplePaginate(10)->withQueryString();
+        return $query->simplePaginate(100)->withQueryString();
     }
     public function getDefaultFilters()
     {
