@@ -199,6 +199,7 @@ const sendUpdateValidation = () => {
       quoteType: props.quoteType,
       quoteUuid: props.quote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
+      action: sendUpdateStatusEnum.ACTION_SUC,
     })
     .then(response => {
       modals.sendConfirm = true;

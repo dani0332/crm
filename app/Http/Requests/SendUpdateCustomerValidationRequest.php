@@ -31,7 +31,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
     {
         return [
             'sendUpdateId' => 'required|exists:send_update_logs,id',
-            'action' => 'nullable|string',
+            'action' => 'required|string',
         ];
     }
 
