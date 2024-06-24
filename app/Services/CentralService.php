@@ -41,6 +41,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use League\CommonMark\Extension\SmartPunct\Quote;
 use Log;
 
 class CentralService
@@ -386,18 +387,18 @@ class CentralService
     {
         $quote = (object) $quote;
         $lockFunctionalities = [
-            'plan_selection' => true,
-            'plan_details' => true,
-            'lead_status' => true,
-            'lead_details' => true,
-            'memebr_details' => true,
+            'plan_selection' => false,
+            'plan_details' => false,
+            'lead_status' => false,
+            'lead_details' => false,
+            'memebr_details' => false,
             'manage_payment' => false,
         ];
 
         $quoteStatuses = [
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
-            // QuoteStatusEnum::PolicyCancelledReissued,
+            QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
         // Lock functioanlity check for Available Plans, Plan Details and Member Details
@@ -414,7 +415,7 @@ class CentralService
         }
 
         // Lock functionality check for Lead status Section
-        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved]);
+        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined]);
         if (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
             $lockFunctionalities['lead_status'] = true;
         }
