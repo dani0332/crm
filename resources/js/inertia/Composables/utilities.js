@@ -124,11 +124,8 @@ export const useDaysSinceStale = payload =>
 
   if (typeof stale_days === 'number' && stale_days <= 90)
   {
-    if (stale_days == 0)
-    {
-      stale_days += 1
-      return stale_days + ' day';
-    } else if (stale_days == 1)
+    stale_days += 1;
+    if (stale_days == 1)
     {
       return stale_days + ' day';
     } else
@@ -320,7 +317,8 @@ export const maskPhone = mobile_no =>
   return null;
 };
 
-export function getQuoteType(id, returnType = 'code') {
+export function getQuoteType(id, returnType = 'code')
+{
   const types = {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
     2: { code: 'HOM', id: 'home', link: '/quotes' },
@@ -334,12 +332,15 @@ export function getQuoteType(id, returnType = 'code') {
   return types[id] ? types[id][returnType] : '';
 }
 
-export function buildCdbidLink(quote_uuid, quote_type_id) {
-  if (quote_uuid) {
+export function buildCdbidLink(quote_uuid, quote_type_id)
+{
+  if (quote_uuid)
+  {
     const url = `${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${quote_uuid}`;
     const CDBID = `${getQuoteType(quote_type_id, 'code')}-${quote_uuid.toUpperCase()}`;
     return `<a target="_blank" class="text-primary-500 hover:underline flex items-center space-x-1" href="${url}">${CDBID}</a>`;
-  } else {
+  } else
+  {
     return '';
   }
 }
