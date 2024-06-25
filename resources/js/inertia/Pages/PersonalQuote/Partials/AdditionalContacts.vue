@@ -79,11 +79,19 @@ const onAdditionalContactSubmit = isValid => {
     {
       preserveScroll: true,
       onSuccess: () => {
-        modals.addContact = false;
-        notification.success({
-          title: 'Additional Contact Added',
-          position: 'top',
-        });
+          if(res.props.flash.success){
+              modals.addContact = false;
+              notification.success({
+                  title: res.props.flash.success,
+                  position: 'top',
+              });
+          }else{
+              modals.addContact = false;
+              notification.success({
+                  title: 'Additional Contact Added',
+                  position: 'top',
+              });
+          }
       },
       onError: err => {
         notification.error({ title: err.error ?? err.value, position: 'top' });
@@ -228,14 +236,6 @@ const additionalContact = computed(() => {
               @click.prevent="additionalContactPrimary(item)"
             >
               Make Primary
-            </x-button>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="additionalContactDelete(item.id)"
-            >
-              Delete
             </x-button>
           </div>
         </template>
