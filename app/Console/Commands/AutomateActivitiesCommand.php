@@ -98,10 +98,8 @@ class AutomateActivitiesCommand extends Command
 
         foreach ($quoteTypeDetails as $quoteClass => $quoteTypeDetail) {
             info('------------------- ActivitiesAutomate - Updating Cold Activities for : '.$quoteClass.' -------------------');
-            $tableName = (new $quoteClass)->getTable();
             $coldActivitiesCount = 0;
-            Activities::join($tableName, 'activities.quote_request_id', '=', $tableName.'.id')
-                ->where(function ($query) use ($quoteTypeDetail) {
+            Activities::where(function ($query) use ($quoteTypeDetail) {
                     if (is_array($quoteTypeDetail['quote_type_id'])) {
                         $query->whereIn('activities.quote_type_id', $quoteTypeDetail['quote_type_id']);
                     } else {
@@ -111,7 +109,7 @@ class AutomateActivitiesCommand extends Command
                 ->where('due_date', '<', Carbon::now())
                 ->where('status', false)
                 ->where('activities.is_cold', false)    
-                ->select('activities.id', 'quote_request_id', $tableName . '.code')
+                ->select('activities.id', 'quote_request_id')
                 ->chunkById(1000, function ($activities) use ($quoteClass, &$coldActivitiesCount) {
                     $ids = $activities->pluck('id')->toArray();
                     $coldActivitiesCount += count($ids);
@@ -122,7 +120,8 @@ class AutomateActivitiesCommand extends Command
                         $quoteClass::whereIn('id', $quoteIds)->update(['is_cold' => true]);
 
                         if ($quoteClass != PersonalQuote::class) {
-                            $quotesCodes = $activities->pluck('code')->unique()->toArray();
+                
+                            $quotesCodes = $quoteClass::whereIn('id', $quoteIds)->select('code')->get()->toArray();
                             PersonalQuote::whereIn('code', $quotesCodes)->update(['is_cold' => true]);
                         }
                     }
