@@ -887,3 +887,10 @@ if (! function_exists('getAlfredEligibleCustomers')) {
         return null;
     }
 }
+
+if (! function_exists('isValidEmail')) {
+    function isValidEmail($email)
+    {
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+}
