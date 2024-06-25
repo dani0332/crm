@@ -672,13 +672,6 @@ class SagePayloadFactory
             }
         }
 
-        // Additional commission and Tax invoice booking Case
-        // if (in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
-        //     $payLoad = collect($payLoad);
-        //     $payLoad = ($extras['extras']['option_id'] == SendUpdateLogStatusEnum::ATIB) ? $payLoad->first() : $payLoad->last();
-        //     $sageRequestType = ($extras['extras']['option_id'] == SendUpdateLogStatusEnum::ATIB) ? SageEnum::SRT_CREATE_AR_SPPAY_PREM_INV : SageEnum::SRT_CREATE_AR_SPPAY_COMM_INV;
-        // }
-
         return [
             'endPoint' => 'AR/ARInvoiceBatches',
             'payload' => $payLoad,
