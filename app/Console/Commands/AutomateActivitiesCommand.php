@@ -97,8 +97,9 @@ class AutomateActivitiesCommand extends Command
         ];
 
         foreach ($quoteTypeDetails as $quoteClass => $quoteTypeDetail) {
-            info('------------------- Updating Cold Activities for : '.$quoteClass.' -------------------');
+            info('------------------- ActivitiesAutomate - Updating Cold Activities for : '.$quoteClass.' -------------------');
             $tableName = (new $quoteClass)->getTable();
+            $coldActivitiesCount = 0;
             Activities::join($tableName, 'activities.quote_request_id', '=', $tableName.'.id')
                 ->where(function ($query) use ($quoteTypeDetail) {
                     if (is_array($quoteTypeDetail['quote_type_id'])) {
@@ -111,8 +112,9 @@ class AutomateActivitiesCommand extends Command
                 ->where('status', false)
                 ->where('activities.is_cold', false)    
                 ->select('activities.id', 'quote_request_id', $tableName . '.code')
-                ->chunkById(1000, function ($activities) use ($quoteClass) {
+                ->chunkById(1000, function ($activities) use ($quoteClass, &$coldActivitiesCount) {
                     $ids = $activities->pluck('id')->toArray();
+                    $coldActivitiesCount += count($ids);
                     Activities::whereIn('id', $ids)->update(['is_cold' => true]);
 
                     if (in_array($quoteClass, [HealthQuote::class, HomeQuote::class, BusinessQuote::class, PersonalQuote::class])) {
@@ -126,16 +128,17 @@ class AutomateActivitiesCommand extends Command
                     }
                 });
                 
-            info('------------------- Updated Cold Activities for : '.$quoteClass.' -------------------');
+            info('------------------- ActivitiesAutomate - Updated Cold Activities for : ' . $quoteClass . ' - count: ' . $coldActivitiesCount . ' -------------------');
 
             if ($quoteTypeDetail['eligible_for_automate'] == true) {
-                info('------------------- Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
+                info('------------------- ActivitiesAutomate - Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
+                $followupCount = 0;
                 $quoteClass::whereHas('activities', function ($activityQuery) {
                     $activityQuery->where('due_date', '<', Carbon::now());
                     $activityQuery->where('status', true);
                 })
                     ->with('activities')
-                    ->chunkById(1000, function ($quoteDetails) use ($quoteTypeDetail) {
+                    ->chunkById(1000, function ($quoteDetails) use ($quoteTypeDetail, &$followupCount) {
 
                         $activitiesToCreate = [];
                         $advisors = User::with('usersroles', 'teams')
@@ -226,10 +229,11 @@ class AutomateActivitiesCommand extends Command
 
                         // bulk create
                         if(!empty($activitiesToCreate)) {
+                            $followupCount += count($activitiesToCreate);
                             Activities::insert($activitiesToCreate);
                         }
                     });
-                info('------------------- Follow-up Activities created for : '.$quoteClass.' -------------------');
+                info('------------------- Follow-up Activities created for : '.$quoteClass . ' - count: ' . $followupCount . ' -------------------');
             }
         }
         info('------------------- Automate Activities Command Finished At: '.now().' -------------------');
