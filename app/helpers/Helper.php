@@ -888,7 +888,7 @@ if (! function_exists('getAlfredEligibleCustomers')) {
     }
 }
 
-if (!function_exists('isValidEmail')) {
+if (! function_exists('isValidEmail')) {
     function isValidEmail($email)
     {
         return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;

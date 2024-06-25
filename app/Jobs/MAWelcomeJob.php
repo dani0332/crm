@@ -40,7 +40,7 @@ class MAWelcomeJob implements ShouldQueue
 
     public function handle(SendEmailCustomerService $sendEmailCustomerService, SendSmsCustomerService $sendSmsCustomerService)
     {
-        if (! $this->email || !isValidEmail($this->email)) {
+        if (! $this->email || ! isValidEmail($this->email)) {
             info('MAWelcomeJob - Error - Empty/Invalid Customer email.');
 
             return false;
