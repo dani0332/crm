@@ -117,6 +117,7 @@ const transactionPaymentStatus = computed(() => {
   }
 });
 const bpForm = useForm({
+  parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
   booking_date:
     dateToDMYWithTime(page.props.quote?.policy_booking_date) || currentDateTime.value,
   transaction_payment_status: page.props.bookPolicyDetails.transactionPaymentStatus,
@@ -854,6 +855,7 @@ const showInsufficientPaymentAlert = () => {
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
+                    <x-tooltip>
                     <x-button
                       size="sm"
                       class="mt-4 mr-2"
@@ -865,9 +867,13 @@ const showInsufficientPaymentAlert = () => {
                       "
                       @click.prevent="confirmSendPolicy"
                     >
-                    Send Policy To Customer 1
-                    </x-button></template
-                  >
+                    Send Policy To Customer
+                    </x-button>
+                    <template #tooltip>
+                      <span>{{ `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending` }}</span>
+                    </template>
+                  </x-tooltip>
+                  </template>
                   <template v-else>
                     <x-tooltip>
                       <x-button
