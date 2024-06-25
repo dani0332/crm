@@ -536,10 +536,8 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SNBU;
         }
 
-        if (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
-            (
-                ($isPolicyCertOrScheduleUploaded || $requiredDocumentsCheck == 0) && ! $sendUpdateLog->is_booking_filled
-            )) || in_array($category, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
+        if (($category == SendUpdateLogStatusEnum::EF && $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) ||
+            ($isPolicyCertOrScheduleUploaded && ! $sendUpdateLog->is_booking_filled)
         ) {
             return SendUpdateLogStatusEnum::SUC;
         }
