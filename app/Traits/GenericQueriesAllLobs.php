@@ -272,7 +272,7 @@ trait GenericQueriesAllLobs
                         $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
                         $infoMessage .= ' BDS '.$areBookingDetailsFilled;
 
-                        if ($areBookingDetailsFilled && $this->checkMainLead($record, $quoteType)) {
+                        if ($areBookingDetailsFilled && (!$this->checkMainLead($record, $quoteType) || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued)) {
                             $bookPolicyDetails['bookButton'] = true;
                             $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
                             $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
