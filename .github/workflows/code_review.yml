@@ -21,7 +21,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_API_MODEL: 'gpt-4o'
-          exclude: 'yarn.lock, composer.lock, public/build/* dist/**, **/*.json, **/*.md, **/*.yaml, **/*.xml' # Optional: File patterns, separated by commas, to exclude from analysis
+          exclude: 'yarn.lock, composer.lock, public/build/*, dist/**, **/*.json, **/*.md, **/*.yaml, **/*.xml' # Optional: File patterns, separated by commas, to exclude from analysis
           custom_prompts: |
             Act as an expert PHP, Laravel Developer 
             Do not worry about the verbosity of variable names, as long as they are somewhat descriptive.
