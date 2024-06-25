@@ -11,7 +11,7 @@ class AddDashboardPermissionToRole extends Migration
      */
     public function up()
     {
-        $role = DB::table('roles')->where('name', 'ROLE_SM_DASHBOARD')->first();
+        $role = DB::table('roles')->where('name', 'SENIOR_MANAGEMENT')->first();
         $permission = DB::table('permissions')->where('name', 'dashboard-view')->first();
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
