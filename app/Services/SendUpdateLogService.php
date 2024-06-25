@@ -516,6 +516,7 @@ class SendUpdateLogService
         $category = $sendUpdateLog->category->code;
         $option = $sendUpdateLog?->option?->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
+        $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
         // check if required documents not uploaded then show Send Update to Customer.
@@ -528,18 +529,16 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
-        if ((in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) ||
-            (($category == SendUpdateLogStatusEnum::EF) && (! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]))) ||
-            (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) && ($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled))
+        if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::EF]) &&
+            (($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled)) &&
+            ! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])
         ) {
             return SendUpdateLogStatusEnum::SNBU;
         }
 
         if (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
             (
-                (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
-                in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
-                ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
+                ($isPolicyCertOrScheduleUploaded || $requiredDocumentsCheck == 0) && ! $sendUpdateLog->is_booking_filled
             )) || in_array($category, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
         ) {
             return SendUpdateLogStatusEnum::SUC;
