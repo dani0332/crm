@@ -1694,7 +1694,6 @@ watch(
                 v-if="
                   !hasAnyRole([
                     rolesEnum.CarAdvisor,
-                    rolesEnum.CarDeputyManager,
                     rolesEnum.CarManager,
                   ])
                 "

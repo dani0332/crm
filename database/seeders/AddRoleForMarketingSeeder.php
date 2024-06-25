@@ -24,16 +24,6 @@ class AddRoleForMarketingSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-
-            $qaRoleId = Role::where('name', 'QA')->pluck('id');
-            $qaPermissionIds = DB::table('role_has_permissions')->where('role_id', $qaRoleId)->pluck('permission_id');
-
-            foreach ($qaPermissionIds as $id) {
-                DB::table('role_has_permissions')->insert([
-                    'role_id' => $marketingOperations->id,
-                    'permission_id' => $id,
-                ]);
-            }
         }
 
         $lostReasonsCarSold = LostReasons::where('text', 'Car sold')->first();
