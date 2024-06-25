@@ -53,18 +53,6 @@ final class SageEnum extends Enum
     const SRT_RTP_AR_SPPAY_INV = 'RTP_AR_SPPAY_INV';
     const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
 
-    // AR Premium Invoice - Monthly, Quaterly, Semi-Annual, Split, Custom
-    const SRT_CREATE_AR_SPPAY_PREM_INV = 'CREATE_AR_SPPAY_PREM_INV';
-    const SRT_AR_SPPAY_PAY_SCDULE_PATCH_PREM_INV = 'SRT_AR_SPPAY_PAY_SCDULE_PATCH_PREM_INV';
-    const SRT_RTP_AR_SPPAY_PREM_INV = 'RTP_AR_SPPAY_PREM_INV';
-    const SRT_POST_AR_SPPAY_PREM_INV = 'POST_AR_SPPAY_PREM_INV';
-
-    // AR Commission Invoice - Monthly, Quaterly, Semi-Annual, Split, Custom
-    const SRT_CREATE_AR_SPPAY_COMM_INV = 'CREATE_AR_SPPAY_COMM_INV';
-    const SRT_AR_SPPAY_PAY_SCDULE_PATCH_COMM_INV = 'SRT_AR_SPPAY_PAY_SCDULE_PATCH_COMM_INV';
-    const SRT_RTP_AR_SPPAY_COMM_INV = 'RTP_AR_SPPAY_COMM_INV';
-    const SRT_POST_AR_SPPAY_COMM_INV = 'POST_AR_SPPAY_COMM_INV';
-
     // AP Invoices - Upfront
     const SRT_CREATE_AP_PREM_INV = 'CREATE_AP_PREM_INV';
     const SRT_RTP_AP_PREM_INV = 'RTP_AP_PREM_INV';
