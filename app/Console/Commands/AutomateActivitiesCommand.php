@@ -226,7 +226,7 @@ class AutomateActivitiesCommand extends Command
 
                         // bulk create
                         if(!empty($activitiesToCreate)) {
-                            Activities::create($activitiesToCreate);
+                            Activities::insert($activitiesToCreate);
                         }
                     });
                 info('------------------- Follow-up Activities created for : '.$quoteClass.' -------------------');
