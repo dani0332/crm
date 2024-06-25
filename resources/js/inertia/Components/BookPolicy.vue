@@ -315,21 +315,10 @@ const disableCommissionVatApplicable = computed(() => {
     );*/
 });
 const showSendAndBookPolicyButtonBlock = computed(() => {
-  let isPolicyStatusTransactionApproved =
-    props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.TransactionApproved;
+  const { quote_status_id } = props.quote;
+  const { TransactionApproved, PolicyIssued } = page.props.quoteStatusEnum;
 
-  let isPolicyStatusPolicyIssued =
-    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued;
-
-  let isPolicyStatusCancellationPending =
-    props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.CancellationPending;
-  return (
-    isPolicyStatusTransactionApproved ||
-    isPolicyStatusPolicyIssued ||
-    isPolicyStatusCancellationPending
-  );
+  return [TransactionApproved, PolicyIssued].includes(quote_status_id);
 });
 const showSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
