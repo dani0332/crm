@@ -53,14 +53,6 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
-        $extractReport = Permission::where('name', PermissionsEnum::EXTRACT_REPORT)->first();
-        if (! $extractReport) {
-            Permission::create([
-                'name' => PermissionsEnum::EXTRACT_REPORT,
-                'guard_name' => 'web',
-            ]);
-        }
-
         // Book policy permissions & roles
         $bookPolicyPermissions = [
             ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::PRODUCTION],
