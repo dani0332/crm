@@ -271,7 +271,8 @@ trait GenericQueriesAllLobs
                         $bookPolicyDetails['editButton'] = true;
                         $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
                         $infoMessage .= ' BDS '.$areBookingDetailsFilled;
-                        if ($areBookingDetailsFilled) {
+
+                        if ($areBookingDetailsFilled && $this->checkMainLead($record, $quoteType)) {
                             $bookPolicyDetails['bookButton'] = true;
                             $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
                             $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
@@ -590,5 +591,19 @@ trait GenericQueriesAllLobs
             $payment->transaction_payment_status = $paymentStatus;
             $payment->save();
         }
+    }
+
+    private function checkMainLead($quote, $quoteType) {
+        if (!$quote->parent_duplicate_quote_id) {
+            return true;
+        }
+    
+        $parentQuoteCode = count(explode('-', $quote->code)) > 2 ? $quote->parent_duplicate_quote_id : false;
+        if ($parentQuoteCode) {
+            $parentQuote = $this->getQuoteObjectBy($quoteType, $parentQuoteCode, 'code');
+            return $parentQuote && $parentQuote->quote_status_id === QuoteStatusEnum::CancellationPending;
+        }
+
+        return false;
     }
 }
