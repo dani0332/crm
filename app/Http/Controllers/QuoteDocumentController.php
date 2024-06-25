@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Requests\PaymentDocumentRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
+use App\Services\ExportDocumentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
@@ -29,6 +32,7 @@ class QuoteDocumentController extends Controller
     protected $sendEmailCustomerService;
     protected $customerService;
     protected $userService;
+    protected $exportDocumentService;
 
     public function __construct(
         CRUDService $crudService,
@@ -37,14 +41,18 @@ class QuoteDocumentController extends Controller
         SendEmailCustomerService $sendEmailCustomerService,
         CustomerService $customerService,
         UserService $userService,
+        ExportDocumentService $exportDocumentService,
         ApplicationStorageService $applicationStorageService,
     ) {
+        $this->middleware('permission:'.PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON, ['only' => ['createProformaPaymentRequest', 'downloadProformaPaymentRequest']]);
+
         $this->crudService = $crudService;
         $this->activityService = $activityService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->customerService = $customerService;
         $this->userService = $userService;
+        $this->exportDocumentService = $exportDocumentService;
         $this->applicationStorageService = $applicationStorageService;
     }
 
@@ -100,7 +108,8 @@ class QuoteDocumentController extends Controller
 
     public function store($quoteType, QuotesDocumentRequest $request)
     {
-        if (! $request->hasFile('file') ||
+        if (
+            ! $request->hasFile('file') ||
             ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
         ) {
             return false;
@@ -108,15 +117,22 @@ class QuoteDocumentController extends Controller
 
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
 
+        // update quote status - production process
+        $this->updateQuoteStatus($quoteType, $request->quote_id);
+
         return redirect()->back()->with('success', 'File Uploaded');
     }
 
     public function storeMultiple(PaymentDocumentRequest $request, $quoteType)
     {
-        if (! count($request->file) ||
+        if (
+            ! count($request->file) ||
             ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
         ) {
             return false;
+        }
+        if ($request->send_update_id) {
+            $quote = SendUpdateLog::find($request->send_update_id);
         }
         foreach ($request->file as $file) {
             $this->quoteDocumentService->uploadQuoteDocument($file['file'], $request->all(), $quote);
@@ -257,5 +273,35 @@ class QuoteDocumentController extends Controller
         $document->delete();
 
         // return response()->json(['message' => 'Document has been deleted.']);
+    }
+
+    /**
+     * Create Proforma Payment Request PDF.
+     */
+    public function createProformaPaymentRequest(Request $request, $quoteType, $quote)
+    {
+        $response = $this->exportDocumentService->createProformaPaymentRequestPdf($quoteType, $quote, $request);
+
+        if (isset($response['error'])) {
+            return redirect()->back()->with('message', $response['error']);
+        }
+
+        return response()->json(['success' => true, 'proforma_request' => $response]);
+    }
+
+    /**
+     * download Proforma Payment Request PDF.
+     */
+    public function downloadProformaPaymentRequest(QuoteDocument $quoteDocument)
+    {
+        $disk = Storage::disk('azureIM');
+
+        if ($disk->exists($quoteDocument->doc_url)) {
+            $contents = $disk->get($quoteDocument->doc_url);
+
+            return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
+        } else {
+            abort(404);
+        }
     }
 }
