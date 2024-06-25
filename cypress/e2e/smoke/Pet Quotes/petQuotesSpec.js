@@ -102,13 +102,11 @@ describe('Pet qoutes', () => {
         commonPage.getModalAssertion()
         commonPage.getTitleField("Test Title")
         commonPage.getActivityDescriptionField(petData.petData.notes)
-        commonPage.getAsigneeDropdown('Adeel - PET_NEW_BUSINESS_ADVISOR')
         commonPage.getDueDateField()
         commonPage.selectDate('25')
         commonPage.getApplyButton()
         commonPage.getButtonByName('Add Activity')
         // Will continue next whenever the blocker will be resolved.
-
 
     })
 

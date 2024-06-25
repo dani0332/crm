@@ -53,7 +53,7 @@ class GoogleSocialiteController extends Controller
         $requestingUser->last_login = now();
         $requestingUser->save();
 
-        if ($requestingUser->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager, RolesEnum::CarDeputyManager])) {
+        if ($requestingUser->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager])) {
             return redirect()->intended('/quotes/car');
         }
 

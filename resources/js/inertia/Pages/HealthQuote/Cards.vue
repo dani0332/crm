@@ -48,7 +48,6 @@ const isAllowed = computed(() => {
     rolesEnum.RMAdvisor,
     rolesEnum.EBPAdvisor,
     rolesEnum.HealthRenewalAdvisor,
-    rolesEnum.HealthNewBusinessAdvisor,
     rolesEnum.HealthAdvisor,
   ]);
 });
