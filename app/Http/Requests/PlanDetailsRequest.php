@@ -29,15 +29,15 @@ class PlanDetailsRequest extends FormRequest
         ];
 
         if (request()->quoteType == quoteTypeCode::Life) {
-            $rules['price_vat_not_applicable'] = 'required|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/';
+            $rules['price_vat_not_applicable'] = 'required|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/|gt:0'; /*|gt:0  added temporarily*/
         } else {
-            $rules['price_vat_applicable'] = 'required|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/';
+            $rules['price_vat_applicable'] = 'required|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/|gt:0'; /*|gt:0  added temporarily*/
         }
 
         if (request()->quoteType == quoteTypeCode::Business) {
             //for business either price_vat_applicable or price_vat_not_applicable is required, and only one field should have value
-            $rules['price_vat_applicable'] = 'nullable|required_without:price_vat_not_applicable|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/';
-            $rules['price_vat_not_applicable'] = 'nullable|required_without:price_vat_applicable|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/';
+            $rules['price_vat_applicable'] = 'nullable|required_without:price_vat_not_applicable|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/|gt:0'; /*|gt:0  added temporarily*/
+            $rules['price_vat_not_applicable'] = 'nullable|required_without:price_vat_applicable|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/|gt:0'; /*|gt:0  added temporarily*/
         }
 
         return $rules;
