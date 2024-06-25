@@ -318,6 +318,7 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
     public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
     public const ADD_MANUAL_HEALTH_PLAN = 'add-manual-health-plan';
+    public const EXTRACT_REPORT = 'extract-report';
 
     public static function getAdvisorConverionReportPermissions()
     {
