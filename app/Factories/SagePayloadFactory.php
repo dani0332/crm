@@ -125,7 +125,7 @@ class SagePayloadFactory
             ],
         ];
 
-        if (! empty($extras['mainLeadDetails']) && ! in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
+        if (! empty($extras['mainLeadDetails']) && isset($extras['extras']['option_id']) && ! in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
             $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
 
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
@@ -441,7 +441,7 @@ class SagePayloadFactory
             ],
         ];
 
-        if (! empty($extras['mainLeadDetails']) && ! in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
+        if (! empty($extras['mainLeadDetails']) && isset($extras['extras']['option_id']) && ! in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
             $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
             $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
 
@@ -520,7 +520,7 @@ class SagePayloadFactory
         }
 
         // Additional commission and Tax invoice booking Case
-        if (in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
+        if (isset($extras['extras']['option_id']) && in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
             $payLoadInvoice = collect($payLoad['Invoices']);
             $payLoad['Invoices'] = ($extras['extras']['option_id'] == SendUpdateLogStatusEnum::ATIB) ? $payLoadInvoice->forget(1)->toArray() : $payLoadInvoice->forget(0)->values()->toArray();
             $sageRequestType = ($extras['extras']['option_id'] == SendUpdateLogStatusEnum::ATIB) ? SageEnum::SRT_CREATE_AR_PREM_INV : SageEnum::SRT_CREATE_AR_COMM_INV;
@@ -910,7 +910,7 @@ class SagePayloadFactory
         }
 
         // Additional commission and Tax invoice booking Case
-        if (in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
+        if (isset($extras['extras']['option_id']) && in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
             $sageRequestType = ($extras['extras']['option_id'] == SendUpdateLogStatusEnum::ATIB) ? SageEnum::SRT_RTP_AR_PREM_INV : SageEnum::SRT_RTP_AR_COMM_INV;
         }
 
@@ -1009,7 +1009,7 @@ class SagePayloadFactory
         }
 
         // Additional commission and Tax invoice booking Case
-        if (in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
+        if (isset($extras['extras']['option_id']) && in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
             $sageRequestType = ($extras['extras']['option_id'] == SendUpdateLogStatusEnum::ATIB) ? SageEnum::SRT_POST_AR_PREM_INV : SageEnum::SRT_POST_AR_COMM_INV;
         }
 
