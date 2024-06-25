@@ -404,4 +404,11 @@ class SendUpdateLogRepository extends BaseRepository
             ->pluck('payments')
             ->collapse();
     }
+
+    public function fetchGetLogByTaxInvoiceNumber($data)
+    {
+        return $this->where('insurer_tax_invoice_number', $data['taxInvoiceNo'])
+            ->where('quote_uuid', $data['quoteUuid'])
+            ->first() ?? null;
+    }
 }

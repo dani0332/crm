@@ -498,7 +498,12 @@ class SendUpdateLogService
     {
         $payments = $this->getPayments($data['quoteId'], $data['quoteUuid'], $data['quoteType']);
 
-        return collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first();
+        $sendUpdateLog = SendUpdateLogRepository::getLogByTaxInvoiceNumber($data);
+
+        return (object) [
+            'send_update_log' => $sendUpdateLog,
+            'payment' => collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first(),
+        ];
     }
 
     public function getUploadedDocuments($sendUpdateLog): array
@@ -511,6 +516,7 @@ class SendUpdateLogService
         $category = $sendUpdateLog->category->code;
         $option = $sendUpdateLog?->option?->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
+        $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
         if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
@@ -528,19 +534,15 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
-        if ((in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) ||
-            (($category == SendUpdateLogStatusEnum::EF) && (! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]))) ||
-            (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) && ($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled))
+        if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::EF]) &&
+            (($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled)) &&
+            ! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])
         ) {
             return SendUpdateLogStatusEnum::SNBU;
         }
 
-        if (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
-            (
-                (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
-                in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
-                ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
-            )) || in_array($category, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
+        if (($category == SendUpdateLogStatusEnum::EF && $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) ||
+            ($isPolicyCertOrScheduleUploaded && ! $sendUpdateLog->is_booking_filled)
         ) {
             return SendUpdateLogStatusEnum::SUC;
         }

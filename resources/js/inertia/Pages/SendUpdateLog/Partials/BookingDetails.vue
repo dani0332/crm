@@ -436,7 +436,9 @@ const selectedInvoice = () => {
   axios
     .post(url, data)
     .then(response => {
-      updateReversalEntries(response.data);
+      let sendUpdateLog = response.data.send_update_log;
+      let payment = response.data.payment;
+      updateReversalEntries(payment, sendUpdateLog);
     })
     .catch(error => {
       // handle the error
@@ -456,22 +458,22 @@ function reverseValue(value) {
   return reversedValue.toLocaleString('en-US', { minimumFractionDigits: 2 });
 }
 
-function updateReversalEntries(response) {
+function updateReversalEntries(payment, sendUpdateLog) {
   reversalEntry.transaction_payment_status = null;
-  reversalEntry.invoice_date = response.insurer_invoice_date || '';
-  reversalEntry.insurer_tax_invoice_number = (response.insurer_tax_number !== '') ? response.insurer_tax_number + '-REV' : '';
-  reversalEntry.broker_invoice_number = (response.broker_invoice_number !== '') ? response.broker_invoice_number + '-REV' : '';
-  reversalEntry.insurer_commission_invoice_number = (response.insurer_commmission_invoice_number !== '') ? response.insurer_commmission_invoice_number + '-REV' : '';
-  reversalEntry.discount = response.discount_value || null;
-  reversalEntry.price_vat_applicable = response.send_update_log?.price_vat_applicable || response.paymentable?.price_vat_applicable;
-  reversalEntry.commission_percentage = ((response.commmission_percentage !== null) ? response.commmission_percentage : response.send_update_log?.commission_percentage) ?? null;
-  reversalEntry.price_vat_not_applicable = response.send_update_log?.price_vat_not_applicable || response.paymentable?.price_vat_not_applicable;
-  reversalEntry.vat_on_commission = ((response.commission_vat !== null) ? response.commission_vat : response.send_update_log?.vat_on_commission) ?? null;
-  reversalEntry.commission_vat_applicable = response.commission_vat_applicable || null;
-  reversalEntry.total_commission = response.commission || null;
-  reversalEntry.commission_vat_not_applicable = response.commission_vat_not_applicable || null;
-  reversalEntry.total_vat_amount = ((response.total_amount !== null) ? response.total_amount : response.send_update_log?.total_vat_amount) ?? null;
-  reversalEntry.price_with_vat = ((response.total_price !== null && response.total_price > 0) ? response.total_price : response.send_update_log?.price_with_vat) ?? null;
+  reversalEntry.invoice_date = payment.insurer_invoice_date || '';
+  reversalEntry.insurer_tax_invoice_number = (payment.insurer_tax_number !== '') ? payment.insurer_tax_number + '-REV' : '';
+  reversalEntry.broker_invoice_number = (payment.broker_invoice_number !== '') ? payment.broker_invoice_number + '-REV' : '';
+  reversalEntry.insurer_commission_invoice_number = (payment.insurer_commmission_invoice_number !== '') ? payment.insurer_commmission_invoice_number + '-REV' : '';
+  reversalEntry.discount = payment.discount_value || null;
+  reversalEntry.price_vat_applicable = sendUpdateLog?.price_vat_applicable || payment.paymentable?.price_vat_applicable;
+  reversalEntry.commission_percentage = sendUpdateLog?.commission_percentage || payment.commmission_percentage || null;
+  reversalEntry.price_vat_not_applicable = sendUpdateLog?.price_vat_not_applicable || payment.paymentable?.price_vat_not_applicable;
+  reversalEntry.vat_on_commission = ((payment.commission_vat !== null) ? payment.commission_vat : sendUpdateLog?.vat_on_commission) ?? null;
+  reversalEntry.commission_vat_applicable = sendUpdateLog?.commission_vat_applicable || payment.commission_vat_applicable || null;
+  reversalEntry.total_commission = sendUpdateLog?.total_commission || payment.commission || null;
+  reversalEntry.commission_vat_not_applicable = sendUpdateLog?.commission_vat_not_applicable || payment.commission_vat_not_applicable || null;
+  reversalEntry.total_vat_amount = sendUpdateLog?.total_vat_amount || payment.total_amount;
+  reversalEntry.price_with_vat = ((payment.total_price !== null && payment.total_price > 0) ? payment.total_price : sendUpdateLog?.price_with_vat) ?? null;
 }
 
 onMounted(() => {
@@ -1029,7 +1031,7 @@ const isPriceVatNotApplicableEditable = computed(() => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.commission_percentage !== null) ? reverseValue(reversalEntry.commission_percentage) : 'N/A' }}</span>
+                <span>{{ (reversalEntry.commission_percentage !== null) ? reverseValue(reversalEntry.commission_percentage) + '%' : 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
