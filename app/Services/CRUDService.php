@@ -788,6 +788,7 @@ class CRUDService extends BaseService
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
         ])) {
             return true;
         }

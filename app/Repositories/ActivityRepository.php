@@ -31,7 +31,7 @@ class ActivityRepository extends BaseRepository
             array_push($assigneeIds, Auth::user()->id);
         }
 
-        return $this->with(['assignee'])
+        return $this->with(['assignee', 'quoteStatus'])
             ->whereIn('assignee_id', $assigneeIds)
             ->filter()
             ->orderBy('status')
@@ -53,7 +53,7 @@ class ActivityRepository extends BaseRepository
             array_push($assigneeIds, Auth::user()->id);
         }
 
-        return $this->with(['assignee'])
+        return $this->with(['assignee', 'quoteStatus'])
             ->filter()
             ->whereIn('assignee_id', $assigneeIds)
             ->count();
@@ -78,6 +78,7 @@ class ActivityRepository extends BaseRepository
             $activityData['quote_request_id'] = $quote->id;
             $activityData['quote_type_id'] = $quote->quote_type_id;
             $activityData['quote_uuid'] = $quote->uuid;
+            $activityData['quote_status_id'] = $quote->quote_status_id;
         }
 
         return ActivityRepository::create($activityData);

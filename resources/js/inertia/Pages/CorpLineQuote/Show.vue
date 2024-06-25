@@ -1,6 +1,6 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
 const props = defineProps({
@@ -219,13 +219,13 @@ const advisorOptions = computed(() => {
 });
 
 const activityTable = [
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'Title', value: 'title' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee' },
-  { text: 'Action', value: 'action' },
+    { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
+    { text: 'Followup Date', value: 'due_date' },
+    { text: 'Assigned To', value: 'assignee' },
+    { text: 'Done', value: 'status', width: 60, align: 'center' },
+    { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -237,7 +237,7 @@ const activityForm = useForm({
   title: null,
   description: null,
   due_date: null,
-  assignee_id: null,
+  assignee_id: page.props?.auth?.user?.id,
   status: null,
   activity_id: null,
   uuid: null,
@@ -669,7 +669,7 @@ watch(
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-          
+
           </div>
         </template>
         <template #body>
@@ -1122,7 +1122,7 @@ watch(
              />
             </div>
           </div>
-  
+
         </div>
         <div class="flex justify-end">
           <x-button
@@ -1155,7 +1155,7 @@ watch(
       :quoteType="page.props.quoteType"
       :payments="payments"
     />
-    
+
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
