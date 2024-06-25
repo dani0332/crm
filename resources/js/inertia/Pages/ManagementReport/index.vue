@@ -182,14 +182,14 @@ const reportTypes = ref([
 ]);
 
 const cleanFilters = filters => {
-    Object.keys(filters).forEach(
-        key =>
-            (filters[key] === '' ||
-                filters[key] == null ||
-                filters[key].length == 0) &&
-            delete filters[key],
-    );
-    return filters;
+  Object.keys(filters).forEach(
+    key =>
+      (filters[key] === '' ||
+        filters[key] == null ||
+        filters[key].length == 0) &&
+      delete filters[key],
+  );
+  return filters;
 };
 
 watch(
@@ -246,13 +246,13 @@ const onSubmit = isValid => {
   });
 };
 
-const onDataExport = (flag) => {
-    filterkeys();
-    filters.export = flag;
-    filters.page = 1;
-    const data = useGenerateQueryString(filters);
-    const url = route('management-report-export');
-    window.open(url + '?' + useObjToUrl(data));
+const onDataExport = flag => {
+  filterkeys();
+  filters.export = flag;
+  filters.page = 1;
+  const data = useGenerateQueryString(filters);
+  const url = route('management-report-export');
+  window.open(url + '?' + useObjToUrl(data));
 };
 
 function onReset() {
@@ -426,15 +426,26 @@ onMounted(() => {
 
     <div class="flex gap-3 justify-end">
       <x-button
-        v-if="can(permissionsEnum.DATA_EXTRACTION)"
+        v-if="can(permissionsEnum.EXTRACT_REPORT)"
         size="sm"
         color="#48bb78"
         @click.prevent="onDataExport(1)"
-        >
+      >
         Export to Excel
       </x-button>
-      <x-button size="sm" color="#ff5e00" type="submit" :disabled="loaders.table">Search</x-button>
-      <x-button size="sm" color="primary" @click.prevent="onReset" :disabled="loaders.table">
+      <x-button
+        size="sm"
+        color="#ff5e00"
+        type="submit"
+        :disabled="loaders.table"
+        >Search</x-button
+      >
+      <x-button
+        size="sm"
+        color="primary"
+        @click.prevent="onReset"
+        :disabled="loaders.table"
+      >
         Reset
       </x-button>
     </div>
