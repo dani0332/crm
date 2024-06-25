@@ -272,10 +272,12 @@ trait GenericQueriesAllLobs
                         $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
                         $infoMessage .= ' BDS '.$areBookingDetailsFilled;
 
-                        if ($areBookingDetailsFilled && (!$this->checkMainLead($record, $quoteType) || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued)) {
+                        if ($areBookingDetailsFilled) {
                             $bookPolicyDetails['bookButton'] = true;
-                            $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
-                            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
+                            if(!$this->checkMainLead($record, $quoteType)  ||  $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued){
+                                $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
+                                $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
+                            }
                         }
                     }
                 }
@@ -594,8 +596,8 @@ trait GenericQueriesAllLobs
     }
 
     private function checkMainLead($quote, $quoteType) {
-        if (!$quote->parent_duplicate_quote_id) {
-            return true;
+        if ($quote->parent_duplicate_quote_id == null) {
+            return false;
         }
     
         $parentQuoteCode = count(explode('-', $quote->code)) > 2 ? $quote->parent_duplicate_quote_id : false;
