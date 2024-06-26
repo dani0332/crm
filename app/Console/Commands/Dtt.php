@@ -48,7 +48,6 @@ class Dtt extends Command
      */
     public function handle()
     {
-
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             info('DTT is not enabled from cms');
