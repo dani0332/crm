@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\CustomerAdditionalContact;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
@@ -203,13 +204,64 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchChangePrimaryContact($quoteId, $data)
     {
-        return DB::transaction(function () use ($quoteId, $data) {
-            $quote = $this->findOrFail($quoteId);
-            $updateData = [$data['key'] => $data['value']];
-            $quote->update($updateData);
+        //Delete Email to Customer AdditionalContact to Make Primary
+        $removeEmail = CustomerAdditionalContact::where('customer_id', $data['quote_customer_id'])
+            ->where('value', $data['value'])
+            ->where('key', 'email')
+            ->first();
+        if (isset($removeEmail->id)) {
+            DB::table('customer_additional_contact')->where('id', $removeEmail->id)->delete();
+        }
+        //Add Primary Email Again into Customer AdditionalContact
+        $addEmail = $this->where('customer_id', $data['quote_customer_id'])->first();
+        if (isset($addEmail->id)) {
+            if (! str_ends_with($addEmail->email, '@insurancemarket.ae') && ! str_ends_with($addEmail->email, '@afia.ae')) {
+                $isExist = CustomerAdditionalContact::where('key', 'email')
+                    ->where('customer_id', $addEmail->customer_id)
+                    ->where('value', $addEmail->email)
+                    ->exists();
+                if (! $isExist) {
+                    CustomerAdditionalContact::create([
+                        'customer_id' => $addEmail->customer_id,
+                        'key' => 'email',
+                        'value' => $addEmail->email,
+                    ]);
+                }
+            }
+        }
+        //Delete Advisor Emails Like "@insurancemarket.ae" or "@afia.ae"
+        $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $data['quote_customer_id'])
+            ->where('key', 'email')
+            ->where(function ($query) {
+                $query->where('value', 'like', '%@insurancemarket.ae')
+                    ->orWhere('value', 'like', '%@afia.ae');
+            })
+            ->first();
+        if (isset($removeAdvisorEmail->id)) {
+            DB::table('customer_additional_contact')->where('id', $removeAdvisorEmail->id)->delete();
+        }
+        $checkEmailAlreadyPrimary = $this->where('email', $data['value'])
+            ->first();
+        if (isset($checkEmailAlreadyPrimary->id)) {
+            return DB::transaction(function () use ($quoteId, $data, $checkEmailAlreadyPrimary) {
+                $quote = $this->findOrFail($quoteId);
+                $quote->update(['customer_id' => $checkEmailAlreadyPrimary->customer_id]);
+                $updateData = [$data['key'] => $data['value']];
+                $quote->update($updateData);
 
-            return true;
-        });
+                return true;
+            });
+
+        } else {
+            return DB::transaction(function () use ($quoteId, $data) {
+                $quote = $this->findOrFail($quoteId);
+                $updateData = [$data['key'] => $data['value']];
+                $quote->update($updateData);
+
+                return true;
+            });
+        }
+
     }
 
     public function fetchCreateDuplicate(array $dataArr, $quoteTypeId): object

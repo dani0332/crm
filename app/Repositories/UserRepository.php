@@ -38,7 +38,6 @@ class UserRepository extends BaseRepository
                     'r.name',
                     [
                         RolesEnum::CarAdvisor,
-                        RolesEnum::CarDeputyManager,
                     ]
                 );
 
@@ -47,17 +46,13 @@ class UserRepository extends BaseRepository
                     RolesEnum::RMAdvisor,
                     RolesEnum::EBPAdvisor,
                     RolesEnum::HealthRenewalAdvisor,
-                    RolesEnum::HealthNewBusinessAdvisor,
-                    RolesEnum::HealthWCUAdvisor,
                 ]);
 
             case strtolower(quoteTypeCode::Business):
                 $query->whereIn('r.name', [
                     RolesEnum::CorpLineAdvisor,
                     RolesEnum::CorpLineRenewalAdvisor,
-                    RolesEnum::CorpLineNewBusinessAdvisor,
                     RolesEnum::GMRenewalAdvisor,
-                    RolesEnum::GMNewBusinessAdvisor,
                 ]);
 
             default:

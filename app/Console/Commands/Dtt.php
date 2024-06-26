@@ -60,7 +60,8 @@ class Dtt extends Command
 
         $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
-        $excludeSources = [LeadSourceEnum::AFIA_RENEWAL, LeadSourceEnum::AFIA_ENQUIRY, LeadSourceEnum::AQEED_LEAD, LeadSourceEnum::AQEED_RENEWALS, LeadSourceEnum::AQEED_REVIVAL, LeadSourceEnum::ARABIC_ADVISORY, LeadSourceEnum::ARABIC_CALL_DESK, LeadSourceEnum::ARABIC_TELE_MARKETING, LeadSourceEnum::ASD,
+        $excludeSources = [
+            LeadSourceEnum::AFIA_RENEWAL, LeadSourceEnum::AFIA_ENQUIRY, LeadSourceEnum::AQEED_LEAD, LeadSourceEnum::AQEED_RENEWALS, LeadSourceEnum::AQEED_REVIVAL, LeadSourceEnum::ARABIC_ADVISORY, LeadSourceEnum::ARABIC_CALL_DESK, LeadSourceEnum::ARABIC_TELE_MARKETING, LeadSourceEnum::ASD,
             LeadSourceEnum::BDM, LeadSourceEnum::CALL_DESK, LeadSourceEnum::CALL_DESK_WHATSAPP, LeadSourceEnum::CAR_FORM, LeadSourceEnum::CAR_INSURANCE_AE, LeadSourceEnum::CAR_VAULT_AFFINITY_MOTOR, LeadSourceEnum::CORPOLINE_NB, LeadSourceEnum::CROSS_SELL, LeadSourceEnum::DUBAI_NOW,
             LeadSourceEnum::ECOM, LeadSourceEnum::ENQUIRY_FROM_RECEPTION, LeadSourceEnum::EXISTING_CLIENT_NEW_BUSINESS, LeadSourceEnum::HOME_INSURANCEMARKET_AE, LeadSourceEnum::IM_PRIO, LeadSourceEnum::IMCRM, LeadSourceEnum::MEDICAL_LIFE_INSURANCEMARKET_AE, LeadSourceEnum::MOBILE,
             LeadSourceEnum::MOTOR_INQUIRY_INSURANCEMARKET_AE, LeadSourceEnum::MOTOR_INQUIRY_PROTECTMYCAR, LeadSourceEnum::MOTOR_INQUIRY_ZOOM, LeadSourceEnum::PERSONAL_CONTACT, LeadSourceEnum::POSTMAN, LeadSourceEnum::RECYCLED, LeadSourceEnum::REFERRAL, LeadSourceEnum::REFERRAL_FROM_EXISTING_CLIENT,
@@ -71,6 +72,7 @@ class Dtt extends Command
         $jobs = [];
         $logPrefix = 'CarRevivalLeadsCreationJob -';
         $leads = CarQuote::select(
+            'id',
             'uuid',
             'first_name',
             'last_name',

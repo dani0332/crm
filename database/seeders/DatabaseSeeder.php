@@ -82,7 +82,7 @@ class DatabaseSeeder extends Seeder
             MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
             // BusinessTypeInsuranceSeeder::class,
             // MarineSeeder::class,
-
+            ImcrmUsersRolesCleaner::class,
         ]);
     }
 }
