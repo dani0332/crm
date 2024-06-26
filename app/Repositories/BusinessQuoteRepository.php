@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
 use App\Traits\CentralTrait;
+use Illuminate\Support\Facades\DB;
 
 class BusinessQuoteRepository extends BaseRepository
 {
@@ -29,7 +30,7 @@ class BusinessQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($quoteType, $forExport = false)
+    public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false)
     {
         $query = $this->with([
             'businessQuoteRequestDetail.lostReason',
@@ -57,9 +58,13 @@ class BusinessQuoteRepository extends BaseRepository
         )), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
         })
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('created_at', 'desc');
+
+        if ($forTotalLeadsCount) {
+            return $query->count();
+        }
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
@@ -81,6 +86,7 @@ class BusinessQuoteRepository extends BaseRepository
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
                     ]);
                 },
@@ -93,7 +99,7 @@ class BusinessQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                \DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
             ])
             ->firstOrFail();
 

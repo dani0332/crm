@@ -98,7 +98,6 @@ class DropdownSourceService extends BaseService
 
     public function getDropdownSource($type, $quoteTypeId = false)
     {
-        $advisorType = strtoupper(explode('/', request()->path())[1]);
         $data = '';
         $lookUpService = new LookupService();
         switch ($type) {
@@ -185,6 +184,7 @@ class DropdownSourceService extends BaseService
                 $data = YearOfManufacture::select('text as id', 'text')->orderBy('sort_order')->get();
                 break;
             case 'advisor_id':
+                $advisorType = strtoupper(explode('/', request()->path())[1]);
                 if (Auth::user()->isRenewalUser() || Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
                     $advisorType = $advisorType.'_RENEWAL';
                 }
@@ -195,7 +195,7 @@ class DropdownSourceService extends BaseService
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
                         ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                        ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR'])->get();
+                        ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR'])->get();
                 } elseif (strtolower($advisorType) == strtolower(quoteTypeCode::Business)) {
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')

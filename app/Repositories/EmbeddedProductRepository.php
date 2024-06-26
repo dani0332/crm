@@ -21,8 +21,10 @@ use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use finfo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
@@ -417,12 +419,17 @@ class EmbeddedProductRepository extends BaseRepository
     ) {
         $pdf = null;
         $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
+        $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
             $viewFile = $certificatesConfig[$short_code]['view_file'];
-            if ($epMdxV2From &&
-            ! empty($capturedAt) &&
-            Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
+
+            if ($epMdxV3From && ! empty($capturedAt)
+                && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV3From->value))) {
+                $viewFile = $certificatesConfig[$short_code]['view_file_v3'];
+
+            } elseif ($epMdxV2From && ! empty($capturedAt)
+            && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
                 $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
             }
 
@@ -448,7 +455,13 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
-        $dataset = EmbeddedTransaction::with('quoteRequest.customer', 'quoteRequest.carMake', 'quoteRequest.carModel', 'quoteRequest.quoteStatus')
+        $dataset = EmbeddedTransaction::with(
+            'quoteRequest.customer',
+            'quoteRequest.carMake',
+            'quoteRequest.carModel',
+            'quoteRequest.quoteStatus',
+            'quoteRequest.advisor',
+        )
             ->join('embedded_product_options', function ($join) use ($ep) {
                 $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
                     ->where('embedded_product_options.embedded_product_id', $ep->id);
@@ -618,5 +631,69 @@ class EmbeddedProductRepository extends BaseRepository
         $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
 
         return $response;
+    }
+
+    public function fetchCapturePayment($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if ($quoteTypeId !== QuoteTypeId::Car) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+            ['payment_status_id', PaymentStatusEnum::AUTHORISED],
+        ])->with(['quoteRequest', 'product.embeddedProduct' => function ($query) {
+            $query->where('product_category', EpCategoryEnum::BOLT_ON);
+        }])
+            ->get();
+
+        $payload = [];
+        if ($epTransaction->isNotEmpty()) {
+            foreach ($epTransaction as $item) {
+                if (empty($payload)) {
+                    $payload = [
+                        'quoteUID' => $item->quoteRequest->uuid,
+                        'quoteTypeId' => $quoteTypeId,
+                    ];
+                }
+
+                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
+                $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
+                $payload['payments'][] = [
+                    'codeRef' => $item->code.'-'.$sr,
+                ];
+
+                PaymentAction::where('payment_code', $item->code)
+                    ->where('action_type', 'CAPTURE')
+                    ->where('is_fulfilled', 0)
+                    ->where('is_manager_approved', 1)
+                    ->delete();
+
+                PaymentAction::create([
+                    'payment_code' => $item->code,
+                    'action_type' => 'CAPTURE',
+                    'amount' => $item->price_with_vat,
+                    'is_fulfilled' => 0,
+                    'created_by' => auth()->user()->email,
+                    'reason' => 'Payment Captured',
+                    'is_manager_approved' => 1,
+                    'sr_no' => $sr,
+                ]);
+            }
+        }
+
+        if (empty($payload)) {
+            return false;
+        }
+
+        try {
+            Marshall::request('/payment/checkout/capture', 'post', $payload);
+            $this->fetchSendDocumentsByLead($leadId, $modelType);
+        } catch (Exception $e) {
+            Log::error('Capture Payment Error: '.$e->getMessage());
+        }
     }
 }

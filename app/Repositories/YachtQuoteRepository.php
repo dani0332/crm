@@ -22,7 +22,7 @@ class YachtQuoteRepository extends BaseRepository
     }
 
     /**
-     * create new personal quote
+     * create new personal quote.
      *
      * @param  $quoteTypeCode
      * @return mixed
@@ -92,9 +92,10 @@ class YachtQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
                     ]);
                 },
@@ -110,6 +111,9 @@ class YachtQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -130,8 +134,13 @@ class YachtQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
+        $request = request();
+
+        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
+        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
+
         $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
             'quoteStatus',
             'currentlyInsuredWith',
@@ -140,11 +149,17 @@ class YachtQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->orderBy($sort_by, $sort_type);
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        if ($forTotalLeadsCount) {
+            //PD Revert
+            // return $query->count();
+            return 0;
+        }
+
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchExport()

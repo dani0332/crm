@@ -38,6 +38,7 @@ use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
+use App\Services\LeadsCountService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -55,6 +56,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(HealthAllocationService::class, function ($app) {
             return new HealthAllocationService();
+        });
+
+        $this->app->singletonIf(LeadsCountService::class, function ($app) {
+            return new LeadsCountService();
         });
     }
 
@@ -82,7 +87,6 @@ class AppServiceProvider extends ServiceProvider
         CycleQuote::observe(CycleQuoteObserver::class);
         BikeQuote::observe(BikeQuoteObserver::class);
         PersonalQuote::observe(PersonalQuoteObserver::class);
-
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

@@ -28,14 +28,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  selectAll: {
-    type: Boolean,
-    default: false,
-  },
-  deselectAll: {
-    type: Boolean,
-    default: false,
-  },
   maxLimit: {
     type: Number,
     default: 0,
@@ -65,14 +57,14 @@ const selectedValue = computed({
     );
   },
   set(newValue) {
-    const { single, maxLimit, selectAll } = props;
+    const { single, maxLimit } = props;
     if (single) {
       emit('update:modelValue', newValue.value);
       return;
     }
     const values = newValue.map(item => item.value);
 
-    if (maxLimit > 0 && values.length > maxLimit && !selectAll) {
+    if (maxLimit > 0 && values.length > maxLimit) {
       values.splice(0, values.length - maxLimit);
     }
     emit('update:modelValue', values);
@@ -151,6 +143,7 @@ const removeSelected = item => {
           :displayValue="list => list?.label"
           :class="{
             'border-red-500': props.hasError,
+            '!bg-gray-100': props.disabled,
           }"
           class="appearance-none block placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 border shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 focus:outline-sky-500 w-full"
           :placeholder="props.placeholder"
@@ -159,7 +152,7 @@ const removeSelected = item => {
               ? props.options.find(option => option.value === props.modelValue)
                   ?.label
               : `${selectedValue.length} Selected ${
-                  props.maxLimit && !props.selectAll
+                  props.maxLimit
                     ? '| max: ' + props.maxLimit
                     : ''
                 }`
@@ -214,8 +207,11 @@ const removeSelected = item => {
                       : selected,
                   }"
                   class="relative flex items-center whitespace-nowrap px-3 text-sm cursor-pointer py-1.5 hover:bg-primary-50"
+                  :title="item.tooltip"
                 >
-                  <span class="flex-1 truncate py-px">{{ item.label }}</span>
+                  <span class="flex-1 truncate py-px">
+                    {{ item.label }}
+                  </span>
                   <span class="ml-1 shrink-0">
                     <svg
                       v-if="
@@ -237,10 +233,10 @@ const removeSelected = item => {
               </ComboboxOption>
             </div>
           </div>
-          <div v-if="props.selectAll || props.deselectAll" class="p-2">
+          <div class="p-2" v-if="!props.single">
             <div class="flex flex-row justify-between gap-2">
               <x-button
-                v-if="props.selectAll"
+                v-if="!props.maxLimit && props.options.length > 0"
                 size="xs"
                 color="primary"
                 light
@@ -249,7 +245,7 @@ const removeSelected = item => {
                 Select All
               </x-button>
               <x-button
-                v-if="props.deselectAll"
+                v-if="props.modelValue.length > 0"
                 size="xs"
                 color="error"
                 light

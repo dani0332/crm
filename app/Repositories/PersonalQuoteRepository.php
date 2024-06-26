@@ -7,9 +7,12 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\CustomerAdditionalContact;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
+use App\Models\SendUpdateLog;
+use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -26,9 +29,11 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
+     * function renamed from fetchUpdateStatus, because updateStatus named function already in GenericQueriesAllLobs
+     *
      * @return mixed
      */
-    public function fetchUpdateStatus($quoteType, $quoteId, $data)
+    public function fetchUpdateStatuses($quoteType, $quoteId, $data)
     {
         return DB::transaction(function () use ($quoteId, $data) {
             $quote = $this->where('id', $quoteId)->firstOrFail();
@@ -36,6 +41,8 @@ class PersonalQuoteRepository extends BaseRepository
             $previousStatusId = $quote->quote_status_id;
 
             $quoteData['quote_status_id'] = $data['quote_status_id'];
+            $quoteData['quote_status_date'] = now();
+            $quote->stale_at = null;
 
             if (! empty($data['notes'])) {
                 $quoteData['notes'] = $data['notes'];
@@ -43,10 +50,15 @@ class PersonalQuoteRepository extends BaseRepository
 
             $quote->update($quoteData);
 
+            if ($previousStatusId != $data['quote_status_id']) {
+                $quote['previousStatusIdChanged'] = true;
+            }
             $detailData = array_filter(Arr::only($data, ['lost_reason_id', 'transapp_code']));
             if (count($detailData)) {
                 $quote->quoteDetail()->updateOrCreate(['personal_quote_id' => $quote->id], $detailData);
             }
+
+            $activityCreated = (new CentralService())->saveAndAssignActivitesToAdvisor($quote, $quote->quote_type_id);
 
             QuoteStatusLog::create([
                 'quote_type_id' => $quote->quote_type_id,
@@ -57,7 +69,7 @@ class PersonalQuoteRepository extends BaseRepository
                 'updated_at' => Carbon::now(),
             ]);
 
-            return $quote;
+            return ['quote' => $quote, 'activity_created' => $activityCreated];
         });
     }
 
@@ -66,12 +78,22 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
+        $quoteType = '';
         $query = DocumentTypeRepository::where('code', $data['document_type_code']);
         if (request()->quote_type_id) {
             $query->where('quote_type_id', request()->quote_type_id);
         }
+        if (isset(request()->quote_type)) {
+            $quoteType = request()->quote_type;
+        }
+
         $documentType = $query->first();
-        $quote = $this->getQuoteObject(request()->folder_path ?? '', $id);
+
+        if (request()->is_send_update) {
+            $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+        } else {
+            $quote = $this->getQuoteObject($quoteType ?? '', $id);
+        }
 
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
@@ -125,7 +147,10 @@ class PersonalQuoteRepository extends BaseRepository
                 'payment_code' => $paymentData['code'],
             ]);
 
-            $quote->update(['quote_status_id' => QuoteStatusEnum::PaymentPending]);
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PaymentPending,
+                'quote_status_date' => now(),
+            ]);
 
             return $quote;
         });
@@ -192,13 +217,64 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchChangePrimaryContact($quoteId, $data)
     {
-        return DB::transaction(function () use ($quoteId, $data) {
-            $quote = $this->findOrFail($quoteId);
-            $updateData = [$data['key'] => $data['value']];
-            $quote->update($updateData);
+        //Delete Email to Customer AdditionalContact to Make Primary
+        $removeEmail = CustomerAdditionalContact::where('customer_id', $data['quote_customer_id'])
+            ->where('value', $data['value'])
+            ->where('key', 'email')
+            ->first();
+        if (isset($removeEmail->id)) {
+            DB::table('customer_additional_contact')->where('id', $removeEmail->id)->delete();
+        }
+        //Add Primary Email Again into Customer AdditionalContact
+        $addEmail = $this->where('customer_id', $data['quote_customer_id'])->first();
+        if (isset($addEmail->id)) {
+            if (! str_ends_with($addEmail->email, '@insurancemarket.ae') && ! str_ends_with($addEmail->email, '@afia.ae')) {
+                $isExist = CustomerAdditionalContact::where('key', 'email')
+                    ->where('customer_id', $addEmail->customer_id)
+                    ->where('value', $addEmail->email)
+                    ->exists();
+                if (! $isExist) {
+                    CustomerAdditionalContact::create([
+                        'customer_id' => $addEmail->customer_id,
+                        'key' => 'email',
+                        'value' => $addEmail->email,
+                    ]);
+                }
+            }
+        }
+        //Delete Advisor Emails Like "@insurancemarket.ae" or "@afia.ae"
+        $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $data['quote_customer_id'])
+            ->where('key', 'email')
+            ->where(function ($query) {
+                $query->where('value', 'like', '%@insurancemarket.ae')
+                    ->orWhere('value', 'like', '%@afia.ae');
+            })
+            ->first();
+        if (isset($removeAdvisorEmail->id)) {
+            DB::table('customer_additional_contact')->where('id', $removeAdvisorEmail->id)->delete();
+        }
+        $checkEmailAlreadyPrimary = $this->where('email', $data['value'])
+            ->first();
+        if (isset($checkEmailAlreadyPrimary->id)) {
+            return DB::transaction(function () use ($quoteId, $data, $checkEmailAlreadyPrimary) {
+                $quote = $this->findOrFail($quoteId);
+                $quote->update(['customer_id' => $checkEmailAlreadyPrimary->customer_id]);
+                $updateData = [$data['key'] => $data['value']];
+                $quote->update($updateData);
 
-            return true;
-        });
+                return true;
+            });
+
+        } else {
+            return DB::transaction(function () use ($quoteId, $data) {
+                $quote = $this->findOrFail($quoteId);
+                $updateData = [$data['key'] => $data['value']];
+                $quote->update($updateData);
+
+                return true;
+            });
+        }
+
     }
 
     public function fetchCreateDuplicate(array $dataArr, $quoteTypeId): object
@@ -206,5 +282,10 @@ class PersonalQuoteRepository extends BaseRepository
         $dataArr['quoteTypeId'] = intval(array_search($quoteTypeId, QuoteTypeId::getOptions()));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
+    }
+
+    public function fetchGetById($quoteId)
+    {
+        return $this->where('id', $quoteId)->first();
     }
 }

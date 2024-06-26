@@ -18,8 +18,9 @@ enum QuoteTypes: string
     case AMT = 'Amt';
     case PERSONAL = 'Personal';
     case GROUP_MEDICAL = 'Group Medical';
-    case CORPLINE = 'Corpline';
+    case CORPLINE = 'CorpLine';
     case CAR_REVIVAL = 'CarRevival';
+    case CAR_BIKE = 'Car_Bike';
 
     public function id(): string
     {
@@ -79,7 +80,7 @@ enum QuoteTypes: string
             'Pet' => QuoteTypes::PET,
             'Cycle' => QuoteTypes::CYCLE,
             'Jetski' => QuoteTypes::JETSKI,
-            'Corpline' => QuoteTypes::CORPLINE,
+            'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             default => null,
         });

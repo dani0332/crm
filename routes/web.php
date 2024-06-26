@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\EnvEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
@@ -8,19 +9,15 @@ use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
-use App\Http\Controllers\BulkEmailProcessController;
+use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
-use App\Http\Controllers\ClaimController;
-use App\Http\Controllers\ClaimsAttachmentsController;
-use App\Http\Controllers\ClaimsStatusController;
 use App\Http\Controllers\CommercialKeywordsController;
 use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FailedJobsController;
-use App\Http\Controllers\FormController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -33,14 +30,11 @@ use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
-use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\RenewalsUploadController;
-use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SageApi;
 use App\Http\Controllers\StatusController;
-use App\Http\Controllers\SubTypeOfInsuranceController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TmCallStatusController;
 use App\Http\Controllers\TmInsuranceTypeController;
@@ -50,10 +44,11 @@ use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TravelController;
 use App\Http\Controllers\TravelMembersDetailController;
-use App\Http\Controllers\TypeOfInsuranceController;
-use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\Admin\QuadrantController;
+use App\Http\Controllers\V2\Admin\RulesController;
+use App\Http\Controllers\V2\Admin\TierController;
 use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
@@ -71,6 +66,8 @@ use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -121,27 +118,35 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
+
+    Route::post('/reports/fetch-teams-by-lob', [ReportsController::class, 'fetchTeamListByLob']);
+    Route::post('/reports/fetch-advisors-by-lob', [ReportsController::class, 'fetchAdvisorsListByLob']);
+    Route::post('/reports/fetch-subteams-by-team', [ReportsController::class, 'fetchSubTeamListByTeam']);
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
+    Route::post('/reports/fetch-advisor-by-sub-team', [ReportsController::class, 'fetchAdvisorListBySubTeam']);
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
+    Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport'])->name('advisor-conversion-report-view');
+    Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
+
+    Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
 
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
         Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard'])->name('tpl-dashboard-view');
-        Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
-        Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport'])->name('advisor-conversion-report-view');
         Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport'])->name('lead-distribution-report-view');
-        Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
         Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport'])->name('advisor-performance-report-view');
         Route::get('/reports/revival-conversion', [ReportsController::class, 'renderRevivalConversionReport'])->name('revival-conversion-report-view');
         Route::get('/reports/utm-report', [ReportsController::class, 'utmLeadsSaleReport'])->name('utm-leads-sales-report');
         Route::get('/reports/renewal-report', [ReportsController::class, 'renderRenewalReport'])->name('renewal-batch-report');
+        Route::get('/reports/conversion-as-at', [ReportsController::class, 'renderConversionAsAtReport'])->name('conversion-as-at-report');
         Route::get('/reports/management-report', [ReportsController::class, 'renderSaleManagementReport'])->name('management-report');
         Route::get('/reports/total-premium', [ReportsController::class, 'totalPremiumLeadsSaleReport'])->name('total-premium-leads-sales-report');
 
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
         if (in_array(quoteTypeCode::Pet, newUi())) {
+            Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
             Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
         }
         if (in_array(quoteTypeCode::Bike, newUi())) {
@@ -149,9 +154,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         if (in_array(quoteTypeCode::Cycle, newUi())) {
             Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
+            Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
         }
         if (in_array(quoteTypeCode::Yacht, newUi())) {
             Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
+            Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
         }
         if (in_array(quoteTypeCode::Jetski, newUi())) {
             Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
@@ -179,6 +186,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction');
+        Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
+        Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
+        Route::delete('delete-quote-notes/{id}', [CentralController::class, 'deleteQuoteNotes'])->name('delete-quote-notes');
         Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-plan-detail');
         Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-leads-detail-with-email-mobile');
         Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-makes-models');
@@ -193,18 +203,29 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
     });
 
+    Route::group(['middleware' => ['permission:'.PermissionsEnum::DATA_EXTRACTION]], function () {
+        Route::get('/reports/management-report/export', [ReportsController::class, 'exportManagementReport'])->name('management-report-export');
+    });
+
+    Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
+        Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
+    });
+
     Route::get('embedded-products-reports', [EmbeddedProductController::class, 'reportsList'])->name('embedded-products.reports');
     Route::get('embedded-products-reports/{ep}', [EmbeddedProductController::class, 'reportTransactions'])->name('embedded-products.reports.certificates');
     Route::get('embedded-products-reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::resource('legacy-policy', LegacyPolicyController::class);
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
+    Route::get('legacy-policy/{policyNumber}/policy', [LegacyPolicyController::class, 'getPolicyByPolicyNumber'])->name('view-legacy-policy.renewal-uploads');
     Route::post('legacy-policy/get-s3-temp-url', [LegacyPolicyController::class, 'getS3TempUrl']);
 
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
     Route::post('embedded-products/download-document', [EmbeddedProductController::class, 'downloadDocument'])->name('embedded-products.download-document');
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
+
+    Route::post('updateLeadStatusDragDrop', [CentralController::class, 'updateLeadStatusDragDrop'])->name('update-lead-status-drag-drop');
 
     Route::get('/clear-cache', function () {
         if (request()->has('info')) {
@@ -286,6 +307,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('quotes/{quoteType}/{quoteUuId}/send-policy-documents', [QuoteDocumentController::class, 'sendPolicyDocument']);
     Route::get('quotes/{quoteType}/{quoteId}/documents/{documentTypeCode}/get-uploaded', [QuoteDocumentController::class, 'getQuoteDocumentsUploaded']);
     Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
+    Route::get('quotes/{quoteType}/{quote}/proforma-payment-request', [QuoteDocumentController::class, 'createProformaPaymentRequest'])->name('create.proforma.payment.request');
+    Route::get('proforma-payment-request/{quote_document}/download', [QuoteDocumentController::class, 'downloadProformaPaymentRequest'])->name('download.proforma.payment.request');
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
@@ -304,11 +327,18 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
     Route::post('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
     Route::post('/get-users-by-team', [DashboardController::class, 'getUsersByTeam']);
+    Route::post('/get-teams-by-product', [DashboardController::class, 'getTeamsByProduct']);
 
     Route::post('/get-sub-teams-by-team', [DashboardController::class, 'getSubTeamsByTeam'])->name('getSubTeamsByTeams');
     Route::post('/get-users-by-sub-team', [DashboardController::class, 'getUsersBySubTeam']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
+    Route::get('/reports/stale-leads', [ReportsController::class, 'renderStaleLeadsReport'])->name('stale-leads-report');
+    Route::get('/reports/pipeline-report', [ReportsController::class, 'renderPipelineReport'])->name('pipeline-report');
+
+    Route::post('/reports/fetch-advisors-by-team', [ReportsController::class, 'fetchAdvisorsByTeam'])->name('fetch-advisors-by-team');
+    Route::post('/reports/fetch-teams-by-type', [ReportsController::class, 'fetchTeamsbyType'])->name('fetch-teams-by-type');
+
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])
         ->middleware('check_lead_report_access')
         ->name('lead-list-report');
@@ -335,12 +365,21 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('/edit/{carMake}', [CommercialVehicleConfigurationContoller::class, 'edit'])->name('admin.configure.commerical.vehicles.edit');
             Route::post('/update', [CommercialVehicleConfigurationContoller::class, 'update'])->name('admin.configure.commerical.vehicles.update');
         });
+
+        Route::group(['prefix' => 'quote-sync'], function () {
+            Route::middleware('readonly_db')->group(function () {
+                Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
+                Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
+            });
+            Route::get('/edit/{quoteSync}', [QuoteSyncController::class, 'edit'])->name('admin.quotesync.edit');
+            Route::put('/update/{quoteSync}', [QuoteSyncController::class, 'update'])->name('admin.quotesync.update');
+            Route::post('/sync-stuck-entries', [QuoteSyncController::class, 'addStuckEntriesForSyncing'])->name('admin.quotesync.sync-stuck-entries');
+        });
     });
 
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
-
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
@@ -382,7 +421,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
-        Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
+        Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy'])->middleware('permission:'.PermissionsEnum::POLICY_DETAILS_ADD);
         Route::post('{quoteType}/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
         Route::post('{quoteType}/export-car-pdf', [CRUDController::class, 'exportCarPdf'])->name('exportCarPdf');
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
@@ -428,9 +467,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('renewal-batches', RenewalBatchController::class)
             ->names(generateRouteNames('renewal-batches'))
             ->middleware('check_route_access');
-        Route::resource('tier', GenericCrudController::class);
-        Route::resource('quadrant', GenericCrudController::class);
-        Route::resource('rule', GenericCrudController::class);
+        Route::resource('tiers', TierController::class);
+        Route::resource('quadrants', QuadrantController::class);
+        Route::resource('rule', RulesController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });
@@ -460,18 +499,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel'])->name('valuation.carmodeldetail');
     });
 
-    // Scheduled to delete 15th April 2024
-    // Route::group(['prefix' => 'claim'], function () {
-    //     Route::resource('claims', ClaimController::class);
-    //     Route::resource('typeofinsurance', TypeOfInsuranceController::class);
-    //     Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
-    //     Route::resource('claimsstatus', ClaimsStatusController::class);
-    //     Route::resource('carrepaircoverage', CarRepairCoverageController::class);
-    //     Route::resource('carrepairtype', CarRepairTypeController::class);
-    //     Route::resource('rentacar', RentACarController::class);
-    //     Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
-    // });
-
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
@@ -487,6 +514,23 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         //        Route::get('aml/upload/uae', [AMLController::class, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
         //        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
+
+    Route::controller(SendUpdateLogController::class)->prefix('send-update')->name('send-update.')->group(function () {
+        Route::post('get-options', 'getOptions')->name('get-options');
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{uuid}', 'show')->name('show');
+        Route::patch('/update/{id}', 'update')->name('update');
+        Route::post('/save-details', 'savePriceDetails')->name('save-price-details');
+        Route::post('/save-policy-details', 'savePolicyDetails')->name('save-policy-details');
+        Route::post('/save-booking-details', 'saveBookingDetails')->name('save-booking-details');
+        Route::post('/get-reversal-entries', 'getReversalEntries')->name('get-reversal-entries');
+        Route::post('/send-update-customer-validation', 'sendUpdateCustomerValidation')->name('send-update-customer-validation');
+        Route::post('/send-update-to-customer', 'sendUpdateToCustomer')->name('send-update-to-customer');
+        Route::post('book-update', 'sendUpdate')->name('book-update');
+    });
+    Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
+    // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {
@@ -516,7 +560,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/car-model', [AjaxController::class, 'carModelBasedOnCarMake']);
     Route::get('/car-make', [AjaxController::class, 'getCarMake']);
-    Route::get('/getoverdueleads', [ClaimController::class, 'getoverdueleads']);
     Route::get('/getCarModelDetails', [AjaxController::class, 'getCarModelDetails']);
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
@@ -529,21 +572,20 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::post('/{quoteType}/upload-individual-kycdoc', [AjaxController::class, 'uploadKycIndividualDocument']);
     Route::post('/{quoteType}/upload-entity-kycdoc', [AjaxController::class, 'uploadKycEntityDocument']);
-    // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
     Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);
 
     Route::resource('members', MembersDetailController::class);
     Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
-    Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
+    Route::get('/insurance-provider-plans', [CarQuoteController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
     //health plan manual add routes
     Route::get('/network-plans-health', [HealthQuoteController::class, 'plansByNetwork']);
     Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
 
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
-    Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
+    Route::post('/car-plan-manual-update-process', [CarQuoteController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
 
@@ -554,6 +596,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/health-plan-notify-agent', [HealthQuoteController::class, 'healthPlanNotifyAgent']);
 
     Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
+    //bookpolicy routes
+    Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy')->middleware('permission:'.PermissionsEnum::BOOK_POLICY_DETAILS_ADD);
+    Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy')->middleware('permission:'.PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON.'|'.PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON.'|'.PermissionsEnum::BOOK_POLICY_BUTTON);
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);

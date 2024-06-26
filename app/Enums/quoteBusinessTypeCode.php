@@ -20,8 +20,9 @@ final class quoteBusinessTypeCode extends Enum
     const groupTravel = 'Group Travel';
     const proIndemnity = 'Professional Indemnity';
     const carFleet = 'Car Fleet (or Multiple Car Discount Scheme)';
-    const marineCargo = 'Marine Cargo';
+    const marineCargoIndividual = 'Marine Cargo (individual shipment) insurance';
     const marineHull = 'Marine Hull (Yacht, Boat or Vessel)';
+    const marineCargoOpenCover = 'Marine Cargo - Open Cover';
     const businessInterruption = 'Business Interruption or Consequential Loss';
     const machineryBreakdown = 'Machinery Breakdown';
     const erection = 'Erection All Risks';
@@ -38,11 +39,19 @@ final class quoteBusinessTypeCode extends Enum
     const workmens = 'Workmens Compensation & Employers Liability';
     const photographers = 'Photographers Insurance';
     const event = 'Event Insurance';
+    const contractorsRisk = 'Contractors All Risks';
+    const holidayHomes = 'Holiday Homes';
+    const liveStock = 'Livestock Insurance';
+    const moneyInsurance = 'Money Insurance';
+    const smeInsurance = 'SME Insurance';
+    const fidelityGuarantee = 'Fidelity Guarantee';
+    const goodsInTransit = 'Goods In Transit';
 
     public static function getId($value): int
     {
         return match ($value) {
             quoteBusinessTypeCode::groupMedical => 5,
+            quoteBusinessTypeCode::carFleet => 9,
         };
     }
 }

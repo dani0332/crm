@@ -4,12 +4,18 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TeamNameEnum;
+use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
@@ -25,16 +31,25 @@ use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\Request;
 
 class YachtQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -43,11 +58,21 @@ class YachtQuoteController extends Controller
         $personalQuotes = YachtQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::YACHT->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return $value['id'] != QuoteStatusEnum::Lost;
+        })->values();
+
+        //PD Revert
+        // $count = $personalQuotes->count();
+
+        $count = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
 
         return inertia('YachtQuote/Index', [
-            'quotes' => $personalQuotes,
+            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : YachtQuoteRepository::getData(true, true),
         ]);
     }
 
@@ -72,6 +97,8 @@ class YachtQuoteController extends Controller
             vAbort($response->msg);
         }
 
+        event(new LeadsCount(YachtQuoteRepository::getData(true, true)));
+
         return redirect('personal-quotes/yacht/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
@@ -91,12 +118,14 @@ class YachtQuoteController extends Controller
     public function show($uuid)
     {
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
-
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy:id,name,email');
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Yacht);
+
+        $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
@@ -109,7 +138,7 @@ class YachtQuoteController extends Controller
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'quote_request_id' => $quote->id,
-        ])->with('assignee')->orderBy('created_at', 'desc')->get();
+        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
         if (AMLService::checkAMLStatusFailed(QuoteTypes::YACHT->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
@@ -122,15 +151,32 @@ class YachtQuoteController extends Controller
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::YACHT->id(), $quote->id);
         $lookupService = app(LookupService::class);
         $industryType = $lookupService->getCompanyTypes();
+        $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Yacht);
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = $lookupService->getSendUpdateOptions(QuoteTypes::YACHT->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::YACHT->value);
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::YACHT->value, $quote->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::YACHT->value, $quote->payments, $quoteDocuments);
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
-            'quote' => $quote,
+            'quote' => fn () => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
+            'quoteTypeId' => QuoteTypes::YACHT->id(),
             'advisors' => $advisors,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
             'paymentMethods' => $paymentMethods,
@@ -147,11 +193,24 @@ class YachtQuoteController extends Controller
             'nationalities' => $nationalities,
             'industryType' => $industryType,
             'emirates' => $emirates,
+            'noteDocumentType' => $noteDocumentType,
+            'quoteDocuments' => $quoteNotes,
+            'cdnPath' => $cdnPath,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'documentTypeCodes' => $documentTypeCodes,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'bookPolicyDetails' => $bookPolicyDetails,
+            'payments' => $quote->payments->toArray() ?? [],
         ]);
     }
 
@@ -166,5 +225,59 @@ class YachtQuoteController extends Controller
         YachtQuoteRepository::update($uuid, $request->validated());
 
         return redirect('personal-quotes/yacht/'.$uuid)->with('message', 'Quote updated successfully');
+    }
+
+    public function cardsView(Request $request)
+    {
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::NewLead, $request)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::Allocated, $request)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::FollowedUp, $request)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::InNegotiation, $request)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PaymentPending, $request)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PolicyIssued, $request)],
+        ];
+
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        // dd($userTeams);
+        if (array_intersect([TeamNameEnum::YACHT_TEAM], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::Allocated,
+                QuoteStatusEnum::InNegotiation,
+                QuoteStatusEnum::FinalizingTerms,
+            ])->values()->toArray();
+        } elseif (array_intersect([TeamNameEnum::YACHT_RENEWALS], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::NewLead,
+                QuoteStatusEnum::FinalizingTerms,
+                QuoteStatusEnum::InNegotiation, ])->values()->toArray();
+        }
+
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'];
+        }
+
+        $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Yacht);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Yacht);
+
+        return inertia('YachtQuote/Cards', [
+            'quotes' => $quotes,
+            'quoteStatusEnum' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
+            'quoteTypeId' => QuoteTypes::YACHT->id(),
+            'quoteType' => QuoteTypes::YACHT->value,
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : YachtQuoteRepository::getData(true, true),
+        ]);
     }
 }

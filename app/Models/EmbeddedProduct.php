@@ -23,6 +23,8 @@ class EmbeddedProduct extends Model
         'logic_description',
         'company_documents',
         'is_active',
+        'min_age',
+        'max_age',
     ];
     protected $appends = ['canGenerateCerticate'];
 

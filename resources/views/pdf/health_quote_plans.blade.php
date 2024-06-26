@@ -445,7 +445,7 @@
                     $quotePlan->{$benefit} = json_decode(collect(@$quotePlan->benefits->{$benefit})->keyBy('code')->toJson());
                 }
             }
-            $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            $quotePlan->addons = isset($addons[$quotePlan->id]) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
             foreach ($quotePlan->benefits as &$benefit) {
                 $benefit = (object) $benefit;
@@ -603,7 +603,7 @@
                     <td class="{{@$feature['col_class']}}">
                         <p>
                             @if($feature['type'] == 'info')
-                                {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
+                                {!!  isset($plans[$planId]->{$feature['code']}) ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
 
                             @elseif($feature['type'] == 'prop')
                                 {!!  $plans[$planId]->{$feature['code']} !!}

@@ -5,9 +5,15 @@ defineProps({
   can: Object,
   advisors: Object,
   quoteType: String,
+  expanded: {
+    type: Boolean,
+    required: false,
+    default: true
+  }
 });
 
 const notification = useNotifications('toast');
+const compareDueDate = useCompareDueDate;
 
 const page = usePage();
 
@@ -33,12 +39,13 @@ const advisorOptions = computed(() => {
 });
 
 const activityTable = [
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Title', value: 'title' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee.email' },
-  { text: 'Action', value: 'action' },
+    { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
+    { text: 'Followup Date', value: 'due_date' },
+    { text: 'Assigned To', value: 'assignee' },
+    { text: 'Done', value: 'status', width: 60, align: 'center' },
+    { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -48,7 +55,7 @@ const activityForm = useForm({
   title: null,
   description: null,
   due_date: null,
-  assignee_id: null,
+  assignee_id: page.props?.auth?.user?.id,
   status: null,
   activity_id: null,
 });
@@ -144,60 +151,71 @@ const onDeleteConfirmation = () => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        New Lead Activity
-        <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-      </h3>
-      <x-button size="sm" color="orange" @click.prevent="addActivity">
-        Add Activity
-      </x-button>
-    </div>
-    <x-divider class="my-4" />
-
-    <DataTable
-      table-class-name="compact"
-      :headers="activityTable"
-      :items="activities"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="activities.length < 15"
-    >
-      <template #item-status="{ status, id }">
-        <x-checkbox
-          color="emerald"
-          size="xl"
-          :modelValue="status === 1"
-          :disabled="status === 1"
-          @change="onStatusUpdate(id)"
-          :loading="activityLoader"
-        />
-      </template>
-      <template #item-action="item">
-        <div class="space-x-4">
-          <x-button
-            size="xs"
-            color="primary"
-            outlined
-            :disabled="item.status === 1"
-            @click.prevent="onEdit(item)"
-          >
-            Edit
-          </x-button>
-
-          <x-button
-            size="xs"
-            color="error"
-            :disabled="item.status === 1"
-            outlined
-            @click.prevent="confirmDelete(item.id)"
-          >
-            Delete
-          </x-button>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            New Lead Activity
+            <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+          </h3>
         </div>
       </template>
-    </DataTable>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="mb-4 flex justify-end">
+          <x-button size="sm" color="orange" @click.prevent="addActivity">
+            Add Activity
+          </x-button>
+        </div>
+
+        <DataTable
+          table-class-name="compact"
+          :headers="activityTable"
+          :items="activities"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="activities.length < 15"
+        >
+          <template #item-assignee="item">
+            {{ item?.assignee?.name || item?.assignee }}
+          </template>
+          <template #item-status="{ status, id }">
+            <x-checkbox
+              color="emerald"
+              size="xl"
+              :modelValue="status === 1"
+              :disabled="status === 1"
+              @change="onStatusUpdate(id)"
+              :loading="activityLoader"
+            />
+          </template>
+          <template #item-action="item">
+            <div class="space-x-4">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                :disabled="item.status === 1"
+                @click.prevent="onEdit(item)"
+              >
+                Edit
+              </x-button>
+
+              <x-button
+                size="xs"
+                color="error"
+                :disabled="item.status === 1"
+                outlined
+                @click.prevent="confirmDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+      </template>
+    </Collapsible>
     <x-modal v-model="modals.activity" size="lg" show-close backdrop>
       <template #header>
         {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
