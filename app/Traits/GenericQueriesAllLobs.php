@@ -15,6 +15,7 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
@@ -390,6 +391,7 @@ trait GenericQueriesAllLobs
             $payment->total_price = $quoteModel->price_with_vat;
             $payment->save();
             $this->updateTotalAmount($payment);
+            $this->updateChildPaymentStatus($payment);
         }
 
         return $this->isLackingPayment($payment);
@@ -610,5 +612,21 @@ trait GenericQueriesAllLobs
         }
 
         return false;
+    }
+
+    private function updateChildPaymentStatus($payment){
+        $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
+        if (!$paymentSplits->isEmpty()) {
+            foreach($paymentSplits as $paymentSplit){
+                if (!($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)){
+                    if($paymentSplit->collection_amount >= $paymentSplit->payment_amount ){
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                    } else {
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                    }
+                    $paymentSplit->save();
+                }
+            }
+        }
     }
 }
