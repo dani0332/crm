@@ -762,10 +762,10 @@ class SendEmailCustomerService extends BaseService
             if ($additionalBcc) {
                 $bodyData['bcc'][] = [
                     'email' => $additionalBcc->value,
-                    'name' => 'Send Policy Update'
+                    'name' => 'Send Policy Update',
                 ];
             }
-            info('sendBookPolicyDocumentsEmail ---- bcc '. $additionalBcc);
+            info('sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc);
 
             if ($emailData->advisorEmail) {
                 $bodyData['cc'] = [
@@ -775,9 +775,9 @@ class SendEmailCustomerService extends BaseService
                     ],
                 ];
             }
-            
+
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            info('sendBookPolicyDocumentsEmail ---- body '. $body);
+            info('sendBookPolicyDocumentsEmail ---- body '.$body);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(

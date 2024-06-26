@@ -254,7 +254,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
         $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails;
-        $bookPolicyDetails['policyCancelled']= false;
+        $bookPolicyDetails['policyCancelled'] = false;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if (! in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -275,12 +275,12 @@ trait GenericQueriesAllLobs
                         $infoMessage .= ' BDS '.$areBookingDetailsFilled;
 
                         if ($areBookingDetailsFilled) {
-                            if(!$this->checkMainLead($record, $quoteType)  ||  $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued){
+                            if (! $this->checkMainLead($record, $quoteType) || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
                                 $bookPolicyDetails['bookButton'] = true;
                                 $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
                                 $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
                             } else {
-                                $bookPolicyDetails['policyCancelled']= true;
+                                $bookPolicyDetails['policyCancelled'] = true;
                             }
                         }
                     }
@@ -288,7 +288,7 @@ trait GenericQueriesAllLobs
             }
         }
 
-        if($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer){
+        if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
         Log::info($infoMessage);
@@ -603,26 +603,29 @@ trait GenericQueriesAllLobs
         }
     }
 
-    private function checkMainLead($quote, $quoteType) {
+    private function checkMainLead($quote, $quoteType)
+    {
         if ($quote->parent_duplicate_quote_id == null) {
             return false;
         }
-    
+
         $parentQuoteCode = count(explode('-', $quote->code)) > 2 ? $quote->parent_duplicate_quote_id : false;
         if ($parentQuoteCode) {
             $parentQuote = $this->getQuoteObjectBy($quoteType, $parentQuoteCode, 'code');
+
             return $parentQuote && $parentQuote->quote_status_id === QuoteStatusEnum::CancellationPending;
         }
 
         return false;
     }
 
-    private function updateChildPaymentStatus($payment){
+    private function updateChildPaymentStatus($payment)
+    {
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
-        if (!$paymentSplits->isEmpty()) {
-            foreach($paymentSplits as $paymentSplit){
-                if (!($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)){
-                    if($paymentSplit->collection_amount >= $paymentSplit->payment_amount ){
+        if (! $paymentSplits->isEmpty()) {
+            foreach ($paymentSplits as $paymentSplit) {
+                if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
+                    if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
                     } else {
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;

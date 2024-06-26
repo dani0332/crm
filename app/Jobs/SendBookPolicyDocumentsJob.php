@@ -74,11 +74,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
             }
-            if(in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])){
+            if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
                 $emailData->currentInsurer = $quote->plan->insuranceProvider->text ?? '';
             } else {
                 $emailData->currentInsurer = $quote->insuranceProvider->text ?? '';
-            }            
+            }
             $emailData->emailTemplateId = $templateId;
             info('SendBookPolicyDocumentsJobEmailData '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
