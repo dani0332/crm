@@ -348,6 +348,8 @@ final class PermissionsEnum extends Enum
     public const DOCUMENT_DELETE = 'document-delete';
     public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
     public const EXTRACT_REPORT = 'extract-report';
+    public const INPL_USER = 'inpl-user';
+    public const INPL_APPROVER = 'inpl-approver';
 
     public static function getAdvisorConversionReportPermissions()
     {

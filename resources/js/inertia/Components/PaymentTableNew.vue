@@ -206,6 +206,14 @@ const calculateTotalAmount = () => {
   calculatePaymentBreakup(false);
 };
 
+// Define a computed property to deduct insure now pay later
+const isInsureNowPayLaterAllowed = computed(() => {
+  if ( paymentMethodsForm.collection_type = 'broker' && can(permissionEnum.INPL_USER) ) { 
+    return true;
+  }  
+  return false;
+});
+
 const isPolicyIssuanceDiscount = computed(() => {
   if (
     can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
@@ -432,8 +440,11 @@ const validatePaymentOption = () => {
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
       isDocumentNotUploaded.value[i] = false;
       if (
-        (paymentMethodsModels.value[i] ==
-          page.props.paymentMethodsEnum?.BankTransfer ||
+        (
+          paymentMethodsModels.value[i] ==
+            page.props.paymentMethodsEnum?.InsureNowPayLater ||
+          paymentMethodsModels.value[i] ==
+            page.props.paymentMethodsEnum?.BankTransfer ||
           paymentMethodsModels.value[i] ==
             page.props.paymentMethodsEnum?.Cheque ||
           paymentMethodsModels.value[i] ==
@@ -688,11 +699,11 @@ const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
   let excludedPaymentTypes = [
-    page.props.paymentMethodsEnum?.InsureNowPayLater,
+    isInsureNowPayLaterAllowed.value ? null : page.props.paymentMethodsEnum?.InsureNowPayLater,
     page.props.paymentMethodsEnum?.CreditApproval,
     page.props.paymentMethodsEnum?.MultiplePayment,
     page.props.paymentMethodsEnum?.PartialPayment,
-  ];
+  ].filter(Boolean);
   if (paymentMethodsForm.frequency != 'upfront') {
     /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
     excludedPaymentTypes.push(
@@ -773,12 +784,12 @@ const handleApprovalReasonChange = () => {
     paymentTypesFiltered.value = paymentTypes.value;
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
-        ![
-          page.props.paymentMethodsEnum?.InsureNowPayLater,
+        ![          
+          isInsureNowPayLaterAllowed.value ? null : page.props.paymentMethodsEnum?.InsureNowPayLater,
           page.props.paymentMethodsEnum?.ProformaPaymentRequest,
           page.props.paymentMethodsEnum?.MultiplePayment,
           page.props.paymentMethodsEnum?.PartialPayment,
-        ].includes(item.value),
+        ].filter(Boolean).includes(item.value),
     );
     if (paymentMethodsForm.collection_type === 'insurer') {
       if (paymentMethodsForm.frequency === 'upfront') {
