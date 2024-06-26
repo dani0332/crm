@@ -155,7 +155,7 @@
                 27th floor, Control Tower, Motor City, Dubai, United Arab Emirates, PO Box - 26423 | Tel: 800 ALFRED (800 253 733) | insurancemarket.ae
             </h6>
         </h5>
-        <table style="width=100%; font-size: 8px; padding:2px;">
+        <table style="width=100%; font-size: 9px; padding:2px;">
         <tr>
             <td style="width=65%; verticle-align:top">
                 
@@ -167,7 +167,7 @@
             </td>
             @if (!empty($data['advisor_name']))
                 <td style="width=20%; verticle-align:top; text-align:right;">
-                    Insurance Advisor: {{ $data['advisor_name'] }}<br>
+                    Insurer Advisor: {{ $data['advisor_name'] }}<br>
                     Email: {{ $data['advisor_email'] }}<br>
                     Mobile Number: {{ $data['advisor_mobile_no'] }}<br>
                     Direct Line: {{ $data['advisor_landline_no'] }}<br>
