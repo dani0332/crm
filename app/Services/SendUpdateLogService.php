@@ -878,6 +878,7 @@ class SendUpdateLogService
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
         $quoteModel = $this->getModelObject($quoteType);
         $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
+        $insuranceProviderText = $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
 
@@ -922,7 +923,7 @@ class SendUpdateLogService
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
             'policyNumber' => $quote->policy_number,
             'carQuoteId' => $sendUpdateLog->code,
-            'currentInsurer' => $quote->plan->insuranceProvider->text ?? '',
+            'currentInsurer' => $insuranceProviderText,
             'policyUpdate' => $update ?? '',
             'customerEmail' => $quote->email,
             'advisor' => (object) [
