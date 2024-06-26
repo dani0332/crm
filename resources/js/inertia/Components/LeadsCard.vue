@@ -246,7 +246,6 @@ watch(
         <x-icon icon="box" class="text-secondary-600 mb-2" />
         <p>No Leads Found</p>
       </div>
-      <!--        quote.title.split(' ').join('')-->
       <leads-card-item
         :title="
           quote.title

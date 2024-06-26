@@ -16,6 +16,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
@@ -83,7 +84,7 @@ class SplitPaymentService
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
         $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
 
-        $sageLogArray = $splitPayment->sageLog->keyBy('step')->toArray();
+        $sageLogArray = $splitPayment->sageApiLogs->keyBy('step')->toArray();
 
         $sageApiService = new SageApiService();
         $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray);
@@ -93,6 +94,11 @@ class SplitPaymentService
             return $returnMessage;
         }
         $request->merge(['sage_customer_number' => $sageCustomerNumber]);
+
+        // check if the payment is the first child payment than add the discount to the sage request for prepayment of sage to balance the amounts
+        if ($splitPayment->sr_no == 1) {
+            $request->merge(['discount' => $splitPayment->payment->discount_value]);
+        }
         // create prepayment reciept
         $isLiveApiCallStep2 = true;
         if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {
@@ -110,19 +116,20 @@ class SplitPaymentService
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4);
             }
             $isLiveApiCallStep3 = true;
-            if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == 'success') {
-                $isLiveApiCallStep3 = false;
-                $readyToPostResponse = json_decode($sageLogArray[3]['response'], true);
-            } else {
-                $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
-                $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
-            }
+            // make ready to post to sage,cannot use log data as it changes on each call
+            $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
+            $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
 
             if ($readyToPostResponse !== '') {
-                $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
-                $returnMessage['response'] = 'Error while making ready to post to sage';
+                $readyToPostArray = json_decode($readyToPostResponse, true);
+                if (isset($readyToPostArray['error']['message']['value']) && ! strpos($readyToPostArray['error']['message']['value'], 'status from POSTED')) {
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
+                    $returnMessage['response'] = 'Error while making ready to post to sage';
 
-                return $returnMessage;
+                    return $returnMessage;
+                } else {
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4);
+                }
             } else {
                 if ($isLiveApiCallStep3) {
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4);
@@ -362,26 +369,41 @@ class SplitPaymentService
         }
     }
 
-    public function createReciept($modelType, $quoteId, $splitPayment)
+    public function createReceipt($modelType, $quoteId, $splitPayment, $send_update_id = null)
     {
         try {
             $quote = $this->getQuoteObject($modelType, $quoteId);
             $quote->load(['customer']);
+            $quote->load(['advisor']);
+
             $data = [];
             $data['order_amount'] = number_format($splitPayment->collection_amount, 2, '.', ',');
             $data['payment_split_id'] = $splitPayment->id;
 
-            $data['customer_name'] = $quote->customer->first_name.' '.$quote->customer->last_name;
+            if (! empty($quote->first_name)) {
+                $data['customer_name'] = $quote->first_name.' '.$quote->last_name;
+            } else {
+                $data['customer_name'] = $quote->customer->first_name.' '.$quote->customer->last_name;
+            }
+
+            // get the advisor details
+            $data['advisor_name'] = $quote->advisor->name ?? '';
+            $data['advisor_email'] = $quote->advisor->email ?? '';
+            $data['advisor_mobile_no'] = $quote->advisor->mobile_no ?? '';
+            $data['advisor_landline_no'] = $quote->advisor->landline_no ?? '';
+            $data['profile_photo_path'] = $quote->advisor->profile_photo_path ?? '';
+
             $data['receipt_number'] = $splitPayment->code;
             $data['order_number'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             $data['pdf_filename'] = $splitPayment->code.'-'.$splitPayment->sr_no;
-            // get today date
-            $data['captured_at'] = date('Y-m-d', time());
-            if ($splitPayment->captured_at != null) {
-                $data['captured_at'] = date('Y-m-d', strtotime($splitPayment->captured_at));
-            }
+            // get verified at date
+            $data['order_at'] = date(config('constants.RECEIPT_ORDER_DATE'), strtotime($splitPayment->verified_at));
 
-            $data['order_at'] = $splitPayment->created_at;
+            $orderDateFormat = config('constants.DATE_DISPLAY_FORMAT');
+            $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->verified_at));
+            if ($splitPayment->captured_at != null) {
+                $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->captured_at));
+            }
 
             if ($modelType == QuoteTypes::BUSINESS->value || $modelType == QuoteTypes::GROUP_MEDICAL->value
             || $modelType == QuoteTypes::HOME->value) {
@@ -409,31 +431,34 @@ class SplitPaymentService
                 $data['type_of_insurance'] = $modelType.' Insurance';
             }
 
-            $documentType = DocumentTypeCode::CPD; // default car
+            $documentType = DocumentTypeCode::CPD_RECEIPT; // default car
             if ($modelType == QuoteTypes::HOME->value) {
-                $documentType = DocumentTypeCode::HOMPD;
+                $documentType = DocumentTypeCode::HOMPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::HEALTH->value) {
-                $documentType = DocumentTypeCode::HPD;
+                $documentType = DocumentTypeCode::HPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::LIFE->value) {
-                $documentType = DocumentTypeCode::LPD;
+                $documentType = DocumentTypeCode::LPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::BUSINESS->value) {
-                $documentType = DocumentTypeCode::CLPD;
+                $documentType = DocumentTypeCode::CLPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::BIKE->value) {
-                $documentType = DocumentTypeCode::BPD;
+                $documentType = DocumentTypeCode::BPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::YACHT->value) {
-                $documentType = DocumentTypeCode::YPD;
+                $documentType = DocumentTypeCode::YPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::TRAVEL->value) {
-                $documentType = DocumentTypeCode::TPD;
+                $documentType = DocumentTypeCode::TPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::PET->value) {
-                $documentType = DocumentTypeCode::PPD;
+                $documentType = DocumentTypeCode::PPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::CYCLE->value) {
-                $documentType = DocumentTypeCode::CYCPD;
+                $documentType = DocumentTypeCode::CYCPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::GROUP_MEDICAL->value) {
-                $documentType = DocumentTypeCode::GMQPD;
+                $documentType = DocumentTypeCode::GMQPD_RECEIPT;
             }
 
             $data['document_type_code'] = $documentType;
             $data['quote_uuid'] = $quote->uuid;
+            if ($send_update_id) {
+                $quote = SendUpdateLog::find($send_update_id);
+            }
 
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');

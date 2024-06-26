@@ -37,7 +37,7 @@ class ReportsController extends Controller
 
     public function __construct()
     {
-        $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConverionReportPermissions());
+        $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConversionReportPermissions());
         $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
 
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
@@ -465,6 +465,19 @@ class ReportsController extends Controller
             'defaultFilters' => $reportInstance->getDefaultFilters(),
             'reportName' => $reportCategory,
         ]);
+    }
+
+    /**
+     * export method for management reports.
+     *
+     * @return void
+     */
+    public function exportManagementReport(Request $request)
+    {
+        $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
+        $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+
+        return $reportInstance->getReportData($request);
     }
 
     public function totalPremiumLeadsSaleReport(Request $request, ReportService $reportService)
