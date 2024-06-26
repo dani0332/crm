@@ -282,7 +282,7 @@ class AMTController extends Controller
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['RM_ADVISOR', 'GM_ADVISOR', 'HEALTH_WCU_ADVISOR'])
+            ->whereIn('r.name', ['RM_ADVISOR', 'GM_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
 
         if ($selectedLeadStatus != '') {

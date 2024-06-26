@@ -21,11 +21,13 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
-  price_vat_applicable: props.quote?.price_vat_applicable ?? 0, // price vat applicable
-  price_vat_not_applicable: props.quote?.price_vat_not_applicable ?? 0, //price vat not applicable
+  price_vat_applicable:
+    props.quote?.price_vat_applicable ?? null /* temperate setting null */, // price vat applicable
+  price_vat_not_applicable:
+    props.quote?.price_vat_not_applicable ?? null /* temperate setting null */, //price vat not applicable
   price_with_vat: props.quote.price_with_vat
     ? useFormatPrice(props.quote.price_with_vat, true)
-    : 0,
+    : null /* temperate setting null */,
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
 });
 
@@ -85,11 +87,20 @@ const submitPlanDetailsForm = isValid => {
     preserveScroll: true,
     onError: errors => {
       formProcessing.value = false;
-      planDetailsForm.setError(errors);
-
-      notification.error({
-        title: errors.error || 'Something went wrong',
-        position: 'top',
+      Object.keys(errors).forEach(function (key) {
+        planDetailsForm.setError(key, errors[key]);
+      });
+      if (errors.error) {
+        notification.error({
+          title: errors.error,
+          position: 'top',
+        });
+      }
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
       });
     },
     onSuccess: () => {
@@ -103,7 +114,7 @@ const submitPlanDetailsForm = isValid => {
 };
 
 const updatePriceWithVat = () => {
-  planDetailsForm.price_with_vat = 0;
+  planDetailsForm.price_with_vat = ''; /* temperate setting empty */
 
   let priceVatApp = parseFloat(
     planDetailsForm.price_vat_applicable !== null &&
@@ -209,6 +220,7 @@ const permissionEnum = page.props.permissionsEnum;
                   ]
                 : []
             "
+            :error="planDetailsForm.errors.price_vat_not_applicable"
             :disabled="
               props.quoteType != quoteTypeCodeEnum.Life &&
               props.quoteType != quoteTypeCodeEnum.Business

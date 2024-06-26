@@ -47,7 +47,7 @@ class CustomersImport implements OnEachRow
 
         $email = $row[1];
 
-        if ($email != null) {
+        if ($email != null && isValidEmail($email)) {
             $customerId = 0;
             $myalfredExpiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
             $customerName = explode(' ', $row[0], 2);

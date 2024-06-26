@@ -270,7 +270,8 @@ function onLobChange(updateDisplayFilter = true) {
   }
 
   if (
-    quote && quote.toLowerCase() == props.quoteTypeCodes.CORPLINE.toLowerCase() ||
+    (quote &&
+      quote.toLowerCase() == props.quoteTypeCodes.CORPLINE.toLowerCase()) ||
     quote == props.quoteTypeCodes.GroupMedical.replace(/ /g, '')
   ) {
     displayBy.value.push({ label: 'Sub Team', value: 'sub_team' });
@@ -370,7 +371,7 @@ const minDate = computed(() => {
             Reset
           </x-button>
           <x-button
-            v-if="can(permissionsEnum.DATA_EXTRACTION)"
+            v-if="can(permissionsEnum.EXTRACT_REPORT)"
             size="sm"
             color="gray"
             :loading="exportLoader"

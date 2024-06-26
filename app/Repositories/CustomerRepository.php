@@ -196,10 +196,32 @@ class CustomerRepository extends BaseRepository
      */
     public function fetchStoreAdditionalContact($customerId, $data)
     {
-        $customer = $this->findOrFail($customerId);
-        $customer->additionalContactInfo()->create($data);
+        if ($data['key'] === GenericRequestEnum::EMAIL) {
+            $isExistEmail = CustomerAdditionalContact::where('customer_id', $customerId)
+                ->where('value', $data['value'])->where('key', 'email')->first();
 
-        return $customer;
+            if ($isExistEmail) {
+                return back()->with('success', 'Email Address already Exist. Please try another.');
+            }
+
+            $customer = $this->findOrFail($customerId);
+            $customer->additionalContactInfo()->create($data);
+
+            return $customer;
+        } elseif ($data['key'] === GenericRequestEnum::MOBILE_NO) {
+            $isExistMobile = CustomerAdditionalContact::where('customer_id', $customerId)
+                ->where('value', $data['value'])->where('key', 'mobile_no')->first();
+
+            if ($isExistMobile) {
+                return back()->with('success', 'Mobile Number already Exist. Please try another.');
+            }
+
+            $customer = $this->findOrFail($customerId);
+            $customer->additionalContactInfo()->create($data);
+
+            return $customer;
+        }
+
     }
 
     public function fetchGetAdditionalContacts($customerId, $quoteMobileNo)

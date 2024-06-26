@@ -25,16 +25,6 @@ const props = defineProps({
     required: false,
     default: true,
   },
-  expanded: {
-    type: Boolean,
-    required: false,
-    default: true,
-  },
-  hasChildLead: {
-    type: Boolean,
-    required: false,
-    default: false,
-  },
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -213,67 +203,47 @@ const additionalContactDeleteConfirmed = () => {
 </script>
 
 <template>
-  <div>
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="expanded">
-        <template #header>
-          <div class="flex flex-wrap gap-3 justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Customer Additional Contacts
-              <x-tag size="sm">{{ contacts.length || 0  }}</x-tag>
-            </h3>
-          </div>
+  <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+    <h3 class="font-semibold text-primary-800 text-lg">
+      Customer Additional Contacts
+      <x-tag size="sm">{{ contacts.length || 0 }}</x-tag>
+    </h3>
+    <template #content>
+      <x-divider class="mb-4 mt-1" />
+      <div class="flex justify-end gap-4 items-center mb-4">
+        <x-button
+          size="sm"
+          color="orange"
+          @click.prevent="addAdditionalContact"
+        >
+          Add Additional Contacts
+        </x-button>
+      </div>
+      <DataTable
+        table-class-name="compact"
+        :headers="additionalContactTable"
+        :items="contacts || []"
+        border-cell
+        hide-rows-per-page
+        hide-footer
+      >
+        <template #item-key="{ key }">
+          <span v-if="key === 'email'"> Email Address </span>
+          <span v-else> Mobile Number </span>
         </template>
-        <template #body>
-          <div  class="flex my-4 justify-end">
+        <template #item-action="item">
+          <div class="space-x-4">
             <x-button
-              v-if="!hasChildLead"
-              size="sm"
-              color="orange"
-              @click.prevent="addAdditionalContact"
+              size="xs"
+              color="emerald"
+              outlined
+              @click.prevent="additionalContactPrimary(item)"
             >
-              Add Additional Contacts
+              Make Primary
             </x-button>
           </div>
-
-          <DataTable
-            table-class-name="compact"
-            :headers="additionalContactTable"
-            :items="contacts || []"
-            border-cell
-            hide-rows-per-page
-            hide-footer
-          >
-            <template #item-key="{ key }">
-              <span v-if="key === 'email'"> Email Address </span>
-              <span v-else> Mobile Number </span>
-            </template>
-            <template #item-action="item">
-              <div class="space-x-4">
-                <x-button
-                  v-if="!hasChildLead"
-                  size="xs"
-                  color="emerald"
-                  outlined
-                  @click.prevent="additionalContactPrimary(item)"
-                >
-                  Make Primary
-                </x-button>
-                <x-button
-                  v-if="canDelete"
-                  size="xs"
-                  color="error"
-                  outlined
-                  :disabled="hasChildLead"
-                  @click.prevent="additionalContactDelete(item.id)"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
         </template>
-      </Collapsible>
+      </DataTable>
 
       <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
         <template #header> Add Additional Contacts </template>
@@ -407,6 +377,6 @@ const additionalContactDeleteConfirmed = () => {
           </div>
         </template>
       </x-modal>
-    </div>
-  </div>
+    </template>
+  </x-collapse>
 </template>
