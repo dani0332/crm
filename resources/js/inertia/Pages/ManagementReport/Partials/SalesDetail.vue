@@ -164,6 +164,7 @@ const isIntegerColumn = key => {
     :sort-by="'net_conversion'"
     :sort-type="'desc'"
     hide-footer
+    :rows-per-page="100"
   >
     <template #item-policy_number="{ policy_number }">
       {{ policy_number }}

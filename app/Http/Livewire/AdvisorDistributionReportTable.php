@@ -177,7 +177,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                     $builder->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates);
                 }),
         ];
-        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             array_push(
                 $filters,
                 MultiSelectFilter::make('Teams')

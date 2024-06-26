@@ -113,6 +113,7 @@ class CarQuoteService extends BaseService
                 'cqr.policy_issuance_status_id',
                 'cqr.policy_issuance_status_other',
                 'cqr.plan_id',
+                'cqr.payment_paid_at',
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
@@ -1009,7 +1010,7 @@ class CarQuoteService extends BaseService
 
     private function addLeadViewEligibilityCheck()
     {
-        if (Auth::user()->hasRole(RolesEnum::CarManager) || Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
+        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
             $this->walkTree(Auth::user()->id);
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
@@ -1740,7 +1741,7 @@ class CarQuoteService extends BaseService
             $allowQuoteLogAction = false;
 
             //validations for Car Advisor / Deputy Manager Role
-            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
                 $allowQuoteLogAction = false;
 
                 if ($lead->quote_status_id == QuoteStatusEnum::CarSold && $paymentEntityModel?->carLostQuoteLog?->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2) {
@@ -2011,7 +2012,7 @@ class CarQuoteService extends BaseService
 
     private function addLeadViewEligibilityCheckExport()
     {
-        if (Auth::user()->hasRole(RolesEnum::CarManager) || Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
+        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
             $this->walkTree(Auth::user()->id);
             $this->exportQuery->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {

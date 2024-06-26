@@ -208,12 +208,44 @@ class GenericPermissionSeeder extends Seeder
             }
         }
 
+        $extractReport = Permission::where('name', PermissionsEnum::EXTRACT_REPORT)->first();
+        if (! $extractReport) {
+            Permission::create([
+                'name' => PermissionsEnum::EXTRACT_REPORT,
+                'guard_name' => 'web',
+            ]);
+        }
+
         $this->generateSegmentFilterPermission();
         $this->embeddedProductSeeds();
         $this->advisorConversionReportSeeds();
         $this->quoteSyncSeeds();
         $this->advisorDistributionReportSeeds();
         $this->addMotorHeadNewRole();
+        $this->createAndAssignManulHealthPlanPermission();
+    }
+
+    /**
+     * add manual health plan permission function.
+     *
+     * @return void
+     */
+    private function createAndAssignManulHealthPlanPermission()
+    {
+        $healthPlanPermission = Permission::where('name', PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)->first();
+        if (! $healthPlanPermission) {
+            Permission::create([
+                'name' => PermissionsEnum::ADD_MANUAL_HEALTH_PLAN,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        // Add Permission to Admin
+        $role = Role::where('name', RolesEnum::Admin)->first();
+
+        if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
+            $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
+        }
         $this->syncMasterPermissionList();
     }
 

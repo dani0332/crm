@@ -4,12 +4,14 @@ namespace App\Traits;
 
 use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
@@ -219,18 +221,23 @@ trait GenericQueriesAllLobs
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
         $infoMessage = 'QC '.$record->code.' ';
-        $insuranceProviderLeadCount = $insuranceProviderCode = '';
+        $insuranceProviderLeadCount = $insuranceProviderCode = $sendUpdateInvoiceDescription = $sendUpdateBrokerInvoice = '';
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
             $insurance_provider_id = $payment->insurance_provider_id;
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
+        if ($payments->first()?->send_update_log_id) {
+            $sendUpdateInvoiceDescription = $payments->first()->invoice_description;
+            $sendUpdateBrokerInvoice = $payments->first()->broker_invoice_number;
+        }
 
+        $invoiceDescription = empty($sendUpdateInvoiceDescription) ? $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number : $sendUpdateInvoiceDescription;
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
-        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
-        $bookPolicyDetails['invoiceDescription'] = $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number;
+        $bookPolicyDetails['brokerInvoiceNo'] = empty($sendUpdateBrokerInvoice) ? $insuranceProviderCode.$insuranceProviderLeadCount : $sendUpdateBrokerInvoice;
+        $bookPolicyDetails['invoiceDescription'] = substr($invoiceDescription, 0, 60);
         $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
@@ -253,8 +260,8 @@ trait GenericQueriesAllLobs
                 $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
                 if ($isAllRequiredDocumentUploaded) {
                     $bookPolicyDetails['sendButton'] = true;
-                    $bookPolicyDetails['text'] = 'Send Policy To Customer';
-                    $bookPolicyDetails['sendPolicyType'] = 'customer';
+                    $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
+                    $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
                 }
                 if ($bookPolicyDetails['sendButton']) {
                     $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
@@ -266,8 +273,8 @@ trait GenericQueriesAllLobs
                         $infoMessage .= ' BDS '.$areBookingDetailsFilled;
                         if ($areBookingDetailsFilled) {
                             $bookPolicyDetails['bookButton'] = true;
-                            $bookPolicyDetails['text'] = 'Send and Book Policy';
-                            $bookPolicyDetails['sendPolicyType'] = 'sage';
+                            $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
+                            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
                         }
                     }
                 }
@@ -367,7 +374,7 @@ trait GenericQueriesAllLobs
         $priceWithVat = $quoteModel->price_with_vat;
         $paymentTotalPrice = $payment->total_price;
 
-        if ($payment && $priceWithVat != $paymentTotalPrice) {
+        if ($payment) {
 
             $difference = $this->handleSmallAmountDifference($payment, $priceWithVat);
 
@@ -376,9 +383,34 @@ trait GenericQueriesAllLobs
             // total price is actual price without discount
             $payment->total_price = $quoteModel->price_with_vat;
             $payment->save();
+            $this->updateTotalAmount($payment);
         }
 
         return $this->isLackingPayment($payment);
+    }
+
+    private function updateTotalAmount($payment)
+    {
+        if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            Log::info('Updating TA for PC: '.$payment->code);
+            $captureAmount = $payment->captured_amount;
+            $totalPrice = $payment->total_price;
+            $discountValue = $payment->discount_value;
+            if ($captureAmount < ($totalPrice - $discountValue)) {
+                $totalAmount = $captureAmount;
+            } else {
+                $totalAmount = $totalPrice - $discountValue;
+            }
+            $payment->total_amount = $totalAmount;
+            $payment->save();
+
+            if ($payment->paymentSplits) {
+                $splitPayment = $payment->paymentSplits()->first();
+                Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$splitPayment->payment_amount.' WTA: '.$totalAmount);
+                $splitPayment->payment_amount = $totalAmount;
+                $splitPayment->save();
+            }
+        }
     }
 
     private function isFilledPolicyDetails($type, $quote)

@@ -382,7 +382,6 @@ watch(
             !hasAnyRole([
               rolesEnum.HomeAdvisor,
               rolesEnum.HomeRenewalAdvisor,
-              rolesEnum.HomeNewBusinessAdvisor,
             ])
           "
         >

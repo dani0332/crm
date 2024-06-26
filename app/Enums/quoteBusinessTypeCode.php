@@ -20,7 +20,7 @@ final class quoteBusinessTypeCode extends Enum
     const groupTravel = 'Group Travel';
     const proIndemnity = 'Professional Indemnity';
     const carFleet = 'Car Fleet (or Multiple Car Discount Scheme)';
-    const marineCargo = 'Marine Cargo';
+    const marineCargoIndividual = 'Marine Cargo (individual shipment) insurance';
     const marineHull = 'Marine Hull (Yacht, Boat or Vessel)';
     const marineCargoOpenCover = 'Marine Cargo - Open Cover';
     const businessInterruption = 'Business Interruption or Consequential Loss';

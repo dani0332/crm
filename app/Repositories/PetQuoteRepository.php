@@ -48,8 +48,6 @@ class PetQuoteRepository extends BaseRepository
             'utmSource' => '',
             'utmMedium' => '',
             'utmCampaign' => '',
-            'iliveinAccommodationTypeId' => $request['ilivein_accommodation_type_id'],
-            'iamPossesionTypeId' => $request['iam_possesion_type_id'],
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
@@ -60,8 +58,6 @@ class PetQuoteRepository extends BaseRepository
 
         if (isset($response->quoteUID)) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
-
-            $quote->update(['premium' => $request['premium']]);
         }
 
         return $response;

@@ -1,7 +1,9 @@
 <script setup>
+import { useRoundIt } from '../Composables/utilities';
 const page = usePage();
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
+
 const props = defineProps({
   quote: {
     type: Object,
@@ -35,6 +37,7 @@ const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const dateToYMD = date => {
@@ -242,10 +245,12 @@ const submitPolicy = () => {
       const flash_messages = err.response.data.errors;
 
       Object.keys(flash_messages).forEach(function (key) {
-        notification.error({
-          title: flash_messages[key],
-          position: 'top',
-        });
+        if (flash_messages[key]) {
+          notification.error({
+            title: flash_messages[key],
+            position: 'top',
+          });
+        }
       });
     })
     .finally(() => {
@@ -256,9 +261,7 @@ const submitPolicy = () => {
 
 const calculateVatOnCommission = commissionVatApplicable => {
   if (Number(commissionVatApplicable) > 0) {
-    return Number(
-      Number(commissionVatApplicable) * Number(page.props.vat),
-    ).toFixed(2);
+    return useRoundIt(commissionVatApplicable * page.props.vat);
   } else {
     return 0;
   }
@@ -268,9 +271,7 @@ const calculateCommissionPercentage = (
   totalPriceWithoutVat,
 ) => {
   if (totalCommissionWithoutVat > 0) {
-    return ((totalCommissionWithoutVat / totalPriceWithoutVat) * 100).toFixed(
-      2,
-    );
+    return useRoundIt((totalCommissionWithoutVat / totalPriceWithoutVat) * 100);
   } else {
     return 0;
   }
@@ -291,9 +292,8 @@ const calculateCommission = () => {
         bpForm.commission_vat_applicable,
       );
 
-      bpForm.total_commission = (
-        totalCommissionWithoutVat + Number(bpForm.vat_on_commission)
-      ).toFixed(2);
+      bpForm.total_commission =
+        totalCommissionWithoutVat + useRoundIt(bpForm.vat_on_commission);
 
       bpForm.commission_percentage = calculateCommissionPercentage(
         totalCommissionWithoutVat,
@@ -336,13 +336,44 @@ const disableCommissionVatApplicable = computed(() => {
         page.props.quoteType != quoteTypeCodeEnum.Health)
     );*/
 });
-const showSendAndBookPolicyButton = computed(() => {
+const showSendAndBookPolicyButtonBlock = computed(() => {
+  let isPolicyStatusTransactionApproved =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.TransactionApproved;
+
+  let isPolicyStatusPolicyIssued =
+    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued;
+
+  let isPolicyStatusCancellationPending =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.CancellationPending;
   return (
+    isPolicyStatusTransactionApproved ||
+    isPolicyStatusPolicyIssued ||
+    isPolicyStatusCancellationPending
+  );
+});
+const showSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  return props.bookPolicyDetails?.sendButton && can(permission);
+});
+const disableSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  let isPolicyStatusCancellationPending =
     props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved ||
-    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued ||
-    props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.CancellationPending
+    page.props.quoteStatusEnum.CancellationPending;
+  return (
+    !props.bookPolicyDetails?.sendButton &&
+    !isPolicyStatusCancellationPending &&
+    !can(permission)
   );
 });
 const showActionButtons = computed(() => {
@@ -716,7 +747,7 @@ const showInsufficientPaymentAlert = () => {
               <div class="w-full md:w-1/2" />
             </div>
             <div v-if="showActionButtons" class="flex justify-end">
-              <template v-if="showSendAndBookPolicyButton">
+              <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
                   v-if="bp.isEditing"
                   class="mt-4 mr-2"
@@ -761,11 +792,7 @@ const showInsufficientPaymentAlert = () => {
                     color="orange"
                     class="mt-4"
                     disabled
-                    v-if="
-                      !props.bookPolicyDetails?.sendButton &&
-                      !props.quote.quote_status_id ==
-                        page.props.quoteStatusEnum.CancellationPending
-                    "
+                    v-if="disableSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
@@ -781,7 +808,7 @@ const showInsufficientPaymentAlert = () => {
                       class="mt-4"
                       @click.prevent="confirmSendPolicy"
                       :disabled="bp.isEditing || is_lacking_payment"
-                      v-if="props.bookPolicyDetails?.sendButton"
+                      v-if="showSendAndBookPolicyButton"
                     >
                       {{ props.bookPolicyDetails?.text }}
                     </x-button>
@@ -800,13 +827,7 @@ const showInsufficientPaymentAlert = () => {
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
                     :disabled="bp.isEditing || is_lacking_payment"
-                    v-if="
-                      props.bookPolicyDetails?.sendButton &&
-                      canAny([
-                        permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON,
-                        permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON,
-                      ])
-                    "
+                    v-if="showSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>

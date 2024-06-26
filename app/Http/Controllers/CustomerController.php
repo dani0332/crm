@@ -15,6 +15,7 @@ use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -204,14 +205,48 @@ class CustomerController extends Controller
             if ($quoteObject->customer && ! $this->customerService->getCustomerByEmail($request->value)) {
                 Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
                 $quoteObject->customer->update(['email' => $request->value]);
-            } else {
-                if ($request->isInertia) {
-                    return redirect()->back()->withErrors(['Email Address already in use for a customer.']);
+
+                // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
+                $removeEmail = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
+                    ->where('value', $quoteObject->email)
+                    ->where('key', 'email')
+                    ->first();
+                if (isset($removeEmail->id)) {
+                    DB::table('customer_additional_contact')->where('id', $removeEmail->id)->delete();
+                }
+                //ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
+                $quoteObjects = $this->getQuoteObject($request->quote_type, $request->quote_id);
+                $email = trim($quoteObjects->email);
+
+                // Check if the email ends with the specified domains
+                if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
+                    $isExist = CustomerAdditionalContact::where('key', 'email')
+                        ->where('customer_id', $quoteObject->customer->id)
+                        ->where('value', $email)
+                        ->exists();
+
+                    if (! $isExist) {
+                        CustomerAdditionalContact::create([
+                            'customer_id' => $quoteObjects->customer_id,
+                            'key' => 'email',
+                            'value' => $email,
+                        ]);
+                    }
+                }
+                $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
+                    ->where('key', 'email')
+                    ->where(function ($query) {
+                        $query->where('value', 'like', '%@insurancemarket.ae')
+                            ->orWhere('value', 'like', '%@afia.ae');
+                    })
+                    ->first();
+                if (isset($removeAdvisorEmail->id)) {
+                    DB::table('customer_additional_contact')->where('id', $removeAdvisorEmail->id)->delete();
                 }
 
-                return response()->json(['data' => [
-                    'message' => 'Email Address already in use for a customer.',
-                ]]);
+            } else {
+                $oldCustomer = $this->customerService->getCustomerByEmail($request->value);
+                $quoteObject->update(['customer_id' => $oldCustomer->id]);
             }
         } elseif ($request->key == GenericRequestEnum::MOBILE_NO) {
             $quoteObject->mobile_no = $request->value;
@@ -261,17 +296,26 @@ class CustomerController extends Controller
         $key = $request->additional_contact_type;
         $value = $request->additional_contact_val;
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-
         if ($key == GenericRequestEnum::EMAIL) {
-            $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
-
-            if ($isAdditionalEmailExist) {
+            if (strtolower($quoteObject->email) === strtolower($request->additional_contact_val)) {
                 if ($request->isInertia) {
-                    vAbort('Email Address already in use for a customer. Please try another.');
+                    vAbort('Email already Exist in Primary. Please try another.');
                 }
 
                 return response()->json(['error' => [
-                    'message' => 'Email Address already in use for a customer. Please try another.',
+                    'message' => 'Email already Exist in Primary. Please try another.',
+                ]]);
+            }
+            $isExistEmail = CustomerAdditionalContact::where('customer_id', $request->customer_id)
+                ->where('value', $request->additional_contact_val)->where('key', 'email')->first();
+
+            if ($isExistEmail) {
+                if ($request->isInertia) {
+                    vAbort('Email already Exist. Please try another.');
+                }
+
+                return response()->json(['error' => [
+                    'message' => 'Email already Exist. Please try another.',
                 ]]);
             }
         }
