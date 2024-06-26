@@ -59,6 +59,7 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             addInsuranceProvidersConfiguration::class,
             RevokeTempPaymentUpdatePermissionsSeeder::class,
+            ImcrmUsersRolesCleaner::class,
         ]);
     }
 }

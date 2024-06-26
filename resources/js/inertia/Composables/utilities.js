@@ -105,10 +105,8 @@ export const useDaysSinceStale = payload => {
     : false;
 
   if (typeof stale_days === 'number' && stale_days <= 90) {
-    if (stale_days == 0) {
-      stale_days += 1;
-      return stale_days + ' day';
-    } else if (stale_days == 1) {
+    stale_days += 1;
+    if (stale_days == 1) {
       return stale_days + ' day';
     } else return stale_days + ' days';
   } else {

@@ -214,7 +214,7 @@ class CRUDController extends Controller
 
             if (
                 isset($upcomingBatch->deadline->deadline_date) &&
-                auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
+                auth()->user()->hasAnyRole([RolesEnum::CarAdvisor]) &&
                 UserRepository::isUserMemberOfTeam(auth()->user()->id, [CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::RENEWALS])
             ) {
                 $showDeadlineAlert = true;
