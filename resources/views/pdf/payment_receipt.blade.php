@@ -167,7 +167,7 @@
             </td>
             @if (!empty($data['advisor_name']))
                 <td style="width=20%; verticle-align:top; text-align:right;">
-                    Insurer Advisor: {{ $data['advisor_name'] }}<br>
+                    Insurance Advisor: {{ $data['advisor_name'] }}<br>
                     Email: {{ $data['advisor_email'] }}<br>
                     Mobile Number: {{ $data['advisor_mobile_no'] }}<br>
                     Direct Line: {{ $data['advisor_landline_no'] }}<br>

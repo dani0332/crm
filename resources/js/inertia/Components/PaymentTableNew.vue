@@ -2381,7 +2381,7 @@ const getCaptureValidation = computed(() => {
   return payment => {
     if (
       props.payments.length > 0 &&
-      payment.total_price === payment.total_amount + payment.discount_value &&
+      parseFloat((payment.total_price).toFixed(2)) === parseFloat((payment.total_amount + payment.discount_value).toFixed(2)) &&
       (((props.isAmlClearedForPayment ||
         props.quoteRequest.quote_status_id ===
           page.props.quoteStatusEnum.AMLScreeningCleared ||
