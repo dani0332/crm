@@ -288,6 +288,9 @@ trait GenericQueriesAllLobs
             }
         }
 
+        if($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer){
+            $bookPolicyDetails['text'] = 'Book Policy';
+        }
         Log::info($infoMessage);
         Log::info('Book Policy Details: ', $bookPolicyDetails);
 
