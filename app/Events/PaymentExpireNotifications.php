@@ -12,7 +12,6 @@ class PaymentExpireNotifications implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     private string $uuid;
-    private string $clientName;
     private int $advisorId;
     private string $message;
     private string $url;
@@ -20,7 +19,6 @@ class PaymentExpireNotifications implements ShouldBroadcastNow
     public function __construct($model, $url)
     {
         $this->uuid = $model->uuid;
-        $this->clientName = "$model->first_name $model->last_name";
         $this->advisorId = $model->advisor_id;
         $this->message = "The payment for $this->uuid will expire in 2 days";
         $this->url = $url;
@@ -38,6 +36,7 @@ class PaymentExpireNotifications implements ShouldBroadcastNow
 
     public function broadcastWith()
     {
+        info('Payment Expire Notification sent to Advisor: '.$this->advisorId.' and Quote ID: '.$this->uuid);
         return [
             'uuid' => $this->uuid,
             'advisorId' => $this->advisorId,
