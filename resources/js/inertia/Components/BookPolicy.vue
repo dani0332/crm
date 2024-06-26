@@ -855,24 +855,39 @@ const showInsufficientPaymentAlert = () => {
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
-                    <x-tooltip>
-                    <x-button
-                      size="sm"
-                      class="mt-4 mr-2"
-                      color="orange"
-                      :disabled="
-                        !props.bookPolicyDetails?.bookButton ||
-                        bp.isEditing ||
-                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
-                      "
-                      @click.prevent="confirmSendPolicy"
-                    >
-                    Send Policy To Customer
+                    <x-tooltip v-if="props.bookPolicyDetails.policyCancelled">
+                      <x-button
+                        size="sm"
+                        class="mt-4 mr-2"
+                        color="orange"
+                        :disabled="
+                          !props.bookPolicyDetails?.bookButton ||
+                          bp.isEditing ||
+                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                        "
+                        @click.prevent="confirmSendPolicy"
+                      >
+                      {{ props.bookPolicyDetails?.text }}
                     </x-button>
                     <template #tooltip>
                       <span>{{ `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending` }}</span>
                     </template>
                   </x-tooltip>
+
+                <x-button v-else
+                  size="sm"
+                  class="mt-4 mr-2"
+                  color="orange"
+                  :disabled="
+                    !props.bookPolicyDetails?.bookButton ||
+                    bp.isEditing ||
+                    !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                  "
+                  @click.prevent="confirmSendPolicy"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+              
                   </template>
                   <template v-else>
                     <x-tooltip>
