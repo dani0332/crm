@@ -2379,9 +2379,11 @@ const uploadDocument = (doc, files, count) => {
 
 const getCaptureValidation = computed(() => {
   return payment => {
+    const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
+    const calculatedTotal = Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
     if (
       props.payments.length > 0 &&
-      parseFloat((payment.total_price).toFixed(2)) === parseFloat((payment.total_amount + payment.discount_value).toFixed(2)) &&
+      totalPriceRounded === calculatedTotal &&
       (((props.isAmlClearedForPayment ||
         props.quoteRequest.quote_status_id ===
           page.props.quoteStatusEnum.AMLScreeningCleared ||
