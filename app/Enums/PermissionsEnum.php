@@ -348,6 +348,7 @@ final class PermissionsEnum extends Enum
     public const VIEW_SAGE_API_LOGS = 'view-sage-api-logs';
     public const DOCUMENT_DELETE = 'document-delete';
     public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
+    public const EXTRACT_REPORT = 'extract-report';
 
     public static function getAdvisorConversionReportPermissions()
     {

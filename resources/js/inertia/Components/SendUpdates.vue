@@ -189,6 +189,7 @@ const authenticatedSendUpdateOptions = computed(() => {
 // }
 
 const optionLoader = ref(false);
+const addButtonLoader = ref(false);
 const parentId = ref();
 
 const sendUpdateOptions = ref([]);
@@ -294,6 +295,7 @@ const onAddUpdate = autoSubmit => {
       return;
     }
   }
+  addButtonLoader.value = true;
 
   optionError.value = false;
 
@@ -327,6 +329,9 @@ const onAddUpdate = autoSubmit => {
         // resetForm()
         // sendUpdatesTable.data = [...sendUpdatesTable.data, form.data]
       },
+    })
+    .finally(() => {
+      addButtonLoader.value = false;
     });
 };
 
@@ -581,6 +586,7 @@ const findOption = (item, key) => {
               size="sm"
               color="primary"
               @click="confirmOrAddUpdate(false)"
+              :loading="addButtonLoader"
             >
               Add
             </x-button>

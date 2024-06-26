@@ -171,6 +171,7 @@ class CycleQuoteRepository extends BaseRepository
                 'customer',
                 'createdBy',
                 'updatedBy',
+                'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },

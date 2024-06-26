@@ -20,7 +20,6 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
 use App\Models\GenericModel;
 use App\Models\PaymentAction;
-use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\User;
@@ -311,7 +310,7 @@ class CRUDService extends BaseService
                         //send rejection email
                         CarLostStatusRejected::dispatch($entity, $carLostQuoteLog);
                     }
-                } elseif (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
+                } elseif (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
                     //store request of car sold/uncontactable with proof
                     $carLostQuoteLog = $entity->carLostQuoteLogs()->create([
                         'advisor_id' => auth()->user()->id,
@@ -404,7 +403,7 @@ class CRUDService extends BaseService
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
             ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
-            $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
+            $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
             if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
                 auth()->user()->hasAnyPermission(
@@ -414,12 +413,12 @@ class CRUDService extends BaseService
             ) {
                 $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
                 $query->whereIn('ut.team_id', $authUserTeamsId);
-                $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
+                $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
             } else {
-                $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor]);
+                $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor]);
             }
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
-            $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
+            $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::GMRenewalAdvisor]);
         } else {
             $query->whereIn('r.name', [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR']);
         }
@@ -464,7 +463,7 @@ class CRUDService extends BaseService
         $query = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR', 'HEALTH_NEW_BUSINESS_ADVISOR', 'HEALTH_RENEWAL_ADVISOR'])
+            ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_RENEWAL_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
 
         return $query->orderBy('r.name')->distinct()->get();
@@ -475,7 +474,7 @@ class CRUDService extends BaseService
         $query = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['RM_ADVISOR', 'BUSINESS_ADVISOR', 'AMT_ADVISOR', 'HEALTH_NEW_BUSINESS_ADVISOR', 'HEALTH_RENEWAL_ADVISOR'])
+            ->whereIn('r.name', ['RM_ADVISOR', 'BUSINESS_ADVISOR', 'AMT_ADVISOR', 'HEALTH_RENEWAL_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
 
         return $query->orderBy('r.name')->distinct()->get();

@@ -384,8 +384,9 @@ const notesForCustomersTableItems = computed(() => {
 
 const leadActivities = reactive({
   columns: [
-    { text: 'Title', value: 'title' },
     { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
     { text: 'Followup Date', value: 'due_date' },
     { text: 'Assigned To', value: 'assignee' },
     { text: 'Done', value: 'status', width: 60, align: 'center' },
@@ -1695,7 +1696,6 @@ watch(
                 v-if="
                   !hasAnyRole([
                     rolesEnum.CarAdvisor,
-                    rolesEnum.CarDeputyManager,
                     rolesEnum.CarManager,
                   ])
                 "
