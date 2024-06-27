@@ -47,14 +47,19 @@ class SICFollowupEmailJob implements ShouldQueue
 
     private function sendWhatsAppMessageKenRequest()
     {
-        $response = Ken::request('/send-sic-dedicated-wa', 'post', [
-            'quoteUID' => $this->uuid,
-        ]);
-        info(now().' | sendWhatsAppMessageKenRequest: response from ken| '.json_encode($response));
-        if ($response) {
-            info('Whatsapp message sent successfully. UUID: '.$this->uuid.' | Time: '.now());
-        } else {
-            info('invaild response from ken| UUID: '.$this->uuid . ' | Time: '.now());
+        try {
+            $response = Ken::request('/send-sic-dedicated-wa', 'post', [
+                'quoteUID' => $this->uuid,
+            ]);
+            info(now().' | sendWhatsAppMessageKenRequest: response from ken| '.json_encode($response));
+            if ($response) {
+                info('Whatsapp message sent successfully. UUID: '.$this->uuid.' | Time: '.now());
+            } else {
+                info('invalid response from ken| UUID: '.$this->uuid . ' | Time: '.now());
+            }
+        } catch (\Throwable $th) {
+            info($th->getMessage().' | Error while sending whatsapp message. UUID: '.$this->uuid.' | Time: '.now());
         }
+
     }
 }
