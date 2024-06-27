@@ -622,8 +622,8 @@ trait GenericQueriesAllLobs
 
     private function updateChildPaymentStatus($payment)
     {
-        Log::info('Updating child payment status for: '.$payment->code);
         DB::transaction(function () use ($payment) {
+            Log::info('Updating child payment status for: '.$payment->code);
             $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
             if (! $paymentSplits->isEmpty()) {
                 foreach ($paymentSplits as $paymentSplit) {
@@ -636,8 +636,8 @@ trait GenericQueriesAllLobs
                         $paymentSplit->save();
                     }
                 }
-                Log::info('Updating complete for child payment status for: '.$payment->code);
             }
+            Log::info('Updating complete for child payment status for: '.$payment->code);
         });
     }
 }
