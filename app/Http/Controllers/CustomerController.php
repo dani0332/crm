@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Models\CustomerDetail;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
@@ -208,7 +209,7 @@ class CustomerController extends Controller
                     'last_name' => $quoteObject->last_name,
                     'nationality_id' => $quoteObject->nationality_id,
                     'mobile_no' => $quoteObject->mobile_no,
-                    'email' => $quoteObject->email,
+                    'email' => $request->value,
                     'dob' => $quoteObject->dob,
                     'gender' => $quoteObject->gender,
                 ];
