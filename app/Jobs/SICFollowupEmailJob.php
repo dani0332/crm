@@ -54,7 +54,7 @@ class SICFollowupEmailJob implements ShouldQueue
         if ($response) {
             info('Whatsapp message sent successfully. UUID: '.$this->uuid.' | Time: '.now());
         } else {
-            info('invaild response from ken| UUID: '.$this->uuid . ' | Time: '.now());
+            info('invaild response from ken| UUID: '.$this->uuid.' | Time: '.now());
         }
     }
 }
