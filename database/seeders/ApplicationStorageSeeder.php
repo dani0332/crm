@@ -210,7 +210,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
             [
                 'key_name' => ApplicationStorageEnums::DIS_INBOX_EMAIL_BCC,
-                'value' => 'sendPolicyUpdate@insurancemarket.ae',
+                'value' => 'sendpolicyupdate@insurancemarket.ae',
                 'is_active' => 1,
             ],
         ];
