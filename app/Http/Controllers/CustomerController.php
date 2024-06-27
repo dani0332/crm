@@ -7,7 +7,6 @@ use App\Enums\GenericRequestEnum;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
-use App\Models\CustomerDetail;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;

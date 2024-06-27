@@ -18,10 +18,7 @@ use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\BerlinService;
-use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerRepository extends BaseRepository
