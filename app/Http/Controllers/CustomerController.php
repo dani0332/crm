@@ -201,10 +201,28 @@ class CustomerController extends Controller
         }
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         if ($request->key == GenericRequestEnum::EMAIL) {
-            $quoteObject->email = $request->value;
             if ($quoteObject->customer && ! $this->customerService->getCustomerByEmail($request->value)) {
                 Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
-                $quoteObject->customer->update(['email' => $request->value]);
+                $customerArray = [
+                    'first_name' => $quoteObject->first_name,
+                    'last_name' => $quoteObject->last_name,
+                    'nationality_id' => $quoteObject->nationality_id,
+                    'mobile_no' => $quoteObject->mobile_no,
+                    'email' => $quoteObject->email,
+                    'dob' => $quoteObject->dob,
+                    'gender' => $quoteObject->gender,
+                ];
+                $customer = Customer::create($customerArray);
+                $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
+                    ->get();
+                foreach ($getCustomerAdditionalContact as $contact) {
+                    CustomerAdditionalContact::create([
+                        'customer_id' => $customer->id,
+                        'key' => $contact->key,
+                        'value' => $contact->value,
+                    ]);
+                }
+                $quoteObject->update(['customer_id' => $customer->id, 'email' => $request->value]);
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
                 $removeEmail = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
@@ -297,15 +315,6 @@ class CustomerController extends Controller
         $value = $request->additional_contact_val;
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         if ($key == GenericRequestEnum::EMAIL) {
-            if (strtolower($quoteObject->email) === strtolower($request->additional_contact_val)) {
-                if ($request->isInertia) {
-                    vAbort('Email already Exist in Primary. Please try another.');
-                }
-
-                return response()->json(['error' => [
-                    'message' => 'Email already Exist in Primary. Please try another.',
-                ]]);
-            }
             $isExistEmail = CustomerAdditionalContact::where('customer_id', $request->customer_id)
                 ->where('value', $request->additional_contact_val)->where('key', 'email')->first();
 

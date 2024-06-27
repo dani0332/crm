@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
@@ -253,6 +254,27 @@ class PersonalQuoteRepository extends BaseRepository
             });
 
         } else {
+            $quoteObject = $this->where("email" , $data['quote_primary_email_address'])->first();
+            $customerArray = [
+                'first_name' => $quoteObject->first_name,
+                'last_name' => $quoteObject->last_name,
+                'nationality_id' => $quoteObject->nationality_id,
+                'mobile_no' => $quoteObject->mobile_no,
+                'email' => $data['value'],
+                'dob' => $quoteObject->dob,
+                'gender' => $quoteObject->gender,
+            ];
+            $customer = Customer::create($customerArray);
+            $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
+                ->get();
+            foreach ($getCustomerAdditionalContact as $contact) {
+                CustomerAdditionalContact::create([
+                    'customer_id' => $customer->id,
+                    'key' => $contact->key,
+                    'value' => $contact->value,
+                ]);
+            }
+            $quoteObject->update(['customer_id' => $customer->id, 'email' => $data['value']]);
             return DB::transaction(function () use ($quoteId, $data) {
                 $quote = $this->findOrFail($quoteId);
                 $updateData = [$data['key'] => $data['value']];
