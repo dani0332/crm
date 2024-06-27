@@ -15,7 +15,6 @@ use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
 use DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -199,87 +198,9 @@ class CustomerController extends Controller
                 'message' => $validator->errors(),
             ]]);
         }
+
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-        if ($request->key == GenericRequestEnum::EMAIL) {
-            if ($quoteObject->customer && ! $this->customerService->getCustomerByEmail($request->value)) {
-                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
-                $customerArray = [
-                    'first_name' => $quoteObject->first_name,
-                    'last_name' => $quoteObject->last_name,
-                    'mobile_no' => $quoteObject->mobile_no,
-                    'email' => $request->value,
-                    'dob' => $quoteObject->dob,
-                ];
-                $customer = Customer::create($customerArray);
-                $customer->update(['code' => 'IND-'.$customer->id]);
-                $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
-                    ->get();
-                foreach ($getCustomerAdditionalContact as $contact) {
-                    CustomerAdditionalContact::create([
-                        'customer_id' => $customer->id,
-                        'key' => $contact->key,
-                        'value' => $contact->value,
-                    ]);
-                }
-                $email = trim($quoteObject->email);
-
-                // Check if the email ends with the specified domains
-                if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
-                    $isExist = CustomerAdditionalContact::where('key', 'email')
-                        ->where('customer_id', $quoteObject->customer->id)
-                        ->where('value', $email)
-                        ->exists();
-
-                    if (! $isExist) {
-                        CustomerAdditionalContact::create([
-                            'customer_id' => $customer->id,
-                            'key' => 'email',
-                            'value' => $email,
-                        ]);
-                    }
-                }
-                $quoteObject->update(['customer_id' => $customer->id, 'email' => $request->value]);
-
-                // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $removeEmail = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
-                    ->where('value', $quoteObject->email)
-                    ->where('key', 'email')
-                    ->first();
-                if (isset($removeEmail->id)) {
-                    DB::table('customer_additional_contact')->where('id', $removeEmail->id)->delete();
-                }
-                //ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
-                $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
-                    ->where('key', 'email')
-                    ->where(function ($query) {
-                        $query->where('value', 'like', '%@insurancemarket.ae')
-                            ->orWhere('value', 'like', '%@afia.ae');
-                    })
-                    ->first();
-                if (isset($removeAdvisorEmail->id)) {
-                    DB::table('customer_additional_contact')->where('id', $removeAdvisorEmail->id)->delete();
-                }
-            } else {
-                $oldCustomer = $this->customerService->getCustomerByEmail($request->value);
-                $quoteObject->update(['customer_id' => $oldCustomer->id]);
-            }
-        } elseif ($request->key == GenericRequestEnum::MOBILE_NO) {
-            $quoteObject->mobile_no = $request->value;
-            if ($quoteObject->customer) {
-                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request->value);
-                $quoteObject->customer->update(['mobile_no' => $request->value]);
-
-                if (isset($request->quote_primary_mobile_no) && isset($request->quote_customer_id)) {
-                    CustomerAdditionalContact::create([
-                        'customer_id' => $request->quote_customer_id,
-                        'key' => 'mobile_no',
-                        'value' => trim($request->quote_primary_mobile_no),
-                    ]);
-                }
-            }
-            // Add quote_previous_primary_mobile_no in customer_additional_contact
-        }
-        $quoteObject->save();
+        $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
 
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
