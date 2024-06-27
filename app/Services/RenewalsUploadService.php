@@ -77,7 +77,7 @@ use Sammyjo20\LaravelHaystack\Models\Haystack;
 class RenewalsUploadService
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
-    
+
     protected $renewalsAddonService;
     protected $capiRequestService;
     protected $insuranceProviderService;
@@ -868,10 +868,9 @@ class RenewalsUploadService
             $quoteObject = $this->createQuoteObject($quoteType->code);
 
             $quote = $quoteObject->create($quoteData);
-            if(!$isQuotePersonal){
+            if (! $isQuotePersonal) {
                 $this->syncQuote($quote, $quoteData);
             }
-
 
             if ($isQuotePersonal) {
                 $quote->quoteDetail()->create($detailData);
