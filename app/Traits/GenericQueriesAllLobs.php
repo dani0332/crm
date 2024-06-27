@@ -22,7 +22,6 @@ use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 trait GenericQueriesAllLobs
@@ -622,22 +621,19 @@ trait GenericQueriesAllLobs
 
     private function updateChildPaymentStatus($payment)
     {
-        DB::transaction(function () use ($payment) {
-            Log::info('Updating child payment status for: '.$payment->code);
-            $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
-            if (! $paymentSplits->isEmpty()) {
-                foreach ($paymentSplits as $paymentSplit) {
-                    if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
-                        if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
-                            $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
-                        } else {
-                            $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
-                        }
-                        $paymentSplit->save();
+        Log::info('Updating child payment status for: '.$payment->code);
+        $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
+        if (! $paymentSplits->isEmpty()) {
+            foreach ($paymentSplits as $paymentSplit) {
+                if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
+                    if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                    } else {
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
+                    $paymentSplit->save();
                 }
             }
-            Log::info('Updating complete for child payment status for: '.$payment->code);
-        });
+        }        
     }
 }

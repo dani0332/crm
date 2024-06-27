@@ -103,7 +103,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-
+use Illuminate\Support\Facades\DB;
 class CRUDController extends Controller
 {
     protected $genericModel;
@@ -1701,14 +1701,17 @@ class CRUDController extends Controller
         }
         Log::info('Updating policy_issuer_id  : '.auth()->id());
 
-        // store policy issuer
-        $payment = $quoteModel->payments->first();
-        $payment->policy_issuer_id = auth()->id();
-        $payment->save();
+        DB::transaction(function () use ($quoteModel, $request) {
+            // store policy issuer
+            $payment = $quoteModel->payments->first();
+            $payment->policy_issuer_id = auth()->id();
+            $payment->save();
 
-        // update status policy issued of req fulfilled
-        $this->updateQuoteStatus($request->modelType, $request->quote_id);
-        $this->updatePriceAndDiscount($quoteModel);
+            // update status policy issued of req fulfilled
+            $this->updateQuoteStatus($request->modelType, $request->quote_id);
+            $this->updatePriceAndDiscount($quoteModel);
+
+        });
 
         Log::info('Policy details update successfully for : '.$quoteModel->uuid);
 
