@@ -35750,6 +35750,7 @@ class DocumentTypeSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 7,
         ]);
 
         DocumentType::firstOrCreate(([
@@ -35763,6 +35764,7 @@ class DocumentTypeSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 8,
         ]);
 
         DocumentType::firstOrCreate(([
@@ -35776,6 +35778,7 @@ class DocumentTypeSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 9,
         ]);
 
         DocumentType::firstOrCreate(([
@@ -35790,6 +35793,7 @@ class DocumentTypeSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 10,
         ]);
     }
 }
