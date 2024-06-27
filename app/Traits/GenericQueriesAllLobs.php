@@ -634,6 +634,6 @@ trait GenericQueriesAllLobs
                     $paymentSplit->save();
                 }
             }
-        }        
+        }
     }
 }
