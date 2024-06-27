@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use Illuminate\Support\Facades\DB;
 
 class CustomerService extends BaseService
 {
