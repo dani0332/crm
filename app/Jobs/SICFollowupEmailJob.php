@@ -4,13 +4,13 @@ namespace App\Jobs;
 
 use App\Facades\Ken;
 use App\Models\CarQuote;
-use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use App\Services\SendEmailCustomerService;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SICFollowupEmailJob implements ShouldQueue
 {
@@ -56,7 +56,7 @@ class SICFollowupEmailJob implements ShouldQueue
             if ($response) {
                 info('Whatsapp message sent successfully. UUID: '.$this->uuid.' | Time: '.now());
             } else {
-                info('invalid response from ken| UUID: '.$this->uuid . ' | Time: '.now());
+                info('invalid response from ken| UUID: '.$this->uuid.' | Time: '.now());
             }
         } catch (\Throwable $th) {
             Log::error($th->getMessage().' | Error while sending whatsapp message. UUID: '.$this->uuid.' | Time: '.now());
