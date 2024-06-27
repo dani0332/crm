@@ -221,6 +221,23 @@ class CustomerController extends Controller
                         'value' => $contact->value,
                     ]);
                 }
+                $email = trim($quoteObject->email);
+
+                // Check if the email ends with the specified domains
+                if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
+                    $isExist = CustomerAdditionalContact::where('key', 'email')
+                        ->where('customer_id', $quoteObject->customer->id)
+                        ->where('value', $email)
+                        ->exists();
+
+                    if (! $isExist) {
+                        CustomerAdditionalContact::create([
+                            'customer_id' => $customer->id,
+                            'key' => 'email',
+                            'value' => $email,
+                        ]);
+                    }
+                }
                 $quoteObject->update(['customer_id' => $customer->id, 'email' => $request->value]);
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
@@ -232,24 +249,6 @@ class CustomerController extends Controller
                     DB::table('customer_additional_contact')->where('id', $removeEmail->id)->delete();
                 }
                 //ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
-                $quoteObjects = $this->getQuoteObject($request->quote_type, $request->quote_id);
-                $email = trim($quoteObjects->email);
-
-                // Check if the email ends with the specified domains
-                if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
-                    $isExist = CustomerAdditionalContact::where('key', 'email')
-                        ->where('customer_id', $quoteObject->customer->id)
-                        ->where('value', $email)
-                        ->exists();
-
-                    if (! $isExist) {
-                        CustomerAdditionalContact::create([
-                            'customer_id' => $quoteObjects->customer_id,
-                            'key' => 'email',
-                            'value' => $email,
-                        ]);
-                    }
-                }
                 $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
                     ->where('key', 'email')
                     ->where(function ($query) {
