@@ -764,7 +764,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalBcc->value,
                 ];
             }
-            info('sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc);
+            info('sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
 
             if ($emailData->advisorEmail) {
                 $bodyData['cc'] = [
