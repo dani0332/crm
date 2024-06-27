@@ -415,7 +415,7 @@ trait GenericQueriesAllLobs
 
     private function isFilledPolicyDetails($type, $quote)
     {
-        if (! empty($quote->policy_number) && ! empty($quote->policy_issuance_date) && ! empty($quote->policy_start_date) && ! empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0) {
+        if (! empty($quote->policy_number) && ! empty($quote->policy_issuance_date) && ! empty($quote->policy_start_date) && ! empty($quote->renewal_expiry_date) && $quote->price_with_vat >= 0) {
             if (in_array(ucfirst($type), [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
                 if (! empty($quote->insurer_quote_number)) {
                     return true;
@@ -466,7 +466,7 @@ trait GenericQueriesAllLobs
                 PaymentStatusEnum::PENDING,
                 PaymentStatusEnum::NEW,
                 PaymentStatusEnum::OVERDUE,
-                PaymentStatusEnum::CREDIT_APPROVED,
+                PaymentStatusEnum::CREDIT_APPROVED, // TODO: Check with Faisal and Ahsan about this to be included or not for booking of policy with zero price.
             ];
 
             $insufficientPaymentStatusesHeading = [

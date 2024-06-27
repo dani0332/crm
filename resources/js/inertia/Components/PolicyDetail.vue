@@ -114,16 +114,16 @@ watch(
   () => page.props.quote?.price_with_vat,
   (newValue, oldValue) => {
     policyDetailsForm.price_vat_notapplicable =
-      page.props.quote.price_vat_not_applicable || '';
+      page.props.quote.price_vat_not_applicable || 0;
     policyDetailsForm.price_vat_applicable =
-      page.props.quote.price_vat_applicable || '';
-    policyDetailsForm.vat = page.props.quote.vat || '';
+      page.props.quote.price_vat_applicable || 0;
+    policyDetailsForm.vat = page.props.quote.vat || 0;
 
-    caculateVatAmount();
+    calculateVatAmount();
   },
 );
 
-const caculateVatAmount = () => {
+const calculateVatAmount = () => {
   let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
   // if price vat applicable and not applicable both are there
@@ -206,7 +206,7 @@ const onUpdatePolicyDetails = isValid => {
   });
 };
 onBeforeMount(() => {
-  caculateVatAmount();
+  calculateVatAmount();
 });
 
 watch(
@@ -322,7 +322,7 @@ watch(
                 </x-tooltip>
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_notapplicable"
-                  @change="caculateVatAmount"
+                  @change="calculateVatAmount"
                   :rules="[price_vat_notapplicable, isNumber]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
@@ -371,7 +371,7 @@ watch(
                 </x-tooltip>
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_applicable"
-                  @change="caculateVatAmount"
+                  @change="calculateVatAmount"
                   :rules="[price_vat_applicable, isNumber]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"
@@ -535,7 +535,7 @@ watch(
                     () => {
                       policyDetailsState.isEditing = false;
                       policyDetailsForm.reset();
-                      caculateVatAmount();
+                      calculateVatAmount();
                       setQuotePlanInsurerNumber();
                     }
                   "
