@@ -57,7 +57,7 @@ class TransactionReportService extends ManagementReport
                     IFNULL( personal_quotes.price_vat_applicable , 0 ) +
                     IFNULL( personal_quotes.price_vat_not_applicable , 0 ) +
                     IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )) -
-                    (p.premium_captured),2) as pending_balance'),
+                    IFNULL( p.premium_captured, 0),2) as pending_balance'),
                 DB::raw('UPPER(p.collection_type) as collects'),
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
