@@ -254,7 +254,7 @@ class PersonalQuoteRepository extends BaseRepository
             });
 
         } else {
-            $quoteObject = $this->where("email" , $data['quote_primary_email_address'])->first();
+            $quoteObject = $this->where('email', $data['quote_primary_email_address'])->first();
             $customerArray = [
                 'first_name' => $quoteObject->first_name,
                 'last_name' => $quoteObject->last_name,
@@ -275,6 +275,7 @@ class PersonalQuoteRepository extends BaseRepository
                 ]);
             }
             $quoteObject->update(['customer_id' => $customer->id, 'email' => $data['value']]);
+
             return DB::transaction(function () use ($quoteId, $data) {
                 $quote = $this->findOrFail($quoteId);
                 $updateData = [$data['key'] => $data['value']];
