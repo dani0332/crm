@@ -863,7 +863,7 @@ class SendUpdateLogService
 
     public function getSendUpdateDocuments($category): array
     {
-        $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE)->toArray();
+        $documentTypes = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
 
         return array_map(function ($documentType) use ($category) {
             if (! in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) &&
