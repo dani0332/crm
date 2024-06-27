@@ -252,19 +252,17 @@ class PersonalQuoteRepository extends BaseRepository
 
                 return true;
             });
-
         } else {
             $quoteObject = $this->where('email', $data['quote_primary_email_address'])->first();
             $customerArray = [
                 'first_name' => $quoteObject->first_name,
                 'last_name' => $quoteObject->last_name,
-                'nationality_id' => $quoteObject->nationality_id,
                 'mobile_no' => $quoteObject->mobile_no,
                 'email' => $data['value'],
                 'dob' => $quoteObject->dob,
-                'gender' => $quoteObject->gender,
             ];
             $customer = Customer::create($customerArray);
+            $customer->update(['code', 'IND-'.$customer->id]);
             $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
                 ->get();
             foreach ($getCustomerAdditionalContact as $contact) {
@@ -284,7 +282,6 @@ class PersonalQuoteRepository extends BaseRepository
                 return true;
             });
         }
-
     }
 
     public function fetchCreateDuplicate(array $dataArr, $quoteTypeId): object
