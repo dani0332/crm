@@ -206,11 +206,9 @@ class CustomerController extends Controller
                 $customerArray = [
                     'first_name' => $quoteObject->first_name,
                     'last_name' => $quoteObject->last_name,
-                    'nationality_id' => $quoteObject->nationality_id,
                     'mobile_no' => $quoteObject->mobile_no,
                     'email' => $request->value,
                     'dob' => $quoteObject->dob,
-                    'gender' => $quoteObject->gender,
                 ];
                 $customer = Customer::create($customerArray);
                 $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
@@ -261,7 +259,6 @@ class CustomerController extends Controller
                 if (isset($removeAdvisorEmail->id)) {
                     DB::table('customer_additional_contact')->where('id', $removeAdvisorEmail->id)->delete();
                 }
-
             } else {
                 $oldCustomer = $this->customerService->getCustomerByEmail($request->value);
                 $quoteObject->update(['customer_id' => $oldCustomer->id]);
