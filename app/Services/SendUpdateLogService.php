@@ -860,4 +860,18 @@ class SendUpdateLogService
 
         return true;
     }
+
+    public function getSendUpdateDocuments($category): array
+    {
+        $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE)->toArray();
+
+        return array_map(function ($documentType) use ($category) {
+            if (! in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) &&
+                in_array($documentType['code'], [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER])
+            ) {
+                $documentType['is_required'] = 1;
+            }
+            return $documentType;
+        }, $documentTypes);
+    }
 }

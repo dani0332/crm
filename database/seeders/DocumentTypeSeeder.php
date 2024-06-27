@@ -35664,7 +35664,7 @@ class DocumentTypeSeeder extends Seeder
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
             'max_files' => 5,
             'max_size' => 25,
-            'is_required' => 0,
+            'is_required' => 1,
             'category' => 'SEND_UPDATE',
             'sort_order' => 1,
         ]);
@@ -35678,7 +35678,7 @@ class DocumentTypeSeeder extends Seeder
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
             'max_files' => 5,
             'max_size' => 25,
-            'is_required' => 0,
+            'is_required' => 1,
             'category' => 'SEND_UPDATE',
             'sort_order' => 2,
         ]);
