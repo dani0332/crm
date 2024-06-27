@@ -159,7 +159,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="compact"
     :loading="loader"
     :headers="tableHeader"
     :items="props.reportData.data || []"
@@ -168,6 +168,7 @@ const isIntegerColumn = key => {
     :sort-by="'net_conversion'"
     :sort-type="'desc'"
     hide-footer
+    :rows-per-page="100"
   >
     <template #item-policy_number="{ policy_number, main_lead_policy_number }">
       {{ policy_number ? policy_number : (main_lead_policy_number ?? 'N/A') }}
@@ -217,7 +218,7 @@ const isIntegerColumn = key => {
       {{ payment_date ?? 'N/A' }}
     </template>
     <template #item-pending_balance="{ pending_balance }">
-      {{ pending_balance ?? 'N/A' }}
+      {{ pending_balance ?? 0 }}
     </template>
     <template #item-collects="{ collects }">
       {{ collects ?? 'N/A' }}

@@ -60,7 +60,7 @@ class EndorsementReportService extends ManagementReport
                     IFNULL( send_update_logs.price_vat_applicable , 0 ) +
                     IFNULL( send_update_logs.price_vat_not_applicable , 0 ) +
                     IFNULL( vat , 0 )) - IFNULL( p.discount_value , 0 )) -
-                    SUM(p.premium_captured),2) as pending_balance'),
+                    (p.premium_captured),2) as pending_balance'),
                 DB::raw('UPPER(p.collection_type) as collects'),
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
