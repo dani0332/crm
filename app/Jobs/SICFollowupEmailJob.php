@@ -39,28 +39,26 @@ class SICFollowupEmailJob implements ShouldQueue
 
         if (empty($carLead->advisor_id)) {
             $sendEmailCustomerService->sendSICFollowupEmail($carLead);
-            info('Start sent message from Whatsapp. UUID: '.$this->uuid);
-            $this->sendWhatsAppMessageKenRequest();
+            $this->sendWhatsAppMessage();
         } else {
             info('SICFollowupEmailJob - Car Lead Advisor Available - Ref ID: '.$carLead->uuid.'- Time: '.now());
         }
     }
 
-    private function sendWhatsAppMessageKenRequest()
+    private function sendWhatsAppMessage()
     {
         try {
             $response = Ken::request('/send-sic-dedicated-wa', 'post', [
                 'quoteUID' => $this->uuid,
             ]);
-            info(now().' | sendWhatsAppMessageKenRequest: response from ken| '.json_encode($response));
+            info('SICFollowupEmailJob - '.now().' - sendWhatsAppMessage: response from ken| '.json_encode($response));
             if ($response) {
                 info('Whatsapp message sent successfully. UUID: '.$this->uuid.' | Time: '.now());
             } else {
                 info('invalid response from ken| UUID: '.$this->uuid.' | Time: '.now());
             }
         } catch (\Throwable $th) {
-            Log::error($th->getMessage().' | Error while sending whatsapp message. UUID: '.$this->uuid.' | Time: '.now());
+            Log::error('SICFollowupEmailJob - Error: '.$th->getMessage().' - UUID: '.$this->uuid.' - Time: '.now());
         }
-
     }
 }
