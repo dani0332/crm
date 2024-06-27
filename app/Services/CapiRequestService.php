@@ -86,14 +86,15 @@ class CapiRequestService
     {
         if (isset($requestContent->quoteUID)) {
             $healthQuote = HealthQuote::where('uuid', $requestContent->quoteUID)->first();
-
-            HealthQuoteRequestDetail::updateOrCreate(
-                ['health_quote_request_id' => $healthQuote->id],
-                [
-                    'advisor_assigned_date' => now(),
-                    'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
-                ]
-            );
+            if($healthQuote) {
+                HealthQuoteRequestDetail::updateOrCreate(
+                    ['health_quote_request_id' => $healthQuote->id],
+                    [
+                        'advisor_assigned_date' => now(),
+                        'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
+                    ]
+                );
+            }
         }
     }
 
