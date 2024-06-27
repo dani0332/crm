@@ -38,7 +38,8 @@ class SICFollowupEmailJob implements ShouldQueue
 
         if (empty($carLead->advisor_id)) {
             $sendEmailCustomerService->sendSICFollowupEmail($carLead);
-            // $this->sendWhatsAppMessageKenRequest();
+            info('Start sent message from Whatsapp. UUID: '.$this->uuid);
+            $this->sendWhatsAppMessageKenRequest();
         } else {
             info('SICFollowupEmailJob - Car Lead Advisor Available - Ref ID: '.$carLead->uuid.'- Time: '.now());
         }
@@ -46,13 +47,14 @@ class SICFollowupEmailJob implements ShouldQueue
 
     private function sendWhatsAppMessageKenRequest()
     {
-        $response = Ken::request('/send-sic-dedicated-wa-message', 'post', [
+        $response = Ken::request('/send-sic-dedicated-wa', 'post', [
             'quoteUID' => $this->uuid,
         ]);
+        info(now().' | sendWhatsAppMessageKenRequest: response from ken| '.json_encode($response));
         if ($response) {
-            info('Whatsapp message sent successfully. UUID: '.$this->uuid);
+            info('Whatsapp message sent successfully. UUID: '.$this->uuid.' | Time: '.now());
         } else {
-            info('invaild response from ken| UUID: '.$this->uuid);
+            info('invaild response from ken| UUID: '.$this->uuid . ' | Time: '.now());
         }
     }
 }
