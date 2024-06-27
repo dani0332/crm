@@ -871,6 +871,7 @@ class SendUpdateLogService
             ) {
                 $documentType['is_required'] = 1;
             }
+
             return $documentType;
         }, $documentTypes);
     }
