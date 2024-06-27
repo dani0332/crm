@@ -211,7 +211,7 @@ class CustomerController extends Controller
                     'dob' => $quoteObject->dob,
                 ];
                 $customer = Customer::create($customerArray);
-                $customer->update(['code', 'IND-'.$customer->id]);
+                $customer->update(['code'=> 'IND-'.$customer->id]);
                 $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $quoteObject->customer->id)
                     ->get();
                 foreach ($getCustomerAdditionalContact as $contact) {
