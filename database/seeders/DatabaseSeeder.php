@@ -60,6 +60,8 @@ class DatabaseSeeder extends Seeder
             addInsuranceProvidersConfiguration::class,
             RevokeTempPaymentUpdatePermissionsSeeder::class,
             ImcrmUsersRolesCleaner::class,
+            addInsuranceProvidersConfiguration::class,
+            addPermissionsForInsurerNowPayment::class,
         ]);
     }
 }
