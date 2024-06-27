@@ -2130,10 +2130,10 @@ class SageApiService
                 info('  ########## End arSplitPrepaymentPayload for : '.$quote->code.' ########## ');
             }
 
-            $isUpfrontPaymentFrequency = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+            $isUpfrontOrSplitPaymentFrequency = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
             $isPaymentStatusPaidOrCaptured = in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
 
-            if (! $isUpfrontPaymentFrequency && $isPaymentStatusPaidOrCaptured && ! $isTotalPriceZero) {
+            if (! $isUpfrontOrSplitPaymentFrequency && $isPaymentStatusPaidOrCaptured) { /* && ! $isTotalPriceZero*/
                 info('########## Start arSplitPrepaymentPayload for : '.$quote->code.'##########');
                 $totalSteps = 18;
 
