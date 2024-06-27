@@ -66,6 +66,7 @@ use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Support\Arr;
@@ -75,8 +76,8 @@ use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class RenewalsUploadService
 {
-    use GenericQueriesAllLobs;
-
+    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
+    
     protected $renewalsAddonService;
     protected $capiRequestService;
     protected $insuranceProviderService;
@@ -867,6 +868,10 @@ class RenewalsUploadService
             $quoteObject = $this->createQuoteObject($quoteType->code);
 
             $quote = $quoteObject->create($quoteData);
+            if(!$isQuotePersonal){
+                $this->syncQuote($quote, $quoteData);
+            }
+
 
             if ($isQuotePersonal) {
                 $quote->quoteDetail()->create($detailData);
