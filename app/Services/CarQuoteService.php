@@ -193,7 +193,8 @@ class CarQuoteService extends BaseService
                 'cqr.enquiry_count',
                 'cqr.policy_booking_date',
                 //'cqr.aml_status_id',
-                DB::raw('GROUP_CONCAT(team.name) as team_name')
+                DB::raw('GROUP_CONCAT(team.name) as team_name'),
+                'cqr.insly_migrated',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')

@@ -84,6 +84,7 @@ class LifeQuoteService extends BaseService
                 'lqr.kyc_decision',
                 'lqr.insurance_provider_id',
                 'ip.text AS insurance_provider_text',
+                'lqr.insly_migrated',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
