@@ -1588,7 +1588,7 @@ class SageApiService
             // total_payments = 1 means upfront payment
             if ($isPaymentFrequencyUpfront) {
                 info('########## Start of Upfront createAPInvoicePrem for : '.$quote->code.'##########');
-                if(! $isTotalPriceZero){
+                if (! $isTotalPriceZero) {
                     $isLiveApiCallStep5 = true;
                     if (isset($sageLogArray[5]) && $sageLogArray[5]['status'] == 'success') {
                         info('SAGE API:  createAPInvoicePrem  Sent Already for '.$quote->uuid);
@@ -1678,7 +1678,7 @@ class SageApiService
 
                         return $returnMessage;
                     }
-                }else{
+                } else {
                     info('  ########## skipping of createAPInvoicePrem for : '.$quote->code.' dye to Zero Pricing ########## ');
                 }
 
