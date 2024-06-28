@@ -83,6 +83,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const RF_SOAC = 'RF_SOAC'; // Request for statement of account (SOA)
     const MSC_NFI = 'MSC_NFI'; // Marital status change (with no financial impact)
     const CTD_NFI = 'CTD_NFI'; // Change travel dates (with no financial impact)
+    const DTSI = 'DTSI'; // Decrease the sum insured
     const DOV = 'DOV'; // Deletion of vehicle
     const ACB = 'ACB'; // Additional commission booking
     const ATIB = 'ATIB'; // Additional tax invoice booking
