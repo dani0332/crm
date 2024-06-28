@@ -222,6 +222,13 @@ class CustomerService extends BaseService
                     DB::table('customer_additional_contact')->where('id', $removeAdvisorEmail->id)->delete();
                 }
             } else {
+                // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
+                $removeEmail = CustomerAdditionalContact::where('value', $value)
+                    ->where('key', 'email')
+                    ->first();
+                if (isset($removeEmail->id)) {
+                    DB::table('customer_additional_contact')->where('id', $removeEmail->id)->delete();
+                }
                 $customer = $this->getCustomerByEmail($value);
 
                 CustomerAdditionalContact::firstOrCreate([
@@ -240,6 +247,9 @@ class CustomerService extends BaseService
                     ]);
                 }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
+
+
+
             }
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
             $lead->update(['mobile_no' => $value]);
