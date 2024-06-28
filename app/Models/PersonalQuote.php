@@ -6,6 +6,7 @@ use App\Enums\FilterTypes;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
+use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
@@ -44,6 +45,10 @@ class PersonalQuote extends Model implements AuditableContract
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
+
+    protected $dispatchesEvents = [
+        'updated' => QuoteEmailUpdated::class,
+    ];
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);

@@ -8,6 +8,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Auth;
@@ -49,6 +50,10 @@ class CarQuote extends BaseModel
         'renewal_batch' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'quote_batch_id' => FilterTypes::IN,
+    ];
+
+    protected $dispatchesEvents = [
+        'updated' => QuoteEmailUpdated::class,
     ];
 
     public function getFullNameAttribute()

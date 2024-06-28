@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
+use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
@@ -31,6 +32,10 @@ class LifeQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+    ];
+
+    protected $dispatchesEvents = [
+        'updated' => QuoteEmailUpdated::class,
     ];
 
     public function getDobAttribute($value)
