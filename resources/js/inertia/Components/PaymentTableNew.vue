@@ -208,8 +208,10 @@ const calculateTotalAmount = () => {
 
 // Define a computed property to deduct insure now pay later
 const isInsureNowPayLaterAllowed = computed(() => {
-  if ( paymentMethodsForm.collection_type = 'broker' && can(permissionEnum.INPL_USER) ) { 
-    return true;
+  if ( paymentMethodsForm.collection_type === 'broker' && 
+       can(permissionEnum.INPL_USER) 
+  ) { 
+    return false;
   }  
   return false;
 });
@@ -699,11 +701,18 @@ const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
   let excludedPaymentTypes = [
-    isInsureNowPayLaterAllowed.value ? null : page.props.paymentMethodsEnum?.InsureNowPayLater,
+    page.props.paymentMethodsEnum?.InsureNowPayLater,
     page.props.paymentMethodsEnum?.CreditApproval,
     page.props.paymentMethodsEnum?.MultiplePayment,
     page.props.paymentMethodsEnum?.PartialPayment,
-  ].filter(Boolean);
+  ];
+  
+  if ( isInsureNowPayLaterAllowed.value ) { 
+    excludedPaymentTypes = excludedPaymentTypes.filter(
+      (paymentType) => paymentType !== page.props.paymentMethodsEnum?.InsureNowPayLater
+    );
+  }
+
   if (paymentMethodsForm.frequency != 'upfront') {
     /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
     excludedPaymentTypes.push(
@@ -1708,6 +1717,13 @@ const editPaymentModal = (
       isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
+    }
+
+    let inureNowPayLaterExists = payment.payment_splits.find(
+      item => item.payment_methods_code ===  page.props.paymentMethodsEnum?.InsureNowPayLater,
+    );
+    if (inureNowPayLaterExists) {
+      isInsureNowPayLaterAllowed.value = true;
     }
   }
   if (paymentMethodsForm.status == 'view') {
@@ -4792,7 +4808,13 @@ const lookupsEnum = page.props.lookupsEnum;
                 isCreditApprovalView ||
                 (splitPaymentRecord.payment_status_id !=
                   paymentStatusEnum.PAID &&
-                  can(permissionEnum.ApprovePayments))
+                  (
+                    can(permissionEnum.ApprovePayments)
+                    ||                    
+                    (can(permissionEnum.INPL_APPROVER) && splitPaymentRecord.payment_methods_code == paymentMethodsEnum?.InsureNowPayLater)
+                  )
+                  
+                )
               "
               class="w-full flex justify-end"
             >
