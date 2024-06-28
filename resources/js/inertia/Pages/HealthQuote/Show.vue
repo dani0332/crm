@@ -1719,7 +1719,6 @@ watch(
           </div>
         </div>
         <div
-          v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
           class="w-full md:w-1/2 flex gap-2 items-end"
         >
           <ComboBox

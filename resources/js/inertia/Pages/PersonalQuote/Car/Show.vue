@@ -1731,7 +1731,6 @@ const handlePlanSelected = plan => {
               v-if="
                 !hasAnyRole([
                   rolesEnum.CarAdvisor,
-                  rolesEnum.CarDeputyManager,
                   rolesEnum.CarManager,
                 ])
               "

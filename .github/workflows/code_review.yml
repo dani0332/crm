@@ -1,0 +1,28 @@
+name: AI Code Reviewer
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+permissions: write-all
+jobs:
+  review:
+    if: '! github.event.pull_request.draft' # Only run on non-draft pull requests. Must be coupled with the ready_for_review event above.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: AI Code Reviewer
+        uses: lukehollenback/ai-codereviewer@dev
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_MODEL: 'gpt-4o'
+          exclude: 'yarn.lock, composer.lock, public/build/**, dist/**, **/*.json, **/*.md, **/*.yaml, **/*.xml' # Optional: File patterns, separated by commas, to exclude from analysis
+          custom_prompts: |
+            Act as an expert PHP, Laravel Developer 
+            Do not worry about the verbosity of variable names, as long as they are somewhat descriptive.
+            Be sure to call out concurrency issues and potential race conditions.

@@ -482,7 +482,6 @@ watch(
           v-if="
             !hasAnyRole([
               rolesEnum.CorpLineRenewalAdvisor,
-              rolesEnum.CorpLineNewBusinessAdvisor,
               rolesEnum.CorpLineAdvisor,
             ])
           "

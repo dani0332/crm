@@ -16,8 +16,6 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
-  premium: props.quote?.pet_quote?.premium || '',
-  policy_number: props.quote?.pet_quote?.policy_number || '',
   pet_type_id: props.quote?.pet_quote?.pet_type_id || '',
   breed_of_pet1: props.quote?.pet_quote?.breed_of_pet1 || '',
   pet_age_id: props.quote?.pet_quote?.pet_age_id || '',
