@@ -247,9 +247,6 @@ class CustomerService extends BaseService
                     ]);
                 }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
-
-
-
             }
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
             $lead->update(['mobile_no' => $value]);
