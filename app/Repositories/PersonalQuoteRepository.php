@@ -211,20 +211,6 @@ class PersonalQuoteRepository extends BaseRepository
         return $audits;
     }
 
-    /**
-     * @return mixed
-     */
-    public function fetchChangePrimaryContact($quoteId, $data)
-    {
-        return DB::transaction(function () use ($quoteId, $data) {
-            $quote = $this->findOrFail($quoteId);
-            $updateData = [$data['key'] => $data['value']];
-            $quote->update($updateData);
-
-            return true;
-        });
-    }
-
     public function fetchCreateDuplicate(array $dataArr, $quoteTypeId): object
     {
         $dataArr['quoteTypeId'] = intval(array_search($quoteTypeId, QuoteTypeId::getOptions()));

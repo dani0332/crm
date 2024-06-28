@@ -34,7 +34,7 @@ class UpdatePolicyDetailRequest extends FormRequest
 
             return [
 
-                'quote_policy_number' => 'required|max:50',
+                'quote_policy_number' => 'required|max:75',
                 'quote_policy_issuance_date' => 'required',
                 'quote_policy_start_date' => 'required',
                 'quote_policy_expiry_date' => 'required|date|after:quote_policy_start_date',
@@ -57,7 +57,7 @@ class UpdatePolicyDetailRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $pattern = '/^(\w+[-\/]?)+$/';
+            $pattern = '/^[\w,\/\\| -]+$/';
             $quote_policy_number = request()->quote_policy_number;
             if (! preg_match($pattern, $quote_policy_number)) {
 

@@ -22,20 +22,17 @@ class SaveBookingDetailsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'commission_vat_applicable' => 'required|numeric|min:1',
+            'commission_vat_applicable' => 'required|numeric',
             'invoice_description' => 'required|string',
             'invoice_date' => 'required|date',
             'insurer_tax_invoice_number' => 'required|string',
             'insurer_commission_invoice_number' => 'required|string',
             'discount' => 'nullable|numeric',
-            'commission_percentage' => 'required|numeric',
             'commission_vat_not_applicable' => 'nullable|numeric',
-            'vat_on_commission' => 'required|numeric',
-            'total_commission' => 'required|numeric',
             'total_vat_amount' => 'required|numeric',
             'price_vat_applicable' => 'required|numeric',
             'price_vat_not_applicable' => 'required|numeric',
-            'total_price' => 'required|numeric',
+            'price_with_vat' => 'required|numeric',
         ];
     }
 

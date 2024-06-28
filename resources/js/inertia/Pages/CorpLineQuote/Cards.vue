@@ -20,7 +20,6 @@ const rolesEnum = page.props.rolesEnum;
 const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.CorpLineRenewalAdvisor,
-    rolesEnum.CorpLineNewBusinessAdvisor,
     rolesEnum.CorpLineAdvisor,
   ]);
 });

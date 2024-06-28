@@ -208,6 +208,11 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => '614',
                 'is_active' => 1,
             ],
+            [
+                'key_name' => ApplicationStorageEnums::DIS_INBOX_EMAIL_BCC,
+                'value' => 'sendpolicyupdate@insurancemarket.ae',
+                'is_active' => 1,
+            ],
         ];
 
         foreach ($applicationStorageSeeder as $applicationStorage) {
@@ -215,6 +220,17 @@ class ApplicationStorageSeeder extends Seeder
                 'key_name' => $applicationStorage['key_name'],
             ];
             ApplicationStorage::firstOrCreate($conditions, $applicationStorage);
+        }
+
+        $sicFollowupEmailTempID = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID)->first();
+        if (empty($sicFollowupEmailTempID)) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID,
+                'value' => 678,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
     }
 }

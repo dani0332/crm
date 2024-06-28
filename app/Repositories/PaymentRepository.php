@@ -403,9 +403,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
                             $parentPayment = $paymentSplit->payment;
-                            /* Part of milestone 2 */
-                            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER) {
-                                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
+                            /* Create payment receipt for broker */
+                            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
+                                ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::CreditApproval]) &&
+                                in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])
+                            ) {
+                                app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $paymentSplit);
                             }
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
@@ -592,9 +595,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     );
                 }
             }
-            /* Part of milestone 2*/
+            /* Create payment receipt for broker*/
             if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
-                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);
+                app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);
             }
         } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
             $paymentInformation = [

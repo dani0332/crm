@@ -24,7 +24,7 @@ class AddRoleForRenewalsManager extends Seeder
                 'updated_at' => now(),
             ]);
 
-            $renewalsRoleId = Role::where('name', 'RENEWALS')->pluck('id');
+            $renewalsRoleId = Role::where('name', 'RENEWALS_MANAGEMENT')->pluck('id');
             $renewalsPermissionIds = DB::table('role_has_permissions')->where('role_id', $renewalsRoleId)->pluck('permission_id');
 
             foreach ($renewalsPermissionIds as $id) {

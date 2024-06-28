@@ -17,9 +17,11 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PolicyIssuanceStatus;
+use App\Services\ApplicationStorageService;
 use App\Services\LeadsCountService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
@@ -57,9 +59,11 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $permissions = $roles = [];
+        $vatValue = 0;
         if (auth()->user()) {
             $permissions = auth()->user()->getAllPermissions()->pluck('name')->toArray();
             $roles = auth()->user()->getRoleNames()->toArray();
+            $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         }
 
         return [
@@ -74,6 +78,7 @@ class HandleInertiaRequests extends Middleware
             'rolesEnum' => RolesEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'documentTypeEnum' => DocumentTypeEnum::asArray(),
+            'sendPolicyTypeEnum' => SendPolicyTypeEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),
@@ -93,6 +98,7 @@ class HandleInertiaRequests extends Middleware
             'im_logo' => getIMLogo(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
+            'vatValue' => $vatValue,
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
