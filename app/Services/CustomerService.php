@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
-use Illuminate\Support\Facades\DB;
 
 class CustomerService extends BaseService
 {
@@ -210,7 +209,7 @@ class CustomerService extends BaseService
                     ->where('key', 'email')
                     ->first();
                 if (isset($removeEmail->id)) {
-                    DB::table('customer_additional_contact')->where('id', $removeEmail->id)->delete();
+                    $removeEmail->delete();
                 }
                 //ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
                 $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer->id)
@@ -221,7 +220,7 @@ class CustomerService extends BaseService
                     })
                     ->first();
                 if (isset($removeAdvisorEmail->id)) {
-                    DB::table('customer_additional_contact')->where('id', $removeAdvisorEmail->id)->delete();
+                    $removeAdvisorEmail->delete();
                 }
             } else {
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
@@ -229,7 +228,7 @@ class CustomerService extends BaseService
                     ->where('key', 'email')
                     ->first();
                 if (isset($removeEmail->id)) {
-                    DB::table('customer_additional_contact')->where('id', $removeEmail->id)->delete();
+                    $removeEmail->delete();
                 }
                 $customer = $this->getCustomerByEmail($value);
 
