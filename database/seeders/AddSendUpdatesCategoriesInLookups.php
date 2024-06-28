@@ -36,8 +36,9 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'key' => $type['key'],
                     'text' => $type['name'],
                     'code' => $type['code'],
-                    'description' => $type['tooltip'],
                     'parent_id' => $parentOption->id,
+                ], [
+                    'description' => $type['tooltip'],
                 ]);
                 // info("\tSub Type: ".$type['name']);
 
@@ -77,8 +78,9 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                             'key' => $subType['key'],
                             'text' => $subType['name'],
                             'code' => $subType['code'] ?? $code,
-                            'description' => $subType['tooltip'],
                             'parent_id' => $typeCategory->id,
+                        ], [
+                            'description' => $subType['tooltip'],
                         ]);
                     }
                 }

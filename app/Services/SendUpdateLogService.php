@@ -432,6 +432,7 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::MDOV,
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::DOV,
             ])) {
                 return true;
@@ -606,6 +607,7 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::DM,
             SendUpdateLogStatusEnum::ACB,
             SendUpdateLogStatusEnum::ATIB,
+            SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
         ];
 
@@ -758,7 +760,7 @@ class SendUpdateLogService
                         'quote_batch_id' => null,
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
-                } else {
+                } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
                     ]);
@@ -853,22 +855,36 @@ class SendUpdateLogService
      */
     public function isPlanDetailAvailable($sendUpdateLog): bool
     {
-        $disAllowedTypes = [
-            SendUpdateLogStatusEnum::MDOM,
-            SendUpdateLogStatusEnum::MDOV,
-            SendUpdateLogStatusEnum::MPC,
-            SendUpdateLogStatusEnum::ED,
-            SendUpdateLogStatusEnum::DM,
-            SendUpdateLogStatusEnum::DOV,
-            SendUpdateLogStatusEnum::ACB,
-            SendUpdateLogStatusEnum::ATIB,
-        ];
-
         if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
-            in_array($sendUpdateLog->option?->code, $disAllowedTypes)) {
+            in_array($sendUpdateLog->option?->code, [
+                SendUpdateLogStatusEnum::MDOM,
+                SendUpdateLogStatusEnum::MDOV,
+                SendUpdateLogStatusEnum::MPC,
+                SendUpdateLogStatusEnum::ED,
+                SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::ACB,
+                SendUpdateLogStatusEnum::ATIB,
+                SendUpdateLogStatusEnum::DTSI,
+            ])) {
             return false;
         }
 
         return true;
+    }
+
+    public function getSendUpdateDocuments($category): array
+    {
+        $documentTypes = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
+
+        return array_map(function ($documentType) use ($category) {
+            if (! in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) &&
+                in_array($documentType['code'], [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER])
+            ) {
+                $documentType['is_required'] = 1;
+            }
+
+            return $documentType;
+        }, $documentTypes);
     }
 }

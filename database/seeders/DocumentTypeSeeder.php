@@ -35664,7 +35664,7 @@ class DocumentTypeSeeder extends Seeder
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
             'max_files' => 5,
             'max_size' => 25,
-            'is_required' => 0,
+            'is_required' => 1,
             'category' => 'SEND_UPDATE',
             'sort_order' => 1,
         ]);
@@ -35678,7 +35678,7 @@ class DocumentTypeSeeder extends Seeder
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
             'max_files' => 5,
             'max_size' => 25,
-            'is_required' => 0,
+            'is_required' => 1,
             'category' => 'SEND_UPDATE',
             'sort_order' => 2,
         ]);
@@ -35750,6 +35750,7 @@ class DocumentTypeSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 7,
         ]);
 
         DocumentType::firstOrCreate(([
@@ -35763,6 +35764,7 @@ class DocumentTypeSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 8,
         ]);
 
         DocumentType::firstOrCreate(([
@@ -35776,6 +35778,7 @@ class DocumentTypeSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 9,
         ]);
 
         DocumentType::firstOrCreate(([
@@ -35790,6 +35793,7 @@ class DocumentTypeSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 10,
         ]);
     }
 }
