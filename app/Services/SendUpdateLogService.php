@@ -753,7 +753,7 @@ class SendUpdateLogService
                         'quote_batch_id' => null,
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
-                } else {
+                } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
                     ]);
