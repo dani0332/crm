@@ -208,6 +208,11 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => '614',
                 'is_active' => 1,
             ],
+            [
+                'key_name' => ApplicationStorageEnums::DIS_INBOX_EMAIL_BCC,
+                'value' => 'sendpolicyupdate@insurancemarket.ae',
+                'is_active' => 1,
+            ],
         ];
 
         foreach ($applicationStorageSeeder as $applicationStorage) {
