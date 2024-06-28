@@ -148,6 +148,31 @@ const caculateVatAmount = () => {
     policyDetailsForm.amount_with_vat = 0;
   }
 };
+const quoteType = page.props.quoteType.toLowerCase();
+const isLifeQuote = quoteType == quoteTypeCodeEnum.Life.toLowerCase();
+const isPriceVatApplicableRequired = computed(() => {
+  if (isLifeQuote) {
+    return true;
+  } else if (
+    [
+      quoteTypeCodeEnum.Health.toLowerCase(),
+      quoteTypeCodeEnum.Yacht.toLowerCase(),
+      quoteTypeCodeEnum.GroupMedical.toLowerCase(),
+      quoteTypeCodeEnum.CORPLINE.toLowerCase(),
+      quoteTypeCodeEnum.BusinessQuote.toLowerCase(),
+    ].includes(quoteType) &&
+    policyDetailsForm.price_vat_applicable == ''
+  ) {
+    //for health, corpline, groupmedical, yatch, price vat not applicable is required when price vat applicable is empty
+    return true;
+  }
+  return false;
+});
+
+const isCarOrBikeQuote = [
+  quoteTypeCodeEnum.Car.toLowerCase(),
+  quoteTypeCodeEnum.Bike.toLowerCase(),
+].includes(quoteType);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -156,7 +181,6 @@ const rules = {
   },
   price_vat_applicable: v => {
     //for life, price vat applicable is not required
-    let isLifeQuote = page.props.quoteType == quoteTypeCodeEnum.Life;
     if (isLifeQuote) return true;
     if (v) {
       return (
@@ -166,8 +190,6 @@ const rules = {
     return !!v || 'This field is required';
   },
   price_vat_not_applicable: v => {
-    let quoteType = page.props.quoteType.toLowerCase();
-    let isLifeQuote = quoteType == quoteTypeCodeEnum.Life.toLowerCase();
     //for life, price vat not applicable is required
     if (isLifeQuote) {
       if (v) {
@@ -184,7 +206,7 @@ const rules = {
         quoteTypeCodeEnum.CORPLINE.toLowerCase(),
         quoteTypeCodeEnum.BusinessQuote.toLowerCase(),
       ].includes(quoteType) &&
-      Number(policyDetailsForm.price_vat_applicable) == 0
+      policyDetailsForm.price_vat_applicable == ''
     ) {
       //for health, corpline, groupmedical, yatch, price vat not applicable is required when price vat applicable is empty
       if (v) {
@@ -197,12 +219,6 @@ const rules = {
     return true;
   },
   quote_plan_insurer_quote_number: v => {
-    let quoteType = page.props.quoteType.toLowerCase();
-    let isCarOrBikeQuote = [
-      quoteTypeCodeEnum.Car.toLowerCase(),
-      quoteTypeCodeEnum.Bike.toLowerCase(),
-    ].includes(quoteType);
-    console.log('quoteType', quoteType, isCarOrBikeQuote);
     if (isCarOrBikeQuote) {
       return !!v || 'This field is required';
     }
@@ -332,7 +348,7 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Policy Number</label
+                    >Policy Number <span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span>{{
@@ -358,7 +374,7 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >ISSUANCE DATE</label
+                    >ISSUANCE DATE <span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span>{{
@@ -383,11 +399,16 @@ watch(
 
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
-                <x-tooltip
-                  ><label
+                <x-tooltip>
+                  <label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Price (VAT NOT APPLICABLE)</label
-                  >
+                    >Price (VAT NOT APPLICABLE)
+                    <span
+                      v-if="isPriceVatApplicableRequired"
+                      class="text-red-500"
+                      >*</span
+                    >
+                  </label>
                   <template #tooltip>
                     <span>{{
                       productionProcessTooltipEnum.PRICE_VAT_NOT_APPLICABLE
@@ -418,7 +439,7 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Start Date</label
+                    >Start Date <span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span>{{ productionProcessTooltipEnum.START_DATE }}</span>
@@ -440,7 +461,10 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Price (VAT APPLICABLE)</label
+                    >Price (VAT APPLICABLE)
+                    <span v-if="!isLifeQuote" class="text-red-500"
+                      >*</span
+                    ></label
                   >
                   <template #tooltip>
                     <span>{{
@@ -472,7 +496,7 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Expiry Date</label
+                    >Expiry Date <span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span>{{ productionProcessTooltipEnum.EXPIRY_DATE }}</span>
@@ -536,7 +560,10 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Insurer Quote Number</label
+                    >Insurer Quote Number
+                    <span v-if="isCarOrBikeQuote" class="text-red-500"
+                      >*</span
+                    ></label
                   >
                   <template #tooltip>
                     <span>{{
