@@ -269,7 +269,7 @@ const calculatePriceDetailsForATIB = () => {
 
       let price_with_vat =
         total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
-      bookingDetailsForm.total_price = convertToNegative(total_price);
+      bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
   }
 }
 
@@ -300,12 +300,12 @@ const calculateCommission = () => {
           Number(bookingDetailsForm.price_vat_applicable) * Number(5 / 100);
         bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
 
-        let total_price =
+        let price_with_vat =
           total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
-        bookingDetailsForm.total_price = convertToNegative(total_price);
+        bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
         bookingDetailsForm.commission_percentage = convertToNegative(
-          (total_commission / total_price) * 100,
+          (total_commission / price_with_vat) * 100,
         );
       } else {
         notification.error({
