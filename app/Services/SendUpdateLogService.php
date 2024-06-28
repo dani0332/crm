@@ -432,6 +432,7 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::MDOV,
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::DOV,
             ])) {
                 return true;
@@ -599,6 +600,7 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::MDOV,
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
         ];
 
@@ -854,6 +856,7 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::DTSI,
             ])) {
             return false;
         }
