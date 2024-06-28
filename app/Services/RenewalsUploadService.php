@@ -1047,7 +1047,7 @@ class RenewalsUploadService
             info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
 
             $quote->update($quoteData);
-            if (!checkPersonalQuotes($quoteType)) {
+            if (! checkPersonalQuotes($quoteType)) {
                 $this->syncQuote($quote, $quoteData);
             }
 
