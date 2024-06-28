@@ -11,7 +11,6 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Services\CentralService;
-use App\Services\CustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -197,19 +196,6 @@ class PersonalQuoteRepository extends BaseRepository
             ->orderBy('a.created_at', 'DESC')->get();
 
         return $audits;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function fetchChangePrimaryContact($quoteId, $data)
-    {
-        $quoteObject = $this->findOrFail($quoteId);
-        $key = $data['key'];
-        $value = $data['value'];
-        app(CustomerService::class)->makeAdditionalContactPrimary($quoteObject, $key, $value);
-
-        return true;
     }
 
     public function fetchCreateDuplicate(array $dataArr, $quoteTypeId): object
