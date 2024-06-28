@@ -325,6 +325,7 @@ class SageApiService
             $response = '';
             $getingPaymentDetails = $this->getPaymentDetails($request, $extras);
 
+            // Need to update this code after Mirza's Implemenntation
             if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
                 $sendUpdateLog = SendUpdateLog::where('id', $request->sendUpdateId)->first();
                 $quoteDetails = [
@@ -335,6 +336,9 @@ class SageApiService
                     'advisor_id' => $sendUpdateLog->advisor_id,
                     'price_vat_applicable' => $getingPaymentDetails['payment']->total_price,
                     'price_with_vat' => $getingPaymentDetails['payment']->total_amount,
+                    'insly_migrated' => true, //$quote->insly_migrated,
+                    'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+                    'booking_filled_by' => auth()->user()->id // $sendUpdateLog->booking_filled_by,
                 ];
 
                 if (isset($getingPaymentDetails['mainLeadDetails'])) {
@@ -400,30 +404,31 @@ class SageApiService
 
                 return ['payment' => $payment, 'splitPayments' => $splitPayments];
             } else {
-                // If we don't have payment details then we fetched it from the Main Lead
-                info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
                 $getQuoteDetails = $this->getQuoteObjectBy($request->quoteType, $request->quoteUuid, 'uuid');
-                $getQuoteDetails->load(['payments' => function ($query) {
-                    $query->whereNull('send_update_log_id');
-                }, 'payments.paymentSplits']);
 
-                $payment = $getQuoteDetails->payments->first();
-                $splitPayments = $payment->paymentSplits;
+                if ($request->inslyMigrated) {
+                    info('Book Update - Creating payment details based on the sent update - The lead originated from Insly. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                    $payment = new Payment();
+                    $splitPayments = collect([new PaymentSplits()]);
 
-                // Most CPD cases have no vaalue then should it set as Credit Note - Need to verify this with Denber
-                $mainLeadDetails = [
-                    'payment' => [
-                        'insurer_tax_number' => $payment->insurer_tax_number,
-                        'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-                    ],
-                ];
+                } else {
+                    // If we don't have payment details then we fetched it from the Main Lead
+                    info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                
+                    $getQuoteDetails->load(['payments' => function ($query) {
+                        $query->whereNull('send_update_log_id');
+                    }, 'payments.paymentSplits']);
+    
+                    $payment = $getQuoteDetails->payments->first();
+                    $splitPayments = $payment->paymentSplits;
+                }
 
                 $payment->fill([
                     'discount_value' => $extras['send_update_log']->discount, // --
                     'invoice_description' => $extras['send_update_log']->invoice_description,
                     'insurer_invoice_date' => $extras['send_update_log']->invoice_date,
-                    'commission_vat' => '', // Need to verify this field
-                    'total_price' => $extras['send_update_log']->price_without_vat, // Need to verify this field
+                    'commission_vat' => '', //$extras['send_update_log']->vat_on_commission, // Need to verify this field
+                    'total_price' => $extras['send_update_log']->price_without_vat, //price_with_vat, // Need to verify this field
                     'total_amount' => $extras['send_update_log']->price_vat_applicable, // Need to verify this field
                     'commission' => $extras['send_update_log']->total_commission,
                     'commission_vat_applicable' => $extras['send_update_log']->commission_vat_applicable,
@@ -442,7 +447,21 @@ class SageApiService
                     'collection_amount' => $extras['send_update_log']->price_vat_applicable, // Need to verify this field, I think we should add discount here
                 ]);
 
-                return ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
+                $response = ['payment' => $payment, 'splitPayments' => $splitPayments];
+
+                if (!$request->inslyMigrated) {
+                    // Most CPD cases have no value then should it set as Credit Note - Need to verify this with Denber
+                    $mainLeadDetails = [
+                        'payment' => [
+                            'insurer_tax_number' => $payment->insurer_tax_number,
+                            'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
+                        ],
+                    ];
+
+                    $response['mainLeadDetails'] = $mainLeadDetails;
+                }
+
+                return $response;
             }
         }
     }
@@ -805,7 +824,7 @@ class SageApiService
             ((in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV])) ||
             (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) && ($extraParams['revCorrSplitPayment'] ?? false)))) {
 
-            $invoiceType = in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV]) ? SageEnum::AR_INVOICE : SageEnum::AP_INVOICE;
+            // $invoiceType = in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV]) ? SageEnum::AR_INVOICE : SageEnum::AP_INVOICE;
             $splitPaymentResponse = $this->splitPaymentsPatch($quote, $sageRequestPayload, $sageLogArray, $extraParams, $sageInvResponse);
 
             if (isset($splitPaymentResponse['status']) && $splitPaymentResponse['status'] == false) {

@@ -406,7 +406,7 @@ class SendUpdateLogController extends Controller
         $paymentDetailsUpdate = false;
         $isPaymentFetchedFromMainLead = true;
 
-        if (! isset($sendUpdateRequest->paymentValidated)) {
+        if (! isset($sendUpdateRequest->paymentValidated) && !$sendUpdateRequest->inslyMigrated) {
             // Add insuficient Payment Validations here
             $insufficientPaymentCheck = false;
             if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
@@ -418,7 +418,7 @@ class SendUpdateLogController extends Controller
                 'parentPaymentStatus' => $sendUpdate->payments->first()?->payment_status_id ?? null,
             ]);
         }
-
+        
         info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
 
