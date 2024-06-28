@@ -382,7 +382,6 @@ trait GenericQueriesAllLobs
 
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         $priceWithVat = $quoteModel->price_with_vat;
-        $paymentTotalPrice = $payment->total_price;
 
         if ($payment) {
 
@@ -412,15 +411,9 @@ trait GenericQueriesAllLobs
             } else {
                 $totalAmount = $totalPrice - $discountValue;
             }
+            Log::info('updateTotalAmount totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
             $payment->save();
-
-            if ($payment->paymentSplits) {
-                $splitPayment = $payment->paymentSplits()->first();
-                Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$splitPayment->payment_amount.' WTA: '.$totalAmount);
-                $splitPayment->payment_amount = $totalAmount;
-                $splitPayment->save();
-            }
         }
     }
 
@@ -624,7 +617,12 @@ trait GenericQueriesAllLobs
         Log::info('Updating child payment status for: '.$payment->code);
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
+            $isFirsSplitPayment = true;
             foreach ($paymentSplits as $paymentSplit) {
+                if ($isFirsSplitPayment) {
+                    Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
+                    $paymentSplit->payment_amount = $payment->total_amount;
+                }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
                     if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
