@@ -229,7 +229,12 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
-              <span v-if="quoteType == 'Health'">
+              <span
+                v-if="
+                  (quoteType == 'Health' && title === 'Quoted') ||
+                  (quoteType == 'Health' && title === 'FollowedUp')
+                "
+              >
                 'Price Starting from' represents the lowest premium amount that
                 a client can pay to initiate insurance coverage, giving you an
                 overview of the potential business to close.

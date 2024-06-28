@@ -49,6 +49,9 @@ final class SendUpdateLogStatusEnum extends Enum
     const SUC = 'Send update to customer'; // send update to customer.
     const SU = 'Book Update'; // send update.
     const SNBU = 'Send and Book Update'; // send and book update.
+    const ACTION_SNBU = 'SNBU';
+    const ACTION_SUC = 'SUC';
+    const ACTION_SU = 'SU';
     const PPE = 'PPE'; // Policy Period Extension
     const BOOKING_FILLED = 1;
     const IS_SEND_UPDATE = 1;
@@ -81,4 +84,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const MSC_NFI = 'MSC_NFI'; // Marital status change (with no financial impact)
     const CTD_NFI = 'CTD_NFI'; // Change travel dates (with no financial impact)
     const DTSI = 'DTSI'; // Decrease the sum insured
+    const DOV = 'DOV'; // Deletion of vehicle
+    const ACB = 'ACB'; // Additional commission booking
+    const ATIB = 'ATIB'; // Additional tax invoice booking
 }

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
 use App\Models\Payment;
+use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -67,10 +68,15 @@ class StorePaymentRequest extends FormRequest
             if (! $quoteModel) {
                 $validator->errors()->add('quote', 'Quote Not Exists');
             } else {
+                // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
+                // Count will be iterative for each payment added through the send update or Child lead
+                $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+                $paymentCount = app(PaymentRepository::class)->getPaymentsCountByLeadCode($mainLeadCode);
+                $expectedPaymentCode = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
                 if (! empty(request()->send_update_id)) {
                     $paymentAlreadyExistsCount = Payment::where('send_update_log_id', request()->send_update_id)->count();
                 } else {
-                    $paymentAlreadyExistsCount = Payment::where('code', $quoteModel->code)->count();
+                    $paymentAlreadyExistsCount = Payment::where('code', $expectedPaymentCode)->count();
                 }
 
                 if ($paymentAlreadyExistsCount > 0) {
