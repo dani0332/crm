@@ -769,6 +769,7 @@ class RenewalsUploadService
             $isQuotePersonal = checkPersonalQuotes($quoteType->code);
 
             $customerData = $this->buildCustomerData($data);
+
             $customer = $this->getCustomer($customerData);
 
             $quoteData = [
