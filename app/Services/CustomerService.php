@@ -107,7 +107,7 @@ class CustomerService extends BaseService
         $customer = $this->getCustomerById($customerId);
         $additionalContacts = CustomerAdditionalContact::where('customer_id', $customerId)->orderBy('created_at', 'desc')->get();
 
-        if (isset($customer) && $quoteMobileNo != $customer->mobile_no) {
+        if (isset($customer) && $quoteMobileNo != $customer->mobile_no && $additionalContacts->where('key', 'mobile_no')->where('value', $customer->mobile_no)->isEmpty()) {
             $customerMobileNo = (object) [
                 'key' => 'mobile_no',
                 'value' => isset($customer->mobile_no) ? $customer->mobile_no : '',
