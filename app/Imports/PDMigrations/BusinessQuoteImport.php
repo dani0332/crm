@@ -32,7 +32,7 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 'email' => $row['person_email_work'],
                 'code' => $row['deal_cdb_id'],
                 'uuid' => $value,
-                'premium' => $row['deal_value'],
+                'premium' => str_replace(" AED", "", $row['deal_value']),
                 'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
                 'business_type_of_insurance_id' => $this->getBusinessInsurance($row['deal_types_of_insurance']),
             ];
@@ -191,6 +191,6 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             DealStageInsuranceTypes::I_NEED_SEVERAL_INSURANCES_FOR_MY_BUSINESS => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several),
         ];
 
-        return $mapping[$insuranceType] ? $mapping[$insuranceType] : quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several);
+        return $mapping[$insuranceType];
     }
 }

@@ -30,7 +30,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     'email' => $row['person_email_work'],
                     'code' => $row['deal_cdb_id'],
                     'uuid' => $value,
-                    'premium' => $row['deal_value'],
+                    'premium' => str_replace(" AED", "", $row['deal_value']),
                     'quote_status_id' => $quoteStatusId,
                 ]);
 
