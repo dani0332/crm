@@ -83,9 +83,9 @@ const policyDetailsForm = useForm({
   quote_policy_issuance_date:
     dateToYMD(page.props.quote.policy_issuance_date) ||
     new Date().toJSON().slice(0, 10),
-  price_vat_notapplicable: page.props.quote.price_vat_not_applicable || 0,
-  price_vat_applicable: page.props.quote.price_vat_applicable || 0,
-  vat: page.props.quote.vat || 0,
+  price_vat_notapplicable: page.props.quote.price_vat_not_applicable || '', // temperate setting empty
+  price_vat_applicable: page.props.quote.price_vat_applicable || '', // temperate setting empty
+  vat: page.props.quote.vat || '', // temperate setting empty
   quote_policy_start_date: dateToYMD(page.props.quote.policy_start_date) || '',
   quote_policy_expiry_date:
     dateToYMD(page.props.quote.renewal_expiry_date) || '',
@@ -144,8 +144,8 @@ const caculateVatAmount = () => {
       2,
     );
   } else {
-    policyDetailsForm.vat = 0;
-    policyDetailsForm.amount_with_vat = 0;
+    policyDetailsForm.vat = ''; // temperate setting empty
+    policyDetailsForm.amount_with_vat = ''; // temperate setting empty
   }
 };
 const quoteType = page.props.quoteType.toLowerCase();

@@ -15,6 +15,7 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
@@ -221,18 +222,22 @@ trait GenericQueriesAllLobs
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
         $infoMessage = 'QC '.$record->code.' ';
-        $insuranceProviderLeadCount = $insuranceProviderCode = '';
+        $insuranceProviderLeadCount = $insuranceProviderCode = $sendUpdateInvoiceDescription = $sendUpdateBrokerInvoice = '';
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
             $insurance_provider_id = $payment->insurance_provider_id;
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
+        if ($payments->first()?->send_update_log_id) {
+            $sendUpdateInvoiceDescription = $payments->first()->invoice_description;
+            $sendUpdateBrokerInvoice = $payments->first()->broker_invoice_number;
+        }
 
-        $invoiceDescription = $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number;
+        $invoiceDescription = empty($sendUpdateInvoiceDescription) ? $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number : $sendUpdateInvoiceDescription;
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
-        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
+        $bookPolicyDetails['brokerInvoiceNo'] = empty($sendUpdateBrokerInvoice) ? $insuranceProviderCode.$insuranceProviderLeadCount : $sendUpdateBrokerInvoice;
         $bookPolicyDetails['invoiceDescription'] = substr($invoiceDescription, 0, 60);
         $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
@@ -249,6 +254,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
         $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails;
+        $bookPolicyDetails['policyCancelled'] = false;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if (! in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -267,16 +273,24 @@ trait GenericQueriesAllLobs
                         $bookPolicyDetails['editButton'] = true;
                         $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
                         $infoMessage .= ' BDS '.$areBookingDetailsFilled;
+
                         if ($areBookingDetailsFilled) {
-                            $bookPolicyDetails['bookButton'] = true;
-                            $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
-                            $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
+                            if (! $this->checkMainLead($record, $quoteType) || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
+                                $bookPolicyDetails['bookButton'] = true;
+                                $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
+                                $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
+                            } else {
+                                $bookPolicyDetails['policyCancelled'] = true;
+                            }
                         }
                     }
                 }
             }
         }
 
+        if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
+            $bookPolicyDetails['text'] = 'Book Policy';
+        }
         Log::info($infoMessage);
         Log::info('Book Policy Details: ', $bookPolicyDetails);
 
@@ -380,6 +394,7 @@ trait GenericQueriesAllLobs
             $payment->total_price = $quoteModel->price_with_vat;
             $payment->save();
             $this->updateTotalAmount($payment);
+            $this->updateChildPaymentStatus($payment);
         }
 
         return $this->isLackingPayment($payment);
@@ -585,6 +600,40 @@ trait GenericQueriesAllLobs
 
             $payment->transaction_payment_status = $paymentStatus;
             $payment->save();
+        }
+    }
+
+    private function checkMainLead($quote, $quoteType)
+    {
+        if ($quote->parent_duplicate_quote_id == null) {
+            return false;
+        }
+
+        $parentQuoteCode = count(explode('-', $quote->code)) > 2 ? $quote->parent_duplicate_quote_id : false;
+        if ($parentQuoteCode) {
+            $parentQuote = $this->getQuoteObjectBy($quoteType, $parentQuoteCode, 'code');
+
+            return $parentQuote && $parentQuote->quote_status_id === QuoteStatusEnum::CancellationPending;
+        }
+
+        return false;
+    }
+
+    private function updateChildPaymentStatus($payment)
+    {
+        Log::info('Updating child payment status for: '.$payment->code);
+        $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
+        if (! $paymentSplits->isEmpty()) {
+            foreach ($paymentSplits as $paymentSplit) {
+                if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
+                    if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                    } else {
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                    }
+                    $paymentSplit->save();
+                }
+            }
         }
     }
 }

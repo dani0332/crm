@@ -29,16 +29,5 @@ class AddActivitiesAssignedToPermssion extends Seeder
                 ]
             );
         }
-
-        $carDeputyManagerRole = Role::where('name', RolesEnum::CarDeputyManager)->first();
-        $rolePermission = DB::table('role_has_permissions')->where('role_id', $carDeputyManagerRole->id)->where('permission_id', $permission->id)->first();
-        if ($rolePermission === null) {
-            DB::table('role_has_permissions')->insert(
-                [
-                    'role_id' => $carDeputyManagerRole->id,
-                    'permission_id' => $permission->id,
-                ]
-            );
-        }
     }
 }

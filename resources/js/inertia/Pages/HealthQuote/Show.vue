@@ -70,6 +70,7 @@ const props = defineProps({
 const isManualPlansCount = ref(0);
 
 const page = usePage();
+const authId = computed(() => page.props.auth.user.id);
 
 let countDays = ref(useDaysSinceStale(props.quoteRequest?.stale_at));
 const compareDueDate = useCompareDueDate;
@@ -1090,13 +1091,13 @@ const confirmDeleteDoc = () => {
 
 //activities
 const activityTable = [
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'Title', value: 'title' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee' },
-  { text: 'Action', value: 'action' },
+    { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
+    { text: 'Followup Date', value: 'due_date' },
+    { text: 'Assigned To', value: 'assignee' },
+    { text: 'Done', value: 'status', width: 60, align: 'center' },
+    { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -1108,7 +1109,7 @@ const activityForm = useForm({
   title: null,
   description: null,
   due_date: null,
-  assignee_id: null,
+  assignee_id: page.props?.auth?.user?.id,
   status: null,
   activity_id: null,
   uuid: null,
@@ -1784,7 +1785,6 @@ watch(
               </div>
             </div>
             <div
-              v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
               class="w-full md:w-1/2 flex gap-2 items-end"
             >
               <ComboBox
@@ -1817,7 +1817,6 @@ watch(
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
             <h3 class="text-xl font-semibold text-primary-800">
-              Health Detail
             </h3>
           </div>
         </template>
@@ -1825,28 +1824,7 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-              Duplicate Lead
-            </x-button>
-
-            <Link :href="route('health.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Health List
-              </x-button>
-            </Link>
-
-            <Link :href="route('health.edit', quote.uuid)">
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
+         
           </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
@@ -2994,7 +2972,7 @@ watch(
                 </x-field>
 
                 <div class="flex flex-col gap-4">
-                 
+
                 </div>
               </div>
             </div>
@@ -3572,6 +3550,7 @@ watch(
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :eCommercePriceWithLP="ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
@@ -3595,7 +3574,7 @@ watch(
       :paymentLink="paymentLink"
       :expanded="sectionExpanded"
     />
-    
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"
@@ -3664,10 +3643,6 @@ watch(
             :rows-per-page="15"
             :hide-footer="activities.length < 15"
           >
-            <template #item-code="{ code }">
-              {{ code }}
-            </template>
-
             <template #item-due_date="{ due_date }">
               <template v-if="compareDueDate(due_date)">
                 <x-tooltip align="right" position="top">

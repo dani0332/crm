@@ -10,6 +10,7 @@ const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentLookups = page.props.paymentLookups;
+const vatValue = page.props.vatValue;
 const documentTypeEnum = page.props.documentTypeEnum;
 const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
@@ -51,6 +52,9 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  eCommercePriceWithLP: {
+    type: [String, Number],
+    default: '0',
   expanded: {
     required: false,
     type: Boolean,
@@ -62,9 +66,9 @@ const props = defineProps({
   },
   bookPolicyDetails: {
     type: Array,
-    default: [],
-  },
-});
+    default: []
+  }
+}});
 
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
@@ -286,6 +290,15 @@ const handleKeyDown = event => {
 
 const currentFile = computed(() => {
   return filesTest.value[currentFileIndex.value];
+});
+
+// Define a computed property to calculate the initial total price without VAT
+const initialTotalPriceWithoutVat = computed(() => {
+  if ( props.quoteType === 'Health' ) {
+    return props.eCommercePriceWithLP; // premium with loading price,excluding vat
+  }  
+  const vatRate = vatValue ? vatValue / 100 : 0;
+  return (totalPrice.value / (1 + vatRate));
 });
 
 const closeInnerModal = () => {
@@ -898,20 +911,20 @@ const handleDiscountChange = (editDiscountValue = 0) => {
 
   if (paymentMethodsForm.discount === 'employee_discount') {
     if (props.quoteType === 'Health') {
-      discountValue.value = (totalPrice.value * (5 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (5 / 100)).toFixed(2);
     } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
-      discountValue.value = (totalPrice.value * (15 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (15 / 100)).toFixed(2);
     } else {
-      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); // for car
+      discountValue.value = (initialTotalPriceWithoutVat.value * (12.5 / 100)).toFixed(2); // for car
     }
   }
   if (paymentMethodsForm.discount === 'family_employee_discount') {
     if (props.quoteType === 'Health') {
-      discountValue.value = (totalPrice.value * (2.5 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (2.5 / 100)).toFixed(2);
     } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
-      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (12.5 / 100)).toFixed(2);
     } else {
-      discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
+      discountValue.value = (initialTotalPriceWithoutVat.value * (7.5 / 100)).toFixed(2); // for car
     }
   }
   if (
@@ -2366,9 +2379,11 @@ const uploadDocument = (doc, files, count) => {
 
 const getCaptureValidation = computed(() => {
   return payment => {
+    const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
+    const calculatedTotal = Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
     if (
       props.payments.length > 0 &&
-      payment.total_price === payment.total_amount + payment.discount_value &&
+      totalPriceRounded === calculatedTotal &&
       (((props.isAmlClearedForPayment ||
         props.quoteRequest.quote_status_id ===
           page.props.quoteStatusEnum.AMLScreeningCleared ||
