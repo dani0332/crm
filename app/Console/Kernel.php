@@ -52,7 +52,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('PaymentExpireNotification:cron')
             ->timezone('Asia/Dubai')
-            ->everyFifteenMinutes()
+            ->hourly()
             ->between('9:00', '18:00')
             ->onOneServer()
             ->withoutOverlapping();

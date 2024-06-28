@@ -58,12 +58,12 @@ class PaymentExpireNotification extends Command
                 'cqr.advisor_id as advisor_id',
                 'cqr.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->where('cqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->whereNotNull('py.authorized_at')
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($carNotification)) {
@@ -75,7 +75,6 @@ class PaymentExpireNotification extends Command
                 event(new PaymentExpireNotifications($model, $url));
             }
         }
-
         // HEALTH PAYMENT EXPIRE NOTIFICATION
         $healthNotification = DB::table('health_quote_request as hqr')
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
@@ -85,12 +84,12 @@ class PaymentExpireNotification extends Command
                 'hqr.advisor_id as advisor_id',
                 'hqr.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('hqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($healthNotification)) {
@@ -112,12 +111,12 @@ class PaymentExpireNotification extends Command
                 'bqr.advisor_id as advisor_id',
                 'bqr.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('bqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($businessNotification)) {
@@ -139,13 +138,13 @@ class PaymentExpireNotification extends Command
                 'bqr.advisor_id as advisor_id',
                 'bqr.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('bqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->where('bqr.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical))
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($medicalNotification)) {
@@ -169,13 +168,13 @@ class PaymentExpireNotification extends Command
                 'pq.advisor_id as advisor_id',
                 'pq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->where('pq.quote_type_id', QuoteTypeId::Bike)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($bikeNotification)) {
@@ -197,13 +196,13 @@ class PaymentExpireNotification extends Command
                 'pq.advisor_id as advisor_id',
                 'pq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->where('pq.quote_type_id', QuoteTypeId::Cycle)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($cycleNotification)) {
@@ -225,13 +224,13 @@ class PaymentExpireNotification extends Command
                 'pq.advisor_id as advisor_id',
                 'pq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->where('pq.quote_type_id', QuoteTypeId::Yacht)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($yachtNotification)) {
@@ -253,13 +252,13 @@ class PaymentExpireNotification extends Command
                 'pq.advisor_id as advisor_id',
                 'pq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->where('pq.quote_type_id', QuoteTypeId::Pet)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($petNotification)) {
@@ -281,13 +280,13 @@ class PaymentExpireNotification extends Command
                 'pq.advisor_id as advisor_id',
                 'pq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->where('pq.quote_type_id', QuoteTypeId::Jetski)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($jetkiNotification)) {
@@ -309,13 +308,13 @@ class PaymentExpireNotification extends Command
                 'pq.advisor_id as advisor_id',
                 'pq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->where('pq.quote_type_id', QuoteTypeId::Home)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($homeNotification)) {
@@ -337,13 +336,13 @@ class PaymentExpireNotification extends Command
                 'pq.advisor_id as advisor_id',
                 'pq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->where('pq.quote_type_id', QuoteTypeId::Life)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($lifeNotification)) {
@@ -365,13 +364,13 @@ class PaymentExpireNotification extends Command
                 'pq.advisor_id as advisor_id',
                 'pq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->where('pq.quote_type_id', QuoteTypeId::Travel)
-            ->having('expiry_days', '=', 2)
+            ->having('expiry_days', '=', 1)
             ->get();
 
         if (! empty($travelNotification)) {

@@ -145,7 +145,6 @@ function showCustomDate(){
     filters.expireDate = '';
     filters.thisWeek = [];
 }
-const currentDate = new Date().toISOString().split('T')[0];
 
 </script>
 <template>
@@ -214,7 +213,7 @@ const currentDate = new Date().toISOString().split('T')[0];
         <template #item-advisor_name="{ advisor_name, advisor_id }">
             <div class="text-left">
                 <Link
-                    :href="`/quotes/car?created_at_start=${currentDate}&created_at_end=${currentDate}&page=1&segment_filter=all&payment_status_id=4&advisor_id[]=${[advisor_id]}`"
+                    :href="`/quotes/car?page=1&segment_filter=all&payment_status_id=4&advisor_id[]=${[advisor_id]}`"
                     class="text-black underline"
                 >
                     {{ advisor_name }}

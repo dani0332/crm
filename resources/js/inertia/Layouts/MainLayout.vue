@@ -32,10 +32,9 @@ const onLogout = () => {
 
 
 
-const today = new Date().toISOString().split('T')[0];
 
 const urls = computed(()=>{
-    return `/quotes/car?created_at_start=${today}&created_at_end=${today}&page=1&segment_filter=all&payment_status_id=4`;
+    return `/quotes/car?page=1&segment_filter=all&payment_status_id=4`;
 
 })
 
