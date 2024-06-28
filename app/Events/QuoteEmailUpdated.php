@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use App\Models\CarQuote;
 use Illuminate\Queue\SerializesModels;
 
 class QuoteEmailUpdated

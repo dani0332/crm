@@ -32,7 +32,6 @@ class HealthQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
     ];
     protected $guarded = [];
-
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];

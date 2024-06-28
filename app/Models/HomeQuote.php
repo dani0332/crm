@@ -33,7 +33,6 @@ class HomeQuote extends Model implements AuditableContract
         'quote_status_id' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
     ];
-
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];

@@ -45,7 +45,6 @@ class PersonalQuote extends Model implements AuditableContract
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];

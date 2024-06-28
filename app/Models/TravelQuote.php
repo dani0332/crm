@@ -36,7 +36,6 @@ class TravelQuote extends Model implements AuditableContract
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
-
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
