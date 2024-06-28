@@ -177,11 +177,13 @@ class CustomerService extends BaseService
                 $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer->id)
                     ->get();
                 foreach ($getCustomerAdditionalContact as $contact) {
-                    CustomerAdditionalContact::create([
-                        'customer_id' => $customer->id,
-                        'key' => $contact->key,
-                        'value' => $contact->value,
-                    ]);
+                    if ($contact->key == GenericRequestEnum::EMAIL && $contact->value != $value) {
+                        CustomerAdditionalContact::create([
+                            'customer_id' => $customer->id,
+                            'key' => $contact->key,
+                            'value' => $contact->value,
+                        ]);
+                    }
                 }
                 $email = trim($lead->email);
 
