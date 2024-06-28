@@ -28,18 +28,36 @@ class HealthDataMigration extends Command
      */
     public function handle()
     {
-        $filePath = 'health.xlsx';
+        $filePaths = [
+            'health-part1.xlsx',
+            'health-part2.xlsx',
+            'health-part3.xlsx',
+            'health-part4.xlsx',
+            'health-part5.xlsx',
+            'health-part6.xlsx',
+            'health-part7.xlsx',
+        ];
 
-        if (!Storage::disk('local')->exists($filePath)) {
-            throw new \Exception('File does not exist: ' . $filePath);
-        }
+        foreach ($filePaths as $filePath) {
+            $fullPath = storage_path('app/PDMigrations/' . $filePath);
 
-        $fullPath = Storage::disk('local')->path($filePath);
+            if (!Storage::disk('pdmigrations')->exists($filePath)) {
+                \Log::error('File does not exist: ' . $filePath);
 
-        try {
-            Excel::import(new HealthQuoteImport, $fullPath);
-        } catch (\Exception $e) {
-            \Log::error('Error importing file: ' . $e->getMessage());
+                continue;
+            }
+
+            $fullPath = Storage::disk('pdmigrations')->path($filePath);
+
+            try {
+                \Log::info('Business QUote data migrations started.');
+
+                Excel::import(new HealthQuoteImport, $fullPath);
+
+                \Log::info('Business QUote data migrations succeeded.');
+            } catch (\Exception $e) {
+                \Log::error('Error importing file: ' . $e->getMessage());
+            }
         }
     }
 }

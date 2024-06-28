@@ -28,7 +28,6 @@ class CorplineDataMigration extends Command
      */
     public function handle()
     {
-        // Define an array with the file paths
         $filePaths = [
             'Corpline_Part1.xlsx',
             'Corpline_Part2.xlsx',
@@ -37,16 +36,22 @@ class CorplineDataMigration extends Command
         ];
 
         foreach ($filePaths as $filePath) {
-            if (!Storage::disk('local')->exists($filePath)) {
+            $fullPath = storage_path('app/PDMigrations/' . $filePath);
+
+            if (!Storage::disk('pdmigrations')->exists($filePath)) {
                 \Log::error('File does not exist: ' . $filePath);
 
                 continue;
             }
 
-            $fullPath = Storage::disk('local')->path($filePath);
+            $fullPath = Storage::disk('pdmigrations')->path($filePath);
 
             try {
+                \Log::info('Business QUote data migrations started.');
+
                 Excel::import(new BusinessQuoteImport, $fullPath);
+
+                \Log::info('Business QUote data migrations succeeded.');
             } catch (\Exception $e) {
                 \Log::error('Error importing file: ' . $e->getMessage());
             }

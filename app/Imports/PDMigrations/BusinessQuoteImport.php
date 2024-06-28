@@ -23,6 +23,7 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
         [$firstName, $lastName] = $this->splitName($fullName);
         if (isset($row['deal_cdb_id'])) {
             [, $value] = explode('-', $row['deal_cdb_id']);
+
             $data = [
                 'first_name' => $firstName,
                 'last_name' => $lastName,
@@ -36,14 +37,15 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 'business_type_of_insurance_id' => $this->getBusinessInsurance($row['deal_types_of_insurance']),
             ];
 
-            $business = BusinessQuote::updateOrCreate($data);
+            $business = BusinessQuote::updateOrCreate(['uuid' => $data['uuid']], $data);
+            info('----------- Business Lead Imported  -----------' . $data['code']);
             $this->syncQuote($business, $business->toArray());
         }
     }
 
     public function chunkSize(): int
     {
-        return 1000;
+        return 5000;
     }
 
     /**

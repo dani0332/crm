@@ -2,8 +2,8 @@
 
 namespace App\Imports;
 
-use App\Enums\DealStageEnum;
-use App\Enums\PDDealStatus;
+use App\Enums\PDMigrations\DealStageEnum;
+use App\Enums\PDMigrations\PDDealStatus;
 use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -21,7 +21,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             [, $value] = explode('-', $row['deal_cdb_id']);
             $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
             if ($quoteStatusId) {
-                $health = HealthQuote::updateOrCreate([
+                $health = HealthQuote::updateOrCreate(['uuid' => $value], [
                     'first_name' => $row['person_first_name'],
                     'last_name' => $row['person_last_name'],
                     'previous_quote_policy_number' => $row['deal_policy_number'],
@@ -33,28 +33,16 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     'premium' => $row['deal_value'],
                     'quote_status_id' => $quoteStatusId,
                 ]);
+
+                info('----------- Health Lead Imported  -----------' . $row['deal_cdb_id']);
                 $this->syncQuote($health, $health->toArray());
             }
         }
     }
-    /**
-     * Split the full name into first and last names.
-     *
-     * @param  string  $fullName
-     * @return array
-     */
-    private function splitName($fullName)
-    {
-        $nameParts = explode(' ', $fullName['name']);
-        $firstName = $nameParts[0];
-        $lastName = end($nameParts);
-
-        return [$firstName, $lastName];
-    }
 
     public function chunkSize(): int
     {
-        return 1000;
+        return 5000;
     }
 
     private function getQuoteStatusId($dealStatus, $dealStage)
@@ -72,10 +60,12 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             $dealStageToQuoteStatus = [
                 DealStageEnum::LEAD()->getToLowerCase() => QuoteStatusEnum::NewLead,
                 DealStageEnum::QUALIFIED()->getToLowerCase() => QuoteStatusEnum::NewLead,
+                DealStageEnum::LEAD_IN()->getToLowerCase() => QuoteStatusEnum::NewLead,
                 DealStageEnum::TERMS_AVAILABLE()->getToLowerCase() => QuoteStatusEnum::RenewalTermsReceived,
                 DealStageEnum::RENEWAL_TERMS_REVD()->getToLowerCase() => QuoteStatusEnum::RenewalTermsReceived,
                 DealStageEnum::ALLOCATION()->getToLowerCase() => QuoteStatusEnum::Allocated,
                 DealStageEnum::TERMS_SENT()->getToLowerCase() => QuoteStatusEnum::RenewalTermsSent,
+                DealStageEnum::RENEWAL_TERMS_SENT()->getToLowerCase() => QuoteStatusEnum::RenewalTermsSent,
                 DealStageEnum::QUOTED()->getToLowerCase() => QuoteStatusEnum::Quoted,
                 DealStageEnum::QUOTED_TERMS_SENT()->getToLowerCase() => QuoteStatusEnum::Quoted,
                 DealStageEnum::ENGAGED()->getToLowerCase() => QuoteStatusEnum::FollowedUp,
@@ -99,6 +89,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 DealStageEnum::PENDING_POLICY_DOCS()->getToLowerCase() => QuoteStatusEnum::PolicyDocumentsPending,
                 DealStageEnum::DOCUMENTS()->getToLowerCase() => QuoteStatusEnum::PolicyDocumentsPending,
                 DealStageEnum::ISSUANCE()->getToLowerCase() => QuoteStatusEnum::PolicyIssued,
+                DealStageEnum::GROUP_EBP_SERVICE()->getToLowerCase() => QuoteStatusEnum::PolicyIssued,
                 DealStageEnum::LOST_CASES()->getToLowerCase() => QuoteStatusEnum::Lost,
                 DealStageEnum::TEST_LEADS()->getToLowerCase() => QuoteStatusEnum::Fake,
                 DealStageEnum::HANGING_LEADS()->getToLowerCase() => QuoteStatusEnum::Fake,
@@ -108,6 +99,5 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             return $dealStageToQuoteStatus[strtolower($dealStage)];
         }
-
     }
 }

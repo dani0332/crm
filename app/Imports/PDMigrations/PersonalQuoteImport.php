@@ -2,8 +2,8 @@
 
 namespace App\Imports;
 
-use App\Enums\DealStageEnum;
-use App\Enums\PDDealStatus;
+use App\Enums\PDMigrations\DealStageEnum;
+use App\Enums\PDMigrations\PDDealStatus;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\HomeQuote;
@@ -38,7 +38,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     'premium' => $row['deal_value'],
                     'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
                 ];
-                $classInstance = HomeQuote::updateOrCreate($data);
+                $classInstance = HomeQuote::updateOrCreate(['uuid' => $data['uuid']], $data);
 
             } else {
 
@@ -55,16 +55,18 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
                 ];
 
-                $classInstance = PersonalQuote::updateOrCreate($data);
+                $classInstance = PersonalQuote::updateOrCreate(['uuid' => $data['uuid']], $data);
 
             }
+
+            info('----------- Importing Personal/Home Qoute Lead  -----------' . $row['deal_cdb_id']);
             $this->syncQuote($classInstance, $classInstance->toArray());
         }
     }
 
     public function chunkSize(): int
     {
-        return 1000;
+        return 5000;
     }
     /**
      * Split the full name into first and last names.
@@ -107,6 +109,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 DealStageEnum::TERMS_AVAILABLE => QuoteStatusEnum::RenewalTermsReceived,
                 DealStageEnum::RENEWAL_TERMS_RECEIVED => QuoteStatusEnum::RenewalTermsReceived,
                 DealStageEnum::TERMS_SENT => QuoteStatusEnum::RenewalTermsSent,
+                DealStageEnum::RENEWAL_TERMS_SENT => QuoteStatusEnum::RenewalTermsSent,
                 DealStageEnum::ENGAGED => QuoteStatusEnum::FollowedUp,
                 DealStageEnum::FOR_FOLLOW_UP => QuoteStatusEnum::FollowedUp,
                 DealStageEnum::AUTO_FOLLOW_UP => QuoteStatusEnum::FollowedUp,

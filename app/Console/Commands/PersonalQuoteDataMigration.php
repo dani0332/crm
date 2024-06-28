@@ -28,18 +28,35 @@ class PersonalQuoteDataMigration extends Command
      */
     public function handle()
     {
-        $filePath = 'personal.xlsx';
+        $filePaths = [
+            'personal-part1.xlsx',
+            'personal-part2.xlsx',
+            'personal-part3.xlsx',
+            'personal-part4.xlsx',
+            'personal-part5.xlsx',
+            'personal-part6.xlsx',
+        ];
 
-        if (!Storage::disk('local')->exists($filePath)) {
-            throw new \Exception('File does not exist: ' . $filePath);
-        }
+        foreach ($filePaths as $filePath) {
+            $fullPath = storage_path('app/PDMigrations/' . $filePath);
 
-        $fullPath = Storage::disk('local')->path($filePath);
+            if (!Storage::disk('pdmigrations')->exists($filePath)) {
+                \Log::error('File does not exist: ' . $filePath);
 
-        try {
-            Excel::import(new PersonalQuoteImport, $fullPath);
-        } catch (\Exception $e) {
-            \Log::error('Error importing file: ' . $e->getMessage());
+                continue;
+            }
+
+            $fullPath = Storage::disk('pdmigrations')->path($filePath);
+
+            try {
+                \Log::info('Persoanl Quote data migrations started.');
+
+                Excel::import(new PersonalQuoteImport, $fullPath);
+
+                \Log::info('Persoanl Quote data migrations succeeded.');
+            } catch (\Exception $e) {
+                \Log::error('Error importing file: ' . $e->getMessage());
+            }
         }
     }
 }
