@@ -9,7 +9,6 @@ class UpdateCustomerEmail
 {
     /**
      * Handle the event.
-     *
      */
     public function handle(QuoteEmailUpdated $event)
     {
