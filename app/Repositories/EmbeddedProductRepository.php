@@ -461,6 +461,7 @@ class EmbeddedProductRepository extends BaseRepository
             'quoteRequest.carModel',
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
+            'quoteRequest.quoteRequestEntityMapping',
         )
             ->join('embedded_product_options', function ($join) use ($ep) {
                 $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
