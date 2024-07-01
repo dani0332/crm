@@ -336,9 +336,9 @@ class SageApiService
                     'advisor_id' => $sendUpdateLog->advisor_id,
                     'price_vat_applicable' => $getingPaymentDetails['payment']->total_price,
                     'price_with_vat' => $getingPaymentDetails['payment']->total_amount,
-                    'insly_migrated' => true, //$quote->insly_migrated,
+                    'insly_migrated' => $quote->insly_migrated,
                     'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
-                    'booking_filled_by' => auth()->user()->id // $sendUpdateLog->booking_filled_by,
+                    'booking_filled_by' => $sendUpdateLog->booking_filled_by,
                 ];
 
                 if (isset($getingPaymentDetails['mainLeadDetails'])) {
@@ -407,7 +407,7 @@ class SageApiService
                 $getQuoteDetails = $this->getQuoteObjectBy($request->quoteType, $request->quoteUuid, 'uuid');
 
                 if ($request->inslyMigrated) {
-                    info('Book Update - Creating payment details based on the sent update - The lead originated from Insly. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                    info('Book Update - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
                     $payment = new Payment();
                     $splitPayments = collect([new PaymentSplits()]);
 
