@@ -77,9 +77,4 @@ final class QuoteStatusEnum extends Enum
 
     // This is use for lost reason id not for Quote status
     public const LOSTREASONID = 34;
-
-    public static function getName($id)
-    {
-        return QuoteStatusEnum::getKey($id);
-    }
 }
