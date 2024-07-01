@@ -78,6 +78,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                                 SendUpdateLogStatusEnum::MDOV,
                                 SendUpdateLogStatusEnum::ED,
                                 SendUpdateLogStatusEnum::DM,
+                                SendUpdateLogStatusEnum::DTSI,
                                 SendUpdateLogStatusEnum::DOV,
                             ]
                         )) {
