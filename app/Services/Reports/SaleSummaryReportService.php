@@ -44,7 +44,7 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
-            ->selectRaw("
+            ->selectRaw('
             (CAST(SUM(CASE WHEN personal_quotes.policy_booking_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_policies,
             (CAST(SUM(CASE WHEN personal_quotes.policy_booking_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_transaction,
             FORMAT(IFNULL(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ,0), 2) as price_vat_applicable,
@@ -56,7 +56,7 @@ class SaleSummaryReportService extends ManagementReport
                 IFNULL( ( SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
                 IFNULL( ( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ) * 0.05, 0) -
                 IFNULL( ( SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)) ), 0) as total_price
-            ")
+            ')
             ->when($request->groupBy, function ($query, $groupBy) use ($request) {
                 $groupByArray = [];
                 $groupBy = $this->resolveGroupByColumn($groupBy);
@@ -129,7 +129,6 @@ class SaleSummaryReportService extends ManagementReport
     /**
      * Get endorsements data
      *
-     * @param Request $request
      * @return mixed
      */
     public function getEndorsementsData(Request $request)
@@ -169,42 +168,42 @@ class SaleSummaryReportService extends ManagementReport
                 return $endorsementsQuery->groupBy($groupByArray);
             });
 
-            if ($request->groupBy == 'advisor') {
-                // Endorsements
-                $endorsementsQuery->addSelect('u.name as advisor');
-                $endorsementsQuery->whereNotNull('personal_quotes.advisor_id');
-            }
+        if ($request->groupBy == 'advisor') {
+            // Endorsements
+            $endorsementsQuery->addSelect('u.name as advisor');
+            $endorsementsQuery->whereNotNull('personal_quotes.advisor_id');
+        }
 
-            if ($request->groupBy == 'customer_group') {
-                // Endorsements
-                $endorsementsQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
-                    ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
-                $endorsementsQuery->whereNotNull('personal_quotes.customer_id');
-            }
+        if ($request->groupBy == 'customer_group') {
+            // Endorsements
+            $endorsementsQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+                ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
+            $endorsementsQuery->whereNotNull('personal_quotes.customer_id');
+        }
 
-            if ($request->groupBy == 'insurer') {
-                // Endorsements
-                $endorsementsQuery->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
-                    ->addSelect('insurance_provider.text as insurer');
-                $endorsementsQuery->whereNotNull('p.insurance_provider_id');
-            }
+        if ($request->groupBy == 'insurer') {
+            // Endorsements
+            $endorsementsQuery->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
+                ->addSelect('insurance_provider.text as insurer');
+            $endorsementsQuery->whereNotNull('p.insurance_provider_id');
+        }
 
-            if ($request->groupBy == 'policy_issuer') {
-                // Endorsements
-                $endorsementsQuery->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                    ->addSelect('pi.name as policy_issuer');
-                $endorsementsQuery->whereNotNull('p.policy_issuer_id');
-            }
+        if ($request->groupBy == 'policy_issuer') {
+            // Endorsements
+            $endorsementsQuery->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+                ->addSelect('pi.name as policy_issuer');
+            $endorsementsQuery->whereNotNull('p.policy_issuer_id');
+        }
 
-            if ($request->groupBy == 'line_of_business') {
-                // Endorsements
-                $endorsementsQuery->addSelect('quote_type.code as line_of_business');
-                $endorsementsQuery->whereNotNull('quote_type.code');
-            }
+        if ($request->groupBy == 'line_of_business') {
+            // Endorsements
+            $endorsementsQuery->addSelect('quote_type.code as line_of_business');
+            $endorsementsQuery->whereNotNull('quote_type.code');
+        }
 
-            $endorsementsQuery = $this->applyFilters($endorsementsQuery, $request, true);
+        $endorsementsQuery = $this->applyFilters($endorsementsQuery, $request, true);
 
-            return $endorsementsQuery->get();
+        return $endorsementsQuery->get();
     }
 
     private function resolveGroupByColumn($groupBy)

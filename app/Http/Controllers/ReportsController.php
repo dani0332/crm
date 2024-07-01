@@ -2,35 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use PDF;
-use Carbon\Carbon;
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
+use App\Factories\ManagementReportServiceFactory;
+use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeId;
-use App\Enums\TeamTypeEnum;
 use App\Models\UserManager;
-use App\Enums\quoteTypeCode;
-use App\Models\RenewalBatch;
-use Illuminate\Http\Request;
-use App\Enums\PermissionsEnum;
+use App\Repositories\CarRevivalQuoteRepository;
+use App\Services\ConversionAsAtReportService;
+use App\Services\Reports\AdvisorConversionReportService;
+use App\Services\Reports\AdvisorDistributionReportService;
+use App\Services\Reports\AdvisorPerformanceReportService;
+use App\Services\Reports\LeadDistributionReportService;
+use App\Services\Reports\RenewalBatchReportService;
+use App\Services\Reports\ReportService;
+use App\Strategies\ManagementReport;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\DB;
-use App\Strategies\ManagementReport;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Services\Reports\ReportService;
-use App\Enums\ManagementReportCategoriesEnum;
-use App\Services\ConversionAsAtReportService;
-use App\Repositories\CarRevivalQuoteRepository;
-use App\Factories\ManagementReportServiceFactory;
-use App\Services\Reports\SaleSummaryReportService;
-use App\Services\Reports\RenewalBatchReportService;
-use App\Services\Reports\LeadDistributionReportService;
-use App\Services\Reports\AdvisorConversionReportService;
-use App\Services\Reports\AdvisorPerformanceReportService;
-use App\Services\Reports\AdvisorDistributionReportService;
+use Illuminate\Support\Facades\DB;
+use PDF;
 
 class ReportsController extends Controller
 {
@@ -460,11 +459,10 @@ class ReportsController extends Controller
     {
         $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
-        $reportData =  null;
+        $reportData = null;
         $endorsementData = null;
 
-        if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY)
-        {
+        if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY) {
             $rawReportData = $reportInstance->getReportData($request);
             $endorsementData = $reportInstance->getEndorsementsData($request);
             /**
