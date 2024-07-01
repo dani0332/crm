@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            SICFollowupEmailTemplateIDSeeder::class,
+            // SICFollowupEmailTemplateIDSeeder::class,
             QuoteStatusTableSeeder::class,
             // RenewalsPermissionSeeder::class,
             // addCarQuoteSearchPermission::class,
