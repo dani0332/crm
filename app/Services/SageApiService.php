@@ -1175,5 +1175,4 @@ class SageApiService
         return ['status' => true, 'message' => 'Policy is being Booked'];
     }
 
-
 }

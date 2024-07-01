@@ -18,16 +18,16 @@ class BookPolicyOnSageJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $sageRequest;
-    private  $quote;
-    private  $payment;
-    private  $paymentSplits;
+    private $quote;
+    private $payment;
+    private $paymentSplits;
     private $skipAPInvoicePatchAndPosting;
-    private  $aPInvoicePatchAndPostingOnly;
+    private $aPInvoicePatchAndPostingOnly;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($sageRequest, $quote, $payment , $paymentSplits, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)
+    public function __construct($sageRequest, $quote, $payment, $paymentSplits, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)
     {
         $this->sageRequest = $sageRequest;
         $this->quote = $quote;
