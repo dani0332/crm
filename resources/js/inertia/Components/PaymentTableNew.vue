@@ -210,7 +210,7 @@ const calculateTotalAmount = () => {
 const isInsureNowPayLaterAllowed = computed(() => {
   
   //handle edit scenario for insure now pay later
-  if (paymentMethodsForm.status == 'edit') {
+  if (paymentMethodsForm.status == 'edit' && paymentMethodsForm.collection_type === 'broker') {
     if (props.payments.length > 0) {
         let inureNowPayLaterExists = props.payments[0].payment_splits.find(
           item => item.payment_method.code ===  page.props.paymentMethodsEnum?.InsureNowPayLater,
