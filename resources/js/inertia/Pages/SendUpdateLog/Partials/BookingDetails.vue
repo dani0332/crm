@@ -383,9 +383,9 @@ function reverseValue(value) {
 function updateReversalEntries(payment, sendUpdateLog) {
   reversalEntry.transaction_payment_status = null;
   reversalEntry.invoice_date = payment.insurer_invoice_date || '';
-  reversalEntry.insurer_tax_invoice_number = (payment.insurer_tax_number !== '') ? payment.insurer_tax_number + '-REV' : '';
-  reversalEntry.broker_invoice_number = (payment.broker_invoice_number !== '') ? payment.broker_invoice_number + '-REV' : '';
-  reversalEntry.insurer_commission_invoice_number = (payment.insurer_commmission_invoice_number !== '') ? payment.insurer_commmission_invoice_number + '-REV' : '';
+  reversalEntry.insurer_tax_invoice_number = (payment?.insurer_tax_number) ? (payment.insurer_tax_number + '-REV') : (sendUpdateLog.insurer_tax_invoice_number + '-REV');
+  reversalEntry.broker_invoice_number = (payment?.broker_invoice_number) ? (payment.broker_invoice_number + '-REV') : (sendUpdateLog.broker_invoice_number + '-REV');
+  reversalEntry.insurer_commission_invoice_number = (payment?.insurer_commmission_invoice_number) ? (payment.insurer_commmission_invoice_number + '-REV') : (sendUpdateLog.insurer_commission_invoice_number + '-REV');
   reversalEntry.discount = payment.discount_value || null;
   reversalEntry.price_vat_applicable = sendUpdateLog?.price_vat_applicable || payment.paymentable?.price_vat_applicable;
   reversalEntry.commission_percentage = sendUpdateLog?.commission_percentage || payment.commmission_percentage || null;
