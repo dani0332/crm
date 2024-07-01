@@ -77,6 +77,10 @@ const isCPD = computed(() => {
   return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPD;
 });
 
+const isCIOrCIR = computed(() => {
+  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI || props.sendUpdateLog.category.code === sendUpdateStatusEnum.CIR;
+});
+
 const hasTaxDocuments = computed(() => {
   // tax invoice and tax invoice raised by buyer.
   return (
@@ -198,8 +202,8 @@ const bookingDetailsForm = useForm({
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
 const calculateCommission = () => {
-  if (bookingDetailsForm.commission_vat_applicable > 0 || bookingDetailsForm.price_vat_applicable > 0) {
-    if (Number(bookingDetailsForm.price_vat_applicable > 0)) {
+  if (bookingDetailsForm.commission_vat_applicable > 0 || bookingDetailsForm.price_vat_applicable > 0 || bookingDetailsForm.price_vat_not_applicable > 0) {
+    if (Number(bookingDetailsForm.price_vat_applicable > 0) || Number(bookingDetailsForm.price_vat_not_applicable > 0)) {
       let vat_on_commission =
         bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
       bookingDetailsForm.vat_on_commission =
@@ -686,7 +690,12 @@ watch(() => props?.payments[0]?.discount_value,
 );
 
 const isPriceVatNotApplicableEditable = computed(() => {
-  return props.quoteType === quoteTypeCodeEnum.Business || props.quoteType === quoteTypeCodeEnum.Health;
+  return props.quoteType === quoteTypeCodeEnum.Business || props.quoteType === quoteTypeCodeEnum.Health || props.quoteType === quoteTypeCodeEnum.Life;
+});
+
+const isPriceVatApplicableEditable = computed(() => {
+  return (isCIOrCIR.value || isEF.value || isCPD.value) &&
+      props.quoteType !== quoteTypeCodeEnum.Life;
 });
 
 </script>
@@ -1360,7 +1369,7 @@ const isPriceVatNotApplicableEditable = computed(() => {
                     </template>
                   </x-tooltip>
                 </div>
-                <div>
+                <div v-if="isPriceVatApplicableEditable">
                   <x-input
                     type="number"
                     min="0"
@@ -1373,6 +1382,9 @@ const isPriceVatNotApplicableEditable = computed(() => {
                     :rules="[isRequired]"
                     size="xs"
                   />
+                </div>
+                <div v-else>
+                  <span>N/A</span>
                 </div>
               </div>
               <div class="grid sm:grid-cols-2">
