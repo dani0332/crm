@@ -397,7 +397,6 @@ watch(
             !hasAnyRole([
               rolesEnum.PetAdvisor,
               rolesEnum.PetRenewalAdvisor,
-              rolesEnum.PetNewBusinessAdvisor,
             ])
           "
         >

@@ -710,6 +710,7 @@ class SendEmailCustomerService extends BaseService
     }
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
+        $isEmailSent = 0;
         try {
             info('sendBookPolicyDocumentsEmail  , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
 
@@ -754,7 +755,16 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
+                'bcc' => [],
             ];
+
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::DIS_INBOX_EMAIL_BCC)->first();
+            if ($additionalBcc) {
+                $bodyData['bcc'][] = [
+                    'email' => $additionalBcc->value,
+                ];
+            }
+            info('sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
 
             if ($emailData->advisorEmail) {
                 $bodyData['cc'] = [
@@ -764,7 +774,9 @@ class SendEmailCustomerService extends BaseService
                     ],
                 ];
             }
+
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+            info('sendBookPolicyDocumentsEmail ---- body '.$body);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
@@ -778,15 +790,17 @@ class SendEmailCustomerService extends BaseService
 
             $response = json_decode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents(), true);
             $responseCode = $clientRequest->getStatusCode();
+            $isEmailSent = 1;
             info('sendBookPolicyDocumentsEmail ---- Request Sent '.$emailData->code);
             info('sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
+            $response = '';
             $responseCode = $ex->getCode();
             $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
             Log::error($responseDetail);
         }
 
-        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $advisorEmail);
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         return $responseCode;
     }
