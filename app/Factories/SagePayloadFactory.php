@@ -42,7 +42,7 @@ class SagePayloadFactory
             strtolower($request->invoicePaymentStatus) == 'paid' &&
             $leadStatus == quoteStatusCode::PolicyBooked
         ) {
-            return self::createPaymontRecieptOneInvoice($request); // Ignore this error because it's not being used anywhere in the codebase
+            return self::createPaymentReceiptOneInvoice($request); // Ignore this error because it's not being used anywhere in the codebase
         } elseif (
             $request->discount > 0 &&
             $leadStatus == quoteStatusCode::PolicyBooked &&
@@ -56,7 +56,7 @@ class SagePayloadFactory
         }
     }
 
-    public static function createPaymontRecieptOneInvoice($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
+    public static function createPaymentReceiptOneInvoice($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -1590,7 +1590,7 @@ class SagePayloadFactory
                         'aRPostInvoices' => [
                             'requestParms' => 'BatchNumber',
                             'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'conditionChecks' => ['type' => 'isset', 'condition_to_check' => 'error'],
                             'errorMessage' => $message[$apiType][$useFor]['aRPostInvoices']['error'],
                         ],
                     ],
@@ -1601,12 +1601,12 @@ class SagePayloadFactory
             case SageEnum::SRT_CREATE_PAY_REC_ONE_INV:
                 $response = [
                     'recursiveCalls' => [
-                        'createPaymontRecieptOneInvoice',
+                        'createPaymentReceiptOneInvoice',
                         'readyToPostReceiptAr',
                         'aRPostReceipts',
                     ],
                     'extraDetails' => [
-                        'createPaymontRecieptOneInvoice' => [
+                        'createPaymentReceiptOneInvoice' => [
                             'requestParms' => 'payload',
                             'nextCondition' => 'BatchNumber',
                             'errorMessage' => 'Error while making Split Pre-Payments to sage',
@@ -1621,7 +1621,7 @@ class SagePayloadFactory
                         'aRPostReceipts' => [
                             'requestParms' => 'BatchNumber',
                             'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'conditionChecks' => ['type' => 'isset', 'condition_to_check' => 'error'],
                             'errorMessage' => 'Error while making Apply payment posted to sage',
                         ],
                     ],
@@ -1645,13 +1645,13 @@ class SagePayloadFactory
                             'requestParms' => 'BatchNumber',
                             'logResponse' => true,
                             'verb' => 'PATCH',
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
+                            'conditionChecks' => ['type' => 'Not Empty', 'condition_to_check' => ''],
                             'errorMessage' => 'Error while making Apply payment ready to post to sage',
                         ],
                         'aRPostReceipts' => [
                             'requestParms' => 'BatchNumber',
                             'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'conditionChecks' => ['type' => 'isset', 'condition_to_check' => 'error'],
                             'errorMessage' => 'Error while making Apply payment Posted to sage',
                         ],
                     ],
@@ -1701,7 +1701,7 @@ class SagePayloadFactory
                     ],
                 ],
             ],
-            // Need to update messaages
+            // Need to update messages
             SageEnum::SRT_REV_CORR_AR_SPPAY_INV => [
                 SageEnum::SCT_STRAIGHT => [
                     'createARInvoicePremAndComm' => [
@@ -1772,7 +1772,7 @@ class SagePayloadFactory
                     ],
                 ],
             ],
-            // Need to update messaages
+            // Need to update messages
             SageEnum::SRT_REV_CORR_AP_SPPAY_INV => [
                 SageEnum::SCT_STRAIGHT => [
                     'createAPInvoicePrem' => [
