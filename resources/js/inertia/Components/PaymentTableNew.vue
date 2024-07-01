@@ -208,11 +208,23 @@ const calculateTotalAmount = () => {
 
 // Define a computed property to deduct insure now pay later
 const isInsureNowPayLaterAllowed = computed(() => {
+  
+  //handle edit scenario for insure now pay later
+  if (paymentMethodsForm.status == 'edit') {
+    if (props.payments.length > 0) {
+        let inureNowPayLaterExists = props.payments[0].payment_splits.find(
+          item => item.payment_method.code ===  page.props.paymentMethodsEnum?.InsureNowPayLater,
+        );
+        if (inureNowPayLaterExists) {
+          return true;
+        }
+    }
+  }
   if ( paymentMethodsForm.collection_type === 'broker' && 
        can(permissionEnum.INPL_USER) 
   ) { 
-    return false;
-  }  
+    return true;
+  }
   return false;
 });
 
@@ -1717,14 +1729,7 @@ const editPaymentModal = (
       isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
-    }
-
-    let inureNowPayLaterExists = payment.payment_splits.find(
-      item => item.payment_methods_code ===  page.props.paymentMethodsEnum?.InsureNowPayLater,
-    );
-    if (inureNowPayLaterExists) {
-      isInsureNowPayLaterAllowed.value = true;
-    }
+    }   
   }
   if (paymentMethodsForm.status == 'view') {
     totalPrice.value = payment.total_price;
