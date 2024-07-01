@@ -390,7 +390,7 @@ function updateReversalEntries(payment, sendUpdateLog) {
   reversalEntry.commission_vat_applicable = sendUpdateLog?.commission_vat_applicable || payment.commission_vat_applicable || null;
   reversalEntry.total_commission = sendUpdateLog?.total_commission || payment.commission || null;
   reversalEntry.commission_vat_not_applicable = sendUpdateLog?.commission_vat_not_applicable || payment.commission_vat_not_applicable || null;
-  reversalEntry.total_vat_amount = sendUpdateLog?.total_vat_amount || payment.total_amount;
+  reversalEntry.total_vat_amount = sendUpdateLog?.total_vat_amount || props.realQuote?.vat;
   reversalEntry.price_with_vat = ((payment.total_price !== null && payment.total_price > 0) ? payment.total_price : sendUpdateLog?.price_with_vat) ?? null;
 }
 
