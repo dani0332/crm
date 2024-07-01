@@ -2,7 +2,6 @@
 
 namespace App\Enums;
 
-use App\Models\QuoteStatus;
 use BenSampo\Enum\Enum;
 
 /**
