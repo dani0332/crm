@@ -27,7 +27,7 @@ const listen = () => {
             window.open(e.url, '_self');
           },
         },
-        timeout: 3500
+        timeout: 30000
       });
     }
   });

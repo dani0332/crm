@@ -167,6 +167,12 @@ class CentralController extends Controller
     {
         (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
+        $modifiedRequest = new Request([
+            'quoteType' => $leadAssignRequest->modelType,
+            'quoteId' => $leadAssignRequest->selectTmLeadId,
+        ]);
+        app(\App\Http\Controllers\API\ApiController::class)->quotePaymentStatusUpdated($modifiedRequest);
+
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
 

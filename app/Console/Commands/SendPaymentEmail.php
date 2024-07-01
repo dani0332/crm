@@ -9,7 +9,6 @@ use App\Jobs\PaymentNotificationEmailJob;
 use App\Models\Sessions;
 use App\Models\User;
 use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -66,23 +65,27 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(car_quote_request.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'car_quote_request.code')
                     ->join('users', 'users.id', 'car_quote_request.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
                     ->where('car_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
 
-                $user = $query->get();
+                $getExpireOneDay = DB::table('car_quote_request')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'car_quote_request.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('car_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
+                $user = $query->get();
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Car Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::BusinessManager)) {
@@ -96,24 +99,28 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(business_quote_request.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
-
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'business_quote_request.code')
                     ->join('users', 'users.id', 'business_quote_request.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
                     ->where('business_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('business_quote_request')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'business_quote_request.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('business_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Business Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::HealthManager)) {
@@ -127,56 +134,63 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(health_quote_request.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
-
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'health_quote_request.code')
                     ->join('users', 'users.id', 'health_quote_request.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
                     ->where('health_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('health_quote_request')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'health_quote_request.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('health_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Health Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::TravelManager)) {
                 $teamName = $userData->getUserTeams($userData->id);
-                $query = DB::table('personal_quotes');
+                $query = DB::table('travel_quote_request');
 
                 $query
                     ->select(
                         'users.id as advisor_id',
                         'users.name as advisor_name',
                         DB::raw('COUNT(*) as total_leads'),
-                        DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                        DB::raw('SUM(travel_quote_request.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
-
                     )
-                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-                    ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                    ->leftJoin('payments as py', 'py.code', '=', 'travel_quote_request.code')
+                    ->join('users', 'users.id', 'travel_quote_request.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Travel)
-                    ->having('expiry_days', '=', 1)
+                    ->where('travel_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('travel_quote_request')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'travel_quote_request.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('travel_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Travel Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::HomeManager)) {
@@ -190,25 +204,30 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(personal_quotes.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
-
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->join('users', 'users.id', 'personal_quotes.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                     ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('personal_quotes')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Home Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::PetManager)) {
@@ -222,25 +241,30 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(personal_quotes.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
-
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->join('users', 'users.id', 'personal_quotes.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                     ->where('personal_quotes.quote_type_id', QuoteTypeId::Pet)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('personal_quotes')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Pet)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Pet Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::YachtManager)) {
                 $teamName = $userData->getUserTeams($userData->id);
@@ -253,25 +277,30 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(personal_quotes.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
-
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->join('users', 'users.id', 'personal_quotes.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                     ->where('personal_quotes.quote_type_id', QuoteTypeId::Yacht)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('personal_quotes')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Yacht)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Yacht Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::LifeManager)) {
                 $teamName = $userData->getUserTeams($userData->id);
@@ -284,25 +313,30 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(personal_quotes.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
-
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->join('users', 'users.id', 'personal_quotes.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                     ->where('personal_quotes.quote_type_id', QuoteTypeId::Life)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('personal_quotes')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Life)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Life Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::BikeManager)) {
                 $teamName = $userData->getUserTeams($userData->id);
@@ -315,25 +349,30 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(personal_quotes.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
-
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->join('users', 'users.id', 'personal_quotes.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                     ->where('personal_quotes.quote_type_id', QuoteTypeId::Bike)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('personal_quotes')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Bike)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Bike Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::CycleManager)) {
                 $teamName = $userData->getUserTeams($userData->id);
@@ -353,18 +392,25 @@ class SendPaymentEmail extends Command
                     ->join('users', 'users.id', 'personal_quotes.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                     ->where('personal_quotes.quote_type_id', QuoteTypeId::Cycle)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('personal_quotes')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Cycle)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Cycle Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::JetskiManager)) {
                 $teamName = $userData->getUserTeams($userData->id);
@@ -377,25 +423,30 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(personal_quotes.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
-
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->join('users', 'users.id', 'personal_quotes.advisor_id')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                     ->where('personal_quotes.quote_type_id', QuoteTypeId::Jetski)
-                    ->having('expiry_days', '=', 1)
                     ->whereIn('teams.name', $teamName)
                     ->groupBy('users.id', 'users.name')
                     ->orderBy('total_leads', 'desc');
+
+                $getExpireOneDay = DB::table('personal_quotes')->select(
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                )
+                    ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+                    ->having('expiry_days', '=', 1)
+                    ->where('personal_quotes.quote_type_id', QuoteTypeId::Cycle)
+                    ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Jetski Lead');
-                    PaymentNotificationEmailJob::dispatch($user);
+                    PaymentNotificationEmailJob::dispatch($user, $getExpireOneDay);
                 }
             } else {
                 info('User Not Found In Session');

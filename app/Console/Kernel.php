@@ -48,7 +48,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->dailyAt('18:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('PaymentExpireNotification:cron')
             ->timezone('Asia/Dubai')

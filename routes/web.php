@@ -642,3 +642,4 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 //     ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
 
 
+Route::get('/send-payment-email', [CRUDController::class, 'sendPaymentEmail']);

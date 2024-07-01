@@ -1441,6 +1441,11 @@ class CRUDController extends Controller
 
             return Redirect::back()->with('message', $msg);
         } else {
+            $modifiedRequest = new Request([
+                'quoteType' => $request->modelType,
+                'quoteId' => $request->selectTmLeadId
+            ]);
+            app(\App\Http\Controllers\API\ApiController::class)->quotePaymentStatusUpdated($modifiedRequest);
             return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
         }
     }
@@ -1977,4 +1982,13 @@ class CRUDController extends Controller
 
         return $response;
     }
+
+    public function sendPaymentEmail()
+    {
+        Artisan::call('SendPaymentEmail:cron');
+
+        return 1;
+    }
+
+
 }

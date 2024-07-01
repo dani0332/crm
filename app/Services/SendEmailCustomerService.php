@@ -962,7 +962,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendPaymentNotificationEmail($user)
+    public function sendPaymentNotificationEmail($user , $getExpireOneDay)
     {
         $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
         try {
@@ -977,6 +977,10 @@ class SendEmailCustomerService extends BaseService
             $total_premium = 0;
             $total_leads = 0;
             foreach ($user as $userData) {
+                if (empty($userData->advisor_email)) {
+                    info("Advisor Email Not Found");
+                    return;
+                }
                 $advisor = (object) [];
                 $advisor->name = $userData->advisor_name;
                 $advisor->email = $userData->advisor_email;
@@ -985,14 +989,15 @@ class SendEmailCustomerService extends BaseService
                 $total_leads += $userData->total_leads;
             }
             $leadData = [
-                'total_leads' => $total_leads,
-                'total_premium' => $total_premium,
+                'total_leads' => $total_leads ? $total_leads : 0,
+                'total_premium' => $total_premium ? $total_premium : 0,
                 'date' => Carbon::now()->toDateString(),
             ];
 
             $params = [
                 'total_leads' => $leadData['total_leads'],
                 'total_premium' => $leadData['total_premium'],
+                'leads_expire' => $getExpireOneDay ? $getExpireOneDay : 0,
                 'date' => $leadData['date'],
             ];
 
