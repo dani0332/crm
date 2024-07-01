@@ -1,6 +1,6 @@
 <script setup>
 const props = defineProps({
-  reportData: Object,
+  reportData: Array,
   loader: {
     type: Boolean,
     default: false,
@@ -11,8 +11,8 @@ const props = defineProps({
 });
 
 const formattedReportData = computed(() => {
-  return props.reportData.data.filter(item => {
-    return (item.total_transaction > 0);
+  return props.reportData?.filter(item => {
+    return (item.total_policies > 0 || item.total_endorsements > 0);
   });
 });
 
@@ -59,6 +59,10 @@ const tableHeader = reactive([
     value: 'commission_vat_applicable',
   },
   {
+    text: 'T. Endorsement Amount',
+    value: 'endorsements_amount',
+  },
+  {
     text: 'T. Price',
     value: 'total_price',
   },
@@ -97,6 +101,7 @@ const isIntegerColumn = key => {
     'discount',
     'commission_vat_applicable',
     'total_price',
+    'endorsements_amount'
   ].includes(key);
 };
 </script>
@@ -140,11 +145,14 @@ const isIntegerColumn = key => {
         commission_vat_applicable ? commission_vat_applicable : 0.00
       }}
     </template>
-    <template #item-total_price="{ total_price }">
-      {{ total_price ? total_price : 0.00 }}
+    <template #item-endorsements_amount="{ endorsements_amount }">
+      {{ endorsements_amount ? priceFormat(endorsements_amount, true) : '0.00'}}
+    </template>
+    <template #item-total_price="{ total_price}">
+      {{ total_price ? priceFormat(total_price, true) :  '0.00'}}
     </template>
     <template #body-append>
-      <tr v-if="reportData.data.length > 0" class="total-row">
+      <tr v-if="reportData?.length > 0" class="total-row">
         <td class="direction-left">Total</td>
         <td
           v-for="header in tableHeader.slice(1, tableHeader.length)"
@@ -153,20 +161,11 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
+              ? priceFormat(calculateTotalSum(reportData, header.value), true)
               : 'N/A'
           }}
         </td>
       </tr>
     </template>
   </DataTable>
-  <Pagination
-    :links="{
-      next: props.reportData.next_page_url,
-      prev: props.reportData.prev_page_url,
-      current: props.reportData.current_page,
-      from: props.reportData.from,
-      to: props.reportData.to,
-    }"
-  />
 </template>
