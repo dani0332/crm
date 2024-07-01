@@ -17,7 +17,7 @@ class MDX extends EmbeddedProduct
     public function getPDFData($quoteObject, $certificateNumber, $premium)
     {
         $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-        if(!empty($quoteObject->quoteRequestEntityMapping)) {
+        if (! empty($quoteObject->quoteRequestEntityMapping)) {
             $firstName = $quoteObject->first_name ?? '';
             $lastName = $quoteObject->last_name ?? '';
         } else {
@@ -26,7 +26,7 @@ class MDX extends EmbeddedProduct
         }
 
         $data = [
-            'name' => $firstName . ' ' . $lastName,
+            'name' => $firstName.' '.$lastName,
             'dob' => isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '',
             'emirates_id' => $quoteObject->customer->emirates_id_number ?? '',
             'plan_type' => 'Individual',

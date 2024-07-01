@@ -39,8 +39,8 @@ class EmbeddedProduct
             if (! empty($planStartDate)) {
                 $planEndDate = Carbon::parse($quoteObject->policy_start_date)->addYear()->format($dateFormat);
             }
-            
-            if (!empty($quoteObject->quoteRequestEntityMapping)) {
+
+            if (! empty($quoteObject->quoteRequestEntityMapping)) {
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
             } else {
