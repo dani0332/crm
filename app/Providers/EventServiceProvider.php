@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\QuoteEmailUpdated;
 use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
+use App\Listeners\UpdateCustomerEmail;
 use App\Models\RenewalBatch;
 use App\Observers\RenewalBatchObserver;
 use Illuminate\Auth\Events\Login;
@@ -33,6 +35,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         Logout::class => [
             LogoutListener::class,
+        ],
+        QuoteEmailUpdated::class => [
+            UpdateCustomerEmail::class,
         ],
     ];
 

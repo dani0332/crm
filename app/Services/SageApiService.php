@@ -54,7 +54,7 @@ class SageApiService
         $latestEndorsementCode = '';
         if ($quote->personal_quote_id) {
             $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
-            $latestEndorsementCode = $latestEndorsement->code;
+            $latestEndorsementCode = $latestEndorsement?->code;
         }
 
         $businessTypeOfInsuranceCode = '';
