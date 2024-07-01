@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SICFollowupEmailJob implements ShouldQueue
 {
@@ -38,21 +39,26 @@ class SICFollowupEmailJob implements ShouldQueue
 
         if (empty($carLead->advisor_id)) {
             $sendEmailCustomerService->sendSICFollowupEmail($carLead);
-            // $this->sendWhatsAppMessageKenRequest();
+            $this->sendWhatsAppMessage();
         } else {
             info('SICFollowupEmailJob - Car Lead Advisor Available - Ref ID: '.$carLead->uuid.'- Time: '.now());
         }
     }
 
-    private function sendWhatsAppMessageKenRequest()
+    private function sendWhatsAppMessage()
     {
-        $response = Ken::request('/send-sic-dedicated-wa-message', 'post', [
-            'quoteUID' => $this->uuid,
-        ]);
-        if ($response) {
-            info('Whatsapp message sent successfully. UUID: '.$this->uuid);
-        } else {
-            info('invaild response from ken| UUID: '.$this->uuid);
+        try {
+            $response = Ken::request('/send-sic-dedicated-wa', 'post', [
+                'quoteUID' => $this->uuid,
+            ]);
+            info('SICFollowupEmailJob - '.now().' - sendWhatsAppMessage: response from ken| '.json_encode($response));
+            if ($response) {
+                info('Whatsapp message sent successfully. UUID: '.$this->uuid.' | Time: '.now());
+            } else {
+                info('invalid response from ken| UUID: '.$this->uuid.' | Time: '.now());
+            }
+        } catch (\Throwable $th) {
+            Log::error('SICFollowupEmailJob - Error: '.$th->getMessage().' - UUID: '.$this->uuid.' - Time: '.now());
         }
     }
 }
