@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Console\Commands;
+
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Jobs\AlfredFollowupEmailJob;
@@ -31,7 +32,6 @@ class AlfredFollowUpSchedulerCommand extends Command
      *
      * @var string
      */
-
     protected $description = 'sending follow up email';
 
     /**
@@ -118,10 +118,11 @@ class AlfredFollowUpSchedulerCommand extends Command
                             $checkCustomerFollowUps = $this->customerService->getCustomerCampaignFollowups($isCustomer->customer_id);
                             if ($checkCustomerFollowUps->campaign_followups < 3) {
                                 $this->customerEmailSent[] = ['email' => $isCustomer->email, 'status' => true];
-                                info("--------start sending email for {$isCustomer->email} -----------");                                usleep(200);
+                                info("--------start sending email for {$isCustomer->email} -----------");
+                                usleep(200);
                                 Haystack::build()
-                                ->addJob(new AlfredFollowupEmailJob($isCustomer))       // Specify the queue name with low priority
-                                ->dispatch();
+                                    ->addJob(new AlfredFollowupEmailJob($isCustomer))       // Specify the queue name with low priority
+                                    ->dispatch();
                                 info("--------end sending email for {$isCustomer->email} -----------");
 
                             }

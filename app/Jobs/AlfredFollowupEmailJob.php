@@ -30,9 +30,10 @@ class AlfredFollowupEmailJob implements ShouldQueue, StackableJob
      */
     public function handle(MyAlfredService $myAlfredService)
     {
-        if(!empty($this->customer)){
+        if (! empty($this->customer)) {
             $this->myAlfredService->sendingAlfredFollowupEmail($this->customer);
         }
+
         return true;
     }
 }
