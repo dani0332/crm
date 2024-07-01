@@ -228,6 +228,21 @@ class SendUpdateLogRepository extends BaseRepository
         return $result;
     }
 
+    public function fetchSaveProviderDetails($data)
+    {
+        try {
+            $result = $this->find($data['send_update_log_id'])->update([
+                'insurance_provider_id' => $data['insurance_provider_id'],
+            ]);
+        } catch (\Exception $ex) {
+            $result = (object) [
+                'message' => $ex->getMessage(),
+            ];
+        }
+
+        return $result;
+    }
+
     public function fetchSendUpdateToCustomer($data)
     {
         try {

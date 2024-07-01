@@ -3,6 +3,7 @@ import LazyPlanDetails from './Partials/PlanDetails.vue';
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
+import LazyProviderDetails from './Partials/ProviderDetails.vue';
 
 const props = defineProps({
   quoteType: String,
@@ -507,6 +508,12 @@ const onKeyPress = (event) => {
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"
       :payments="props.payments"
+    />
+
+    <LazyProviderDetails
+        v-if="props.quote?.insly_migrated || props.realQuote?.insly_migrated"
+        :sendUpdateLog="sendUpdateLog"
+        :insuranceProviders="props.insuranceProviders"
     />
 
     <AuditLogs
