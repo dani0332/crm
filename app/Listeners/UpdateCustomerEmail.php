@@ -19,8 +19,8 @@ class UpdateCustomerEmail
         try {
             $customer = Customer::find($quote->customer_id);
 
-            if ($customer && $customer->email !== $quote->email) {
-                $customer->email = $quote->email;
+            if ($customer && trim($customer->email) !== trim($quote->email)) {
+                $customer->email = trim($quote->email);
                 $customer->save();
             }
         } catch (Exception $e) {
