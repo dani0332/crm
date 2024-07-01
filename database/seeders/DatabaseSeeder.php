@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -15,7 +16,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             // SICFollowupEmailTemplateIDSeeder::class,
-            QuoteStatusTableSeeder::class,
+            // QuoteStatusTableSeeder::class,
             // RenewalsPermissionSeeder::class,
             // addCarQuoteSearchPermission::class,
             // QuoteStatusTableSeeder::class,
@@ -42,20 +43,12 @@ class DatabaseSeeder extends Seeder
             // GenericPermissionSeeder::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
-            LostReasonsTableSeeder::class,
-            AddGenericRolePermissionSeeder::class,
-            addDubaiNowEmailGroup::class,
-            DubaiLeadSource::class,
-            ActivitySchedulesSeeder::class,
-            DocumentTypeSeeder::class,
-            //            AddNewDocumentTypesSeeder::class,
-            // UpdateCustomerToHealthAndTravelMemberDetails::class,
+            // LostReasonsTableSeeder::class,
+            // AddGenericRolePermissionSeeder::class,
+            // addDubaiNowEmailGroup::class,
+            // DubaiLeadSource::class,
+            // ActivitySchedulesSeeder::class,
             GenericPermissionSeeder::class,
-            // UpdateOldTeamNamesSeeder::class,
-            // AddCapAdvisorPermissionSeeder::class,
-            // UpdateLeadAllocationByQuoteId::class,
-            // AddLegacyPaymentsPermssion::class,
-            ApplicationStorageSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
             addDubaiNowEmailGroup::class,
@@ -82,6 +75,17 @@ class DatabaseSeeder extends Seeder
             MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
             // BusinessTypeInsuranceSeeder::class,
             // MarineSeeder::class,
+
+            AddPaymentPermissions::class,
+            AddCreateSendUpdatePermissionToAllRoles::class,
+            // AddSendUpdatesCategoriesInLookups::class, Please don't run this seeder on test and stage env.
+            InslyRoles::class,
+            InslyPermissions::class,
+            QuoteStatusMapSeeder::class,
+            QuoteStatusSeeder::class,
+            ApplicationStorageSeeder::class,
+            addInsuranceProvidersConfiguration::class,
+            RevokeTempPaymentUpdatePermissionsSeeder::class,
             ImcrmUsersRolesCleaner::class,
         ]);
     }
