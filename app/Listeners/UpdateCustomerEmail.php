@@ -5,7 +5,7 @@ namespace App\Listeners;
 use App\Events\QuoteEmailUpdated;
 use App\Models\Customer;
 use Exception;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UpdateCustomerEmail
 {
@@ -16,8 +16,6 @@ class UpdateCustomerEmail
     {
         $quote = $event->quote;
 
-        DB::beginTransaction();
-
         try {
             $customer = Customer::find($quote->customer_id);
 
@@ -25,11 +23,8 @@ class UpdateCustomerEmail
                 $customer->email = $quote->email;
                 $customer->save();
             }
-
-            DB::commit();
         } catch (Exception $e) {
-            DB::rollBack();
-            info('Update Customer Email Failed');
+            Log::error('Update Customer Email Failed - '.$e->getMessage());
         }
     }
 }
