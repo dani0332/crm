@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Services\CarQuoteService;
 use App\Traits\ExcelExportable;
+use Illuminate\Support\Facades\DB;
 
 class CarQuoteExport
 {
@@ -11,7 +12,45 @@ class CarQuoteExport
 
     public function collection()
     {
-        return app(CarQuoteService::class)->getGridData()->get();
+        return app(CarQuoteService::class)->getGridData()->select(
+            'cqr.code',
+            'qb.name as quote_batch_id_text',
+            'cqr.first_name',
+            'cqr.last_name',
+            DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
+            'cqr.source',
+            'n.TEXT AS nationality_id_text',
+            'ulhf.TEXT AS uae_license_held_for_id_text',
+            'cmake.TEXT AS car_make_id_text',
+            'cmodel.TEXT AS car_model_id_text',
+            'cqr.year_of_manufacture',
+            'cqr.year_of_first_registration',
+            'cqr.car_value',
+            'cqr.car_value_tier',
+            'vt.text as vehicle_type_id_text',
+            'cqr.current_insurance_status',
+            'cqr.currently_insured_with as currently_insured_with_text',
+            'ch.TEXT AS claim_history_id_text',
+            DB::raw('DATE_FORMAT(cqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
+            DB::raw('DATE_FORMAT(cqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
+            't.cost_per_lead as cost_per_lead',
+            'qs.text AS quote_status_id_text',
+            'ps.text AS payment_status_id_text',
+            'cqr.is_ecommerce',
+            't.name as tier_id_text',
+            'qvc.visit_count as visit_count',
+            DB::raw('DATE_FORMAT(cqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
+            'cqr.updated_at as updated_at',
+            'cqr.updated_by',
+            'cqr.additional_notes',
+            'u.name AS advisor_id_text',
+            'cqr.policy_number',
+            DB::raw('DATE_FORMAT(cqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
+            'cqr.is_gcc_standard',
+            'cqr.is_modified',
+            'cqr.premium',
+            'ls.text as lost_reason',
+            'cqr.quote_link')->get();
     }
 
     public function headings(): array
