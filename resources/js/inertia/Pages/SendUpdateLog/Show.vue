@@ -495,6 +495,12 @@ const onKeyPress = (event) => {
       :quote-type="props.quoteType"
     />
 
+    <LazyProviderDetails
+        v-if="props.quote?.insly_migrated || props.realQuote?.insly_migrated"
+        :sendUpdateLog="sendUpdateLog"
+        :insuranceProviders="props.insuranceProviders"
+    />
+
     <LazyBookingDetails
       v-if="isBookingDetailsVisible"
       :sendUpdateLog="sendUpdateLog"
@@ -508,12 +514,6 @@ const onKeyPress = (event) => {
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"
       :payments="props.payments"
-    />
-
-    <LazyProviderDetails
-        v-if="props.quote?.insly_migrated || props.realQuote?.insly_migrated"
-        :sendUpdateLog="sendUpdateLog"
-        :insuranceProviders="props.insuranceProviders"
     />
 
     <AuditLogs
