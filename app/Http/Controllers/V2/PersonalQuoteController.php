@@ -9,6 +9,7 @@ use App\Http\Requests\PersonalQuotePolicyRequest;
 use App\Http\Requests\PersonalQuoteStatusRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\CustomerService;
 
 class PersonalQuoteController extends Controller
 {
@@ -76,7 +77,8 @@ class PersonalQuoteController extends Controller
      */
     public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)
     {
-        PersonalQuoteRepository::changePrimaryContact($quoteId, $request->validated());
+        $quoteObject = PersonalQuoteRepository::findOrFail($quoteId);
+        app(CustomerService::class)->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
 
         return back();
     }
