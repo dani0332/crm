@@ -1208,7 +1208,7 @@ class CarQuoteService extends BaseService
         return $carQuote;
     }
 
-    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false)
+    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $isDtt=false)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
@@ -1220,7 +1220,7 @@ class CarQuoteService extends BaseService
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
-            'getLatestRating' => $getLatestRating,
+            'getLatestRating' => $isDtt ? true : $getLatestRating,
             'lang' => 'en',
             'url' => strval(url()->current()),
             'ipAddress' => request()->ip(),
@@ -1457,9 +1457,9 @@ class CarQuoteService extends BaseService
         return CarQuote::where('parent_duplicate_quote_id', $code)->first();
     }
 
-    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false)
+    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false, $isDtt=false)
     {
-        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled);
+        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled, $isDtt);
 
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
