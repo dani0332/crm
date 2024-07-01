@@ -125,7 +125,7 @@ class CarQuoteRepository extends BaseRepository
      */
     public function fetchFollowupStarted($data)
     {
-        $quoteStatus = QuoteStatusEnum::getOptions()[$data['quote_status_id']];
+        $quoteStatus = QuoteStatusEnum::getName($data['quote_status_id']);
         $quoteTypeId = QuoteTypes::getIdFromValue($data['quote_type']);
         app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $data['quote_uuid'], $quoteStatus, [], $data['notes']);
         $quote = $this->where('uuid', $data['quote_uuid'])->first();

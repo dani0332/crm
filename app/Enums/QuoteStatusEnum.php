@@ -78,15 +78,73 @@ final class QuoteStatusEnum extends Enum
     // This is use for lost reason id not for Quote status
     public const LOSTREASONID = 34;
 
-    public static function getOptions()
+    public static function getName($id)
     {
-        $oClass = new ReflectionClass(__CLASS__);
-        $constants = $oClass->getConstants();
-        $retval = [];
-        foreach ($constants as $name => $val) {
-            $retval[$val] = $name;
-        }
+        $types = [
+            1 => 'Draft',
+            2 => 'Quoted',
+            3 => 'Cancelled',
+            4 => 'Issued',
+            6 => 'AMLScreeningCleared',
+            7 => 'AMLScreeningFailed',
+            8 => 'NewLead',
+            9 => 'Fake',
+            10 => 'FTCSent',
+            11 => 'FTCAccepted',
+            12 => 'FTCResubmitted',
+            14 => 'MissingDocumentsRequested',
+            15 => 'TransactionApproved',
+            17 => 'Lost',
+            19 => 'KYCCleared',
+            22 => 'FTCPending',
+            24 => 'FollowedUp',
+            25 => 'InNegotiation',
+            26 => 'ApplicationPending',
+            36 => 'ApplicationSubmitted',
+            27 => 'PendingwithUW',
+            28 => 'PaymentPending',
+            29 => 'PolicyDocumentsPending',
+            30 => 'QualificationPending',
+            31 => 'Qualified',
+            32 => 'TransactionDeclined',
+            33 => 'PolicyIssued',
+            34 => 'PolicyInvoiced',
+            35 => 'Duplicate',
+            40 => 'PriceTooHigh',
+            41 => 'PolicyPurchasedBeforeFirstCall',
+            42 => 'NotContactablePe',
+            43 => 'FollowupCall',
+            44 => 'Interested',
+            45 => 'NoAnswer',
+            46 => 'NotInterested',
+            47 => 'NotEligibleForInsurance',
+            48 => 'IMRenewal',
+            49 => 'NotLookingForMotorInsurance',
+            50 => 'NonGccSpec',
+            51 => 'PendingQuote',
+            52 => 'CarSold',
+            53 => 'Uncontactable',
+            54 => 'Stale',
+            55 => 'PolicySentToCustomer',
+            56 => 'PolicyBooked',
+            57 => 'CancellationPending',
+            58 => 'PolicyCancelled',
+            59 => 'Allocated',
+            60 => 'RenewalTermsReceived',
+            61 => 'ProposalFormRequested',
+            62 => 'ProposalFormReceived',
+            63 => 'PendingRenewalInformation',
+            64 => 'AdditionalInformationRequested',
+            65 => 'QuoteRequested',
+            66 => 'FinalizingTerms',
+            67 => 'QuotedByUW',
+            68 => 'SentForTransactionApproval',
+            69 => 'RenewalTermsSent',
+            70 => 'PolicyPending',
+            71 => 'EarlyRenewal',
+            72 => 'PolicyCancelledReissued',
+        ];
 
-        return $retval;
+        return $types[$id];
     }
 }
