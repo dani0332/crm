@@ -16,15 +16,15 @@ class UpdateCustomerEmail
     {
         $quote = $event->quote;
 
-        try {
-            $customer = Customer::find($quote->customer_id);
+        // try {
+        //     $customer = Customer::find($quote->customer_id);
 
-            if ($customer && trim($customer->email) !== trim($quote->email)) {
-                $customer->email = trim($quote->email);
-                $customer->save();
-            }
-        } catch (Exception $e) {
-            Log::error('Update Customer Email Failed - '.$e->getMessage());
-        }
+        //     if ($customer && trim($customer->email) !== trim($quote->email)) {
+        //         $customer->email = trim($quote->email);
+        //         $customer->save();
+        //     }
+        // } catch (Exception $e) {
+        //     Log::error('Update Customer Email Failed - '.$e->getMessage());
+        // }
     }
 }
