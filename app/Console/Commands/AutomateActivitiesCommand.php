@@ -195,13 +195,13 @@ class AutomateActivitiesCommand extends Command
                                     ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
                                     ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
                                     ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
-                                        $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
+                                        return $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
                                     })
                                     ->when($quoteDetail->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteDetail, $quoteTypeDetail) {
                                         $renewalTeamID = isset($quoteTypeDetail['multiple_lobs']) ?
                                             $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['renewal_team'] : $quoteTypeDetail['renewal_team'];
 
-                                        $query->where('team_id', $renewalTeamID ?? null);
+                                        return $query->where('team_id', $renewalTeamID ?? null);
                                     })->first();
 
                                 if ($activitySchedules && $activityCreationAllowed) {
