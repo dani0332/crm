@@ -77,7 +77,7 @@ class ManagementReport
             'transactionTypes' => $transactionTypes,
         ];
     }
-    public function applyFilters($query, $request, $endorsementsQuery=false)
+    public function applyFilters($query, $request, $endorsementsQuery = false)
     {
         //secondOptionalFieldName to be used in case of transaction due date, coming from a different table 'payment_splits'
         $dateFilter = function ($fieldName, $filterKey, $secondOptionalFieldName = null) use ($query, $request) {
@@ -120,10 +120,9 @@ class ManagementReport
             case ManagementReportCategoriesEnum::SALE_SUMMARY:
             case ManagementReportCategoriesEnum::SALE_DETAIL:
                 if ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
-                    if ($endorsementsQuery)
-                    {
+                    if ($endorsementsQuery) {
                         $dateFilter('send_update_logs.booking_date', 'policyBookDate');
-                    }else{
+                    } else {
                         $dateFilter('personal_quotes.policy_booking_date', 'policyBookDate');
                     }
                 } elseif ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
@@ -324,10 +323,11 @@ class ManagementReport
                     $item->total_transaction = $item->total_policies + $item->total_endorsements;
                     $item->endorsements_amount = (float) $endorsement->total_endorsement_amount;
                     $item->total_price =
-                        ($item->total_price ? (float)$item->total_price : 0) +
-                        ($endorsement->total_endorsement_amount ? (float)$endorsement->total_endorsement_amount : 0);
+                        ($item->total_price ? (float) $item->total_price : 0) +
+                        ($endorsement->total_endorsement_amount ? (float) $endorsement->total_endorsement_amount : 0);
                 }
             }
+
             return $item;
         });
 
