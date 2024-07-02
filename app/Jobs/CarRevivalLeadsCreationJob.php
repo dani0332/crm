@@ -96,6 +96,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'isEmailSkip' => true,
                 'referenceUrl' => config('constants.APP_URL'),
                 'sicFlowEnabled' => false,
+                'whatsappConsent' => true,
             ];
 
             info('CarRevivalLeadsCreationJob - carRevivalParentLead -'.$this->lead->uuid.'- capiPayload - '.json_encode($dataArr));
