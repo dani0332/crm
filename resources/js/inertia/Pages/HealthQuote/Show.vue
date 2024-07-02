@@ -1,6 +1,6 @@
 <script setup>
+import {computed, reactive, ref} from 'vue';
 import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
-import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from './../../Components/MigratePayment.vue';
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
@@ -80,6 +80,7 @@ const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 
 const showPlans = ref(!props.hashCollapsibleStatuses);
+const contactLoader = ref(false);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -102,6 +103,9 @@ const fixedValue = number => {
     });
   }
 };
+const confirmData = reactive({
+    contactPrimary: null,
+});
 
 const allowStatusUpdate = computed(() => {
   return (
