@@ -20,10 +20,6 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
-    text: 'Endorsement Sub-type',
-    value: 'endorsement_sub_type',
-  },
-  {
     text: 'Policy Number',
     value: 'policy_number',
   },
@@ -141,6 +137,10 @@ const tableHeader = reactive([
     text: 'Booking Date',
     value: 'booking_date',
   },
+  {
+    text: 'Endorsement Sub-type',
+    value: 'endorsement_sub_type',
+  }
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -174,9 +174,6 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
-    <template #item-endorsement_sub_type="{ endorsement_sub_type }">
-      {{ endorsement_sub_type ?? 'N/A' }}
-    </template>
     <template #item-policy_number="{ policy_number, main_lead_policy_number }">
       {{ policy_number ? policy_number : (main_lead_policy_number ?? 'N/A') }}
     </template>
@@ -268,6 +265,9 @@ const isIntegerColumn = key => {
     </template>
     <template #item-booking_date="{ booking_date }">
       {{ booking_date ?? 'N/A' }}
+    </template>
+    <template #item-endorsement_sub_type="{ endorsement_sub_type }">
+      {{ endorsement_sub_type ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">

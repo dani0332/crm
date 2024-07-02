@@ -108,7 +108,7 @@ class EndorsementReportService extends ManagementReport
             $data = $query->get();
 
             // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1, 2, 3, 4, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
 
             return $this->download(
                 'Endorsement Report '.$this->reportDateRange,
@@ -139,7 +139,6 @@ class EndorsementReportService extends ManagementReport
     public function headings(): array
     {
         return [
-            'Endorsement Sub-Type',
             'Policy Number',
             'Transactions',
             'Policy Start Date',
@@ -169,13 +168,13 @@ class EndorsementReportService extends ManagementReport
             'Insurer Invoice Date',
             'Broker Invoice No',
             'Booking Date',
+            'Endorsement Sub-Type',
         ];
     }
 
     public function map($quote): array
     {
         return [
-            $quote->endorsement_sub_type ?? 'N/A',
             $quote->policy_number ? '="'.$quote->policy_number.'"' : ('="'.$quote->main_lead_policy_number.'"' ?? 'N/A'),
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ? $quote->policy_start_date : ($quote->main_lead_policy_start_date ?? 'N/A'),
@@ -205,6 +204,7 @@ class EndorsementReportService extends ManagementReport
             $quote->insurer_tax_invoice_date ?? 'N/A',
             $quote->broker_invoice_number ?? 'N/A',
             $quote->booking_date ?? 'N/A',
+            $quote->endorsement_sub_type ?? 'N/A',
         ];
     }
 }
