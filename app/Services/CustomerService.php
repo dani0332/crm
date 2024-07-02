@@ -187,7 +187,7 @@ class CustomerService extends BaseService
                 // Check if the email ends with the specified domains
                 if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
                     $isExist = CustomerAdditionalContact::where('key', 'email')
-                        ->where('customer_id', $lead->customer->id)
+                        ->where('customer_id', $lead->customer_id)
                         ->where('value', $email)
                         ->exists();
 
@@ -202,9 +202,8 @@ class CustomerService extends BaseService
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $removeEmail = CustomerAdditionalContact::where('customer_id', $lead->customer->id)
+                $removeEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                     ->where('value', $lead->email)
-                    ->where('customer_id', $lead->customer->id)
                     ->where('key', 'email')
                     ->first();
                 if (isset($removeEmail->id)) {
@@ -238,7 +237,7 @@ class CustomerService extends BaseService
                     'value' => trim($lead->email),
                 ]);
 
-                $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer->id)
+                $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                     ->get();
                 foreach ($getCustomerAdditionalContact as $contact) {
                     CustomerAdditionalContact::firstOrCreate([
