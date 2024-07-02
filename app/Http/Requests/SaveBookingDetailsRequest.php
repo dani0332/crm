@@ -2,10 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\SendUpdateLog;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
 {
+    protected object $sendUpdate;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -22,6 +26,7 @@ class SaveBookingDetailsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'id' => 'required',
             'commission_vat_applicable' => 'required|numeric',
             'invoice_description' => 'required|string',
             'invoice_date' => 'required|date',
@@ -29,9 +34,9 @@ class SaveBookingDetailsRequest extends FormRequest
             'insurer_commission_invoice_number' => 'required|string',
             'discount' => 'nullable|numeric',
             'commission_vat_not_applicable' => 'nullable|numeric',
-            'total_vat_amount' => 'required|numeric',
-            'price_vat_applicable' => 'required|numeric',
-            'price_vat_not_applicable' => 'required|numeric',
+            'total_vat_amount' => 'sometimes|numeric',
+            'price_vat_applicable' => 'sometimes|numeric',
+            'price_vat_not_applicable' => 'sometimes|numeric',
             'price_with_vat' => 'required|numeric',
         ];
     }
@@ -42,7 +47,21 @@ class SaveBookingDetailsRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            // $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
+            $priceVatApplicable = $this->get('price_vat_applicable');
+            $priceVatNotApplicable = $this->get('price_vat_not_applicable');
+            $totalVatAmount = $this->get('total_vat_amount');
+            $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
+
+            if (in_array($this->sendUpdate?->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
+                SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life) && ($priceVatNotApplicable < 1)) {
+                return $validator->errors()->add('error', 'Price vat not applicable required.');
+            } elseif ($priceVatApplicable < 1 && $priceVatNotApplicable < 1) {
+                return $validator->errors()->add('error', 'Price vat applicable required.');
+            }
+
+            if ($priceVatApplicable > 0 && $totalVatAmount < 1) {
+                return $validator->errors()->add('error', 'Total Vat amount required.');
+            }
         });
     }
 }

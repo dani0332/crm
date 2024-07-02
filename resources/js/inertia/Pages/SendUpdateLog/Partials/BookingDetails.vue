@@ -191,8 +191,8 @@ const bookingDetailsForm = useForm({
     props.bookingDetails?.total_commission ||
     props?.payments[0]?.commission ||
     '',
-  total_vat_amount: props.bookingDetails?.total_vat_amount || null,
-  price_vat_applicable: props.bookingDetails?.price_vat_applicable || props.sendUpdateLog.price_vat_applicable || '',
+  total_vat_amount: props.bookingDetails?.total_vat_amount || '0.00',
+  price_vat_applicable: props.bookingDetails?.price_vat_applicable || props.sendUpdateLog.price_vat_applicable || '0.00',
   price_vat_not_applicable:
     props.bookingDetails?.price_vat_not_applicable || props.sendUpdateLog.price_vat_not_applicable || '0.00',
   price_with_vat: props.bookingDetails?.price_with_vat || '0.00',
@@ -1548,7 +1548,7 @@ const isPriceVatApplicableEditable = computed(() => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.total_vat_amount !== null ? thousandSeparator(bookingDetailsForm.total_vat_amount) : 'N/A'
+                    bookingDetailsForm.total_vat_amount !== '0.00' ? thousandSeparator(bookingDetailsForm.total_vat_amount) : 'N/A'
                   }}</span>
                 </div>
               </div>
