@@ -169,24 +169,15 @@ class AutomateActivitiesCommand extends Command
                                         null) :
                                     $quoteTypeDetail['quote_type_id'];
 
-                                $lastActivity = $quoteDetail->activities->sortByDesc('created_at')->first();
+                                $lastActivity = $quoteDetail->activities->sortByDesc('id')->first();
+                                $quoteDetail->activities = $quoteDetail->activities->where('status', true)->sortByDesc('id');
 
                                 $activityCreationAllowed = true;
-                                if ($lastActivity->is_cold || $lastActivity->is_cold && $lastActivity->status == 0) {
+                                if ($lastActivity->is_cold || $lastActivity->status == 0) {
                                     $activityCreationAllowed = false;
                                 }
 
                                 $scheduledActivitiesIDs = $quoteDetail->activities
-                                    ->filter(function ($activity) {
-
-                                        $isDueDatePassed = ! is_null($activity->due_date) && $activity->due_date != '0000-00-00 00:00:00'
-                                        ? Carbon::parse($activity->due_date)->lt(Carbon::now())
-                                        : false;
-
-                                        return $isDueDatePassed === true &&
-                                            $activity->status == true &&
-                                            ! is_null($activity->activity_schedule_id);
-                                    })
                                     ->pluck('activity_schedule_id')
                                     ->unique()
                                     ->toArray();
