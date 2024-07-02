@@ -26,7 +26,7 @@ class SaveBookingDetailsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => 'required',
+            'id' => 'required|exists:send_update_logs,id',
             'commission_vat_applicable' => 'required|numeric',
             'invoice_description' => 'required|string',
             'invoice_date' => 'required|date',
