@@ -42,13 +42,57 @@ class GenericPermissionSeeder extends Seeder
                     'guard_name' => 'web',
                 ]);
             }
+        }
 
-            // Add Compliance Permission to Admin
-            $role = Role::where('name', RolesEnum::Admin)->first();
+        // Add Permission to Admin
+        $healthQuoteAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_ACCESS)->first();
+        if (! $healthQuoteAccess) {
+            Permission::create([
+                'name' => PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                'guard_name' => 'web',
+            ]);
+        }
 
-            if (! $role->hasPermissionTo($conversionPermission)) {
-                $role->givePermissionTo($conversionPermission);
+        // Book policy permissions & roles
+        $bookPolicyPermissions = [
+            ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::PRODUCTION],
+            ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::NRA],
+            ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::FINANCE],
+        ];
+
+        foreach ($bookPolicyPermissions as $permission) {
+            $permissionRecord = Permission::where('name', $permission['name'])->first();
+
+            if (! $permissionRecord) {
+                $permissionRecord = Permission::create([
+                    'name' => $permission['name'],
+                    'guard_name' => 'web',
+                ]);
             }
+
+            if (! empty($permission['role'])) {
+                $role = Role::where('name', $permission['role'])->first();
+
+                if (! $role) {
+                    $role = Role::create([
+                        'name' => $permission['role'],
+                        'guard_name' => 'web',
+                    ]);
+                }
+
+                if (! $role->hasPermissionTo($permissionRecord->id)) {
+                    $role->givePermissionTo($permissionRecord->id);
+                }
+            }
+        }
+        // Add Compliance Permission to Admin
+        $role = Role::where('name', RolesEnum::Admin)->first();
+
+        // Add Compliance Permission to Admin
+        $role = Role::where('name', RolesEnum::Admin)->first();
+
+        if (! $role->hasPermissionTo($conversionPermission)) {
+            $role->givePermissionTo($conversionPermission);
         }
 
         // Plans Selection & Plan Details Section Permissions
@@ -182,7 +226,7 @@ class GenericPermissionSeeder extends Seeder
     }
 
     /**
-     * add manual health plan permission function
+     * add manual health plan permission function.
      *
      * @return void
      */
@@ -202,6 +246,7 @@ class GenericPermissionSeeder extends Seeder
         if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
             $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
         }
+        $this->syncMasterPermissionList();
     }
 
     private function generateSegmentFilterPermission()
@@ -263,7 +308,10 @@ class GenericPermissionSeeder extends Seeder
         ];
 
         foreach ($permissionList as $permission => $roles) {
-            $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+            $dataset = Permission::where(['name' => $permission, 'guard_name' => 'web'])->first();
+            if (! $dataset) {
+                $dataset = Permission::create(['name' => $permission, 'guard_name' => 'web']);
+            }
             foreach ($roles as $roleName) {
                 if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($dataset->id)) {
                     $role->givePermissionTo($dataset->id);
@@ -566,6 +614,70 @@ class GenericPermissionSeeder extends Seeder
             $motorHeadRole->syncPermissions($carManagerRole->permissions);
         } catch (\Exception $e) {
             Log::error('Error assigning permissions to Motor Head role: '.$e->getMessage());
+        }
+    }
+
+    private function syncMasterPermissionList()
+    {
+        $permissionList = [
+            PermissionsEnum::ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION => [
+                RolesEnum::Admin,
+                RolesEnum::ServiceExecutive,
+                RolesEnum::SeniorManagement,
+                RolesEnum::GMManager,
+                RolesEnum::CorplineManager,
+            ],
+            PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON => [
+            ],
+            PermissionsEnum::POLICY_DETAILS_ADD => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::BOOK_POLICY_DETAILS_ADD => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::BOOK_POLICY_BUTTON => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+        ];
+
+        $this->syncPermissionsWithRole($permissionList);
+    }
+
+    private function syncPermissionsWithRole($permissionList)
+    {
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::findOrCreate($permission, 'web');
+            foreach ($roles as $roleName) {
+                if (($role = Role::findOrCreate($roleName, 'web')) && ! $role->hasPermissionTo($dataset->id)) {
+                    $role->givePermissionTo($dataset->id);
+                }
+            }
         }
     }
 }

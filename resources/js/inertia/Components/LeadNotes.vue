@@ -300,7 +300,7 @@ watch(
   <div v-if="can(permissionsEnum.SAVE_QUOTE_NOTES)">
     <x-tooltip>
       <x-button size="sm" color="emerald" @click="showModal = true">
-        Notes ({{ notes.data.length }})
+        Notes ({{ notes?.data?.length }})
       </x-button>
       <template #tooltip>
         <span

@@ -1368,7 +1368,7 @@ onUpdated(() => {
             </x-button>
           </div> -->
 
-          <!-- Set Manual plan modification true for CoPay, Requested from API Team-->
+            <!-- Set Manual plan modification true for CoPay, Requested from API Team-->
             <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
               <x-button
                 :disabled="!isManual"
