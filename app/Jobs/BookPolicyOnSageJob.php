@@ -10,6 +10,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -17,6 +18,8 @@ class BookPolicyOnSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 3;
+    public $timeout = 30;
     private $sageRequest;
     private $quote;
     private $payment;
@@ -1092,6 +1095,11 @@ class BookPolicyOnSageJob implements ShouldQueue
         }
         info('################################## Sage Policy Booked for : '.$this->quote->code.'##################################');
 
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->quote->uuid))->dontRelease()];
     }
 
     private function convertResponseToArray($response)

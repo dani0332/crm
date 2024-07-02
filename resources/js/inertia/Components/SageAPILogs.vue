@@ -12,7 +12,7 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 
 <template>
   <div>
-    <x-modal v-model="showModal" size="xl" backdrop>
+    <x-modal v-model="showModal" size="xl" backdrop show-close>
       <template #header>
         <span>Sage API Logs </span>
       </template>
