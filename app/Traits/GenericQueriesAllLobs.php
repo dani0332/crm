@@ -622,6 +622,7 @@ trait GenericQueriesAllLobs
                 if ($isFirsSplitPayment) {
                     Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     $paymentSplit->payment_amount = $payment->total_amount;
+                    $isFirsSplitPayment = false;
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
                     if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
