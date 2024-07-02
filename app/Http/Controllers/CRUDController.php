@@ -1423,6 +1423,8 @@ class CRUDController extends Controller
 
     public function manualLeadAssign(Request $request)
     {
+        $quoteData = $this->getQuoteObject($request->modelType, $request->selectTmLeadId);
+
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('error', $isValidRequest);
@@ -1441,11 +1443,13 @@ class CRUDController extends Controller
 
             return Redirect::back()->with('message', $msg);
         } else {
-            $modifiedRequest = new Request([
-                'quoteType' => $request->modelType,
-                'quoteId' => $request->selectTmLeadId
-            ]);
-            app(\App\Http\Controllers\API\ApiController::class)->quotePaymentStatusUpdated($modifiedRequest);
+            if($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED){
+                $modifiedRequest = new Request([
+                    'quoteType' => $request->modelType,
+                    'quoteId' => $request->selectTmLeadId
+                ]);
+                app(\App\Http\Controllers\API\ApiController::class)->quotePaymentStatusUpdated($modifiedRequest);
+            }
             return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
         }
     }

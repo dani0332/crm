@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -165,13 +166,18 @@ class CentralController extends Controller
 
     public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)
     {
-        (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
-        $modifiedRequest = new Request([
-            'quoteType' => $leadAssignRequest->modelType,
-            'quoteId' => $leadAssignRequest->selectTmLeadId,
-        ]);
-        app(\App\Http\Controllers\API\ApiController::class)->quotePaymentStatusUpdated($modifiedRequest);
+        (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
+        
+        $quoteData = $this->getQuoteObject($leadAssignRequest->modelType, $leadAssignRequest->selectTmLeadId);
+        $authorizedPayment = Payment::where('code', '=', $quoteData->code)->first();
+        if ($authorizedPayment && $authorizedPayment->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+            $modifiedRequest = new Request([
+                'quoteType' => $leadAssignRequest->modelType,
+                'quoteId' => $leadAssignRequest->selectTmLeadId,
+            ]);
+            app(\App\Http\Controllers\API\ApiController::class)->quotePaymentStatusUpdated($modifiedRequest);
+        }
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
