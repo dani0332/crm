@@ -362,10 +362,6 @@ class HealthQuoteService extends BaseService
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
             $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
-        } else {
-            //previous_quote_policy_number is null check
-            $this->query->whereNull('previous_quote_policy_number');
-
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
