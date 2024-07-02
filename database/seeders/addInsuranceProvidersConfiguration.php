@@ -141,12 +141,20 @@ class addInsuranceProvidersConfiguration extends Seeder
         ];
 
         foreach ($insuranceProvidersMapping as $providerMapping) {
-            InsuranceProvider::where('code', $providerMapping['code'])
-                ->update([
+            $insuranceProvider = InsuranceProvider::where('code', $providerMapping['code'])->first();
+
+            if ($insuranceProvider->sage_vendor_id != $providerMapping['sage_vendor_id'] ||
+                $insuranceProvider->gl_liaiblity_account != $providerMapping['gl_liaiblity_account'] ||
+                $insuranceProvider->sage_insurer_customer_id != $providerMapping['sage_insurer_customer_id']) {
+
+                $insuranceProvider->update([
                     'sage_vendor_id' => $providerMapping['sage_vendor_id'],
                     'gl_liaiblity_account' => $providerMapping['gl_liaiblity_account'],
                     'sage_insurer_customer_id' => $providerMapping['sage_insurer_customer_id'],
                 ]);
+
+            }
+
         }
 
     }
