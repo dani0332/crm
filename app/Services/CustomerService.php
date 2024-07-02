@@ -173,7 +173,7 @@ class CustomerService extends BaseService
                 ];
                 $customer = Customer::create($customerArray);
                 $customer->update(['code' => 'IND-'.$customer->id]);
-                $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer->id)
+                $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                     ->get();
                 foreach ($getCustomerAdditionalContact as $contact) {
                     CustomerAdditionalContact::create([
