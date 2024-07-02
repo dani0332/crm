@@ -586,8 +586,6 @@ class AMLController extends Controller
             $companyName = null;
         }
 
-        app(AMLService::class)->checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, true, $yob, $companyName);
-
         return redirect()->back()->with('success', 'Quote is updated');
     }
 

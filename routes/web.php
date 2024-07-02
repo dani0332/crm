@@ -9,19 +9,15 @@ use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
-use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\ClaimController;
-use App\Http\Controllers\ClaimsAttachmentsController;
-use App\Http\Controllers\ClaimsStatusController;
 use App\Http\Controllers\CommercialKeywordsController;
 use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FailedJobsController;
-use App\Http\Controllers\FormController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -34,14 +30,11 @@ use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
-use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\RenewalsUploadController;
-use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SageApi;
 use App\Http\Controllers\StatusController;
-use App\Http\Controllers\SubTypeOfInsuranceController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TmCallStatusController;
 use App\Http\Controllers\TmInsuranceTypeController;
@@ -51,8 +44,6 @@ use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TravelController;
 use App\Http\Controllers\TravelMembersDetailController;
-use App\Http\Controllers\TypeOfInsuranceController;
-use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
@@ -77,6 +68,7 @@ use App\Http\Controllers\V2\QuoteSyncController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use App\Http\Middleware\SetReadDbConnection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -191,7 +183,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-sold', [CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
-        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction');
+        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
+
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
         Route::delete('delete-quote-notes/{id}', [CentralController::class, 'deleteQuoteNotes'])->name('delete-quote-notes');
@@ -209,7 +202,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
     });
 
-    Route::group(['middleware' => ['permission:'.PermissionsEnum::DATA_EXTRACTION]], function () {
+    Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
 
@@ -498,18 +491,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car-models', [ValuationController::class, 'carModelBasedOnCarMake'])->name('valuation.carmodels');
         Route::get('car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel'])->name('valuation.carmodeldetail');
     });
-
-    // Scheduled to delete 15th April 2024
-    // Route::group(['prefix' => 'claim'], function () {
-    //     Route::resource('claims', ClaimController::class);
-    //     Route::resource('typeofinsurance', TypeOfInsuranceController::class);
-    //     Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
-    //     Route::resource('claimsstatus', ClaimsStatusController::class);
-    //     Route::resource('carrepaircoverage', CarRepairCoverageController::class);
-    //     Route::resource('carrepairtype', CarRepairTypeController::class);
-    //     Route::resource('rentacar', RentACarController::class);
-    //     Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
-    // });
 
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);

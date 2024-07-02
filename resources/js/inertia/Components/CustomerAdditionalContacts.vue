@@ -241,15 +241,6 @@ const additionalContactDeleteConfirmed = () => {
             >
               Make Primary
             </x-button>
-            <x-button
-              v-if="canDelete"
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="additionalContactDelete(item.id)"
-            >
-              Delete
-            </x-button>
           </div>
         </template>
       </DataTable>

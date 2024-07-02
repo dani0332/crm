@@ -344,7 +344,7 @@ use App\Enums\LeadSourceEnum;
                     </form>
 
 
-                    @if(isset($paymentEntityModel->carLostQuoteLogs) && $paymentEntityModel->source == LeadSourceEnum::RENEWAL_UPLOAD && auth()->user()->hasAnyRole(RolesEnum::CarAdvisor, RolesEnum::CarManager, RolesEnum::MarketingOperations, RolesEnum::CarDeputyManager))
+                    @if(isset($paymentEntityModel->carLostQuoteLogs) && $paymentEntityModel->source == LeadSourceEnum::RENEWAL_UPLOAD && auth()->user()->hasAnyRole(RolesEnum::CarAdvisor, RolesEnum::CarManager, RolesEnum::MarketingOperations))
                     <h2>Car Sold / Uncontactable Logs</h2>
                     <div id="lead-history-div">
                         <table id="carLostQuoteLogsTable" class="table table-striped jambo_table" style="width:100%">
