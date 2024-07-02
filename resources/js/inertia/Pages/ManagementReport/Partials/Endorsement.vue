@@ -20,6 +20,10 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Endorsement Sub-type',
+    value: 'endorsement_sub_type',
+  },
+  {
     text: 'Policy Number',
     value: 'policy_number',
   },
@@ -170,6 +174,9 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template #item-endorsement_sub_type="{ endorsement_sub_type }">
+      {{ endorsement_sub_type ?? 'N/A' }}
+    </template>
     <template #item-policy_number="{ policy_number, main_lead_policy_number }">
       {{ policy_number ? policy_number : (main_lead_policy_number ?? 'N/A') }}
     </template>

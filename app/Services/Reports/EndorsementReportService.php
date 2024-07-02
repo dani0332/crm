@@ -74,6 +74,7 @@ class EndorsementReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
+                'l.text as endorsement_sub_type',
                 DB::raw("DATE_FORMAT(send_update_logs.booking_date, '%Y-%m-%d') as booking_date"),
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
@@ -89,6 +90,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
+            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->where('send_update_logs.category_id', '=', EndorsementStatusEnum::ENDORSEMENT_FINANCIAL_ID);
 
@@ -106,7 +108,7 @@ class EndorsementReportService extends ManagementReport
             $data = $query->get();
 
             // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28];
+            $nonIntegarIndexes = [0, 1, 2, 3, 4, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
 
             return $this->download(
                 'Endorsement Report '.$this->reportDateRange,
@@ -137,6 +139,7 @@ class EndorsementReportService extends ManagementReport
     public function headings(): array
     {
         return [
+            'Endorsement Sub-Type',
             'Policy Number',
             'Transactions',
             'Policy Start Date',
@@ -172,6 +175,7 @@ class EndorsementReportService extends ManagementReport
     public function map($quote): array
     {
         return [
+            $quote->endorsement_sub_type ?? 'N/A',
             $quote->policy_number ? '="'.$quote->policy_number.'"' : ('="'.$quote->main_lead_policy_number.'"' ?? 'N/A'),
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ? $quote->policy_start_date : ($quote->main_lead_policy_start_date ?? 'N/A'),
