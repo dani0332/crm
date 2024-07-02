@@ -76,7 +76,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('car_quote_request')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'car_quote_request.code')
                     ->having('expiry_days', '=', 1)
@@ -110,7 +110,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('business_quote_request')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'business_quote_request.code')
                     ->having('expiry_days', '=', 1)
@@ -145,7 +145,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('health_quote_request')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'health_quote_request.code')
                     ->having('expiry_days', '=', 1)
@@ -180,7 +180,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('travel_quote_request')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'travel_quote_request.code')
                     ->having('expiry_days', '=', 1)
@@ -216,7 +216,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('personal_quotes')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->having('expiry_days', '=', 1)
@@ -253,7 +253,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('personal_quotes')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->having('expiry_days', '=', 1)
@@ -289,7 +289,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('personal_quotes')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->having('expiry_days', '=', 1)
@@ -325,7 +325,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('personal_quotes')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->having('expiry_days', '=', 1)
@@ -361,7 +361,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('personal_quotes')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->having('expiry_days', '=', 1)
@@ -385,7 +385,7 @@ class SendPaymentEmail extends Command
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM(personal_quotes.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
 
                     )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
@@ -399,7 +399,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('personal_quotes')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->having('expiry_days', '=', 1)
@@ -435,7 +435,7 @@ class SendPaymentEmail extends Command
                     ->orderBy('total_leads', 'desc');
 
                 $getExpireOneDay = DB::table('personal_quotes')->select(
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 7 DAY), NOW()) as expiry_days')
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                     ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                     ->having('expiry_days', '=', 1)

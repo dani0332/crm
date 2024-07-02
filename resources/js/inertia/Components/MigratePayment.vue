@@ -4,7 +4,7 @@ const props = defineProps({
     quoteType: String,
     quoteId: Number,
     paymentCode: String,
-    payments: Array,   
+    payments: Array,
 });
 
 const notification = useNotifications('toast');
@@ -12,27 +12,27 @@ const isLoading = ref(false);
 
 
 // Check if the component should be visible
-const isVisible = computed(() => {
-    if (props.payments.length > 5 || props.payments.length === 0) {
-        return false; 
-    }   
-
-    if(isSameInsuranceProviderId(props.payments)){
-        return true; 
-    } else {
-        return false;
-    }    
-});
+// const isVisible = computed(() => {
+//     if (props.payments.length > 5 || props.payments.length === 0) {
+//         return false;
+//     }
+//
+//     if(isSameInsuranceProviderId(props.payments)){
+//         return true;
+//     } else {
+//         return false;
+//     }
+// });
 
 // Check if all insurance_provider_id are the same
 const isAllCancelled = (allPayments) => {
     if (allPayments.length === 0) {
-        return false; 
-    }           
-    
-    // filter out the 3 cancelled and 11 drafted payments 
+        return false;
+    }
+
+    // filter out the 3 cancelled and 11 drafted payments
     let cancelledPayments = allPayments.filter(payment => payment.payment_status_id === page.props.paymentStatusEnum.CANCELLED || payment.payment_status_id === page.props.paymentStatusEnum.DRAFT);
-    
+
     if(cancelledPayments.length === allPayments.length){
         return true;
     } else {
@@ -43,7 +43,7 @@ const isAllCancelled = (allPayments) => {
 // Check if all insurance_provider_id are the same
 const isSameInsuranceProviderId = (arr) => {
     if (arr.length === 0) {
-        return false; 
+        return false;
     }
     const firstInsuranceProviderId = arr[0].insurance_provider.id;
     for (let i = 1; i < arr.length; i++) {
@@ -54,15 +54,15 @@ const isSameInsuranceProviderId = (arr) => {
     return true; // If all insurance_provider_id are the same, return true
 }
 const migratePayment = () => {
-    
+
     isLoading.value = true;
 
     let data = {
         'model_type' : props.quoteType,
         'quote_id' : props.quoteId,
-        'payment_code' : props.paymentCode,        
+        'payment_code' : props.paymentCode,
     }
-    
+
     axios.post(`/payments/${props.quoteType}/migrate-payment`, data)
         .then(res => {
             isLoading.value = false;
@@ -77,12 +77,12 @@ const migratePayment = () => {
                     title:  res.data.message,
                     position: 'top',
                 });
-            }           
+            }
             setTimeout(() => {
                 location.reload();
-            }, 500);           
+            }, 500);
         })
-        .catch(err => {           
+        .catch(err => {
             console.log(err)
             isLoading.value = false;
             notification.error({
@@ -110,7 +110,7 @@ const showConfirmation = () => {
             <x-button
                 size="sm"
                 color="orange"
-                :loading="isLoading"        
+                :loading="isLoading"
                 @click.prevent="showConfirmation()"
             >
                 Migrate Payment

@@ -1,8 +1,10 @@
 <script setup>
 import Pusher from 'pusher-js';
 const page = usePage();
+import CustomExpireNotification from './CustomExpireNotification.vue';
 
-const notification = useNotifications('toast');
+const showNotification = ref(false);
+const notificationData = ref({});
 
 const options = {
   cluster: 'ap1',
@@ -15,23 +17,24 @@ const channel = pusher.subscribe(
 );
 
 const listen = () => {
-  channel.bind('expire.notification', function (e) {
-    if (e.advisorId === page.props.auth.user.id) {
-      notification.info({
-        title: 'Payment',
-        iconColor: 'success',
-        message: e.message,
-        action: {
-          label: 'REF#',
-          onClick: () => {
-            window.open(e.url, '_self');
-          },
-        },
-        timeout: 30000
-      });
-    }
-  });
+    channel.bind('expire.notification', function (e) {
+        if (e.advisorId === page.props.auth.user.id) {
+            notificationData.value = {
+                imageUrl: '/image/alfred-theme.png',
+                title: 'Payment',
+                message: e.message,
+                url: e.url,
+                timeout: 30000
+            };
+            showNotification.value = true;
+        }
+    });
 };
+
+const hideNotification = () => {
+    showNotification.value = false;
+};
+
 
 onMounted(() => {
   listen();
@@ -44,5 +47,16 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div></div>
+    <div>
+        <CustomExpireNotification
+            v-if="showNotification"
+            :imageUrl="notificationData.imageUrl"
+            :title="notificationData.title"
+            :message="notificationData.message"
+            :url="notificationData.url"
+            :timeout="notificationData.timeout"
+            :callHideFunction="hideNotification"
+            @close="showNotification = false"
+        />
+    </div>
 </template>

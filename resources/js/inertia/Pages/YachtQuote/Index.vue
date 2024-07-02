@@ -252,9 +252,9 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
         return "Invalid date";
     }
 
-    // Calculate the new date by adding 7 days to the authorized date
+    // Calculate the new date by adding 8 days to the authorized date
     const newDate = new Date(parsedDate);
-    newDate.setDate(parsedDate.getDate() + 7);
+    newDate.setDate(parsedDate.getDate() + 8);
 
     // Get the current date
     const currentDate = new Date();
