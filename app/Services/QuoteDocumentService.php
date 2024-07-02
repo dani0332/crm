@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -10,6 +11,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
+use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -233,14 +235,16 @@ class QuoteDocumentService extends BaseService
     public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
     {
 
+        $businessInsurerName = false;
         $documentTypes = DocumentType::active()
             ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
             ->byQuoteTypeId($quoteTypeId)
             ->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
                 return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
             })
-            ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer) {
-                return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer);
+            ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer, $businessTypeOfInsurance) {
+                $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
+                return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
             })->sortDocumentType()->get();
 
         if ($quoteTypeId == QuoteTypeId::Business) {
