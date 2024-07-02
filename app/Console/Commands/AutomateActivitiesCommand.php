@@ -100,15 +100,15 @@ class AutomateActivitiesCommand extends Command
             info('------------------- ActivitiesAutomate - Updating Cold Activities for : '.$quoteClass.' -------------------');
             $coldActivitiesCount = 0;
             Activities::where(function ($query) use ($quoteTypeDetail) {
-                    if (is_array($quoteTypeDetail['quote_type_id'])) {
-                        $query->whereIn('activities.quote_type_id', $quoteTypeDetail['quote_type_id']);
-                    } else {
-                        $query->where('activities.quote_type_id', $quoteTypeDetail['quote_type_id']);
-                    }
-                })
+                if (is_array($quoteTypeDetail['quote_type_id'])) {
+                    $query->whereIn('activities.quote_type_id', $quoteTypeDetail['quote_type_id']);
+                } else {
+                    $query->where('activities.quote_type_id', $quoteTypeDetail['quote_type_id']);
+                }
+            })
                 ->where('due_date', '<', Carbon::now())
                 ->where('status', false)
-                ->where('activities.is_cold', false)    
+                ->where('activities.is_cold', false)
                 ->select('activities.id', 'quote_request_id')
                 ->chunkById(1000, function ($activities) use ($quoteClass, &$coldActivitiesCount) {
                     $ids = $activities->pluck('id')->toArray();
@@ -120,14 +120,14 @@ class AutomateActivitiesCommand extends Command
                         $quoteClass::whereIn('id', $quoteIds)->update(['is_cold' => true]);
 
                         if ($quoteClass != PersonalQuote::class) {
-                
+
                             $quotesCodes = $quoteClass::whereIn('id', $quoteIds)->select('code')->get()->toArray();
                             PersonalQuote::whereIn('code', $quotesCodes)->update(['is_cold' => true]);
                         }
                     }
                 });
-                
-            info('------------------- ActivitiesAutomate - Updated Cold Activities for : ' . $quoteClass . ' - count: ' . $coldActivitiesCount . ' -------------------');
+
+            info('------------------- ActivitiesAutomate - Updated Cold Activities for : '.$quoteClass.' - count: '.$coldActivitiesCount.' -------------------');
 
             if ($quoteTypeDetail['eligible_for_automate'] == true) {
                 info('------------------- ActivitiesAutomate - Fetching : '.$quoteClass.' Quotes for create follow-up Activities -------------------');
@@ -141,9 +141,9 @@ class AutomateActivitiesCommand extends Command
 
                         $activitiesToCreate = [];
                         $advisors = User::with('usersroles', 'teams')
-                        ->whereIn('id', $quoteDetails->pluck('advisor_id')->toArray())
-                        ->get()
-                        ->keyBy('id');
+                            ->whereIn('id', $quoteDetails->pluck('advisor_id')->toArray())
+                            ->get()
+                            ->keyBy('id');
 
                         $roleIds = $advisors->flatMap(function ($advisor) {
                             return $advisor->usersroles;
@@ -153,15 +153,15 @@ class AutomateActivitiesCommand extends Command
                             return $advisor->teams;
                         })->unique('id')->pluck('id')->toArray();
 
-                        $schedules = ActivitySchedule::whereIn('quote_type_id', 
-                        is_array($quoteTypeDetail['quote_type_id']) ? $quoteTypeDetail['quote_type_id']: [$quoteTypeDetail['quote_type_id']])
+                        $schedules = ActivitySchedule::whereIn('quote_type_id',
+                            is_array($quoteTypeDetail['quote_type_id']) ? $quoteTypeDetail['quote_type_id'] : [$quoteTypeDetail['quote_type_id']])
                             ->whereIn('role_id', $roleIds)
                             ->whereIn('team_id', $teamIds)
                             ->get();
 
                         foreach ($quoteDetails as $quoteDetail) {
                             if (! empty($quoteDetail->advisor_id)) {
-                                
+
                                 $advisorDetails = $advisors[$quoteDetail->advisor_id];
                                 $getQuoteType = isset($quoteTypeDetail['multiple_lobs']) ?
                                     (isset($quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]) ?
@@ -178,14 +178,14 @@ class AutomateActivitiesCommand extends Command
 
                                 $scheduledActivitiesIDs = $quoteDetail->activities
                                     ->filter(function ($activity) {
-                                        
-                                        $isDueDatePassed = !is_null($activity->due_date) && $activity->due_date != '0000-00-00 00:00:00' 
+
+                                        $isDueDatePassed = ! is_null($activity->due_date) && $activity->due_date != '0000-00-00 00:00:00'
                                         ? Carbon::parse($activity->due_date)->lt(Carbon::now())
                                         : false;
 
                                         return $isDueDatePassed === true &&
                                             $activity->status == true &&
-                                            !is_null($activity->activity_schedule_id);
+                                            ! is_null($activity->activity_schedule_id);
                                     })
                                     ->pluck('activity_schedule_id')
                                     ->unique()
@@ -216,7 +216,7 @@ class AutomateActivitiesCommand extends Command
                                         'assignee_id' => $quoteDetail->advisor_id,
                                         'uuid' => generateUuid(),
                                         'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->created_at ?? now()),
-                                        'client_name' => $quoteDetail->first_name . ' ' . $quoteDetail->last_name,
+                                        'client_name' => $quoteDetail->first_name.' '.$quoteDetail->last_name,
                                         'client_email' => $quoteDetail->email,
                                         'quote_uuid' => $quoteDetail->uuid,
                                         'quote_status_id' => $quoteDetail->quote_status_id,
@@ -227,12 +227,12 @@ class AutomateActivitiesCommand extends Command
                         }
 
                         // bulk create
-                        if(!empty($activitiesToCreate)) {
+                        if (! empty($activitiesToCreate)) {
                             $followupCount += count($activitiesToCreate);
                             Activities::insert($activitiesToCreate);
                         }
                     });
-                info('------------------- Follow-up Activities created for : '.$quoteClass . ' - count: ' . $followupCount . ' -------------------');
+                info('------------------- Follow-up Activities created for : '.$quoteClass.' - count: '.$followupCount.' -------------------');
             }
         }
         info('------------------- Automate Activities Command Finished At: '.now().' -------------------');
