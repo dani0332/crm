@@ -192,6 +192,7 @@ class AutomateActivitiesCommand extends Command
                                     ->toArray();
 
                                 $activitySchedules = $schedules->where('quote_status_id', $quoteDetail->quote_status_id)
+                                    ->where('quote_type_id', $getQuoteType)
                                     ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
                                     ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
                                     ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
