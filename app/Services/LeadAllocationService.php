@@ -662,7 +662,7 @@ class LeadAllocationService extends BaseService
     {
         info('---- Inside updateCarLeadDetailRecord - leadId : '.$leadId);
         CarQuoteRequestDetail::updateOrCreate(
-            ['car_quote_request_id' => $leadId], 
+            ['car_quote_request_id' => $leadId],
             [
                 'advisor_assigned_date' => now(),
                 'advisor_assigned_by_id' => auth()->id(),

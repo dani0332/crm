@@ -462,13 +462,13 @@ class CarQuoteService extends BaseService
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date ?? null;
 
         CarQuoteRequestDetail::updateOrCreate(
-            ['car_quote_request_id' => $id], 
+            ['car_quote_request_id' => $id],
             [
                 'advisor_assigned_date' => Carbon::now(),
                 'advisor_assigned_by_id' => Auth::user()->id,
             ]
         );
-        
+
         return $oldAdvisorAssignedDate;
     }
 

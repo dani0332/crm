@@ -895,11 +895,11 @@ if (! function_exists('isValidEmail')) {
     }
 }
 
-if (!function_exists('isValidDate')) {
+if (! function_exists('isValidDate')) {
     function isValidDate($date): bool
     {
-        return !empty($date) 
-        && $date != '0000-00-00 00:00:00' 
+        return ! empty($date)
+        && $date != '0000-00-00 00:00:00'
         && $date != '0000-00-00';
     }
 }

@@ -86,7 +86,7 @@ class CapiRequestService
     {
         if (isset($requestContent->quoteUID)) {
             $healthQuote = HealthQuote::where('uuid', $requestContent->quoteUID)->first();
-            if($healthQuote) {
+            if ($healthQuote) {
                 HealthQuoteRequestDetail::updateOrCreate(
                     ['health_quote_request_id' => $healthQuote->id],
                     [

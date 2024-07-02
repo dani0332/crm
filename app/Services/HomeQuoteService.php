@@ -371,7 +371,7 @@ class HomeQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         HomeQuoteRequestDetail::updateOrCreate(
-            ['home_quote_request_id' => $id], 
+            ['home_quote_request_id' => $id],
             [
                 'advisor_assigned_date' => Carbon::now(),
                 'advisor_assigned_by_id' => Auth::user()->id,

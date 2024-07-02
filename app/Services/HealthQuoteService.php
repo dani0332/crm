@@ -638,7 +638,7 @@ class HealthQuoteService extends BaseService
                 'advisor_assigned_by_id' => auth()->user()->id,
             ];
         }
-        
+
         HealthQuoteRequestDetail::updateOrCreate(
             ['health_quote_request_id' => $id],
             $data
