@@ -749,7 +749,7 @@ class SendEmailCustomerService extends BaseService
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
-                        'mobileNo' => $emailData->mobileNo,
+                        'mobileNo' => $emailData->advisorMobileNo,
                     ],
                 ],
                 'tags' => [

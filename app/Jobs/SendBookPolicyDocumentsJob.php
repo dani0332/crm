@@ -70,14 +70,15 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->quoteDocuments = $docs;
             $emailData->advisorName = '';
             $emailData->advisorEmail = '';
+            $emailData->mobileNo = '';
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
-                $mobileNo = formatMobileNo($quote->advisor->mobile_no);
-                if (! is_string($mobileNo)) {
-                    $mobileNo = '';
+                $advisorMobileNo = formatMobileNo($quote->advisor->mobile_no);
+                if (!is_string($advisorMobileNo)) {
+                    $advisorMobileNo = '';
                 }
-                $emailData->mobileNo = str_replace('+', '', $mobileNo);
+                $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
                 $emailData->currentInsurer = $quote->plan->insuranceProvider->text ?? '';
