@@ -41,10 +41,38 @@ class DttHealth extends Command
             return false;
         }
 
-        $dateOne = Carbon::now()->subMonths(11)->toDateString();
 
+        $dateOne = Carbon::now()->subMonths(11)->toDateString();
+        $dateTwo = Carbon::now()->subMonths(11)->addDay(1)->toDateString();
         $logPrefix = 'HealthRevivalLeadsCreationJob-';
-        $leads = HealthQuote::whereDate('created_at', '=', $dateOne)
+        $leads = HealthQuote::select(
+            'id',
+            'uuid',
+            'first_name',
+            'last_name',
+            'gender',
+            'email',
+            'dob',
+            'details',
+            'mobile_no',
+            'preference',
+            'marital_status_id',
+            'premium',
+            'lead_type_id',
+            'is_ebp_renewal',
+            'cover_for_id',
+            'has_dental',
+            'has_worldwide_cover',
+            'has_home',
+            'currently_insured_with_id',
+            'emirate_of_your_visa_id',
+            'nationality_id',
+            'salary_band_id',
+            'member_category_id',
+            'customer_id',
+        )
+            ->where('created_at', '>=', $dateOne)
+            ->where('created_at', '<', $dateTwo)
 
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
 
@@ -58,7 +86,7 @@ class DttHealth extends Command
             ->get();
 
         if ($leads->count() == 0) {
-            info($logPrefix.'No leads found');
+            info($logPrefix . 'No leads found');
 
             return false;
         }
@@ -76,7 +104,7 @@ class DttHealth extends Command
             return in_array($item->customer_id, $customerIdsWithTransApp) ? false : true;
         });
 
-        info($logPrefix.' count - '.count($filteredLeads).' - '.json_encode($filteredLeads->pluck('uuid')->toArray()));
+        info($logPrefix . ' count - ' . count($filteredLeads) . ' - ' . json_encode($filteredLeads->pluck('uuid')->toArray()));
 
         foreach ($filteredLeads as $item) {
             $jobs[] = new HealthRevivalLeadsCreationJob($item);
@@ -87,19 +115,19 @@ class DttHealth extends Command
                 ->addJobs($jobs)
 
                 ->then(function () use ($logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
+                    info($logPrefix . ' all jobs completed successfully');
                 })
                 ->catch(function () use ($logPrefix) {
-                    info($logPrefix.' one of batch is failed.');
+                    info($logPrefix . ' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
-                    info($logPrefix.' everything done');
+                    info($logPrefix . ' everything done');
                 })
                 ->allowFailures()
                 ->withDelay(5)
                 ->dispatch();
         } else {
-            info($logPrefix.'------No lead Found------');
+            info($logPrefix . '------No lead Found------');
         }
     }
 }

@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
+use App\Models\ApplicationStorage;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
@@ -81,6 +83,19 @@ class HealthRevivalQuotesSeeder extends Seeder
                     }
                 }
             }
+        }
+
+
+        // dtt health initial and followup template
+        $dttHealthInitialAndFollowupTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE)->first();
+        if (!$dttHealthInitialAndFollowupTemplate) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE,
+                'value' => '691',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
     }
 }
