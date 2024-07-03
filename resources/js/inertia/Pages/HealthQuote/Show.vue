@@ -889,9 +889,7 @@ const onPlanFiltersSubmit = () => {
     );
   });
   modals.planFilters = false;
-  if(planDataTable.value) {
-      planDataTable.value.updatePage(1);
-  }
+  planDataTable.value.updatePage(1);
 };
 
 const onPlanFiltersReset = () => {
