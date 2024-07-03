@@ -431,6 +431,12 @@ const onKeyPress = (event) => {
       </x-form>
     </div>
 
+    <LazyProviderDetails
+        v-if="props.quote?.insly_migrated || props.realQuote?.insly_migrated"
+        :sendUpdateLog="sendUpdateLog"
+        :insuranceProviders="props.insuranceProviders"
+    />
+
     <!-- Indicative additional price & Plan details comp -->
     <LazyPlanDetails
       v-if="props.isPlanDetailAvailable"
@@ -493,12 +499,6 @@ const onKeyPress = (event) => {
       :send-update-log="props.sendUpdateLog"
       :update-btn="props.updateBtn"
       :quote-type="props.quoteType"
-    />
-
-    <LazyProviderDetails
-        v-if="props.quote?.insly_migrated || props.realQuote?.insly_migrated"
-        :sendUpdateLog="sendUpdateLog"
-        :insuranceProviders="props.insuranceProviders"
     />
 
     <LazyBookingDetails
