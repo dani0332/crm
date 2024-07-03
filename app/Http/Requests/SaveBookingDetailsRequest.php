@@ -61,7 +61,7 @@ class SaveBookingDetailsRequest extends FormRequest
                 return $validator->errors()->add('error', 'Price vat applicable required.');
             }
 
-            if ($priceVatApplicable > 0 && ($totalVatAmount < 1)) {
+            if ($priceVatApplicable > 0 && $totalVatAmount < 1) {
                 return $validator->errors()->add('error', 'Total Vat amount required.');
             }
         });
