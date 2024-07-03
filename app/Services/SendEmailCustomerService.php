@@ -972,6 +972,8 @@ class SendEmailCustomerService extends BaseService
                 'api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
             ];
+            $url = url('/');
+            $url .= '/reports/payment-summary';
             $advisorData = [];
             if ($userData) {
                 $advisor = (object) [];
@@ -979,7 +981,6 @@ class SendEmailCustomerService extends BaseService
                 $advisor->email = $userData->email;
                 $advisorData[] = $advisor;
             }
-
             $total_premium = 0;
             $total_leads = 0;
             foreach ($user as $users) {
@@ -998,6 +999,7 @@ class SendEmailCustomerService extends BaseService
                 'total_premium' => $leadData['total_premium'],
                 'leads_expire' => $getExpireOneDay ? $getExpireOneDay : 0,
                 'date' => $leadData['date'],
+                'paymentDoc' => $url,
             ];
 
             if (empty($params['total_leads']) || empty($params['total_premium']) || empty($params['date'])) {
