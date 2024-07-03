@@ -83,12 +83,12 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'memberCategoryId' => $this->lead->member_category_id,
             ];
 
-            info($logPrefix . 'capiPayLoad' . json_encode($dataArr));
+            info($logPrefix.'capiPayLoad'.json_encode($dataArr));
 
             $capiResponse = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
 
-            if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
-                info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response-' . json_encode($capiResponse));
+            if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
+                info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID.' - CAPI Response-'.json_encode($capiResponse));
 
                 $healthQuote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $capiResponse->quoteUID);
 
@@ -97,43 +97,38 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     'quoteUID' => 'R6GP2BZ8',
                 ]);
 
-
                 $emailData = new \stdClass();
-                $customerName = $healthQuote->first_name . ' ' . $healthQuote->last_name;
-
-
+                $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
 
                 $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE;
 
                 $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
-
-                $emailData->subject = $customerName . "'s" . ' Health Insurance with Alfred ' . $healthQuote->code;
+                $emailData->subject = $customerName."'s".' Health Insurance with Alfred '.$healthQuote->code;
 
                 $emailData->customerName = $customerName;
-                $emailData->customerEmail =  'nouman.hussain@myalfred.com';
+                $emailData->customerEmail = 'nouman.hussain@myalfred.com';
                 // $emailData->customerEmail =  $healthQuote->email;
                 $emailData->templateId = (int) $emailTemplateId;
                 $emailData->quotePlanLink = '';
                 $emailData->advisorDetails = '';
                 $emailData->tag = 'health-revival-initial-email';
-                $emailData->plans =  $response['plans'];
-                $emailData->templateType =  'revivalHealthInitial';
+                $emailData->plans = $response['plans'];
+                $emailData->templateType = 'revivalHealthInitial';
 
-
-                info($logPrefix . 'emailData -' . json_encode($emailData));
+                info($logPrefix.'emailData -'.json_encode($emailData));
 
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
                 if ($response == 201) {
-                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '- emailSent -- ' . $emailData->customerEmail);
+                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'- emailSent -- '.$emailData->customerEmail);
                 } else {
-                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . 'emailIsNotSent - ' . $emailData->customerEmail);
+                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'emailIsNotSent - '.$emailData->customerEmail);
                 }
             } else {
-                info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- capiResponseError - ' . json_encode($capiResponse));
+                info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- capiResponseError - '.json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
-            Log::error($logPrefix . 'health revival Exception - ' . $this->lead->id . ' - Exception:' . $exception->getMessage());
+            Log::error($logPrefix.'health revival Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
         }
     }
 }

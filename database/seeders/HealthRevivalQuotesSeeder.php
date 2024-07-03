@@ -85,10 +85,9 @@ class HealthRevivalQuotesSeeder extends Seeder
             }
         }
 
-
         // dtt health initial and followup template
         $dttHealthInitialAndFollowupTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE)->first();
-        if (!$dttHealthInitialAndFollowupTemplate) {
+        if (! $dttHealthInitialAndFollowupTemplate) {
             DB::table('application_storage')->insert([
                 'key_name' => ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE,
                 'value' => '691',
