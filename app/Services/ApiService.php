@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
@@ -164,5 +166,24 @@ class ApiService
         info('------ Lead allocation request completed to evaluate tier only for '.$allocationId.' ------');
 
         return apiResponse($responseData, Response::HTTP_OK, 'Tier assigned successfully!');
+    }
+
+    public function quoteUpdated($data)
+    {
+        $quoteType = QuoteTypes::getName($data['quoteTypeId']);
+        if (! $quoteType) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+        $model = $quoteType?->model();
+
+        $quote = $model::where('uuid', $data['quoteUUID'])->first();
+        if (! $quote) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+        }
+
+        // Sync Courier Quote with MACRM if Policy Issued
+        SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType?->id());
+
+        return apiResponse(null, message: 'ok');
     }
 }

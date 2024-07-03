@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -65,5 +66,10 @@ class ApiController extends Controller
     public function evaluateTier(EvaluateTierRequest $request)
     {
         return $this->apiService->evaluateTier($request);
+    }
+
+    public function quoteUpdated(QuoteUpdatedRequest $request)
+    {
+        return $this->apiService->quoteUpdated($request->validated());
     }
 }
