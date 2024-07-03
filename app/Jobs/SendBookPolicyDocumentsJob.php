@@ -75,7 +75,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
                 $advisorMobileNo = formatMobileNo($quote->advisor->mobile_no);
-                if (!is_string($advisorMobileNo)) {
+                if (! is_string($advisorMobileNo)) {
                     $advisorMobileNo = '';
                 }
                 $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
