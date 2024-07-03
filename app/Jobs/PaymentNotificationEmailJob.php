@@ -15,6 +15,7 @@ class PaymentNotificationEmailJob implements ShouldQueue
 
     private $user = null;
     private $getExpireOneDay = null;
+    private $userData = null;
     public $tries = 3;
     public $timeout = 30;
     public $backoff = 10;
@@ -24,10 +25,11 @@ class PaymentNotificationEmailJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($user, $getExpireOneDay)
+    public function __construct($user, $userData ,$getExpireOneDay)
     {
         $this->user = $user;
         $this->getExpireOneDay = $getExpireOneDay;
+        $this->userData = $userData;
     }
 
     /**
@@ -42,6 +44,11 @@ class PaymentNotificationEmailJob implements ShouldQueue
 
             return false;
         }
-        $sendEmailCustomerService->sendPaymentNotificationEmail($this->user, $this->getExpireOneDay);
+        if (! $this->userData) {
+            info('PaymentNotificationEmailJob: User data is not found');
+
+            return false;
+        }
+        $sendEmailCustomerService->sendPaymentNotificationEmail($this->user, $this->userData, $this->getExpireOneDay);
     }
 }

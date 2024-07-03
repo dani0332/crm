@@ -962,7 +962,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendPaymentNotificationEmail($user , $getExpireOneDay)
+    public function sendPaymentNotificationEmail($user, $userData, $getExpireOneDay)
     {
         $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
         try {
@@ -972,21 +972,19 @@ class SendEmailCustomerService extends BaseService
                 'api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
             ];
-
             $advisorData = [];
+            if ($userData) {
+                $advisor = (object) [];
+                $advisor->name = $userData->name;
+                $advisor->email = $userData->email;
+                $advisorData[] = $advisor;
+            }
+
             $total_premium = 0;
             $total_leads = 0;
-            foreach ($user as $userData) {
-                if (empty($userData->advisor_email)) {
-                    info("Advisor Email Not Found");
-                    return;
-                }
-                $advisor = (object) [];
-                $advisor->name = $userData->advisor_name;
-                $advisor->email = $userData->advisor_email;
-                $advisorData[] = $advisor;
-                $total_premium += $userData->total_premium;
-                $total_leads += $userData->total_leads;
+            foreach ($user as $users) {
+                $total_premium += $users->total_premium;
+                $total_leads += $users->total_leads;
             }
             $leadData = [
                 'total_leads' => $total_leads ? $total_leads : 0,
@@ -995,6 +993,7 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $params = [
+                'advisor_name' => $userData->name,
                 'total_leads' => $leadData['total_leads'],
                 'total_premium' => $leadData['total_premium'],
                 'leads_expire' => $getExpireOneDay ? $getExpireOneDay : 0,
@@ -1005,6 +1004,8 @@ class SendEmailCustomerService extends BaseService
                 return;
             }
             if (isset($advisorData) && empty($advisorData)) {
+                info('Advisor Email or Data Not Found');
+
                 return;
             }
             $replyTo = [
