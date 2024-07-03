@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Models\Lookup;
 use App\Models\SendUpdateLog;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -32,6 +33,12 @@ class EndorsementReportService extends ManagementReport
                 .' - '.
                 Carbon::parse($request['paymentDueDate'][1])->toDateString();
         }
+
+        // lookupQuery
+        $endrosementFinancialId = Lookup::query()
+            ->select('id')
+            ->where('code', EndorsementStatusEnum::ENDORSEMENT_FINANCIAL_CODE)
+            ->first()->id;
 
         $query = SendUpdateLog::query()
             ->select(
@@ -92,7 +99,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
-            ->where('send_update_logs.category_id', '=', EndorsementStatusEnum::ENDORSEMENT_FINANCIAL_ID);
+            ->where('send_update_logs.category_id', '=', $endrosementFinancialId);
 
         $this->applyFilters($query, $request);
 
