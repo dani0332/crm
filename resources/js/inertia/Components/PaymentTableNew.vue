@@ -1634,7 +1634,7 @@ const editPaymentModal = (
     paymentMethodsModels.value[i] =
       payment.payment_splits[i - 1].payment_method.code;
     splitAmountModels.value[i] = payment.payment_splits[i - 1].payment_amount;
-    dueDateModels.value[i] = (payment.payment_splits[i - 1].due_date).substring(0, 10);
+    dueDateModels.value[i] =  moment(payment.payment_splits[i - 1].due_date).format('YYYY-MM-DD');
     collectionAmountModels.value[i] =
       payment.payment_splits[i - 1].collection_amount;
 
