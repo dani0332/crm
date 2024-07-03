@@ -20,6 +20,9 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 const notification = useNotifications('toast');
+
+const formatted = date => useDateFormat(date, 'YYYY-MM-DD HH:mm:ss');
+
 const activityForm = useForm({
   title: null,
   description: null,
@@ -32,28 +35,30 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
 });
+
 const filters = reactive({
   assignee_id: '',
   status: '',
-  due_date_start: '',
-  due_date_end: '',
+  // due_date_start: '',
+  // due_date_end: '',
   due_date_time_start: '',
   due_date_time_end: '',
   page: 1,
+  isCustom: false,
 });
 const loader = reactive({
   table: false,
   export: false,
 });
 const activityTable = [
-    { text: 'REF ID', value: 'cdbid' },
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee.name' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'REF ID', value: 'cdbid' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee.name' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 // Filter Functions
@@ -66,10 +71,10 @@ function filterActivities(isValid) {
     if (filters.status == '1') {
       filters.due_date_end = '1/1/1970';
     } else {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      filters.due_date_end = yesterday.toLocaleDateString();
+      // const today = new Date();
+      // const yesterday = new Date(today);
+      // yesterday.setDate(today.getDate() - 1);
+      // filters.due_date_end = yesterday.toLocaleDateString();
     }
   }
 
@@ -159,12 +164,13 @@ function resetDates(option) {
     selectedOption.value = option;
     customStartDate.value = null; // Clear previously selected dates
     customEndDate.value = null;
+    filt;
   }
   if (option != 'custom') {
-    filters.due_date_time_start = '';
-    filters.due_date_time_end = '';
-    filters.due_date_start = startDate;
-    filters.due_date_end = endDate;
+    filters.due_date_time_start = formatted(startDate).value;
+    filters.due_date_time_end = formatted(endDate).value;
+    // filters.due_date_start = startDate;
+    // filters.due_date_end = endDate;
     filterActivities(1); // Call the filterActivities function
   }
 }

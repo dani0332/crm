@@ -29,7 +29,7 @@ trait FilterCriteria
                             $query->where($key, $value);
                             break;
                         case FilterTypes::FREE:
-                            $query->where($key, 'like', '%'.$value.'%');
+                            $query->where($key, 'like', '%' . $value . '%');
                             break;
                         case FilterTypes::DATE:
                             $date = Carbon::parse($value)->format('Y-m-d');
@@ -48,13 +48,14 @@ trait FilterCriteria
                             }
                             break;
                         case FilterTypes::DATE_BETWEEN:
-                            if (isset(request()->{$key.'_start'}) && isset(request()->{$key.'_end'})) {
-                                $startDate = date('Y-m-d 00:00:00', strtotime(request()->{$key.'_start'}));
-                                $endDate = date('Y-m-d 23:59:59', strtotime(request()->{$key.'_end'}));
+                            if (isset(request()->{$key . '_start'}) && isset(request()->{$key . '_end'})) {
+                                $startDate = date('Y-m-d 00:00:00', strtotime(request()->{$key . '_start'}));
+                                $endDate = date('Y-m-d 23:59:59', strtotime(request()->{$key . '_end'}));
                                 $query->whereBetween($key, [$startDate, $endDate]);
-                            } elseif (isset(request()->{$key.'_time_start'}) && isset(request()->{$key.'_time_end'})) {
-                                $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_start'}));
-                                $endDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_end'}));
+                            } elseif (isset(request()->{$key . '_time_start'}) && isset(request()->{$key . '_time_end'})) {
+                                $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key . '_time_start'}));
+                                $endDate = date('Y-m-d H:i:s', strtotime(request()->{$key . '_time_end'}));
+                                // dd($key);
                                 $query->whereBetween($key, [$startDate, $endDate]);
                             }
                             break;
