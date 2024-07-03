@@ -14,7 +14,6 @@ use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -63,7 +62,6 @@ use App\Models\TravelQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Repositories\BusinessQuoteRepository;
-use App\Repositories\CarQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -1293,11 +1291,8 @@ class RenewalsUploadService
                 if ($responseCode == 201) {
 
                     //update quote status to quoted
-                    CarQuoteRepository::updateQuoteStatus([
-                        'quote_uuid' => $carQuote->uuid,
-                        'quote_status_id' => QuoteStatusEnum::Quoted,
-                        'notes' => 'Change quote status to Quoted as OCB sent',
-                    ]);
+                    $notes = 'Change quote status to Quoted as OCB sent';
+                    app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id, $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
 
                     //record ocb sent datetime
                     $carQuote->carQuoteRequestDetail->updateOrCreate(
