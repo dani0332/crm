@@ -414,11 +414,11 @@ class SageApiService
                 } else {
                     // If we don't have payment details then we fetched it from the Main Lead
                     info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-                
+
                     $getQuoteDetails->load(['payments' => function ($query) {
                         $query->whereNull('send_update_log_id');
                     }, 'payments.paymentSplits']);
-    
+
                     $payment = $getQuoteDetails->payments->first();
                     $splitPayments = $payment->paymentSplits;
                 }
@@ -449,7 +449,7 @@ class SageApiService
 
                 $response = ['payment' => $payment, 'splitPayments' => $splitPayments];
 
-                if (!$request->inslyMigrated) {
+                if (! $request->inslyMigrated) {
                     // Most CPD cases have no value then should it set as Credit Note - Need to verify this with Denber
                     $mainLeadDetails = [
                         'payment' => [

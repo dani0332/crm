@@ -1263,7 +1263,6 @@ class SagePayloadFactory
             'sageInsurerCustomerId' => $sageInsurerCustomerId,
         ];
 
-
         if (! empty($splitPayments)) {
             $response['paymentDueDate'] = date('Y-m-d', strtotime($splitPayments[0]['due_date']));
         }
