@@ -83,9 +83,10 @@ class SendPaymentEmail extends Command
                     ->where('car_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
                 $user = $query->get();
+                info([$user]);
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Car Lead');
-                    PaymentNotificationEmailJob::dispatch($user, $userData ,$getExpireOneDay);
+                    info('PaymentNotification Job Dispatch For Car');
+                    PaymentNotificationEmailJob::dispatch($user, $userData ,$getExpireOneDay );
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::BusinessManager)) {
@@ -119,8 +120,8 @@ class SendPaymentEmail extends Command
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Business Lead');
-                    PaymentNotificationEmailJob::dispatch($user, $userData ,$getExpireOneDay);
+                    info('PaymentNotification Job Dispatch For Business');
+                    PaymentNotificationEmailJob::dispatch($user, $userData ,$getExpireOneDay );
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::HealthManager)) {
@@ -154,8 +155,8 @@ class SendPaymentEmail extends Command
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Health Lead');
-                    PaymentNotificationEmailJob::dispatch($user, $userData, $getExpireOneDay);
+                    info('PaymentNotification Job Dispatch For Health');
+                    PaymentNotificationEmailJob::dispatch($user, $userData, $getExpireOneDay );
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::TravelManager)) {
@@ -189,8 +190,8 @@ class SendPaymentEmail extends Command
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Travel Lead');
-                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay);
+                    info('PaymentNotification Job Dispatch For Travel');
+                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay );
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::HomeManager)) {
@@ -226,8 +227,8 @@ class SendPaymentEmail extends Command
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Home Lead');
-                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay);
+                    info('PaymentNotification Job Dispatch For Home');
+                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay );
 
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::PetManager)) {
@@ -263,8 +264,8 @@ class SendPaymentEmail extends Command
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Pet Lead');
-                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay);
+                    info('PaymentNotification Job Dispatch For Pet Lead');
+                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay );
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::YachtManager)) {
                 $teamName = $userData->getUserTeams($userData->id);
@@ -299,8 +300,8 @@ class SendPaymentEmail extends Command
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Yacht Lead');
-                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay);
+                    info('PaymentNotification Job Dispatch For Yacht Lead');
+                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay );
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::LifeManager)) {
                 $teamName = $userData->getUserTeams($userData->id);
@@ -335,8 +336,9 @@ class SendPaymentEmail extends Command
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Life Lead');
-                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay);
+                    info('PaymentNotification Job Dispatch For Life');
+
+                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay );
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::BikeManager)) {
                 $teamName = $userData->getUserTeams($userData->id);
@@ -372,6 +374,8 @@ class SendPaymentEmail extends Command
 
                 if ($user->isNotEmpty()) {
                     info('sendPaymentNotification Job Dispatch For Bike Lead');
+
+
                     PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay);
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::CycleManager)) {
@@ -409,7 +413,9 @@ class SendPaymentEmail extends Command
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Cycle Lead');
+                    info('PaymentNotification Job Dispatch For Cycle');
+
+
                     PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay);
                 }
             } elseif (isset($userData) && $userData->hasRole(RolesEnum::JetskiManager)) {
@@ -445,8 +451,10 @@ class SendPaymentEmail extends Command
                 $user = $query->get();
 
                 if ($user->isNotEmpty()) {
-                    info('sendPaymentNotification Job Dispatch For Jetski Lead');
-                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay);
+                    info('PaymentNotification Job Dispatch For Jetski');
+
+
+                    PaymentNotificationEmailJob::dispatch($user,$userData, $getExpireOneDay );
                 }
             } else {
                 info('User Not Found In Session');

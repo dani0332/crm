@@ -975,9 +975,12 @@ class SendEmailCustomerService extends BaseService
             $advisorData = [];
             if ($userData) {
                 $advisor = (object) [];
+
                 $advisor->name = $userData->name;
+
                 $advisor->email = $userData->email;
                 $advisorData[] = $advisor;
+                info("Email Data",[$userData->email]);
             }
 
             $total_premium = 0;
