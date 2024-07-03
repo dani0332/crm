@@ -617,12 +617,10 @@ trait GenericQueriesAllLobs
         Log::info('Updating child payment status for: '.$payment->code);
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
-            $isFirsSplitPayment = true;
             foreach ($paymentSplits as $paymentSplit) {
-                if ($isFirsSplitPayment) {
+                if ($payment->frequency == PaymentFrequency::UPFRONT  && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                     Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     $paymentSplit->payment_amount = $payment->total_amount;
-                    $isFirsSplitPayment = false;
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
                     if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
