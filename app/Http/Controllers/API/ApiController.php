@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Enums\quoteBusinessTypeCode;
-use App\Enums\quoteTypeCode;
-use App\Events\PaymentNotifications;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Services\ApiService;
+use App\Services\NotificationService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -65,36 +63,8 @@ class ApiController extends Controller
 
     public function quotePaymentStatusUpdated(Request $request)
     {
-        info('Payment Notification Function Call');
 
-        if (is_numeric($request->quoteType)) {
-            return response()->json(['message' => 'Quote Type Not Valid'], 403);
-        }
-        $model = $this->getModelObject(strtolower($request->quoteType));
-        $url = url('/');
-
-        if (is_numeric($request->quoteId)) {
-            $model = $model::find($request->quoteId);
-        } else {
-            $model = $model::where('uuid', $request->quoteId)->first();
-        }
-
-        if ($request->quoteType == quoteTypeCode::Business) {
-            if ($model->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
-                $url .= "/medical/amt/$model->uuid";
-            } else {
-                $url .= "/quotes/business/$model->uuid";
-            }
-        } else {
-            $url .= '/quotes/'.strtolower($request->quoteType).'/'.$model->uuid;
-        }
-        if ($model->advisor_id === null) {
-            return response()->json(['message' => 'No Advisor Assign to this Lead.'], 403);
-        }
-
-        info('Payment Notification Event Trigger');
-
-        event(new PaymentNotifications($model, $url));
+        app(NotificationService::class)->paymentStatusUpdate($request);
 
         return response()->json(['message' => 'Payment notification successfully send to advisor!'], 200);
     }

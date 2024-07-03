@@ -48,6 +48,7 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
+use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
@@ -166,17 +167,22 @@ class CentralController extends Controller
 
     public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)
     {
-
         (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
-        
-        $quoteData = $this->getQuoteObject($leadAssignRequest->modelType, $leadAssignRequest->selectTmLeadId);
-        $authorizedPayment = Payment::where('code', '=', $quoteData->code)->first();
-        if ($authorizedPayment && $authorizedPayment->payment_status_id === PaymentStatusEnum::AUTHORISED) {
-            $modifiedRequest = new Request([
-                'quoteType' => $leadAssignRequest->modelType,
-                'quoteId' => $leadAssignRequest->selectTmLeadId,
-            ]);
-            app(\App\Http\Controllers\API\ApiController::class)->quotePaymentStatusUpdated($modifiedRequest);
+
+        $quoteIds = explode(',', $leadAssignRequest->selectTmLeadId);
+        foreach ($quoteIds as $ids) {
+            $quoteData = $this->getQuoteObject($leadAssignRequest->modelType, $ids);
+            if ($quoteData) {
+                $authorizedPayment = Payment::where('code', '=', $quoteData->code)->first();
+                if ($authorizedPayment && $authorizedPayment->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                    $modifiedRequest = new Request([
+                        'quoteType' => $leadAssignRequest->modelType,
+                        'quoteId' => $ids,
+                    ]);
+                    app(NotificationService::class)->paymentStatusUpdate($modifiedRequest);
+                }
+            }
+
         }
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');

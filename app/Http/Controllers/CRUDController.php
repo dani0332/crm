@@ -85,6 +85,7 @@ use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
+use App\Services\NotificationService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
@@ -99,10 +100,10 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Artisan;
 
 class CRUDController extends Controller
 {
@@ -1423,8 +1424,6 @@ class CRUDController extends Controller
 
     public function manualLeadAssign(Request $request)
     {
-        $quoteData = $this->getQuoteObject($request->modelType, $request->selectTmLeadId);
-
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('error', $isValidRequest);
@@ -1443,13 +1442,21 @@ class CRUDController extends Controller
 
             return Redirect::back()->with('message', $msg);
         } else {
-            if($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED){
-                $modifiedRequest = new Request([
-                    'quoteType' => $request->modelType,
-                    'quoteId' => $request->selectTmLeadId
-                ]);
-                app(\App\Http\Controllers\API\ApiController::class)->quotePaymentStatusUpdated($modifiedRequest);
+            $quoteIds = explode(',', $request->selectTmLeadId);
+            foreach ($quoteIds as $ids) {
+                if ($ids) {
+                    $quoteData = $this->getQuoteObject($request->modelType, $ids);
+                    if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                        $modifiedRequest = new Request([
+                            'quoteType' => $request->modelType,
+                            'quoteId' => $ids,
+                        ]);
+                        app(NotificationService::class)->paymentStatusUpdate($modifiedRequest);
+                    }
+                }
+
             }
+
             return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
         }
     }
@@ -1993,6 +2000,5 @@ class CRUDController extends Controller
 
         return 1;
     }
-
 
 }
