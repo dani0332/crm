@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -13,6 +14,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Factories\SagePayloadFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\ApplicationStorage;
@@ -39,6 +41,7 @@ use App\Services\SageCustomApiService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
@@ -99,7 +102,16 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        dd((new SageCustomApiService())->getToken());
+        /*$aPInvoicePaymentsScheduleResponse = (new SageCustomApiService())->getAPInvoicePaymentScheduleByBatchNumber(183);
+        if($aPInvoicePaymentsScheduleResponse['status']) {
+            $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
+            foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
+                $aPInvoicePaymentSchedule->datedue = Carbon::now()->addYears($key)->format('Ymd');
+            }
+            dd((new SageCustomApiService())->updateAPInvoicePaymentSchedule(183, $aPInvoicePaymentsSchedule));
+        }
+        dd($aPInvoicePaymentsScheduleResponse);*/
+
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
