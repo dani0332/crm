@@ -70,7 +70,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->quoteDocuments = $docs;
             $emailData->advisorName = '';
             $emailData->advisorEmail = '';
-            $emailData->mobileNo = '';
+            $emailData->advisorMobileNo = '';
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
