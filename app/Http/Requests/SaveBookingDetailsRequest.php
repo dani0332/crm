@@ -47,19 +47,21 @@ class SaveBookingDetailsRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $priceVatApplicable = $this->get('price_vat_applicable');
-            $priceVatNotApplicable = $this->get('price_vat_not_applicable');
-            $totalVatAmount = $this->get('total_vat_amount');
+            $priceVatApplicable = abs($this->get('price_vat_applicable'));
+            $priceVatNotApplicable = abs($this->get('price_vat_not_applicable'));
+            $totalVatAmount = abs($this->get('total_vat_amount'));
             $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
 
-            if (in_array($this->sendUpdate?->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
-                SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life) && ($priceVatNotApplicable < 1)) {
+            $isPriceVatNotApplicableRequired = in_array($this->sendUpdate?->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
+                SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life) && ($priceVatNotApplicable < 1);
+
+            if ($isPriceVatNotApplicableRequired) {
                 return $validator->errors()->add('error', 'Price vat not applicable required.');
             } elseif ($priceVatApplicable < 1 && $priceVatNotApplicable < 1) {
                 return $validator->errors()->add('error', 'Price vat applicable required.');
             }
 
-            if ($priceVatApplicable > 0 && $totalVatAmount < 1) {
+            if ($priceVatApplicable > 0 && ($totalVatAmount < 1)) {
                 return $validator->errors()->add('error', 'Total Vat amount required.');
             }
         });
