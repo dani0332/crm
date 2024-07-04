@@ -693,7 +693,7 @@ class RenewalsUploadService
 
         //update primary mobile no if changed
         if (! empty($customerData['mobile_no']) && $customer->mobile_no != $customerData['mobile_no']) {
-            app(CustomerService::class)->makeAdditionalContactPrimary($quote, GenericRequestEnum::MOBILE_NO, $customerData['mobile_no']);
+            app(CustomerService::class)->makeAdditionalContactPrimary($quote->refresh(), GenericRequestEnum::MOBILE_NO, $customerData['mobile_no']);
         }
     }
 
