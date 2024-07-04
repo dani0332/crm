@@ -60,6 +60,7 @@ class SageCustomApiService
 
         if ($this->maxAttempts < $currentAttempts) {
             $responseData['error'] = 'execution timeout! Please try again later.';
+
             return $responseData;
         }
 
@@ -103,6 +104,7 @@ class SageCustomApiService
 
         if ($this->maxAttempts < $currentAttempts) {
             $responseData['error'] = 'execution timeout! Please try again later.';
+
             return $responseData;
         }
         $updateAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
@@ -130,7 +132,7 @@ class SageCustomApiService
                 $this->bearerToken = null;
                 $currentAttempts++;
 
-                return $this->updateAPInvoicePaymentSchedule($batchNumber, $aPInvoicePaymentsSchedule , $currentAttempts);
+                return $this->updateAPInvoicePaymentSchedule($batchNumber, $aPInvoicePaymentsSchedule, $currentAttempts);
             }
 
             return $responseData;
