@@ -327,6 +327,7 @@ class SageApiService
 
             if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
                 $sendUpdateLog = SendUpdateLog::where('id', $request->sendUpdateId)->first();
+
                 $quoteDetails = [
                     'policy_booking_date' => $sendUpdateLog->booking_date,
                     'renewal_expiry_date' => $sendUpdateLog->expiry_date,
@@ -334,7 +335,7 @@ class SageApiService
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
                     'price_vat_applicable' => $getingPaymentDetails['payment']->total_price,
-                    'price_with_vat' => $getingPaymentDetails['payment']->total_amount,
+                    'price_with_vat' => abs($sendUpdateLog->price_with_vat),
                 ];
 
                 if (isset($getingPaymentDetails['mainLeadDetails'])) {
