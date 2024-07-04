@@ -46,10 +46,8 @@ class SaveBookingDetailsRequest extends FormRequest
             SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
 
         if ($isPriceVatNotApplicableRequired) {
-            info('if');
             $rules['price_vat_not_applicable'] = 'required|numeric|min:1';
         } else {
-            info('else');
             $rules['price_vat_applicable'] = 'required|numeric|min:1';
             $rules['total_vat_amount'] = 'required|numeric';
         }
