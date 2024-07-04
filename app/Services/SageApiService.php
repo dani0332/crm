@@ -327,7 +327,6 @@ class SageApiService
 
             if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
                 $sendUpdateLog = SendUpdateLog::where('id', $request->sendUpdateId)->first();
-
                 $quoteDetails = [
                     'policy_booking_date' => $sendUpdateLog->booking_date,
                     'renewal_expiry_date' => $sendUpdateLog->expiry_date,
