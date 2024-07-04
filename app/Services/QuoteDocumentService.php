@@ -300,4 +300,18 @@ class QuoteDocumentService extends BaseService
 
         return $mapping[$quoteTypeId] ?? [];
     }
+    
+    public function getHandBookDocuments ($quote){
+        $policyWording = $quote->plan->policyWording->map(function ($policyWording) {
+            $baseUrl = 'https://insurancemarket.blob.core.windows.net';
+            if (strpos($policyWording->link, $baseUrl) !== 0) {
+                $policyWording->link = rtrim($baseUrl, '/') . '/' . ltrim($policyWording->link, '/');
+            }
+            return [
+                'url' => $policyWording->link,
+                'name' => basename($policyWording->link),
+            ];
+        });
+        return $policyWording->toArray();
+    }
 }

@@ -177,4 +177,8 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
     }
+    
+    public function policyWording(){
+        return $this->hasMany(TravelPlanPolicyWording  ::class, 'plan_id', 'id');
+    }
 }
