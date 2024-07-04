@@ -544,4 +544,8 @@ class CarQuote extends BaseModel
     {
         return $this->morphMany(DuplicateInquiryLog::class, 'loggable');
     }
+
+    public function policyWording(){
+        return $this->hasMany(CarPlanPolicyWording::class, 'plan_id', 'plan_id');
+    }
 }

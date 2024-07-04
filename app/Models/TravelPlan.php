@@ -15,8 +15,4 @@ class TravelPlan extends Model
     {
         return $this->belongsTo(InsuranceProvider::class, 'provider_id');
     }
-
-    public function policyWording(){
-        return $this->hasMany(TravelPlanPolicyWording  ::class, 'plan_id', 'id');
-    }
 }

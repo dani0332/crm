@@ -302,17 +302,20 @@ class QuoteDocumentService extends BaseService
     }
     
     public function getHandBookDocuments ($quote){
-        dd($quote->plan->policyWording);
-        $policyWording = $quote->plan->policyWording->map(function ($policyWording) {
-            $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
-            if (strpos($policyWording->link, $baseUrl) !== 0) {
-                $policyWording->link = rtrim($baseUrl, '/') . '/' . ltrim($policyWording->link, '/');
-            }
-            return [
-                'url' => $policyWording->link,
-                'name' => basename($policyWording->link),
-            ];
-        });
-        return $policyWording->toArray();
+        if ($quote->policyWording) {
+            $policyWording = $quote->policyWording->map(function ($policyWording) {
+                $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
+                if (strpos($policyWording->link, $baseUrl) !== 0) {
+                    $policyWording->link = rtrim($baseUrl, '/') . '/' . ltrim($policyWording->link, '/');
+                }
+                return [
+                    'url' => $policyWording->link,
+                    'name' => basename($policyWording->link),
+                ];
+            });
+            return $policyWording->toArray();
+        }
+        
+        return [];
     }
 }
