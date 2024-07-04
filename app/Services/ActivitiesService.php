@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
 use App\Models\QuoteStatus;
@@ -133,46 +134,24 @@ class ActivitiesService extends BaseService
 
     public function getQuoteTypeId($modelType)
     {
-        $quoteTypeId = null;
-        switch ($modelType) {
-            case 'car':
-                $quoteTypeId = QuoteTypeId::Car;
-                break;
-            case 'home':
-                $quoteTypeId = QuoteTypeId::Home;
-                break;
-            case 'life':
-                $quoteTypeId = QuoteTypeId::Life;
-                break;
-            case 'travel':
-                $quoteTypeId = QuoteTypeId::Travel;
-                break;
-            case 'health':
-                $quoteTypeId = QuoteTypeId::Health;
-                break;
-            case 'business':
-                $quoteTypeId = QuoteTypeId::Business;
-                break;
-            case 'pet':
-                $quoteTypeId = QuoteTypeId::Pet;
-                break;
-            case 'cycle':
-                $quoteTypeId = QuoteTypeId::Cycle;
-                break;
-            case 'jetski':
-                $quoteTypeId = QuoteTypeId::Jetski;
-                break;
-            case 'bike':
-                $quoteTypeId = QuoteTypeId::Bike;
-                break;
-            case 'yacht':
-                $quoteTypeId = QuoteTypeId::Yacht;
-                break;
-            default:
-                break;
-        }
+        $quoteTypeIds = [
+            quoteTypeCode::Car => QuoteTypeId::Car,
+            quoteTypeCode::Home => QuoteTypeId::Home,
+            quoteTypeCode::Life => QuoteTypeId::Life,
+            quoteTypeCode::Travel => QuoteTypeId::Travel,
+            quoteTypeCode::Health => QuoteTypeId::Health,
+            quoteTypeCode::Business => QuoteTypeId::Business,
+            quoteTypeCode::Pet => QuoteTypeId::Pet,
+            quoteTypeCode::Cycle => QuoteTypeId::Cycle,
+            quoteTypeCode::Jetski => QuoteTypeId::Jetski,
+            quoteTypeCode::Bike => QuoteTypeId::Bike,
+            quoteTypeCode::Yacht => QuoteTypeId::Yacht,
+            quoteTypeCode::GroupMedical => QuoteTypeId::Business,
+        ];
 
-        return $quoteTypeId;
+        $modelType = ucwords($modelType);
+
+        return $quoteTypeIds[$modelType] ?? null;
     }
 
     public function filterActivitiesByPeriod($activities, $period)
