@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Rules\NotZero;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
@@ -46,20 +47,14 @@ class SaveBookingDetailsRequest extends FormRequest
             SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
 
         if ($isPriceVatNotApplicableRequired) {
-            $rules['price_vat_not_applicable'] = 'required|numeric|min:1';
+            $rules['price_vat_not_applicable'] = ['required', 'numeric', new NotZero];
         } else {
-            $rules['price_vat_applicable'] = 'required|numeric|min:1';
+            $rules['price_vat_applicable'] = ['required', 'numeric', new NotZero];
             $rules['total_vat_amount'] = 'required|numeric';
         }
 
         return $rules;
     }
 
-    public function messages(): array
-    {
-        return [
-            'price_vat_not_applicable.min' => 'The price VAT not applicable field is required.',
-            'price_vat_applicable.min' => 'The price VAT applicable field is required.',
-        ];
-    }
+
 }
