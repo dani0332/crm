@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Imports\HealthQuoteImport;
+use App\Imports\PDMigrations\HealthQuoteImport;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -36,6 +36,7 @@ class HealthDataMigration extends Command
             'health-part5.xlsx',
             'health-part6.xlsx',
             'health-part7.xlsx',
+            // 'health_test.xlsx',
         ];
 
         foreach ($filePaths as $filePath) {
@@ -54,7 +55,7 @@ class HealthDataMigration extends Command
 
                 Excel::import(new HealthQuoteImport, $fullPath);
 
-                \Log::info('Health Quote data migrations succeeded.');
+                \Log::info('Health Quote data migrations succeeded');
             } catch (\Exception $e) {
                 \Log::error('Error importing file: ' . $e->getMessage());
             }
