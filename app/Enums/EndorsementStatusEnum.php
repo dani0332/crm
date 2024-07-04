@@ -9,5 +9,11 @@ use BenSampo\Enum\Enum;
 final class EndorsementStatusEnum extends Enum
 {
     public const UPDATE_BOOKED = 'Update Booked';
+
+    /**
+     * ENDROSMENT CATEORGOIES
+     */
     public const ENDORSEMENT_FINANCIAL_CODE = 'EF';
+    public const CANCELLATION_FROM_INCEPTION = 'CI';
+    public const CANCELLATION_FROM_INCEPTION_AND_REISSUANCE = 'CIR';
 }

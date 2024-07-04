@@ -35,10 +35,14 @@ class EndorsementReportService extends ManagementReport
         }
 
         // lookupQuery
-        $endrosementFinancialId = Lookup::query()
+        $endrosementCategoryIds = Lookup::query()
             ->select('id')
-            ->where('code', EndorsementStatusEnum::ENDORSEMENT_FINANCIAL_CODE)
-            ->first()->id;
+            ->whereIn('code', [
+                EndorsementStatusEnum::ENDORSEMENT_FINANCIAL_CODE,
+                EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION,
+                EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION_AND_REISSUANCE])
+            ->pluck('id')->toArray();
+
 
         $query = SendUpdateLog::query()
             ->select(
@@ -99,7 +103,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
-            ->where('send_update_logs.category_id', '=', $endrosementFinancialId);
+            ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
 
         $this->applyFilters($query, $request);
 
