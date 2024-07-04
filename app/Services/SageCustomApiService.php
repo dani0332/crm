@@ -77,6 +77,7 @@ class SageCustomApiService
             $responseData['error'] = $response->object()?->message;
             if ($responseData['error'] == SageEnum::SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE) {
                 $currentAttempts++;
+
                 return $this->getAPInvoicePaymentScheduleByBatchNumber($batchNumber);
             }
 
@@ -113,7 +114,8 @@ class SageCustomApiService
         } elseif ($response->failed()) {
             if ($response->badRequest()) {
                 $responseData['response'] = $response->object();
-                $responseData['error'] = $response->object()?->title  ?? $response->object()?->messsage ?? 'Something went wrong!';
+                $responseData['error'] = $response->object()?->title ?? $response->object()?->messsage ?? 'Something went wrong!';
+
                 return $responseData;
             }
 
@@ -121,6 +123,7 @@ class SageCustomApiService
             $responseData['error'] = $response->object()?->title ?? 'Something went wrong!';
             if ($responseData['error'] == SageEnum::SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE) {
                 $currentAttempts++;
+
                 return $this->updateAPInvoicePaymentSchedule($batchNumber, $aPInvoicePaymentsSchedule);
             }
 
