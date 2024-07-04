@@ -652,7 +652,7 @@ class SendUpdateLogService
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
-        if ($categoryCode == SendUpdateLogStatusEnum::EF || $categoryCode == SendUpdateLogStatusEnum::CI || $categoryCode == SendUpdateLogStatusEnum::CIR) {
+        if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
             $log = [
                 SendUpdateLogStatusEnum::EF => 'Endorsement Financial', 
                 SendUpdateLogStatusEnum::CI => 'Cancellation from Inception',
