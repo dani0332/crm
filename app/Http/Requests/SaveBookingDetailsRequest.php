@@ -56,5 +56,4 @@ class SaveBookingDetailsRequest extends FormRequest
         return $rules;
     }
 
-
 }
