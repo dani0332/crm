@@ -9,6 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
 {
+    protected object $sendUpdate;
     /**
      * Determine if the user is authorized to make this request.
      */
