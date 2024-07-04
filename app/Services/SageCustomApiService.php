@@ -79,6 +79,7 @@ class SageCustomApiService
             if ($responseData['error'] == SageEnum::SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE) {
                 $this->bearerToken = null;
                 $currentAttempts++;
+
                 return $this->getAPInvoicePaymentScheduleByBatchNumber($batchNumber, $currentAttempts);
             }
 
@@ -99,7 +100,7 @@ class SageCustomApiService
             $this->bearerToken = $this->getToken();
             $currentAttempts++;
         }
-        
+
         if ($this->maxAttempts < $currentAttempts) {
             $responseData['error'] = 'execution timeout! Please try again later.';
             return $responseData;
@@ -119,7 +120,8 @@ class SageCustomApiService
         } elseif ($response->failed()) {
             if ($response->badRequest()) {
                 $responseData['response'] = $response->object();
-                $responseData['error'] = $response->object()?->title  ?? $response->object()?->messsage ?? 'Something went wrong!';
+                $responseData['error'] = $response->object()?->title ?? $response->object()?->messsage ?? 'Something went wrong!';
+
                 return $responseData;
             }
             $responseData['response'] = $response->object();
@@ -127,6 +129,7 @@ class SageCustomApiService
             if ($responseData['error'] == SageEnum::SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE) {
                 $this->bearerToken = null;
                 $currentAttempts++;
+
                 return $this->updateAPInvoicePaymentSchedule($batchNumber, $aPInvoicePaymentsSchedule , $currentAttempts);
             }
 
