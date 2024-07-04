@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Rules\NotZero;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
@@ -36,7 +37,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'commission_percentage' => 'required|numeric',
             'commission_vat_not_applicable' => 'nullable|numeric',
             'vat_on_commission' => 'required|numeric',
-            'total_commission' => 'required|numeric',
+            'total_commission' => 'required|numeric',            
             'total_vat_amount' => 'sometimes|numeric',
             'price_vat_applicable' => 'sometimes|numeric',
             'price_vat_not_applicable' => 'sometimes|numeric',
@@ -44,34 +45,19 @@ class SaveBookingDetailsRequest extends FormRequest
             'price_with_vat' => 'required|numeric',
         ];
 
+        $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
+
+        $isPriceVatNotApplicableRequired = in_array($this->sendUpdate?->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
+            SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
+
+        if ($isPriceVatNotApplicableRequired) {
+            $rules['price_vat_not_applicable'] = ['required', 'numeric', new NotZero];
+        } else {
+            $rules['price_vat_applicable'] = ['required', 'numeric', new NotZero];
+            $rules['total_vat_amount'] = 'required|numeric';
+        }
+
         return $rules;
     }
 
-    /**
-     * @return void
-     */
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            $priceVatApplicable = abs($this->get('price_vat_applicable'));
-            $priceVatNotApplicable = abs($this->get('price_vat_not_applicable'));
-            $totalVatAmount = abs($this->get('total_vat_amount'));
-            $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
-
-            $isPriceVatNotApplicableRequired = in_array($this->sendUpdate?->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
-                SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life) && ($priceVatNotApplicable < 1);
-
-            if ($this->get('send_update_option') !== SendUpdateLogStatusEnum::ACB) {
-                if ($isPriceVatNotApplicableRequired) {
-                    return $validator->errors()->add('error', 'Price vat not applicable required.');
-                } elseif ($priceVatApplicable < 1 && $priceVatNotApplicable < 1) {
-                    return $validator->errors()->add('error', 'Price vat applicable required.');
-                }
-    
-                if ($priceVatApplicable > 0 && $totalVatAmount < 1) {
-                    return $validator->errors()->add('error', 'Total Vat amount required.');
-                }
-            }
-        });
-    }
 }
