@@ -164,11 +164,14 @@ function resetDates(option) {
     selectedOption.value = option;
     customStartDate.value = null; // Clear previously selected dates
     customEndDate.value = null;
-    filt;
+    filters.isCustom = true;
   }
   if (option != 'custom') {
-    filters.due_date_time_start = formatted(startDate).value;
-    filters.due_date_time_end = formatted(endDate).value;
+    // filters.due_date_time_start = formatted(startDate).value;
+    // filters.due_date_time_end = formatted(endDate).value;
+
+    filters.due_date_time_start = startDate;
+    filters.due_date_time_end = endDate;
     // filters.due_date_start = startDate;
     // filters.due_date_end = endDate;
     filterActivities(1); // Call the filterActivities function
@@ -177,8 +180,8 @@ function resetDates(option) {
 function applyCustomDates() {
   if (customStartDate.value && customEndDate.value) {
     // Update the filters with the selected custom dates
-    filters.due_date_start = '';
-    filters.due_date_end = '';
+    // filters.due_date_start = '';
+    // filters.due_date_end = '';
     filters.due_date_time_start = customStartDate.value;
     filters.due_date_time_end = customEndDate.value;
     filterActivities(1); // Call the filterActivities function

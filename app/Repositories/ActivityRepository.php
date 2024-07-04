@@ -31,7 +31,9 @@ class ActivityRepository extends BaseRepository
             array_push($assigneeIds, Auth::user()->id);
         }
 
-        request()->due_date_time_end = Carbon::parse(request()->due_date_time_end)->format('Y-m-d 23:59:59');
+        if (!request()->isCustom) {
+            request()->due_date_time_end = Carbon::parse(request()->due_date_time_end)->format('Y-m-d 23:59:59');
+        }
         return $this->with(['assignee', 'quoteStatus'])
             ->whereIn('assignee_id', $assigneeIds)
             ->filter()
