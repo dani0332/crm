@@ -652,8 +652,13 @@ class SendUpdateLogService
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
-        if ($categoryCode == SendUpdateLogStatusEnum::EF) {
-            info('Book Update - Sending Update to Sage300 for Endorsement Financial - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        if ($categoryCode == SendUpdateLogStatusEnum::EF || $categoryCode == SendUpdateLogStatusEnum::CI || $categoryCode == SendUpdateLogStatusEnum::CIR) {
+            $log = [
+                SendUpdateLogStatusEnum::EF => 'Endorsement Financial', 
+                SendUpdateLogStatusEnum::CI => 'Cancellation from Inception',
+                SendUpdateLogStatusEnum::CIR => 'Cancellation from Inception and Reissuance'
+            ];
+            info('Book Update - Sending Update to Sage300 for '.$log[$categoryCode].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
