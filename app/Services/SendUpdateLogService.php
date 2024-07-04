@@ -654,9 +654,9 @@ class SendUpdateLogService
 
         if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
             $log = [
-                SendUpdateLogStatusEnum::EF => 'Endorsement Financial', 
+                SendUpdateLogStatusEnum::EF => 'Endorsement Financial',
                 SendUpdateLogStatusEnum::CI => 'Cancellation from Inception',
-                SendUpdateLogStatusEnum::CIR => 'Cancellation from Inception and Reissuance'
+                SendUpdateLogStatusEnum::CIR => 'Cancellation from Inception and Reissuance',
             ];
             info('Book Update - Sending Update to Sage300 for '.$log[$categoryCode].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
