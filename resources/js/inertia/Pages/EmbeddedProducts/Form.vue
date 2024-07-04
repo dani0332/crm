@@ -22,6 +22,8 @@ const form = useForm({
   short_code: props.embeddedProduct?.short_code || '',
   min_age: props.embeddedProduct?.min_age || '',
   max_age: props.embeddedProduct?.max_age || '',
+  min_value: props.embeddedProduct?.min_value ?? '',
+  max_value: props.embeddedProduct?.max_value || '',
   display_name: props.embeddedProduct?.display_name || '',
   description: props.embeddedProduct?.description || '',
 
