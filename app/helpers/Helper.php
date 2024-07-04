@@ -894,3 +894,12 @@ if (! function_exists('isValidEmail')) {
         return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
 }
+
+if (! function_exists('isValidDate')) {
+    function isValidDate($date): bool
+    {
+        return ! empty($date)
+        && $date != '0000-00-00 00:00:00'
+        && $date != '0000-00-00';
+    }
+}
