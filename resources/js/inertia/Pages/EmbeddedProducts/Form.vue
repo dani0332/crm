@@ -22,7 +22,7 @@ const form = useForm({
   short_code: props.embeddedProduct?.short_code || '',
   min_age: props.embeddedProduct?.min_age || '',
   max_age: props.embeddedProduct?.max_age || '',
-  min_value: props.embeddedProduct?.min_value ?? '',
+  min_value: props.embeddedProduct?.min_value || '',
   max_value: props.embeddedProduct?.max_value || '',
   display_name: props.embeddedProduct?.display_name || '',
   description: props.embeddedProduct?.description || '',
@@ -136,13 +136,17 @@ const updatePricingType = () => {
   ];
 };
 function onSubmit(isValid) {
-    form.placements.forEach((placement, index) => {
-      isLOBEmpty.value[index] = !placement.quote_type_id;
-    });
+  form.placements.forEach((placement, index) => {
+    isLOBEmpty.value[index] = !placement.quote_type_id;
+  });
 
-    isInsuranceProviderIdEmpty.value = !form.insurance_provider_id;
+  isInsuranceProviderIdEmpty.value = !form.insurance_provider_id;
 
-  if (isValid && form.insurance_provider_id && form.placements.every(placement => placement.quote_type_id)) {
+  if (
+    isValid &&
+    form.insurance_provider_id &&
+    form.placements.every(placement => placement.quote_type_id)
+  ) {
     const method = isEdit.value ? 'put' : 'post';
 
     const url = isEdit.value
@@ -238,13 +242,13 @@ function onSubmit(isValid) {
           label="Insurance Provider"
           required
         >
-            <ComboBox
-                v-model="form.insurance_provider_id"
-                placeholder="Select Insurance Provider"
-                :options="insuranceProviderOptions"
-                :single="true"
-                :hasError="isInsuranceProviderIdEmpty"
-            />
+          <ComboBox
+            v-model="form.insurance_provider_id"
+            placeholder="Select Insurance Provider"
+            :options="insuranceProviderOptions"
+            :single="true"
+            :hasError="isInsuranceProviderIdEmpty"
+          />
         </x-field>
 
         <x-field label="Product Name" required>
@@ -300,6 +304,24 @@ function onSubmit(isValid) {
           />
         </x-field>
 
+        <x-field label="Value">
+          <x-input
+            v-model="form.min_value"
+            type="number"
+            min="0"
+            class="w-1/2 pr-2"
+            placeholder="Minimum Value"
+            :error="form.errors.min_value"
+          />
+          <x-input
+            v-model="form.max_value"
+            type="number"
+            min="0"
+            class="w-1/2"
+            placeholder="Maximum Value"
+            :error="form.errors.max_value"
+          />
+        </x-field>
       </div>
 
       <x-divider class="my-4" />
@@ -308,6 +330,7 @@ function onSubmit(isValid) {
         <div class="sm:col-span-2">
           <x-field label="Tooltip /Help text">
             <x-markdown-editor
+              :toolBarProp="['bold', 'italic', 'link', 'table', 'preview']"
               id="product_description"
               v-model="form.description"
               height="max-h-72"
@@ -405,11 +428,11 @@ function onSubmit(isValid) {
         <div class="grid sm:grid-cols-2 gap-4">
           <x-field label="LOB" required>
             <ComboBox
-                v-model="form.placements[index].quote_type_id"
-                placeholder="Select LOB"
-                :options="quoteTypesOptions"
-                :single="true"
-                :hasError="isLOBEmpty[index]"
+              v-model="form.placements[index].quote_type_id"
+              placeholder="Select LOB"
+              :options="quoteTypesOptions"
+              :single="true"
+              :hasError="isLOBEmpty[index]"
             />
           </x-field>
 
