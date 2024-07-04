@@ -652,8 +652,8 @@ class SendUpdateLogService
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
-        if ($categoryCode == SendUpdateLogStatusEnum::EF) {
-            info('Book Update - Sending Update to Sage300 for Endorsement Financial - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+            info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -669,7 +669,7 @@ class SendUpdateLogService
         }
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-            info('Book Update - Sending Update to Sage300 for Correction of Policy Details - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
+            info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
