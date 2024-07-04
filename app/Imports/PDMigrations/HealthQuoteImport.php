@@ -32,6 +32,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     'uuid' => $value,
                     'premium' => str_replace(" AED", "", $row['deal_value']),
                     'quote_status_id' => $quoteStatusId,
+                    'advsior' => $row['deal_owner'],
                 ]);
 
                 info('----------- Health Lead Imported  -----------' . $row['deal_cdb_id']);
