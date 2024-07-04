@@ -582,7 +582,7 @@ function sendUpdate(prePaymentCheck = true) {
       quoteRefId: props.realQuote.id,
       paymentValidated: true,
       reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
-      inslyMigrated: true //props.realQuote.insly_migrated, TODO:: need to uncomment when finalize
+      inslyMigrated: props.realQuote.insly_migrated,
     })
     .then(response => {
       loader.sendUpdate = false;
@@ -639,7 +639,7 @@ const submitToCustomer = () => {
     quoteRefId: props.realQuote.id,
     paymentValidated: true,
     reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
-    inslyMigrated: true //props.realQuote.insly_migrated, TODO:: need to uncomment when finalize
+    inslyMigrated: props.realQuote.insly_migrated,
   };
   axios
     .post(url, data)
