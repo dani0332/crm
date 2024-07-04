@@ -19,7 +19,7 @@ class SageCustomApiService
         $this->sageCustomApiUserName = env('SAGE_300_CUSTOM_API_USERNAME');
         $this->sageCustomApiPassword = env('SAGE_300_CUSTOM_API_USER_PASSWORD');
         $this->sageBaseUrl = env('SAGE_300_BASE_URL');
-        $this->bearerToken = Cache::store('redis')->get(SageEnum::SAGE_CUSTOM_API_TOKEN_CACHE_KEY) ?? $this->getToken();
+        $this->bearerToken = Cache::store('redis')->get(SageEnum::SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY) ?? $this->getToken();
     }
 
     public function getToken()
@@ -28,7 +28,7 @@ class SageCustomApiService
             return $this->bearerToken;
         }
 
-        $loginUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_GET_TOKEN_ENDPOINT;
+        $loginUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_GET_AUTH_TOKEN_ENDPOINT;
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
         ])->post($loginUrl, [
@@ -36,8 +36,8 @@ class SageCustomApiService
             'password' => $this->sageCustomApiPassword,
         ]);
         if ($response->successful()) {
-            Cache::store('redis')->put(SageEnum::SAGE_CUSTOM_API_TOKEN_CACHE_KEY, $response->body(), 60 * 30);
-            $this->bearerToken = Cache::store('redis')->get(SageEnum::SAGE_CUSTOM_API_TOKEN_CACHE_KEY);
+            Cache::store('redis')->put(SageEnum::SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY, $response->body(), 60 * 30);
+            $this->bearerToken = Cache::store('redis')->get(SageEnum::SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY);
 
             return $this->bearerToken;
         } else {
@@ -45,23 +45,24 @@ class SageCustomApiService
         }
     }
 
-    public function getAPInvoicePaymentScheduleByBatchNumber($batchNumber)
+    public function getAPInvoicePaymentScheduleByBatchNumber($batchNumber, $currentAttempts = 0)
     {
         $responseData = [
             'error' => null,
             'response' => null,
             'status' => false,
         ];
-        $currentAttempts = 0;
-        while (! $this->bearerToken && $this->maxAttempts >= $this->attempts) {
+
+        while (! $this->bearerToken && $this->maxAttempts >= $currentAttempts) {
             $this->bearerToken = $this->getToken();
             $currentAttempts++;
         }
+
         if ($this->maxAttempts < $currentAttempts) {
             $responseData['error'] = 'execution timeout! Please try again later.';
-
             return $responseData;
         }
+
         $getAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_GET_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->bearerToken,
@@ -76,15 +77,16 @@ class SageCustomApiService
             $responseData['response'] = $response->object();
             $responseData['error'] = $response->object()?->message;
             if ($responseData['error'] == SageEnum::SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE) {
+                $this->bearerToken = null;
                 $currentAttempts++;
-                return $this->getAPInvoicePaymentScheduleByBatchNumber($batchNumber);
+                return $this->getAPInvoicePaymentScheduleByBatchNumber($batchNumber, $currentAttempts);
             }
 
             return $responseData;
         }
     }
 
-    public function updateAPInvoicePaymentSchedule($batchNumber, $aPInvoicePaymentsSchedule)
+    public function updateAPInvoicePaymentSchedule($batchNumber, $aPInvoicePaymentsSchedule, $currentAttempts = 0)
     {
         $responseData = [
             'error' => null,
@@ -92,10 +94,14 @@ class SageCustomApiService
             'url' => null,
             'status' => false,
         ];
-        $currentAttempts = 0;
+
+        while (! $this->bearerToken && $this->maxAttempts >= $currentAttempts) {
+            $this->bearerToken = $this->getToken();
+            $currentAttempts++;
+        }
+        
         if ($this->maxAttempts < $currentAttempts) {
             $responseData['error'] = 'execution timeout! Please try again later.';
-
             return $responseData;
         }
         $updateAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
@@ -116,12 +122,12 @@ class SageCustomApiService
                 $responseData['error'] = $response->object()?->title  ?? $response->object()?->messsage ?? 'Something went wrong!';
                 return $responseData;
             }
-
             $responseData['response'] = $response->object();
             $responseData['error'] = $response->object()?->title ?? 'Something went wrong!';
             if ($responseData['error'] == SageEnum::SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE) {
+                $this->bearerToken = null;
                 $currentAttempts++;
-                return $this->updateAPInvoicePaymentSchedule($batchNumber, $aPInvoicePaymentsSchedule);
+                return $this->updateAPInvoicePaymentSchedule($batchNumber, $aPInvoicePaymentsSchedule , $currentAttempts);
             }
 
             return $responseData;

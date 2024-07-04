@@ -102,16 +102,6 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        /*$aPInvoicePaymentsScheduleResponse = (new SageCustomApiService())->getAPInvoicePaymentScheduleByBatchNumber(183);
-        if($aPInvoicePaymentsScheduleResponse['status']) {
-            $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
-            foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
-                $aPInvoicePaymentSchedule->datedue = Carbon::now()->addYears($key)->format('Ymd');
-            }
-            dd((new SageCustomApiService())->updateAPInvoicePaymentSchedule(183, $aPInvoicePaymentsSchedule));
-        }
-        dd($aPInvoicePaymentsScheduleResponse);*/
-
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);

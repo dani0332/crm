@@ -1591,20 +1591,6 @@ class SageApiService
 
                     return $returnMessage;
                 }
-
-                /*foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
-                    // add discount amount to amount due for the first child payment in sage for balancing the amount
-                    $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
-                    $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
-                    if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                        $dueDate = $invoicePaymentSchedulesDueDate;
-                    } else {
-                        $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
-                    }
-
-                    $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
-                    $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
-                }*/
                 //7
                 $isLiveApiCallStep7 = true;
                 if (isset($sageLogArray[7]) && $sageLogArray[7]['status'] == 'success') {
