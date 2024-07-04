@@ -302,6 +302,7 @@ class QuoteDocumentService extends BaseService
     }
     
     public function getHandBookDocuments ($quote){
+        dd($quote->plan->policyWording);
         $policyWording = $quote->plan->policyWording->map(function ($policyWording) {
             $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
             if (strpos($policyWording->link, $baseUrl) !== 0) {
