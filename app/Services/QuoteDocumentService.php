@@ -303,7 +303,7 @@ class QuoteDocumentService extends BaseService
     
     public function getHandBookDocuments ($quote){
         $policyWording = $quote->plan->policyWording->map(function ($policyWording) {
-            $baseUrl = 'https://insurancemarket.blob.core.windows.net';
+            $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
             if (strpos($policyWording->link, $baseUrl) !== 0) {
                 $policyWording->link = rtrim($baseUrl, '/') . '/' . ltrim($policyWording->link, '/');
             }
