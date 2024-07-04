@@ -37,7 +37,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'commission_percentage' => 'required|numeric',
             'commission_vat_not_applicable' => 'nullable|numeric',
             'vat_on_commission' => 'required|numeric',
-            'total_commission' => 'required|numeric',            
+            'total_commission' => 'required|numeric',
             'total_vat_amount' => 'sometimes|numeric',
             'price_vat_applicable' => 'sometimes|numeric',
             'price_vat_not_applicable' => 'sometimes|numeric',
