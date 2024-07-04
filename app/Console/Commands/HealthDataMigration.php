@@ -50,11 +50,11 @@ class HealthDataMigration extends Command
             $fullPath = Storage::disk('pdmigrations')->path($filePath);
 
             try {
-                \Log::info('Business QUote data migrations started.');
+                \Log::info('Health Quote data migrations started.');
 
                 Excel::import(new HealthQuoteImport, $fullPath);
 
-                \Log::info('Business QUote data migrations succeeded.');
+                \Log::info('Health Quote data migrations succeeded.');
             } catch (\Exception $e) {
                 \Log::error('Error importing file: ' . $e->getMessage());
             }

@@ -47,11 +47,11 @@ class CorplineDataMigration extends Command
             $fullPath = Storage::disk('pdmigrations')->path($filePath);
 
             try {
-                \Log::info('Business QUote data migrations started.');
+                \Log::info('Business Quote data migrations started.');
 
                 Excel::import(new BusinessQuoteImport, $fullPath);
 
-                \Log::info('Business QUote data migrations succeeded.');
+                \Log::info('Business Quote data migrations succeeded.');
             } catch (\Exception $e) {
                 \Log::error('Error importing file: ' . $e->getMessage());
             }

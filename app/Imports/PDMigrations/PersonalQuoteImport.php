@@ -90,7 +90,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             return QuoteStatusEnum::Lost;
         }
 
-        if ($dealStatus === PDDealStatus::WON && $dealStage === DealStageEnum::PENDING_POLICY_DOCUMENTS) {
+        if ($dealStatus === PDDealStatus::WON) {
             return QuoteStatusEnum::TransactionApproved;
         }
 

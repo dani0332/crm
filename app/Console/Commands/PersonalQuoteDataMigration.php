@@ -49,11 +49,11 @@ class PersonalQuoteDataMigration extends Command
             $fullPath = Storage::disk('pdmigrations')->path($filePath);
 
             try {
-                \Log::info('Persoanl Quote data migrations started.');
+                \Log::info('Personal Quote data migrations started.');
 
                 Excel::import(new PersonalQuoteImport, $fullPath);
 
-                \Log::info('Persoanl Quote data migrations succeeded.');
+                \Log::info('Personal Quote data migrations succeeded.');
             } catch (\Exception $e) {
                 \Log::error('Error importing file: ' . $e->getMessage());
             }
