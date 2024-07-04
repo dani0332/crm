@@ -66,6 +66,7 @@ class SageCustomApiService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->bearerToken,
         ])->get($getAPInvoicePaymentScheduleUrl);
+
         if ($response->successful()) {
             $responseData['response'] = $response->object();
             $responseData['status'] = true;
@@ -76,7 +77,6 @@ class SageCustomApiService
             $responseData['error'] = $response->object()?->message;
             if ($responseData['error'] == SageEnum::SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE) {
                 $currentAttempts++;
-
                 return $this->getAPInvoicePaymentScheduleByBatchNumber($batchNumber);
             }
 
@@ -89,6 +89,7 @@ class SageCustomApiService
         $responseData = [
             'error' => null,
             'response' => null,
+            'url' => null,
             'status' => false,
         ];
         $currentAttempts = 0;
@@ -98,6 +99,7 @@ class SageCustomApiService
             return $responseData;
         }
         $updateAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
+        $responseData['url'] = $updateAPInvoicePaymentScheduleUrl;
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->bearerToken,
             'Content-Type' => 'application/json',
@@ -112,7 +114,6 @@ class SageCustomApiService
             if ($response->badRequest()) {
                 $responseData['response'] = $response->object();
                 $responseData['error'] = $response->object()?->title  ?? $response->object()?->messsage ?? 'Something went wrong!';
-
                 return $responseData;
             }
 

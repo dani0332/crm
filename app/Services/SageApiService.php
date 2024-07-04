@@ -24,6 +24,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class SageApiService
@@ -1557,15 +1558,17 @@ class SageApiService
             }
 
             if (! empty($postedResponse['BatchNumber'])) {
-                $url = 'AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')';
-                info('SAGE API: '.$quote->uuid.' : createAPInvoiceSplitPayments - '.$postedResponse['BatchNumber'].' completed successfully');
+                $apBatchNumber = $postedResponse['BatchNumber'];
+                $url = 'AP/APInvoiceBatches('.$apBatchNumber.')';
+                info('SAGE API: '.$quote->uuid.' : createAPInvoiceSplitPayments - '.$apBatchNumber.' completed successfully');
                 if ($isLiveApiCallStep6) {
                     $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 6, 15);
                 }
 
                 info('SAGE API:  Prepare Patch payload for SpitPayments  for '.$quote->uuid);
                 $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService())->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
-                if($aPInvoicePaymentsScheduleResponse['status']) {
+
+                if ($aPInvoicePaymentsScheduleResponse['status']) {
                     $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
                     foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
                         // add discount amount to amount due for the first child payment in sage for balancing the amount
@@ -1577,13 +1580,16 @@ class SageApiService
                             $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
                         }
 
-                        $aPInvoicePaymentSchedule->datedue = $dueAmount;
-                        $aPInvoicePaymentSchedule->amtdue = $dueDate;
-                        $aPInvoicePaymentSchedule->amtduehc = $dueDate;
+                        $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+                        $aPInvoicePaymentSchedule->amtdue = $dueAmount;
+                        $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
                     }
-                    dd((new SageCustomApiService())->updateAPInvoicePaymentSchedule(183, $aPInvoicePaymentsSchedule));
-                }else{
+                } else {
+                    $returnMessage['status'] = false;
+                    $returnMessage['message'] = 'Error while getting split payment schedule from sage';
+                    $returnMessage['error'] = $aPInvoicePaymentsScheduleResponse['error'];
 
+                    return $returnMessage;
                 }
 
                 /*foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
@@ -1607,19 +1613,19 @@ class SageApiService
                     $postedResponse = json_decode($sageLogArray[7]['response'], true);
                 } else {
                     info('SAGE API:  Send Patch Request  for '.$quote->uuid);
-                    $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
-                    $postedResponse = json_decode($resp, true);
+                    $resp = (new SageCustomApiService())->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
+                    $postedResponse['response'] = $resp;
                 }
 
-                $postedResponse['endPoint'] = $url;
-                $postedResponse['payload'] = $postedResponse;
-                if (isset($postedResponse['error'])) {
+                $postedResponse['endPoint'] = $resp['url'];
+                $postedResponse['payload'] = $aPInvoicePaymentsSchedule;
+                if (! $resp['status']) {
                     Log::error('SAGE API: '.$quote->uuid.' : Patch Request failed');
                     $this->logSageApiCall($postedResponse, $postedResponse, $quote, 7, 15, 'fail');
                     $returnMessage['status'] = false;
-                    $returnMessage['message'] = 'Error while making AP split paymets patch to sage';
+                    $returnMessage['message'] = 'Error while making AP split payments patch to sage';
 
-                    $errorMessage = $postedResponse['error']['message']['value'] ?? null;
+                    $errorMessage = $postedResponse['error'] ?? null;
                     Log::error('SAGE API : '.$errorMessage);
                     $returnMessage['error'] = $errorMessage;
 
@@ -1637,7 +1643,7 @@ class SageApiService
                     $readyToPostResponse = json_decode($sageLogArray[8]['response'], true);
                 } else {
                     info('SAGE API:  Send readyToPostInvoiceAP  for '.$quote->uuid);
-                    $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($postedResponse['BatchNumber']);
+                    $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($apBatchNumber);
                     $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
                 }
 
