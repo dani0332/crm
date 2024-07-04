@@ -42,9 +42,10 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 }
 
                 // Update or create the HealthQuote record based on the search criteria
-                $health = HealthQuote::updateOrCreate($searchCriteria, $healthData);
+                // $health = HealthQuote::updateOrCreate($searchCriteria, $healthData);
+                return HealthQuote::updateOrCreate($searchCriteria, $healthData);
 
-                $this->syncQuote($health, $health->toArray());
+                // $this->syncQuote($health, $health->toArray());
             }
         }
     }
