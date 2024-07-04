@@ -401,4 +401,14 @@ class SendUpdateLogRepository extends BaseRepository
             ->where('quote_uuid', $data['quoteUuid'])
             ->first() ?? null;
     }
+
+    public function fetchGetSendUpdateLogInvoices($quoteTypeId, $quoteUuid)
+    {
+        return $this->query()
+            ->where('quote_uuid', $quoteUuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('status', SendUpdateLogStatusEnum::UPDATE_BOOKED)
+            ->get()
+            ->pluck('insurer_tax_invoice_number');
+    }
 }
