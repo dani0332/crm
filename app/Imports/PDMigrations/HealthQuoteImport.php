@@ -22,7 +22,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
             if ($quoteStatusId) {
-                info('Quote status found: '. $quoteStatusId);
+                info('Quote status found: '.$quoteStatusId);
 
                 $healthData = [
                     'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
@@ -37,7 +37,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     $healthData['advisor_id'] = $this->getAdvisorId($row['deal_owner']);
                     [, $value] = explode('-', $row['deal_cdb_id']);
                     $searchCriteria['uuid'] = $value;
-                } else if (isset($row['deal_policy_number'])) {
+                } elseif (isset($row['deal_policy_number'])) {
                     $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number'];
                 } else {
                     info('No quote identifier found');
@@ -46,7 +46,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 $health = HealthQuote::where($searchCriteria)->first();
 
                 if ($health) {
-                    info('Quote found: '. $health->uuid);
+                    info('Quote found: '.$health->uuid);
                     $health->update($healthData);
                     $this->syncQuote($health, $healthData);
                     info('Quote updated');
