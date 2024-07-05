@@ -22,46 +22,37 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
             if ($quoteStatusId) {
+                info('Quote status found: '. $quoteStatusId);
+
                 $healthData = [
                     'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
                     'quote_status_id' => $quoteStatusId,
                 ];
 
-                // Only add 'code' if 'deal_cdb_id' is set
-                if (isset($row['deal_cdb_id'])) {
-                    $healthData['advisor_id'] = $this->getadvisorId($row['deal_owner']);
-                }
-
                 // Determine the search criteria based on the available identifiers
                 $searchCriteria = [];
+
+                // Only add 'code' if 'deal_cdb_id' is set
                 if (isset($row['deal_cdb_id'])) {
+                    $healthData['advisor_id'] = $this->getAdvisorId($row['deal_owner']);
                     [, $value] = explode('-', $row['deal_cdb_id']);
                     $searchCriteria['uuid'] = $value;
-                } elseif (isset($row['deal_policy_number'])) {
+                } else if (isset($row['deal_policy_number'])) {
                     $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number'];
+                } else {
+                    info('No quote identifier found');
                 }
 
                 $health = HealthQuote::where($searchCriteria)->first();
 
                 if ($health) {
+                    info('Quote found: '. $health->uuid);
                     $health->update($healthData);
                     $this->syncQuote($health, $healthData);
+                    info('Quote updated');
                 }
-                // else {
-                //     $data = [
-                //         'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
-                //         'quote_status_id' => $quoteStatusId,
-                //         'advisor_id' => $this->getadvisorId($row['deal_owner']),
-                //     ];
-                //     $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $data, HealthQuote::class);
-
-                //     info('----------- CAPI Response Health migrations -----------' . json_encode($response));
-                //     if (isset($response->quoteUID)) {
-                //         $health = HealthQuote::where('uuid', $response->quoteUID);
-                //         $this->syncQuote($health, $healthData);
-                //     }
-                // }
             }
+            info('Quote status not defined');
         }
     }
 
@@ -125,7 +116,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     }
 
-    private function getadvisorId($userName)
+    private function getAdvisorId($userName)
     {
         $advisor = User::where('name', $userName)->first();
 
