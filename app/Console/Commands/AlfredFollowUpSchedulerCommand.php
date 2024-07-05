@@ -108,6 +108,7 @@ class AlfredFollowUpSchedulerCommand extends Command
     {
         $customerDataCollapsed = collect($this->customerData)->collapse();
         $this->customerData = $customerDataCollapsed->all();
+        $jobs = [];
         if (! empty($customerFollowUpEmails)) {
             foreach ($customerFollowUpEmails as $customer) {
                 if (! empty($customer->email)) {
@@ -118,13 +119,7 @@ class AlfredFollowUpSchedulerCommand extends Command
                             $checkCustomerFollowUps = $this->customerService->getCustomerCampaignFollowups($isCustomer->customer_id);
                             if ($checkCustomerFollowUps->campaign_followups < 3) {
                                 $this->customerEmailSent[] = ['email' => $isCustomer->email, 'status' => true];
-                                info("--------start sending email for {$isCustomer->email} -----------");
-                                usleep(200);
-                                Haystack::build()
-                                    ->addJob(new AlfredFollowupEmailJob($isCustomer))       // Specify the queue name with low priority
-                                    ->dispatch();
-                                info("--------end sending email for {$isCustomer->email} -----------");
-
+                                $jobs[] = new AlfredFollowupEmailJob($isCustomer);
                             }
                         }
                     }
@@ -134,6 +129,26 @@ class AlfredFollowUpSchedulerCommand extends Command
                     echo 'invaild customer email  received from alfred : '.$customer->email;
                 }
             }
+            if (count($jobs)) {
+                Haystack::build()
+                    ->addJobs($jobs)
+                    ->then(function () {
+                        info('AlfredFollowUpSchedule - all jobs completed successfully');
+                    })
+                    ->catch(function () {
+                        info('AlfredFollowUpSchedule - one of batch is failed.');
+                    })
+                    ->finally(function () {
+                        info('AlfredFollowUpSchedule - everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(1)
+                    ->dispatch();
+            } else {
+                info('AlfredFollowUpSchedule - No Customer Found to Send Email');
+            }
+        } else {
+            info('AlfredFollowUpSchedule - No Customers Found');
         }
     }
 }
