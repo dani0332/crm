@@ -11,7 +11,7 @@ return [
     | by the framework. The "local" disk, as well as a variety of cloud
     | based disks are available to your application. Just store away!
     |
-    */
+     */
 
     'default' => env('FILESYSTEM_DRIVER', 'local'),
 
@@ -26,7 +26,7 @@ return [
     |
     | Supported Drivers: "local", "ftp", "sftp", "s3"
     |
-    */
+     */
 
     'disks' => [
 
@@ -51,7 +51,7 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             // 'visibility' => 'public',
-            'bucket_endpoint' => true,  //add this
+            'bucket_endpoint' => true, //add this
         ],
         'insly_documents' => [
             'driver' => 's3',
@@ -62,7 +62,7 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             // 'visibility' => 'public',
-            'bucket_endpoint' => true,  //add this
+            'bucket_endpoint' => true, //add this
         ],
         'azure' => [
             'driver' => 'azure',
@@ -99,6 +99,10 @@ return [
         //     'url'       => env('AZURE_STORAGE_URL'),
         //     'prefix'    => null,
         // ],
+        'pdmigrations' => [
+            'driver' => 'local',
+            'root' => storage_path('PDMigrations'),
+        ],
     ],
 
     /*
@@ -110,7 +114,7 @@ return [
     | `storage:link` Artisan command is executed. The array keys should be
     | the locations of the links and the values should be their targets.
     |
-    */
+     */
 
     'links' => [
         public_path('storage') => storage_path('app/public'),

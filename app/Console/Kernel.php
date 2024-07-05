@@ -4,7 +4,6 @@ namespace App\Console;
 
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
-use App\Jobs\CarLost\UnconSubmissionReminder;
 use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -49,10 +48,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
 
         /*$schedule->job(new UnconSubmissionReminder)
-            ->tuesdays()
-            ->fridays()
-            ->withoutOverlapping(1)->onOneServer()
-            ->at('9:00');*/
+        ->tuesdays()
+        ->fridays()
+        ->withoutOverlapping(1)->onOneServer()
+        ->at('9:00');*/
 
         //send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
@@ -97,6 +96,40 @@ class Kernel extends ConsoleKernel
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
         $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
+
+        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:05')
+        //     ->onOneServer()
+        //     ->withoutOverlapping()
+        //     ->onSuccess(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Completed -----------'.$output);
+        //     })
+        //     ->onFailure(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Failed -----------'.$output);
+        //     });
+
+        $schedule->command('HealthDataMigration:cron')
+            ->timezone('Asia/Dubai')
+            ->dailyAt('15:00')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->onSuccess(function (Stringable $output) {
+                info('----------- Health Data Migrations Completed -----------'.$output);
+            })
+            ->onFailure(function (Stringable $output) {
+                info('----------- Health Data Migrations Failed -----------'.$output);
+            });
+
+        // $schedule->command('PersonalQuoteDataMigration:cron')
+        //     ->timezone('Asia/Dubai')
+        //     ->dailyAt('11:05')
+        //     ->onOneServer()
+        //     ->withoutOverlapping()
+        //     ->onSuccess(function (Stringable $output) {
+        //         info('----------- Personal/Home Quote Data Migrations Completed -----------' . $output);
+        //     })
+        //     ->onFailure(function (Stringable $output) {
+        //         info('----------- Personal/Home Quote Data Migrations Failed -----------' . $output);
+        //     });
     }
 
     /**
