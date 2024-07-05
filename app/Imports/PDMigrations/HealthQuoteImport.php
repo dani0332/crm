@@ -21,7 +21,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
         if (isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) {
             $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
             if ($quoteStatusId) {
-                info('HealthQuoteImport - Quote status found: '.$quoteStatusId);
+                info('HealthQuoteImport - Quote status found: ' . $quoteStatusId);
 
                 $healthData = [
                     'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
@@ -47,7 +47,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 if ($health) {
                     $health->update($healthData);
                     $this->syncQuote($health, $healthData);
-                    info('HealthQuoteImport - Quote found: '.$health->uuid.' - Quote updated');
+                    info('HealthQuoteImport - Quote found: ' . $health->uuid . ' - Quote updated');
                 }
             }
             info('HealthQuoteImport - Quote status not defined');
@@ -61,7 +61,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     private function getQuoteStatusId($dealStatus, $dealStage)
     {
-        if ($dealStatus === PDDealStatus::LOST && $dealStage === DealStageEnum::FOLLOW_UP) {
+        if ($dealStatus === PDDealStatus::LOST) {
             return QuoteStatusEnum::Lost;
         }
 
