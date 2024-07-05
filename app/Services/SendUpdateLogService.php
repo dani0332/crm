@@ -486,12 +486,6 @@ class SendUpdateLogService
             }
         }
 
-        /*$quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        $sendUpdatePayments = SendUpdateLogRepository::sendUpdateBookedPayments($quoteTypeId, $quoteUuid);
-        if (! empty($sendUpdatePayments)) {
-            $payments = $payments->merge($sendUpdatePayments);
-        }*/
-
         return $payments;
     }
 
