@@ -111,7 +111,7 @@ class AlfredFollowUpSchedulerCommand extends Command
         $jobs = [];
         if (! empty($customerFollowUpEmails)) {
             foreach ($customerFollowUpEmails as $customer) {
-                if (! empty($customer->email)) {
+                if (! empty($customer->email) && isValidEmail($customer->email)) {
                     if ($customer->haveRemainingScratches) {
                         $isCustomer = collect($this->customerData)->where('email', $customer->email)->first();
                         $isEmailSent = collect($this->customerEmailSent)->where('email', $customer->email)->first();
