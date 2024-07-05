@@ -128,6 +128,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
     private function getadvisorId($userName)
     {
         $advisor = User::where('name', $userName)->first();
+
         return $advisor ? $advisor->id : null;
     }
 }

@@ -36,10 +36,10 @@ class CorplineDataMigration extends Command
         ];
 
         foreach ($filePaths as $filePath) {
-            $fullPath = storage_path('app/PDMigrations/' . $filePath);
+            $fullPath = storage_path('app/PDMigrations/'.$filePath);
 
-            if (!Storage::disk('pdmigrations')->exists($filePath)) {
-                \Log::error('File does not exist: ' . $filePath);
+            if (! Storage::disk('pdmigrations')->exists($filePath)) {
+                \Log::error('File does not exist: '.$filePath);
 
                 continue;
             }
@@ -53,7 +53,7 @@ class CorplineDataMigration extends Command
 
                 \Log::info('Business Quote data migrations succeeded.');
             } catch (\Exception $e) {
-                \Log::error('Error importing file: ' . $e->getMessage());
+                \Log::error('Error importing file: '.$e->getMessage());
             }
         }
     }

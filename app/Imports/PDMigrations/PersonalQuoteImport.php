@@ -35,7 +35,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     'email' => $row['person_email_work'],
                     'code' => $row['deal_cdb_id'],
                     'uuid' => $value,
-                    'premium' => str_replace(" AED", "", $row['deal_value']),
+                    'premium' => str_replace(' AED', '', $row['deal_value']),
                     'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
                 ];
                 $classInstance = HomeQuote::updateOrCreate(['uuid' => $data['uuid']], $data);
@@ -59,7 +59,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             }
 
-            info('----------- Importing Personal/Home Qoute Lead  -----------' . $row['deal_cdb_id']);
+            info('----------- Importing Personal/Home Qoute Lead  -----------'.$row['deal_cdb_id']);
             $this->syncQuote($classInstance, $classInstance->toArray());
         }
     }

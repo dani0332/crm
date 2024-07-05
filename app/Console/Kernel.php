@@ -73,10 +73,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(29)
             ->onSuccess(function (Stringable $output) {
-                info('----------- QuoteSyncJob Completed -----------' . $output);
+                info('----------- QuoteSyncJob Completed -----------'.$output);
             })
             ->onFailure(function (Stringable $output) {
-                info('----------- QuoteSyncJob Failed -----------' . $output);
+                info('----------- QuoteSyncJob Failed -----------'.$output);
             });
 
         $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(30);
@@ -113,10 +113,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1)
             ->onSuccess(function (Stringable $output) {
-                info('----------- Health Data Migrations Completed -----------' . $output);
+                info('----------- Health Data Migrations Completed -----------'.$output);
             })
             ->onFailure(function (Stringable $output) {
-                info('----------- Health Data Migrations Failed -----------' . $output);
+                info('----------- Health Data Migrations Failed -----------'.$output);
             });
 
         // $schedule->command('PersonalQuoteDataMigration:cron')
@@ -139,7 +139,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__ . '/Commands');
+        $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
     }
