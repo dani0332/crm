@@ -39,7 +39,6 @@ use App\Services\SageCustomApiService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\SageLoggable;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller

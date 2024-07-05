@@ -152,7 +152,7 @@ class SageCustomApiService
     {
         $quotes = [];
         $payments = Payment::whereNot('frequency', PaymentFrequency::UPFRONT)->whereNull('send_update_log_id')->whereIn('insurer_tax_number', $this->getOpenAPInvoicesDocumentNumbers())->get();
-        echo $payments->count() . '<br/>';
+        echo $payments->count().'<br/>';
         try {
             foreach ($payments as $index => $payment) {
                 $paymentSplits = $payment->paymentSplits;
@@ -281,7 +281,7 @@ class SageCustomApiService
 
                     if (! empty($postedResponse['BatchNumber'])) {
                         $apBatchNumber = $postedResponse['BatchNumber'];
-                        echo $apBatchNumber . '<br/>';
+                        echo $apBatchNumber.'<br/>';
                         $url = 'AP/APInvoiceBatches('.$apBatchNumber.')';
                         info('SAGE API: '.$quote->uuid.' : createAPInvoiceSplitPayments - '.$apBatchNumber.' completed successfully');
                         if ($isLiveApiCallStep6) {
