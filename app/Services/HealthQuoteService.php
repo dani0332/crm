@@ -216,23 +216,9 @@ class HealthQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return HealthQuoteRequestDetail::create([
-            'health_quote_request_id' => $id,
-            'created_at' => now(),
-            'updated_at' => now(),
-            'advisor_assigned_date' => now(),
-            'advisor_assigned_by_id' => auth()->user()->id,
-        ]);
+        return HealthQuoteRequestDetail::firstOrCreate(
+            ['health_quote_request_id' => $id],
+        );
     }
 
     public function getLeadsForAssignment()
@@ -362,10 +348,6 @@ class HealthQuoteService extends BaseService
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
             $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
-        } else {
-            //previous_quote_policy_number is null check
-            $this->query->whereNull('previous_quote_policy_number');
-
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
@@ -644,15 +626,19 @@ class HealthQuoteService extends BaseService
     public function updateChildRecord($id, $advisorId)
     {
         $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
+        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date ?? null;
+        $data = [];
         if ($advisorId != null) {
-            $childRecord->advisor_assigned_by_id = auth()->user()->id;
-            $childRecord->advisor_assigned_date = now();
-            $childRecord->save();
+            $data = [
+                'advisor_assigned_date' => now(),
+                'advisor_assigned_by_id' => auth()->user()->id,
+            ];
         }
+
+        HealthQuoteRequestDetail::updateOrCreate(
+            ['health_quote_request_id' => $id],
+            $data
+        );
 
         return $oldAdvisorAssignedDate;
     }
