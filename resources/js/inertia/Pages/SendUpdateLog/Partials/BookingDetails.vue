@@ -259,6 +259,8 @@ const calculateCommission = () => {
   }
 };
 
+const isReversalNegative = ref(false);
+
 // this function is used to convert the value to negative if the isNegativeValue is true.
 function convertToNegative(value) {
   if (props.isNegativeValue || isReversalNegative.value) {
@@ -340,6 +342,10 @@ const reversalEntry = reactive({
   total_price: null,
 });
 
+watch(() => reversalEntry.price_with_vat, (newValue, oldValue) => {
+  isReversalNegative.value = newValue < 0;
+});
+
 const loader = reactive({
   sendUpdateSectionBtn: false,
   sendUpdate: false,
@@ -397,12 +403,6 @@ function updateReversalEntries(payment, sendUpdateLog) {
   reversalEntry.total_vat_amount = sendUpdateLog?.total_vat_amount || props.realQuote?.vat;
   reversalEntry.price_with_vat = ((payment.total_price !== null && payment.total_price > 0) ? payment.total_price : sendUpdateLog?.price_with_vat) ?? null;
 }
-
-const isReversalNegative = ref(false);
-
-watch(() => reversalEntry.price_with_vat, (newValue, oldValue) => {
-  isReversalNegative.value = newValue < 0;
-});
 
 onMounted(() => {
   if (
