@@ -19,10 +19,9 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
     public function model(array $row)
     {
         if (isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) {
-
             $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
             if ($quoteStatusId) {
-                info('Quote status found: '.$quoteStatusId);
+                info('HealthQuoteImport - Quote status found: '.$quoteStatusId);
 
                 $healthData = [
                     'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
@@ -40,19 +39,18 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 } elseif (isset($row['deal_policy_number'])) {
                     $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number'];
                 } else {
-                    info('No quote identifier found');
+                    info('HealthQuoteImport - No quote identifier found');
                 }
 
                 $health = HealthQuote::where($searchCriteria)->first();
 
                 if ($health) {
-                    info('Quote found: '.$health->uuid);
                     $health->update($healthData);
                     $this->syncQuote($health, $healthData);
-                    info('Quote updated');
+                    info('HealthQuoteImport - Quote found: '.$health->uuid.' - Quote updated');
                 }
             }
-            info('Quote status not defined');
+            info('HealthQuoteImport - Quote status not defined');
         }
     }
 
@@ -113,7 +111,6 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
         ];
 
         return $dealStageToQuoteStatus[strtolower($dealStage)];
-
     }
 
     private function getAdvisorId($userName)
