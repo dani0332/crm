@@ -7,7 +7,6 @@ use App\Enums\PDMigrations\PDDealStatus;
 use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
 use App\Models\User;
-use App\Services\CapiRequestService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -47,20 +46,21 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 if ($health) {
                     $health->update($healthData);
                     $this->syncQuote($health, $healthData);
-                } else {
-                    $data = [
-                        'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
-                        'quote_status_id' => $quoteStatusId,
-                        'advisor_id' => $this->getadvisorId($row['deal_owner']),
-                    ];
-                    $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $data, HealthQuote::class);
-
-                    info('----------- CAPI Response Health migrations -----------' . json_encode($response));
-                    if (isset($response->quoteUID)) {
-                        $health = HealthQuote::where('uuid', $response->quoteUID);
-                        $this->syncQuote($health, $healthData);
-                    }
                 }
+                // else {
+                //     $data = [
+                //         'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
+                //         'quote_status_id' => $quoteStatusId,
+                //         'advisor_id' => $this->getadvisorId($row['deal_owner']),
+                //     ];
+                //     $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $data, HealthQuote::class);
+
+                //     info('----------- CAPI Response Health migrations -----------' . json_encode($response));
+                //     if (isset($response->quoteUID)) {
+                //         $health = HealthQuote::where('uuid', $response->quoteUID);
+                //         $this->syncQuote($health, $healthData);
+                //     }
+                // }
             }
         }
     }
