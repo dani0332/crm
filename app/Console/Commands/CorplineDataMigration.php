@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Imports\PDMigrations\BusinessQuoteImport;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -36,10 +37,8 @@ class CorplineDataMigration extends Command
         ];
 
         foreach ($filePaths as $filePath) {
-            $fullPath = storage_path('app/PDMigrations/'.$filePath);
-
             if (! Storage::disk('pdmigrations')->exists($filePath)) {
-                \Log::error('File does not exist: '.$filePath);
+                Log::error('File does not exist: '.$filePath);
 
                 continue;
             }
@@ -47,13 +46,13 @@ class CorplineDataMigration extends Command
             $fullPath = Storage::disk('pdmigrations')->path($filePath);
 
             try {
-                \Log::info('Business Quote data migrations started.');
+                Log::info('Business Quote data migrations started.');
 
                 Excel::import(new BusinessQuoteImport, $fullPath);
 
-                \Log::info('Business Quote data migrations succeeded.');
+                Log::info('Business Quote data migrations succeeded.');
             } catch (\Exception $e) {
-                \Log::error('Error importing file: '.$e->getMessage());
+                Log::error('Error importing file: '.$e->getMessage());
             }
         }
     }

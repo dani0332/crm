@@ -97,15 +97,15 @@ class Kernel extends ConsoleKernel
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
         $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 
-        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:05')
-        //     ->onOneServer()
-        //     ->withoutOverlapping(1)
-        //     ->onSuccess(function (Stringable $output) {
-        //         info('----------- Business Data Migrations Completed -----------' . $output);
-        //     })
-        //     ->onFailure(function (Stringable $output) {
-        //         info('----------- Business Data Migrations Failed -----------' . $output);
-        //     });
+        $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:05')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->onSuccess(function (Stringable $output) {
+                info('----------- Business Data Migrations Completed -----------'.$output);
+            })
+            ->onFailure(function (Stringable $output) {
+                info('----------- Business Data Migrations Failed -----------'.$output);
+            });
 
         $schedule->command('HealthDataMigration:cron')
             ->timezone('Asia/Dubai')
