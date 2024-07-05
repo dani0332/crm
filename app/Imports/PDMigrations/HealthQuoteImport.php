@@ -21,7 +21,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
         if (isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) {
             $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
             if ($quoteStatusId) {
-                info('HealthQuoteImport - Quote status found: '.$quoteStatusId);
+                info('HealthQuoteImport - Quote status found: ' . $quoteStatusId);
 
                 $healthData = [
                     'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
@@ -47,7 +47,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 if ($health) {
                     $health->update($healthData);
                     $this->syncQuote($health, $healthData);
-                    info('HealthQuoteImport - Quote found: '.$health->uuid.' - Quote updated');
+                    info('HealthQuoteImport - Quote found: ' . $health->uuid . ' - Quote updated');
                 }
             }
             info('HealthQuoteImport - Quote status not defined');
@@ -86,6 +86,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             DealStageEnum::FOLLOW_UP()->getToLowerCase() => QuoteStatusEnum::FollowedUp,
             DealStageEnum::LAST_FOLLOW_UP()->getToLowerCase() => QuoteStatusEnum::FollowedUp,
             DealStageEnum::FIRST_FOLLOW_UP()->getToLowerCase() => QuoteStatusEnum::FollowedUp,
+            DealStageEnum::FIRST_FOLLOWUP()->getToLowerCase() => QuoteStatusEnum::FollowedUp,
             DealStageEnum::IN_NEGOTIATION()->getToLowerCase() => QuoteStatusEnum::InNegotiation,
             DealStageEnum::ACCEPTED()->getToLowerCase() => QuoteStatusEnum::ApplicationPending,
             DealStageEnum::APPLICATION()->getToLowerCase() => QuoteStatusEnum::ApplicationPending,

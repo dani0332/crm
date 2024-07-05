@@ -95,6 +95,7 @@ final class DealStageEnum extends Enum
     const REMINDER_SENT = 'Reminder Sent';
     const AWAITING_DOCUMENTS = 'Awaiting Documents';
     const FINALIZING_TERMS_CONDITIONS = 'Finalizing Terms and Conditions';
+    const FIRST_FOLLOWUP = 'first followup';
 
     public function getToLowerCase(): string
     {
