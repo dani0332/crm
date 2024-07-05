@@ -55,7 +55,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     public function chunkSize(): int
     {
-        return 5000;
+        return 2000;
     }
 
     private function getQuoteStatusId($dealStatus, $dealStage)
@@ -113,7 +113,6 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             return $dealStageToQuoteStatus[strtolower($dealStage)];
         }
-
     }
 
     private function getAdvisorId($userName)
