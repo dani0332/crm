@@ -36,7 +36,7 @@ class HealthDataMigration extends Command
             // 'health-part5.xlsx',
             // 'health-part6.xlsx',
             // 'health-part7.xlsx',
-            'health_test.xlsx',
+            'health.xlsx',
         ];
 
         foreach ($filePaths as $filePath) {
