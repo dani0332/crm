@@ -19,7 +19,10 @@ class AlfredFollowupEmailJob implements ShouldQueue, StackableJob
      */
     private $customer;
 
-    private $myAlfredService;
+    public $tries = 3;
+    public $timeout = 30;
+    public $backoff = 10;
+
     public function __construct($customer)
     {
         $this->customer = $customer;
@@ -31,7 +34,7 @@ class AlfredFollowupEmailJob implements ShouldQueue, StackableJob
     public function handle(MyAlfredService $myAlfredService)
     {
         if (! empty($this->customer)) {
-            $this->myAlfredService->sendingAlfredFollowupEmail($this->customer);
+            $myAlfredService->sendingAlfredFollowupEmail($this->customer);
         }
 
         return true;
