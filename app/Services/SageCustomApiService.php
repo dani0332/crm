@@ -117,7 +117,7 @@ class SageCustomApiService
             return $responseData;
         }
         $updateAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
-        $responseData['url'] = $updateAPInvoicePaymentScheduleUrl;
+        $responseData['url'] = SageEnum::SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->bearerToken,
             'Content-Type' => 'application/json',
