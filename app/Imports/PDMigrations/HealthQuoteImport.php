@@ -54,6 +54,8 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                         'advisor_id' => $this->getadvisorId($row['deal_owner']),
                     ];
                     $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $data, HealthQuote::class);
+
+                    info('----------- CAPI Response Health migrations -----------' . json_encode($response));
                     if (isset($response->quoteUID)) {
                         $health = HealthQuote::where('uuid', $response->quoteUID);
                         $this->syncQuote($health, $healthData);
