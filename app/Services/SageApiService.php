@@ -1569,7 +1569,7 @@ class SageApiService
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making AP split payments patch to sage';
 
-                    $errorMessage = $postedResponse['error'] ?? null;
+                    $errorMessage = $resp['error'] ?? null;
                     Log::error('SAGE API : '.$errorMessage);
                     $returnMessage['error'] = $errorMessage;
 
@@ -2063,7 +2063,7 @@ class SageApiService
         return ['status' => true, 'message' => 'Policy Booked'];
     }
 
-    private function convertResponseToArray($response)
+    public function convertResponseToArray($response)
     {
         if (is_array($response)) {
             return $response;

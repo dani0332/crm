@@ -35,6 +35,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SageCustomApiService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -98,6 +99,7 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
+        //dd((new SageCustomApiService())->postOpenedAPInvoices());
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
