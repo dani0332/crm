@@ -20,6 +20,8 @@ class SageCustomApiService
     private mixed $sageCustomApiPassword;
     private mixed $sageCustomApiUserName;
     private string $sageBaseUrl;
+    private string $sageCustomApiVersion;
+    private string $sageCompany;
     private mixed $bearerToken = null;
     private mixed $maxAttempts = 10;
 
@@ -28,6 +30,8 @@ class SageCustomApiService
         $this->sageCustomApiUserName = env('SAGE_300_CUSTOM_API_USERNAME');
         $this->sageCustomApiPassword = env('SAGE_300_CUSTOM_API_USER_PASSWORD');
         $this->sageBaseUrl = env('SAGE_300_BASE_URL');
+        $this->sageCompany = env('SAGE_300_COMPANY');
+        $this->sageCustomApiVersion = env('SAGE_300_CUSTOM_API_VERSION');
         $this->bearerToken = Cache::store('redis')->get(SageEnum::SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY) ?? $this->getToken();
     }
 
@@ -37,9 +41,10 @@ class SageCustomApiService
             return $this->bearerToken;
         }
 
-        $loginUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_GET_AUTH_TOKEN_ENDPOINT;
+        $loginUrl = $this->sageBaseUrl.$this->sageCustomApiVersion.SageEnum::SAGE_CUSTOM_API_GET_AUTH_TOKEN_ENDPOINT;
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
+            'X-Database-Name' => $this->sageCompany,
         ])->post($loginUrl, [
             'username' => $this->sageCustomApiUserName,
             'password' => $this->sageCustomApiPassword,
@@ -73,9 +78,10 @@ class SageCustomApiService
             return $responseData;
         }
 
-        $getAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_GET_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
+        $getAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.$this->sageCustomApiVersion.SageEnum::SAGE_CUSTOM_API_GET_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->bearerToken,
+            'X-Database-Name' => $this->sageCompany,
         ])->get($getAPInvoicePaymentScheduleUrl);
 
         if ($response->successful()) {
@@ -116,11 +122,13 @@ class SageCustomApiService
 
             return $responseData;
         }
-        $updateAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.SageEnum::SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
-        $responseData['url'] = SageEnum::SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
+        $endPoint = $this->sageCustomApiVersion.SageEnum::SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
+        $updateAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.$endPoint;
+        $responseData['url'] = $endPoint;
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->bearerToken,
             'Content-Type' => 'application/json',
+            'X-Database-Name' => $this->sageCompany,
         ])->put($updateAPInvoicePaymentScheduleUrl, $aPInvoicePaymentsSchedule);
 
         if ($response->successful()) {

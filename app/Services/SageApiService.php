@@ -36,6 +36,7 @@ class SageApiService
     protected $sagePassword;
     protected $sageRequestUrl;
     protected $sageBatchNumber;
+    protected $sageCompany;
     protected $recursiveCallStatus;
 
     public function __construct()
@@ -44,6 +45,7 @@ class SageApiService
         $this->sageLogin = env('SAGE_300_LOGIN');
         $this->sagePassword = env('SAGE_300_PASSWORD');
         $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
+        $this->sageCompany = env('SAGE_300_COMPANY');
         $this->sageBatchNumber = '';
         $this->recursiveCallStatus = SageEnum::STATUS_SUCCESS;
     }
@@ -1543,6 +1545,7 @@ class SageApiService
                         $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
                         $aPInvoicePaymentSchedule->amtdue = $dueAmount;
                         $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
+                        $aPInvoicePaymentSchedule->audtorg = $this->sageCompany;
                     }
                 } else {
                     $returnMessage['status'] = false;
