@@ -27,17 +27,17 @@ class SyncCustomerJob implements ShouldQueue
     public $timeout = 30;
     public $backoff = 300;
     private $newCustomerId;
-    private $previousEmail;
+    private $email;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($newCustomerId, $previousEmail)
+    public function __construct($newCustomerId, $email)
     {
         $this->newCustomerId = $newCustomerId;
-        $this->previousEmail = $previousEmail;
+        $this->email = $email;
     }
 
     /**
@@ -47,26 +47,26 @@ class SyncCustomerJob implements ShouldQueue
      */
     public function handle()
     {
-        if (empty($this->newCustomerId) || empty($this->previousEmail)) {
-            info('SyncCustomerJob - missing data '.$this->newCustomerId.' - '.$this->previousEmail);
+        if (empty($this->newCustomerId) || empty($this->email)) {
+            info('SyncCustomerJob - missing data '.$this->newCustomerId.' - '.$this->email);
 
             return;
 
         }
 
-        info('----------- SyncCustomerJob Started ----------- '.$this->newCustomerId.' - '.$this->previousEmail);
+        info('----------- SyncCustomerJob Started ----------- '.$this->newCustomerId.' - '.$this->email);
         $modelClasses = $this->getQuoteModels();
         foreach ($modelClasses as $modelClass) {
             try {
-                $updateCount = $modelClass::where('email', $this->previousEmail)->update(['customer_id' => $this->newCustomerId]);
-                info('SyncCustomerJob - Updated '.$updateCount.' entries in '.$modelClass.' for '.$this->previousEmail.' - new customer id - '.$this->newCustomerId);
+                $updateCount = $modelClass::where('email', $this->email)->where('customer_id', '!=', $this->newCustomerId)->update(['customer_id' => $this->newCustomerId]);
+                info('SyncCustomerJob - Updated '.$updateCount.' entries in '.$modelClass.' for '.$this->email.' - new customer id - '.$this->newCustomerId);
             } catch (Exception $e) {
-                $error = 'SyncCustomerJob Error syncing entry: '.$this->newCustomerId.' - '.$this->previousEmail.' - '.$modelClass.' - '.$e->getMessage();
+                $error = 'SyncCustomerJob Error syncing entry: '.$this->newCustomerId.' - '.$this->email.' - '.$modelClass.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
             }
         }
 
-        info('----------- SyncCustomerJob Completed ----------- '.$this->newCustomerId.' - '.$this->previousEmail);
+        info('----------- SyncCustomerJob Completed ----------- '.$this->newCustomerId.' - '.$this->email);
     }
 
     public function middleware()

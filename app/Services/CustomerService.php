@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
-use App\Jobs\SyncCustomerJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 
@@ -251,8 +250,6 @@ class CustomerService extends BaseService
                 }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
             }
-
-            SyncCustomerJob::dispatch($customer->id, $previousEmail);
 
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
             $lead->update(['mobile_no' => $value]);
