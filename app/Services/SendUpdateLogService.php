@@ -465,6 +465,7 @@ class SendUpdateLogService
         }
 
         return [
+            'booking_date' => $quote->policy_booking_date ?? null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
