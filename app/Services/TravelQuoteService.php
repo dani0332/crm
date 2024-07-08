@@ -90,15 +90,15 @@ class TravelQuoteService extends BaseService
             'tqr.destination_id',
             'nationality.country_name as destination_id_text',
             'tqr.is_ecommerce',
-            'tqr.renewal_expiry_date',
             'tqr.renewal_batch',
             'tqr.renewal_import_code',
             'tqr.previous_quote_policy_number',
             DB::raw('DATE_FORMAT(tqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+            DB::raw('DATE_FORMAT(tqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
             'tqr.device',
             'tqr.previous_quote_policy_premium',
             'tqr.policy_issuance_date',
-            DB::raw('DATE_FORMAT(tqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
+            'tqr.policy_start_date',
             'tqr.customer_id',
             'tqr.parent_duplicate_quote_id',
             'tqr.has_arrived_destination',
@@ -128,7 +128,15 @@ class TravelQuoteService extends BaseService
             'ent.company_address',
             'qrem.entity_type_code',
             'ent.industry_type_code',
-            'ent.emirate_of_registration_id'
+            'ent.emirate_of_registration_id',
+            'tqr.price_vat_not_applicable',
+            'tqr.price_vat_applicable',
+            'tqr.price_with_vat',
+            'tqr.vat',
+            'tqr.insurer_quote_number',
+            'tqr.policy_issuance_status_id',
+            'tqr.policy_issuance_status_other',
+            'tqr.policy_booking_date',
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -503,9 +511,25 @@ class TravelQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return TravelQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'child', 'parent'])->first();
+        return TravelQuote::where('id', $id)->with([
+            'child',
+            'parent',
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                // This condition added to get the latest payment first for fetching Booking Details accordingly
+                $payment->orderBy('created_at', 'desc');
+            },
+        ])->first();
     }
 
     public function getSelectedLostReason($id)
@@ -665,7 +689,7 @@ class TravelQuoteService extends BaseService
                 $title = 'Price';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent Ref-ID';
+                $title = 'PARENT REF-ID';
                 break;
             case 'customer_type':
                 $title = 'Customer Type';
