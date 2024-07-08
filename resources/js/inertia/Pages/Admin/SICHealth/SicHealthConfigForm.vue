@@ -1,4 +1,5 @@
 <script setup>
+
 const props = defineProps({
     sicHealthConfig: Object,
     nationalities: Object,
@@ -8,6 +9,8 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
+let errors = reactive({
+});
 
 const SICHealthConfigForm = useForm({
   id : props.sicHealthConfig?.id ?? null,
@@ -28,7 +31,7 @@ const subTeamOptions = [
   { value: 'Entry-Level', label: 'Entry-Level'},
 ];
 function onSubmit(isValid) {
-    console.log("test");
+
   if (isValid) {
     let method = 'post';
     let url = route('admin.sic-health-config-store')
@@ -59,10 +62,22 @@ const memberCategoriesOptions = computed(() => {
     label: cat.text,
   }));
 });
+const ageRangeValid = computed(() => {
+      const minAge = parseInt(SICHealthConfigForm.min_age);
+      const maxAge = parseInt(SICHealthConfigForm.max_age);
+      if ( minAge > maxAge) {
+        errors.min_age = 'Min Age must be less than or equal to Max Age';
+        return false;
+      }
+      else {
+        errors.min_age = null;
+      }
+      return true;
+    });
 </script>
 <template>
-    <Head :title=" 'SIC Health Configuration'" />
-    <div class="card p-4 shadow-md rounded-lg">
+    <Head :title="'SIC Health Configuration'" />
+    <div class="card p-4 shadow-md rounded-lg mb-4">
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
         SIC Health Configuration
@@ -73,7 +88,7 @@ const memberCategoriesOptions = computed(() => {
         </Link>
       </div>
     </div>
-    <x-divider class="my-4" />
+    <x-divider class="my-4 " />
     <x-form @submit="onSubmit" :auto-focus="false">
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="col-span-1 sm:col-span-1">
@@ -87,8 +102,8 @@ const memberCategoriesOptions = computed(() => {
                       v-model="SICHealthConfigForm.min_age"
                       placeholder="Min Age"
                       class="w-full"
-                      :rules="[isRequired]"
-                      :error="$page.props.errors.min_age"
+                      :rules="[isRequired,ageRangeValid]"
+                      :error="errors.min_age"
                     />
                   </x-field>
                   <x-field label="Max Age" required>
@@ -97,7 +112,7 @@ const memberCategoriesOptions = computed(() => {
                       class="w-full"
                       placeholder="Max Age"
                       :rules="[isRequired]"
-                      :error="$page.props.errors.max_age"
+                      :error="errors.max_age"
                     />
                   </x-field>
               </div>
@@ -112,7 +127,7 @@ const memberCategoriesOptions = computed(() => {
                     <ComboBox
                         v-model="SICHealthConfigForm.plan_types"
                         :options="subTeamOptions"
-                    :multiple="true"
+                        :multiple="true"
                         :autocomplete="true"
                         :error="SICHealthConfigForm?.errors.plan_types"
                         />
