@@ -58,8 +58,16 @@ class SyncCustomerJob implements ShouldQueue
         $modelClasses = $this->getQuoteModels();
         foreach ($modelClasses as $modelClass) {
             try {
-                $updateCount = $modelClass::where('email', $this->email)->where('customer_id', '!=', $this->newCustomerId)->update(['customer_id' => $this->newCustomerId]);
-                info('SyncCustomerJob - Updated '.$updateCount.' entries in '.$modelClass.' for '.$this->email.' - new customer id - '.$this->newCustomerId);
+                $entries = $modelClass::where('email', $this->email)->where('customer_id', '!=', $this->newCustomerId)->get();
+                if(!empty($entries)) {
+                    foreach ($entries as $entry) {
+                        $entry->customer_id = $this->newCustomerId;
+                        $entry->save();
+                    }
+
+                    info('SyncCustomerJob - Updated ' . count($entries) . ' entries in ' . $modelClass . ' for ' . $this->email . ' - new customer id - ' . $this->newCustomerId);
+                }
+                
             } catch (Exception $e) {
                 $error = 'SyncCustomerJob Error syncing entry: '.$this->newCustomerId.' - '.$this->email.' - '.$modelClass.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
