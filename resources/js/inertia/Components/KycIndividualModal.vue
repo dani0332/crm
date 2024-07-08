@@ -303,7 +303,7 @@ onMounted(() => {
         label="Mobile number"
         placeholder="Mobile number"
         :rules="[isRequired]"
-        readonly
+        :readonly="true"
       />
 
       <x-input
@@ -312,7 +312,7 @@ onMounted(() => {
         placeholder="Email"
         type="email"
         :rules="[isRequired]"
-        readonly
+        :readonly="true"
       />
 
       <x-input
