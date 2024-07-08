@@ -59,15 +59,15 @@ class SyncCustomerJob implements ShouldQueue
         foreach ($modelClasses as $modelClass) {
             try {
                 $entries = $modelClass::where('email', $this->email)->where('customer_id', '!=', $this->newCustomerId)->get();
-                if(!empty($entries)) {
+                if (! empty($entries)) {
                     foreach ($entries as $entry) {
                         $entry->customer_id = $this->newCustomerId;
                         $entry->save();
                     }
 
-                    info('SyncCustomerJob - Updated ' . count($entries) . ' entries in ' . $modelClass . ' for ' . $this->email . ' - new customer id - ' . $this->newCustomerId);
+                    info('SyncCustomerJob - Updated '.count($entries).' entries in '.$modelClass.' for '.$this->email.' - new customer id - '.$this->newCustomerId);
                 }
-                
+
             } catch (Exception $e) {
                 $error = 'SyncCustomerJob Error syncing entry: '.$this->newCustomerId.' - '.$this->email.' - '.$modelClass.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
