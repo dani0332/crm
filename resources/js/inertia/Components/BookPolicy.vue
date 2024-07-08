@@ -379,6 +379,14 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
+
+const isPolicyCancelledPending = computed(() => {
+  const { quote_status_id } = props.quote;
+  const { PolicyCancelled, CancellationPending, PolicyCancelledReissued } = page.props.quoteStatusEnum;
+
+  return [PolicyCancelled, CancellationPending, PolicyCancelledReissued].includes(quote_status_id);
+});
+
 </script>
 
 <template>
@@ -689,6 +697,20 @@ const showInsufficientPaymentAlert = () => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
+            <div v-if="isPolicyCancelledPending" class="flex justify-end"> 
+              <x-tooltip>
+                <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
+                  Edit
+                </x-button>
+                <x-button size="sm" color="orange" class="mt-4" disabled>
+                  Send and Book Policy 
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</span>
+                </template>
+              </x-tooltip>
+            </div>
+
             <div v-if="showActionButtons" class="flex justify-end">
               <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
