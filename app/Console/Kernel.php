@@ -32,8 +32,6 @@ class Kernel extends ConsoleKernel
         Commands\AlfredFollowUpSchedulerCommand::class,
     ];
 
-    private $appEnv = '';
-
     /**
      * Define the application's command schedule.
      *
@@ -41,7 +39,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $this->appEnv = config('constants.APP_ENV');
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
@@ -73,10 +70,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(29)
             ->onSuccess(function (Stringable $output) {
-                info('----------- QuoteSyncJob Completed -----------' . $output);
+                info('----------- QuoteSyncJob Completed -----------'.$output);
             })
             ->onFailure(function (Stringable $output) {
-                info('----------- QuoteSyncJob Failed -----------' . $output);
+                info('----------- QuoteSyncJob Failed -----------'.$output);
             });
 
         $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(30);
@@ -95,7 +92,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
-        $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
+        // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 
         // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:05')
         //     ->onOneServer()
@@ -113,10 +110,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->onSuccess(function (Stringable $output) {
-                info('----------- Health Data Migrations Completed -----------' . $output);
+                info('----------- Health Data Migrations Completed -----------'.$output);
             })
             ->onFailure(function (Stringable $output) {
-                info('----------- Health Data Migrations Failed -----------' . $output);
+                info('----------- Health Data Migrations Failed -----------'.$output);
             });
 
         // $schedule->command('PersonalQuoteDataMigration:cron')
@@ -139,7 +136,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__ . '/Commands');
+        $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
     }
