@@ -32,8 +32,6 @@ class Kernel extends ConsoleKernel
         Commands\AlfredFollowUpSchedulerCommand::class,
     ];
 
-    private $appEnv = '';
-
     /**
      * Define the application's command schedule.
      *
@@ -41,7 +39,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $this->appEnv = config('constants.APP_ENV');
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
@@ -95,7 +92,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
-        $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
+        // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 
         // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:05')
         //     ->onOneServer()
@@ -107,17 +104,17 @@ class Kernel extends ConsoleKernel
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
 
-        // $schedule->command('HealthDataMigration:cron')
-        //     ->timezone('Asia/Dubai')
-        //     ->dailyAt('00:40')
-        //     ->onOneServer()
-        //     ->withoutOverlapping()
-        //     ->onSuccess(function (Stringable $output) {
-        //         info('----------- Health Data Migrations Completed -----------'.$output);
-        //     })
-        //     ->onFailure(function (Stringable $output) {
-        //         info('----------- Health Data Migrations Failed -----------'.$output);
-        //     });
+        $schedule->command('HealthDataMigration:cron')
+            ->timezone('Asia/Dubai')
+            ->dailyAt('12:10')
+            ->onOneServer()
+            ->withoutOverlapping()
+            ->onSuccess(function (Stringable $output) {
+                info('----------- Health Data Migrations Completed -----------'.$output);
+            })
+            ->onFailure(function (Stringable $output) {
+                info('----------- Health Data Migrations Failed -----------'.$output);
+            });
 
         // $schedule->command('PersonalQuoteDataMigration:cron')
         //     ->timezone('Asia/Dubai')
