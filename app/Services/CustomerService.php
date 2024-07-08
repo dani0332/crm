@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
+use App\Jobs\SyncCustomerJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
-use App\Jobs\SyncCustomerJob;
 
 class CustomerService extends BaseService
 {
