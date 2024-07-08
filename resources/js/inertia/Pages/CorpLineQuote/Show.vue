@@ -43,6 +43,7 @@ const props = defineProps({
   documentTypeCodes: Array,
   linkedQuoteDetails: Array,
   bookPolicyDetails: Array,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -1160,7 +1161,7 @@ watch(
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['CLPD', 'CLPDR', 'CLDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>

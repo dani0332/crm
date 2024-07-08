@@ -99,7 +99,7 @@ class JetskiQuoteController extends Controller
 
         $quote->load('documents.createdBy');
 
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::JETSKI->id());
+        @[$documentTypes, $documentTypeCodes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::JETSKI->id());
 
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
@@ -154,6 +154,7 @@ class JetskiQuoteController extends Controller
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
             'documentTypeCodes' => $documentTypeCodes,
+            'paymentDocument' => $paymentDocument
         ]);
     }
 

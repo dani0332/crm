@@ -170,7 +170,7 @@ class LifeController extends Controller
         $isQuoteDocumentEnabled = $this->lifeQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = $this->lifeQuoteService->getQuoteDocuments($this->genericModel->modelType, $quote->id);
         $displaySendPolicyButton = $this->lifeQuoteService->displaySendPolicyButton($quote, $quoteDocuments, self::TYPE_ID);
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Life);
+        @[$documentTypes, $documentTypeCodes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Life);
 
         $customerAdditionalContacts = $this->lifeQuoteService->getAdditionalContacts($quote->customer_id, $quote->mobile_no);
         $activities = $this->lifeQuoteService->getActivityByLeadId($quote->id, strtolower($this->genericModel->modelType));
@@ -214,6 +214,7 @@ class LifeController extends Controller
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
             ],
+            'paymentDocument' => $paymentDocument
         ]);
     }
 

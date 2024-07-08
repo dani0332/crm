@@ -274,7 +274,7 @@ class AmtController extends Controller
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
         $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)->latest()->first();
-        @[$documentTypes,, $businessDocumentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id(), $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::GroupMedical);
+        @[$documentTypes, $businessDocumentTypeCodes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id(), $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::GroupMedical);
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $sendUpdateOptions = [];
@@ -356,6 +356,7 @@ class AmtController extends Controller
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $record->payments->toArray() ?? [],
+            'paymentDocument' => $paymentDocuments
         ]);
     }
 

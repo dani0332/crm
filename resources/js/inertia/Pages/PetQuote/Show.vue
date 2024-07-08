@@ -54,6 +54,7 @@ const props = defineProps({
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -931,7 +932,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['PPD', 'PPDR', 'PDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>

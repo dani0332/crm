@@ -60,6 +60,7 @@ defineProps({
   aboveAgeMembers: Number,
   documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  paymentDocument: Array
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -2495,7 +2496,7 @@ watch(
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['TPD', 'TPDR', 'TDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>
