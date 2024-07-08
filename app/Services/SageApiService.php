@@ -671,7 +671,7 @@ class SageApiService
                     // This Split Invoice for Reverse and Correction need to be tested
                     $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
-                        'lastIteration' => 7, 
+                        'lastIteration' => 7,
                         'startingStep' => 9,
                         'totalSteps' => 21,
                         'batchNumber' => $invoiceResponse->BatchNumber,
@@ -976,7 +976,7 @@ class SageApiService
             if (($isARInvoicesCalls && empty($postedResponse['Invoices'][0]['InvoicePaymentSchedules'])) || (! $isARInvoicesCalls && $postedResponse['status'] == false)) {
                 $returnMessage['status'] = false;
                 $returnMessage['message'] = 'Error while getting '.$processDetails['invoiceType'].' Split paymets from sage';
-                if (!$isARInvoicesCalls) {
+                if (! $isARInvoicesCalls) {
                     $returnMessage['error'] = $postedResponse['error'];
                 }
                 logger()->error('Book Update - Sage API Failed - Response: Error while getting '.$processDetails['invoiceType'].' Split paymets from sage');
@@ -1073,8 +1073,9 @@ class SageApiService
                         json_decode($resp, true)['error']['message']['value'] : 'Error while making '.$processDetails['invoiceType'].' Split paymets patch to sage';
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = $responseMessage;
-                    if (!$isARInvoicesCalls) 
+                    if (! $isARInvoicesCalls) {
                         $returnMessage['error'] = $postedResponse['error'] ?? null;
+                    }
                     logger()->error('Book Update - Sage API Failed - Response: '.$responseMessage);
 
                     return $returnMessage;
