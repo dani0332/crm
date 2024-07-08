@@ -379,6 +379,18 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
+const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusableTemplate();
+
+const isSsowingTransactionPaymentStatus = computed(() => {
+  const policyStatuses = [
+    page.props.quoteStatusEnum.PolicyBooked,
+    page.props.quoteStatusEnum.CancellationPending,
+    page.props.quoteStatusEnum.PolicyCancelled,
+    page.props.quoteStatusEnum.PolicyCancelledReissued
+  ];
+  return policyStatuses.includes(props.quote.quote_status_id);
+});
+
 </script>
 
 <template>
@@ -451,9 +463,7 @@ const showInsufficientPaymentAlert = () => {
                   </template>
                 </x-tooltip>
                 <template
-                  v-if="
-                    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked
-                  "
+                  v-if="isSsowingTransactionPaymentStatus"
                 >
                   <x-tooltip position="center">
                     <dd class="border-b border-dotted border-black">
