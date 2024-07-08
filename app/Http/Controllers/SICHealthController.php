@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Repositories\NationalityRepository;
 use App\Services\LookupService;
 use App\Services\SICHealthConfigService;
-use App\Repositories\NationalityRepository;
+use Illuminate\Http\Request;
 
 class SICHealthController extends Controller
 {
     //
     private $sicHealthConfigService;
-public function __construct(SICHealthConfigService $sicHealthConfigService)
+    public function __construct(SICHealthConfigService $sicHealthConfigService)
     {
         $this->sicHealthConfigService = $sicHealthConfigService;
     }
 
-    public function sicHealthConfig(){
+    public function sicHealthConfig()
+    {
         $nationalities = NationalityRepository::withActive()->get();
-        $sicHealthConfig =   $this->sicHealthConfigService->getEntity();
+        $sicHealthConfig = $this->sicHealthConfigService->getEntity();
+
         return inertia('Admin/SICHealth/SicHealthConfigForm', [
             'nationalities' => $nationalities,
             'sicHealthConfig' => $sicHealthConfig,
@@ -26,11 +28,11 @@ public function __construct(SICHealthConfigService $sicHealthConfigService)
         ]);
     }
 
-    public function sicHealthConfigStore(Request $request){
-        $this->sicHealthConfigService->saveEntity($request->id ?? null,(object)request()->all());
+    public function sicHealthConfigStore(Request $request)
+    {
+        $this->sicHealthConfigService->saveEntity($request->id ?? null, (object) request()->all());
 
-
-        return redirect()->route('admin.sic-health-config')->with('success','SIC Health Config saved successfully');
+        return redirect()->route('admin.sic-health-config')->with('success', 'SIC Health Config saved successfully');
 
     }
 }
