@@ -19,7 +19,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     public function model(array $row)
     {
-        $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('M Y');
+        $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('MY');
         if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) && strpos($dealBatch, '2024') !== false) {
             $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
             if ($quoteStatusId) {
@@ -33,6 +33,7 @@ class HealthQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 // Determine the search criteria based on the available identifiers
                 $searchCriteria = [];
 
+                $searchCriteria = ['renewal_batch' => $dealBatch];
                 // Only add 'code' if 'deal_cdb_id' is set
                 if (isset($row['deal_cdb_id'])) {
                     $healthData['advisor_id'] = $this->getAdvisorId($row['deal_owner']);
