@@ -37,12 +37,12 @@ class HealthDataMigration extends Command
             // 'health-part5.xlsx',
             // 'health-part6.xlsx',
             // 'health-part7.xlsx',
-            'health.xlsx',
+            'health-new.xlsx',
         ];
 
         foreach ($filePaths as $filePath) {
-            if (! Storage::disk('pdmigrations')->exists($filePath)) {
-                Log::error('File does not exist: '.$filePath);
+            if (!Storage::disk('pdmigrations')->exists($filePath)) {
+                Log::error('File does not exist: ' . $filePath);
 
                 continue;
             }
@@ -56,7 +56,7 @@ class HealthDataMigration extends Command
 
                 Log::info('Health Quote data migrations succeeded');
             } catch (\Exception $e) {
-                Log::error('Error importing file: '.$e->getMessage());
+                Log::error('Error importing file: ' . $e->getMessage());
             }
         }
     }
