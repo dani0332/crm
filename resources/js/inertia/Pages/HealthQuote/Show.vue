@@ -1,6 +1,6 @@
 <script setup>
+import {computed, reactive, ref} from 'vue';
 import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
-import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from './../../Components/MigratePayment.vue';
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
@@ -80,6 +80,7 @@ const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 
 const showPlans = ref(!props.hashCollapsibleStatuses);
+const contactLoader = ref(false);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -102,6 +103,9 @@ const fixedValue = number => {
     });
   }
 };
+const confirmData = reactive({
+    contactPrimary: null,
+});
 
 const allowStatusUpdate = computed(() => {
   return (
@@ -919,7 +923,9 @@ const onPlanFiltersSubmit = () => {
     );
   });
   modals.planFilters = false;
-  planDataTable.value.updatePage(1);
+  if(planDataTable.value) {
+      planDataTable.value.updatePage(1);
+  }
 };
 
 const onPlanFiltersReset = () => {
@@ -1817,7 +1823,6 @@ watch(
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
             <h3 class="text-xl font-semibold text-primary-800">
-              Health Detail
             </h3>
           </div>
         </template>
@@ -1825,28 +1830,7 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${quote.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-              Duplicate Lead
-            </x-button>
-
-            <Link :href="route('health.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Health List
-              </x-button>
-            </Link>
-
-            <Link :href="route('health.edit', quote.uuid)">
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
+         
           </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">

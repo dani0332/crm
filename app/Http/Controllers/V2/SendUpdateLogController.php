@@ -136,7 +136,7 @@ class SendUpdateLogController extends Controller
 
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code ?? null;
-        $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
+        $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode);
         $quoteDocuments = $sendUpdateLog->documents;
         $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
@@ -160,6 +160,10 @@ class SendUpdateLogController extends Controller
             $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments[0]['insurance_provider_id']);
             // it will get all invoice_descriptions for booking details
             $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
+            $sendUpdateLogInvoices = SendUpdateLogRepository::getSendUpdateLogInvoices($quoteTypeId, $realQuote->uuid);
+            if (! empty($sendUpdateLogInvoices)) {
+                $paymentInvoices = array_merge($paymentInvoices->toArray(), $sendUpdateLogInvoices->toArray());
+            }
         }
 
         if ($sendUpdateLog->is_booking_filled) {

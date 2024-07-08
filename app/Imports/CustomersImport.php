@@ -84,7 +84,7 @@ class CustomersImport implements OnEachRow
                 $customerId = $newCustomer->id;
             }
 
-            $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email, 'CORPORATE', 'corporate-myalfred-we');
+            $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email, 'CORPORATE', 'corporate-myalfred-we', true);
             info('CustomersImport responseExtend: '.$responseExtend);
 
             $newQuoteCustomer = new QuoteCustomer();

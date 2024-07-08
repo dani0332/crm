@@ -6,6 +6,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
@@ -50,9 +51,12 @@ class QuoteDocumentService extends BaseService
         return $query->orderBy('sort_order', 'asc')->get();
     }
 
-    public function getQuoteDocumentsForUploadByCategory($category)
+    public function getSendUpdateDocumentTypes(): array
     {
-        return DocumentType::where(['category' => $category, 'is_active' => true])->get();
+        return DocumentType::where(['category' => SendUpdateLogStatusEnum::SEND_UPDATE, 'is_active' => true])
+            ->orderBy('sort_order')
+            ->get()
+            ->toArray();
     }
 
     /**
