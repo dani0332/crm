@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
 use App\Factories\AllocationFactory;
+use App\Http\Requests\ActivityApiRequest;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\SICWorkflowRequest;
@@ -14,6 +15,7 @@ use App\Models\MyAlFredUser;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class ApiService
 {
@@ -164,26 +166,11 @@ class ApiService
 
     public function createActivity($request)
     {
-        if ($request->input('title') === null || $request->input('title') === '') {
-            return response()->json(['message' => 'Activity Title Required'], 422);
-        }
-        if ($request->input('description') === null || $request->input('description') === '') {
-            return response()->json(['message' => 'Activity Description Required'], 422);
-        }
-        if ($request->input('due_date') === null || $request->input('due_date') === '') {
-            return response()->json(['message' => 'Activity Due Date Required'], 422);
-        }
-        if ($request->input('assignee_id') === null || $request->input('assignee_id') === '') {
-            return response()->json(['message' => 'Activity Assignee ID Required'], 422);
-        }
-        if ($request->input('entityUId') === null || $request->input('entityUId') === '') {
-            return response()->json(['message' => 'Entity UUID Required'], 422);
-        }
-        if ($request->input('entityId') === null || $request->input('entityId') === '') {
-            return response()->json(['message' => 'Entity ID Required'], 422);
-        }
-        if ($request->input('modelType') === null || $request->input('modelType') === '') {
-            return response()->json(['message' => 'Model Type Required'], 422);
+        $rules = ActivityApiRequest::rules();
+        $messages = ActivityApiRequest::messages();
+        $validator = Validator::make($request->all(), $rules, $messages);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first()], 422);
         }
         $record = '';
         if (isset($request->entityId)) {
