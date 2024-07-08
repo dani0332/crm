@@ -1003,7 +1003,7 @@ class SageApiService
                         $invoicePaymentSchedule['AmountDue'] = $amountDue;
                         $invoicePaymentSchedule['DueDate'] = $dueDate;
                     } else {
-                        $invoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format('Ymd');
+                        $invoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
                         $invoicePaymentSchedule->amtdue = $amountDue;
                         $invoicePaymentSchedule->amtduehc = $amountDue;
                     }
@@ -1049,6 +1049,7 @@ class SageApiService
                     $payLoadOptions =
                     $postedResponse = json_decode($sageLogArray[$extras['startingStep']]['response'], true);
                 } else {
+                    $isLiveApiCall = true;
                     if ($isARInvoicesCalls) {
                         $payLoadOptions = $postedResponse;
                         $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
@@ -1080,7 +1081,7 @@ class SageApiService
                 }
 
                 if ($isLiveApiCall) {
-                    $this->logSageApiCall($postedResponse, $resp, $quoteObject, $extras['startingStep'], $extras['totalSteps']);
+                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps']);
                 }
             }
 
