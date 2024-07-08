@@ -30,13 +30,6 @@ class HealthDataMigration extends Command
     public function handle()
     {
         $filePaths = [
-            // 'health-part1.xlsx',
-            // 'health-part2.xlsx',
-            // 'health-part3.xlsx',
-            // 'health-part4.xlsx',
-            // 'health-part5.xlsx',
-            // 'health-part6.xlsx',
-            // 'health-part7.xlsx',
             'health-new.xlsx',
         ];
 

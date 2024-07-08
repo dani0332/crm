@@ -106,7 +106,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('HealthDataMigration:cron')
             ->timezone('Asia/Dubai')
-            ->dailyAt('12:05')
+            ->dailyAt('12:10')
             ->onOneServer()
             ->withoutOverlapping()
             ->onSuccess(function (Stringable $output) {
