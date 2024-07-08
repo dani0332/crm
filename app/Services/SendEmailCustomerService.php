@@ -749,13 +749,23 @@ class SendEmailCustomerService extends BaseService
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
+                        'mobileNo' => $emailData->advisorMobileNo,
                     ],
                 ],
                 'tags' => [
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
+                'bcc' => [],
             ];
+
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::DIS_INBOX_EMAIL_BCC)->first();
+            if ($additionalBcc) {
+                $bodyData['bcc'][] = [
+                    'email' => $additionalBcc->value,
+                ];
+            }
+            info('sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
 
             if ($emailData->advisorEmail) {
                 $bodyData['cc'] = [
@@ -765,7 +775,9 @@ class SendEmailCustomerService extends BaseService
                     ],
                 ];
             }
+
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+            info('sendBookPolicyDocumentsEmail ---- body '.$body);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
