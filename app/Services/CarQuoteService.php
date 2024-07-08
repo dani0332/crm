@@ -585,6 +585,7 @@ class CarQuoteService extends BaseService
     public function getEntityPlain($id)
     {
         return CarQuote::where('id', $id)->with([
+            'insuranceProviderDetails',
             'payments' => function ($payment) {
                 $payment->with([
                     'paymentSplits' => function ($paymentSplit) {
