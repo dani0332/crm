@@ -298,7 +298,7 @@ onMounted(() => {
         placeholder="Mobile number"
         type="number"
         :rules="[isRequired]"
-        :disabled="true"
+        readonly
       />
 
       <x-input
@@ -307,7 +307,7 @@ onMounted(() => {
         placeholder="Email"
         type="email"
         :rules="[isRequired]"
-        :disabled="true"
+        readonly
       />
 
       <div>
