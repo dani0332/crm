@@ -140,6 +140,8 @@ const bpForm = useForm({
   modelType: props.modelType,
   transaction_payment_status_tool_tip: page.props.bookPolicyDetails.paymentStatusTooltip,
   line_of_business: page.props?.bookPolicyDetails?.lineOfBusiness,
+  isPolicyCancelledOrPending: page.props?.bookPolicyDetails?.isPolicyCancelledOrPending,
+  isPolicyCancelledOrPendingToolTtip: page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip
 });
 
 let is_lacking_payment = ref(page.props.bookPolicyDetails.isLackingOfPayment || false);
@@ -379,13 +381,6 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
-
-const isPolicyCancelledPending = computed(() => {
-  const { quote_status_id } = props.quote;
-  const { PolicyCancelled, CancellationPending, PolicyCancelledReissued } = page.props.quoteStatusEnum;
-
-  return [PolicyCancelled, CancellationPending, PolicyCancelledReissued].includes(quote_status_id);
-});
 
 const isShowingTransactionPaymentStatus = computed(() => {
   const policyStatuses = [
@@ -705,7 +700,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
-            <div v-if="isPolicyCancelledPending" class="flex justify-end"> 
+            <div v-if="bpForm.isPolicyCancelledOrPending" class="flex justify-end"> 
               <x-tooltip>
                 <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
                   Edit
@@ -714,7 +709,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                   Send and Book Policy 
                 </x-button>
                 <template #tooltip>
-                  <span class="custom-tooltip-content">This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</span>
+                  <span class="custom-tooltip-content">{{isPolicyCancelledOrPendingToolTtip}}</span>
                 </template>
               </x-tooltip>
             </div>

@@ -23,6 +23,7 @@ use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\CssSelector\XPath\Extension\FunctionExtension;
 
 trait GenericQueriesAllLobs
 {
@@ -255,6 +256,9 @@ trait GenericQueriesAllLobs
         $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
         $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails;
         $bookPolicyDetails['policyCancelled'] = false;
+        $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
+        $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_MESSAGE;
+
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -632,5 +636,10 @@ trait GenericQueriesAllLobs
                 }
             }
         }
+    }
+
+    private function isPolicyCancelledOrPending($quote){
+        $quote_status_id =  $quote->quote_status_id;
+        return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 }
