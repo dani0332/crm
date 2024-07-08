@@ -394,103 +394,16 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
                             //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
                         }
-                        DB::beginTransaction();
-                        try {
-                            if (empty($paymentSplit->verified_at)) {
-                                $paymentSplit->verified_at = now();
-                                $paymentSplit->verified_by = Auth::user()->id;
-                            }
-                            $paymentSplit->collection_amount = $splitAmount;
-                            $paymentSplit->save();
-                            $parentPayment = $paymentSplit->payment;
-                            /* Create payment receipt for broker */
-                            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
-                                ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::CreditApproval]) &&
-                                in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])
-                            ) {
-                                app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $paymentSplit);
-                            }
-                            $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
-                            $parentPayment->save();
-
-                            if ($parentPayment->send_update_log_id) {
-                                SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
-                                    'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
-                                ]);
-                            }
-                            DB::commit();
-                        } catch (Exception $exception) {
-                            DB::rollBack();
-                        }
+                        // process split payment approve
+                        app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType,$request->quote_id, $paymentSplit->id, $splitAmount);
+                        
+                        
                     }
                 }
             }
-
-            $canCaptureEp = false;
-            // On failure, the capture button will render again and the user can try again
-            DB::beginTransaction();
-            try {
-                $masterPaymentStatus = $firstPayment->payment_status_id;
-                $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                    PaymentStatusEnum::PAID,
-                    PaymentStatusEnum::CAPTURED,
-                ])->where('code', $firstPayment->code)->count();
-
-                $totalPartialPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                    PaymentStatusEnum::PARTIAL_CAPTURED,
-                    PaymentStatusEnum::PARTIALLY_PAID,
-                ])->where('code', $firstPayment->code)->count();
-
-                if ($totalPaidPayments == $firstPayment->total_payments) {
-                    $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
-                } elseif ($totalPartialPaidPayments > 0) {
-                    $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
-                }
-                $firstPayment->update([
-                    'is_approved' => 1,
-                    'payment_status_id' => $masterPaymentStatus,
-                    'updated_by' => Auth::user()->id,
-                ]);
-                $successMessage = 'Transaction approved';
-                $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
-                if ($totalApproved == $quoteModel->payments()->count()) {
-                    if ($request->send_update_id) {
-                        $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
-                    } else {
-                        $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
-                    }
-                    $quoteModel->save();
-                    $canCaptureEp = true;
-                    // Berlin Service - Extend Customer Subscription on Shaji request
-                    $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
-                    if ($customerData) {
-                        $quoteOptions = QuoteTypeId::getOptions();
-                        $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
-                        info('Transaction Approved responseExtend: '.$responseExtend);
-                    }
-                    //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
-                    // dispatch(new MAWelcomeJob($parentQuoteModel->first_name, $parentQuoteModel->last_name, $parentQuoteModel->email, $parentQuoteModel->mobile_no, 'IMCRM', ''));
-
-                    //Create duplicate lead for TRAVEL
-                    if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $request->send_update_id) {
-                        if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
-                            $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
-                        }
-                    }
-                }
-                if (! $request->send_update_id) {
-                    $this->updateLeadStatus($firstPayment); //update lead status
-                }
-                DB::commit();
-            } catch (Exception $exception) {
-                $canCaptureEp = false;
-                DB::rollBack();
-            }
-
-            if ($canCaptureEp) {
-                // capture EP and send documents
-                EmbeddedProductRepository::capturePayment($request->quote_id, $request->modelType);
-            }
+            // process master payment approve
+            $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType,$request->quote_id, $masterPayment, $request->send_update_id);
+            
         }
 
         return $successMessage;
