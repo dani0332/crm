@@ -334,7 +334,7 @@ class SageApiService
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
                     'price_vat_applicable' => $getingPaymentDetails['payment']->total_price,
-                    'price_with_vat' => $getingPaymentDetails['payment']->total_amount,
+                    'price_with_vat' => abs($sendUpdateLog->price_with_vat),
                 ];
 
                 if (isset($getingPaymentDetails['mainLeadDetails'])) {
