@@ -33,7 +33,9 @@ class CarQuoteRequestDetail extends Model implements AuditableContract
     {
         $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return isValidDate($table)
+            ? $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format)
+            : $table;
     }
 
     public function assignedBy()

@@ -1398,22 +1398,22 @@ onUpdated(() => {
 
           <TabPanel>
             <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4 p-4">
-                <div class="grid sm:grid-cols-4" v-if="(props.plan.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []).length > 0">
+                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []).length > 0">
                     <dt class="font-medium">Key Hospitals:</dt>
                     <dd>
                         <div
-                          v-for="data in props.plan.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []"
+                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []"
                           :key="data.id"
                         >
                           {{ data.text }}
                         </div>
                     </dd>
                 </div>
-                <div class="grid sm:grid-cols-4" v-if="(props.plan.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []).length > 0">
+                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []).length > 0">
                     <dt class="font-medium">Key Clinics:</dt>
                     <dd>
                         <div
-                          v-for="data in props.plan.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []"
+                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []"
                           :key="data.id"
                         >
                           {{ data.text }}

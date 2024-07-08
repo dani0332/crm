@@ -424,17 +424,18 @@
             // $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
             $quotePlan->total += $policyFee;
 
-            $featuredFacilities = $quotePlan->healthNetwork?->featuredFacilities;
-
             $quotePlan->hospitals = [];
             $quotePlan->clinics = [];
 
-            if ($featuredFacilities) {
-                foreach ($featuredFacilities as $facility) {
-                    if ($facility->type == 'HOSPITAL') {
-                        $quotePlan->hospitals[] = $facility;
-                    } elseif ($facility->type == 'CLINIC') {
-                        $quotePlan->clinics[] = $facility;
+            if (property_exists($quotePlan, 'healthNetwork')) {
+                $featuredFacilities = $quotePlan?->healthNetwork?->featuredFacilities;
+                if ($featuredFacilities) {
+                    foreach ($featuredFacilities as $facility) {
+                        if ($facility->type == 'HOSPITAL') {
+                            $quotePlan->hospitals[] = $facility;
+                        } elseif ($facility->type == 'CLINIC') {
+                            $quotePlan->clinics[] = $facility;
+                        }
                     }
                 }
             }
