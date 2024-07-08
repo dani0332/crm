@@ -709,7 +709,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                   Send and Book Policy 
                 </x-button>
                 <template #tooltip>
-                  <span class="custom-tooltip-content">{{isPolicyCancelledOrPendingToolTtip}}</span>
+                  <span class="custom-tooltip-content">{{bpForm.isPolicyCancelledOrPendingToolTtip}}</span>
                 </template>
               </x-tooltip>
             </div>
