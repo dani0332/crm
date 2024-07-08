@@ -90,7 +90,7 @@ class UpdateLostStatus extends Command
                         switch ($eligibleQuoteType) {
                             case CarQuote::class:
                                 $upsertRecord = CarQuoteRequestDetail::updateOrCreate(['car_quote_request_id' => $quoteDetail->id], ['lost_reason_id' => $lostReasonId]);
-                                info('UpdateLostStatus - leadId : ' . $quoteDetail->id . ' - CarQuoteRequestDetail - created: ' . $upsertRecord->wasRecentlyCreated);
+                                info('UpdateLostStatus - leadId : '.$quoteDetail->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                                 break;
 
                             case HomeQuote::class:

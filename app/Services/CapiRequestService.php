@@ -78,7 +78,7 @@ class CapiRequestService
                         ]
                     );
 
-                    info('handleCarResponse - leadId : ' . $carQuote->id . ' - CarQuoteRequestDetail - created: ' . $upsertRecord->wasRecentlyCreated);
+                    info('handleCarResponse - leadId : '.$carQuote->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                 }
             }
         }

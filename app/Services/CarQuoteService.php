@@ -469,7 +469,7 @@ class CarQuoteService extends BaseService
             ]
         );
 
-        info('updateChildRecord - leadId : ' . $id . ' - CarQuoteRequestDetail - created: ' . $upsertRecord->wasRecentlyCreated);
+        info('updateChildRecord - leadId : '.$id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
 
         return $oldAdvisorAssignedDate;
     }
