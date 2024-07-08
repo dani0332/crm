@@ -24,7 +24,7 @@ class SyncCustomerJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3;
-    public $timeout = 30;
+    public $timeout = 60;
     public $backoff = 300;
     private $newCustomerId;
     private $email;
