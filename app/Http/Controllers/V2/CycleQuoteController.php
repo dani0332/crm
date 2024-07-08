@@ -142,7 +142,7 @@ class CycleQuoteController extends Controller
 
         $quote->load('documents.createdBy:id,name,email');
 
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Cycle);
+        @[$documentTypes, $documentTypeCodes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Cycle);
 
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
@@ -232,6 +232,7 @@ class CycleQuoteController extends Controller
             'quoteDocuments' => $quoteNotes,
             'cdnPath' => $cdnPath,
             'linkedQuoteDetails' => $linkedQuoteDetails,
+            'paymentDocument' => $paymentDocument
         ]);
     }
 

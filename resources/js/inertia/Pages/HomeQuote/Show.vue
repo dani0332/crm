@@ -47,6 +47,7 @@ const props = defineProps({
   hasPolicyIssuedStatus: Boolean,
   documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -1187,7 +1188,7 @@ watch(
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['HOMPD', 'HOMPDR', 'HOMDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>
