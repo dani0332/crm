@@ -163,6 +163,7 @@ class InslyDetailRepository extends BaseRepository
                             $item->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$item->uuid;
                         }
                         $item->modelType = $quoteType;
+                        $item->insly_migrated = true;
                         $data[] = $item;
                     }
 
