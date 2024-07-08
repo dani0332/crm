@@ -2,8 +2,8 @@
 
 namespace App\Observers;
 
-use App\Models\Customer;
 use App\Jobs\SyncCustomerJob;
+use App\Models\Customer;
 
 class CustomerObserver
 {
