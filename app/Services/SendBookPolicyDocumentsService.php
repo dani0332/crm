@@ -5,8 +5,6 @@ namespace App\Services;
 use App\Enums\quoteTypeCode;
 use App\Models\ApplicationStorage;
 use App\Repositories\DocumentTypeRepository;
-use App\Services\QuoteDocumentService;
-use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 
@@ -25,14 +23,14 @@ class SendBookPolicyDocumentsService
     {
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
-        $modelType = ucwords( !empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
+        $modelType = ucwords(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
-   
+
         $handBookDocuments = [];
 
         try {
-            if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])){
+            if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                 $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
             }
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
@@ -45,13 +43,13 @@ class SendBookPolicyDocumentsService
 
         $quote->load('advisor');
 
-        $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)) . '_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
+        $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
 
-        if (!empty($templateId)) {
+        if (! empty($templateId)) {
             $emailData = new \stdClass();
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
-            $emailData->clientFullName = $quote->first_name . ' ' . $quote->last_name;
+            $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
             $emailData->policy_number = $quote->policy_number;
             $emailData->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
             $emailData->quoteDocuments = $quoteDocuments;
@@ -64,7 +62,7 @@ class SendBookPolicyDocumentsService
                 $advisorMobileNo = formatMobileNo($quote->advisor->mobile_no);
                 $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
             }
-            if(in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])){
+            if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
                 $emailData->currentInsurer = $quote->plan->insuranceProvider->text ?? '';
             } else {
                 $emailData->currentInsurer = $quote->insuranceProvider->text ?? '';
@@ -73,8 +71,9 @@ class SendBookPolicyDocumentsService
             $emailData->handBookDocuments = $handBookDocuments;
 
             // Assuming SendEmailCustomerService is a service class responsible for sending emails
-            
+
             $response = app(SendEmailCustomerService::class)->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
+
             return $response;
         }
 

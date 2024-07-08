@@ -618,7 +618,7 @@ trait GenericQueriesAllLobs
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {
-                if ($payment->frequency == PaymentFrequency::UPFRONT  && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+                if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                     Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     $paymentSplit->payment_amount = $payment->total_amount;
                 }

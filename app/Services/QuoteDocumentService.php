@@ -300,22 +300,25 @@ class QuoteDocumentService extends BaseService
 
         return $mapping[$quoteTypeId] ?? [];
     }
-    
-    public function getHandBookDocuments ($quote){
+
+    public function getHandBookDocuments($quote)
+    {
         if ($quote->policyWording) {
             $policyWording = $quote->policyWording->map(function ($policyWording) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
                 if (strpos($policyWording->link, $baseUrl) !== 0) {
-                    $policyWording->link = rtrim($baseUrl, '/') . '/' . ltrim($policyWording->link, '/');
+                    $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
                 }
+
                 return [
                     'url' => $policyWording->link,
                     'name' => basename($policyWording->link),
                 ];
             });
+
             return $policyWording->toArray();
         }
-        
+
         return [];
     }
 }

@@ -48,7 +48,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $handBookDocuments = [];
 
         try {
-            if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])){
+            if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                 $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
             }
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
