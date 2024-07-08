@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -54,3 +55,5 @@ Route::prefix('v1')->group(function () {
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
 });
+
+Route::post('/imcrm/create-activity', [ApiController::class, 'createActivity'])->name('createActivity');
