@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Jobs\SyncCustomerJob;
 
 class CustomerService extends BaseService
 {
@@ -162,6 +163,8 @@ class CustomerService extends BaseService
     public function makeAdditionalContactPrimary($lead, $key, $value)
     {
         if ($key == GenericRequestEnum::EMAIL) {
+            $customer = null;
+            $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
                 info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
                 $customerArray = [
@@ -248,6 +251,9 @@ class CustomerService extends BaseService
                 }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
             }
+
+            SyncCustomerJob::dispatch($customer->id, $previousEmail);
+
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
