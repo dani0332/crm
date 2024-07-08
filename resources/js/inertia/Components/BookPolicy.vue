@@ -381,7 +381,7 @@ const showInsufficientPaymentAlert = () => {
 };
 const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusableTemplate();
 
-const isSsowingTransactionPaymentStatus = computed(() => {
+const isShowingTransactionPaymentStatus = computed(() => {
   const policyStatuses = [
     page.props.quoteStatusEnum.PolicyBooked,
     page.props.quoteStatusEnum.CancellationPending,
@@ -463,7 +463,7 @@ const isSsowingTransactionPaymentStatus = computed(() => {
                   </template>
                 </x-tooltip>
                 <template
-                  v-if="isSsowingTransactionPaymentStatus"
+                  v-if="isShowingTransactionPaymentStatus"
                 >
                   <x-tooltip position="center">
                     <dd class="border-b border-dotted border-black">
