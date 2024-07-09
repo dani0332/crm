@@ -728,6 +728,10 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
+            if (is_array($emailData->handBookDocuments) && ! empty($emailData->handBookDocuments)) {
+                $attachments = array_merge($attachments, $emailData->handBookDocuments);
+            }
+
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
