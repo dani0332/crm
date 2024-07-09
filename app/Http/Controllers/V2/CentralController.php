@@ -57,6 +57,7 @@ use Illuminate\Support\Facades\DB;
 class CentralController extends Controller
 {
     use GenericQueriesAllLobs;
+
     public function createDuplicate(DuplicateLobRequest $request)
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
@@ -187,7 +188,6 @@ class CentralController extends Controller
                 'quote_type_id' => $customerProfileRequest->quote_type_id,
                 'quote_request_id' => $customerProfileRequest->quote_request_id,
             ], ['entity_id' => $entity->id, 'entity_type_code' => $customerProfileRequest->entity_type_code]);
-
         }
 
         return redirect()->back();
@@ -240,6 +240,7 @@ class CentralController extends Controller
 
         return $successMessage;
     }
+
     // Update split payment status
     public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
     {
@@ -247,6 +248,7 @@ class CentralController extends Controller
 
         return back()->with('success', $successMessage);
     }
+
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
@@ -262,6 +264,7 @@ class CentralController extends Controller
 
         return $successMessage;
     }
+
     // Store new payment
     public function storeNewPayment(StorePaymentRequest $request)
     {
@@ -350,7 +353,6 @@ class CentralController extends Controller
 
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
-
         $responseMessage = ['Lead status has been updated'];
         $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
         $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
@@ -385,7 +387,6 @@ class CentralController extends Controller
             }
 
             DB::commit();
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -393,14 +394,10 @@ class CentralController extends Controller
         }
 
         return response()->json(['message' => $responseMessage]);
-
     }
 
     public function sendOCBEmail(Request $request)
     {
-        info('sendHealthEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
-
-        //get Health quote by uuid using model
         $healthQuote = HealthQuote::where('uuid', $request->quote_uuid)->first();
 
         $previousAdvisor = null;
@@ -413,7 +410,6 @@ class CentralController extends Controller
         $listQuotePlans = app(HealthQuoteService::class)->getQuotePlans($request->quote_uuid);
         if (! isset($listQuotePlans)) {
             return response()->json(['error' => 'OCB Health Plan Not Found'], 404);
-
         }
         if (! empty($request->selected_plans) && is_array($request->selected_plans)) {
             if (! isset($listQuotePlans->quote->plans)) {
@@ -452,15 +448,14 @@ class CentralController extends Controller
         $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
         $emailData = app(SendEmailCustomerService::class)->buildEmailData($healthQuote, $listQuotePlans, $previousAdvisor, $request, $emailTemplateId);
-        info('sendHealthEmailOneClickBuy OCB email data built for quote uuid: '.$request->quote_uuid);
+
         $responseCode = app(SendEmailCustomerService::class)->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'health-quote-one-click-buy');
         if ($responseCode == 201) {
-            info('sendHealthEmailOneClickBuy OCB email sent to customer for quote uuid: '.$request->quote_uuid);
             if (isset($healthQuote)) {
                 $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $healthQuote->save();
             }
-            info('Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
+            info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
