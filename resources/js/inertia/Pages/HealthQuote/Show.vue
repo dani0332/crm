@@ -1,6 +1,6 @@
 <script setup>
+import {computed, reactive, ref} from 'vue';
 import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
-import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from './../../Components/MigratePayment.vue';
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
@@ -81,6 +81,7 @@ const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 
 const showPlans = ref(!props.hashCollapsibleStatuses);
+const contactLoader = ref(false);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -103,6 +104,9 @@ const fixedValue = number => {
     });
   }
 };
+const confirmData = reactive({
+    contactPrimary: null,
+});
 
 const allowStatusUpdate = computed(() => {
   return (
@@ -920,7 +924,9 @@ const onPlanFiltersSubmit = () => {
     );
   });
   modals.planFilters = false;
-  planDataTable.value.updatePage(1);
+  if(planDataTable.value) {
+      planDataTable.value.updatePage(1);
+  }
 };
 
 const onPlanFiltersReset = () => {
@@ -1781,7 +1787,6 @@ watch(
               </div>
             </div>
             <div
-              v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
               class="w-full md:w-1/2 flex gap-2 items-end"
             >
               <ComboBox
@@ -1814,13 +1819,15 @@ watch(
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
             <h3 class="text-xl font-semibold text-primary-800">
-              Health Detail
             </h3>
           </div>
         </template>
 
         <template #body>
-          <x-divider class="my-4 mb-3" />
+          <x-divider class="my-4" />
+          <div class="flex gap-2 mb-3 justify-end">
+         
+          </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div

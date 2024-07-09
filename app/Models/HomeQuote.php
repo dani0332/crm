@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
+use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,6 +32,9 @@ class HomeQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
         'quote_status_id' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
+    ];
+    protected $dispatchesEvents = [
+        'updated' => QuoteEmailUpdated::class,
     ];
 
     public function quoteStatus()

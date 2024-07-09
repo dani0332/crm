@@ -7,7 +7,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
@@ -432,6 +431,7 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::MDOV,
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
+                SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::DOV,
             ])) {
                 return true;
@@ -485,12 +485,6 @@ class SendUpdateLogService
             }
         }
 
-        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        $sendUpdatePayments = SendUpdateLogRepository::sendUpdateBookedPayments($quoteTypeId, $quoteUuid);
-        if (! empty($sendUpdatePayments)) {
-            $payments = $payments->merge($sendUpdatePayments);
-        }
-
         return $payments;
     }
 
@@ -498,7 +492,12 @@ class SendUpdateLogService
     {
         $payments = $this->getPayments($data['quoteId'], $data['quoteUuid'], $data['quoteType']);
 
-        return collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first();
+        $sendUpdateLog = SendUpdateLogRepository::getLogByTaxInvoiceNumber($data);
+
+        return (object) [
+            'send_update_log' => $sendUpdateLog,
+            'payment' => collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first() ?? [],
+        ];
     }
 
     public function getUploadedDocuments($sendUpdateLog): array
@@ -511,6 +510,7 @@ class SendUpdateLogService
         $category = $sendUpdateLog->category->code;
         $option = $sendUpdateLog?->option?->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
+        $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
         // check if required documents not uploaded then show Send Update to Customer.
@@ -523,19 +523,15 @@ class SendUpdateLogService
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
-        if ((in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) ||
-            (($category == SendUpdateLogStatusEnum::EF) && (! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]))) ||
-            (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) && ($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled))
+        if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::EF]) &&
+            (($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled)) &&
+            ! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])
         ) {
             return SendUpdateLogStatusEnum::SNBU;
         }
 
-        if (($sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
-            (
-                (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments) ||
-                in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) ||
-                ($requiredDocumentsCheck == 0 && ! $sendUpdateLog->is_booking_filled)
-            )) || in_array($category, [SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::EN])
+        if (($category == SendUpdateLogStatusEnum::EF && $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) ||
+            ($isPolicyCertOrScheduleUploaded && ! $sendUpdateLog->is_booking_filled)
         ) {
             return SendUpdateLogStatusEnum::SUC;
         }
@@ -597,6 +593,7 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::MDOV,
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
         ];
 
@@ -648,8 +645,8 @@ class SendUpdateLogService
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
-        if ($categoryCode == SendUpdateLogStatusEnum::EF) {
-            info('Book Update - Sending Update to Sage300 for Endorsement Financial - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+            info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -665,7 +662,7 @@ class SendUpdateLogService
         }
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-            info('Book Update - Sending Update to Sage300 for Correction of Policy Details - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
+            info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -749,7 +746,7 @@ class SendUpdateLogService
                         'quote_batch_id' => null,
                     ]);
                     (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
-                } else {
+                } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
                     ]);
@@ -852,10 +849,26 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::DTSI,
             ])) {
             return false;
         }
 
         return true;
+    }
+
+    public function getSendUpdateDocuments($category): array
+    {
+        $documentTypes = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
+
+        return array_map(function ($documentType) use ($category) {
+            if (! in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) &&
+                in_array($documentType['code'], [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER])
+            ) {
+                $documentType['is_required'] = 1;
+            }
+
+            return $documentType;
+        }, $documentTypes);
     }
 }
