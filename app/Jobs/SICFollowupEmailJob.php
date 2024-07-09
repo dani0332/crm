@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteTypes;
 use App\Facades\Ken;
-use App\Models\CarQuote;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,15 +19,13 @@ class SICFollowupEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    private $uuid;
-
     public $tries = 3;
+
     public $timeout = 15;
     public $backoff = 60;
 
-    public function __construct($uuid)
+    public function __construct(public $uuid, public QuoteTypes $quoteType)
     {
-        $this->uuid = $uuid;
     }
 
     /**
@@ -35,13 +33,13 @@ class SICFollowupEmailJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService)
     {
-        $carLead = CarQuote::where('uuid', $this->uuid)->first();
+        $lead = $this->quoteType?->model()::where('uuid', $this->uuid)->first();
 
-        if (empty($carLead->advisor_id)) {
-            $sendEmailCustomerService->sendSICFollowupEmail($carLead);
+        if (empty($lead->advisor_id)) {
+            $sendEmailCustomerService->sendSICFollowupEmail($lead, $this->quoteType);
             $this->sendWhatsAppMessage();
         } else {
-            info('SICFollowupEmailJob - Car Lead Advisor Available - Ref ID: '.$carLead->uuid.'- Time: '.now());
+            info('SICFollowupEmailJob - Lead Advisor Available - Ref ID: '.$lead->uuid.'- Time: '.now());
         }
     }
 
