@@ -438,7 +438,7 @@
     <header>
         <div class="header">
             <div class="logo">
-                <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" />
+                <img class="im-logo" src="{{getIMLogo(true)}}" />
             </div>
             <h3>Your Tailor Made <br />Travel Insurance Comparison Table</h3>
         </div>
@@ -571,7 +571,7 @@
                     <td class="{{@$feature['heading_class']}}"><p class="text-left">{{@$feature['title']}}</p></td>
                     @foreach($planIds as $planId)
                         <?php $return_value = '';
-                            ?>
+                   ?>
                         @if($feature['type'] == 'info')
 
                             @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
@@ -609,11 +609,11 @@
                         @endif
                         <td class="{{@$feature['col_class']}}">
                             <p>
-                    <?php if($return_value == 'Excluded'){
-                            $planIterate++;
-                    ?>
+                    <?php if ($return_value == 'Excluded') {
+                        $planIterate++;
+                        ?>
                                 Excluded
-                    <?php }else{
+                    <?php } else {
                         $planIterate = 0;
                         ?>
                         <?php echo $return_value ?>
@@ -622,9 +622,8 @@
                   </p>
 
                         </td>
-                            <?php if(count($planIds) == $planIterate){
-
-                            ?>
+                            <?php if (count($planIds) == $planIterate) {
+                                ?>
                             <style>
                                 .row_<?php echo $featCount; ?>{
                                     display: none !important;
@@ -632,8 +631,8 @@
                             </style>
                     <?php
 
-                        }
-                        ?>
+                            }
+                   ?>
 
                     @endforeach
                 </tr>
