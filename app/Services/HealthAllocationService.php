@@ -168,14 +168,8 @@ class HealthAllocationService extends AllocationService
         info('about to update health quote detail record for : '.$leadId);
 
         $quoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
-        $oldAdvisorAssignedDate = '';
-
-        if ($quoteDetail) {
-            $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date;
-            $this->updateExistingQuoteDetail($quoteDetail, $leadId);
-        } else {
-            $this->createNewQuoteDetail($leadId, HealthQuoteRequestDetail::class, 'health_quote_request_id');
-        }
+        $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date ?? '';
+        $this->upsertQuoteDetail($leadId, HealthQuoteRequestDetail::class, 'health_quote_request_id');
 
         return $oldAdvisorAssignedDate;
     }

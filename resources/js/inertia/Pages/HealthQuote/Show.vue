@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import {computed, reactive, ref} from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -71,6 +71,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 
 const showPlans = ref(!props.hashCollapsibleStatuses);
+const contactLoader = ref(false);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -91,7 +92,9 @@ const fixedValue = number => {
     });
   }
 };
-
+const confirmData = reactive({
+    contactPrimary: null,
+});
 const checkPlanType = id => {
   return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
@@ -886,7 +889,9 @@ const onPlanFiltersSubmit = () => {
     );
   });
   modals.planFilters = false;
-  planDataTable.value.updatePage(1);
+  if(planDataTable.value) {
+      planDataTable.value.updatePage(1);
+  }
 };
 
 const onPlanFiltersReset = () => {

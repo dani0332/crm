@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Activities;
 use App\Traits\GetUserTreeTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,8 +28,11 @@ class ActivityRepository extends BaseRepository
         if (Auth::user()->isManagerOrDeputy()) {
             $assigneeIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
         } else {
-            $assigneeIds = $this->walkTree(Auth::user()->id);
             array_push($assigneeIds, Auth::user()->id);
+        }
+
+        if (request()->isCustom) {
+            request()->due_date_time_end = Carbon::parse(request()->due_date_time_end)->format('Y-m-d 23:59:59');
         }
 
         return $this->with(['assignee', 'quoteStatus'])
