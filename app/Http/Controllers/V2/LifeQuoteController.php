@@ -99,7 +99,6 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        //dd((new SageCustomApiService())->postOpenedAPInvoices());
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);

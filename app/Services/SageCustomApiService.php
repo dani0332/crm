@@ -156,6 +156,9 @@ class SageCustomApiService
         }
     }
 
+    /*
+     * This function is temporarily created to resolve the issue related to the Patch and Posting of Skipped AP Invoices
+     * */
     public function postOpenedAPInvoices()
     {
         $quotes = [];
