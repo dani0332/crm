@@ -59,6 +59,7 @@ const props = defineProps({
   quoteNotes: Object,
   clientInquiryLogs: Array,
   hashCollapsibleStatuses: Boolean,
+    emailStatuses: Array,
 });
 
 const isManualPlansCount = ref(0);
@@ -110,6 +111,7 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
   planFilters: false,
+    sendConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -142,6 +144,19 @@ const onCreateDuplicate = isValid => {
     },
   });
 };
+const emailTableColumns = reactive({
+    columns: [
+        { text: 'Id', value: 'id' },
+        { text: 'Email Subject', value: 'email_subject' },
+        { text: 'Email Address', value: 'email_address' },
+        { text: 'Status', value: 'email_status' },
+        { text: 'Reason', value: 'reason' },
+        { text: 'Template Id', value: 'template_id' },
+        { text: 'Customer Id', value: 'customer_id' },
+        { text: 'Created At', value: 'created_at' },
+        { text: 'Updated At', value: 'updated_at' },
+    ],
+});
 
 const confirmDeleteData = reactive({
   docs: null,
@@ -1564,6 +1579,96 @@ const salaryBrandMapping = {
   1: 'AED 4000 and below',
   2: 'More than AED 4000',
 };
+const validateEmailSending = () =>{
+    if (selectedPlans.value.length === 0) {
+        modals.sendConfirm = true;
+        return;
+    }
+    const hiddenPlans = selectedPlans.value.filter(plan => plan.isHidden);
+    if (hiddenPlans.length > 0) {
+        notification.error({
+            title: 'You cannot select a hidden plan',
+            position: 'top',
+        });
+        modals.sendConfirm = false;
+        return;
+    }
+    if (selectedPlans.value.length < 6) {
+        notification.error({
+            title: 'Minimum 6 plans should be selected',
+            position: 'top',
+        });
+        modals.sendConfirm = false;
+        return;
+    }
+    if(selectedPlans.value.length > 6){
+        notification.error({
+            title: 'Maximum 6 plans can be selected',
+            position: 'top',
+        });
+        modals.sendConfirm = false;
+        return;
+    }
+    modals.sendConfirm = true;
+}
+const loader = ref({
+    link: false,
+});
+const confirmSendEmail = () => {
+    loader.value.link = true;
+    const first_name = page.props.quote.first_name || '';
+    const last_name = page.props.quote.last_name || '';
+    axios
+        .post(
+            `/quotes/health/${page.props.quote.uuid}/send-ocb`,
+            {
+                quote_type_id: page.props.quoteTypeId,
+                quote_id: page.props.quote.id,
+                quote_uuid: page.props.quote.uuid,
+                quote_cdb_id: page.props.quote.code,
+                quote_previous_expiry_date:
+                page.props.quote.previous_policy_expiry_date,
+                quote_previous_policy_number:
+                page.props.quote.previous_quote_policy_number,
+                customer_name: `${first_name} ${last_name}`,
+                customer_email: page.props.quote.email,
+                customer_id : page.props.quote.customer_id,
+                advisor_name: page.props.quote.advisor_id_text ? page.props.quote.advisor_id_text : null,
+                advisor_email: page.props.quote.advisor_email ? page.props.quote.advisor_email : null,
+                advisor_mobile_no: page.props.quote.advisor_mobile_no
+                    ? page.props.quote.advisor_mobile_no
+                    : null,
+                advisor_landline_no: page.props.quote.advisor_landline_no
+                    ? page.props.quote.advisor_landline_no
+                    : null,
+                selected_plans: selectedPlans.value
+            },
+            {
+                responseType: 'json',
+            },
+        )
+        .then(response => {
+            notification.success({
+                title: response.data.success,
+                position: 'top',
+            });
+            router.reload({
+                replace: true,
+                preserveScroll: true,
+                preserveState: true,
+            });
+        })
+        .catch(error => {
+            notification.error({
+                title: "OCB email sending failed, please try again.",
+                position: 'top',
+            });
+        })
+        .finally(() => {
+            modals.sendConfirm = false;
+            loader.value.link = false;
+        });
+};
 
 watch(
   () => memberForm.member_category_id,
@@ -1595,6 +1700,10 @@ watch(
   },
   { immediate: true },
 );
+
+
+const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
+
 </script>
 
 <template>
@@ -2808,8 +2917,15 @@ watch(
             >
               Download PDF
             </x-button>
-
-            <x-button
+              <x-button
+                  @click.prevent="validateEmailSending"
+                  size="sm"
+                  color="orange"
+                  :disabled="doesEmailStatusExist"
+              >
+                  Send OCA Email to Customer
+              </x-button>
+              <x-button
               v-if="plansTable.data.length > 0"
               size="sm"
               color="orange"
@@ -2819,6 +2935,24 @@ watch(
             >
               Copy Link
             </x-button>
+              <x-modal v-model="modals.sendConfirm" show-close backdrop>
+                  <template #header> Send Email </template>
+                  <p>Are you sure send email to customer?</p>
+                  <template #actions>
+                      <div class="text-right space-x-4">
+                          <x-button
+                              size="sm"
+                              ghost
+                              @click.prevent="modals.sendConfirm = false"
+                          >
+                              Cancel
+                          </x-button>
+                          <x-button size="sm" color="error" @click.prevent="confirmSendEmail" :loading="loader.link">
+                              Send
+                          </x-button>
+                      </div>
+                  </template>
+              </x-modal>
             <x-badge
               size="sm"
               color="error"
@@ -3172,6 +3306,24 @@ watch(
       :modelType="modelType"
       :paymentLink="paymentLink"
     />
+
+      <div class="p-4 rounded shadow mb-6 bg-white">
+          <div class="flex justify-between items-center mb-4">
+              <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+          </div>
+          <DataTable
+              table-class-name="tablefixed compact"
+              :headers="emailTableColumns.columns"
+              :items="emailStatuses || []"
+              show-index
+              border-cell
+              fixed-checkbox
+              hide-rows-per-page
+              hide-footer
+          >
+          </DataTable>
+      </div>
+      <x-divider class="my-4" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

@@ -161,5 +161,14 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ]);
         }
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE,
+                'value' => '677',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }
