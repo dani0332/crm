@@ -13,12 +13,19 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\CollectionTypeEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\TravelQuote;
+use App\Services\TravelQuoteService;
+use App\Services\CustomerService;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
@@ -563,10 +570,12 @@ class SplitPaymentService
 
     // function to process the split payment approve
     public function processSplitPaymentApprove($modelType, $quoteId, $splitPaymentId, $amountCollected)
-    {dd('here33');
+    {
         DB::beginTransaction();
         try {
+            dd($splitPaymentId);
             $paymentSplit = PaymentSplits::find($splitPaymentId);
+            dd($paymentSplit);
             if (empty($paymentSplit->verified_at)) {
                 $paymentSplit->verified_at = now();
                 $paymentSplit->verified_by = Auth::user()->id;
@@ -599,14 +608,14 @@ class SplitPaymentService
     }
 
     // function to process the master payment approve
-    public function processMasterPaymentApprove($modelType, $quoteId, $masterPayment, $sendUpdateId)
+    public function processMasterPaymentApprove($modelType, $quoteId, $firstPayment, $sendUpdateId)
     {
         $canCaptureEp = false;
         // On failure, the capture button will render again and the user can try again
         DB::beginTransaction();
         try {
             $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-            $firstPayment = $masterPayment;
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $masterPaymentStatus = $firstPayment->payment_status_id;
             $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
@@ -631,7 +640,7 @@ class SplitPaymentService
             $successMessage = 'Transaction approved';
             $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
             if ($totalApproved == $quoteModel->payments()->count()) {
-                if ($request->send_update_id) {
+                if ($sendUpdateId) {
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                 } else {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
@@ -639,12 +648,12 @@ class SplitPaymentService
                 $quoteModel->save();
                 $canCaptureEp = true;
                 // Berlin Service - Extend Customer Subscription on Shaji request
-                $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
+                /*$customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
                 if ($customerData) {
                     $quoteOptions = QuoteTypeId::getOptions();
                     $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
                     info('Transaction Approved responseExtend: '.$responseExtend);
-                }
+                }*/
                 //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
                 // dispatch(new MAWelcomeJob($parentQuoteModel->first_name, $parentQuoteModel->last_name, $parentQuoteModel->email, $parentQuoteModel->mobile_no, 'IMCRM', ''));
 
@@ -669,7 +678,31 @@ class SplitPaymentService
             // capture EP and send documents
             EmbeddedProductRepository::capturePayment($quoteId, $modelType);
         }
-        return successMessage;
+        return $successMessage;
+    }
+
+    // Update lead status for ecomm quotes
+    private function updateLeadStatus($payment)
+    {
+        $quoteType = '';
+        if ($payment->paymentable_type == CarQuote::class) {
+            $quoteType = quoteTypeCode::Car;
+        } elseif ($payment->paymentable_type == HealthQuote::class) {
+            $quoteType = quoteTypeCode::Health;
+        } elseif ($payment->paymentable_type == TravelQuote::class) {
+            $quoteType = quoteTypeCode::Travel;
+        }
+        // If a quote type is found, get the corresponding quote object
+        if ($quoteType !== '') {
+            $quoteModel = $this->getQuoteObject($quoteType, $payment->paymentable_id);
+            if ($quoteModel) {
+                $quoteModel->payment_status_id = $payment->payment_status_id;
+                if ($payment->payment_status_id == PaymentStatusEnum::PAID) {
+                    $quoteModel->payment_paid_at = now();
+                }
+                $quoteModel->save();
+            }
+        }
     }
 
 }

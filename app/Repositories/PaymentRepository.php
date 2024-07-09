@@ -378,6 +378,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($request->is_capture) { //update collected amount in childs
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
+                    
+                    dd($paymentSplit);
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
                         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
                             //create sage reciept
@@ -394,6 +396,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
                             //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
                         }
+                        dd( $paymentSplit);
                         // process split payment approve
                         app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType,$request->quote_id, $paymentSplit->id, $splitAmount);
                         
@@ -401,8 +404,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
             }
+            
             // process master payment approve
-            $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType,$request->quote_id, $masterPayment, $request->send_update_id);
+            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType,$request->quote_id, $firstPayment, $request->send_update_id);
             
         }
 
