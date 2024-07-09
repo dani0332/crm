@@ -22,10 +22,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
 const isAllowed = computed(() => {
-  return !hasAnyRole([
-    rolesEnum.PetAdvisor,
-    rolesEnum.PetRenewalAdvisor,
-  ]);
+  return !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor]);
 });
 
 watch(
@@ -96,6 +93,8 @@ const filters = reactive({
   is_cold: '',
   stale_at: '',
 });
+
+provide('filters', filters);
 
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({

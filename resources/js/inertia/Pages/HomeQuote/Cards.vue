@@ -25,10 +25,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
 const isAllowed = computed(() => {
-  return !hasAnyRole([
-    rolesEnum.HomeAdvisor,
-    rolesEnum.HomeRenewalAdvisor,
-  ]);
+  return !hasAnyRole([rolesEnum.HomeAdvisor, rolesEnum.HomeRenewalAdvisor]);
 });
 
 const quotes = reactive({
@@ -95,6 +92,8 @@ const filters = reactive({
   is_stale: false,
   status_filters: null,
 });
+
+provide('filters', filters);
 
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
