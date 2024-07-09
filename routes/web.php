@@ -354,7 +354,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('sic-health-config', SICHealthController::class)->names([
             'index' => 'admin.sic-health-config.index',
             'store' => 'admin.sic-health-config.store',
-            ]);
+        ]);
 
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');

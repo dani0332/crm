@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class SICHealthController extends Controller
 {
     //
-    public  $sicHealthConfigService;
+    public $sicHealthConfigService;
     public function __construct(SICHealthConfigService $sicHealthConfigService)
     {
         $this->sicHealthConfigService = $sicHealthConfigService;
@@ -19,6 +19,7 @@ class SICHealthController extends Controller
     public function index()
     {
         $sicHealthConfig = $this->sicHealthConfigService->getEntity();
+
         return inertia('Admin/SICHealth/SicHealthConfigForm', [
             'nationalities' => NationalityRepository::withActive()->get(),
             'sicHealthConfig' => $sicHealthConfig,
