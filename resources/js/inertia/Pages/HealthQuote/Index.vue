@@ -27,7 +27,6 @@ const loader = reactive({
   export: false,
 });
 
-
 const { isRequired } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
@@ -144,15 +143,15 @@ const filters = reactive({
 
 const canExport = ref(false);
 watch(
-    () => filters,
-    () => {
-        if (filters.created_at_start && filters.created_at_end) {
-            canExport.value = true;
-        } else {
-            canExport.value = false;
-        }
-    },
-    { deep: true, immediate: true },
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 const subTeamOptions = [
@@ -532,9 +531,9 @@ watch(
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
