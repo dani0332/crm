@@ -23,7 +23,6 @@ class ActivityRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-
         $assigneeIds = [];
         if (Auth::user()->isManagerOrDeputy()) {
             $assigneeIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
@@ -32,7 +31,7 @@ class ActivityRepository extends BaseRepository
         }
 
         if (request()->isCustom) {
-            request()->due_date_time_end = Carbon::parse(request()->due_date_time_end)->format('Y-m-d 23:59:59');
+            request()->due_date_time_end = Carbon::createFromFormat('d/m/Y', request()->due_date_time_end)->format('Y-m-d 23:59:59');
         }
 
         return $this->with(['assignee', 'quoteStatus'])
@@ -48,7 +47,6 @@ class ActivityRepository extends BaseRepository
      */
     public function fetchCountActivities()
     {
-
         $assigneeIds = [];
         if (Auth::user()->isManagerOrDeputy()) {
             $assigneeIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
@@ -61,8 +59,8 @@ class ActivityRepository extends BaseRepository
             ->filter()
             ->whereIn('assignee_id', $assigneeIds)
             ->count();
-
     }
+
     /**
      * @return mixed
      */
@@ -85,7 +83,7 @@ class ActivityRepository extends BaseRepository
             $activityData['quote_status_id'] = $quote->quote_status_id;
         }
 
-        return ActivityRepository::create($activityData);
+        return self::create($activityData);
     }
 
     /**
