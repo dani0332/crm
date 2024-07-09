@@ -24,6 +24,7 @@ class HealthQuote extends Model implements AuditableContract
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
         'previous_quote_policy_number' => FilterTypes::EXACT,
+        'policy_number' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
@@ -118,7 +119,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function getFullNameAttribute()
     {
-        return $this->first_name.' '.$this->last_name;
+        return $this->first_name . ' ' . $this->last_name;
     }
 
     public function documents()
@@ -195,11 +196,11 @@ class HealthQuote extends Model implements AuditableContract
                 $customerMember->save();
             }
 
-            return $customerMember->first_name.' '.$customerMember->last_name;
+            return $customerMember->first_name . ' ' . $customerMember->last_name;
         } else {
             $healthQuote = HealthQuote::find($id);
             if ($healthQuote) {
-                return $healthQuote->first_name.' '.$healthQuote->last_name;
+                return $healthQuote->first_name . ' ' . $healthQuote->last_name;
             }
         }
 

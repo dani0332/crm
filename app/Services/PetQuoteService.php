@@ -117,7 +117,7 @@ class PetQuoteService extends BaseService
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
         ];
-        if (! Auth::user()->hasRole('ADMIN')) {
+        if (!Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
@@ -144,7 +144,7 @@ class PetQuoteService extends BaseService
     {
         $entity = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->firstOrFail();
         $lostId = 0;
-        if (! is_null($entity) && $entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
 
@@ -178,7 +178,7 @@ class PetQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
                 $this->query->where('pqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
@@ -194,7 +194,7 @@ class PetQuoteService extends BaseService
 
             if (Auth::user()->isSpecificTeamAdvisor('Pet')) {
                 // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('pqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+                $this->query->where('pqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
             }
             if (isset($request->code) && $request->code != '') {
                 $this->query->where('pqr.code', $request->code);
@@ -212,7 +212,10 @@ class PetQuoteService extends BaseService
                 $this->query->where('pqr.mobile_no', $request->mobile_no);
             }
             if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-                $this->query->where('pqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+                $this->query->where(function ($query) use ($request) {
+                    $query->where('pqr.policy_number', $request->previous_quote_policy_number)
+                        ->orWhere('pqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+                });
             }
             if (isset($request->renewal_batch) && $request->renewal_batch != '') {
                 $this->query->where('pqr.renewal_batch', $request->renewal_batch);
@@ -236,23 +239,23 @@ class PetQuoteService extends BaseService
                 }
             }
             foreach ($searchProperties as $item) {
-                if (! empty($request[$item]) && $item != 'created_at') {
+                if (!empty($request[$item]) && $item != 'created_at') {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
-                    } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    } elseif ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
                         if ($request[$item][0] == 'null') {
                             $this->query->whereNull('advisor_id');
                         } else {
                             $this->query->whereIn('advisor_id', $request[$item]);
                         }
-                    } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
+                    } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $skipped = ['is_renewal', 'previous_policy_expiry_date'];
                         if (in_array($item, $skipped)) {
                             continue;
                         }
-                        $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
             }
@@ -360,13 +363,13 @@ class PetQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'pqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
             ->orderBy('advisor_id', 'ASC');
-        if (! empty($CDBID)) {
+        if (!empty($CDBID)) {
             $query->where('pqr.id', '=', $CDBID);
         }
-        if (! empty($email)) {
+        if (!empty($email)) {
             $query->where('pqr.email', '=', $email);
         }
-        if (! empty($mobile_no)) {
+        if (!empty($mobile_no)) {
             $query->where('pqr.mobile_no', '=', $mobile_no);
         }
 
@@ -548,7 +551,7 @@ class PetQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds) . ' Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             if (in_array(quoteTypeCode::Pet, newUi())) {

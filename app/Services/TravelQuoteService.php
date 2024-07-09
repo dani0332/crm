@@ -114,8 +114,8 @@ class TravelQuoteService extends BaseService
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                WHERE quote_type_id = ' . QuoteTypeId::Travel . ' AND quote_request_id = tqr.id),
+                "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
             as customer_type'),
             'c.insured_first_name',
             'c.insured_last_name',
@@ -200,7 +200,7 @@ class TravelQuoteService extends BaseService
             }
         }
 
-        if (! auth()->user()->hasRole(RolesEnum::Admin) && ! auth()->user()->hasRole(RolesEnum::CallDesk)) {
+        if (!auth()->user()->hasRole(RolesEnum::Admin) && !auth()->user()->hasRole(RolesEnum::CallDesk)) {
             $travelQuote['advisorId'] = auth()->user()->id;
         }
 
@@ -242,13 +242,13 @@ class TravelQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->orderBy('advisor_id', 'ASC');
-        if (! empty($CDBID)) {
+        if (!empty($CDBID)) {
             $query->where('tqr.id', '=', $CDBID);
         }
-        if (! empty($email)) {
+        if (!empty($email)) {
             $query->where('tqr.email', '=', $email);
         }
-        if (! empty($mobile_no)) {
+        if (!empty($mobile_no)) {
             $query->where('tqr.mobile_no', '=', $mobile_no);
         }
 
@@ -317,13 +317,13 @@ class TravelQuoteService extends BaseService
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
             $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at) && ! empty($request->created_at_end)) {
+        if (!empty($request->created_at) && !empty($request->created_at_end)) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (!empty($request->created_at_start) && !empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
@@ -355,10 +355,13 @@ class TravelQuoteService extends BaseService
         }
         if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('tqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where(function ($query) use ($request) {
+                $query->where('tqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $this->query->where('tqr.renewal_batch', $request->renewal_batch);
@@ -395,23 +398,23 @@ class TravelQuoteService extends BaseService
         }
 
         foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at') {
+            if (!empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
-                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                } elseif ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
                     if ($request[$item][0] == 'null') {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
+                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'is_ecommerce', 'previous_policy_expiry_date', 'next_followup_date'];
                     if (in_array($item, $skipped)) {
                         continue;
                     }
-                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
@@ -512,7 +515,7 @@ class TravelQuoteService extends BaseService
     {
         $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
         $lostId = 0;
-        if (! is_null($entity) && $entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
 
@@ -546,7 +549,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('quote/travel/'.$id)->with('success', 'Travel Quote has been updated');
+            return redirect('quote/travel/' . $id)->with('success', 'Travel Quote has been updated');
         }
     }
 
@@ -717,12 +720,12 @@ class TravelQuoteService extends BaseService
     public function getQuotePlans($id)
     {
         $quoteUuId = TravelQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-travel-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-travel-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -738,7 +741,7 @@ class TravelQuoteService extends BaseService
                     'headers' => [
                         'Content-Type' => 'application/json', 'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
+                        'Authorization' => 'Basic ' . $authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
@@ -798,7 +801,7 @@ class TravelQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds) . ' Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -917,7 +920,7 @@ class TravelQuoteService extends BaseService
         $selectedPlanIds = isset($data['selectedPlanIds']) ? $data['selectedPlanIds'] : [];
         $hasAdultAndSeniorMember = isset($data['hasAdultAndSeniorMember']) ? $data['hasAdultAndSeniorMember'] : false;
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
-        if (! isset($quotePlans->quotes->plans)) {
+        if (!isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
         }
 
@@ -932,7 +935,7 @@ class TravelQuoteService extends BaseService
             ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
 
@@ -946,10 +949,10 @@ class TravelQuoteService extends BaseService
 
     public function createDuplicateLead($leadModal)
     {
-        if (! $leadModal) {
+        if (!$leadModal) {
             return false; // Add validation to avoid failure if $leadModal is null
         }
-        $newLeadCode = $leadModal->code.'-1';
+        $newLeadCode = $leadModal->code . '-1';
         $leadExists = TravelQuote::where('code', $newLeadCode)->exists();
         if ($leadExists) {
             // Lead with the code already exists
@@ -957,7 +960,7 @@ class TravelQuoteService extends BaseService
         }
         $duplicateLead = $leadModal->replicate();
         $duplicateLead->parent_id = $leadModal->id;
-        $duplicateLead->uuid = $leadModal->uuid.'-1';
+        $duplicateLead->uuid = $leadModal->uuid . '-1';
         $duplicateLead->code = $newLeadCode;
         $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
         $duplicateLead->save();

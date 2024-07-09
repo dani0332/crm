@@ -91,7 +91,7 @@ class AmtController extends Controller
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $data->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
         $this->whereBasedOnRole($data, 'bqr');
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
@@ -111,7 +111,7 @@ class AmtController extends Controller
             $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->first_name) && $request->first_name != '') {
-            $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
+            $data->where('bqr.first_name', 'like', '%' . $request->first_name . '%');
         }
         if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
@@ -119,7 +119,7 @@ class AmtController extends Controller
             $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
         if (isset($request->last_name) && $request->last_name != '') {
-            $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
+            $data->where('bqr.last_name', 'like', '%' . $request->last_name . '%');
         }
         if (isset($request->email) && $request->email != '') {
             $data->where('bqr.email', '=', $request->email);
@@ -149,7 +149,10 @@ class AmtController extends Controller
             $data->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $data->where('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $data->where(function ($query) use ($request) {
+                $query->where('bqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $data->where('bqr.renewal_batch', $request->renewal_batch);
@@ -214,10 +217,10 @@ class AmtController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            if (! isset($record->quoteUID)) {
+            if (!isset($record->quoteUID)) {
                 return redirect('medical/amt')->with('success', 'Lead has been stored');
             } else {
-                return redirect('medical/amt/'.$record->quoteUID)->with('success', 'Lead has been stored');
+                return redirect('medical/amt/' . $record->quoteUID)->with('success', 'Lead has been stored');
             }
         }
     }
@@ -328,7 +331,7 @@ class AmtController extends Controller
             ->select('gmt.text as text', 'gmt.id as id')
             ->first();
         $selectedGmType = '';
-        if (! is_null($GMType)) {
+        if (!is_null($GMType)) {
             $selectedGmType = $GMType->id;
         }
 
@@ -360,7 +363,7 @@ class AmtController extends Controller
         ]);
         app(CRUDService::class)->updateModelByType('business', $request, $id);
 
-        return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
+        return redirect('medical/amt/' . $id)->with('success', 'Lead has been updated');
     }
 
     public function cardsView(Request $request)
