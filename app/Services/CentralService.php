@@ -398,6 +398,7 @@ class CentralService
         $quoteStatuses = [
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
@@ -405,12 +406,10 @@ class CentralService
         $quoteStatusForPlansAndMembers = array_merge($quoteStatuses, [
             QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::PolicySentToCustomer,
-            QuoteStatusEnum::PolicyBooked,
         ]);
 
         if (in_array($quote->quote_status_id, $quoteStatusForPlansAndMembers)) {
             $lockFunctionalities['plan_selection'] = true;
-            $lockFunctionalities['plan_details'] = true;
             $lockFunctionalities['member_details'] = true;
         }
 
@@ -422,6 +421,7 @@ class CentralService
 
         // Lock functionality check for edit lead details
         if (in_array($quote->quote_status_id, $quoteStatuses)) {
+            $lockFunctionalities['plan_details'] = true;
             $lockFunctionalities['lead_details'] = true;
         }
 
