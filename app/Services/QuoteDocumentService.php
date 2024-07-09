@@ -277,7 +277,7 @@ class QuoteDocumentService extends BaseService
             $orderedDocumentTypesByCategory->put('ISSUING_DOCUMENTS', $documentTypesByCategory->get('ISSUING_DOCUMENTS'));
         }
 
-        return [$orderedDocumentTypesByCategory, $documentTypes, $paymentDocuments];
+        return [$orderedDocumentTypesByCategory, $paymentDocuments];
     }
 
     public function getQuoteDocumentsForSendUpdates($sendUpdateLogId)

@@ -58,7 +58,6 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   paymentDocument: Array
 });

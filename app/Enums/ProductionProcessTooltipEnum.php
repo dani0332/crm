@@ -37,10 +37,10 @@ final class ProductionProcessTooltipEnum extends Enum
     const TRANSACTION_PAYMENT_STATUS_NOT_PAID = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
     const TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID = 'The invoice has received a portion of its total amount due. Please ensure that the remaining balance is collected promptly to prevent potential financial discrepancies.';
     const TRANSACTION_PAYMENT_STATUS_PAID = 'This insurer tax invoice has been settled in its entirety, with no outstanding amounts. Always review payments to guarantee the accuracy of this status.';
+    CONST POLICY_DETAILS_LOCKED_TOOL_TIP = "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'";
 
     // Manage payment section
     const PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED = 'This payment is currently standalone and hasn\'t been associated with any insurer tax invoices. It\'s essential to review and link it to its relevant invoice(s) for accurate accounting.';
     const PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED = 'This payment is connected to one or more insurer tax invoices, but there\'s a balance remaining. The unallocated portion should be connected to relevant invoices or accounted for.';
     const PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED = 'This payment is thoroughly associated with insurer tax invoices, ensuring that there are no outstanding amounts or pending links.';
-    CONST POLICY_DETAILS_LOCKED_MESSAGE = "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'";
 }

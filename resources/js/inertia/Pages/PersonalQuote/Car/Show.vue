@@ -94,7 +94,6 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   paymentDocument: Array,
   linkedQuoteDetails: Object,
 });
