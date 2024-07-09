@@ -471,15 +471,13 @@ class TravelQuoteService extends BaseService
 
     public function updateChildRecord($id)
     {
-        $childRecord = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        TravelQuoteRequestDetail::updateOrCreate(
+            ['travel_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
     }
 
     private function getQuerySuffix($item)
@@ -547,21 +545,7 @@ class TravelQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return TravelQuoteRequestDetail::create([
-            'travel_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return TravelQuoteRequestDetail::firstOrCreate(['travel_quote_request_id' => $id]);
     }
 
     public function updateTravelQuote(Request $request, $id)
