@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Imports;
+namespace App\Imports\PDMigrations;
 
 use App\Enums\PDMigrations\DealStageEnum;
 use App\Enums\PDMigrations\PDDealStatus;
@@ -42,8 +42,11 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 $classInstance = PersonalQuote::where($searchCriteria)->first();
             }
 
-            info('----------- Importing Personal/Home Qoute Lead  -----------' . $row['deal_cdb_id']);
-            $this->syncQuote($classInstance, $data);
+            if ($classInstance) {
+                info('----------- Importing Personal/Home Qoute Lead  -----------' . $row['deal_cdb_id'] . ' ' . $row['deal_policy_number']);
+                $classInstance->update($data);
+                $this->syncQuote($classInstance, $data);
+            }
         }
     }
 
