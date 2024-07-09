@@ -62,10 +62,7 @@ class InstallmentReportService extends ManagementReport
                 'btoi.text as sub_type_line_of_business',
                 'q.text as lead_status',
             )
-            ->join('payments as p', function ($join) {
-                $join->on('personal_quotes.code', '=', 'p.code')
-                    ->where('p.frequency', '<>', PaymentFrequency::UPFRONT);
-            })
+            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->leftJoin('quote_status as q', 'q.id', '=', 'personal_quotes.quote_status_id')
