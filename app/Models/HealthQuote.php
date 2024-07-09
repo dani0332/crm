@@ -209,4 +209,9 @@ class HealthQuote extends Model implements AuditableContract
 
         return 'Price';
     }
+
+    public function policyWording()
+    {
+        return $this->hasMany(HealthPlanPolicyWording::class, 'plan_id', 'plan_id');
+    }
 }
