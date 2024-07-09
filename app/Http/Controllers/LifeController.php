@@ -214,7 +214,7 @@ class LifeController extends Controller
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
             ],
-            'paymentDocument' => $paymentDocument
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

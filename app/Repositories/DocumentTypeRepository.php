@@ -5,9 +5,9 @@ namespace App\Repositories;
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\BusinessInsuranceType;
 use App\Models\DocumentType;
 use App\Models\KycLog;
-use App\Models\BusinessInsuranceType;
 use App\Services\ActivitiesService;
 
 class DocumentTypeRepository extends BaseRepository
@@ -67,6 +67,7 @@ class DocumentTypeRepository extends BaseRepository
                 return $query->byBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
             })->when($latestKycLog?->search_type, function ($query) use ($latestKycLog, $quote) {
                 $businessInsurerName = $this->fetchBusinessInsurerName($quote->business_type_of_insurance_id);
+
                 return $query->byBusinessTypeOfCustomer($latestKycLog?->search_type, $businessInsurerName);
             });
 
@@ -81,11 +82,13 @@ class DocumentTypeRepository extends BaseRepository
         return $documentTypes->pluck('code')->toArray();
     }
 
-    public function fetchBusinessInsurerName($id){
+    public function fetchBusinessInsurerName($id)
+    {
         $businessInsuranceType = BusinessInsuranceType::find($id);
         if ($businessInsuranceType && in_array($businessInsuranceType->code, [quoteBusinessTypeCode::groupMedical, quoteBusinessTypeCode::carFleet])) {
             return DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER;
         }
+
         return false;
     }
 }

@@ -210,7 +210,7 @@ class YachtQuoteController extends Controller
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],
-            'paymentDocument' => $paymentDocument
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

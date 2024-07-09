@@ -85,10 +85,10 @@ class DocumentType extends Model implements AuditableContract
         return $query->where('business_type_of_insurance_id', $businessTypeOfInsurance);
     }
 
-    public function scopeByBusinessTypeOfCustomer($query, $businessTypeOfCustomer, $businessInsurerName=false)
+    public function scopeByBusinessTypeOfCustomer($query, $businessTypeOfCustomer, $businessInsurerName = false)
     {
-        if (!$businessInsurerName){
-            if (in_array($businessTypeOfCustomer, [ CustomerTypeEnum::Business, CustomerTypeEnum::Entity ])) {
+        if (! $businessInsurerName) {
+            if (in_array($businessTypeOfCustomer, [CustomerTypeEnum::Business, CustomerTypeEnum::Entity])) {
                 $businessTypeOfCustomer = DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER;
             } elseif ($businessTypeOfCustomer == CustomerTypeEnum::Individual) {
                 $businessTypeOfCustomer = DocumentTypeCode::INDIVIDUAL_BUSINESS_TYPE_OF_CUSTOMER;
@@ -100,7 +100,7 @@ class DocumentType extends Model implements AuditableContract
         return $query->where('business_type_of_customer', $businessTypeOfCustomer);
     }
 
-    public function scopeGetBusinessDocument($query, $businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName=false)
+    public function scopeGetBusinessDocument($query, $businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName = false)
     {
         return $query->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
             return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);

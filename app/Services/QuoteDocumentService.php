@@ -2,20 +2,18 @@
 
 namespace App\Services;
 
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypeId;
+use App\Enums\DocumentTypeCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Enums\DocumentTypeCode;
-use Illuminate\Support\Facades\Log;
-use App\Enums\quoteBusinessTypeCode;
-use App\Traits\GenericQueriesAllLobs;
-use App\Enums\SendUpdateLogStatusEnum;
-use Illuminate\Support\Facades\Storage;
-use Maatwebsite\Excel\Concerns\ToArray;
 use App\Repositories\DocumentTypeRepository;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class QuoteDocumentService extends BaseService
 {
@@ -243,11 +241,12 @@ class QuoteDocumentService extends BaseService
             })
             ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer, $businessTypeOfInsurance) {
                 $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
+
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
             })->sortDocumentType()->get();
 
         if ($quoteTypeId == QuoteTypeId::Business) {
-            if ($quoteType == quoteTypeCode::CORPLINE){
+            if ($quoteType == quoteTypeCode::CORPLINE) {
                 $quoteTypeId = QuoteTypeId::Corpline;
             }
             $businessDocumetTypes = [];
@@ -263,7 +262,7 @@ class QuoteDocumentService extends BaseService
         $paymentDocumentCodes = $this->paymentDocumentTypesOptions($quoteTypeId);
         $paymentDocuments = $documentTypes->filter(function ($type) use ($paymentDocumentCodes) {
             return in_array($type->code, $paymentDocumentCodes);
-        })->values()->all(); 
+        })->values()->all();
 
         $documentTypesByCategory = $documentTypes->groupBy('category');
         $orderedDocumentTypesByCategory = collect();

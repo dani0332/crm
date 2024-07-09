@@ -757,7 +757,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'policyIssuanceStatus', 'bookPolicyDetails', 'isAmlClearedForPayment', 'clientInquiryLogs', 'linkedQuoteDetails', 'puaTypeEnum', 'paymentDocument'
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'policyIssuanceStatus', 'bookPolicyDetails', 'isAmlClearedForPayment', 'clientInquiryLogs', 'linkedQuoteDetails', 'puaTypeEnum', 'paymentDocument',
             ]));
         }
 
@@ -887,7 +887,7 @@ class CRUDController extends Controller
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
-                'paymentDocument' => $paymentDocument
+                'paymentDocument' => $paymentDocument,
             ]);
         }
 
@@ -1039,7 +1039,7 @@ class CRUDController extends Controller
                 'linkedQuoteDetails' => $linkedQuoteDetails,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
                 'clientInquiryLogs' => $clientInquiryLogs,
-                'paymentDocument' =>  $paymentDocument
+                'paymentDocument' => $paymentDocument,
             ]);
         } else {
             return view('shared.show', compact([

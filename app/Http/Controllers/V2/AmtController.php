@@ -355,7 +355,7 @@ class AmtController extends Controller
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $record->payments->toArray() ?? [],
-            'paymentDocument' => $paymentDocuments
+            'paymentDocument' => $paymentDocuments,
         ]);
     }
 

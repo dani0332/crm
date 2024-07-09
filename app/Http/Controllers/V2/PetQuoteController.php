@@ -210,7 +210,7 @@ class PetQuoteController extends Controller
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'linkedQuoteDetails' => $linkedQuoteDetails,
-            'paymentDocument' => $paymentDocument
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

@@ -191,7 +191,7 @@ class BikeQuoteController extends Controller
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'record' => $quote,
-            'paymentDocument' => $paymentDocument
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

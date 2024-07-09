@@ -153,7 +153,7 @@ class JetskiQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
-            'paymentDocument' => $paymentDocument
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

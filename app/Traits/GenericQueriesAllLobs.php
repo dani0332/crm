@@ -23,7 +23,6 @@ use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\CssSelector\XPath\Extension\FunctionExtension;
 
 trait GenericQueriesAllLobs
 {
@@ -638,8 +637,10 @@ trait GenericQueriesAllLobs
         }
     }
 
-    private function isPolicyCancelledOrPending($quote){
-        $quote_status_id =  $quote->quote_status_id;
+    private function isPolicyCancelledOrPending($quote)
+    {
+        $quote_status_id = $quote->quote_status_id;
+
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 }

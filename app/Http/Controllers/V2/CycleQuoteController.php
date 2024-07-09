@@ -231,7 +231,7 @@ class CycleQuoteController extends Controller
             'quoteDocuments' => $quoteNotes,
             'cdnPath' => $cdnPath,
             'linkedQuoteDetails' => $linkedQuoteDetails,
-            'paymentDocument' => $paymentDocument
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 
