@@ -415,7 +415,7 @@ const validatePaymentOption = () => {
   const validFrequencies = ['monthly', 'quarterly', 'semi_annual', 'custom'];
   if (
     validFrequencies.includes(paymentMethodsForm.frequency) &&
-    paymentMethodsModels.value[1] ==
+    paymentMethodsModels.value[1] ===
       page.props.paymentMethodsEnum?.InsurerPayment &&
     paymentMethodsForm.collection_type === 'insurer'
   ) {
@@ -436,7 +436,7 @@ const validatePaymentOption = () => {
             page.props.paymentMethodsEnum?.Cheque ||
           paymentMethodsModels.value[i] ==
             page.props.paymentMethodsEnum?.PostDatedCheque ||
-          (paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.InsurerPayment && paymentMethodsForm.credit_approval==='')
+          (paymentMethodsForm.credit_approval==='' && paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.InsurerPayment)
         ) &&
         (fileUploadModels.value[i] === undefined ||
           fileUploadModels.value[i].length === 0)
