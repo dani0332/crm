@@ -90,7 +90,7 @@ defineProps({
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   vatPercentage: Number,
-  commercialRules: Object,
+  commercialRules: Boolean,
   isAmlClearedForPayment: Boolean,
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
@@ -1511,7 +1511,7 @@ const handlePlanSelected = plan => {
 };
 
 const isPlanDetailEnabled = computed(() => {  
-  if(page.props.commercialRules?.length > 0) { // Check rules for commercial
+  if(page.props.commercialRules) { // Check rules for commercial
     return true;
   }
 

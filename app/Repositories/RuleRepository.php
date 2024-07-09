@@ -22,46 +22,22 @@ class RuleRepository extends BaseRepository
      */
     public function fetchGetCommercialRule($lead)
     {
-        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
-
-        $commercialCarMake = CarMake::where('id', $lead->car_make_id)
-            ->where('is_commercial', true)
-            ->select('id')
-            ->first();
-
+        $_return = false;
         $commercialCarModel = CarModel::where('id', $lead->car_model_id)
             ->where('is_commercial', true)
-            ->select('id')
-            ->first();
+            ->count();
 
-        foreach ($commercialKeywords as $keyword) {
-            if (
-                str_contains(
-                    strtolower(trim($lead->full_name)),
-                    strtolower(trim($keyword->name))
-                )
-                ||
-                ($commercialCarMake && $commercialCarModel)
-            ) {
-                return $this->_getCommercialRule();
-
-            }
+        if ($commercialCarModel) {
+            $_return = true;
         }
-    }
 
-    public function _getCommercialRule()
-    {
-        // Join relevant tables to retrieve commercial rules for car make and model.
-        // Filter by rule type, ensure rules are active, and group by rule ID.
-        // Select a concatenated list of user IDs as "leadSourceUsers" for each rule.
-        return $this->model()::join('rule_details', 'rule_details.rule_id', 'rules.id')
-            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-            ->join('users', 'users.id', 'rule_users.user_id')
-            ->where('rule_type', RuleTypeEnum::CAR_MAKE_MODEL)
-            ->where('rules.is_active', 1)
-            ->groupBy('rule_details.rule_id')
-            ->select(
-                \DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-            )->get();
+        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+        $commercialKeywordsCheck = in_array(strtolower(trim($lead->full_name)), array_column($commercialKeywords->toArray(), strtolower(trim('name'))));
+        if ($commercialKeywordsCheck) {
+            $_return = true;
+        }
+
+        return $_return;
     }
+   
 }
