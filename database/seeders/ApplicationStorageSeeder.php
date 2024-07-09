@@ -161,10 +161,8 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ]);
         }
-
-        $healthOneClickBuyPlanTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->count();
-        if ($healthOneClickBuyPlanTemplate == 0) {
-            $healthOneClickBuyPlanTemplate = ApplicationStorage::create([
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->exists()) {
+            ApplicationStorage::create([
                 'key_name' => ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE,
                 'value' => '677',
                 'is_active' => 1,

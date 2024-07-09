@@ -115,7 +115,7 @@ class HealthQuoteService extends BaseService
             'sb.text as salary_band_id_text',
             'hqr.member_category_id',
             'mc.text as member_category_id_text',
-            'hqr.renewal_expiry_date',
+//            'hqr.renewal_expiry_date',
             'hqr.renewal_batch',
             'hqr.renewal_import_code',
             'hqr.previous_quote_policy_number',
@@ -167,7 +167,7 @@ class HealthQuoteService extends BaseService
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
             'hqr.stale_at',
-            'hqr.health_plan_type_id',
+            'hqr.health_plan_type_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')

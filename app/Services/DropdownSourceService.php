@@ -324,7 +324,7 @@ class DropdownSourceService extends BaseService
                 // =========== end =================
                 break;
             case 'plan_type_id':
-                $data = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
+                $data = HealthPlanType::where('is_active', 1)->select('id', 'text')->orderBy('id')->get();
                 break;
             default:
                 break;

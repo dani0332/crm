@@ -336,7 +336,7 @@ function onSubmit(isValid) {
         <x-field v-if="!isEdit" label="POLICY START DATE">
           <x-input v-model="quoteForm.policy_start_date" class="w-full" />
         </x-field>
-          <x-field label="TYPE OF PLAN" required>
+          <x-field label="TYPE OF PLAN">
               <x-select
                   v-model="quoteForm.plan_type_id"
                   :options="

@@ -375,7 +375,7 @@ class SendEmailCustomerService extends BaseService
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
-        if (isset($messageId) && isset($emailData->quoteTypeId) && ($emailData->quoteTypeId == QuoteTypeId::Health) && isset($emailData->quoteId)) {
+        if (isset($messageId) && ($emailData->quoteTypeId == QuoteTypeId::Health) && isset($emailData->quoteId)) {
             UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
         }
 
@@ -981,7 +981,7 @@ class SendEmailCustomerService extends BaseService
     }
     private function buildPlansEmailData($healthQuote, $plans, $previousAdvisor, $request, $emailTemplateId)
     {
-        $advisor = User::where('id', $healthQuote->advisor_id)->first();
+        $advisor = User::find($healthQuote->advisor_id);
         $insurerPlans = [];
         foreach ($plans as $plan) {
             $premium = 0;
@@ -1061,7 +1061,7 @@ class SendEmailCustomerService extends BaseService
         $isRevivalLead = $healthQuote->source == LeadSourceEnum::REVIVAL || $healthQuote->source == LeadSourceEnum::REVIVAL_PAID || $healthQuote->source == LeadSourceEnum::REVIVAL_REPLIED;
         $currentInsurer = null;
         if (isset($healthQuote->currently_insured_with_id)) {
-            $currentInsurer = InsuranceProvider::where('id', '=', $healthQuote->currently_insured_with_id)->first();
+            $currentInsurer = InsuranceProvider::find($healthQuote->currently_insured_with_id);
         }
 
         return (object) [
@@ -1084,8 +1084,8 @@ class SendEmailCustomerService extends BaseService
             'quoteId' => $healthQuote->id,
             'quoteTypeId' => QuoteTypeId::Health,
             'currentInsurer' => $currentInsurer ? $currentInsurer->text : null,
-            'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : ''), // DLA = Disable Lead Assignment
-            'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.'/?assignAdvisor=true',
+            'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment
+            'requestAdvisorLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.'/?assignAdvisor=true'),
             'assignmentType' => $this->getAssignmentTypeText($healthQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
@@ -1130,7 +1130,7 @@ class SendEmailCustomerService extends BaseService
 
     private function getPlanBuyNowLink($plan, $uuid)
     {
-        $buyNowLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$uuid.'/payment/?providerCode='.$plan->providerCode.'&planId='.$plan->id.'&selectedCopayId='.$plan->selectedCopayId;
+        $buyNowLink = url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$uuid.'/payment', ['providerCode' => $plan->providerCode, 'planId' => $plan->id, 'selectedCopayId' => $plan->selectedCopayId]);
 
         return $buyNowLink;
     }

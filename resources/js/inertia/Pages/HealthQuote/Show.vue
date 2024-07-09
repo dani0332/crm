@@ -144,7 +144,7 @@ const onCreateDuplicate = isValid => {
     },
   });
 };
-const emailStatusTable = reactive({
+const emailTableColumns = reactive({
     columns: [
         { text: 'Id', value: 'id' },
         { text: 'Email Subject', value: 'email_subject' },
@@ -1579,7 +1579,7 @@ const salaryBrandMapping = {
   1: 'AED 4000 and below',
   2: 'More than AED 4000',
 };
-const sendEmailValidationsCheck = () =>{
+const validateEmailSending = () =>{
     if (selectedPlans.value.length === 0) {
         modals.sendConfirm = true;
         return;
@@ -1609,7 +1609,7 @@ const sendEmailValidationsCheck = () =>{
         modals.sendConfirm = false;
         return;
     }
-    modals.sendConfirm = true
+    modals.sendConfirm = true;
 }
 const loader = ref({
     link: false,
@@ -1659,8 +1659,7 @@ const confirmSendEmail = () => {
             });
         })
         .catch(error => {
-            console.log(error);
-            notification.success({
+            notification.error({
                 title: "OCB email sending failed, please try again.",
                 position: 'top',
             });
@@ -1703,7 +1702,7 @@ watch(
 );
 
 
-const isEmailStatusExist = computed(() => props.emailStatuses.length > 0);
+const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
 
 </script>
 
@@ -2919,10 +2918,10 @@ const isEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               Download PDF
             </x-button>
               <x-button
-                  @click.prevent="sendEmailValidationsCheck"
+                  @click.prevent="validateEmailSending"
                   size="sm"
                   color="orange"
-                  :disabled="isEmailStatusExist"
+                  :disabled="doesEmailStatusExist"
               >
                   Send OCA Email to Customer
               </x-button>
@@ -3314,7 +3313,7 @@ const isEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           </div>
           <DataTable
               table-class-name="tablefixed compact"
-              :headers="emailStatusTable.columns"
+              :headers="emailTableColumns.columns"
               :items="emailStatuses || []"
               show-index
               border-cell
