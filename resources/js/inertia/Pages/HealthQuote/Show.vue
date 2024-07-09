@@ -1614,6 +1614,8 @@ const validateEmailSending = () =>{
 const loader = ref({
     link: false,
 });
+
+const isOcaButtonDisabled = ref(false);
 const confirmSendEmail = () => {
     loader.value.link = true;
     const first_name = page.props.quote.first_name || '';
@@ -1652,6 +1654,7 @@ const confirmSendEmail = () => {
                 title: response.data.success,
                 position: 'top',
             });
+            isOcaButtonDisabled.value = true;
             router.reload({
                 replace: true,
                 preserveScroll: true,
@@ -2921,7 +2924,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
                   @click.prevent="validateEmailSending"
                   size="sm"
                   color="orange"
-                  :disabled="doesEmailStatusExist"
+                  :disabled="doesEmailStatusExist || isOcaButtonDisabled"
               >
                   Send OCA Email to Customer
               </x-button>

@@ -375,7 +375,7 @@ class SendEmailCustomerService extends BaseService
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
-        if (isset($messageId) && ($emailData->quoteTypeId == QuoteTypeId::Health) && isset($emailData->quoteId)) {
+        if (isset($messageId) && isset($emailData->quoteTypeId) && ($emailData->quoteTypeId == QuoteTypeId::Health) && isset($emailData->quoteId)) {
             UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
         }
 
