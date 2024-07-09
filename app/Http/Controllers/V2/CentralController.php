@@ -247,7 +247,6 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         if ($request->send_policy_type == 'customer') {
-            // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request));
 
             $quote->update([

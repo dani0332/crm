@@ -140,6 +140,8 @@ const bpForm = useForm({
   modelType: props.modelType,
   transaction_payment_status_tool_tip: page.props.bookPolicyDetails.paymentStatusTooltip,
   line_of_business: page.props?.bookPolicyDetails?.lineOfBusiness,
+  isPolicyCancelledOrPending: page.props?.bookPolicyDetails?.isPolicyCancelledOrPending,
+  isPolicyCancelledOrPendingToolTtip: page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip
 });
 
 let is_lacking_payment = ref(page.props.bookPolicyDetails.isLackingOfPayment || false);
@@ -379,6 +381,17 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
+
+const isShowingTransactionPaymentStatus = computed(() => {
+  const policyStatuses = [
+    page.props.quoteStatusEnum.PolicyBooked,
+    page.props.quoteStatusEnum.CancellationPending,
+    page.props.quoteStatusEnum.PolicyCancelled,
+    page.props.quoteStatusEnum.PolicyCancelledReissued
+  ];
+  return policyStatuses.includes(props.quote.quote_status_id);
+});
+
 </script>
 
 <template>
@@ -451,9 +464,7 @@ const showInsufficientPaymentAlert = () => {
                   </template>
                 </x-tooltip>
                 <template
-                  v-if="
-                    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked
-                  "
+                  v-if="isShowingTransactionPaymentStatus"
                 >
                   <x-tooltip position="center">
                     <dd class="border-b border-dotted border-black">
@@ -689,6 +700,20 @@ const showInsufficientPaymentAlert = () => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
+            <div v-if="bpForm.isPolicyCancelledOrPending" class="flex justify-end"> 
+              <x-tooltip>
+                <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
+                  Edit
+                </x-button>
+                <x-button size="sm" color="orange" class="mt-4" disabled>
+                  Send and Book Policy 
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">{{bpForm.isPolicyCancelledOrPendingToolTtip}}</span>
+                </template>
+              </x-tooltip>
+            </div>
+
             <div v-if="showActionButtons" class="flex justify-end">
               <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
