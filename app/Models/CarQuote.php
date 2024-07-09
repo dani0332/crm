@@ -550,7 +550,7 @@ class CarQuote extends BaseModel
         return $this->hasMany(CarPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 
-     // Get insurance provieder for plan details section
+     // Get insurance provider for plan details section
      public function insuranceProviderDetails()
      {
          return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
