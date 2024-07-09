@@ -728,7 +728,7 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            if ($emailData->handBookDocuments) {
+            if (is_array($emailData->handBookDocuments) && !empty($emailData->handBookDocuments)) {
                 $attachments = array_merge($attachments, $emailData->handBookDocuments);
             }
 

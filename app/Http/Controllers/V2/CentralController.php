@@ -49,7 +49,6 @@ use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
-use App\Services\SendBookPolicyDocumentsService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -248,10 +247,6 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         if ($request->send_policy_type == 'customer') {
-            // $endBookPolicyDocumentsService = new SendBookPolicyDocumentsService($request);
-            // $endBookPolicyDocumentsService->execute();
-            // dd(252);
-            // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request));
 
             $quote->update([
