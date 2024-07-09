@@ -15,6 +15,7 @@ use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\QuoteRequestEntityMapping;
 use App\Models\SageApiLog;
 use App\Models\SendUpdateLog;
 use App\Models\User;
@@ -142,19 +143,32 @@ class SageApiService
     // Code Refactor, Old function verifySageCustomer updated function sageCustomer
     public function sageCustomer($quoteTypeId, $quote, $totalSteps = 4)
     {
+        $response = '';
+        $customerPayload = [
+            'sage_request_type' => SageEnum::SRT_CREATE_CUSTOMER,
+            'entry_type' => SageEnum::SCT_STRAIGHT,
+            'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
+            'payload' => [],
+        ];
+
         $sageCustomerNumber = false;
+        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
+
         $customer = Customer::where('id', $quote->customer_id)->first();
+        $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
+
+        $quoteEntityMapping = QuoteRequestEntityMapping::where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quote->id])->first();
+        $quoteEntity = $quoteEntityMapping?->entity;
+        if ($quoteEntity) {
+            $customerData['entity'] = $quoteEntity;
+            if ($quoteEntity->sage_customer_number) {
+                $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
+                return $quoteEntity->sage_customer_number;
+            }
+        }
 
         if ($customer) {
-            $response = '';
-            $customer->data = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
-            $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
-            $customerPayload = [
-                'sage_request_type' => SageEnum::SRT_CREATE_CUSTOMER,
-                'entry_type' => SageEnum::SCT_STRAIGHT,
-                'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
-                'payload' => [],
-            ];
+            $customer->data = $customerData;
 
             if ($customer->sage_customer_number) {
                 $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
@@ -183,12 +197,18 @@ class SageApiService
                         $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
                     }
                     unset($customer->data);
-                    $customer->sage_customer_number = $sageCustomerNumber;
-                    $customer->save();
                 } else {
                     $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps, 'fail');
                 }
             }
+        }
+
+        if ($quoteEntity) {
+            $quoteEntity->sage_customer_number = $sageCustomerNumber;
+            $quoteEntity->save();
+        } else {
+            $customer->sage_customer_number = $sageCustomerNumber;
+            $customer->save();
         }
 
         return $sageCustomerNumber;
@@ -197,12 +217,24 @@ class SageApiService
     public function verifySageCustomer($customerId, $data = null, $logModal = null, $sageLogArray = [], $totalSteps = 4)
     {
         $customer = Customer::find($customerId);
-        $customer->data = ! empty($data) ? $data : [];
         $sageCustomerNumber = false;
         $payLoadOptions['endPoint'] = 'AR/ARCustomers';
         $payLoadOptions['payload'] = [];
         $response = '';
+
+        $quoteEntityMapping = QuoteRequestEntityMapping::where(['quote_type_id' => $data['quoteTypeId'], 'quote_request_id' => $data['id']])->first();
+        $quoteEntity = $quoteEntityMapping?->entity;
+
+        if ($quoteEntity) {
+            $data['entity'] = $quoteEntity;
+            if ($quoteEntity->sage_customer_number) {
+                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
+                return $quoteEntity->sage_customer_number;
+            }
+        }
+
         if ($customer) {
+            $customer->data = ! empty($data) ? $data : [];
             if ($customer->sage_customer_number) {
                 $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
                 $sageCustomerNumber = $customer->sage_customer_number;
@@ -234,12 +266,17 @@ class SageApiService
                         $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
                     }
                     unset($customer->data);
-                    $customer->sage_customer_number = $sageCustomerNumber;
-                    $customer->save();
                 } else {
                     $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, 'fail');
                 }
             }
+        }
+        if ($quoteEntity) {
+            $quoteEntity->sage_customer_number = $sageCustomerNumber;
+            $quoteEntity->save();
+        } else {
+            $customer->sage_customer_number = $sageCustomerNumber;
+            $customer->save();
         }
 
         return $sageCustomerNumber;
