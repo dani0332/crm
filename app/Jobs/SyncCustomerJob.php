@@ -61,7 +61,7 @@ class SyncCustomerJob implements ShouldQueue
             try {
                 $entries = $modelClass::where('email', $this->email)->where('customer_id', '!=', $this->newCustomerId)->get();
                 $auditsToCreate = [];
-                if(!empty($entries) && $entries->count()) {
+                if (! empty($entries) && $entries->count()) {
                     foreach ($entries as $entry) {
                         $auditsToCreate[] = [
                             'event' => 'updated',
@@ -76,9 +76,9 @@ class SyncCustomerJob implements ShouldQueue
 
                     $modelClass::where('email', $this->email)->where('customer_id', '!=', $this->newCustomerId)->update(['customer_id' => $this->newCustomerId]);
                     Audit::insert($auditsToCreate);
-                    info('SyncCustomerJob - Updated ' . count($entries) . ' entries in ' . $modelClass . ' for ' . $this->email . ' - new customer id - ' . $this->newCustomerId);
+                    info('SyncCustomerJob - Updated '.count($entries).' entries in '.$modelClass.' for '.$this->email.' - new customer id - '.$this->newCustomerId);
                 }
-                
+
             } catch (Exception $e) {
                 $error = 'SyncCustomerJob Error syncing entry: '.$this->newCustomerId.' - '.$this->email.' - '.$modelClass.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
