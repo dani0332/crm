@@ -19,48 +19,31 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     public function model(array $row)
     {
-        $fullName = $row['deal_contact_person']; // Adjust the key based on your column name
-        [$firstName, $lastName] = $this->splitName($fullName);
-        if (isset($row['deal_cdb_id'])) {
-            [, $value] = explode('-', $row['deal_cdb_id']);
-            $classInstance = null;
+        if (isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) {
 
-            if ($row['deal_type_of_insurance'] === QuoteTypes::HOME->value) {
-                $data = [
-                    'first_name' => $firstName,
-                    'last_name' => $lastName,
-                    'previous_quote_policy_number' => $row['deal_policy_number'],
-                    'mobile_no' => $row['person_phone_work'],
-                    'source' => $row['deal_source_of_inquiry'],
-                    'email' => $row['person_email_work'],
-                    'code' => $row['deal_cdb_id'],
-                    'uuid' => $value,
-                    'premium' => str_replace(' AED', '', $row['deal_value']),
-                    'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
-                ];
-                $classInstance = HomeQuote::updateOrCreate(['uuid' => $data['uuid']], $data);
+            $data = [
+                'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
+                'premium' => str_replace(' AED', '', $row['deal_value']),
+                'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
+            ];
 
-            } else {
+            $searchCriteria = [];
 
-                $data = [
-                    'first_name' => $firstName,
-                    'last_name' => $lastName,
-                    'previous_quote_policy_number' => $row['deal_policy_number'],
-                    'mobile_no' => $row['person_phone_work'],
-                    'source' => $row['deal_source_of_inquiry'],
-                    'email' => $row['person_email_work'],
-                    'code' => $row['deal_cdb_id'],
-                    'uuid' => $value,
-                    'premium' => $row['deal_value'],
-                    'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
-                ];
-
-                $classInstance = PersonalQuote::updateOrCreate(['uuid' => $data['uuid']], $data);
-
+            if (isset($row['deal_cdb_id'])) {
+                [, $value] = explode('-', $row['deal_cdb_id']);
+                $searchCriteria['uuid'] = $value;
+            } elseif (isset($row['deal_policy_number'])) {
+                $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number'];
             }
 
-            info('----------- Importing Personal/Home Qoute Lead  -----------'.$row['deal_cdb_id']);
-            $this->syncQuote($classInstance, $classInstance->toArray());
+            if ($row['deal_type_of_insurance'] === QuoteTypes::HOME->value) {
+                $classInstance = HomeQuote::where($searchCriteria)->first();
+            } else {
+                $classInstance = PersonalQuote::where($searchCriteria)->first();
+            }
+
+            info('----------- Importing Personal/Home Qoute Lead  -----------' . $row['deal_cdb_id']);
+            $this->syncQuote($classInstance, $data);
         }
     }
 
@@ -86,7 +69,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
     private function getQuoteStatusId($dealStatus, $dealStage)
     {
 
-        if ($dealStatus === PDDealStatus::LOST && $dealStage === DealStageEnum::FOLLOW_UP) {
+        if ($dealStatus === PDDealStatus::LOST) {
             return QuoteStatusEnum::Lost;
         }
 
