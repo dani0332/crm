@@ -323,7 +323,6 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function checkPolicyDetailsFilled($sendUpdate, $quoteTypeId, $quote)
     {
-
         $sendUpdatePolicyDetails = [
             'first_name' => ($sendUpdate->first_name ?? $quote->first_name) ?? null,
             'last_name' => ($sendUpdate->last_name ?? $quote->last_name) ?? null,
@@ -383,22 +382,20 @@ class SendUpdateLogRepository extends BaseRepository
         return true;
     }
 
-    public function fetchSendUpdateBookedPayments($quoteTypeId, $quoteUuid)
-    {
-        return $this->query()
-            ->where('quote_uuid', $quoteUuid)
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('status', SendUpdateLogStatusEnum::UPDATE_BOOKED)
-            ->whereHas('payments')
-            ->get()
-            ->pluck('payments')
-            ->collapse();
-    }
-
     public function fetchGetLogByTaxInvoiceNumber($data)
     {
         return $this->where('insurer_tax_invoice_number', $data['taxInvoiceNo'])
             ->where('quote_uuid', $data['quoteUuid'])
             ->first() ?? null;
+    }
+
+    public function fetchGetSendUpdateLogInvoices($quoteTypeId, $quoteUuid)
+    {
+        return $this->query()
+            ->where('quote_uuid', $quoteUuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('status', SendUpdateLogStatusEnum::UPDATE_BOOKED)
+            ->get()
+            ->pluck('insurer_tax_invoice_number');
     }
 }

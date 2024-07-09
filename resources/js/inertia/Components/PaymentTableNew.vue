@@ -55,6 +55,7 @@ const props = defineProps({
   eCommercePriceWithLP: {
     type: [String, Number],
     default: '0',
+  },
   expanded: {
     required: false,
     type: Boolean,
@@ -68,7 +69,7 @@ const props = defineProps({
     type: Array,
     default: []
   }
-}});
+});
 
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
