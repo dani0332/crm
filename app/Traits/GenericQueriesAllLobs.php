@@ -216,13 +216,16 @@ trait GenericQueriesAllLobs
 
     /**
      * add comments & improvements needed
-     *
+     * This method called when we visit all LOB's details page
+     * Based on this method we decide to show buttons and  checking lacking payment and other stuff    
      * @return array
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
+        Log::info('bookPolicyPayload method calling started for ' . $record->code);
         $infoMessage = 'QC '.$record->code.' ';
         $insuranceProviderLeadCount = $insuranceProviderCode = $sendUpdateInvoiceDescription = $sendUpdateBrokerInvoice = '';
+        // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
             $insurance_provider_id = $payment->insurance_provider_id;
@@ -253,7 +256,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
-        $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails;
+        $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails . ' IEQD: ' . empty($quoteDocuments);
         $bookPolicyDetails['policyCancelled'] = false;
         $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
@@ -278,7 +281,9 @@ trait GenericQueriesAllLobs
                         $infoMessage .= ' BDS '.$areBookingDetailsFilled;
 
                         if ($areBookingDetailsFilled) {
-                            if (! $this->checkMainLead($record, $quoteType) || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
+                            $isMainLead = $this->checkMainLead($record, $quoteType);
+                            $infoMessage .= ' IML '. $isMainLead;
+                            if (!$isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
                                 $bookPolicyDetails['bookButton'] = true;
                                 $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
                                 $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
@@ -290,7 +295,8 @@ trait GenericQueriesAllLobs
                 }
             }
         }
-
+        
+        // If quote status id is policy sent to customer then we set text book policy
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
@@ -310,15 +316,12 @@ trait GenericQueriesAllLobs
         return $leadCodeArray[0];
     }
 
+
     public function updateQuoteStatus($type, $id)
     {
+        if ($type == 'send-update') return true;
+        if (request()->has('quote_type')) $type = request()->quote_type;
 
-        if ($type == 'send-update') {
-            return true;
-        }
-        if (request()->has('quote_type')) {
-            $type = request()->quote_type;
-        }
         $quote = $this->getQuoteObject($type, $id);
         Log::info('Updating quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
@@ -340,15 +343,27 @@ trait GenericQueriesAllLobs
         }
     }
 
+    /**
+     * Retrieves the transaction payment status and associated tooltip information from payment table
+     * Invoking from bookPolicyPayload function.
+     * @return array
+     */
     private function transactionPaymentStatus($payment, $quote)
     {
+        // If no payment has been created for the lead, return an unpaid payment status along with the relevant tooltip
         if (! $payment) {
             return $this->getUnpaidStatus();
         }
 
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked && $payment->transaction_payment_status == null) {
-            $this->updatePaymentAllocationStatus($quote);
-        }
+        // List of statuses where the payment allocation status needs updating if payment status is set to null
+        $statusesTriggeringUpdate = [
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued
+        ];
+        $updateRequired = in_array($quote->quote_status_id, $statusesTriggeringUpdate) && is_null($payment->transaction_payment_status);
+        if ($updateRequired) $this->updatePaymentAllocationStatus($quote);
 
         return $this->getPaymentStatus($payment);
     }
@@ -419,46 +434,80 @@ trait GenericQueriesAllLobs
             $payment->save();
         }
     }
-
+    
+    /**
+     * Evaluates if all necessary policy details are filled for a given quote.
+     * such as policy number, policy issuance date, policy start date, renewal expiry date, and price with VAT are present.
+     * Triggering from bookPolicyPayload
+     * @return bool
+     */
     private function isFilledPolicyDetails($type, $quote)
     {
-        if (! empty($quote->policy_number) && ! empty($quote->policy_issuance_date) && ! empty($quote->policy_start_date) && ! empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0) {
-            if (in_array(ucfirst($type), [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
-                if (! empty($quote->insurer_quote_number)) {
-                    return true;
-                }
-            } else {
-                return true;
-            }
-        }
+        Log::info("Logging filled policy details for " . $quote->code, [
+            'policy_number' => $quote->policy_number,
+            'policy_issuance_date' => $quote->policy_issuance_date,
+            'policy_start_date' => $quote->policy_start_date,
+            'renewal_expiry_date' => $quote->renewal_expiry_date,
+            'insurer_quote_number' => $quote->insurer_quote_number,
+        ]);
 
-        return false;
+        $hasBasicPolicyDetails = !empty($quote->policy_number) && 
+                                !empty($quote->policy_issuance_date) && 
+                                !empty($quote->policy_start_date) && 
+                                !empty($quote->renewal_expiry_date) && 
+                                $quote->price_with_vat > 0;
+
+        if (!$hasBasicPolicyDetails) return false;
+
+        $isCarOrBike = in_array(ucfirst($type), [QuoteTypes::CAR->value, QuoteTypes::BIKE->value]);
+        $hasInsurerQuoteNumber = !empty($quote->insurer_quote_number);
+
+        // For CAR or BIKE types, ensure insurer_quote_number is also filled
+        if ($isCarOrBike && !$hasInsurerQuoteNumber) return false;
+
+        return true;
     }
 
+    /**
+     * Check if all required documents are uplaoded to enable send policy to customer & book policybutton in book policy section 
+     * Triggering from updateQuoteStatus & bookPolicyPayload 
+     * @return boolean
+     */
     private function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)
     {
         $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
 
-        info('isAllRequiredDocumentAreUploaded: '.$record->code.' Total number of document required: '.count($documentTypeCodes).' Upload nber of document: '.$quoteDocumentsCount);
+        info('isAllRequiredDocumentAreUploaded: '.$record->code.' Total number of document required: '.count($documentTypeCodes).' Upload number of document: '.$quoteDocumentsCount);
         info('documentTypeCodes: ', $documentTypeCodes);
 
         return $quoteDocumentsCount == count($documentTypeCodes);
     }
 
+    /**
+     * Checks if the given payment is lacking based on its total price and the sum of its split payments.
+     * It calculates the total price and the sum of split payments including payment discount value
+     * Triggering from updatePriceAndDiscount & bookPolicyPayload
+     * @return boolean
+     */
     private function isLackingPayment($payment)
     {
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
-            Log::info('isLackingPayment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' Split payment count '.$sumOfSplitPayment);
+            Log::info('Checking Lacking Payment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
 
             return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
 
         return true;
     }
-
+    /**
+     * Checks if the payment is insufficient based on its payment status.
+     * This method sets appropriate headings and descriptions based on the specific payment status
+     * Triggering from bookPolicyPayload and used in book policy section before sending policy
+     * @return array 
+     */
     private function checkForInsufficientPayment($paymnet)
     {
         $paymentStatusHeading = '';
@@ -559,7 +608,13 @@ trait GenericQueriesAllLobs
 
         return $difference;
     }
-
+    
+    /**
+     * Determines if all below mentiooned fields are filled or not  
+     * Based on this we will show book policy button inj booking details section
+     * Triggering from bookPolicyPayload
+     * @return boolean
+     */
     private function areBookingDetailsFilled($payment)
     {
 
@@ -599,6 +654,12 @@ trait GenericQueriesAllLobs
         }
     }
 
+    /**
+     * Determines if the provided quote is the main lead or child lead based on parent_duplicate_quote_id column.
+     * If child lead and parent lead status is not cancellation pending we weill show only send policy to customer button 
+     * Triggering from bookPolicyPayload
+     * @return bool
+     */
     private function checkMainLead($quote, $quoteType)
     {
         if ($quote->parent_duplicate_quote_id == null) {
@@ -637,6 +698,12 @@ trait GenericQueriesAllLobs
         }
     }
 
+    /**
+     * Determines if a quote's status indicates that the policy is either cancelled, pending cancellation, or cancelled and reissued.
+     * Based on this we show tooltip and disbaled button related to send & book policy
+     * Triggering from bookPolicyPayload and used in book policy & policy details section
+     * @return boolean
+     */
     private function isPolicyCancelledOrPending($quote)
     {
         $quote_status_id = $quote->quote_status_id;
