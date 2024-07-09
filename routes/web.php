@@ -351,8 +351,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
-        Route::get('/sic-health-config', [SICHealthController::class, 'sicHealthConfig'])->name('admin.sic-health-config');
-        Route::post('/sic-health-config-store', [SICHealthController::class, 'sicHealthConfigStore'])->name('admin.sic-health-config-store');
+        Route::resource('sic-health-config', SICHealthController::class)->names([
+            'index' => 'admin.sic-health-config.index',
+            'store' => 'admin.sic-health-config.store',
+            ]);
+
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
             Route::get('/view/{commercialKeyword}', [CommercialKeywordsController::class, 'show'])->name('admin.commercial.keywords.show');

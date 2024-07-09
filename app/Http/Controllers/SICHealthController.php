@@ -10,29 +10,27 @@ use Illuminate\Http\Request;
 class SICHealthController extends Controller
 {
     //
-    private $sicHealthConfigService;
+    public  $sicHealthConfigService;
     public function __construct(SICHealthConfigService $sicHealthConfigService)
     {
         $this->sicHealthConfigService = $sicHealthConfigService;
     }
 
-    public function sicHealthConfig()
+    public function index()
     {
-        $nationalities = NationalityRepository::withActive()->get();
         $sicHealthConfig = $this->sicHealthConfigService->getEntity();
-
         return inertia('Admin/SICHealth/SicHealthConfigForm', [
-            'nationalities' => $nationalities,
+            'nationalities' => NationalityRepository::withActive()->get(),
             'sicHealthConfig' => $sicHealthConfig,
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
         ]);
     }
 
-    public function sicHealthConfigStore(Request $request)
+    public function store(Request $request)
     {
-        $this->sicHealthConfigService->saveEntity($request->id ?? null, (object) request()->all());
+        $this->sicHealthConfigService->saveEntity($request->id ?? null, request()->all());
 
-        return redirect()->route('admin.sic-health-config')->with('success', 'SIC Health Config saved successfully');
+        return redirect()->route('admin.sic')->with('success', 'SIC Health Config saved successfully');
 
     }
 }

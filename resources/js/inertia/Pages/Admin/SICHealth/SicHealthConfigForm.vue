@@ -34,7 +34,7 @@ function onSubmit(isValid) {
 
   if (isValid) {
     let method = 'post';
-    let url = route('admin.sic-health-config-store')
+    let url = route('admin.sic-health-config')
     SICHealthConfigForm.submit(method, url, {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {

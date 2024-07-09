@@ -530,9 +530,9 @@ class HandleInertiaRequests extends Middleware
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(
-                                auth()->user()->can(PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES),
+                                auth()->user()->can(PermissionsEnum::CONFIGURE_SIC_HEALTH),
                                 'Configure SIC Health',
-                                route('admin.sic-health-config'),
+                                route('admin.sic-health-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );
