@@ -119,7 +119,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function getFullNameAttribute()
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 
     public function documents()
@@ -196,11 +196,11 @@ class HealthQuote extends Model implements AuditableContract
                 $customerMember->save();
             }
 
-            return $customerMember->first_name . ' ' . $customerMember->last_name;
+            return $customerMember->first_name.' '.$customerMember->last_name;
         } else {
             $healthQuote = HealthQuote::find($id);
             if ($healthQuote) {
-                return $healthQuote->first_name . ' ' . $healthQuote->last_name;
+                return $healthQuote->first_name.' '.$healthQuote->last_name;
             }
         }
 

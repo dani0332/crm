@@ -94,8 +94,8 @@ class HomeQuoteService extends BaseService
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
-                WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = hqr.id),
-                "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
             'c.insured_first_name',
             'c.insured_last_name',
@@ -136,7 +136,7 @@ class HomeQuoteService extends BaseService
     {
         $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
         $lostId = 0;
-        if (!is_null($entity) && $entity->lost_reason_id) {
+        if (! is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
 
@@ -175,7 +175,7 @@ class HomeQuoteService extends BaseService
             'isPropertyRentedHolidayHome' => $request->is_property_rented_holiday_home == 'on' ? true : false,
             'referenceUrl' => $appUrl,
         ];
-        if (!Auth::user()->hasRole('ADMIN')) {
+        if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
@@ -219,7 +219,7 @@ class HomeQuoteService extends BaseService
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (!empty($request->created_at_start) && !empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
@@ -304,23 +304,23 @@ class HomeQuoteService extends BaseService
             }
         }
         foreach ($searchProperties as $item) {
-            if (!empty($request[$item]) && $item != 'created_at') {
+            if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
-                } elseif ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
+                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     if ($request[$item][0] == 'null') {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
+                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'previous_policy_expiry_date', 'next_followup_date'];
                     if (in_array($item, $skipped)) {
                         continue;
                     }
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
                 }
             }
         }
@@ -400,13 +400,13 @@ class HomeQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->orderBy('advisor_id', 'ASC');
-        if (!empty($CDBID)) {
+        if (! empty($CDBID)) {
             $query->where('hqr.id', '=', $CDBID);
         }
-        if (!empty($email)) {
+        if (! empty($email)) {
             $query->where('hqr.email', '=', $email);
         }
-        if (!empty($mobile_no)) {
+        if (! empty($mobile_no)) {
             $query->where('hqr.mobile_no', '=', $mobile_no);
         }
 
@@ -433,7 +433,7 @@ class HomeQuoteService extends BaseService
         $homeQuote->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('quote/home/' . $id)->with('success', 'Home Quote has been updated');
+            return redirect('quote/home/'.$id)->with('success', 'Home Quote has been updated');
         }
     }
 
@@ -648,7 +648,7 @@ class HomeQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: ' . json_encode($leadsIds) . ' Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name);
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
