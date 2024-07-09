@@ -61,10 +61,10 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   clientInquiryLogs: Array,
   quoteNotes: Object,
+  paymentDocument: Array
 });
 
 const isManualPlansCount = ref(0);
@@ -3533,11 +3533,7 @@ watch(
       v-if="isNewPaymentStructure"
       quoteType="Health"
       :payments="payments"
-      :paymentDocument="
-        documentTypes.QUOTE.filter(item =>
-          ['HPD', 'HPDR', 'HDPDR'].includes(item.code),
-        )
-      "
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>

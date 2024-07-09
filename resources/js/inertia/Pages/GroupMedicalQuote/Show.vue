@@ -29,12 +29,12 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
   payments: Array,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -988,7 +988,7 @@ watch(
       :vatPrice="vatPercentage"
     />
 
-    <MigratePayment
+    <MigratePayment       
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode="quote.code"
@@ -1000,7 +1000,7 @@ watch(
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['GMQPD', 'GMQPDR', 'GMQDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>
