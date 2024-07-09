@@ -276,7 +276,33 @@
             display: none;
         }
 
-
+        .header {
+            background: #1d83bc;
+            color: #ffffff;
+            font-size: 19px;
+            text-align: center;
+            padding: 8px 10px;
+            width: 100%;
+            height: 60px;
+            max-height: 60px;
+        }
+        .header .logo {
+            float: left;
+            background-color: white;
+            border-radius: 5px;
+            padding: 5px 10px 5px 0px;
+            height: 50px;
+            max-height: 50px;
+        }
+        .header .logo img {
+            max-height: 50px;
+            height: 50px;
+        }
+        .header h3 {
+            float: right;
+            text-align: right;
+            padding-right: 18px;
+        }
     </style>
 </head>
 <body>
@@ -410,8 +436,11 @@
 
     {{-- PDF Page Header --}}
     <header>
-        <div>
-            <img src="{{public_path('images/header.png')}}">
+        <div class="header">
+            <div class="logo">
+                <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" />
+            </div>
+            <h3>Your Tailor Made <br />Travel Insurance Comparison Table</h3>
         </div>
     </header>
 
