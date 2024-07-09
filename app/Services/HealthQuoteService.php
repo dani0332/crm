@@ -98,6 +98,9 @@ class HealthQuoteService extends BaseService
             'hqr.advisor_id',
             'hqr.previous_advisor_id',
             'u.name as advisor_id_text',
+            'u.email as advisor_email',
+            'u.mobile_no as advisor_mobile_no',
+            'u.landline_no as advisor_landline_no',
             'uadv.name AS previous_advisor_id_text',
             'hqrd.next_followup_date',
             'hqrd.transapp_code',
@@ -163,7 +166,8 @@ class HealthQuoteService extends BaseService
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
-            'hqr.stale_at'
+            'hqr.stale_at',
+            'hqr.health_plan_type_id',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -245,6 +249,7 @@ class HealthQuoteService extends BaseService
             'hasWorldwideCover' => $request->has_worldwide_cover == 'on' ? true : false,
             'hasHome' => $request->has_home == 'on' ? true : false,
             'currentlyInsuredWithId' => $request->currently_insured_with_id,
+            'healthPlanTypeId' => $request->plan_type_id,
         ];
         $dataArr['memberDetails'][] = [
             'firstName' => $request->first_name,
@@ -693,6 +698,7 @@ class HealthQuoteService extends BaseService
             'device' => 'input|title',
             'is_ecommerce' => '|static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'policy_start_date' => 'input|date',
+            'plan_type_id' => 'select|title',
         ];
     }
 
@@ -829,6 +835,9 @@ class HealthQuoteService extends BaseService
                 break;
             case 'assignment_type':
                 $title = 'Assignment Type';
+                break;
+            case 'plan_type_id':
+                $title = 'Plan Type';
                 break;
             default:
                 break;

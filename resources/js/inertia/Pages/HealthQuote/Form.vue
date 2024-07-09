@@ -57,6 +57,7 @@ const quoteForm = useForm({
   has_dental: props.quote?.has_dental || null,
   has_worldwide_cover: props.quote?.has_worldwide_cover || null,
   has_home: props.quote?.has_home || null,
+  plan_type_id : props.quote?.health_plan_type_id || null,
 });
 
 const memberCategorySalaryMapping = {
@@ -335,6 +336,20 @@ function onSubmit(isValid) {
         <x-field v-if="!isEdit" label="POLICY START DATE">
           <x-input v-model="quoteForm.policy_start_date" class="w-full" />
         </x-field>
+          <x-field label="TYPE OF PLAN" required>
+              <x-select
+                  v-model="quoteForm.plan_type_id"
+                  :options="
+              dropdownSource.plan_type_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+                  class="w-full"
+                  :rules="[isRequired]"
+                  :disabled="isEdit"
+              />
+          </x-field>
 
         <x-field>
           <div class="grid grid-cols-2 gap-2">
