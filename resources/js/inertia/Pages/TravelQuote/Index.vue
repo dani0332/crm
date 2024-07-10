@@ -244,7 +244,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
     const differenceInDays = differenceInTime / (1000 * 3600 * 24);
 
     // Check if the date has expired
-    if (differenceInDays <= 0) {
+    if (Math.floor(differenceInDays) <= 0) {
         return "Expired";
     }
 

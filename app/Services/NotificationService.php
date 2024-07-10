@@ -36,9 +36,9 @@ class NotificationService extends BaseService
         } else {
             $url .= '/quotes/'.strtolower($request->quoteType).'/'.$model->uuid;
         }
-        if(checkPersonalQuotes($request->quoteType))
-        {
-            $url .= '/personal-quotes/'.strtolower($request->quoteType).'/'.$model->uuid;
+
+        if (checkPersonalQuotes(ucwords($request->quoteType))) {
+            $url = '/personal-quotes/'.strtolower($request->quoteType).'/'.$model->uuid;
 
         }
         if ($model->advisor_id === null) {
