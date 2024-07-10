@@ -231,8 +231,12 @@ const calculateCommission = () => {
 const isReversalNegative = ref(false);
 
 // this function is used to convert the value to negative if the isNegativeValue is true.
+const isNegativeValue = computed(() => {
+  return props.isNegativeValue || isReversalNegative.value;
+});
+
 function convertToNegative(value) {
-  if (props.isNegativeValue || isReversalNegative.value) {
+  if (isNegativeValue.value) {
     value = -value;
   }
   value = isNaN(value) ? 0 : Number(value);
@@ -1352,12 +1356,13 @@ const isPriceVatApplicableEditable = computed(() => {
                     add step="any"
                     v-model="bookingDetailsForm.price_vat_applicable"
                     @change="calculateCommission"
-                    class="!mb-0 w-full icon-padding"
+                    class="!mb-0 w-full"
+                    :class="isNegativeValue ? ' icon-padding' : ''"
                     :disabled="!state.isEdit"
                     placeholder="Enter Price"
                     :rules="[isRequired]"
                     size="xs"
-                    :icon-left="(props.isNegativeValue || isReversalNegative) ? 'minus' : ''"
+                    :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
                 <div v-else>
@@ -1406,12 +1411,13 @@ const isPriceVatApplicableEditable = computed(() => {
                       add step="any"
                       v-model="bookingDetailsForm.price_vat_not_applicable"
                       @change="calculateCommission"
-                      class="!mb-0 w-full icon-padding"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
                       :disabled="!state.isEdit"
                       placeholder="Enter Price"
                       :rules="[isRequired]"
                       size="xs"
-                      :icon-left="(props.isNegativeValue || isReversalNegative) ? 'minus' : ''"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
                 <div v-else>
@@ -1462,12 +1468,13 @@ const isPriceVatApplicableEditable = computed(() => {
                     add step="any"
                     v-model="bookingDetailsForm.commission_vat_applicable"
                     @change="calculateCommission"
-                    class="!mb-0 w-full icon-padding"
+                    class="!mb-0 w-full"
+                    :class="isNegativeValue ? ' icon-padding' : ''"
                     :disabled="!state.isEdit"
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
                     size="xs"
-                    :icon-left="(props.isNegativeValue || isReversalNegative) ? 'minus' : ''"
+                    :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
               </div>
