@@ -29,12 +29,13 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
   payments: Array,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -363,6 +364,10 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -413,12 +418,19 @@ watch(
             Group Medical List
           </x-button>
         </Link>
-        <Link
-          v-if="!can(permissionsEnum.canEditQuote)"
-          :href="route('amt.edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('amt.edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="!can(permissionsEnum.canEditQuote)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="!can(permissionsEnum.canEditQuote)"/>
+        </template>
       </div>
     </div>
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
@@ -921,7 +933,7 @@ watch(
                   label="Status"
                   :options="leadStatusOptions"
                   :disabled="
-                    quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                    (quote.quote_status_id == quoteStatusEnum.TransactionApproved) || lockLeadSectionsDetails.lead_status
                   "
                   placeholder="Lead Status"
                   class="w-full"
@@ -933,7 +945,7 @@ watch(
                   placeholder="Lead Notes"
                   class="w-full"
                   :disabled="
-                    quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                    (quote.quote_status_id == quoteStatusEnum.TransactionApproved) || lockLeadSectionsDetails.lead_status
                   "
                 />
               </div>
@@ -952,6 +964,7 @@ watch(
                 placeholder="Lost Reason is required"
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
+                :disabled="lockLeadSectionsDetails.lead_status"
               />
               <x-field label="Transaction Type">
                 <x-input
@@ -963,7 +976,7 @@ watch(
               </x-field>
             </div>
           </div>
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
@@ -971,11 +984,20 @@ watch(
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                (quote.quote_status_id == quoteStatusEnum.TransactionApproved) || isDisabled
               "
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>
@@ -988,7 +1010,7 @@ watch(
       :vatPrice="vatPercentage"
     />
 
-    <MigratePayment
+    <MigratePayment       
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode="quote.code"
@@ -1000,7 +1022,7 @@ watch(
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['GMQPD', 'GMQPDR', 'GMQDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>

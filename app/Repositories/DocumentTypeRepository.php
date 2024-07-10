@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\BusinessInsuranceType;
 use App\Models\DocumentType;
 use App\Models\KycLog;
 use App\Services\ActivitiesService;
@@ -33,7 +34,8 @@ class DocumentTypeRepository extends BaseRepository
             $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)->latest()->first();
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
             $businessTypeOfCustomer = $latestKycLog?->search_type;
-            $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer);
+            $businessInsurerName = $this->fetchBusinessInsurerName($businessTypeOfInsurance);
+            $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName);
         }
 
         return $documentTypeCodes->pluck('code')->toArray();
@@ -46,7 +48,8 @@ class DocumentTypeRepository extends BaseRepository
             $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)->latest()->first();
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
             $businessTypeOfCustomer = $latestKycLog?->search_type;
-            $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer);
+            $businessInsurerName = $this->fetchBusinessInsurerName($businessTypeOfInsurance);
+            $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName);
         }
 
         return $documentTypeCodes->pluck('code')->toArray();
@@ -62,9 +65,12 @@ class DocumentTypeRepository extends BaseRepository
             $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)->latest()->first();
             $documentTypes->when($quote->business_type_of_insurance_id, function ($query) use ($quote) {
                 return $query->byBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
-            })->when($latestKycLog?->search_type, function ($query) use ($latestKycLog) {
-                return $query->byBusinessTypeOfCustomer($latestKycLog?->search_type);
+            })->when($latestKycLog?->search_type, function ($query) use ($latestKycLog, $quote) {
+                $businessInsurerName = $this->fetchBusinessInsurerName($quote->business_type_of_insurance_id);
+
+                return $query->byBusinessTypeOfCustomer($latestKycLog?->search_type, $businessInsurerName);
             });
+
             if (($quote->business_type_of_insurance_id === quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet) || ($quote->business_type_of_insurance_id === quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)))) {
                 return $documentTypes->pluck('code')->toArray();
             }
@@ -76,4 +82,13 @@ class DocumentTypeRepository extends BaseRepository
         return $documentTypes->pluck('code')->toArray();
     }
 
+    public function fetchBusinessInsurerName($id)
+    {
+        $businessInsuranceType = BusinessInsuranceType::find($id);
+        if ($businessInsuranceType && in_array($businessInsuranceType->code, [quoteBusinessTypeCode::groupMedical, quoteBusinessTypeCode::carFleet])) {
+            return DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER;
+        }
+
+        return false;
+    }
 }
