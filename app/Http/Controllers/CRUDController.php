@@ -761,7 +761,7 @@ class CRUDController extends Controller
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
                 'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'isAmlClearedForPayment', 'lockLeadSectionsDetails', 'policyIssuanceStatus', 'paymentDocument',
-                'puaTypeEnum'
+                'puaTypeEnum',
             ]));
         }
 
