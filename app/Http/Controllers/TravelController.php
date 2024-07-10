@@ -183,7 +183,7 @@ class TravelController extends Controller
         $documentTypes = $documentType = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
 
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
 
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
@@ -287,9 +287,9 @@ class TravelController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'documentTypeCodes' => $documentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

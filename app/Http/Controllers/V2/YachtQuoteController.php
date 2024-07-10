@@ -123,7 +123,7 @@ class YachtQuoteController extends Controller
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy:id,name,email');
 
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Yacht);
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Yacht);
 
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
@@ -205,7 +205,6 @@ class YachtQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
-            'documentTypeCodes' => $documentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
@@ -213,6 +212,7 @@ class YachtQuoteController extends Controller
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

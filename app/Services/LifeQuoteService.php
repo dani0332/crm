@@ -162,21 +162,9 @@ class LifeQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return LifeQuoteRequestDetail::create([
-            'life_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return LifeQuoteRequestDetail::firstOrCreate(
+            ['life_quote_request_id' => $id]
+        );
     }
 
     public function getLeadsForAssignment()
@@ -434,15 +422,13 @@ class LifeQuoteService extends BaseService
 
     public function updateChildRecord($id)
     {
-        $childRecord = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        LifeQuoteRequestDetail::updateOrCreate(
+            ['life_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => auth()->id(),
+            ]
+        );
     }
 
     public function fillModelProperties()

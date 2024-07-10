@@ -52,9 +52,9 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -947,7 +947,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="documentTypeCodes.filter(item => ['CYCPD', 'CYCPDR', 'CYCDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

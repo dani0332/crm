@@ -55,6 +55,7 @@ const props = defineProps({
   eCommercePriceWithLP: {
     type: [String, Number],
     default: '0',
+  },
   expanded: {
     required: false,
     type: Boolean,
@@ -68,7 +69,7 @@ const props = defineProps({
     type: Array,
     default: []
   }
-}});
+});
 
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
@@ -425,13 +426,10 @@ const validatePaymentOption = () => {
     isPaymentCalculationError.value = true;
     issueFound = true;
   }
-
+  const validFrequencies = ['monthly', 'quarterly', 'semi_annual', 'custom'];
   if (
-    (paymentMethodsForm.frequency === 'monthly' ||
-      paymentMethodsForm.frequency === 'quarterly' ||
-      paymentMethodsForm.frequency === 'semi_annual' ||
-      paymentMethodsForm.frequency === 'custom') &&
-    paymentMethodsModels.value[1] ==
+    validFrequencies.includes(paymentMethodsForm.frequency) &&
+    paymentMethodsModels.value[1] ===
       page.props.paymentMethodsEnum?.InsurerPayment &&
     paymentMethodsForm.collection_type === 'insurer'
   ) {
@@ -452,8 +450,8 @@ const validatePaymentOption = () => {
             page.props.paymentMethodsEnum?.Cheque ||
           paymentMethodsModels.value[i] ==
             page.props.paymentMethodsEnum?.PostDatedCheque ||
-          paymentMethodsModels.value[i] ==
-            page.props.paymentMethodsEnum?.InsurerPayment) &&
+          (paymentMethodsForm.credit_approval==='' && paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.InsurerPayment)
+        ) &&
         (fileUploadModels.value[i] === undefined ||
           fileUploadModels.value[i].length === 0)
       ) {

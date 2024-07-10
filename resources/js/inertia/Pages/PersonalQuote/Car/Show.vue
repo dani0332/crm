@@ -94,7 +94,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
+  paymentDocument: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
 });
@@ -3359,7 +3359,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['CPD', 'CPDR', 'CDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

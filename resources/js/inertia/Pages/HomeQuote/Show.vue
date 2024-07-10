@@ -45,9 +45,9 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -1211,7 +1211,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['HOMPD', 'HOMPDR', 'HOMDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>

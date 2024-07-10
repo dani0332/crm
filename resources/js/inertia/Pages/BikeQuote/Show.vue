@@ -46,9 +46,9 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -834,7 +834,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['BPD', 'BPDR', 'BDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>

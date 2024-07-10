@@ -40,10 +40,10 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Array,
   bookPolicyDetails: Array,
   lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -1181,7 +1181,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['CLPD', 'CLPDR', 'CLDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>

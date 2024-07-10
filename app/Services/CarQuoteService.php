@@ -467,14 +467,15 @@ class CarQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date ?? null;
 
-        if (! $childRecord) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        CarQuoteRequestDetail::updateOrCreate(
+            ['car_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
 
         return $oldAdvisorAssignedDate;
     }
@@ -565,26 +566,15 @@ class CarQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return CarQuoteRequestDetail::create([
-            'car_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return CarQuoteRequestDetail::firstOrCreate(
+            ['car_quote_request_id' => $id],
+        );
     }
 
     public function getEntityPlain($id)
     {
         return CarQuote::where('id', $id)->with([
+            'insuranceProviderDetails',
             'payments' => function ($payment) {
                 $payment->with([
                     'paymentSplits' => function ($paymentSplit) {

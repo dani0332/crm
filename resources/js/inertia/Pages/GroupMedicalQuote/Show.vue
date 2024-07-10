@@ -29,13 +29,13 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
   payments: Array,
   lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -1010,7 +1010,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       :vatPrice="vatPercentage"
     />
 
-    <MigratePayment
+    <MigratePayment       
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode="quote.code"
@@ -1022,7 +1022,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['GMQPD', 'GMQPDR', 'GMQDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>

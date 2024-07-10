@@ -45,6 +45,8 @@ const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const isPolicyCancelledOrPending = page.props?.bookPolicyDetails?.isPolicyCancelledOrPending;
+const isPolicyCancelledOrPendingToolTtip = page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip;
 
 const policyIssuanceStatusOptions = computed(() => {
   let policyIssuanceStatus = page.props.policyIssuanceStatus;
@@ -332,6 +334,7 @@ watch(
     setQuotePlanInsurerNumber();
   },
 );
+
 </script>
 
 <template>
@@ -641,6 +644,16 @@ watch(
               </x-button>
             </EditPolicyButtonTemplate>
 
+            <div v-if="isPolicyCancelledOrPending" class="flex justify-end"> 
+              <x-tooltip>
+                <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
+                  Edit
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content"> {{ isPolicyCancelledOrPendingToolTtip }} </span>
+                </template>
+              </x-tooltip>
+            </div>
             <div class="flex justify-end">
               <template
                 v-if="

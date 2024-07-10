@@ -20,6 +20,9 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 const notification = useNotifications('toast');
+
+const formatted = date => useDateFormat(date, 'YYYY-MM-DD HH:mm:ss');
+
 const activityForm = useForm({
   title: null,
   description: null,
@@ -32,28 +35,28 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
 });
+
 const filters = reactive({
   assignee_id: '',
   status: '',
-  due_date_start: '',
-  due_date_end: '',
   due_date_time_start: '',
   due_date_time_end: '',
   page: 1,
+  isCustom: true,
 });
 const loader = reactive({
   table: false,
   export: false,
 });
 const activityTable = [
-    { text: 'REF ID', value: 'cdbid' },
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee.name' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'REF ID', value: 'cdbid' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee.name' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 // Filter Functions
@@ -65,11 +68,6 @@ function filterActivities(isValid) {
   if (isOverDue.value) {
     if (filters.status == '1') {
       filters.due_date_end = '1/1/1970';
-    } else {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      filters.due_date_end = yesterday.toLocaleDateString();
     }
   }
 
@@ -152,27 +150,23 @@ function resetDates(option) {
     yesterday.setDate(today.getDate() - 1);
     startDate = '1/1/1970';
     filters.status = '0';
-    isOverDue.value = true;
+    isOverDue.value = false;
     endDate = yesterday.toLocaleDateString();
   } else if (option === 'custom') {
     // Handle the custom option by setting the custom start and end dates
     selectedOption.value = option;
     customStartDate.value = null; // Clear previously selected dates
     customEndDate.value = null;
+    filters.isCustom = false;
   }
   if (option != 'custom') {
-    filters.due_date_time_start = '';
-    filters.due_date_time_end = '';
-    filters.due_date_start = startDate;
-    filters.due_date_end = endDate;
+    filters.due_date_time_start = startDate;
+    filters.due_date_time_end = endDate;
     filterActivities(1); // Call the filterActivities function
   }
 }
 function applyCustomDates() {
   if (customStartDate.value && customEndDate.value) {
-    // Update the filters with the selected custom dates
-    filters.due_date_start = '';
-    filters.due_date_end = '';
     filters.due_date_time_start = customStartDate.value;
     filters.due_date_time_end = customEndDate.value;
     filterActivities(1); // Call the filterActivities function

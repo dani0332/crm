@@ -58,9 +58,9 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -2596,14 +2596,10 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
       :payments="payments"
     />
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      quoteType="Travel"
-      :payments="payments"
-      :paymentDocument="
-        documentTypeCodes.filter(item =>
-          ['TPD', 'TPDR', 'TDPDR'].includes(item.code),
-        )
-      "
+			v-if="isNewPaymentStructure"
+			quoteType="Travel"
+			:payments="payments"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>
