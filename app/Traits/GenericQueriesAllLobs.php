@@ -222,7 +222,7 @@ trait GenericQueriesAllLobs
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
-        Log::info('bookPolicyPayload method calling started for ' . $record->code);
+        Log::info('fn: bookPolicyPayload called for ' . $record->code);
         $infoMessage = 'QC '.$record->code.' ';
         $insuranceProviderLeadCount = $insuranceProviderCode = $sendUpdateInvoiceDescription = $sendUpdateBrokerInvoice = '';
         // Retrieve the first payment belongs to lead not to send update
@@ -316,14 +316,18 @@ trait GenericQueriesAllLobs
         return $leadCodeArray[0];
     }
 
-
+    /**
+     * Updates quote & policy issuance status, first will check if the quote's current status is not already set to 'Policy Sent to Customer' 
+     * We check policy issuance status is not 'Policy Issued' & if afilled policy details & required documents are uploaded 
+     * This will trigger once policy details section update or new document upload from upload document section
+     */
     public function updateQuoteStatus($type, $id)
     {
         if ($type == 'send-update') return true;
         if (request()->has('quote_type')) $type = request()->quote_type;
 
         $quote = $this->getQuoteObject($type, $id);
-        Log::info('Updating quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
+        Log::info('fn: updateQuoteStatus called for : '.$quote->uuid);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             Log::info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
@@ -338,7 +342,7 @@ trait GenericQueriesAllLobs
                         'policy_issuance_status_other' => '',
                     ]);
                 }
-                Log::info('Update done for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
+                Log::info('update Quote Status complete for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
             }
         }
     }
@@ -394,9 +398,15 @@ trait GenericQueriesAllLobs
         return [$paymentStatus, $paymentStatusTooltip];
     }
 
+    /**
+     * Updates the total payment price for all payment frequencies and the total amount for upfront payments.
+     * Invoked when update in the policy details section 
+     * It also checks for discrepancies between the total amount of child payments and the total price of the parent payment.
+     * @return boolean
+     */
     public function updatePriceAndDiscount($quoteModel): bool
     {
-        Log::info('Updating price & discount for: '.$quoteModel->uuid);
+        Log::info('fn: updatePriceAndDiscount called for : '.$quoteModel->uuid);
 
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         $priceWithVat = $quoteModel->price_with_vat;
@@ -417,6 +427,11 @@ trait GenericQueriesAllLobs
         return $this->isLackingPayment($payment);
     }
 
+    /**
+     * Updates the total payment price when payment frequency is upfront and payment is paid
+     * Invoked when update in the policy details section 
+     * @return void
+     */
     private function updateTotalAmount($payment)
     {
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
@@ -553,6 +568,11 @@ trait GenericQueriesAllLobs
         return [$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription];
     }
 
+    /**
+     * This method will set payment status in payment table 
+     * This method trigger when policy details section update
+     * @return void 
+     */
     public function setPaymentStatusAsPerPrice($quoteModel, mixed $payment, mixed $difference): void
     {
         $priceWithVat = round($quoteModel->price_with_vat, 2);
@@ -566,7 +586,10 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * @return float|mixed
+     * This method calculates the difference between the price with VAT and the total payment amount, which includes the captured amount and any discount value. 
+     * If the difference is less than $1 but more than $0, it adjusts the payment's discount value to account for this difference
+     * This method trigger when policy details section update
+     * @return double 
      */
     public function handleSmallAmountDifference(mixed $payment, mixed $priceWithVat): mixed
     {
@@ -628,6 +651,11 @@ trait GenericQueriesAllLobs
             && (! empty($payment->commission_vat_not_applicable) || ! empty($payment->commission_vat_applicable));
     }
 
+    /**
+     * Updates the transaction payment status of a payment associated with a given quote.
+     * This method is triggered during the booking policy process
+     * @return null
+     */
     private function updatePaymentAllocationStatus($quote)
     {
 
@@ -676,6 +704,12 @@ trait GenericQueriesAllLobs
         return false;
     }
 
+    /**
+     * For each payment split, if the parent payment's frequency is UPFRONT and its status is PAID,
+     * the method updates the payment split's payment amount to match the parent payment's total amount and logs this update.
+     * If the collection amount is greater than or equal to the payment amount, the payment split's status is set to PAID, otherwise, it is set to PARTIALLY_PAID
+     * This method trigger when policy details section update
+     */
     private function updateChildPaymentStatus($payment)
     {
         Log::info('Updating child payment status for: '.$payment->code);
