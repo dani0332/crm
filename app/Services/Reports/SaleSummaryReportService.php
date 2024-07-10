@@ -2,15 +2,17 @@
 
 namespace App\Services\Reports;
 
-use App\Enums\ManagementReportCategoriesEnum;
-use App\Enums\ManagementReportTypeEnum;
+use Carbon\Carbon;
+use App\Models\Lookup;
+use Illuminate\Http\Request;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
-use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\EndorsementStatusEnum;
+use App\Strategies\ManagementReport;
+use App\Enums\ManagementReportTypeEnum;
+use App\Enums\ManagementReportCategoriesEnum;
 
 class SaleSummaryReportService extends ManagementReport
 {
@@ -40,21 +42,20 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
             ->leftJoin('user_team', 'u.id', '=', 'user_team.user_id')
             ->leftJoin('teams as t', 'user_team.team_id', '=', 't.id')
-            ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->selectRaw('
-            (CAST(SUM(CASE WHEN personal_quotes.policy_booking_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_policies,
-            (CAST(SUM(CASE WHEN personal_quotes.policy_booking_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_transaction,
-            FORMAT(IFNULL(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ,0), 2) as price_vat_applicable,
-            FORMAT(IFNULL(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) * 0.05,0), 2) as total_vat,
+            COUNT(DISTINCT(personal_quotes.uuid)) as total_policies,
+            COUNT(DISTINCT(personal_quotes.uuid)) as total_transaction,
+            FORMAT( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)), 2) as price_vat_applicable,
+            FORMAT(IFNULL(SUM(personal_quotes.vat) / COUNT(DISTINCT(user_team.team_id)),0), 2) as total_vat,
             FORMAT(IFNULL(SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)),0), 2) as price_vat_not_applicable,
             FORMAT(IFNULL(SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)),0), 2) as discount,
             FORMAT(IFNULL(SUM(p.commission_vat_applicable) / COUNT(DISTINCT(user_team.team_id)),0), 2) as commission_vat_applicable,
                 IFNULL( ( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
                 IFNULL( ( SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
-                IFNULL( ( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ) * 0.05, 0) -
+                IFNULL( ( SUM(personal_quotes.vat) / COUNT(DISTINCT(user_team.team_id)) ), 0) -
                 IFNULL( ( SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)) ), 0) as total_price
             ')
             ->when($request->groupBy, function ($query, $groupBy) use ($request) {
@@ -95,6 +96,10 @@ class SaleSummaryReportService extends ManagementReport
         if ($request->groupBy == 'line_of_business') {
             $query->addSelect('quote_type.code as line_of_business');
             $query->whereNotNull('quote_type.code');
+        }
+
+        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+            $query->join('payment_splits as ps', 'p.code', '=', 'ps.code');
         }
 
         $this->applyFilters($query, $request);
@@ -138,24 +143,34 @@ class SaleSummaryReportService extends ManagementReport
         $request['groupBy'] = $request->groupBy ?? 'advisor';
         $this->groupByColumn = $request['groupBy'];
 
+        // lookupQuery
+        $endrosementCategoryIds = Lookup::query()
+            ->select('id')
+            ->whereIn('code', [
+                EndorsementStatusEnum::ENDORSEMENT_FINANCIAL_CODE,
+                EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION,
+                EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION_AND_REISSUANCE])
+            ->pluck('id')->toArray();
+
         $endorsementsQuery = SendUpdateLog::query()
             ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
             ->leftJoin('lookups as l', 'send_update_logs.category_id', '=', 'l.id')
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
             ->leftJoin('user_team', 'u.id', '=', 'user_team.user_id')
             ->leftJoin('teams as t', 'user_team.team_id', '=', 't.id')
-            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
+            ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->selectRaw(
-                "(CAST(SUM(CASE WHEN send_update_logs.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_endorsements,
+                "COUNT(DISTINCT(send_update_logs.uuid)) as total_endorsements,
                 IFNULL( ( SUM(send_update_logs.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
                 IFNULL( ( SUM(send_update_logs.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
-                IFNULL( ( SUM(send_update_logs.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ) * 0.05, 0) -
+                IFNULL( ( SUM(send_update_logs.total_vat_amount) / COUNT(DISTINCT(user_team.team_id)) ), 0) -
                 IFNULL( ( SUM(send_update_logs.discount) / COUNT(DISTINCT(user_team.team_id)) ), 0) as total_endorsement_amount
             "
-            )->where('l.code', 'EF')
+            )
+            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
             ->when($request->groupBy, function ($endorsementsQuery, $groupBy) use ($request) {
                 $groupByArray = [];
                 $groupBy = $this->resolveGroupByColumn($groupBy);
@@ -164,7 +179,6 @@ class SaleSummaryReportService extends ManagementReport
                 if ($utmGroupBy) {
                     array_push($groupByArray, $utmGroupBy);
                 }
-
                 return $endorsementsQuery->groupBy($groupByArray);
             });
 
@@ -201,8 +215,11 @@ class SaleSummaryReportService extends ManagementReport
             $endorsementsQuery->whereNotNull('quote_type.code');
         }
 
-        $endorsementsQuery = $this->applyFilters($endorsementsQuery, $request, true);
+        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+            $endorsementsQuery->join('payment_splits as ps', 'p.code', '=', 'ps.code');
+        }
 
+        $endorsementsQuery = $this->applyFilters($endorsementsQuery, $request, true);
         return $endorsementsQuery->get();
     }
 
