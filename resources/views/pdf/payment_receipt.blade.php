@@ -78,7 +78,7 @@
         <tbody>
             <tr style="border: none;">
                 <td style="width: 70%; border: none; vertical-align:top;">
-                <img src="{{getIMLogo(true)}}" alt="Insurance Market Logo">
+                    <img src="{{'data:image/png;base64,'.base64_encode(getIMLogo(true)}}" alt="Insurance Market Logo" width="300">
                 </td>
                 <td style="vertical-align:middle; text-align:right; border: none; font-size:20px;">
                 <strong>Payment Receipt</strong>
