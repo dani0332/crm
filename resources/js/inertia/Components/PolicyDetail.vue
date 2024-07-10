@@ -47,6 +47,8 @@ const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const isPolicyCancelledOrPending = page.props?.bookPolicyDetails?.isPolicyCancelledOrPending;
+const isPolicyCancelledOrPendingToolTtip = page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip;
 
 const policyIssuanceStatusOptions = computed(() => {
   let policyIssuanceStatus = page.props.policyIssuanceStatus;
@@ -317,6 +319,8 @@ watch(
   },
 );
 
+const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusableTemplate();
+
 const setQuotePlanInsurerNumber = () => {
   policyDetailsForm.quote_plan_insurer_quote_number =
     planQuoteInsurerNumber.value ||
@@ -332,6 +336,7 @@ watch(
     setQuotePlanInsurerNumber();
   },
 );
+
 </script>
 
 <template>
@@ -629,9 +634,30 @@ watch(
               <div class="w-full md:w-1/2" />
             </div>
 
+            <EditPolicyButtonTemplate v-slot="{ isDisabled }" >
+              <x-button
+                class="mt-4"
+                color="emerald"
+                size="sm"
+                @click.prevent="policyDetailsState.isEditing = true"
+                :disabled="isDisabled"
+              >
+              Edit
+              </x-button>
+            </EditPolicyButtonTemplate>
+
+            <div v-if="isPolicyCancelledOrPending" class="flex justify-end"> 
+              <x-tooltip>
+                <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
+                  Edit
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content"> {{ isPolicyCancelledOrPendingToolTtip }} </span>
+                </template>
+              </x-tooltip>
+            </div>
             <div class="flex justify-end">
               <template
-                class="flex justify-end"
                 v-if="
                   quote.quote_status_id ==
                     quoteStatusEnum.TransactionApproved ||
@@ -669,36 +695,17 @@ watch(
                   Update
                 </x-button>
 
-                <template
-                  v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()"
-                >
-                  <x-button
-                    v-if="
-                      !policyDetailsState.isEditing &&
-                      can(permissionsEnum.POLICY_DETAILS_ADD)
-                    "
-                    class="mt-4"
-                    color="emerald"
-                    size="sm"
-                    @click.prevent="policyDetailsState.isEditing = true"
-                  >
-                    Edit
-                  </x-button></template
-                >
+                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
+                  <template v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()">
+                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && can(permissionsEnum.POLICY_DETAILS_ADD)" :isDisabled="true"/>
+                  </template>
+                  <template #tooltip>TThis lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+                </x-tooltip>
+
                 <template v-else>
-                  <x-button
-                    v-if="
-                      !policyDetailsState.isEditing &&
-                      can(permissionsEnum.POLICY_DETAILS_ADD)
-                    "
-                    class="mt-4"
-                    color="emerald"
-                    size="sm"
-                    @click.prevent="policyDetailsState.isEditing = true"
-                  >
-                    Edit
-                  </x-button></template
-                >
+                  <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && can(permissionsEnum.POLICY_DETAILS_ADD)"/>
+                </template>
+
               </template>
               <template v-else>
                 <x-tooltip>
@@ -711,7 +718,7 @@ watch(
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      'The button is not accessable because policy has been booked'
+                      "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
                     }}</span>
                   </template>
                 </x-tooltip>

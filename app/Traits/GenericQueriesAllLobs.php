@@ -255,8 +255,11 @@ trait GenericQueriesAllLobs
         $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
         $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails;
         $bookPolicyDetails['policyCancelled'] = false;
+        $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
+        $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
+
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
-        if (! in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $isFilledPolicyDetails) {
+        if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
                 $isAllRequiredDocumentUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record);
                 $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
@@ -382,7 +385,6 @@ trait GenericQueriesAllLobs
 
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         $priceWithVat = $quoteModel->price_with_vat;
-        $paymentTotalPrice = $payment->total_price;
 
         if ($payment) {
 
@@ -412,15 +414,9 @@ trait GenericQueriesAllLobs
             } else {
                 $totalAmount = $totalPrice - $discountValue;
             }
+            Log::info('updateTotalAmount totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
             $payment->save();
-
-            if ($payment->paymentSplits) {
-                $splitPayment = $payment->paymentSplits()->first();
-                Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$splitPayment->payment_amount.' WTA: '.$totalAmount);
-                $splitPayment->payment_amount = $totalAmount;
-                $splitPayment->save();
-            }
         }
     }
 
@@ -625,6 +621,10 @@ trait GenericQueriesAllLobs
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {
+                if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+                    Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
+                    $paymentSplit->payment_amount = $payment->total_amount;
+                }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
                     if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
@@ -635,5 +635,12 @@ trait GenericQueriesAllLobs
                 }
             }
         }
+    }
+
+    private function isPolicyCancelledOrPending($quote)
+    {
+        $quote_status_id = $quote->quote_status_id;
+
+        return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 }

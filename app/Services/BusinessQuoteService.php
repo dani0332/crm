@@ -158,40 +158,39 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser'])->first();
+        return BusinessQuote::where('id', $id)->with([
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                // This condition added to get the latest payment first for fetching Booking Details accordingly
+                $payment->orderBy('created_at', 'desc');
+            },
+        ])->first();
     }
 
     public function updateChildRecord($id)
     {
-        $childRecord = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        BusinessQuoteRequestDetail::updateOrCreate(
+            ['business_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
     }
 
     public function getDetailEntity($id)
     {
-        $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return BusinessQuoteRequestDetail::create([
-            'business_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return BusinessQuoteRequestDetail::firstOrCreate(['business_quote_request_id' => $id]);
     }
 
     public function getSelectedLostReason($id)
