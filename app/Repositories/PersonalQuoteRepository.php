@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PersonalQuoteRepository extends BaseRepository
 {
@@ -77,6 +78,7 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
+        Log::info('fn: fetchUploadDocument called');
         $quoteType = '';
         $query = DocumentTypeRepository::where('code', $data['document_type_code']);
         if (request()->quote_type_id) {
@@ -108,7 +110,8 @@ class PersonalQuoteRepository extends BaseRepository
             $docUuid = uniqid().rand(1, 100);
         }
 
-        return $quote->documents()->create([
+        // This data will store in quote doocumeets table
+        $documentsArray = [
             'doc_name' => $docName,
             'original_name' => $originalName,
             'doc_url' => $filePathAzure,
@@ -117,7 +120,10 @@ class PersonalQuoteRepository extends BaseRepository
             'document_type_text' => $documentType->text,
             'doc_uuid' => $docUuid,
             'created_by_id' => auth()->id(),
-        ]);
+        ];
+        Log::info('Document array prepared for creation' , $documentsArray);
+
+        return $quote->documents()->create($documentsArray);
     }
 
     /**

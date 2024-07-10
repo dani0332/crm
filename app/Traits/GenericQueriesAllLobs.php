@@ -372,6 +372,10 @@ trait GenericQueriesAllLobs
         return $this->getPaymentStatus($payment);
     }
 
+    /**
+     * This will return unpaid payment status and tool tip.
+     * @return array
+     */
     private function getUnpaidStatus()
     {
         return [
@@ -380,6 +384,10 @@ trait GenericQueriesAllLobs
         ];
     }
 
+    /**
+     * Retrieves the payment status and its corresponding tooltip based on the transaction payment status of a payment.
+     * @return array
+     */
     private function getPaymentStatus($payment)
     {
         if ($payment->transaction_payment_status == TransactionPaymentStatusEnum::UNPAID_TEXT) {

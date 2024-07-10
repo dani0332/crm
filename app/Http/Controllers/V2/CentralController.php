@@ -214,6 +214,8 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
+        Log::info('fn: updateBookingPolicy called');
+
         $validatedData = $bookPolicyRequest->validated();
 
         $paymentInformation = [
@@ -245,6 +247,8 @@ class CentralController extends Controller
     {
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+        
+        Log::info('fn: sendBookingPolicy called for ' . $quote->code . ' policy type '. $request->send_policy_type);
 
         if ($request->send_policy_type == 'customer') {
             dispatch(new SendBookPolicyDocumentsJob($request));
@@ -252,6 +256,8 @@ class CentralController extends Controller
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
             ]);
+
+            Log::info('Policy send to customer for ' . $quote->code);
 
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
@@ -290,6 +296,8 @@ class CentralController extends Controller
             (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
 
             $this->updatePaymentAllocationStatus($quote);
+
+            Log::info("Payment allocation && Transaction payment status update & policy send to customer for " . $quote->code);
 
             return response()->json(['message' => $response['message']], 200);
         }

@@ -40,6 +40,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        info('job: SendBookPolicyDocumentsJob started with payload: '.json_encode($this->data));
+
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
         $modelType = ! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
@@ -48,22 +50,24 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $handBookDocuments = [];
 
         try {
+            // This will give handbook document from relevant policy wording table only for mentioned LOB's
             if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                 $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
+                info('Handbook documents retrieved: '.json_encode($handBookDocuments));
             }
+            // First Retrieve document types marked for sending to the customer, then fetch the corresponding uploaded documents
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
             $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
+            info('Quote documents which need to send to customer through email retrieved: '.json_encode($docs));
         } catch (Exception $ex) {
-            error('SendBookPolicyDocumentsJobError '.$ex->getMessage());
+            error('Send BookPolicy Documents Job Error '.$ex->getMessage());
             $docs = [];
         }
 
         $quote->load('advisor');
 
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
-
-        info('SendBookPolicyDocumentsJobData '.json_encode($quote));
-
+        // Prepare the data to be sent to Brevo for email template dispatch
         if (! empty($templateId)) {
             $emailData = new \stdClass();
             $emailData->code = $quote->code;
@@ -88,9 +92,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             }
             $emailData->emailTemplateId = $templateId;
             $emailData->handBookDocuments = $handBookDocuments;
-            info('SendBookPolicyDocumentsJobEmailData '.json_encode($emailData));
+            info('Send Book Policy Documents Job Email Data '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-            info('SendBookPolicyDocumentsJobResponse '.json_encode($response));
+            info('Send Book Policy Documents Job Response '.json_encode($response));
         }
     }
 

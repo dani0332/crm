@@ -708,36 +708,41 @@ class SendEmailCustomerService extends BaseService
             $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
         }
     }
+    
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
+        Log::info('fn: sendBookPolicyDocumentsEmail called');
+
         $isEmailSent = 0;
         try {
-            info('sendBookPolicyDocumentsEmail  , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
-
+            info('sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
+    
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
                     $path = $document->doc_url;
-                    $documentURL = $path !== '' ? $websiteURL.$path : '';
+                    $documentURL = $path!== ''? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
                         'name' => basename($documentURL),
                     ];
                 }
             }
-
-            if (is_array($emailData->handBookDocuments) && ! empty($emailData->handBookDocuments)) {
+    
+            if (is_array($emailData->handBookDocuments) &&! empty($emailData->handBookDocuments)) {
                 $attachments = array_merge($attachments, $emailData->handBookDocuments);
             }
-
+    
+            info('Attachments: '.json_encode($attachments));
+    
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
                 'Content-Type' => 'application/json',
             ];
-
+    
             $bodyData = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
@@ -748,21 +753,21 @@ class SendEmailCustomerService extends BaseService
                     'clientFullName' => $emailData->clientFullName,
                     'carQuoteId' => $emailData->code,
                     'currentInsurer' => $emailData->currentInsurer,
-                    'renewalDueDate' => $emailData->renewalDueDate,
+                    'enewalDueDate' => $emailData->renewalDueDate,
                     'policyNumber' => $emailData->policy_number,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
-                        'mobileNo' => $emailData->advisorMobileNo,
+                        'obileNo' => $emailData->advisorMobileNo,
                     ],
                 ],
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => isset($attachments)? $attachments : null,
                 'bcc' => [],
             ];
-
+    
             $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::DIS_INBOX_EMAIL_BCC)->first();
             if ($additionalBcc) {
                 $bodyData['bcc'][] = [
@@ -770,7 +775,7 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
             info('sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
-
+    
             if ($emailData->advisorEmail) {
                 $bodyData['cc'] = [
                     [
@@ -779,10 +784,10 @@ class SendEmailCustomerService extends BaseService
                     ],
                 ];
             }
-
+    
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
             info('sendBookPolicyDocumentsEmail ---- body '.$body);
-
+    
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 config('constants.SIB_URL'),
@@ -792,21 +797,24 @@ class SendEmailCustomerService extends BaseService
                     'timeout' => 20,
                 ]
             );
-
+    
             $response = json_decode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents(), true);
             $responseCode = $clientRequest->getStatusCode();
             $isEmailSent = 1;
             info('sendBookPolicyDocumentsEmail ---- Request Sent '.$emailData->code);
             info('sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+    
+            info('Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
         } catch (Exception $ex) {
             $response = '';
             $responseCode = $ex->getCode();
             $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
             Log::error($responseDetail);
+            info('Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
         }
-
+    
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
-
+    
         return $responseCode;
     }
 
