@@ -73,7 +73,7 @@ class QuoteDocumentRequest extends FormRequest
              */
             if (in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && isset($quote->id) && ! empty(request()->member_detail_id)) {
                 //check for quote records if exists
-                if ( $quote->customerMembers()->where('id', request()->member_detail_id)->first()) {
+                if ($quote->customerMembers()->where('id', request()->member_detail_id)->first()) {
                     $validator->errors()->add('member_detail_id', 'Invalid member detail id provided');
                 }
             }
@@ -90,8 +90,8 @@ class QuoteDocumentRequest extends FormRequest
                 }
             } else {
                 //validate if payment is authorized
-                if(request()->quoteType  != strtolower(quoteTypeCode::Travel)) {
-                    if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED ) {
+                if (request()->quoteType != strtolower(quoteTypeCode::Travel)) {
+                    if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
                         $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
                     }
                 }

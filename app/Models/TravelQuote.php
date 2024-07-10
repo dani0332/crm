@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
-use Config;
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
-use App\Traits\FilterCriteria;
-use OwenIt\Auditing\Auditable;
-use App\Traits\QuoteModelTrait;
 use App\Events\QuoteEmailUpdated;
-use App\Models\TravelDestination;
-use Illuminate\Database\Eloquent\Model;
+use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
+use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class TravelQuote extends Model implements AuditableContract
@@ -175,7 +174,8 @@ class TravelQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
-    public function TravelDestinations(){
+    public function TravelDestinations()
+    {
         return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
     }
 }

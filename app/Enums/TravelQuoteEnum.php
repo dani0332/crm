@@ -19,5 +19,5 @@ final class TravelQuoteEnum extends Enum
     const REVIVAL = 'Revival';
     const IMCRM_BOOKING = 'imcrm_booking';
     const IN_BOUND = 'inbound';
-    const  OUT_BOUND  ='outbound';
+    const OUT_BOUND = 'outbound';
 }

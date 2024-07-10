@@ -12,6 +12,8 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -43,15 +45,12 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\QuoteStatusService;
+use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\TravelQuoteEnum;
-use App\Enums\WorkflowTypeEnum;
-use App\Services\CentralService;
-use App\Services\SIBService;
 
 class AMLController extends Controller
 {
@@ -615,8 +614,8 @@ class AMLController extends Controller
             }
             $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
             $quoteDetails->save();
-             // this event only working for travel lob
-             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
+            // this event only working for travel lob
+            if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 $this->stopHapexReminder($quoteDetails);
             }
             info('AML Screening Bridger - Potential Matche(s) not Found, Quote Status changed to AML Screening Cleared');
@@ -645,24 +644,26 @@ class AMLController extends Controller
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+
         return true;
     }
 
     public function mapHapexMailPayload($quote)
     {
-        $directionCode  = $quote['direction_code'] == TravelQuoteEnum::TRAVEL_UAE_INBOUND ?  TravelQuoteEnum::IN_BOUND : TravelQuoteEnum::OUT_BOUND;
+        $directionCode = $quote['direction_code'] == TravelQuoteEnum::TRAVEL_UAE_INBOUND ? TravelQuoteEnum::IN_BOUND : TravelQuoteEnum::OUT_BOUND;
+
         return [
             'carQuoteId' => $quote->code,
             'customerName' => "{$quote->first_name} {$quote->last_name}",
             'direction_code' => $quote->direction_code,
-            'advisor' => !empty($quote->advisor) ? (object)[
+            'advisor' => ! empty($quote->advisor) ? (object) [
                 'name' => $quote->advisor->name,
                 'email' => $quote->advisor->email,
                 'phone' => $quote->advisor->mobile_no,
                 'directLine' => $quote->advisor->landline_no,
                 'whatsapp' => $quote->advisor->mobile_no,
             ] : [],
-            'uploadDocsPage' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL') . $quote->uuid . '/thankyou/' . $directionCode,
+            'uploadDocsPage' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid.'/thankyou/'.$directionCode,
         ];
     }
 
@@ -688,6 +689,7 @@ class AMLController extends Controller
     public function sendHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
+
         return true;
     }
 }

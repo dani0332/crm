@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class TravelDestination extends Model
 {
     use HasFactory;
+
     protected $table = 'travel_destination';
 
     public function destination()

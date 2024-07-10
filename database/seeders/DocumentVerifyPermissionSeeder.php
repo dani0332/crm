@@ -2,14 +2,12 @@
 
 namespace Database\Seeders;
 
-
-use App\Enums\RolesEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Spatie\Permission\Models\Role;
 
 class DocumentVerifyPermissionSeeder extends Seeder
 {
@@ -20,11 +18,11 @@ class DocumentVerifyPermissionSeeder extends Seeder
     {
 
         $roleId = Role::where('name', RolesEnum::TravelHapex ?? 'HAPEX')->first()->id;
-        if(!empty($roleId)){
+        if (! empty($roleId)) {
             $docVeirfyPermission = Permission::where('name', PermissionsEnum::DOCUMENT_VERIFY)->first();
-            if(empty($docVeirfyPermission->id)){
+            if (empty($docVeirfyPermission->id)) {
                 DB::table('permissions')->insert([
-                    'name' =>  PermissionsEnum::DOCUMENT_VERIFY ?? 'document-verify',
+                    'name' => PermissionsEnum::DOCUMENT_VERIFY ?? 'document-verify',
                     'guard_name' => 'web',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -34,15 +32,12 @@ class DocumentVerifyPermissionSeeder extends Seeder
                         'role_id' => $roleId,
                         'permission_id' => $docVeirfyPermission->id,
                     ]);
+            } else {
+                info(PermissionsEnum::DOCUMENT_VERIFY.' Permission not found');
             }
-            else {
-                info(PermissionsEnum::DOCUMENT_VERIFY .' Permission not found');
-            }
+        } else {
+            info(RolesEnum::TravelHapex.' Role not found');
         }
-        else {
-            info(RolesEnum::TravelHapex .' Role not found');
-        }
-
 
     }
 }

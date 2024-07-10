@@ -25,6 +25,4 @@ class DocumentTypeCode extends Enum
     const PPD = 'PPD';
     const YPD = 'YPD';
     const E_TICKETS = 'E_TICKETS';
-
-
 }
