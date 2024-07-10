@@ -21,7 +21,7 @@ const rules = {
 };
 const notification = useNotifications('toast');
 
-const formatted = date => useDateFormat(date, 'YYYY-MM-DD');
+const formatted = date => useDateFormat(date, 'DD-MM-YYYY');
 
 const activityForm = useForm({
   title: null,
@@ -42,12 +42,14 @@ const filters = reactive({
   due_date_time_start: '',
   due_date_time_end: '',
   page: 1,
-  isCustom: true,
+  isCustom: false,
 });
+
 const loader = reactive({
   table: false,
   export: false,
 });
+
 const activityTable = [
   { text: 'REF ID', value: 'cdbid' },
   { text: 'Client Name', value: 'client_name' },
@@ -162,7 +164,7 @@ function resetDates(option) {
     selectedOption.value = option;
     customStartDate.value = null; // Clear previously selected dates
     customEndDate.value = null;
-    filters.isCustom = false;
+    filters.isCustom = true;
     // params.isCustom = false;
   }
   if (option != 'custom') {
