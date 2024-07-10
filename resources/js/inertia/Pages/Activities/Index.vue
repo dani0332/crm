@@ -171,7 +171,6 @@ function resetDates(option) {
     customStartDate.value = null; // Clear previously selected dates
     customEndDate.value = null;
     filters.isCustom = true;
-    // params.isCustom = false;
   }
   if (option != 'custom') {
     filters.due_date_time_start = startDate.value;
@@ -184,7 +183,6 @@ function applyCustomDates() {
   if (customStartDate.value && customEndDate.value) {
     filters.due_date_time_start = customStartDate.value;
     filters.due_date_time_end = customEndDate.value;
-    // filters.isCustom = false;
     filterActivities(1); // Call the filterActivities function
   }
 }
