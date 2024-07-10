@@ -94,8 +94,9 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
+  paymentDocument: Array,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1528,16 +1529,67 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate(); 
+const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
   <div>
     <Head title="Car Detail" />
-    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">E-COM Detail</h2>
-    </div>
-    <x-divider class="my-4" /> -->
-
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Car Detail</h2>
+      </template>
+      <template #default>
+        <Link
+          v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+          :href="`/legacy-policy/${record.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <template
+          v-if="
+            !can(permissionEnum.ApprovePayments) &&
+            allowedDuplicateLOB.length > 0
+          "
+        >
+          <x-button
+            v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
+            class="mr-2"
+            size="sm"
+            color="#ff5e00"
+            @click.prevent="openSendOCBConfirmNB"
+          >
+            Send NB OCB To Customer
+          </x-button>
+          <x-button
+            v-if="
+              !hasAnyRole([
+                rolesEnum.CarAdvisor,
+                rolesEnum.CarDeputyManager,
+                rolesEnum.CarManager,
+              ])
+            "
+            class="mr-2"
+            size="sm"
+            color="#ff5e00"
+            @click.prevent="openDuplicate"
+          >
+            Duplicate Lead
+          </x-button>
+        </template>
+        <Link :href="route('car.index')">
+          <x-button size="sm" tag="div">Car List</x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <x-divider class="my-4" />
     <AssignTier
       v-if="
         !can(permissionEnum.ApprovePayments) &&
@@ -1664,52 +1716,7 @@ watch(
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex mb-4 justify-end">
-            <Link
-              v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
-              :href="`/legacy-policy/${record.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <template
-              v-if="
-                !can(permissionEnum.ApprovePayments) &&
-                allowedDuplicateLOB.length > 0
-              "
-            >
-              <x-button
-                v-if="hasAnyRole([rolesEnum.LeadPool]) && !isRenewalUpload"
-                class="mr-2"
-                size="sm"
-                color="#ff5e00"
-                @click.prevent="openSendOCBConfirmNB"
-              >
-                Send NB OCB To Customer
-              </x-button>
-              <x-button
-                v-if="
-                  !hasAnyRole([
-                    rolesEnum.CarAdvisor,
-                    rolesEnum.CarManager,
-                  ])
-                "
-                class="mr-2"
-                size="sm"
-                color="#ff5e00"
-                @click.prevent="openDuplicate"
-              >
-                Duplicate Lead
-              </x-button>
-            </template>
-            <Link :href="route('car.index')">
-              <x-button size="sm" tag="div">Car List</x-button>
-            </Link>
-          </div>
-
+          <x-divider class="my-4 mb-3" />
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -1926,18 +1933,22 @@ watch(
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
-          <div
-            v-if="
-              quote.quote_status_id !=
-                page.props.quoteStatusEnum.PolicyCancelled ||
-              linkedQuoteDetails.childLeadsCount == 0
-            "
-            class="flex justify-end mb-4"
-          >
+          
+          <LeadEditBtnTemplate v-slot="{ isDisabled }">
             <Link :href="route('car.edit', record.uuid)">
-              <x-button size="sm" color="primary" tag="div">Edit </x-button>
+              <x-button :disabled="isDisabled" size="sm" color="primary" tag="div">Edit</x-button>
             </Link>
+          </LeadEditBtnTemplate>
+
+          <div v-if="quote.quote_status_id !=
+                page.props.quoteStatusEnum.PolicyCancelled || linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end mb-4" >
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+              <LeadEditBtnReuseTemplate :isDisabled="true"/>
+              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+            </x-tooltip>
+            <LeadEditBtnReuseTemplate v-else/>
           </div>
+
         </template>
       </Collapsible>
     </div>
@@ -2359,7 +2370,7 @@ watch(
                   label="Status"
                   class="w-full uppercase"
                   placeholder="Please select Lead Status"
-                  :disabled="leadStatusDisabled"
+                  :disabled="leadStatusDisabled || lockLeadSectionsDetails.lead_status"
                   :options="leadStatusOptions"
                 />
                 <x-field
@@ -2379,6 +2390,7 @@ watch(
                     placeholder="Lost Reason is required"
                     class="w-full"
                     :error="leadStatusForm.errors.lostReason"
+                    :disabled="lockLeadSectionsDetails.lead_status"
                   />
                 </x-field>
                 <x-field
@@ -2397,6 +2409,7 @@ watch(
                     placeholder="Please select follow-up date & time"
                     :error="leadStatusForm.errors.next_followup_date"
                     class="w-full"
+                    :disabled="lockLeadSectionsDetails.lead_status"
                   />
                   <!-- <x-input
 								v-model="leadStatusForm.next_followup_date"
@@ -2421,6 +2434,7 @@ watch(
                   placeholder="Please Select Tier"
                   class="w-full uppercase"
                   :error="leadStatusForm.errors.tier_id"
+                  :disabled="lockLeadSectionsDetails.lead_status"
                 />
                 <x-field
                   label="Notes"
@@ -2445,10 +2459,10 @@ watch(
                         : []
                     "
                     :error="leadStatusForm.errors.notes"
-                    :disabled="
+                    :disabled="(
                       record.quote_status_id ==
                         quoteStatusEnum.TransactionApproved ||
-                      isCarLostStatus(record.quote_status_id)
+                      isCarLostStatus(record.quote_status_id)) || lockLeadSectionsDetails.lead_status
                     "
                   />
                 </x-field>
@@ -2466,8 +2480,8 @@ watch(
                     "
                     type="file"
                     :disabled="
-                      isCarLostStatus(record.quote_status_id) &&
-                      !carLostChangeStatus
+                      (isCarLostStatus(record.quote_status_id) &&
+                      !carLostChangeStatus) || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Car Sold / Uncontactable Proof"
                     class="form-control w-full"
@@ -2492,7 +2506,7 @@ watch(
                   <x-select
                     v-model="leadStatusForm.lost_approval_status"
                     :options="leadApprovalStatusOptions"
-                    :disabled="!allowQuoteLogAction"
+                    :disabled="!allowQuoteLogAction || lockLeadSectionsDetails.lead_status"
                     placeholder="Approval Status"
                     class="w-full"
                     :rules="[isRequired]"
@@ -2517,8 +2531,8 @@ watch(
                       }))
                     "
                     :disabled="
-                      !allowQuoteLogAction ||
-                      !hasRole(rolesEnum.MarketingOperations)
+                      (!allowQuoteLogAction ||
+                      !hasRole(rolesEnum.MarketingOperations)) || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Approval Reasons"
                     class="w-full"
@@ -2543,8 +2557,8 @@ watch(
                       }))
                     "
                     :disabled="
-                      !allowQuoteLogAction ||
-                      !hasRole(rolesEnum.MarketingOperations)
+                      (!allowQuoteLogAction ||
+                      !hasRole(rolesEnum.MarketingOperations)) || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Rejection Reasons"
                     class="w-full"
@@ -2562,7 +2576,7 @@ watch(
                   <x-field class="uppercase" label="Notes">
                     <x-textarea
                       v-model="leadStatusForm.lost_notes"
-                      :disabled="!allowQuoteLogAction"
+                      :disabled="!allowQuoteLogAction || lockLeadSectionsDetails.lead_status"
                       placeholder="Notes"
                       class="w-full"
                     />
@@ -2578,7 +2592,7 @@ watch(
                           $event.target.files[0]
                       "
                       type="file"
-                      :disabled="!allowQuoteLogAction"
+                      :disabled="!allowQuoteLogAction || lockLeadSectionsDetails.lead_status"
                       placeholder="Car Sold / Uncontactable Proof"
                       class="w-full"
                       :rules="[isRequired]"
@@ -2620,22 +2634,31 @@ watch(
           </DataTable>
 
           <x-divider class="mb-1 mt-10" />
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
-              v-if="!can(permissionEnum.ApprovePayments)"
               class="mt-4"
               color="emerald"
               size="sm"
               :disabled="
-                record.qssuote_status_id ==
-                  quoteStatusEnum.TransactionApproved ||
-                (!carLostChangeStatus && !allowQuoteLogAction)
+                (record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                (!carLostChangeStatus && !allowQuoteLogAction)) || isDisabled
               "
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+  
+          <div class="flex justify-end">
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
+            
           </div>
         </template>
       </Collapsible>
@@ -2901,32 +2924,25 @@ watch(
               Send OCB Email to Customer
             </x-button>
 
-            <x-button
-              @click.prevent="modals.createPlan = true"
-              size="sm"
-              color="orange"
-              class="mr-2"
-              v-if="
-                (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
-                can(permissionEnum.CarQuotesPlansCreate)
-              "
-              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            >
-              Add Plan
-            </x-button>
-            <x-button
-              v-else-if="
-                hasRole(rolesEnum.Admin) &&
-                can(permissionEnum.CarQuotesPlansCreate)
-              "
-              @click.prevent="modals.createPlan = true"
-              size="sm"
-              color="orange"
-              class="mr-2"
-              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            >
-              Add Plan
-            </x-button>
+            <AddPlanButtonTemplate v-slot="{ isDisabled }">
+              <x-button
+                @click.prevent="modals.createPlan = true"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                v-if="can(permissionEnum.CarQuotesPlansCreate) && ((access.carManagerCanEdit || access.carAdvisorCanEdi) || hasRole(rolesEnum.Admin))"
+                :disabled="isDisabled"
+              >
+                Add Plan
+              </x-button>
+            </AddPlanButtonTemplate>
+            
+            <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
+              <AddPlanButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.</template>
+            </x-tooltip>
+            <AddPlanButtonReuseTemplate v-else :isDisabled="page.props.linkedQuoteDetails.childLeadsCount > 0"/>
+
             <x-button
               @click.prevent="copyLink"
               size="sm"
@@ -3176,9 +3192,7 @@ watch(
                     @update:selectedPlanChanged="handlePlanSelected"
                     :plan="item"
                     :quoteType="quoteType"
-                    :has-child-lead="
-                      page.props.linkedQuoteDetails.childLeadsCount > 0
-                    "
+                    :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
                     :uuid="quote.uuid"
                   />
 
@@ -3345,15 +3359,15 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['CPD', 'CPDR', 'CDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-    />
-
+		/>
+    
     <PaymentTable
       v-else
       :payments="payments"
