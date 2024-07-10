@@ -256,7 +256,10 @@ class HomeQuoteService extends BaseService
             $this->query->where('hqr.policy_number', $request->policy_number);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where(function ($query) use ($request) {
+                $query->where('hqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $this->query->where('hqr.renewal_batch', $request->renewal_batch);
@@ -271,7 +274,7 @@ class HomeQuoteService extends BaseService
         }
         if (Auth::user()->isSpecificTeamAdvisor('Home')) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
 
         // quote_status filter
