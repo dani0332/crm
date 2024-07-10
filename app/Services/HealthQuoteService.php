@@ -167,7 +167,7 @@ class HealthQuoteService extends BaseService
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
-            'hqr.health_plan_type_id'
+            'hqr.health_plan_type_id',
             'hqr.price_vat_not_applicable',
             'hqr.price_vat_applicable',
             'hqr.price_with_vat',
