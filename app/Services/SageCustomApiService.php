@@ -139,7 +139,7 @@ class SageCustomApiService
         } elseif ($response->failed()) {
             if ($response->badRequest()) {
                 $responseData['response'] = $response->object();
-                $responseData['error'] = $response->object()?->title ?? $response->object()?->messsage ?? 'Something went wrong!';
+                $responseData['error'] = $response->object()?->title ?? $response->object()?->message ?? 'Something went wrong!';
 
                 return $responseData;
             }
