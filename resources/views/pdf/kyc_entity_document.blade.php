@@ -121,8 +121,7 @@
 
 <body>
     <div id="header">
-        <img src="{{'data:image/png;base64,'.base64_encode(getIMLogo(true)}}" alt="Insurance Market Logo" width="300">
-    </div>
+        <img src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" alt="Insurance Market Logo" width="300">    </div>
     <hr>
 
     <div id="content">
