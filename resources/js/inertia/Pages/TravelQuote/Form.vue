@@ -271,7 +271,6 @@ const schengenCountries = [
 const checkUAEResident = computed(() => {
     if (quoteForm.members.some(member => member.uae_resident === '0')) {
         hasZeroValueForUAEResident.value = true;
-        console.log('Error: One or more members have selected a value of 0 for UAE resident status.');
         return true;
     }
     hasZeroValueForUAEResident.value = false;
@@ -397,8 +396,7 @@ const checkUAEResident = computed(() => {
             :rules="[isRequired]"
           />
         </x-field>
-      </div>
-      <div class="grid sm:grid-cols-2 gap-4">
+
         <x-field label="First Name" required>
           <x-input
             v-model="quoteForm.first_name"
@@ -471,7 +469,7 @@ const checkUAEResident = computed(() => {
       <div class="grid mb-2" v-if="hasZeroValueForUAEResident">
         <div class="alert flex items-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <span class="text-sm text-red-500 dark:text-red-400 mt-1">
-            This coverage is valid for UAE residents only. Please remove all non UAE residents from the traveller(s) above to proceed.
+            This coverage is valid for UAE residents only. Please remove all non UAE residents from the traveller(s) below to proceed.
           </span>
         </div>
       </div>
@@ -488,6 +486,17 @@ const checkUAEResident = computed(() => {
                 : 'Additional Traveler ' + index
             }}
           </h2>
+          <div class="flex items-center justify-end">
+            <x-button
+              v-if="travel.primary != true"
+              size="sm"
+              outlined
+              color="error"
+              icon="xc"
+              @click="removeMember(index)"
+            />
+          </div>
+        </div>
           <x-field label="Date of Birth" required>
             <DatePicker
               v-model="travel.dob"
@@ -510,7 +519,8 @@ const checkUAEResident = computed(() => {
               v-model="travel.uae_resident"
               placeholder="Are you a UAE resident"
               :options="isUAEResident"
-              :rules="[rules.isRequired,checkUAEResident]"
+              :rules="[rules.isRequired]"
+              @change="checkUAEResident"
               class="w-full"
             />
           </x-field>
@@ -536,6 +546,7 @@ const checkUAEResident = computed(() => {
           size="md"
           color="emerald"
           type="submit"
+          v-if="!hasZeroValueForUAEResident"
           :loading="quoteForm.processing"
         >
           {{ editMode ? 'Update' : 'Create' }}
