@@ -30,12 +30,13 @@ class PersonalQuoteDataMigration extends Command
     public function handle()
     {
         $filePaths = [
-            'personal-part1.xlsx',
-            'personal-part2.xlsx',
-            'personal-part3.xlsx',
-            'personal-part4.xlsx',
-            'personal-part5.xlsx',
-            'personal-part6.xlsx',
+            // 'personal-part1.xlsx',
+            // 'personal-part2.xlsx',
+            // 'personal-part3.xlsx',
+            // 'personal-part4.xlsx',
+            // 'personal-part5.xlsx',
+            // 'personal-part6.xlsx',
+            'home.xlsx',
         ];
 
         foreach ($filePaths as $filePath) {
