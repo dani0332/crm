@@ -196,19 +196,20 @@ class SageApiService
                     if ($isLiveApiCallStep1) {
                         $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
                     }
-                    unset($customer->data);
                 } else {
                     $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps, 'fail');
                 }
             }
         }
-
-        if ($quoteEntity) {
-            $quoteEntity->sage_customer_number = $sageCustomerNumber;
-            $quoteEntity->save();
-        } elseif ($customer) {
-            $customer->sage_customer_number = $sageCustomerNumber;
-            $customer->save();
+        if ($sageCustomerNumber) {
+            unset($customer->data);
+            if ($quoteEntity) {
+                $quoteEntity->sage_customer_number = $sageCustomerNumber;
+                $quoteEntity->save();
+            } elseif ($customer) {
+                $customer->sage_customer_number = $sageCustomerNumber;
+                $customer->save();
+            }
         }
 
         return $sageCustomerNumber;
@@ -265,18 +266,20 @@ class SageApiService
                     if ($isLiveApiCallStep1) {
                         $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
                     }
-                    unset($customer->data);
                 } else {
                     $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, 'fail');
                 }
             }
         }
-        if ($quoteEntity) {
-            $quoteEntity->sage_customer_number = $sageCustomerNumber;
-            $quoteEntity->save();
-        } elseif ($customer) {
-            $customer->sage_customer_number = $sageCustomerNumber;
-            $customer->save();
+        if ($sageCustomerNumber) {
+            unset($customer->data);
+            if ($quoteEntity) {
+                $quoteEntity->sage_customer_number = $sageCustomerNumber;
+                $quoteEntity->save();
+            } elseif ($customer) {
+                $customer->sage_customer_number = $sageCustomerNumber;
+                $customer->save();
+            }
         }
 
         return $sageCustomerNumber;
