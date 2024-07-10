@@ -163,6 +163,7 @@ class SageApiService
             $customerData['entity'] = $quoteEntity;
             if ($quoteEntity->sage_customer_number) {
                 $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
+
                 return $quoteEntity->sage_customer_number;
             }
         }
@@ -229,6 +230,7 @@ class SageApiService
             $data['entity'] = $quoteEntity;
             if ($quoteEntity->sage_customer_number) {
                 $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
+
                 return $quoteEntity->sage_customer_number;
             }
         }
