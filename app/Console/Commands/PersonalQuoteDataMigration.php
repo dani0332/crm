@@ -34,8 +34,8 @@ class PersonalQuoteDataMigration extends Command
         ];
 
         foreach ($filePaths as $filePath) {
-            if (!Storage::disk('pdmigrations')->exists($filePath)) {
-                Log::error('File does not exist: ' . $filePath);
+            if (! Storage::disk('pdmigrations')->exists($filePath)) {
+                Log::error('File does not exist: '.$filePath);
 
                 continue;
             }
@@ -49,7 +49,7 @@ class PersonalQuoteDataMigration extends Command
 
                 Log::info('Personal Quote data migrations succeeded.');
             } catch (\Exception $e) {
-                Log::error('Error importing file: ' . $e->getMessage());
+                Log::error('Error importing file: '.$e->getMessage());
             }
         }
     }

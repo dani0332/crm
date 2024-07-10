@@ -47,7 +47,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             if ($classInstance) {
                 $classInstance->update($data);
                 $this->syncQuote($classInstance, $data);
-                info('----------- Importing Personal/Home Qoute Lead  -----------' . $row['deal_cdb_id'] . ' ' . $row['deal_policy_number']);
+                info('----------- Importing Personal/Home Qoute Lead  -----------'.$row['deal_cdb_id'].' '.$row['deal_policy_number']);
             }
         }
     }
