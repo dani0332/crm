@@ -21,8 +21,6 @@ const rules = {
 };
 const notification = useNotifications('toast');
 
-const formatted = date => useDateFormat(date, 'DD-MM-YYYY');
-
 const activityForm = useForm({
   title: null,
   description: null,
@@ -118,7 +116,7 @@ function setQueryFilters() {
 }
 
 function resetDates(option) {
-  // filters.isCustom = true;
+  
   const today = new Date();
   let startDate, endDate;
   if (isOverDue.value) {
@@ -127,38 +125,46 @@ function resetDates(option) {
   isOverDue.value = false;
   selectedOption.value = option;
   if (option == 'today') {
-    startDate = today.toLocaleDateString();
-    endDate = today.toLocaleDateString();
+
+    startDate = endDate = useDateFormat(today, 'DD-MM-YYYY');
+
   } else if (option == 'tomorrow') {
+
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-    startDate = tomorrow.toLocaleDateString();
-    endDate = tomorrow.toLocaleDateString();
+    startDate = endDate = useDateFormat(tomorrow, 'DD-MM-YYYY');
+
   } else if (option == 'tweek') {
+
     const firstDayOfWeek = new Date(
       today.setDate(today.getDate() - today.getDay() + 1),
     );
     const lastDayOfWeek = new Date(
       today.setDate(today.getDate() - today.getDay() + 7),
     );
-    startDate = firstDayOfWeek.toLocaleDateString();
-    endDate = lastDayOfWeek.toLocaleDateString();
+    startDate = useDateFormat(firstDayOfWeek, 'DD-MM-YYYY');
+    endDate = useDateFormat(lastDayOfWeek, 'DD-MM-YYYY');
+
   } else if (option == 'tmonth') {
+
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayOfMonth = new Date(
       today.getFullYear(),
       today.getMonth() + 1,
       0,
     );
-    startDate = firstDayOfMonth.toLocaleDateString();
-    endDate = lastDayOfMonth.toLocaleDateString();
+    startDate = useDateFormat(firstDayOfMonth, 'DD-MM-YYYY');
+    endDate = useDateFormat(lastDayOfMonth, 'DD-MM-YYYY');
+
   } else if (option == 'overdue') {
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    startDate = '1/1/1970';
     filters.status = '0';
     isOverDue.value = false;
-    endDate = yesterday.toLocaleDateString();
+
+    startDate = useDateFormat('01/01/1970', 'DD-MM-YYYY');
+    endDate = useDateFormat(yesterday, 'DD-MM-YYYY');
+
   } else if (option === 'custom') {
     // Handle the custom option by setting the custom start and end dates
     selectedOption.value = option;
@@ -168,8 +174,9 @@ function resetDates(option) {
     // params.isCustom = false;
   }
   if (option != 'custom') {
-    filters.due_date_time_start = formatted(startDate).value;
-    filters.due_date_time_end = formatted(endDate).value;
+    filters.due_date_time_start = startDate.value;
+    filters.due_date_time_end = endDate.value;
+
     filterActivities(1); // Call the filterActivities function
   }
 }
