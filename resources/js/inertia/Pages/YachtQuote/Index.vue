@@ -47,15 +47,15 @@ const filters = reactive(availableFilters);
 const canExport = ref(false);
 const hasRole = role => useHasRole(role);
 watch(
-    () => filters,
-    () => {
-        if (filters.created_at_start && filters.created_at_end) {
-            canExport.value = true;
-        } else {
-            canExport.value = false;
-        }
-    },
-    { deep: true, immediate: true },
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 let params = useUrlSearchParams('history');
@@ -87,7 +87,7 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
-  { text: 'POLICY NO', value: 'policy_no', is_active: true },
+  { text: 'POLICY NO', value: 'policy_number', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   {
     text: 'CURRENTLY INSURED WITH',
@@ -448,9 +448,9 @@ watch(
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

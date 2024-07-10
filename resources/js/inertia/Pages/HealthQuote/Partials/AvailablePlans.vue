@@ -1390,7 +1390,10 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
                 color="primary"
                 size="sm"
                 @click="
-                  onLoadingPricesUpdate(props.plan.memberPremiumBreakdown)
+                  onLoadingPricesUpdate(
+                    props.plan.memberPremiumBreakdown,
+                    false,
+                  )
                 "
               >
                 Update & Save
