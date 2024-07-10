@@ -166,10 +166,6 @@ class SendUpdateLogController extends Controller
             }
         }
 
-        if ($sendUpdateLog->is_booking_filled) {
-            $bookingDetails = $this->sendUpdateLogService->mergeBookingDetails($bookingDetails, $sendUpdateLog);
-        }
-
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
         // payment related work.
         $this->quoteDocumentService = app(QuoteDocumentService::class);

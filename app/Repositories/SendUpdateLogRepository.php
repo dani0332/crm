@@ -15,6 +15,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
+use App\Services\SendUpdateLogService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Support\Str;
 
@@ -258,6 +259,9 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSaveBookingDetails($request)
     {
         try {
+            $res = $this->find($request['id']);
+            $isNegative = app(SendUpdateLogService::class)->isNegativeValue($res);
+
             $data = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
                 // 'booking_date' => $request['booking_date'], // commented this because it will update when Sage Invoice created through Send Update
@@ -271,11 +275,11 @@ class SendUpdateLogRepository extends BaseRepository
                 'commission_percentage' => strToFloat($request['commission_percentage']),
                 'commission_vat_not_applicable' => $request['commission_vat_not_applicable'],
                 'vat_on_commission' => $request['vat_on_commission'],
-                'commission_vat_applicable' => strToFloat($request['commission_vat_applicable']),
                 'total_commission' => $request['total_commission'],
                 'total_vat_amount' => $request['total_vat_amount'],
-                'price_vat_applicable' => strToFloat($request['price_vat_applicable']),
-                'price_vat_not_applicable' => $request['price_vat_not_applicable'],
+                'price_vat_applicable' => strToFloat($request['price_vat_applicable'], $isNegative),
+                'price_vat_not_applicable' => strToFloat($request['price_vat_not_applicable'], $isNegative),
+                'commission_vat_applicable' => strToFloat($request['commission_vat_applicable'], $isNegative),
                 'price_with_vat' => $request['price_with_vat'],
             ];
             // it will check if send update type is CPD then it will add reversal_invoice to $data because other send update types don't have 2 kind of
@@ -283,7 +287,7 @@ class SendUpdateLogRepository extends BaseRepository
             if ($request['send_update_type'] == SendUpdateLogStatusEnum::CPD) {
                 $data = array_merge($data, ['reversal_invoice' => $request['reversal_invoice']]);
             }
-            $res = $this->find($request['id'])->update($data);
+            $res = $res->update($data);
 
             $payment = Payment::where('send_update_log_id', $request['id'])->firstOrFail();
             if ($payment) {

@@ -756,8 +756,12 @@ if (! function_exists('apiResponse')) {
 }
 
 if (! function_exists('strToFloat')) {
-    function strToFloat($value): float
+    function strToFloat($value, $isNegative = false): float
     {
+        if ($isNegative) {
+            $value = $value > 0 ? -$value : $value;
+        }
+
         return floatval(str_replace(',', '', $value));
     }
 }
