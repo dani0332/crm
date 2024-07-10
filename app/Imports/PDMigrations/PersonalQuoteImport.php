@@ -19,9 +19,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     public function model(array $row)
     {
-        // $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('MY');
         if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) && strpos($row['deal_batch'], '2024') !== false) {
-            dd($row);
 
             $data = [
                 'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
@@ -30,6 +28,8 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             ];
 
             $searchCriteria = [];
+
+            $searchCriteria = ['renewal_batch' => $row['deal_batch']];
 
             if (isset($row['deal_cdb_id'])) {
                 [, $value] = explode('-', $row['deal_cdb_id']);
