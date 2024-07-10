@@ -163,7 +163,6 @@ class InslyDetailRepository extends BaseRepository
                             $item->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$item->uuid;
                         }
                         $item->modelType = $quoteType;
-                        $item->insly_migrated = true;
                         $data[] = $item;
                     }
 
@@ -321,6 +320,7 @@ class InslyDetailRepository extends BaseRepository
         }
         $dataArr['premium'] = $premium;
         $dataArr['source'] = LeadSourceEnum::INSLY;
+        $dataArr['insly_migrated'] = true;
         $dataArr['quote_status_id'] = QuoteStatusEnum::NewLead;
         if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
             $dataArr['quote_type_id'] = $quoteTypeData->id;
