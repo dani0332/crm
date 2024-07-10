@@ -30,8 +30,8 @@ class ActivityRepository extends BaseRepository
             array_push($assigneeIds, Auth::user()->id);
         }
 
-        if (request()->isCustom) {
-            request()->due_date_time_end = Carbon::createFromFormat('d/m/Y', request()->due_date_time_end)->format('Y-m-d 23:59:59');
+        if (isset(request()->isCustom) && request()->isCustom === 'false') {
+            request()->due_date_time_end = Carbon::createFromFormat('d-m-Y', request()->due_date_time_end)->endOfDay()->toDateTimeString();
         }
 
         return $this->with(['assignee', 'quoteStatus'])
