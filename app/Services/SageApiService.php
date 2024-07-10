@@ -163,6 +163,7 @@ class SageApiService
             $customerData['entity'] = $quoteEntity;
             if ($quoteEntity->sage_customer_number) {
                 $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
+
                 return $quoteEntity->sage_customer_number;
             }
         }
@@ -170,7 +171,7 @@ class SageApiService
         if ($customer) {
             $customer->data = $customerData;
 
-            if ($customer->sage_customer_number) {
+            if ($customer->sage_customer_number && ! $quoteEntity) {
                 $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
                 $sageCustomerNumber = $customer->sage_customer_number;
             } else {
@@ -206,7 +207,7 @@ class SageApiService
         if ($quoteEntity) {
             $quoteEntity->sage_customer_number = $sageCustomerNumber;
             $quoteEntity->save();
-        } else {
+        } elseif ($customer) {
             $customer->sage_customer_number = $sageCustomerNumber;
             $customer->save();
         }
@@ -229,13 +230,14 @@ class SageApiService
             $data['entity'] = $quoteEntity;
             if ($quoteEntity->sage_customer_number) {
                 $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
+
                 return $quoteEntity->sage_customer_number;
             }
         }
 
         if ($customer) {
             $customer->data = ! empty($data) ? $data : [];
-            if ($customer->sage_customer_number) {
+            if ($customer->sage_customer_number && ! $quoteEntity) {
                 $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
                 $sageCustomerNumber = $customer->sage_customer_number;
             } else {
@@ -274,7 +276,7 @@ class SageApiService
         if ($quoteEntity) {
             $quoteEntity->sage_customer_number = $sageCustomerNumber;
             $quoteEntity->save();
-        } else {
+        } elseif ($customer) {
             $customer->sage_customer_number = $sageCustomerNumber;
             $customer->save();
         }
