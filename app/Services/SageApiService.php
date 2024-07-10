@@ -1008,6 +1008,7 @@ class SageApiService
                         $invoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
                         $invoicePaymentSchedule->amtdue = $amountDue;
                         $invoicePaymentSchedule->amtduehc = $amountDue;
+                        $invoicePaymentSchedule->audtorg = $this->sageCompany;
                     }
                 }
 
