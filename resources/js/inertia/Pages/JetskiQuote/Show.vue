@@ -30,6 +30,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  lockLeadSectionsDetails: Object,
 });
 
 const page = usePage();
@@ -39,6 +40,9 @@ const permissionsEnum = page.props.permissionsEnum;
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const modelClass = 'App\\Models\\PersonalQuote';
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -61,13 +65,20 @@ const modelClass = 'App\\Models\\PersonalQuote';
                 View Legacy policy
               </x-button>
             </Link>
-            <Link
-              v-if="can(permissionsEnum.JetskiQuotesEdit)"
-              :href="route('jetski-quotes-edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
 
+            <LeadEditBtnTemplate v-slot="{ isDisabled }">
+              <Link :href="route('jetski-quotes-edit', quote.uuid)">
+                <x-button :disabled="isDisabled"size="sm" tag="div">Edit</x-button>
+            </Link>
+</LeadEditBtnTemplate>
+
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.JetskiQuotesEdit)" :isDisabled="true"/>
+              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+            </x-tooltip>
+            <template v-else>
+              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.JetskiQuotesEdit)"/>
+            </template>
             <Link
               v-if="can(permissionsEnum.JetskiQuotesList)"
               :href="route('jetski-quotes-list')"

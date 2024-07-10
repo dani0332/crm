@@ -40,9 +40,10 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Array,
   bookPolicyDetails: Array,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -568,6 +569,9 @@ watch(
     }
   },
 );
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -615,12 +619,19 @@ watch(
           </x-button>
         </Link>
 
-        <Link
-          v-if="permissions.canEditQuote == true"
-          :href="route('business.edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('business.edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" />
+        </template>
       </template>
     </StickyHeader>
 
@@ -1093,7 +1104,7 @@ watch(
                 v-model="leadStatusForm.leadStatus"
                 label="STATUS"
                 :options="leadStatusOptions"
-                :disabled="disableStatusSection"
+                :disabled="disableStatusSection || lockLeadSectionsDetails.lead_status"
                 placeholder="Lead Status"
                 class="w-full"
               />
@@ -1103,7 +1114,7 @@ watch(
                 label="NOTES"
                 placeholder="Lead Notes"
                 class="w-full"
-                :disabled="disableStatusSection"
+                :disabled="disableStatusSection || lockLeadSectionsDetails.lead_status"
               />
               <x-select
                 v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
@@ -1118,21 +1129,32 @@ watch(
                 placeholder="Lost Reason is required"
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
-              />
+              :disabled="lockLeadSectionsDetails.lead_status"
+             />
             </div>
           </div>
         </div>
-        <div class="flex justify-end">
+        <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
           <x-button
             class="mt-4"
             color="emerald"
             size="sm"
             :loading="loaders.leadStatus"
             @click.prevent="onLeadStatus"
-            :disabled="disableStatusSection"
+            :disabled="disableStatusSection || isDisabled
+            "
           >
             Change Status
           </x-button>
+        </StatusUpdateButtonTemplate>
+        <div class="flex justify-end">
+          <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+            <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+            <template #tooltip>
+              The lead status cannot be manually updated once it has reached 'Transaction Approved'
+            </template>
+          </x-tooltip>
+          <StatusUpdateButtonReuseTemplate v-else />
         </div>
       </template>
     </Collapsible>
@@ -1155,14 +1177,10 @@ watch(
     />
 
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="page.props.quoteType"
-      :payments="payments"
-      :paymentDocument="
-        documentTypeCodes.filter(item =>
-          ['CLPD', 'CLPDR', 'CLDPDR'].includes(item.code),
-        )
-      "
+			v-if="isNewPaymentStructure"
+			:quoteType="page.props.quoteType"
+			:payments="payments"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>

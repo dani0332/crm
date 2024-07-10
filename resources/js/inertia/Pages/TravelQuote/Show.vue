@@ -58,8 +58,9 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -1181,6 +1182,17 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
+const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] =
+  createReusableTemplate();
+const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
@@ -1227,12 +1239,29 @@ watch(
           <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
         </Link>
 
-        <Link
-          v-if="permissions.canEditQuote == true"
-          :href="route('travel.edit', quote.uuid)"
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('travel.edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          position="bottom"
         >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+          <LeadEditBtnReuseTemplate
+            v-if="permissions.canEditQuote"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" />
+        </template>
       </div>
     </div>
 
@@ -1912,11 +1941,57 @@ watch(
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex flex-wrap gap-3 mb-3 justify-end">
-            <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
+          <AddMemberButtonTemplate v-slot="{ isDisabled }">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="onAddTraveler"
+              :disabled="isDisabled"
+            >
               Add Member
             </x-button>
+          </AddMemberButtonTemplate>
+          <div class="flex flex-wrap gap-3 mb-3 justify-end">
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.member_details"
+              position="bottom"
+            >
+              <AddMemButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                This lead is now locked as the policy has been booked. If
+                changes are needed such midterm addition of member, go to 'Send
+                Update', select 'Add Update', and choose 'Endorsement Financial'
+              </template>
+            </x-tooltip>
+            <AddMemButtonReuseTemplate v-else />
           </div>
+
+          <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <x-button
+              size="xs"
+              color="primary"
+              @click.prevent="onEditTraveler(item)"
+              outlined
+              :disabled="isDisabled"
+            >
+              Edit
+            </x-button>
+          </EditMemberButtonTemplate>
+
+          <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <x-button
+              size="xs"
+              color="error"
+              @click.prevent="
+                confirmModal.onConfirm = () => deleteTraveler(item.id);
+                confirmModal.show = true;
+              "
+              outlined
+              :disabled="isDisabled"
+            >
+              Delete
+            </x-button>
+          </DeleteMemberButtonTemplate>
 
           <DataTable
             table-class-name="tablefixed compact"
@@ -1947,25 +2022,39 @@ watch(
 
             <template #item-action="item">
               <div class="flex gap-2">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  @click.prevent="onEditTraveler(item)"
-                  outlined
+                <x-tooltip
+                  v-if="lockLeadSectionsDetails.member_details"
+                  position="bottom"
                 >
-                  Edit
-                </x-button>
-                <x-button
-                  size="xs"
-                  color="error"
-                  @click.prevent="
-                    confirmModal.onConfirm = () => deleteTraveler(item.id);
-                    confirmModal.show = true;
-                  "
-                  outlined
+                  <EditMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
+                  <template #tooltip>
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </template>
+                </x-tooltip>
+                <EditMemberButtonReuseTemplate v-else :item="item" />
+
+                <x-tooltip
+                  v-if="lockLeadSectionsDetails.member_details"
+                  position="bottom"
                 >
-                  Delete
-                </x-button>
+                  <DeleteMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
+                  <template #tooltip>
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </template>
+                </x-tooltip>
+                <DeleteMemberButtonReuseTemplate v-else :item="item" />
               </div>
             </template>
           </DataTable>
@@ -2107,7 +2196,8 @@ watch(
                     :options="leadStatusOptions"
                     :disabled="
                       quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved
+                        quoteStatusEnum.TransactionApproved ||
+                      lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Lead Status"
                     class="w-full"
@@ -2121,7 +2211,8 @@ watch(
                     class="w-full"
                     :disabled="
                       quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved
+                        quoteStatusEnum.TransactionApproved ||
+                      lockLeadSectionsDetails.lead_status
                     "
                   />
                 </x-field>
@@ -2138,6 +2229,7 @@ watch(
                   placeholder="Lost Reason is required"
                   class="w-full"
                   :error="leadStatusForm.errors.lostReason"
+                  :disabled="lockLeadSectionsDetails.lead_status"
                 />
               </x-field>
               <x-field label="Transaction Type">
@@ -2150,7 +2242,7 @@ watch(
               </x-field>
             </div>
           </div>
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
@@ -2158,11 +2250,25 @@ watch(
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                isDisabled
               "
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              position="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>
@@ -2322,7 +2428,7 @@ watch(
           <div v-else>
             <DataTable
               v-model:items-selected="selectedPlans"
-              table-class-name="tablefixed compact"
+              table-class-name="tablefixed"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
               border-cell
@@ -2349,12 +2455,12 @@ watch(
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
               <template #item-discountPremium="item">
-                <span class="text-primary-600">{{
-                  item.discountPremium + item.vat
-                }}</span>
+                <span class="text-primary-600">
+                  {{ item.discountPremium + item.vat }}
+                </span>
               </template>
               <template #item-action="item">
-                <div>
+                <div class="flex gap-2">
                   <x-button
                     size="xs"
                     color="error"
@@ -2366,7 +2472,6 @@ watch(
 
                   <span>
                     <SelectPlan
-                      class="ml-1"
                       v-if="!selectedPlanIds.includes(item.id)"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
@@ -2380,7 +2485,6 @@ watch(
                       }"
                     />
                     <x-button
-                      class="ml-1"
                       v-else
                       size="xs"
                       color="orange"
@@ -2404,7 +2508,7 @@ watch(
             <div>
               <DataTable
                 v-model:items-selected="selectedPlans"
-                table-class-name="tablefixed compact"
+                table-class-name="tablefixed"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
                 border-cell
@@ -2433,12 +2537,12 @@ watch(
                   }}</span>
                 </template>
                 <template #item-discountPremium="item">
-                  <span class="text-primary-600">{{
-                    item.discountPremium + item.vat
-                  }}</span>
+                  <span class="text-primary-600">
+                    {{ item.discountPremium + item.vat }}
+                  </span>
                 </template>
                 <template #item-action="item">
-                  <div>
+                  <div class="flex gap-2">
                     <x-button
                       size="xs"
                       color="error"
@@ -2449,7 +2553,6 @@ watch(
                     </x-button>
                     <span>
                       <SelectPlan
-                        class="ml-1"
                         v-if="!selectedPlanIds.includes(item.id)"
                         @update:selectedPlanChanged="handlePlanSelected"
                         :plan="item"
@@ -2463,7 +2566,6 @@ watch(
                         }"
                       />
                       <x-button
-                        class="ml-1"
                         v-else
                         size="xs"
                         color="orange"
@@ -2495,14 +2597,10 @@ watch(
       :payments="payments"
     />
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      quoteType="Travel"
-      :payments="payments"
-      :paymentDocument="
-        documentTypeCodes.filter(item =>
-          ['TPD', 'TPDR', 'TDPDR'].includes(item.code),
-        )
-      "
+			v-if="isNewPaymentStructure"
+			quoteType="Travel"
+			:payments="payments"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>

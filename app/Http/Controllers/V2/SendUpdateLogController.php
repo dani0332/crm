@@ -160,6 +160,10 @@ class SendUpdateLogController extends Controller
             $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments[0]['insurance_provider_id']);
             // it will get all invoice_descriptions for booking details
             $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
+            $sendUpdateLogInvoices = SendUpdateLogRepository::getSendUpdateLogInvoices($quoteTypeId, $realQuote->uuid);
+            if (! empty($sendUpdateLogInvoices)) {
+                $paymentInvoices = array_merge($paymentInvoices->toArray(), $sendUpdateLogInvoices->toArray());
+            }
         }
 
         if ($sendUpdateLog->is_booking_filled) {
@@ -185,6 +189,8 @@ class SendUpdateLogController extends Controller
 
         if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
             $paymentEntityModel->load(['plan']);
+        } else {
+            $paymentEntityModel->load(['insuranceProvider']);
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.

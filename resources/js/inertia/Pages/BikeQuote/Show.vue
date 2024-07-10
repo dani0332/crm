@@ -46,8 +46,9 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -224,6 +225,9 @@ const linkEntity = () => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -259,12 +263,19 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             View Legacy policy
           </x-button>
         </Link>
-        <Link
-          v-if="can(permissionsEnum.BikeQuotesEdit)"
-          :href="route('bike-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('bike-quotes-edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.BikeQuotesEdit)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.BikeQuotesEdit)"/>
+        </template>
 
         <Link
           v-if="can(permissionsEnum.BikeQuotesList)"
@@ -820,14 +831,10 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     />
 
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
-      :payments="quote.payments"
-      :paymentDocument="
-        documentTypeCodes.filter(item =>
-          ['BPD', 'BPDR', 'BDPDR'].includes(item.code),
-        )
-      "
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="quote.payments"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>

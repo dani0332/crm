@@ -45,8 +45,9 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -490,6 +491,10 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -530,9 +535,17 @@ watch(
           <x-button size="sm" color="primary" tag="div"> Home List </x-button>
         </Link>
 
-        <Link :href="route('home.edit', quote.uuid)">
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('home.edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <LeadEditBtnReuseTemplate v-else/>
       </template>
     </StickyHeader>
 
@@ -1121,7 +1134,7 @@ watch(
                 <x-select
                   v-model="leadStatusForm.leadStatus"
                   :options="leadStatusOptions"
-                  :disabled="allowStatusUpdate"
+                  :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
                   placeholder="Lead Status"
                   class="w-full"
                   label="Status"
@@ -1140,7 +1153,7 @@ watch(
                   placeholder="Lost Reason is required"
                   class="w-full"
                   :error="leadStatusForm.errors.lostReason"
-                  :disabled="allowStatusUpdate"
+                  :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
                 />
                 <x-textarea
                   v-model="leadStatusForm.notes"
@@ -1148,26 +1161,37 @@ watch(
                   label="Notes"
                   placeholder="Lead Notes"
                   class="w-full"
-                  :disabled="allowStatusUpdate"
+                  :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
+
                 />
               </div>
             </div>
           </div>
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="allowStatusUpdate"
+              :disabled="allowStatusUpdate || isDisabled"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>
     </div>
+
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
@@ -1184,14 +1208,10 @@ watch(
       :payments="payments"
     />
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
-      :payments="payments"
-      :paymentDocument="
-        page.props.documentTypeCodes.filter(item =>
-          ['HOMPD', 'HOMPDR', 'HOMDPDR'].includes(item.code),
-        )
-      "
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="payments"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>

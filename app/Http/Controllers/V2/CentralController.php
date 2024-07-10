@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
@@ -38,8 +39,10 @@ use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\QuoteNote;
@@ -47,9 +50,12 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
+use App\Services\HealthQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
+use App\Services\SendEmailCustomerService;
 use App\Services\SplitPaymentService;
+use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -59,6 +65,7 @@ use Illuminate\Support\Facades\Log;
 class CentralController extends Controller
 {
     use GenericQueriesAllLobs;
+
     public function createDuplicate(DuplicateLobRequest $request)
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
@@ -247,7 +254,6 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         if ($request->send_policy_type == 'customer') {
-            // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request));
 
             $quote->update([
@@ -295,6 +301,7 @@ class CentralController extends Controller
             return response()->json(['message' => $response['message']], 200);
         }
     }
+
     public function loadAvailablePlans($type, $id)
     {
         return (new CentralService())->loadAvailablePlans($type, $id);
@@ -324,6 +331,7 @@ class CentralController extends Controller
 
         return $successMessage;
     }
+
     // Update split payment status
     public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
     {
@@ -331,6 +339,7 @@ class CentralController extends Controller
 
         return back()->with('success', $successMessage);
     }
+
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
@@ -440,7 +449,6 @@ class CentralController extends Controller
 
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
-
         $responseMessage = ['Lead status has been updated'];
         $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
         $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
@@ -475,7 +483,6 @@ class CentralController extends Controller
             }
 
             DB::commit();
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -483,6 +490,74 @@ class CentralController extends Controller
         }
 
         return response()->json(['message' => $responseMessage]);
+    }
 
+    public function sendOCBEmail(Request $request)
+    {
+        $healthQuote = HealthQuote::where('uuid', $request->quote_uuid)->first();
+
+        $previousAdvisor = null;
+        if (isset($healthQuote) && ! empty($healthQuote->previous_advisor_id)) {
+            $previousAdvisor = app(UserService::class)->getUserById($healthQuote->previous_advisor_id);
+        }
+
+        // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
+        // Fetch all quote plans
+        $listQuotePlans = app(HealthQuoteService::class)->getQuotePlans($request->quote_uuid);
+        if (! isset($listQuotePlans)) {
+            return response()->json(['error' => 'OCB Health Plan Not Found'], 404);
+        }
+        if (! empty($request->selected_plans) && is_array($request->selected_plans)) {
+            if (! isset($listQuotePlans->quote->plans)) {
+                $listQuotePlans = 'Plans not available!';
+            } else {
+                $allPlans = $listQuotePlans->quote->plans;
+                if (isset($request->selected_plans) && is_array($request->selected_plans)) {
+                    $selectedPlanIds = array_map(function ($plan) {
+                        return $plan['id'];
+                    }, $request->selected_plans);
+                    $filteredQuotePlans = array_filter($allPlans, function ($plan) use ($selectedPlanIds) {
+                        return in_array($plan->id, $selectedPlanIds);
+                    });
+
+                    $listQuotePlans = array_values($filteredQuotePlans);
+                } else {
+                    $listQuotePlans = [];
+                }
+            }
+        } else {
+            $visiblePlans = array_filter($listQuotePlans->quote->plans, function ($plan) {
+                return ! $plan->isHidden;
+            });
+            shuffle($visiblePlans);
+            $randomPlans = array_slice($visiblePlans, 0, 6);
+            $listQuotePlans = $randomPlans;
+        }
+
+        info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
+
+        $emailTemplateId = (int) ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->value('value');
+
+        if (! isset($emailTemplateId)) {
+            return response()->json(['error' => 'Invalid email template ID'], 400);
+        }
+        $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
+
+        $emailData = app(SendEmailCustomerService::class)->buildEmailData($healthQuote, $listQuotePlans, $previousAdvisor, $request, $emailTemplateId);
+
+        $responseCode = app(SendEmailCustomerService::class)->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'health-quote-one-click-buy');
+        if ($responseCode == 201) {
+            if (isset($healthQuote)) {
+                $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
+                $healthQuote->save();
+            }
+            info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
+        } else {
+            info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
+
+            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
+        }
     }
 }

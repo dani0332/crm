@@ -2,10 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\SendUpdateLog;
+use App\Rules\NotZero;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
 {
+    protected object $sendUpdate;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -21,7 +26,8 @@ class SaveBookingDetailsRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
+            'id' => 'required|exists:send_update_logs,id',
             'commission_vat_applicable' => 'required|numeric',
             'invoice_description' => 'required|string',
             'invoice_date' => 'required|date',
@@ -29,20 +35,25 @@ class SaveBookingDetailsRequest extends FormRequest
             'insurer_commission_invoice_number' => 'required|string',
             'discount' => 'nullable|numeric',
             'commission_vat_not_applicable' => 'nullable|numeric',
-            'total_vat_amount' => 'required|numeric',
-            'price_vat_applicable' => 'required|numeric',
-            'price_vat_not_applicable' => 'required|numeric',
+            'total_vat_amount' => 'sometimes|numeric',
+            'price_vat_applicable' => 'sometimes|numeric',
+            'price_vat_not_applicable' => 'sometimes|numeric',
             'price_with_vat' => 'required|numeric',
         ];
+
+        $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
+
+        $isPriceVatNotApplicableRequired = in_array($this->sendUpdate?->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
+            SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
+
+        if ($isPriceVatNotApplicableRequired) {
+            $rules['price_vat_not_applicable'] = ['required', 'numeric', new NotZero];
+        } else {
+            $rules['price_vat_applicable'] = ['required', 'numeric', new NotZero];
+            $rules['total_vat_amount'] = 'required|numeric';
+        }
+
+        return $rules;
     }
 
-    /**
-     * @return void
-     */
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            // $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
-        });
-    }
 }
