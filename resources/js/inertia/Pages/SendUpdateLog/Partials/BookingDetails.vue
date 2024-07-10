@@ -428,7 +428,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.commission_vat_applicable = reversalEntry.commission_vat_applicable || null;
   bookingDetailsForm.total_commission = reversalEntry.total_commission || null;
   bookingDetailsForm.commission_vat_not_applicable = reversalEntry.commission_vat_not_applicable || null;
-  bookingDetailsForm.total_vat_amount = reversalEntry.total_vat_amount || null;
+  bookingDetailsForm.total_vat_amount = reversalEntry.total_vat_amount || '0.00';
   bookingDetailsForm.price_with_vat = reversalEntry.price_with_vat;
 };
 
