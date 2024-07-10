@@ -62,6 +62,7 @@ const props = defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
   clientInquiryLogs: Array,
   quoteNotes: Object,
   paymentDocument: Array
@@ -988,16 +989,15 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(function callback(
-      breakDown,
-      index,
-    ) {
-      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-        if (ratePerCopay.notifyAgent) {
-          element.needPriceUpdate = true;
-        }
-      });
-    });
+    element.memberPremiumBreakdown?.forEach(
+      function callback(breakDown, index) {
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+          if (ratePerCopay.notifyAgent) {
+            element.needPriceUpdate = true;
+          }
+        });
+      },
+    );
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -1600,9 +1600,21 @@ const memberCategorySalaryMapping = {
   'Employee with salary above AED 4000': 2,
 };
 
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
+  createReusableTemplate();
+const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] =
+  createReusableTemplate();
+const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
+
 const salaryBrandMapping = {
   1: 'AED 4000 and below',
-  2: 'More than AED 4000',
 };
 
 watch(
@@ -1672,48 +1684,32 @@ watch(
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
-
         <Link :href="route('health.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Health List </x-button>
         </Link>
 
-        <Link :href="route('health.edit', quote.uuid)">
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('health.edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          position="bottom"
+        >
+          <LeadEditBtnReuseTemplate :isDisabled="true" />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
+        </x-tooltip>
+        <LeadEditBtnReuseTemplate v-else />
       </template>
     </StickyHeader>
     <x-divider class="my-4" />
-    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
-      <div class="flex items-center space-x-2">
-        <h2 class="text-xl font-semibold">Health Detail</h2>
-        <p
-          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="daysSinceStale(quoteRequest?.stale_at) !== false"
-        >
-          Stale for {{ daysSinceStale(quoteRequest?.stale_at) }} days
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <LeadNotes
-          :documentType="noteDocumentType"
-          :notes="quoteNotes"
-          :modelType="modelType"
-          :quote="quote"
-          :cdn="cdnPath"
-        />
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-          Duplicate Lead
-        </x-button>
 
-        <Link :href="route('health.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Health List </x-button>
-        </Link>
-
-        <Link :href="route('health.edit', quote.uuid)">
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-      </div>
-    </div> -->
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -2329,13 +2325,54 @@ watch(
       </h3>
       <template #content>
         <x-divider class="mb-4 mt-1" />
-        <div class="w-full flex flex-wrap gap-3 justify-end items-center mb-4">
-          <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
+        <AddMemberButtonTemplate v-slot="{ isDisabled }">
+          <x-button
+            @click.prevent="onAddMemberModal"
+            size="sm"
+            color="orange"
+            :disabled="isDisabled"
+          >
             Add Member
           </x-button>
+        </AddMemberButtonTemplate>
+        <div class="flex mb-3 justify-end">
+          <x-tooltip
+            v-if="lockLeadSectionsDetails.member_details"
+            position="bottom"
+          >
+            <AddMemButtonReuseTemplate :isDisabled="true" />
+            <template #tooltip>
+              This lead is now locked as the policy has been booked. If changes
+              are needed such midterm addition of member, go to 'Send Update',
+              select 'Add Update', and choose 'Endorsement Financial'
+            </template>
+          </x-tooltip>
+          <AddMemButtonReuseTemplate v-else />
         </div>
+        <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="primary"
+            outlined
+            @click.prevent="onEditMember(item)"
+            :disabled="isDisabled"
+          >
+            Edit
+          </x-button>
+        </EditMemberButtonTemplate>
+        <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="error"
+            outlined
+            @click.prevent="memberDelete(item.id)"
+            :disabled="isDisabled"
+          >
+            Delete
+          </x-button>
+        </DeleteMemberButtonTemplate>
         <DataTable
-          table-class-name="tablefixed compact"
+          table-class-name="tablefixed overflow-auto"
           :headers="memberDetailsTable.columns"
           :items="membersDetail || []"
           border-cell
@@ -2372,22 +2409,46 @@ watch(
 
           <template #item-action="item">
             <div class="flex gap-2">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="onEditMember(item)"
+              <x-tooltip
+                v-if="lockLeadSectionsDetails.member_details"
+                position="left"
+                align="center"
+                class="yoyo-tip"
               >
-                Edit
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="memberDelete(item.id)"
+                <EditMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
+                <template #tooltip>
+                  <div class="whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
+                </template>
+              </x-tooltip>
+              <EditMemberButtonReuseTemplate v-else :item="item" />
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.member_details"
+                position="left"
+                align="center"
+                class="yoyo-tip"
               >
-                Delete
-              </x-button>
+                <DeleteMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
+                <template #tooltip>
+                  <div class="whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
+                </template>
+              </x-tooltip>
+              <DeleteMemberButtonReuseTemplate v-else :item="item" />
             </div>
           </template>
         </DataTable>
@@ -2567,211 +2628,6 @@ watch(
         </x-modal>
       </template>
     </x-collapse>
-    <!-- <div
-      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
-      class="p-4 rounded shadow mb-6 bg-white"
-    >
-      <Collapsible :expanded="sectionExpanded">
-<template #header>
-    <div class="flex justify-between items-center">
-        <h3 class="font-semibold text-primary-800 text-lg">
-            Member Details
-            <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
-        </h3>
-    </div>
-</template>
-
-<template #body>
-    <x-divider class="my-4" />
-    <div class="flex mb-3 justify-end">
-        <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
-            Add Member
-        </x-button>
-    </div>
-
-    <DataTable table-class-name="tablefixed compact" :headers="memberDetailsTable.columns" :items="membersDetail || []" border-cell hide-rows-per-page hide-footer>
-        <template #item-first_name="{ first_name, last_name }">
-                                          {{
-                                            (first_name == null ? '' : first_name) +
-                                            ' ' +
-                                            (last_name == null ? '' : last_name)
-                                          }}
-</template>
-
-<template #item-gender="{ gender }">
-     {{ genderText(gender).value }}
-</template>
-
-<template #item-dob="{ dob }">
-     {{ dateFormat(dob) }}
-</template>
-
-<template #item-relation="{ relation }">
-     {{ relation?.text }}
-</template>
-
-<template #item-nationality="{ nationality }">
-     {{ nationality?.text }}
-</template>
-
-<template #item-emirate="{ emirate }">
-     {{ emirate?.text }}
-</template>
-
-<template #item-member_category_id="{ member_category_id }">
-     {{ memberCategoryText(member_category_id).value }}
-</template>
-
-<template #item-action="item">
-    <div class="flex gap-2">
-        <x-button size="xs" color="primary" outlined @click.prevent="onEditMember(item)">
-            Edit
-        </x-button>
-        <x-button size="xs" color="error" outlined @click.prevent="memberDelete(item.id)">
-            Delete
-        </x-button>
-    </div>
-</template>
-          </DataTable>
-        </template>
-      </Collapsible>
-
-      <x-modal v-model="modals.member" size="lg" show-close backdrop>
-<template #header>
-     {{ memberActionEdit ? "Edit" : "Add" }} Member
-</template>
-
-        <x-form @submit="onMemberSubmit" :auto-focus="false">
-          <div
-            v-if="isManualPlansCount > 0"
-            class="bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
-            role="alert"
-          >
-            <div class="flex">
-              <div class="py-1">
-                <svg
-                  class="fill-current h-6 w-6 text-read-900 mr-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
-                <p class="text-sm">
-                  Please revist all manual plan(s) and update the per member
-                  price
-                </p>
-              </div>
-            </div>
-          </div>
-          <div class="grid md:grid-cols-2 gap-4 md:pb-16">
-          <input type="hidden" :value="memberForm.id" />
-            <x-input
-                maxLength="60"
-                v-model="memberForm.first_name"
-                label="First Name"
-                placeholder="First Name"
-            />
-            <x-input
-                maxLength="60"
-                v-model="memberForm.last_name"
-                label="Last Name"
-                placeholder="Last Name"
-            />
-            <ComboBox
-              v-model="memberForm.nationality_id"
-              label="Nationality"
-              :options="nationalityOptions"
-              placeholder="Select Nationality"
-              :single="true"
-              :hasError="memberFieldReq.nationality"
-            />
-            <x-select
-              v-model="memberForm.emirate_of_your_visa_id"
-              label="Emirate of Visa*"
-              :options="emiratesOptions"
-              :rules="[isRequired]"
-              placeholder="Select Emirate of Visa"
-              class="w-full"
-            />
-
-            <x-select
-              v-model="memberForm.member_category_id"
-              label="Member Category*"
-              :options="memberCategoriesOptions"
-              :rules="[isRequired]"
-              placeholder="Select Member Category"
-              class="w-full"
-            />
-
-            <x-select
-              v-model="memberForm.gender"
-              label="Gender*"
-              :options="genderSelect"
-              :rules="[isRequired]"
-              placeholder="Select Gender"
-              class="w-full"
-            />
-            <DatePicker
-              v-model="memberForm.dob"
-              label="DOB*"
-              :rules="[isRequired]"
-              :hasError="memberFieldReq.dob"
-            />
-            <x-select
-              v-model="memberForm.relation_code"
-              label="Relation"
-              :options="memberRelationOptions"
-              placeholder="Select Relation"
-              class="w-full"
-            />
-            <x-select
-              v-model="memberForm.salary_band_id"
-              label="Salary Band"
-              :options="salaryBandsOptions"
-              placeholder="Select Salary Band"
-              class="w-full"
-            />
-          </div>
-
-          <div class="flex justify-end gap-3">
-            <x-button size="sm" @click.prevent="modals.member = false"> Cancel </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="memberForm.processing"
-              type="submit"
-              class="px-6"
-            >
-              {{ memberActionEdit ? "Update" : "Save" }}
-            </x-button>
-          </div>
-        </x-form>
-      </x-modal>
-
-      <x-modal v-model="modals.memberConfirm" show-close backdrop>
-<template #header>
-     Delete Member Detail
-</template>
-        <p>Are you sure you want to delete this?</p>
-<template #actions>
-    <div class="text-right space-x-4">
-        <x-button size="sm" ghost @click.prevent="modals.memberConfirm = false">
-            Cancel
-        </x-button>
-        <x-button size="sm" color="error" @click.prevent="memberDeleteConfirmed" :loading="memberForm.processing">
-            Delete
-        </x-button>
-    </div>
-</template>
-      </x-modal>
-    </div> -->
-
     <UBODetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
       :quote="quote"
@@ -2938,7 +2794,9 @@ watch(
                   v-model="leadStatusForm.leadStatus"
                   label="Status"
                   :options="leadStatusOptions"
-                  :disabled="allowStatusUpdate"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
                   placeholder="Lead Status"
                   class="w-full"
                 />
@@ -2948,7 +2806,9 @@ watch(
                   label="Notes"
                   placeholder="Lead Notes"
                   class="w-full"
-                  :disabled="allowStatusUpdate"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
                 />
               </div>
             </div>
@@ -2967,6 +2827,7 @@ watch(
                   placeholder="Lost Reason is required"
                   class="w-full"
                   :error="leadStatusForm.errors.lostReason"
+                  :disabled="lockLeadSectionsDetails.lead_status"
                 />
                 <x-field class="" label="Transaction Type">
                   <x-input
@@ -2977,23 +2838,35 @@ watch(
                   />
                 </x-field>
 
-                <div class="flex flex-col gap-4">
-
-                </div>
+                <div class="flex flex-col gap-4"></div>
               </div>
             </div>
           </div>
           <x-divider class="mb-1 mt-10" />
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
+              :disabled="isDisabled"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              position="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>
@@ -3064,96 +2937,6 @@ watch(
         </template>
       </Collapsible>
     </div>
-
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <x-form @submit="submitPolicyDetails" :auto-focus="false">
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_number"
-              :disabled="!policyDetails.editMode"
-              label="Policy Number"
-              :rules="[isRequired, policyDetailRules.policy_number]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_issuance_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="Issuance Date"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_start_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="Start Date"
-              :rules="[isRequired, policyDetailRules.policy_start_date]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.renewal_expiry_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="Expiry Date"
-              :rules="[isRequired, policyDetailRules.renewal_expiry_date]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.premium"
-              :disabled="!policyDetails.editMode"
-              label="Premium"
-              :rules="[isRequired, policyDetailRules.premium]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2"></div>
-        </div>
-
-        <div class="text-right space-x-4 mt-12" v-if="policyDetails.canEdit">
-          <x-button
-            color="#007bff"
-            size="sm"
-            v-show="policyDetails.editMode"
-            @click.prevent="cancelPolicyFrom"
-            >Cancel</x-button
-          >
-          <x-button
-            color="#26B99A"
-            type="submit"
-            size="sm"
-            v-show="policyDetails.editMode"
-            >Update</x-button
-          >
-          <x-button
-            color="#007bff"
-            size="sm"
-            type="submit"
-            v-show="!policyDetails.editMode"
-            @click.prevent="policyDetails.editMode = true"
-            >Edit</x-button
-          >
-        </div>
-      </x-form>
-    </div> -->
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -3221,15 +3004,35 @@ watch(
               <template #content> {{ planFiltersCount }} </template>
             </x-badge>
 
-            <!-- v-if="isBetaUser" -->
-            <x-button
-              v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
-              size="sm"
-              color="emerald"
-              @click.prevent="modals.createPlan = true"
+            <AddPlanButtonTemplate v-slot="{ isDisabled }">
+              <x-button
+                v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
+                size="sm"
+                color="emerald"
+                @click.prevent="modals.createPlan = true"
+                :disabled="isDisabled"
+              >
+                Add Plan
+              </x-button>
+            </AddPlanButtonTemplate>
+
+            <x-tooltip
+              v-if="page.props.lockLeadSectionsDetails.plan_selection"
+              position="left"
+              align="center"
+              class="yoyo-tip"
             >
-              Add Plan
-            </x-button>
+              <AddPlanButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                <div class="whitespace-normal text-xs">
+                  No further actions can be taken on an issued policy. For
+                  changes, such as a change in insurer, go to 'Send Update',
+                  select 'Add Update', and choose 'Cancellation from inception
+                  and reissuance.
+                </div>
+              </template>
+            </x-tooltip>
+            <AddPlanButtonReuseTemplate v-else />
 
             <DataTable
               ref="planDataTable"
@@ -3306,20 +3109,6 @@ watch(
                   )
                 }}
               </template>
-              <!--<template #item-action="item">
-    <div class="flex gap-2 pr-2">
-        <x-tag size="xs" color="primary" class="mt-0.5 text-[10px]">
-            Manual Plan
-        </x-tag>
-        <x-tag v-if="isHidden" size="xs" color="error" class="mt-0.5 text-[10px]">
-            Hidden
-        </x-tag>
-        <x-tag v-if="!isHidden" size="xs" color="success" class="mt-0.5 text-[10px]">
-            Currently Online
-        </x-tag>
-    </div>
-</template>-->
-
               <template #item-action="item">
                 <div class="flex gap-2 pr-2">
                   <!-- put here -->
