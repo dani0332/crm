@@ -165,6 +165,7 @@ class LifeQuoteController extends Controller
         $isQuoteDocumentEnabled = app(BaseService::class)->quoteDocumentEnabled(QuoteTypes::LIFE->value);
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -210,6 +211,7 @@ class LifeQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
         ]);
     }
