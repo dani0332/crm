@@ -381,6 +381,7 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
+const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusableTemplate();
 
 const isShowingTransactionPaymentStatus = computed(() => {
   const policyStatuses = [
@@ -700,6 +701,19 @@ const isShowingTransactionPaymentStatus = computed(() => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
+
+            <EditBookPolicyBtnTemplate v-slot="{ isDisabled }">
+              <x-button
+                  class="mt-4 mr-2"
+                  color="emerald"
+                  size="sm"
+                  @click.prevent="bp.isEditing = true"
+                  :disabled="isDisabled"
+                >
+                  Edit
+                </x-button>
+            </EditBookPolicyBtnTemplate>
+            
             <div v-if="bpForm.isPolicyCancelledOrPending" class="flex justify-end"> 
               <x-tooltip>
                 <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
@@ -741,19 +755,16 @@ const isShowingTransactionPaymentStatus = computed(() => {
                 >
                   Update
                 </x-button>
-                <x-button
-                  v-if="
-                    !bp.isEditing &&
-                    props.bookPolicyDetails?.editButton &&
-                    can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
-                  "
-                  class="mt-4 mr-2"
-                  color="emerald"
-                  size="sm"
-                  @click.prevent="bp.isEditing = true"
-                >
-                  Edit
-                </x-button>
+                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
+                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="true"/>
+                  <template #tooltip>
+                    This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
+                  </template>
+                </x-tooltip>
+
+                <template v-else>
+                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)"/>
+                </template>
                 <x-tooltip>
                   <x-button
                     size="sm"
@@ -813,7 +824,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      "The button is not accessible because policy has been booked"
+                      "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
                     }}</span>
                   </template>
                 </x-tooltip>
@@ -856,23 +867,17 @@ const isShowingTransactionPaymentStatus = computed(() => {
                   >
                     Update
                   </x-button>
-                  <div
-                    v-if="
-                      !bp.isEditing &&
-                      props.bookPolicyDetails?.editButton &&
-                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
-                    "
-                  >
-                    <x-button
-                      class="mt-4 mr-2"
-                      color="emerald"
-                      size="sm"
-                      :disabled="!props.bookPolicyDetails?.editButton"
-                      @click.prevent="bp.isEditing = true"
-                    >
-                      Edit
-                    </x-button>
-                  </div>
+
+                  <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
+                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="true"/>
+                    <template #tooltip>
+                      This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
+                    </template>
+                  </x-tooltip>
+
+                  <template v-else>
+                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="!props.bookPolicyDetails?.editButton"/>
+                  </template>
 
                   <template
                     v-if="

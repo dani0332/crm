@@ -51,6 +51,7 @@ const props = defineProps({
   enums: Object,
   bookPolicyDetails: Array,
   payments: Array,
+  lockLeadSectionsDetails: Object,
   paymentDocument: Array
 });
 
@@ -229,6 +230,9 @@ const linkEntity = () => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -252,12 +256,20 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           :quote="quote"
           :cdn="cdnPath"
         />
-        <Link
-          v-if="can(permissionsEnum.YachtQuotesEdit)"
-          :href="route('yacht-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('yacht-quotes-edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.YachtQuotesEdit)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.YachtQuotesEdit)"/>
+        </template>
 
         <Link
           v-if="can(permissionsEnum.YachtQuotesList)"

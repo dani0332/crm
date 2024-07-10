@@ -128,7 +128,7 @@ class SagePayloadFactory
             $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
 
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
-            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+            // $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
         }
 
         $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_INV;
@@ -315,7 +315,7 @@ class SagePayloadFactory
             $applyToDocumentPrem = $extras['mainLeadDetails']['payment']['insurer_tax_number'];
 
             $payLoad['Invoices'][0]['DocumentType'] = 'DebitNote';
-            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+            // $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
         }
 
         $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_INV;
@@ -445,10 +445,10 @@ class SagePayloadFactory
             $applyToDocumentComm = $extras['mainLeadDetails']['payment']['insurer_commmission_invoice_number'];
 
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
-            $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
+            // $payLoad['Invoices'][0]['ApplytoDocument'] = $applyToDocumentPrem;
 
             $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
-            $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
+            // $payLoad['Invoices'][1]['ApplytoDocument'] = $applyToDocumentComm;
         }
 
         $sageRequestType = SageEnum::SRT_CREATE_AR_PREM_COMM_INV;
