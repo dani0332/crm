@@ -172,7 +172,7 @@ class SageApiService
 
             if ($customer->sage_customer_number && ! $quoteEntity) {
                 $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
-                $sageCustomerNumber = $customer->sage_customer_number;
+                return $customer->sage_customer_number;
             } else {
                 $isLiveApiCallStep1 = true;
                 $sageSecondLog = isset($sageLogArray[1]) ? $sageLogArray[1] : false;
@@ -238,7 +238,7 @@ class SageApiService
             $customer->data = ! empty($data) ? $data : [];
             if ($customer->sage_customer_number && ! $quoteEntity) {
                 $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
-                $sageCustomerNumber = $customer->sage_customer_number;
+                return $customer->sage_customer_number;
             } else {
                 $isLiveApiCallStep1 = true;
                 if (isset($sageLogArray[1]) && $sageLogArray[1]['status'] == config('constants.SAGE_LOG_SUCCESS_STATUS')) {
