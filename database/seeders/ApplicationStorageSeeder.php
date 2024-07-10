@@ -164,7 +164,83 @@ class ApplicationStorageSeeder extends Seeder
         if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->exists()) {
             ApplicationStorage::create([
                 'key_name' => ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE,
-                'value' => '677',
+                'value' => '677', ]);
+        }
+        $applicationStorageSeeder = [
+            [
+                'key_name' => ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE,
+                'value' => '591',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE,
+                'value' => '612',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE,
+                'value' => '593',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE,
+                'value' => '617',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE,
+                'value' => '616',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE,
+                'value' => '615',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE,
+                'value' => '592',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE,
+                'value' => '618',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE,
+                'value' => '622',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::GROUP_MEDICAL_BOOK_POLICY_TEMPLATE,
+                'value' => '613',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE,
+                'value' => '614',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::DIS_INBOX_EMAIL_BCC,
+                'value' => 'sendpolicyupdate@insurancemarket.ae',
+                'is_active' => 1,
+            ],
+        ];
+
+        foreach ($applicationStorageSeeder as $applicationStorage) {
+            $conditions = [
+                'key_name' => $applicationStorage['key_name'],
+            ];
+            ApplicationStorage::firstOrCreate($conditions, $applicationStorage);
+        }
+
+        $sicFollowupEmailTempID = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID)->first();
+        if (empty($sicFollowupEmailTempID)) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID,
+                'value' => 678,
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

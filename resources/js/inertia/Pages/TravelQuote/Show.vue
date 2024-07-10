@@ -1,9 +1,9 @@
 <script setup>
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -26,6 +26,7 @@ defineProps({
   quoteDocuments: Object,
   displaySendPolicyButton: Boolean,
   documentTypes: Object,
+  documentType: Object,
   cdnPath: String,
   memberCategories: Array,
   emailStatuses: Array,
@@ -39,7 +40,6 @@ defineProps({
   isBetaUser: Boolean,
   payments: Array,
   quoteRequest: Object,
-  permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
@@ -52,15 +52,24 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
   storageUrl: String,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
+  sendUpdateOptions: Array,
+  sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
+  linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
+const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
-
+const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
   return true;
@@ -95,6 +104,13 @@ const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+
+const normalPlansIds = reactive({
+  ids: [],
+});
+const seniorPlansIds = reactive({
+  ids: [],
+});
 
 const {
   isRequired,
@@ -174,6 +190,7 @@ const modals = reactive({
   planDetails: false,
   mixInquiryConfirm: false,
 });
+
 const travelFields = computed(() => {
   let skipFields = [
     'previous_quote_policy_number',
@@ -181,7 +198,7 @@ const travelFields = computed(() => {
     'previous_policy_expiry_date',
     'policy_start_date',
     'renewal_batch',
-    'transapp_code'
+    'transapp_code',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -199,7 +216,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: lostReasonId.value || '',
 });
 
@@ -450,8 +466,7 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id ==
-      page.props.enums.quoteStatusEnum.TransactionApproved &&
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved &&
     page.props.permissions.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -505,28 +520,6 @@ const memberDataDocs = membersDetail => {
     .filter(member => member.name !== undefined);
 };
 
-const quoteDocumentsTable = reactive({
-  isLoading: false,
-  columns: [
-    {
-      text: 'Document Type',
-      value: 'document_type_text',
-    },
-    {
-      text: 'Document Name',
-      value: 'original_name',
-    },
-    {
-      text: 'Created At',
-      value: 'created_at',
-    },
-    {
-      text: 'Created By',
-      value: 'created_by_name',
-    },
-  ],
-});
-
 const sendPolicyToClient = () => {
   if (confirm('Are you sure you want to send documents to customer?')) {
     let quoteType = page.props.modelType;
@@ -570,6 +563,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
+      onLoadAvailablePlansData();
       router.reload({
         preserveScroll: true,
       });
@@ -637,18 +631,6 @@ const onExportPlans = () => {
     });
 };
 
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
-const normalPlansIds = reactive({
-  ids: [],
-});
-const seniorPlansIds = reactive({
-  ids: [],
-});
-
 const onLoadAvailablePlansData = async () => {
   let data = {
     jsonData: true,
@@ -666,28 +648,6 @@ const onLoadAvailablePlansData = async () => {
     .catch(err => {
       console.log(err);
     });
-};
-
-const confirmDeleteDoc = () => {
-  quoteDocumentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        quoteDocumentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
 };
 
 const emailStatusesTable = reactive({
@@ -757,11 +717,11 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Price',
+      text: 'Actual Price',
       value: 'actualPremium',
     },
     {
-      text: 'Total Price',
+      text: 'Price with VAT',
       value: 'discountPremium',
     },
     {
@@ -1191,8 +1151,47 @@ const genderList = [
   { value: 'M', label: 'Male' },
   { value: 'F', label: 'Female' },
 ];
-
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+const handleSelectionChange = (tableType, selectedItems) => {
+  if (tableType === 'adult' && selectedSeniorPlans.value.length > 0) {
+    modals.mixInquiryConfirm = true;
+    selectedAdultPlans.value = [];
+  } else if (tableType === 'senior' && selectedAdultPlans.value.length > 0) {
+    modals.mixInquiryConfirm = true;
+    selectedSeniorPlans.value = [];
+  } else {
+    if (tableType === 'adult') {
+      selectedAdultPlans.value = selectedItems;
+      selectedPlans.value = selectedItems;
+    } else if (tableType === 'senior') {
+      selectedSeniorPlans.value = selectedItems;
+      selectedPlans.value = selectedItems;
+    }
+  }
+};
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
+const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] =
+  createReusableTemplate();
+const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
@@ -1204,6 +1203,23 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <Link
           v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
           preserve-scroll
         >
           <x-button size="sm" color="#ff5e00" tag="div">
@@ -1222,12 +1238,29 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
         </Link>
 
-        <Link
-          v-if="permissions.canEditQuote == true"
-          :href="route('travel.edit', quote.uuid)"
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link :href="route('travel.edit', quote.uuid)">
+            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          </Link>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          position="bottom"
         >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+          <LeadEditBtnReuseTemplate
+            v-if="permissions.canEditQuote"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="permissions.canEditQuote" />
+        </template>
       </div>
     </div>
 
@@ -1273,216 +1306,323 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </x-form>
     </x-modal>
 
-    <x-divider class="my-4" />
+    <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
+        </template>
+        <template #body>
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div
+                class="grid sm:grid-cols-2"
+                v-for="field in travelFields"
+                :key="field"
+              >
+                <dt v-if="field.title == 'Ref-ID'">
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      {{ field.title }}
+                    </label>
+                    <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+                </dt>
+                <dt v-else-if="field.title == 'Ref-ID'">
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      {{ field.title }}
+                    </label>
+                    <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+                </dt>
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-else-if="
+                    hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering]) &&
+                    field.title == 'ID'
+                  "
+                >
+                  <dt class="font-medium uppercase">{{ field.title }}</dt>
+                  <dd>{{ field?.value }}</dd>
+                </div>
+                <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
+                <dd>{{ field?.value }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      PARENT REF-ID
+                    </label>
+                    <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+                </dt>
+                <dt>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </dt>
+              </div>
+
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium">
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </dt>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      TRAVELING WHERE
+                    </label>
+                    <template #tooltip> Traveling Where</template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium uppercase">
+                  {{
+                    quote.direction_code != null
+                      ? quote.direction_code
+                      : quote?.currently_located_in_id_text ==
+                            enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                          quote?.region_cover_for_id !=
+                            enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                        ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                        : quote?.destination_id_text ==
+                              enums.travelQuoteEnum
+                                .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                            quote?.region_cover_for_id ==
+                              enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                          ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                          : ''
+                  }}
+                </dt>
+              </div>
+
+              <div
+                v-if="
+                  enums.travelQuoteEnum.TRAVEL_UAE_INBOUND ==
+                    quote.direction_code || quote?.region_cover_for_id == 3
+                "
+                class="grid sm:grid-cols-2"
+              >
+                <dt>
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
+                    ARRIVED AT UAE
+                  </label>
+                </dt>
+                <dt class="font-medium">
+                  {{
+                    quote.has_arrived_uae == 1 ||
+                    quote.currently_located_in_id_text ==
+                      enums.travelQuoteEnum.LOCATION_UAE_TEXT
+                      ? 'Yes'
+                      : 'No'
+                  }}
+                </dt>
+              </div>
+              <div v-else class="grid sm:grid-cols-2">
+                <dt>
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
+                    ARRIVED AT DESTINATION
+                  </label>
+                </dt>
+                <dt class="font-medium">
+                  {{
+                    quote.has_arrived_destination == 1 ||
+                    quote.currently_located_in_id_text ==
+                      enums.travelQuoteEnum.LOCATION_OUTSIDE_UAE
+                      ? 'Yes'
+                      : 'No'
+                  }}
+                </dt>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                    >
+                      DAYS COVERS
+                    </label>
+                    <template #tooltip>Days Covers</template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium">{{ quote.days_cover_for }}</dt>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                    >
+                      TRAVEL START DATE
+                    </label>
+                    <template #tooltip> Travel Start Date</template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium">
+                  {{
+                    quote.start_date
+                      ? quote.start_date
+                      : quote.policy_start_date
+                  }}
+                </dt>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                    >
+                      TRAVEL END DATE
+                    </label>
+                    <template #tooltip> Travel End Date</template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium">{{ quote.end_date }}</dt>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                    >
+                      TRAVEL COVERAGE
+                    </label>
+                    <template #tooltip> Travel Coverage</template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium">
+                  {{
+                    quote.coverage_code != null
+                      ? quote.coverage_code
+                      : quote.days_cover_for <= 92
+                        ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                        : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                          '/' +
+                          enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                  }}
+                </dt>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                    >
+                      REGION COVERAGE
+                    </label>
+                    <template #tooltip>Region Cover</template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium">
+                  {{ quote.region_cover_for_id_text }}
+                </dt>
+              </div>
+            </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div
-            class="grid sm:grid-cols-2"
-            v-for="field in travelFields"
-            :key="field"
-          >
-            <dt v-if="field.title == 'Ref-ID'">
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  {{ field.title }}
-                </label>
-                <template #tooltip> Reference ID </template>
-              </x-tooltip>
-            </dt>
-
-            <dt v-else-if="field.title == 'Parent Ref-ID'">
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  {{ field.title }}
-                </label>
-                <template #tooltip> Parent Reference ID </template>
-              </x-tooltip>
-            </dt>
-            <div
-              class="grid sm:grid-cols-2"
-              v-else-if="
-                hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering]) &&
-                field.title == 'ID'
-              "
-            >
-              <dt class="font-medium uppercase">{{ field.title }}</dt>
-              <dd>{{ field?.value }}</dd>
-            </div>
-            <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
-            <dd>{{ field?.value }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  TRAVELING WHERE
-                </label>
-                <template #tooltip> Traveling Where</template>
-              </x-tooltip>
-            </dt>
-            <dt class="font-medium uppercase">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote.direction_code != null
-                  ? quote.direction_code
-                  : quote?.currently_located_in_id_text ==
-                        enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                      quote?.region_cover_for_id !=
-                        enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                    ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                    : quote?.destination_id_text ==
-                          enums.travelQuoteEnum
-                            .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                        quote?.region_cover_for_id ==
-                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                      ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                      : ''
+                quote.customer_type == page.props.customerTypeEnum.Individual
+                  ? 'Customer '
+                  : 'Entity '
               }}
-            </dt>
+              Profile
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex mb-3 justify-end">
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <div
-            v-if="
-              enums.travelQuoteEnum.TRAVEL_UAE_INBOUND ==
-                quote.direction_code || quote?.region_cover_for_id == 3
-            "
             class="grid sm:grid-cols-2"
+            v-if="quoteRequest.child || quoteRequest.parent"
           >
-            <dt>
-              <label
-                class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-              >
-                ARRIVED AT UAE
-              </label>
-            </dt>
-            <dt class="font-medium">
-              {{
-                quote.has_arrived_uae == 1 ||
-                quote.currently_located_in_id_text ==
-                  enums.travelQuoteEnum.LOCATION_UAE_TEXT
-                  ? 'Yes'
-                  : 'No'
-              }}
-            </dt>
-          </div>
-          <div v-else class="grid sm:grid-cols-2">
-            <dt>
-              <label
-                class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-              >
-                ARRIVED AT DESTINATION
-              </label>
-            </dt>
-            <dt class="font-medium">
-              {{
-                quote.has_arrived_destination == 1 ||
-                quote.currently_located_in_id_text ==
-                  enums.travelQuoteEnum.LOCATION_OUTSIDE_UAE
-                  ? 'Yes'
-                  : 'No'
-              }}
-            </dt>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-                >
-                  DAYS COVERS
-                </label>
-                <template #tooltip>Days Covers</template>
-              </x-tooltip>
-            </dt>
-            <dt class="font-medium">{{ quote.days_cover_for }}</dt>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-                >
-                  TRAVEL START DATE
-                </label>
-                <template #tooltip> Travel Start Date</template>
-              </x-tooltip>
-            </dt>
-            <dt class="font-medium">
-              {{
-                quote.start_date ? quote.start_date : quote.policy_start_date
-              }}
-            </dt>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-                >
-                  TRAVEL END DATE
-                </label>
-                <template #tooltip> Travel End Date</template>
-              </x-tooltip>
-            </dt>
-            <dt class="font-medium">{{ quote.end_date }}</dt>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-                >
-                  TRAVEL COVERAGE
-                </label>
-                <template #tooltip> Travel Coverage</template>
-              </x-tooltip>
-            </dt>
-            <dt class="font-medium">
-              {{
-                quote.coverage_code != null
-                  ? quote.coverage_code
-                  : quote.days_cover_for <= 92
-                    ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                    : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                      '/' +
-                      enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
-              }}
-            </dt>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
-                >
-                  REGION COVERAGE
-                </label>
-                <template #tooltip>Region Cover</template>
-              </x-tooltip>
-            </dt>
-            <dt class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
-          </div>
-
-          <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
             <template v-if="quoteRequest.child">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     CHILD REF ID
                   </label>
-                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
+                  <template #tooltip
+                    >Navigation key from parent to child in data
+                    hierarchy.</template
+                  >
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.child.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.child.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.child?.code }}
                 </a>
               </dt>
@@ -1490,231 +1630,223 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <template v-if="quoteRequest.parent">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     PARENT REF ID
                   </label>
                   <template #tooltip>Parent Ref Id</template>
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.parent.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.parent.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.parent.code }}
                 </a>
               </dt>
             </template>
           </div>
-        </dl>
-      </div>
-    </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          {{
-            quote.customer_type == page.props.customerTypeEnum.Individual
-              ? 'Customer '
-              : 'Entity '
-          }}
-          Profile
-        </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
-          KYC - Complete
-        </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
-      </div>
-      <x-divider class="mb-4 mt-1" />
-      <x-form @submit="updateProfileDetails" :auto-focus="false">
-        <div class="text-sm">
-          <dl
-            v-if="
-              quote.customer_type === page.props.customerTypeEnum.Individual
-            "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
-          >
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">FIRST NAME</dt>
-              <dd>{{ quote.first_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">LAST NAME</dt>
-              <dd>{{ quote.last_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">INSURED FIRST NAME</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.insured_first_name"
-                  :rules="[isRequired]"
-                  placeholder="INSURED FIRST NAME"
-                  class="w-full"
-                  :disabled="!isProfileUpdateAllow"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">INSURED LAST NAME</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.insured_last_name"
-                  :rules="[isRequired]"
-                  placeholder="INSURED LAST NAME"
-                  class="w-full"
-                  :disabled="!isProfileUpdateAllow"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">MOBILE NUMBER</dt>
-              <dd>{{ quote.mobile_no }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">NATIONALITY</dt>
-              <dd>{{ quote.nationality_id_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">DATE OF BIRTH</dt>
-              <dd>{{ quote.dob }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES ID NUMBER</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.emirates_id_number"
-                  :rules="[isRequired]"
-                  placeholder="EMIRATES ID NUMBER"
-                  class="w-full"
-                  :disabled="!isProfileUpdateAllow"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
-              <dd>
-                <DatePicker
-                  v-model="customerProfileForm.emirates_id_expiry_date"
-                  :rules="[isRequired]"
-                  placeholder="EMIRATES ID EXPIRY DATE"
-                  :disabled="!isProfileUpdateAllow"
-                  :min-date="new Date()"
-                />
-              </dd>
-            </div>
+          <x-form @submit="updateProfileDetails" :auto-focus="false">
+            <div class="text-sm">
+              <dl
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Individual
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+              >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FIRST NAME</dt>
+                  <dd>{{ quote.first_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LAST NAME</dt>
+                  <dd>{{ quote.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED FIRST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_first_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED FIRST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED LAST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_last_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED LAST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MOBILE NUMBER</dt>
+                  <dd>{{ quote.mobile_no }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMAIL</dt>
+                  <dd>{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality_id_text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">DATE OF BIRTH</dt>
+                  <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.emirates_id_number"
+                      :rules="[isRequired]"
+                      placeholder="EMIRATES ID NUMBER"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                  <dd>
+                    <DatePicker
+                      v-model="customerProfileForm.emirates_id_expiry_date"
+                      :rules="[isRequired]"
+                      placeholder="EMIRATES ID EXPIRY DATE"
+                      :disabled="!isProfileUpdateAllow"
+                      :min-date="new Date()"
+                    />
+                  </dd>
+                </div>
 
-            <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
-          </dl>
-          <dl
-            v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
-          >
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">FIRST NAME</dt>
-              <dd>{{ quote.first_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">LAST NAME</dt>
-              <dd>{{ quote.last_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">MOBILE NUMBER</dt>
-              <dd>{{ quote.mobile_no }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">COMPANY NAME</dt>
-              <dd>{{ customerProfileForm.company_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">TRADE LICENSE NO</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.trade_license_no"
-                  placeholder="TRADE LICENSE NO"
-                  type="text"
-                  class="w-full"
-                />
+                <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
+              </dl>
+              <dl
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+              >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FIRST NAME</dt>
+                  <dd>{{ quote.first_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LAST NAME</dt>
+                  <dd>{{ quote.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MOBILE NUMBER</dt>
+                  <dd>{{ quote.mobile_no }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMAIL</dt>
+                  <dd>{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">COMPANY NAME</dt>
+                  <dd>{{ customerProfileForm.company_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">TRADE LICENSE NO</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.trade_license_no"
+                      placeholder="TRADE LICENSE NO"
+                      type="text"
+                      class="w-full"
+                    />
+                    <x-button
+                      @click.prevent="searchByTradeLicense"
+                      size="xs"
+                      color="primary"
+                    >
+                      Search
+                    </x-button>
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+                  <dd>
+                    <ComboBox
+                      v-model="customerProfileForm.emirate_of_registration_id"
+                      :single="true"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      :options="emiratesOptions"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">COMPANY ADDRESS</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.company_address"
+                      placeholder="COMPANY ADDRESS"
+                      type="text"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INDUSTRY TYPE</dt>
+                  <dd>
+                    <ComboBox
+                      :single="true"
+                      v-model="customerProfileForm.industry_type_code"
+                      placeholder="SELECT INDUSTRY TYPE"
+                      :options="industryTypeOptions"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ENTITY TYPE</dt>
+                  <dd>
+                    <ComboBox
+                      @update:modelValue="entityTypeChange($event)"
+                      :single="true"
+                      v-model:modelValue="customerProfileForm.entity_type_code"
+                      placeholder="SELECT ENTITY TYPE"
+                      :options="[
+                        { label: 'Parent', value: 'Parent' },
+                        { label: 'Sub Entity', value: 'SubEntity' },
+                      ]"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
+              </dl>
+              <div class="flex justify-end">
                 <x-button
-                  @click.prevent="searchByTradeLicense"
-                  size="xs"
-                  color="primary"
+                  v-if="isProfileUpdateAllow"
+                  class="mt-4"
+                  color="emerald"
+                  size="sm"
+                  :loading="customerProfileForm.processing"
+                  type="submit"
                 >
-                  Search
+                  Update Profile
                 </x-button>
-              </dd>
+              </div>
             </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
-              <dd>
-                <ComboBox
-                  v-model="customerProfileForm.emirate_of_registration_id"
-                  :single="true"
-                  placeholder="SELECT EMIRATES OF REGISTRATION"
-                  :options="emiratesOptions"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">COMPANY ADDRESS</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.company_address"
-                  placeholder="COMPANY ADDRESS"
-                  type="text"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">INDUSTRY TYPE</dt>
-              <dd>
-                <ComboBox
-                  :single="true"
-                  v-model="customerProfileForm.industry_type_code"
-                  placeholder="SELECT INDUSTRY TYPE"
-                  :options="industryTypeOptions"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">ENTITY TYPE</dt>
-              <dd>
-                <ComboBox
-                  @update:modelValue="entityTypeChange($event)"
-                  :single="true"
-                  v-model:modelValue="customerProfileForm.entity_type_code"
-                  placeholder="SELECT ENTITY TYPE"
-                  :options="[
-                    { label: 'Parent', value: 'Parent' },
-                    { label: 'Sub Entity', value: 'SubEntity' },
-                  ]"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-          </dl>
-          <div class="flex justify-end">
-            <x-button
-              v-if="isProfileUpdateAllow"
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="customerProfileForm.processing"
-              type="submit"
-            >
-              Update Profile
-            </x-button>
-          </div>
-        </div>
-      </x-form>
+          </x-form>
+        </template>
+      </Collapsible>
     </div>
+
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
@@ -1797,52 +1929,55 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Member Details
-          <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
-        </h3>
-        <div class="flex flex-wrap gap-3">
-          <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
-            Add Member
-          </x-button>
-        </div>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="travelerTable.columns"
-        :items="travelers || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="travelers.length < 15"
-        show-index
-      >
-        <template #item-index="{ index, code }">
-          <div>{{ code ?? 'Member ' + index }}</div>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Member Details
+              <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+            </h3>
+          </div>
         </template>
-        <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <AddMemberButtonTemplate v-slot="{ isDisabled }">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="onAddTraveler"
+              :disabled="isDisabled"
+            >
+              Add Member
+            </x-button>
+          </AddMemberButtonTemplate>
+          <div class="flex flex-wrap gap-3 mb-3 justify-end">
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.member_details"
+              position="bottom"
+            >
+              <AddMemButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                This lead is now locked as the policy has been booked. If
+                changes are needed such midterm addition of member, go to 'Send
+                Update', select 'Add Update', and choose 'Endorsement Financial'
+              </template>
+            </x-tooltip>
+            <AddMemButtonReuseTemplate v-else />
+          </div>
 
-        <template #item-relation="{ relation }">
-          {{ relation?.text }}
-        </template>
-        <template #item-gender="{ gender }">
-          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
-        </template>
-        <template #item-nationality="{ nationality }">
-          {{ nationality?.text }}
-        </template>
-
-        <template #item-action="item">
-          <div class="flex gap-2">
+          <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
             <x-button
               size="xs"
               color="primary"
               @click.prevent="onEditTraveler(item)"
               outlined
+              :disabled="isDisabled"
             >
               Edit
             </x-button>
+          </EditMemberButtonTemplate>
+
+          <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
             <x-button
               size="xs"
               color="error"
@@ -1851,12 +1986,79 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 confirmModal.show = true;
               "
               outlined
+              :disabled="isDisabled"
             >
               Delete
             </x-button>
-          </div>
+          </DeleteMemberButtonTemplate>
+
+          <DataTable
+            table-class-name="tablefixed compact"
+            :headers="travelerTable.columns"
+            :items="travelers || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="travelers.length < 15"
+            show-index
+          >
+            <template #item-index="{ index, code }">
+              <div>{{ code ?? 'Member ' + index }}</div>
+            </template>
+            <template #item-dob="{ dob }">
+              {{ dateFormat(dob).value }}
+            </template>
+
+            <template #item-relation="{ relation }">
+              {{ relation?.text }}
+            </template>
+            <template #item-gender="{ gender }">
+              {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
+            </template>
+            <template #item-nationality="{ nationality }">
+              {{ nationality?.text }}
+            </template>
+
+            <template #item-action="item">
+              <div class="flex gap-2">
+                <x-tooltip
+                  v-if="lockLeadSectionsDetails.member_details"
+                  position="bottom"
+                >
+                  <EditMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
+                  <template #tooltip>
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </template>
+                </x-tooltip>
+                <EditMemberButtonReuseTemplate v-else :item="item" />
+
+                <x-tooltip
+                  v-if="lockLeadSectionsDetails.member_details"
+                  position="bottom"
+                >
+                  <DeleteMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
+                  <template #tooltip>
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </template>
+                </x-tooltip>
+                <DeleteMemberButtonReuseTemplate v-else :item="item" />
+              </div>
+            </template>
+          </DataTable>
         </template>
-      </DataTable>
+      </Collapsible>
       <x-modal
         v-model="travelerTable.addTraveler"
         size="lg"
@@ -1930,6 +2132,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :nationalities="nationalities"
       :UBORelations="UBORelations"
       :quote_type="page.props.modelType"
+      :expanded="sectionExpanded"
     />
 
     <x-modal v-model="confirmModal.show" show-close backdrop>
@@ -1952,14 +2155,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </template>
     </x-modal>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
+      :expanded="sectionExpanded"
     />
+
     <LastYearPolicyDetail
       v-if="
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
@@ -1969,326 +2174,173 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
       :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
+      :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2">
-          <div class="flex flex-col gap-4">
-            <x-field label="STATUS">
-              <x-select
-                v-model="leadStatusForm.leadStatus"
-                :options="leadStatusOptions"
-                :disabled="
-                  quote.quote_status_id ==
-                  enums.quoteStatusEnum.TransactionApproved
-                "
-                placeholder="Lead Status"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="NOTES">
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                placeholder="Lead Notes"
-                class="w-full"
-                :disabled="
-                  quote.quote_status_id ==
-                  enums.quoteStatusEnum.TransactionApproved
-                "
-              />
-            </x-field>
-          </div>
-        </div>
-        <div class="w-full md:w-2/3">
-          <x-field
-            label="LOST REASON"
-            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
-          >
-            <x-select
-              v-model="leadStatusForm.lostReason"
-              :options="lostReasonsOptions"
-              placeholder="Lost Reason is required"
-              class="w-full"
-              :error="leadStatusForm.errors.lostReason"
-            />
-          </x-field>
-          <x-field label="Transaction Type">
-            <x-input
-              type="text"
-              :value="quote.transaction_type_text"
-              class="w-full"
-              :disabled="true"
-            />
-          </x-field>
-        </div>
-      </div>
-      <div class="flex justify-end">
-        <x-button
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="leadStatusForm.processing"
-          @click.prevent="onLeadStatus"
-          :disabled="
-            quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-          "
-        >
-          Change Status
-        </x-button>
-      </div>
-    </div>
-
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">E-COM Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PRICE</dt>
-            <dd>{{ selectedProviderPlan.premium ?? 'N/A' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">AUTHORISED AT</dt>
-            <dd>{{ ecomDetails.paidAt ?? 'N/A' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PAID AT</dt>
-            <dd>{{ ecomDetails.paidAtPayment ?? 'N/A' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ ecomDetails.paymentStatus ?? 'N/A' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
-          </div>
-        </dl>
-      </div>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <x-form @submit="submitPolicyDetails" :auto-focus="false">
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_number"
-              :disabled="!policyDetails.editMode"
-              label="POLICY NUMBER"
-              :rules="[isRequired, policy_number]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.policy_issuance_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="ISSUANCE DATE"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.policy_start_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="START DATE"
-              :rules="[isRequired, policy_start_date]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.renewal_expiry_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="EXPIRY DATE"
-              :rules="[isRequired, renewal_expiry_date]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.premium"
-              :disabled="!policyDetails.editMode"
-              label="PRICE"
-              :rules="[isRequired, premium]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2"></div>
-        </div>
-
-        <div class="text-right space-x-4 mt-12" v-if="policyDetails.canEdit">
-          <x-button
-            color="#007bff"
-            size="sm"
-            v-show="policyDetails.editMode"
-            @click.prevent="cancelPolicyFrom"
-            >Cancel</x-button
-          >
-          <x-button
-            color="#26B99A"
-            type="submit"
-            size="sm"
-            v-show="policyDetails.editMode"
-            >Update</x-button
-          >
-          <x-button
-            color="#007bff"
-            size="sm"
-            type="submit"
-            v-show="!policyDetails.editMode"
-            @click.prevent="policyDetails.editMode = true"
-            >Edit</x-button
-          >
-        </div>
-      </x-form>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="emailStatusesTableColumns"
-        :items="emailStatuses || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="emailStatuses.length < 15"
-      >
-        <template #item-email_status="item">
-          <span class="text-primary-600 uppercase">{{
-            item.email_status
-          }}</span>
-        </template>
-        <template #item-reason="item">
-          <span class="text-primary-600 uppercase">{{ item.reason }}</span>
-        </template>
-      </DataTable>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Documents
-          <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-        </h3>
-        <div class="flex gap-2">
-            <Link
-                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${quote.insly_id}`"
-                preserve-scroll
-            >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
-            </Link>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
-            Upload Documents
-          </x-button>
-          <x-button
-            size="sm"
-            color="red"
-            v-if="
-              displaySendPolicyButton &&
-              permissions.notProductionApproval &&
-              permissions.isQuoteDocumentEnabled
-            "
-            @click="sendPolicyToClient"
-          >
-            Send Policy
-          </x-button>
-        </div>
-      </div>
-      <DataTable
-        table-class-name="compact"
-        :headers="quoteDocumentsTable.columns"
-        :items="quoteDocuments || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="quoteDocuments.length < 15"
-      >
-        <template #item-original_name="item">
-          <a
-            :href="cdnPath + item.doc_url"
-            target="_blank"
-            class="text-primary-600"
-          >
-            {{ item.original_name }}
-          </a>
-        </template>
-        <template #item-action="{ doc_name }">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
           <div>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="onDocDelete(doc_name)"
-            >
-              Delete
-            </x-button>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           </div>
         </template>
-      </DataTable>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+            <div class="w-full md:w-1/2">
+              <div class="flex flex-col gap-4">
+                <x-field label="STATUS">
+                  <x-select
+                    v-model="leadStatusForm.leadStatus"
+                    :options="leadStatusOptions"
+                    :disabled="
+                      quote.quote_status_id ==
+                        quoteStatusEnum.TransactionApproved ||
+                      lockLeadSectionsDetails.lead_status
+                    "
+                    placeholder="Lead Status"
+                    class="w-full"
+                  />
+                </x-field>
+                <x-field label="NOTES">
+                  <x-textarea
+                    v-model="leadStatusForm.notes"
+                    type="text"
+                    placeholder="Lead Notes"
+                    class="w-full"
+                    :disabled="
+                      quote.quote_status_id ==
+                        quoteStatusEnum.TransactionApproved ||
+                      lockLeadSectionsDetails.lead_status
+                    "
+                  />
+                </x-field>
+              </div>
+            </div>
+            <div class="w-full md:w-2/3">
+              <x-field
+                label="LOST REASON"
+                v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
+              >
+                <x-select
+                  v-model="leadStatusForm.lostReason"
+                  :options="lostReasonsOptions"
+                  placeholder="Lost Reason is required"
+                  class="w-full"
+                  :error="leadStatusForm.errors.lostReason"
+                  :disabled="lockLeadSectionsDetails.lead_status"
+                />
+              </x-field>
+              <x-field label="Transaction Type">
+                <x-input
+                  type="text"
+                  :value="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
+              </x-field>
+            </div>
+          </div>
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="leadStatusForm.processing"
+              @click.prevent="onLeadStatus"
+              :disabled="
+                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                isDisabled
+              "
+            >
+              Change Status
+            </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              position="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
+          </div>
+        </template>
+      </Collapsible>
+    </div>
 
-      <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-        <template #header> Upload Documents </template>
-        <LazyDocumentUploader
-          :members="memberDataDocs(travelers)"
-          :doc-types="documentTypes"
-          :docs="quoteDocuments || []"
-          :cdn="cdnPath"
-        />
-      </x-modal>
-      <x-modal v-model="modals.docConfirm" show-close backdrop>
-        <template #header> Delete Document </template>
-        <p>Are you sure you want to delete this document?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.docConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              @click.prevent="confirmDeleteDoc"
-              :loading="quoteDocumentsTable.isLoading"
-            >
-              Delete
-            </x-button>
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg">
+              E-COM Details
+            </h3>
           </div>
         </template>
-      </x-modal>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRICE</dt>
+                <dd>{{ selectedProviderPlan.premium }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAID AT</dt>
+                <dd>{{ ecomDetails.paidAt }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ ecomDetails.paymentStatus }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+              </div>
+            </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <DataTable
+            table-class-name="tablefixed compact"
+            :headers="emailStatusesTableColumns"
+            :items="emailStatuses || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="emailStatuses.length < 15"
+          >
+            <template #item-email_status="item">
+              <span class="text-primary-600 uppercase">{{
+                item.email_status
+              }}</span>
+            </template>
+            <template #item-reason="item">
+              <span class="text-primary-600 uppercase">{{ item.reason }}</span>
+            </template>
+          </DataTable>
+        </template>
+      </Collapsible>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2303,12 +2355,17 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-              <div>
-                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
-                  age 0-64
-                </h6>
-              </div>
+            <div>
+              <h6
+                v-if="
+                  aboveAgeMembers > 0 && availablePlansTable.data.length > 0
+                "
+                class="font-semibold text-primary-600 text-ms mb-1"
+              >
+                Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                age 0-64
+              </h6>
+            </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2369,8 +2426,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
           <div v-else>
             <DataTable
-                v-model:items-selected="selectedPlans"
-              table-class-name="tablefixed compact"
+              v-model:items-selected="selectedPlans"
+              table-class-name="tablefixed"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
               border-cell
@@ -2397,12 +2454,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
               <template #item-discountPremium="item">
-                <span class="text-primary-600">{{
-                  item.discountPremium + item.vat
-                }}</span>
+                <span class="text-primary-600">
+                  {{ item.discountPremium + item.vat }}
+                </span>
               </template>
               <template #item-action="item">
-                <div>
+                <div class="flex gap-2">
                   <x-button
                     size="xs"
                     color="error"
@@ -2414,7 +2471,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
                   <span>
                     <SelectPlan
-                      class="ml-1"
                       v-if="!selectedPlanIds.includes(item.id)"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
@@ -2428,7 +2484,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                       }"
                     />
                     <x-button
-                      class="ml-1"
                       v-else
                       size="xs"
                       color="orange"
@@ -2451,8 +2506,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </div>
             <div>
               <DataTable
-                  v-model:items-selected="selectedPlans"
-                table-class-name="tablefixed compact"
+                v-model:items-selected="selectedPlans"
+                table-class-name="tablefixed"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
                 border-cell
@@ -2464,16 +2519,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   <span class="text-primary-600 uppercase">{{
                     item.providerName
                   }}</span>
-                    <div class="flex gap-1">
-                        <x-tag
-                            v-if="item.isDisabled"
-                            size="xs"
-                            color="error"
-                            class="mt-0.5 text-[10px]"
-                        >
-                            Hidden
-                        </x-tag>
-                    </div>
+                  <div class="flex gap-1">
+                    <x-tag
+                      v-if="item.isDisabled"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px]"
+                    >
+                      Hidden
+                    </x-tag>
+                  </div>
                 </template>
                 <template #item-name="item">
                   <span class="text-primary-600 uppercase">{{
@@ -2481,12 +2536,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   }}</span>
                 </template>
                 <template #item-discountPremium="item">
-                  <span class="text-primary-600">{{
-                    item.discountPremium + item.vat
-                  }}</span>
+                  <span class="text-primary-600">
+                    {{ item.discountPremium + item.vat }}
+                  </span>
                 </template>
                 <template #item-action="item">
-                  <div>
+                  <div class="flex gap-2">
                     <x-button
                       size="xs"
                       color="error"
@@ -2497,7 +2552,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     </x-button>
                     <span>
                       <SelectPlan
-                        class="ml-1"
                         v-if="!selectedPlanIds.includes(item.id)"
                         @update:selectedPlanChanged="handlePlanSelected"
                         :plan="item"
@@ -2511,7 +2565,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                         }"
                       />
                       <x-button
-                        class="ml-1"
                         v-else
                         size="xs"
                         color="orange"
@@ -2538,22 +2591,34 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       quoteType="Travel"
       :payments="payments"
     />
-
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="enums.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
+      :paymentDocument="paymentDocument"
+      :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+      :bookPolicyDetails="bookPolicyDetails"
+    />
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -2571,60 +2636,110 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :quote="quote"
+      modelType="travel"
+      :expanded="sectionExpanded"
+      :payments="payments"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+    />
+
+    <QuoteDocument
+      :document-types="documentTypes"
+      :quote-documents="page.props.quoteDocuments || []"
+      :storageUrl="storageUrl"
+      :quote="quote"
+      :expanded="sectionExpanded"
+      :docUploadURL="docUploadURL"
+      quoteType="Travel"
+      :sendPolicy="
+        displaySendPolicyButton &&
+        permissions.notProductionApproval &&
+        permissions.isQuoteDocumentEnabled
+      "
+      @sendPolicyToClient="sendPolicyToClient"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="quote"
+      quoteType="travel"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Lead Activities
-          <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-        </h3>
-        <x-button size="sm" color="orange" @click.prevent="addActivity">
-          Add Activity
-        </x-button>
-      </div>
-      <x-divider class="my-4" />
-      <DataTable
-        table-class-name="compact"
-        :headers="activityTable"
-        :items="activities"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="activities.length < 15"
-      >
-        <template #item-status="{ status, id }">
-          <x-checkbox
-            color="emerald"
-            size="xl"
-            :modelValue="status === 1"
-            :disabled="status === 1"
-            @change="onActivityStatusUpdate(id)"
-          />
-        </template>
-        <template #item-action="item">
-          <div class="space-x-4">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              :disabled="item.status === 1"
-              @click.prevent="activityEdit(item)"
-            >
-              Edit
-            </x-button>
-            <x-button
-              size="xs"
-              color="error"
-              :disabled="item.status === 1"
-              outlined
-              @click.prevent="activityDelete(item.id)"
-            >
-              Delete
-            </x-button>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Lead Activities
+              <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+            </h3>
           </div>
         </template>
-      </DataTable>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="my-4 flex justify-end">
+            <x-button size="sm" color="orange" @click.prevent="addActivity">
+              Add Activity
+            </x-button>
+          </div>
+          <x-divider class="my-4" />
+          <DataTable
+            table-class-name="compact"
+            :headers="activityTable"
+            :items="activities"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="activities.length < 15"
+          >
+            <template #item-status="{ status, id }">
+              <x-checkbox
+                color="emerald"
+                size="xl"
+                :modelValue="status === 1"
+                :disabled="status === 1"
+                @change="onActivityStatusUpdate(id)"
+              />
+            </template>
+            <template #item-action="item">
+              <div class="space-x-4">
+                <x-button
+                  size="xs"
+                  color="primary"
+                  outlined
+                  :disabled="item.status === 1"
+                  @click.prevent="activityEdit(item)"
+                >
+                  Edit
+                </x-button>
+                <x-button
+                  size="xs"
+                  color="error"
+                  :disabled="item.status === 1"
+                  outlined
+                  @click.prevent="activityDelete(item.id)"
+                >
+                  Delete
+                </x-button>
+              </div>
+            </template>
+          </DataTable>
+        </template>
+      </Collapsible>
       <x-modal v-model="modals.activity" size="lg" show-close backdrop>
         <template #header>
           {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
@@ -2706,55 +2821,75 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </x-modal>
     </div>
-    <div class="p-4 rounded shadow mb-6 bg-warning"></div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div v-if="historyData === null" class="text-center py-3">
-        <x-button
-          size="sm"
-          color="primary"
-          outlined
-          @click.prevent="onLoadHistoryData"
-          :loading="historyLoading"
-        >
-          Load History Data
-        </x-button>
-      </div>
-      <DataTable
-        v-else
-        table-class-name="compact"
-        :headers="historyDataTable"
-        :items="historyData || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="historyData.length < 15"
-      />
-    </div>
-    <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
+      <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="text-center">
-            SORRY!
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
           </div>
         </template>
-        <p>Please choose quotes from the same age group for a correct comparison.</p>
-        <template #actions>
-          <div class="text-center space-x-4">
+        <template #body>
+          <x-divider class="my-4" />
+          <div v-if="historyData === null" class="text-center py-3">
             <x-button
               size="sm"
-              color="emerald"
-              @click.prevent="modals.mixInquiryConfirm = false"
+              color="primary"
+              outlined
+              @click.prevent="onLoadHistoryData"
+              :loading="historyLoading"
             >
-              Okay, got it!
+              Load History Data
             </x-button>
           </div>
+          <DataTable
+            v-else
+            table-class-name="compact"
+            :headers="historyDataTable"
+            :items="historyData || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="historyData.length < 15"
+          />
         </template>
-      </x-modal>
-    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+      </Collapsible>
+    </div>
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
+
+    <AuditLogs
+      :type="'App\\Models\\TravelQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
+      <template #header>
+        <div class="text-center">SORRY!</div>
+      </template>
+      <p>
+        Please choose quotes from the same age group for a correct comparison.
+      </p>
+      <template #actions>
+        <div class="text-center space-x-4">
+          <x-button
+            size="sm"
+            color="emerald"
+            @click.prevent="modals.mixInquiryConfirm = false"
+          >
+            Okay, got it!
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
   </div>
 </template>
 <style>

@@ -16,6 +16,11 @@ const props = defineProps({
     required: true,
     type: String,
   },
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true,
+  },
 });
 
 const page = usePage();
@@ -181,73 +186,120 @@ const UBODeleteConfirmed = () => {
     },
   );
 };
+
+const [AddUBOButtonTemplate, AddUBOButtonReuseTemplate] = createReusableTemplate();
+const [EditUBOButtonTemplate, EditUBOButtonReuseTemplate] = createReusableTemplate();
+const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        UBO Details
-        <x-tag size="sm">{{
-          (computedUboMembers && computedUboMembers.length) || 0
-        }}</x-tag>
-      </h3>
-      <x-button
-        v-if="
-          page.props.quote?.quote_request_entity_mapping?.entity_id ??
-          page.props.quote.entity_id
-        "
-        @click.prevent="addUBOModal"
-        size="sm"
-        color="orange"
-        :loading="isLoading"
-      >
-        Add UBO
-      </x-button>
-    </div>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            UBO Details
+            <x-tag size="sm">{{ computedUboMembers && computedUboMembers.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
 
-    <DataTable
-      table-class-name="tablefixed compact"
-      :headers="UBODetailsTable.columns"
-      :items="computedUboMembers || []"
-      show-index
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-index="{ index, code }">
-        <div>{{ code ?? 'UBO ' + index }}</div>
-      </template>
-      <template #item-dob="{ dob }">
-        {{ dateFormat(dob) }}
-      </template>
-      <template #item-relation="{ relation }">
-        {{ relation?.text }}
-      </template>
-      <template #item-nationality="{ nationality }">
-        {{ nationality?.text }}
-      </template>
-      <template #item-action="item">
-        <div class="flex gap-2">
+        <AddUBOButtonTemplate v-slot="{ isDisabled }">
+          <x-button
+            v-if="
+              page.props.quote?.quote_request_entity_mapping?.entity_id ??
+              page.props.quote.entity_id
+            "
+            @click.prevent="addUBOModal"
+            size="sm"
+            color="orange"
+            :loading="isLoading"
+            :disabled="isDisabled"
+          >
+            Add UBO
+          </x-button>
+        </AddUBOButtonTemplate>
+
+        <div class="flex mb-3 justify-end">
+          <x-tooltip v-if="page.props.lockLeadSectionsDetails.member_details" position="bottom">
+            <AddUBOButtonReuseTemplate :isDisabled="true"/>
+            <template #tooltip>
+              This lead is now locked as the policy has been booked. If changes are needed such midterm addition of member, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+            </template>
+          </x-tooltip>
+          <AddUBOButtonReuseTemplate v-else />
+        </div>
+
+        <EditUBOButtonTemplate v-slot="{ isDisabled, item }">
           <x-button
             size="xs"
             color="primary"
             outlined
             @click.prevent="onEditUBO(item)"
+            :disabled="isDisabled"
           >
             Edit
           </x-button>
+        </EditUBOButtonTemplate>
+
+        <DeleteUBOButtonTemplate v-slot="{ isDisabled, item }">
           <x-button
             size="xs"
             color="error"
             outlined
             @click.prevent="UBODelete(item.id)"
+            :disabled="isDisabled"
           >
             Delete
           </x-button>
-        </div>
+        </DeleteUBOButtonTemplate>
+
+        <DataTable
+          table-class-name="tablefixed compact"
+          :headers="UBODetailsTable.columns"
+          :items="computedUboMembers || []"
+          show-index
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-index="{ index, code }">
+            <div>{{ code ?? 'UBO ' + index }}</div>
+          </template>
+          <template #item-dob="{ dob }">
+            {{ dateFormat(dob) }}
+          </template>
+          <template #item-relation="{ relation }">
+            {{ relation?.text }}
+          </template>
+          <template #item-nationality="{ nationality }">
+            {{ nationality?.text }}
+          </template>
+          <template #item-action="item">
+            <div class="flex gap-2">
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.member_details" position="bottom">
+                <EditUBOButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                </template>
+              </x-tooltip>
+              <EditUBOButtonReuseTemplate v-else :item="item"/>
+
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.member_details" position="bottom">
+                <DeleteUBOButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                </template>
+              </x-tooltip>
+              <DeleteUBOButtonReuseTemplate v-else :item="item"/>
+            </div>
+          </template>
+        </DataTable>
       </template>
-    </DataTable>
+    </Collapsible>
 
     <x-modal v-model="modals.UBO" size="lg" show-close backdrop>
       <template #header> {{ UBOActionEdit ? 'Edit' : 'Add' }} UBO </template>
