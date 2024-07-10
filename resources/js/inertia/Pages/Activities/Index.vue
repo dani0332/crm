@@ -21,7 +21,7 @@ const rules = {
 };
 const notification = useNotifications('toast');
 
-const formatted = date => useDateFormat(date, 'YYYY-MM-DD HH:mm:ss');
+const formatted = date => useDateFormat(date, 'YYYY-MM-DD');
 
 const activityForm = useForm({
   title: null,
@@ -76,6 +76,7 @@ function filterActivities(isValid) {
       delete filters[key];
     }
   }
+
   router.visit('/activities', {
     method: 'get',
     data: {
@@ -92,6 +93,7 @@ function filterActivities(isValid) {
     },
   });
 }
+
 function resetFilters() {
   router.visit('/activities', {
     method: 'get',
@@ -101,6 +103,7 @@ function resetFilters() {
     onSuccess: () => (loader.table = false),
   });
 }
+
 function setQueryFilters() {
   let query = router.page.url.split('?')[1];
   if (query) {
@@ -111,7 +114,9 @@ function setQueryFilters() {
     });
   }
 }
+
 function resetDates(option) {
+  // filters.isCustom = true;
   const today = new Date();
   let startDate, endDate;
   if (isOverDue.value) {
@@ -158,10 +163,11 @@ function resetDates(option) {
     customStartDate.value = null; // Clear previously selected dates
     customEndDate.value = null;
     filters.isCustom = false;
+    // params.isCustom = false;
   }
   if (option != 'custom') {
-    filters.due_date_time_start = startDate;
-    filters.due_date_time_end = endDate;
+    filters.due_date_time_start = formatted(startDate).value;
+    filters.due_date_time_end = formatted(endDate).value;
     filterActivities(1); // Call the filterActivities function
   }
 }
@@ -169,6 +175,7 @@ function applyCustomDates() {
   if (customStartDate.value && customEndDate.value) {
     filters.due_date_time_start = customStartDate.value;
     filters.due_date_time_end = customEndDate.value;
+    // filters.isCustom = false;
     filterActivities(1); // Call the filterActivities function
   }
 }
@@ -261,9 +268,11 @@ const onSubmit = isValid => {
 
 // Component hooks
 watch(() => filters, { deep: true, immediate: true });
+
 onBeforeMount(() => {
   resetDates('today');
 });
+
 onMounted(() => {
   setQueryFilters();
 });
