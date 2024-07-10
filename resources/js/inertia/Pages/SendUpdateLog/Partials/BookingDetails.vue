@@ -1352,7 +1352,7 @@ const isPriceVatApplicableEditable = computed(() => {
                     add step="any"
                     v-model="bookingDetailsForm.price_vat_applicable"
                     @change="calculateCommission"
-                    class="!mb-0 w-full"
+                    class="!mb-0 w-full icon-padding"
                     :disabled="!state.isEdit"
                     placeholder="Enter Price"
                     :rules="[isRequired]"
@@ -1406,7 +1406,7 @@ const isPriceVatApplicableEditable = computed(() => {
                       add step="any"
                       v-model="bookingDetailsForm.price_vat_not_applicable"
                       @change="calculateCommission"
-                      class="!mb-0 w-full"
+                      class="!mb-0 w-full icon-padding"
                       :disabled="!state.isEdit"
                       placeholder="Enter Price"
                       :rules="[isRequired]"
@@ -1462,7 +1462,7 @@ const isPriceVatApplicableEditable = computed(() => {
                     add step="any"
                     v-model="bookingDetailsForm.commission_vat_applicable"
                     @change="calculateCommission"
-                    class="!mb-0 w-full"
+                    class="!mb-0 w-full icon-padding"
                     :disabled="!state.isEdit"
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
@@ -1719,3 +1719,9 @@ const isPriceVatApplicableEditable = computed(() => {
     </x-modal>
   </div>
 </template>
+
+<style>
+  .icon-padding input {
+    padding-left: 4vh !important;
+  }
+</style>
