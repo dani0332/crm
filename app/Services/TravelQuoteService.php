@@ -29,6 +29,7 @@ use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use App\Models\TravelDestination;
 
 class TravelQuoteService extends BaseService
 {
@@ -110,6 +111,7 @@ class TravelQuoteService extends BaseService
             'tqr.primary_member_id',
             'tqr.risk_score',
             'tqr.kyc_decision',
+            'tqr.is_documents_valid',
             //'tqr.prefill_plan_id',
             DB::raw('IF(EXISTS (
                 SELECT *
@@ -163,6 +165,8 @@ class TravelQuoteService extends BaseService
             'email' => $request->email,
             'mobileNo' => $request->mobile_no,
             'nationalityId' => $request->nationality_id,
+            'destinationIds' => $request->destination_ids ?? [],
+            'tripStarted' => $request->has_arrived_uae == '1' ? 1 : 0 ,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
         ];
@@ -175,11 +179,16 @@ class TravelQuoteService extends BaseService
                     $memberData->primary = true;
                     $travelQuote['dob'] = $memberDob;
                 }
+                else {
+                    $memberData->primary = false;
+                }
                 if (isset($member['id'])) {
                     $memberData->id = $member['id'];
                 }
                 $memberData->dob = $memberDob;
                 $memberData->gender = $member['gender'];
+                $memberData->uaeResident = (bool) (isset($member['uae_resident']) &&  $member['uae_resident'] == '1' )  ? true : false;
+                $memberData->nationalityId  =  $request->nationality_id;
                 array_push($members, $memberData);
             }
             $travelQuote['members'] = $members;
@@ -575,6 +584,7 @@ class TravelQuoteService extends BaseService
             'premium' => 'input|number|title',
             'policy_number' => 'input|text',
             'nationality_id' => 'select|title|required',
+            'destination_id' => 'select'|'title',
             'previous_quote_id' => 'readonly|title',
             'renewal_expiry_date' => 'input|date|title|range',
             'is_renewal' => '|static|Yes,No',
@@ -980,4 +990,7 @@ class TravelQuoteService extends BaseService
         return true;
     }
 
+    public function getTravelDestinations($id){
+        return TravelDestination::where('quote_id', $id)->with('destination:id,code,country_name')->get();
+    }
 }

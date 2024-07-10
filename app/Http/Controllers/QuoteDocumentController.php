@@ -18,6 +18,8 @@ use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Enums\WorkflowTypeEnum;
+use App\Services\SIBService;
 
 class QuoteDocumentController extends Controller
 {
@@ -257,5 +259,23 @@ class QuoteDocumentController extends Controller
         $document->delete();
 
         // return response()->json(['message' => 'Document has been deleted.']);
+    }
+
+    public function validateDocumentsUpdate($quoteType, $quoteUuId, Request $request)
+    {
+
+        $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
+        $quoteModel->is_documents_valid = $request->is_documents_valid;
+        $quoteModel->save();
+        if ($request->is_documents_valid) {
+            $this->stopHapexReminder($quoteModel);
+        }
+        return redirect()->back()->with('message', 'Document validity status update successfully.');
+    }
+
+    public function stopHapexReminder($quote)
+    {
+        SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+        return true;
     }
 }

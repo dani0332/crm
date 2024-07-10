@@ -48,6 +48,10 @@ use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\TravelQuoteEnum;
+use App\Enums\WorkflowTypeEnum;
+use App\Services\CentralService;
+use App\Services\SIBService;
 
 class AMLController extends Controller
 {
@@ -611,7 +615,10 @@ class AMLController extends Controller
             }
             $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
             $quoteDetails->save();
-
+             // this event only working for travel lob
+             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
+                $this->stopHapexReminder($quoteDetails);
+            }
             info('AML Screening Bridger - Potential Matche(s) not Found, Quote Status changed to AML Screening Cleared');
         } else {
             QuoteStatusLog::create([
@@ -625,9 +632,62 @@ class AMLController extends Controller
 
             $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
             $quoteDetails->save();
-
+            if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
+                if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid) {
+                    $this->sendHapexReminder($quoteDetails);
+                }
+            }
             info('AML Screening Bridger - Potential Matche(s) Found, Quote Status changed to AML Screening Failed');
         }
         session()->forget('amlResponseCheck');
+    }
+
+    public function stopHapexReminder($quote)
+    {
+        SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+        return true;
+    }
+
+    public function mapHapexMailPayload($quote)
+    {
+        $directionCode  = $quote['direction_code'] == TravelQuoteEnum::TRAVEL_UAE_INBOUND ?  TravelQuoteEnum::IN_BOUND : TravelQuoteEnum::OUT_BOUND;
+        return [
+            'carQuoteId' => $quote->code,
+            'customerName' => "{$quote->first_name} {$quote->last_name}",
+            'direction_code' => $quote->direction_code,
+            'advisor' => !empty($quote->advisor) ? (object)[
+                'name' => $quote->advisor->name,
+                'email' => $quote->advisor->email,
+                'phone' => $quote->advisor->mobile_no,
+                'directLine' => $quote->advisor->landline_no,
+                'whatsapp' => $quote->advisor->mobile_no,
+            ] : [],
+            'uploadDocsPage' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL') . $quote->uuid . '/thankyou/' . $directionCode,
+        ];
+    }
+
+    public function mapHapexPlans($plans)
+    {
+        return collect($plans)->map(function ($plan) {
+            return [
+                'id' => $plan->id,
+                'planName' => $plan->name,
+                'repairType' => $plan->travelType,
+                'vat' => $plan->vat,
+                'actualPremium' => $plan->actualPremium,
+                'discountPremium' => $plan->discountPremium,
+                'benefits' => collect($plan->benefits->exclusion)->map(function ($benefit) {
+                    return (object) [
+                        'value' => $benefit->text,
+                        'code' => $benefit->code,
+                    ];
+                }),
+            ];
+        });
+    }
+    public function sendHapexReminder($quote)
+    {
+        SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
+        return true;
     }
 }

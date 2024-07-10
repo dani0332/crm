@@ -55,6 +55,7 @@ defineProps({
   isNewPaymentStructure: Boolean,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
+  travelDestinations: Object,
 });
 
 const permissionsEnum = page.props.permissionsEnum;
@@ -269,6 +270,9 @@ const travelerForm = useForm({
   dob: '',
   nationality_id: null,
   relation_code: null,
+  passport:null,
+  uae_resident:null,
+  emirates_id_number:'',
   gender: null,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -285,8 +289,12 @@ const travelerTable = reactive({
   processing: false,
   columns: [
     {
-      text: 'Member Name',
+      text: 'First Name',
       value: 'first_name',
+    },
+    {
+      text: 'Last Name',
+      value: 'last_name',
     },
     {
       text: 'Nationality',
@@ -303,6 +311,18 @@ const travelerTable = reactive({
     {
       text: 'Relation',
       value: 'relation',
+    },
+    {
+      text: 'Emirates ID Number',
+      value: 'emirates_id_number',
+    },
+    {
+      text: 'Passport Number',
+      value: 'passport',
+    },
+    {
+      text: 'UAE Resident',
+      value: 'uae_resident',
     },
     {
       text: 'Action',
@@ -343,6 +363,9 @@ const addTravelMember = isValid => {
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
+      travelerForm.uae_resident = null;
+      travelerForm.passport = null;
+      travelerForm.emirates_id_number = '';
       travelerForm.id = null;
       travelerForm.gender = null;
       travelerForm.reset();
@@ -356,6 +379,9 @@ const onAddTraveler = () => {
   travelerForm.dob = '';
   travelerForm.nationality_id = '';
   travelerForm.relation_code = '';
+  travelerForm.uae_resident = null;
+  travelerForm.passport = null;
+  travelerForm.emirates_id_number = '';
   travelerForm.id = null;
   travelerTable.addTraveler = true;
   travelerForm.gender = null;
@@ -371,6 +397,9 @@ const onEditTraveler = traveler => {
   travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
   travelerForm.nationality_id = traveler.nationality_id;
+  travelerForm.uae_resident = traveler.uae_resident;
+  travelerForm.emirates_id_number = traveler.emirates_id_number;
+  travelerForm.passport = traveler.passport;
   travelerTable.addTraveler = true;
 };
 
@@ -1193,6 +1222,59 @@ const genderList = [
 ];
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+const getupdateDocumentValidate = (event) => {
+    console.log("getupdateDocumentValidate");
+    updateDocumentValidate.show = event;
+    page.props.quote.is_documents_valid = event;
+}
+
+const updateDocumentValidate = reactive({
+  show: false,
+  title: 'Update',
+  message: 'Are all documents correct?',
+  processing:false,
+  onConfirm: () => {
+    updateDocumentValidate.show = false;
+  },
+});
+
+const documentValidate = async (val) =>  {
+  updateDocumentValidate.processing = true;
+  if( page.props.quoteDocuments?.length < 1){
+    notification.info({
+          title: 'Please upload the documents file first',
+          position: 'top',
+        });
+    updateDocumentValidate.processing = false;
+    updateDocumentValidate.show = false;
+    return false;
+  }
+  let data ={"is_documents_valid": val};
+  await axios.post(`/quotes/travel/${page.props.quote.uuid}/update-validate-documents`,data).then((res)=>{
+    if (res.status == 200) {
+      notification.success({
+          title: 'Document validity status update successfully.',
+          position: 'top',
+        });
+     }
+     else {
+      notification.error({
+          title: 'Documents validity status updated failed',
+          position: 'top',
+        });
+     }
+    updateDocumentValidate.processing = false;
+    updateDocumentValidate.show = false;
+  }).catch((err)=>{
+    notification.error({
+          title: 'Documents validity status updated failed',
+          position: 'top',
+    });
+    updateDocumentValidate.processing = false;
+    updateDocumentValidate.show = false;
+  })
+}
 </script>
 
 <template>
@@ -1470,6 +1552,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </dt>
             <dt class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRAVEL DESTINATION(S)
+            </dt>
+            <dt class="font-medium">
+                <span v-for="(item, index) in travelDestinations" :key="item.id">
+                    {{ item?.destination?.country_name }}<span v-if="index < travelDestinations?.length - 1">, </span>
+                  </span>
+            </dt>
+          </div>
 
           <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
             <template v-if="quoteRequest.child">
@@ -1605,6 +1696,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </div>
 
             <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
+
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UAE resident</dt>
+                <dd>{{ customerProfileForm.uae_resident ?? 'N/A' }}</dd>
+            </div>
           </dl>
           <dl
             v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
@@ -1832,6 +1928,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
         </template>
+        <template #item-uae_resident="{ uae_resident }">
+            {{ uae_resident === 1 ? 'Yes' : uae_resident === 0 ? 'No' : '' }}
+        </template>
 
         <template #item-action="item">
           <div class="flex gap-2">
@@ -1894,6 +1993,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               :options="memberRelationOptions"
               placeholder="Select Relation"
               class="w-full"
+            />
+            <x-input
+            v-model="travelerForm.emirates_id_number"
+            label="Emirates ID Number"
+            placeholder="Emirates ID Number"
+            />
+            <x-input
+                v-model="travelerForm.passport"
+                label="Passport Number"
+                placeholder="Passport Number"
             />
             <x-field label="Gender*">
               <x-select
@@ -2208,6 +2317,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     View Legacy policy
                 </x-button>
             </Link>
+            <x-tooltip position="top">
+                <x-button @click.prevent="getupdateDocumentValidate(true)"  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering,rolesEnum.TravelHapex]) " size="sm" color="green">
+                  Verify Documents
+                </x-button>
+                  <template #tooltip>
+                      Verify Documents: Clicking this button confirms that all submitted documents are accurate and valid.</template>
+              </x-tooltip>
           <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
             Upload Documents
           </x-button>
@@ -2259,6 +2375,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
+
         <LazyDocumentUploader
           :members="memberDataDocs(travelers)"
           :doc-types="documentTypes"
@@ -2625,6 +2742,29 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
         </template>
       </DataTable>
+      <x-modal v-model="updateDocumentValidate.show" show-close backdrop>
+        <template #header> Are all documents correct?  </template>
+        <p>Note: By clicking 'Yes,' you confirm that all submitted documents are accurate and valid. Failure to verify will be considered a breach of the Code of Conduct (COC).</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="updateDocumentValidate.show = false"
+            >
+              No
+            </x-button>
+            <x-button
+              size="sm"
+              color="green"
+              @click.prevent="documentValidate(quote.is_documents_valid)"
+              :loading="updateDocumentValidate.processing"
+            >
+              Yes
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
       <x-modal v-model="modals.activity" size="lg" show-close backdrop>
         <template #header>
           {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
