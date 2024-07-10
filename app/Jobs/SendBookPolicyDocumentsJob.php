@@ -45,10 +45,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $modelType = ! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
+        $handBookDocuments = [];
 
         try {
+            if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
+                $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
+            }
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
-            $quoteDocuments = $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
+            $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
         } catch (Exception $ex) {
             error('SendBookPolicyDocumentsJobError '.$ex->getMessage());
             $docs = [];
@@ -83,6 +87,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->currentInsurer = $quote->insuranceProvider->text ?? '';
             }
             $emailData->emailTemplateId = $templateId;
+            $emailData->handBookDocuments = $handBookDocuments;
             info('SendBookPolicyDocumentsJobEmailData '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('SendBookPolicyDocumentsJobResponse '.json_encode($response));

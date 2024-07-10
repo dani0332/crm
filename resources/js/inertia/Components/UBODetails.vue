@@ -186,6 +186,11 @@ const UBODeleteConfirmed = () => {
     },
   );
 };
+
+const [AddUBOButtonTemplate, AddUBOButtonReuseTemplate] = createReusableTemplate();
+const [EditUBOButtonTemplate, EditUBOButtonReuseTemplate] = createReusableTemplate();
+const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTemplate();
+
 </script>
 
 <template>
@@ -201,7 +206,8 @@ const UBODeleteConfirmed = () => {
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <div class="flex mb-3 justify-end">
+
+        <AddUBOButtonTemplate v-slot="{ isDisabled }">
           <x-button
             v-if="
               page.props.quote?.quote_request_entity_mapping?.entity_id ??
@@ -211,10 +217,46 @@ const UBODeleteConfirmed = () => {
             size="sm"
             color="orange"
             :loading="isLoading"
+            :disabled="isDisabled"
           >
             Add UBO
           </x-button>
+        </AddUBOButtonTemplate>
+
+        <div class="flex mb-3 justify-end">
+          <x-tooltip v-if="page.props.lockLeadSectionsDetails.member_details" position="bottom">
+            <AddUBOButtonReuseTemplate :isDisabled="true"/>
+            <template #tooltip>
+              This lead is now locked as the policy has been booked. If changes are needed such midterm addition of member, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+            </template>
+          </x-tooltip>
+          <AddUBOButtonReuseTemplate v-else />
         </div>
+
+        <EditUBOButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="primary"
+            outlined
+            @click.prevent="onEditUBO(item)"
+            :disabled="isDisabled"
+          >
+            Edit
+          </x-button>
+        </EditUBOButtonTemplate>
+
+        <DeleteUBOButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="error"
+            outlined
+            @click.prevent="UBODelete(item.id)"
+            :disabled="isDisabled"
+          >
+            Delete
+          </x-button>
+        </DeleteUBOButtonTemplate>
+
         <DataTable
           table-class-name="tablefixed compact"
           :headers="UBODetailsTable.columns"
@@ -238,22 +280,21 @@ const UBODeleteConfirmed = () => {
           </template>
           <template #item-action="item">
             <div class="flex gap-2">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="onEditUBO(item)"
-              >
-                Edit
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="UBODelete(item.id)"
-              >
-                Delete
-              </x-button>
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.member_details" position="bottom">
+                <EditUBOButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                </template>
+              </x-tooltip>
+              <EditUBOButtonReuseTemplate v-else :item="item"/>
+
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.member_details" position="bottom">
+                <DeleteUBOButtonReuseTemplate :isDisabled="true" :item="item"/>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to 'Send Update', select 'Add Update', and choose 'Endorsement Financial'
+                </template>
+              </x-tooltip>
+              <DeleteUBOButtonReuseTemplate v-else :item="item"/>
             </div>
           </template>
         </DataTable>

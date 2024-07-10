@@ -7,7 +7,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
@@ -486,12 +485,6 @@ class SendUpdateLogService
             }
         }
 
-        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        $sendUpdatePayments = SendUpdateLogRepository::sendUpdateBookedPayments($quoteTypeId, $quoteUuid);
-        if (! empty($sendUpdatePayments)) {
-            $payments = $payments->merge($sendUpdatePayments);
-        }
-
         return $payments;
     }
 
@@ -503,7 +496,7 @@ class SendUpdateLogService
 
         return (object) [
             'send_update_log' => $sendUpdateLog,
-            'payment' => collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first(),
+            'payment' => collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first() ?? [],
         ];
     }
 
