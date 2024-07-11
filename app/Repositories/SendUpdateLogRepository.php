@@ -259,8 +259,8 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSaveBookingDetails($request)
     {
         try {
-            $res = $this->find($request['id']);
-            $isNegative = app(SendUpdateLogService::class)->isNegativeValue($res);
+            $result = $this->find($request['id']);
+            $isNegative = app(SendUpdateLogService::class)->isNegativeValue($result);
 
             $data = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
@@ -287,7 +287,7 @@ class SendUpdateLogRepository extends BaseRepository
             if ($request['send_update_type'] == SendUpdateLogStatusEnum::CPD) {
                 $data = array_merge($data, ['reversal_invoice' => $request['reversal_invoice']]);
             }
-            $res = $res->update($data);
+            $result = $result->update($data);
 
             $payment = Payment::where('send_update_log_id', $request['id'])->firstOrFail();
             if ($payment) {
@@ -309,13 +309,13 @@ class SendUpdateLogRepository extends BaseRepository
                 $payment->save();
             }
         } catch (\Exception $ex) {
-            $res = (object) [
+            $result = (object) [
                 'message' => $ex->getMessage(),
             ];
             info($ex->getMessage());
         }
 
-        return $res;
+        return $result;
     }
 
     public function fetchEndorsementsByPersonalQuoteId($personalQuoteId)
