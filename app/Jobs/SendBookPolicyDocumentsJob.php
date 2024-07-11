@@ -94,7 +94,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->currentInsurer = $quote->insuranceProvider->text;
                 $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
             }
-            
+
             $emailData->emailTemplateId = $templateId;
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
