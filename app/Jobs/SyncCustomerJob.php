@@ -59,25 +59,38 @@ class SyncCustomerJob implements ShouldQueue
         $modelClasses = $this->getQuoteModels();
         foreach ($modelClasses as $modelClass) {
             try {
-                $entries = $modelClass::where('email', $this->email)->where('customer_id', '!=', $this->newCustomerId)->get();
-                $auditsToCreate = [];
-                if (! empty($entries) && $entries->count()) {
-                    foreach ($entries as $entry) {
-                        $auditsToCreate[] = [
-                            'event' => 'updated',
-                            'auditable_type' => $modelClass,
-                            'auditable_id' => $entry->id,
-                            'old_values' => json_encode(['customer_id' => $entry->customer_id]),
-                            'new_values' => json_encode(['customer_id' => $this->newCustomerId]),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-                    }
 
-                    $modelClass::where('email', $this->email)->where('customer_id', '!=', $this->newCustomerId)->update(['customer_id' => $this->newCustomerId]);
-                    Audit::insert($auditsToCreate);
-                    info('SyncCustomerJob - Updated '.count($entries).' entries in '.$modelClass.' for '.$this->email.' - new customer id - '.$this->newCustomerId);
-                }
+                $modelClass::where('email', $this->email)
+                    ->chunk(1000, function ($entries) use ($modelClass) {
+                        $auditsToCreate = [];
+                        $entriesToSkip = [];
+
+                        foreach ($entries as $entry) {
+                            if ($entry->customer_id == $this->newCustomerId) {
+                                $entriesToSkip[] = $entry->id;
+                                continue;
+                            }
+
+                            $auditsToCreate[] = [
+                                'event' => 'updated',
+                                'auditable_type' => $modelClass,
+                                'auditable_id' => $entry->id,
+                                'old_values' => json_encode(['customer_id' => $entry->customer_id]),
+                                'new_values' => json_encode(['customer_id' => $this->newCustomerId]),
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+                        }
+
+                        // update quote classes
+                        $entryIds = $entries->pluck('id')->diff($entriesToSkip)->toArray();
+                        $modelClass::whereIn('id', $entryIds)->update(['customer_id' => $this->newCustomerId]);
+
+                        // insert audits
+                        Audit::insert($auditsToCreate);
+
+                        info('SyncCustomerJob - Updated ' . count($entryIds) . ' entries in ' . $modelClass . ' for ' . $this->email . ' - new customer id - ' . $this->newCustomerId);
+                    });
 
             } catch (Exception $e) {
                 $error = 'SyncCustomerJob Error syncing entry: '.$this->newCustomerId.' - '.$this->email.' - '.$modelClass.' - '.$e->getMessage();
