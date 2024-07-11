@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SendPolicyTypeEnum;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
@@ -256,7 +257,7 @@ class CentralController extends Controller
 
         info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
 
-        if ($request->send_policy_type == 'customer') {
+        if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             dispatch(new SendBookPolicyDocumentsJob($request));
 
             $quote->update([
@@ -267,7 +268,7 @@ class CentralController extends Controller
 
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
-        if ($request->send_policy_type == 'sage') {
+        if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
