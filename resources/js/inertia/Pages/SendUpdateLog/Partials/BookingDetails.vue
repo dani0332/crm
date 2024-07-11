@@ -833,11 +833,14 @@ const showSageAPILogs = async () => {
 const fetchSageAPILogs = async () => {
   NProgress.start();
   sageAPILogs.loader = true;
-  const response = await axios.get(route('sage.api.logs', [props.quote.id]), {
-    params: {
-      modelClass: props.modelClass,
+  const response = await axios.get(
+    route('sage.api.logs', [props.sendUpdateLog.id]),
+    {
+      params: {
+        modelClass: props.modelClass,
+      },
     },
-  });
+  );
   sageAPILogs.loader = false;
   NProgress.done();
   if (response.data?.success) {
