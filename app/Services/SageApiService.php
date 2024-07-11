@@ -1567,9 +1567,9 @@ class SageApiService
                     $postedResponse['response'] = $resp;
                 }
 
-                $postedResponse['endPoint'] = $resp['url'];
+                $postedResponse['endPoint'] = $resp['url'] ?? $postedResponse['endPoint'] ?? null;
                 $postedResponse['payload'] = $aPInvoicePaymentsSchedule;
-                if (! $resp['status']) {
+                if (! $postedResponse['response']['status']) {
                     Log::error('SAGE API: '.$quote->uuid.' : Patch Request failed');
                     $this->logSageApiCall($postedResponse, $postedResponse, $quote, 7, 15, 'fail');
                     $returnMessage['status'] = false;
