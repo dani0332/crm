@@ -720,9 +720,11 @@ class SendEmailCustomerService extends BaseService
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
+        info('fn: sendBookPolicyDocumentsEmail called');
+
         $isEmailSent = 0;
         try {
-            info('sendBookPolicyDocumentsEmail  , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
+            info('sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
 
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
@@ -742,6 +744,8 @@ class SendEmailCustomerService extends BaseService
                 $attachments = array_merge($attachments, $emailData->handBookDocuments);
             }
 
+            info('Attachments: '.json_encode($attachments));
+
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
@@ -760,6 +764,7 @@ class SendEmailCustomerService extends BaseService
                     'currentInsurer' => $emailData->currentInsurer,
                     'renewalDueDate' => $emailData->renewalDueDate,
                     'policyNumber' => $emailData->policy_number,
+                    'roadsideAssistance' => $emailData->roadsideAssistance,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
@@ -808,11 +813,14 @@ class SendEmailCustomerService extends BaseService
             $isEmailSent = 1;
             info('sendBookPolicyDocumentsEmail ---- Request Sent '.$emailData->code);
             info('sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+
+            info('Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
         } catch (Exception $ex) {
             $response = '';
             $responseCode = $ex->getCode();
             $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
-            Log::error($responseDetail);
+            error($responseDetail);
+            info('Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);

@@ -51,13 +51,17 @@ class TransactionReportService extends ManagementReport
                 DB::raw('p.commission_vat_applicable as commission_vat_applicable'),
                 DB::raw('p.commission_vat as commission_vat'),
                 DB::raw('p.commission_vat_not_applicable as commission_vat_not_applicable'),
-                DB::raw('p.premium_captured as collected_amount'),
-                'p.captured_at as payment_date',
+                DB::raw('p.captured_amount as collected_amount'),
+                DB::raw('(SELECT pss.verified_at
+                FROM payment_splits pss
+                WHERE pss.code = p.code
+                and pss.sr_no = 1
+                LIMIT 1) as payment_date'),
                 DB::raw('FORMAT(((
                     IFNULL( personal_quotes.price_vat_applicable , 0 ) +
                     IFNULL( personal_quotes.price_vat_not_applicable , 0 ) +
                     IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )) -
-                    IFNULL( p.premium_captured, 0),2) as pending_balance'),
+                    IFNULL( p.captured_amount, 0),2) as pending_balance'),
                 DB::raw('UPPER(p.collection_type) as collects'),
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
