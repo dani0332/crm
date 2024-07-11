@@ -23,6 +23,7 @@ use App\Models\SendUpdateLog;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\TravelQuote;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\TravelQuoteService;
 use App\Services\CustomerService;
 use App\Repositories\EmbeddedProductRepository;
@@ -571,11 +572,25 @@ class SplitPaymentService
     // function to process the split payment approve
     public function processSplitPaymentApprove($modelType, $quoteId, $splitPaymentId, $amountCollected)
     {
+        $paymentSplit = PaymentSplits::find($splitPaymentId);            
+        if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
+            //create sage reciept
+            if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
+                $sageResponse = $this->createSageRecipt($request, $paymentSplit, $splitAmount);
+                if ($sageResponse['status'] == 'success') {
+                    $paymentSplit->sage_reciept_id = $sageResponse['response'];
+                } else {
+                    $sageMessage = $sageResponse['response'];
+                    vAbort($sageMessage);
+                }
+            }
+            //Marshal Service to capture split payment
+            $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
+            //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
+        }
+
         DB::beginTransaction();
-        try {
-            dd($splitPaymentId);
-            $paymentSplit = PaymentSplits::find($splitPaymentId);
-            dd($paymentSplit);
+        try {            
             if (empty($paymentSplit->verified_at)) {
                 $paymentSplit->verified_at = now();
                 $paymentSplit->verified_by = Auth::user()->id;
@@ -608,31 +623,36 @@ class SplitPaymentService
     }
 
     // function to process the master payment approve
-    public function processMasterPaymentApprove($modelType, $quoteId, $firstPayment, $sendUpdateId)
+    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId)
     {
         $canCaptureEp = false;
         // On failure, the capture button will render again and the user can try again
         DB::beginTransaction();
-        try {
-            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+        try {            
+            if ($sendUpdateId>0) {
+                $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
+            } else {
+                $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            }
+            $masterPayment = $quoteModel->payments()->where('code', $quoteModel->code)->first();
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-            $masterPaymentStatus = $firstPayment->payment_status_id;
+            $masterPaymentStatus = $masterPayment->payment_status_id;
             $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::CAPTURED,
-            ])->where('code', $firstPayment->code)->count();
+            ])->where('code', $masterPayment->code)->count();
 
             $totalPartialPaidPayments = PaymentSplits::whereIn('payment_status_id', [
                 PaymentStatusEnum::PARTIAL_CAPTURED,
                 PaymentStatusEnum::PARTIALLY_PAID,
-            ])->where('code', $firstPayment->code)->count();
+            ])->where('code', $masterPayment->code)->count();
 
-            if ($totalPaidPayments == $firstPayment->total_payments) {
+            if ($totalPaidPayments == $masterPayment->total_payments) {
                 $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
             } elseif ($totalPartialPaidPayments > 0) {
                 $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
             }
-            $firstPayment->update([
+            $masterPayment->update([
                 'is_approved' => 1,
                 'payment_status_id' => $masterPaymentStatus,
                 'updated_by' => Auth::user()->id,
@@ -665,7 +685,7 @@ class SplitPaymentService
                 }
             }
             if (! $sendUpdateId) {
-                $this->updateLeadStatus($firstPayment); //update lead status
+                $this->updateLeadStatus($masterPayment); //update lead status
             }
             DB::commit();
         } catch (Exception $exception) {

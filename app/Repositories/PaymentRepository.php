@@ -381,21 +381,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     
                     dd($paymentSplit);
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
-                        if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
-                            //create sage reciept
-                            if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
-                                $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $paymentSplit, $splitAmount);
-                                if ($sageResponse['status'] == 'success') {
-                                    $paymentSplit->sage_reciept_id = $sageResponse['response'];
-                                } else {
-                                    $sageMessage = $sageResponse['response'];
-                                    vAbort($sageMessage);
-                                }
-                            }
-                            //Marshal Service to capture split payment
-                            $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
-                            //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
-                        }
+                        
                         dd( $paymentSplit);
                         // process split payment approve
                         app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType,$request->quote_id, $paymentSplit->id, $splitAmount);
@@ -406,7 +392,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             
             // process master payment approve
-            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType,$request->quote_id, $firstPayment, $request->send_update_id);
+            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType,$request->quote_id, $request->send_update_id);
             
         }
 
