@@ -38,14 +38,14 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             }
 
             if ($row['deal_type_of_insurance'] === QuoteTypes::HOME->value) {
-                $classInstance = HomeQuote::where($searchCriteria)->first();
+                $lead = HomeQuote::where($searchCriteria)->first();
             } else {
-                $classInstance = PersonalQuote::where($searchCriteria)->first();
+                $lead = PersonalQuote::where($searchCriteria)->first();
             }
 
-            if ($classInstance) {
-                $classInstance->update($data);
-                $this->syncQuote($classInstance, $data);
+            if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
+                $lead->update($data);
+                $this->syncQuote($lead, $data);
                 info('----------- Importing Personal/Home Qoute Lead  -----------' . $row['deal_cdb_id'] . ' ' . $row['deal_policy_number']);
             }
         }
