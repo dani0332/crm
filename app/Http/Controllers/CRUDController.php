@@ -656,6 +656,8 @@ class CRUDController extends Controller
         }
 
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+
         $puaTypeEnum = PuaEnum::asArray();
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
@@ -757,7 +759,9 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'policyIssuanceStatus', 'bookPolicyDetails', 'isAmlClearedForPayment', 'clientInquiryLogs', 'linkedQuoteDetails', 'puaTypeEnum', 'paymentDocument',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
+                'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'isAmlClearedForPayment', 'lockLeadSectionsDetails', 'policyIssuanceStatus', 'paymentDocument',
+                'puaTypeEnum',
             ]));
         }
 
@@ -887,6 +891,7 @@ class CRUDController extends Controller
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
+                'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
                 'paymentDocument' => $paymentDocument,
             ]);
         }
@@ -967,6 +972,7 @@ class CRUDController extends Controller
 
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
+                'emailStatuses' => $emailStatuses,
                 'quote' => $record,
                 'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
@@ -1038,6 +1044,7 @@ class CRUDController extends Controller
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
+                'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
                 'clientInquiryLogs' => $clientInquiryLogs,
                 'paymentDocument' => $paymentDocument,
             ]);

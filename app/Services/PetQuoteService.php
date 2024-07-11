@@ -178,7 +178,7 @@ class PetQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
                 $this->query->where('pqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
@@ -194,7 +194,7 @@ class PetQuoteService extends BaseService
 
             if (Auth::user()->isSpecificTeamAdvisor('Pet')) {
                 // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('pqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+                $this->query->where('pqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
             }
             if (isset($request->code) && $request->code != '') {
                 $this->query->where('pqr.code', $request->code);
@@ -212,7 +212,10 @@ class PetQuoteService extends BaseService
                 $this->query->where('pqr.mobile_no', $request->mobile_no);
             }
             if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-                $this->query->where('pqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+                $this->query->where(function ($query) use ($request) {
+                    $query->where('pqr.policy_number', $request->previous_quote_policy_number)
+                        ->orWhere('pqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+                });
             }
             if (isset($request->renewal_batch) && $request->renewal_batch != '') {
                 $this->query->where('pqr.renewal_batch', $request->renewal_batch);

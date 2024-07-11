@@ -440,6 +440,7 @@ onMounted(() => {
           v-model="filters.created_at_start"
           label="Created Date Start"
           :rules="
+            filters.previous_quote_policy_number ||
             filters.code ||
             filters.email ||
             filters.renewal_batch ||
@@ -452,6 +453,7 @@ onMounted(() => {
           v-model="filters.created_at_end"
           label="Created Date End"
           :rules="
+            filters.previous_quote_policy_number ||
             filters.code ||
             filters.email ||
             filters.renewal_batch ||
@@ -565,9 +567,9 @@ onMounted(() => {
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <ComboBox
           v-if="!hasRole(rolesEnum.CarAdvisor)"
@@ -692,7 +694,9 @@ onMounted(() => {
             "
             size="sm"
             color="emerald"
-            :href="`/car/leads-details-with-email/${genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE}?${objToUrl(filters)}`"
+            :href="`/car/leads-details-with-email/${
+              genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
+            }?${objToUrl(filters)}`"
             class="justify-self-start mr-3"
           >
             Extract leads detail with email/mobile_no
@@ -717,7 +721,9 @@ onMounted(() => {
             v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
             size="sm"
             color="emerald"
-            :href="`/car/export-makes-model/${genericRequestEnum.EXPORT_MAKES_MODELS}?${objToUrl(filters)}`"
+            :href="`/car/export-makes-model/${
+              genericRequestEnum.EXPORT_MAKES_MODELS
+            }?${objToUrl(filters)}`"
             class="justify-self-start mr-3"
           >
             Extract makes models trims

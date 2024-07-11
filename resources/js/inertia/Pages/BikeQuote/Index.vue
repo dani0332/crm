@@ -105,7 +105,7 @@ const tableHeader = [
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'PRICE', value: 'premium' },
-  { text: 'POLICY NO', value: 'policy_no' },
+  { text: 'POLICY NO', value: 'policy_number' },
   { text: 'SOURCE', value: 'source' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
@@ -298,9 +298,9 @@ watch(
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
