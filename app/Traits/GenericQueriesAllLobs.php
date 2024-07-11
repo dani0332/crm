@@ -487,8 +487,7 @@ trait GenericQueriesAllLobs
         $hasBasicPolicyDetails = ! empty($quote->policy_number) &&
                                 ! empty($quote->policy_issuance_date) &&
                                 ! empty($quote->policy_start_date) &&
-                                ! empty($quote->renewal_expiry_date) &&
-                                $quote->price_with_vat > 0;
+                                ! empty($quote->renewal_expiry_date);
 
         if (! $hasBasicPolicyDetails) {
             return false;
