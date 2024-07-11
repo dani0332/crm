@@ -13,6 +13,7 @@ use App\Models\ClaimHistory;
 use App\Models\CurrencyType;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
+use App\Models\HealthPlanType;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\InsuranceProvider;
@@ -321,6 +322,9 @@ class DropdownSourceService extends BaseService
 
                 }
                 // =========== end =================
+                break;
+            case 'plan_type_id':
+                $data = HealthPlanType::where('is_active', 1)->select('id', 'text')->orderBy('id')->get();
                 break;
             default:
                 break;

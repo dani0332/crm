@@ -153,21 +153,9 @@ class HomeQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return HomeQuoteRequestDetail::create([
-            'home_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return HomeQuoteRequestDetail::firstOrCreate(
+            ['home_quote_request_id' => $id],
+        );
     }
 
     public function saveHomeQuote(Request $request)
@@ -268,7 +256,10 @@ class HomeQuoteService extends BaseService
             $this->query->where('hqr.policy_number', $request->policy_number);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where(function ($query) use ($request) {
+                $query->where('hqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $this->query->where('hqr.renewal_batch', $request->renewal_batch);
@@ -283,7 +274,7 @@ class HomeQuoteService extends BaseService
         }
         if (Auth::user()->isSpecificTeamAdvisor('Home')) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
 
         // quote_status filter
@@ -390,15 +381,13 @@ class HomeQuoteService extends BaseService
 
     public function updateChildRecord($id)
     {
-        $childRecord = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        HomeQuoteRequestDetail::updateOrCreate(
+            ['home_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)

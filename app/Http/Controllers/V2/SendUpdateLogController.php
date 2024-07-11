@@ -189,11 +189,14 @@ class SendUpdateLogController extends Controller
 
         if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
             $paymentEntityModel->load(['plan']);
+        } else {
+            $paymentEntityModel->load(['insuranceProvider']);
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
         if ($quoteTypeId == QuoteTypeId::Business) {
-            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
+            $businessQuoteType = $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical) ? QuoteTypeId::GroupMedical : QuoteTypeId::Corpline;
+            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($businessQuoteType);
         } else {
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         }

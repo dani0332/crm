@@ -256,4 +256,9 @@ class CustomerService extends BaseService
             }
         }
     }
+
+    public function getCustomerCampaignFollowups($id)
+    {
+        return Customer::select('id', 'email', 'campaign_followups', 'last_followup_sent_at')->where('id', $id)->first();
+    }
 }
