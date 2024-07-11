@@ -249,7 +249,7 @@ const regionName = (ids) => {
         return matchingOption ? matchingOption.text : null;
     });
     for (let i = 0; i < matchedValues.length; i++) {
-        if (matchedValues[i] === 'United States of America' || matchedValues[i] === 'Canada') {
+        if (matchedValues[i] === 'United States of America' || matchedValues[i] === 'Canada' || matchedValues[i] === 'United States') {
             updateRegionCover(2);
             return 'Worldwide (incl. US/Canada)';
         } else if (schengenCountries.includes(matchedValues[i])) {
