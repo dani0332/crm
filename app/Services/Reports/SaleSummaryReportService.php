@@ -2,17 +2,17 @@
 
 namespace App\Services\Reports;
 
-use Carbon\Carbon;
+use App\Enums\EndorsementStatusEnum;
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
 use App\Models\Lookup;
-use Illuminate\Http\Request;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
-use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\DB;
-use App\Enums\EndorsementStatusEnum;
 use App\Strategies\ManagementReport;
-use App\Enums\ManagementReportTypeEnum;
-use App\Enums\ManagementReportCategoriesEnum;
+use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SaleSummaryReportService extends ManagementReport
 {
@@ -174,12 +174,12 @@ class SaleSummaryReportService extends ManagementReport
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->selectRaw(
-                "COUNT(DISTINCT(send_update_logs.uuid)) as total_endorsements,
+                'COUNT(DISTINCT(send_update_logs.uuid)) as total_endorsements,
                 IFNULL( ( SUM(send_update_logs.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
                 IFNULL( ( SUM(send_update_logs.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
                 IFNULL( ( SUM(send_update_logs.total_vat_amount) / COUNT(DISTINCT(user_team.team_id)) ), 0) -
                 IFNULL( ( SUM(send_update_logs.discount) / COUNT(DISTINCT(user_team.team_id)) ), 0) as total_endorsement_amount
-            "
+            '
             )
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
@@ -191,6 +191,7 @@ class SaleSummaryReportService extends ManagementReport
                 if ($utmGroupBy) {
                     array_push($groupByArray, $utmGroupBy);
                 }
+
                 return $endorsementsQuery->groupBy($groupByArray);
             });
 
@@ -234,6 +235,7 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         $endorsementsQuery = $this->applyFilters($endorsementsQuery, $request, true);
+
         return $endorsementsQuery->get();
     }
 
