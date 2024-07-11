@@ -153,8 +153,10 @@ const bpForm = useForm({
   transaction_payment_status_tool_tip:
     page.props.bookPolicyDetails.paymentStatusTooltip,
   line_of_business: page.props?.bookPolicyDetails?.lineOfBusiness,
-  isPolicyCancelledOrPending: page.props?.bookPolicyDetails?.isPolicyCancelledOrPending,
-  isPolicyCancelledOrPendingToolTtip: page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip
+  isPolicyCancelledOrPending:
+    page.props?.bookPolicyDetails?.isPolicyCancelledOrPending,
+  isPolicyCancelledOrPendingToolTtip:
+    page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
 });
 
 let is_lacking_payment = ref(
@@ -398,16 +400,17 @@ const showInsufficientPaymentAlert = () => {
   }
 };
 
-const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusableTemplate();
+const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] =
+  createReusableTemplate();
 
 const isShowingTransactionPaymentStatus = computed(() => {
-    const policyStatuses = [
-        page.props.quoteStatusEnum.PolicyBooked,
-        page.props.quoteStatusEnum.CancellationPending,
-        page.props.quoteStatusEnum.PolicyCancelled,
-        page.props.quoteStatusEnum.PolicyCancelledReissued
-    ];
-    return policyStatuses.includes(props.quote.quote_status_id);
+  const policyStatuses = [
+    page.props.quoteStatusEnum.PolicyBooked,
+    page.props.quoteStatusEnum.CancellationPending,
+    page.props.quoteStatusEnum.PolicyCancelled,
+    page.props.quoteStatusEnum.PolicyCancelledReissued,
+  ];
+  return policyStatuses.includes(props.quote.quote_status_id);
 });
 
 const sageAPILogs = reactive({
@@ -424,6 +427,9 @@ const sageAPILogs = reactive({
   ],
 });
 provide('sageAPILogs', sageAPILogs);
+const showSageAPILogsButtonAndComponent = computed(() => {
+  return can(permissionsEnum.VIEW_SAGE_API_LOGS) && sageAPILogs.data.length > 0;
+});
 const showSageAPILogs = async () => {
   try {
     let sageLogs = await fetchSageAPILogs();
@@ -544,9 +550,7 @@ onBeforeMount(() => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <template
-                  v-if="isShowingTransactionPaymentStatus"
-                >
+                <template v-if="isShowingTransactionPaymentStatus">
                   <x-tooltip position="center">
                     <dd class="border-b border-dotted border-black">
                       {{ bpForm.transaction_payment_status }}
@@ -796,17 +800,20 @@ onBeforeMount(() => {
 
             <EditBookPolicyBtnTemplate v-slot="{ isDisabled }">
               <x-button
-                  class="mt-4 mr-2"
-                  color="emerald"
-                  size="sm"
-                  @click.prevent="bp.isEditing = true"
-                  :disabled="isDisabled"
-                >
-                  Edit
-                </x-button>
+                class="mt-4 mr-2"
+                color="emerald"
+                size="sm"
+                @click.prevent="bp.isEditing = true"
+                :disabled="isDisabled"
+              >
+                Edit
+              </x-button>
             </EditBookPolicyBtnTemplate>
 
-            <div v-if="bpForm.isPolicyCancelledOrPending" class="flex justify-end">
+            <div
+              v-if="bpForm.isPolicyCancelledOrPending"
+              class="flex justify-end"
+            >
               <x-tooltip>
                 <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
                   Edit
@@ -815,14 +822,16 @@ onBeforeMount(() => {
                   Send and Book Policy
                 </x-button>
                 <template #tooltip>
-                  <span class="custom-tooltip-content">{{bpForm.isPolicyCancelledOrPendingToolTtip}}</span>
+                  <span class="custom-tooltip-content">{{
+                    bpForm.isPolicyCancelledOrPendingToolTtip
+                  }}</span>
                 </template>
               </x-tooltip>
             </div>
 
             <div v-if="showActionButtons" class="flex justify-end">
               <x-button
-                v-if="can(permissionsEnum.VIEW_SAGE_API_LOGS)"
+                v-if="showSageAPILogsButtonAndComponent"
                 @click="showSageAPILogs"
                 size="sm"
                 class="mt-4 mr-2"
@@ -857,15 +866,33 @@ onBeforeMount(() => {
                 >
                   Update
                 </x-button>
-                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
-                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="true"/>
+                <x-tooltip
+                  v-if="page.props.lockLeadSectionsDetails.lead_details"
+                  position="bottom"
+                >
+                  <EditBookPolicyBtnResuseTemplate
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
+                    :isDisabled="true"
+                  />
                   <template #tooltip>
-                    This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed, go to 'Send Update', select 'Add
+                    Update', and choose 'Correction of Policy'
                   </template>
                 </x-tooltip>
 
                 <template v-else>
-                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)"/>
+                  <EditBookPolicyBtnResuseTemplate
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
+                  />
                 </template>
                 <x-tooltip>
                   <x-button
@@ -980,15 +1007,34 @@ onBeforeMount(() => {
                     Update
                   </x-button>
 
-                  <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
-                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="true"/>
+                  <x-tooltip
+                    v-if="page.props.lockLeadSectionsDetails.lead_details"
+                    position="bottom"
+                  >
+                    <EditBookPolicyBtnResuseTemplate
+                      v-if="
+                        !bp.isEditing &&
+                        props.bookPolicyDetails?.editButton &&
+                        can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                      "
+                      :isDisabled="true"
+                    />
                     <template #tooltip>
-                      This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
+                      This lead is now locked as the policy has been booked. If
+                      changes are needed, go to 'Send Update', select 'Add
+                      Update', and choose 'Correction of Policy'
                     </template>
                   </x-tooltip>
 
                   <template v-else>
-                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="!props.bookPolicyDetails?.editButton"/>
+                    <EditBookPolicyBtnResuseTemplate
+                      v-if="
+                        !bp.isEditing &&
+                        props.bookPolicyDetails?.editButton &&
+                        can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                      "
+                      :isDisabled="!props.bookPolicyDetails?.editButton"
+                    />
                   </template>
 
                   <template
@@ -1058,7 +1104,7 @@ onBeforeMount(() => {
       </template>
     </Collapsible>
     <SageAPILogs
-      v-if="can(permissionsEnum.VIEW_SAGE_API_LOGS)"
+      v-if="showSageAPILogsButtonAndComponent"
       :show-modal="showSageAPILogsModal"
       :quote="props.quote"
       :sage-api-logs="sageAPILogs"

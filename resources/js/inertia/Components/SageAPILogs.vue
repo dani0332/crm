@@ -3,10 +3,6 @@ const page = usePage();
 
 const showModal = inject('showSageAPILogsModal');
 const sageAPILogs = inject('sageAPILogs');
-console.clear();
-console.log('Show API Logs Component');
-console.log(showModal);
-console.log(sageAPILogs.table);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 </script>
 

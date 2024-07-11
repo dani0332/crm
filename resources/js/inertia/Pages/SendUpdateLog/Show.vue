@@ -40,6 +40,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const modelClass = 'App\\Models\\SendUpdateLog';
 
 const { isRequired } = useRules();
 
@@ -127,10 +128,11 @@ const onCancel = () => {
   sendUpdateForm.option_id = props.sendUpdateLog?.option_id || null;
   sendUpdateForm.car_addons = props.sendUpdateLog?.car_addons || null;
   sendUpdateForm.emirates_id = props.sendUpdateLog?.emirates_id || null;
-  sendUpdateForm.seating_capacity = props.sendUpdateLog?.seating_capacity || null;
+  sendUpdateForm.seating_capacity =
+    props.sendUpdateLog?.seating_capacity || null;
 };
 
-const onUpdateLog = (isValid) => {
+const onUpdateLog = isValid => {
   if (!isValid) return;
   sendUpdateForm.patch(
     route('send-update.update', { id: props.sendUpdateLog.id }),
@@ -192,7 +194,7 @@ const additionalFieldOptions = computed(() => {
   }
 });
 
-const onKeyPress = (event) => {
+const onKeyPress = event => {
   if (event.key === 'e' || event.key === 'E') {
     event.preventDefault();
   }
@@ -207,127 +209,129 @@ const onKeyPress = (event) => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <x-form @submit="onUpdateLog">
         <div class="flex gap-2 w-100 flex-grow justify-between">
-        <h3 class="text-lg font-semibold text-primary-800 capitalize">
-          {{ sendUpdateLog.category.text }}
-        </h3>
-        <Link :href="state.redirectURL">
-          <x-button color="primary" size="sm" class="mr-5"
-            >Go back to lead</x-button
-          >
-        </Link>
-      </div>
-      <x-divider class="my-4" />
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt>
-              <x-tooltip position="left">
-                <label
-                  class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                >
-                  SU ref ID
-                </label>
-                <template #tooltip>
-                  A unique reference identifier assigned to each "Send Update"
-                  request, allowing for easy tracking and reference.
-                </template>
-              </x-tooltip>
-            </dt>
-            <dd>{{ sendUpdateLog.code }}</dd>
-          </div>
-          <div class="grid md:grid-cols-2 gap-y-4">
-            <dt>Notes</dt>
-            <dd>
-              <x-input
-                v-model="sendUpdateForm.notes"
-                size="xs"
-                :disabled="!state.edit"
-              />
-            </dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <template
-              v-if="
-                props.sendUpdateLog.category.code !== props.sendUpdateStatusEnum.EN &&
-                props.sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPU
-              "
+          <h3 class="text-lg font-semibold text-primary-800 capitalize">
+            {{ sendUpdateLog.category.text }}
+          </h3>
+          <Link :href="state.redirectURL">
+            <x-button color="primary" size="sm" class="mr-5"
+              >Go back to lead</x-button
             >
+          </Link>
+        </div>
+        <x-divider class="my-4" />
+        <div class="text-sm">
+          <dl class="grid md:grid-cols-2 gap-y-4">
+            <div class="grid sm:grid-cols-2">
               <dt>
                 <x-tooltip position="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Transaction Type
+                    SU ref ID
                   </label>
                   <template #tooltip>
-                    Refers to category of the financial transaction associated
-                    with the policy. It helps classify the specific type of
-                    transaction being recorded or processed within the system.
+                    A unique reference identifier assigned to each "Send Update"
+                    request, allowing for easy tracking and reference.
                   </template>
                 </x-tooltip>
               </dt>
-              <dd>{{ transactionType || page.props.parentText || '' }}</dd>
-            </template>
-          </div>
-          <div class="grid md:grid-cols-2 gap-y-4">
-            <dt>
-              <x-tooltip position="left">
-                <label
-                  class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                >
-                  Status
-                </label>
-                <template #tooltip>
-                  The current status of the ""Send Update"" request, indicating
-                  whether it is pending, transaction approved, or declined,
-                  among other possible states.
-                </template>
-              </x-tooltip>
-            </dt>
-            <dd>{{ sendUpdateLog.status }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <template
-              v-if="
-                sendUpdateLog.category.code !==
-                  props.sendUpdateStatusEnum.CI &&
-                sendUpdateLog.category.code !==
-                  props.sendUpdateStatusEnum.CIR &&
-                sendUpdateLog.category.code !==
-                  props.sendUpdateStatusEnum.CPU &&
-                sendUpdateLog.category.code !==
-                  props.sendUpdateStatusEnum.CPD
-                "
-            >
-              <dt>
-                <x-tooltip position="left">
-                  <label
-                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                  >
-                    Sub Type
-                  </label>
-                  <template #tooltip>
-                    A further classification of the "Send Update" request,
-                    providing additional context or details.
-                  </template>
-                </x-tooltip>
-              </dt>
+              <dd>{{ sendUpdateLog.code }}</dd>
+            </div>
+            <div class="grid md:grid-cols-2 gap-y-4">
+              <dt>Notes</dt>
               <dd>
-                <x-select
+                <x-input
+                  v-model="sendUpdateForm.notes"
                   size="xs"
                   :disabled="!state.edit"
-                  v-model="sendUpdateForm.option_id"
-                  :options="updateLogOptions"
                 />
               </dd>
-            </template>
-            <template
-              v-else-if="
-                sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPU &&
-                sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPD
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <template
+                v-if="
+                  props.sendUpdateLog.category.code !==
+                    props.sendUpdateStatusEnum.EN &&
+                  props.sendUpdateLog.category.code !==
+                    props.sendUpdateStatusEnum.CPU
                 "
-            >
-              <!-- <dt class="font-bold text-right mr-10">Reason</dt>
+              >
+                <dt>
+                  <x-tooltip position="left">
+                    <label
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      Transaction Type
+                    </label>
+                    <template #tooltip>
+                      Refers to category of the financial transaction associated
+                      with the policy. It helps classify the specific type of
+                      transaction being recorded or processed within the system.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ transactionType || page.props.parentText || '' }}</dd>
+              </template>
+            </div>
+            <div class="grid md:grid-cols-2 gap-y-4">
+              <dt>
+                <x-tooltip position="left">
+                  <label
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Status
+                  </label>
+                  <template #tooltip>
+                    The current status of the ""Send Update"" request,
+                    indicating whether it is pending, transaction approved, or
+                    declined, among other possible states.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>{{ sendUpdateLog.status }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <template
+                v-if="
+                  sendUpdateLog.category.code !==
+                    props.sendUpdateStatusEnum.CI &&
+                  sendUpdateLog.category.code !==
+                    props.sendUpdateStatusEnum.CIR &&
+                  sendUpdateLog.category.code !==
+                    props.sendUpdateStatusEnum.CPU &&
+                  sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPD
+                "
+              >
+                <dt>
+                  <x-tooltip position="left">
+                    <label
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      Sub Type
+                    </label>
+                    <template #tooltip>
+                      A further classification of the "Send Update" request,
+                      providing additional context or details.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <x-select
+                    size="xs"
+                    :disabled="!state.edit"
+                    v-model="sendUpdateForm.option_id"
+                    :options="updateLogOptions"
+                  />
+                </dd>
+              </template>
+              <template
+                v-else-if="
+                  sendUpdateLog.category.code !==
+                    props.sendUpdateStatusEnum.CPU &&
+                  sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPD
+                "
+              >
+                <!-- <dt class="font-bold text-right mr-10">Reason</dt>
               <dd>
                 <x-select
                   size="xs"
@@ -336,53 +340,78 @@ const onKeyPress = (event) => {
                   :options="changeReasonOptions"
                 />
               </dd> -->
-            </template>
-          </div>
-          <div class="grid sm:grid-cols-2" v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car">
-              <template v-if="props.additionalField && sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.AOCOV">
+              </template>
+            </div>
+            <div
+              class="grid sm:grid-cols-2"
+              v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car"
+            >
+              <template
+                v-if="
+                  props.additionalField &&
+                  sendUpdateLog?.option?.code ===
+                    props.sendUpdateStatusEnum.AOCOV
+                "
+              >
                 <dt>
                   <label
-                      class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
                   >
                     ADDONS
                   </label>
                 </dt>
                 <dd>
                   <x-select
-                      :rules="[isRequired]"
-                      v-model="sendUpdateForm.car_addons"
-                      placeholder="Select Addons"
-                      :options="additionalFieldOptions"
-                      size="xs"
-                      :disabled="!state.edit"
-                      :class="{ 'pointer-events-none': !state.edit }"
-                      multiple
-                    />
+                    :rules="[isRequired]"
+                    v-model="sendUpdateForm.car_addons"
+                    placeholder="Select Addons"
+                    :options="additionalFieldOptions"
+                    size="xs"
+                    :disabled="!state.edit"
+                    :class="{ 'pointer-events-none': !state.edit }"
+                    multiple
+                  />
                 </dd>
               </template>
-              <template v-else-if="props.additionalField && (sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.COE || sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.COE_NFI)">
+              <template
+                v-else-if="
+                  props.additionalField &&
+                  (sendUpdateLog?.option?.code ===
+                    props.sendUpdateStatusEnum.COE ||
+                    sendUpdateLog?.option?.code ===
+                      props.sendUpdateStatusEnum.COE_NFI)
+                "
+              >
                 <dt>
                   <label
-                      class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
                   >
                     EMIRATE OF REGISTRATION
                   </label>
                 </dt>
                 <dd>
                   <x-select
-                      :rules="[isRequired]"
-                      v-model="sendUpdateForm.emirates_id"
-                      placeholder="Select Emirate of Registration"
-                      :options="additionalFieldOptions"
-                      size="xs"
-                      :disabled="!state.edit"
-                    />
+                    :rules="[isRequired]"
+                    v-model="sendUpdateForm.emirates_id"
+                    placeholder="Select Emirate of Registration"
+                    :options="additionalFieldOptions"
+                    size="xs"
+                    :disabled="!state.edit"
+                  />
                 </dd>
               </template>
-              <template v-else-if="props.additionalField && (sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.CISC || sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.CISC_NFI)">
+              <template
+                v-else-if="
+                  props.additionalField &&
+                  (sendUpdateLog?.option?.code ===
+                    props.sendUpdateStatusEnum.CISC ||
+                    sendUpdateLog?.option?.code ===
+                      props.sendUpdateStatusEnum.CISC_NFI)
+                "
+              >
                 <dt>
                   <label
-                      class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
                   >
                     SEATING CAPACITY
                   </label>
@@ -401,30 +430,31 @@ const onKeyPress = (event) => {
               </template>
             </div>
           </dl>
-      </div>
-      <div class="flex justify-end">
-        <x-button size="sm" @click="onEdit" v-if="!state.edit"> Edit </x-button>
-        <template v-else>
-          <x-button
-            size="sm"
-            color="orange"
-            @click="onCancel"
-            class="mr-3"
-            :loading="sendUpdateForm.processing"
-            :disabled="sendUpdateForm.processing"
-          >
-            Cancel
+        </div>
+        <div class="flex justify-end">
+          <x-button size="sm" @click="onEdit" v-if="!state.edit">
+            Edit
           </x-button>
-          <x-button
-            size="sm"
-            color="primary"
-            type="submit"
+          <template v-else>
+            <x-button
+              size="sm"
+              color="orange"
+              @click="onCancel"
+              class="mr-3"
               :loading="sendUpdateForm.processing"
               :disabled="sendUpdateForm.processing"
-              >
-              Update
-            </x-button
             >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="primary"
+              type="submit"
+              :loading="sendUpdateForm.processing"
+              :disabled="sendUpdateForm.processing"
+            >
+              Update
+            </x-button>
           </template>
         </div>
       </x-form>
@@ -507,10 +537,11 @@ const onKeyPress = (event) => {
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"
       :payments="props.payments"
+      :modelClass="modelClass"
     />
 
     <AuditLogs
-      :type="'App\\Models\\SendUpdateLog'"
+      :type="modelClass"
       :id="$page.props.sendUpdateLog.id"
       :expanded="true"
     />
