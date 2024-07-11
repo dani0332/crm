@@ -62,6 +62,7 @@ const quoteForm = useForm({
   uuid: editMode.value ? props.quote?.uuid : null,
   mobile_no: props.quote?.mobile_no || null,
   nationality_id: props.quote?.nationality_id || null,
+  destination_ids: props.quote?.destination_ids ?? [],
   start_date: props.quote?.start_date || null,
   end_date: props.quote?.end_date || null,
   region_cover_for_id: props.quote?.region_cover_for_id?.toString() || null,
