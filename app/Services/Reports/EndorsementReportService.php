@@ -43,7 +43,6 @@ class EndorsementReportService extends ManagementReport
                 EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION_AND_REISSUANCE])
             ->pluck('id')->toArray();
 
-
         $query = SendUpdateLog::query()
             ->select(
                 'send_update_logs.policy_number',
