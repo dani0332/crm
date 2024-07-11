@@ -151,7 +151,7 @@ const bookingDetailsForm = useForm({
   booking_date: props.bookingDetails?.booking_date || props.sendUpdateLog?.booking_date,
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
-  transaction_payment_status: props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value,
+  transaction_payment_status: props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value || '',
   invoice_date: props.sendUpdateLog?.invoice_date || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
   insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || '',
   discount: isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || '0.00',
@@ -366,7 +366,7 @@ function reverseValue(value) {
 }
 
 function updateReversalEntries(payment, sendUpdateLog) {
-  reversalEntry.transaction_payment_status = payment?.transaction_payment_status || '';
+  reversalEntry.transaction_payment_status = payment?.transaction_payment_status || sendUpdateLog?.transaction_payment_status || '';
   reversalEntry.booking_date = payment?.policy_booking_date || sendUpdateLog?.booking_date || '';
   reversalEntry.invoice_date = payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = (payment?.insurer_tax_number) ? (payment.insurer_tax_number + '-REV') : (sendUpdateLog.insurer_tax_invoice_number + '-REV');
@@ -395,7 +395,7 @@ onMounted(() => {
 
 const onUpdateReversal = () => {
   state.reversalSectionEdit = !state.reversalSectionEdit;
-  bookingDetailsForm.transaction_payment_status = null;
+  bookingDetailsForm.transaction_payment_status = reversalEntry.transaction_payment_status || null;
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
   bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
