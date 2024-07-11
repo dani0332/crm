@@ -12,6 +12,7 @@ use App\Services\SendEmailCustomerService;
 use App\Repositories\DocumentTypeRepository;
 use function Laravel\Prompts\error;
 
+// This class is designed for testing and developing the functionality of sending and booking policy emails.
 class SendBookPolicyDocumentsJobLocal extends BaseService
 {
     use GenericQueriesAllLobs;
