@@ -60,7 +60,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CentralController extends Controller
 {
@@ -221,7 +220,7 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
-        Log::info('fn: updateBookingPolicy called');
+        info('fn: updateBookingPolicy called');
 
         $validatedData = $bookPolicyRequest->validated();
 
@@ -245,7 +244,7 @@ class CentralController extends Controller
         $payment->update($paymentInformation);
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
         $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
-        Log::info('Book policy details update successfully for : '.$quote->uuid);
+        info('Book policy details update successfully for : '.$quote->uuid);
 
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
@@ -255,7 +254,7 @@ class CentralController extends Controller
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        Log::info('fn: sendBookingPolicy called for '.$quote->code.' policy type '.$request->send_policy_type);
+        info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == 'customer') {
             dispatch(new SendBookPolicyDocumentsJob($request));
@@ -264,7 +263,7 @@ class CentralController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
             ]);
 
-            Log::info('Policy send to customer for '.$quote->code);
+            info('Policy send to customer for '.$quote->uuid);
 
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
@@ -304,7 +303,7 @@ class CentralController extends Controller
 
             $this->updatePaymentAllocationStatus($quote);
 
-            Log::info('Payment allocation && Transaction payment status update & policy send to customer for '.$quote->code);
+            info('Payment allocation && Transaction payment status update & policy send to customer for '.$quote->uuid);
 
             return response()->json(['message' => $response['message']], 200);
         }

@@ -22,7 +22,6 @@ use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
 
 trait GenericQueriesAllLobs
 {
@@ -223,7 +222,7 @@ trait GenericQueriesAllLobs
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
-        Log::info('fn: bookPolicyPayload called for '.$record->code);
+        info('fn: bookPolicyPayload called for '.$record->uuid);
         $infoMessage = 'QC '.$record->code.' ';
         $insuranceProviderLeadCount = $insuranceProviderCode = $sendUpdateInvoiceDescription = $sendUpdateBrokerInvoice = '';
         // Retrieve the first payment belongs to lead not to send update
@@ -301,8 +300,8 @@ trait GenericQueriesAllLobs
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
-        Log::info($infoMessage);
-        Log::info('Book Policy Details: ', $bookPolicyDetails);
+        info($infoMessage);
+        info('Book Policy Details: ', $bookPolicyDetails);
 
         return $bookPolicyDetails;
     }
@@ -332,14 +331,14 @@ trait GenericQueriesAllLobs
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        Log::info('fn: updateQuoteStatus called for : '.$quote->uuid);
+        info('fn: updateQuoteStatus called for : '.$quote->uuid);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-            Log::info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
+            info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
                 $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
-                Log::info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
+                info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
                 if ($isAllRequiredDocumentAreUploaded) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
@@ -347,7 +346,7 @@ trait GenericQueriesAllLobs
                         'policy_issuance_status_other' => '',
                     ]);
                 }
-                Log::info('update Quote Status complete for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
+                info('update Quote Status complete for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
             }
         }
     }
@@ -423,7 +422,7 @@ trait GenericQueriesAllLobs
      */
     public function updatePriceAndDiscount($quoteModel): bool
     {
-        Log::info('fn: updatePriceAndDiscount called for : '.$quoteModel->uuid);
+        info('fn: updatePriceAndDiscount called for : '.$quoteModel->uuid);
 
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         $priceWithVat = $quoteModel->price_with_vat;
@@ -453,7 +452,7 @@ trait GenericQueriesAllLobs
     private function updateTotalAmount($payment)
     {
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-            Log::info('Updating TA for PC: '.$payment->code);
+            info('Updating TA for PC: '.$payment->code);
             $captureAmount = $payment->captured_amount;
             $totalPrice = $payment->total_price;
             $discountValue = $payment->discount_value;
@@ -462,7 +461,7 @@ trait GenericQueriesAllLobs
             } else {
                 $totalAmount = $totalPrice - $discountValue;
             }
-            Log::info('updateTotalAmount totalAmount: '.$totalAmount);
+            info('updateTotalAmount totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
             $payment->save();
         }
@@ -477,7 +476,7 @@ trait GenericQueriesAllLobs
      */
     private function isFilledPolicyDetails($type, $quote)
     {
-        Log::info('Logging filled policy details for '.$quote->code, [
+        info('Logging filled policy details for '.$quote->code, [
             'policy_number' => $quote->policy_number,
             'policy_issuance_date' => $quote->policy_issuance_date,
             'policy_start_date' => $quote->policy_start_date,
@@ -535,7 +534,7 @@ trait GenericQueriesAllLobs
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
-            Log::info('Checking Lacking Payment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
+            info('Checking Lacking Payment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
 
             return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
@@ -653,7 +652,7 @@ trait GenericQueriesAllLobs
             }
         }
 
-        Log::info($infoMessage);
+        info($infoMessage);
 
         return $difference;
     }
@@ -741,12 +740,12 @@ trait GenericQueriesAllLobs
      */
     private function updateChildPaymentStatus($payment)
     {
-        Log::info('Updating child payment status for: '.$payment->code);
+        info('Updating child payment status for: '.$payment->code);
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {
                 if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-                    Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
+                    info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     $paymentSplit->payment_amount = $payment->total_amount;
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {

@@ -1681,7 +1681,7 @@ class CRUDController extends Controller
 
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
-        Log::info('fn: updateQuotePolicy called');
+        info('fn: updateQuotePolicy called');
 
         $request = (object) $policyDetailRequest->validated();
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);

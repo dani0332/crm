@@ -720,7 +720,7 @@ class SendEmailCustomerService extends BaseService
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
-        Log::info('fn: sendBookPolicyDocumentsEmail called');
+        info('fn: sendBookPolicyDocumentsEmail called');
 
         $isEmailSent = 0;
         try {
@@ -762,13 +762,13 @@ class SendEmailCustomerService extends BaseService
                     'clientFullName' => $emailData->clientFullName,
                     'carQuoteId' => $emailData->code,
                     'currentInsurer' => $emailData->currentInsurer,
-                    'enewalDueDate' => $emailData->renewalDueDate,
+                    'renewalDueDate' => $emailData->renewalDueDate,
                     'policyNumber' => $emailData->policy_number,
                     'roadsideAssistance' => $emailData->roadsideAssistance,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
-                        'obileNo' => $emailData->advisorMobileNo,
+                        'mobileNo' => $emailData->advisorMobileNo,
                     ],
                 ],
                 'tags' => [
@@ -819,7 +819,7 @@ class SendEmailCustomerService extends BaseService
             $response = '';
             $responseCode = $ex->getCode();
             $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
-            Log::error($responseDetail);
+            error($responseDetail);
             info('Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
         }
 
