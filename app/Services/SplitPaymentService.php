@@ -26,6 +26,7 @@ use App\Models\TravelQuote;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\TravelQuoteService;
 use App\Services\CustomerService;
+use App\Services\CRUDService;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -34,6 +35,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+
 use PDF;
 
 class SplitPaymentService
@@ -570,13 +573,24 @@ class SplitPaymentService
     }
 
     // function to process the split payment approve
-    public function processSplitPaymentApprove($modelType, $quoteId, $splitPaymentId, $amountCollected)
+    public function processSplitPaymentApprove($modelType, $quoteId, $splitPaymentId, $amountCollected, $isFromJob=false)
     {
         $paymentSplit = PaymentSplits::find($splitPaymentId);            
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             //create sage reciept
+            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
             if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
-                $sageResponse = $this->createSageRecipt($request, $paymentSplit, $splitAmount);
+                $quoteModel = $this->getQuoteObject($modelType, $quoteId);                
+                
+                // Create an empty Request object
+                $request = Request::createFromGlobals();
+                $request->merge( [
+                    'modelType' => $modelType,
+                    'quote_id' => $quoteId,
+                    'customer_id' => $quoteModel->customer_id,
+                ]);
+
+                $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
                 if ($sageResponse['status'] == 'success') {
                     $paymentSplit->sage_reciept_id = $sageResponse['response'];
                 } else {
@@ -585,7 +599,8 @@ class SplitPaymentService
                 }
             }
             //Marshal Service to capture split payment
-            $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
             //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
         }
 
@@ -600,7 +615,7 @@ class SplitPaymentService
             $parentPayment = $paymentSplit->payment;
             /* Create payment receipt for broker */
             if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
-                ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::CreditApproval]) &&
+                ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard,PaymentMethodsEnum::CreditApproval]) &&
                 in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])
             ) {
                 $this->createReceipt($modelType, $quoteId, $paymentSplit);
@@ -623,7 +638,7 @@ class SplitPaymentService
     }
 
     // function to process the master payment approve
-    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId)
+    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob=false)
     {
         $canCaptureEp = false;
         // On failure, the capture button will render again and the user can try again
@@ -674,8 +689,6 @@ class SplitPaymentService
                     $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
                     info('Transaction Approved responseExtend: '.$responseExtend);
                 }*/
-                //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
-                // dispatch(new MAWelcomeJob($parentQuoteModel->first_name, $parentQuoteModel->last_name, $parentQuoteModel->email, $parentQuoteModel->mobile_no, 'IMCRM', ''));
 
                 //Create duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $sendUpdateId) {

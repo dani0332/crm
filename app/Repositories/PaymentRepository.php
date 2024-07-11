@@ -390,27 +390,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->save();
             $successMessage = 'Transaction declined';
         } else {
-            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
+            
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
             if ($request->is_capture) { //update collected amount in childs
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
-                    
-                    dd($paymentSplit);
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
-                        
-                        dd( $paymentSplit);
                         // process split payment approve
                         app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType,$request->quote_id, $paymentSplit->id, $splitAmount);
-                        
-                        
                     }
                 }
-            }
-            
+            }            
             // process master payment approve
-            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType,$request->quote_id, $request->send_update_id);
-            
+            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType,$request->quote_id, $request->send_update_id);            
         }
 
         return $successMessage;
