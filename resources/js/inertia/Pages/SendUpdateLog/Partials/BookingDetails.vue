@@ -342,7 +342,13 @@ const selectedInvoice = () => {
       updateReversalEntries(payment, sendUpdateLog);
     })
     .catch(error => {
-      // handle the error
+      const flash_messages = error.response.data.errors;
+      Object.keys(flash_messages).forEach(function (key) {
+        notification.error({
+          title: flash_messages[key],
+          position: 'top',
+        });
+      });
     })
     .finally(() => {
       loader.selectInvoice = false;

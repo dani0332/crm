@@ -13,6 +13,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReversalEntriesRequest;
 use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerValidationRequest;
@@ -335,14 +336,14 @@ class SendUpdateLogController extends Controller
 
     public function saveBookingDetails(SaveBookingDetailsRequest $request)
     {
-        SendUpdateLogRepository::saveBookingDetails($request);
+        SendUpdateLogRepository::saveBookingDetails($request->validated());
 
         return redirect()->back();
     }
 
-    public function getReversalEntries(Request $request)
+    public function getReversalEntries(ReversalEntriesRequest $request)
     {
-        $reversalEntries = app(SendUpdateLogService::class)->getReversalEntries($request->input());
+        $reversalEntries = app(SendUpdateLogService::class)->getReversalEntries($request->validated());
 
         return response()->json($reversalEntries);
     }
