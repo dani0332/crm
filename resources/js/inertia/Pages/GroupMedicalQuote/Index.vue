@@ -289,11 +289,11 @@ onMounted(() => {
           />
         </x-field>
         <x-field label="Lead Status">
-            <ComboBox
-                v-model="filters.leadStatus"
-                placeholder="Search by Lead Status"
-                :options="leadStatusOptions"
-            />
+          <ComboBox
+            v-model="filters.leadStatus"
+            placeholder="Search by Lead Status"
+            :options="leadStatusOptions"
+          />
         </x-field>
         <x-field label="Advisor">
           <ComboBox
@@ -308,9 +308,9 @@ onMounted(() => {
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
 
         <x-input

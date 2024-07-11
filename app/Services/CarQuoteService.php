@@ -210,8 +210,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-            //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
-            //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
+        //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
+        //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
@@ -921,7 +921,8 @@ class CarQuoteService extends BaseService
             && empty($request->email)
             && empty($request->code)
             && empty($request->renewal_batch)
-            && empty($request->quote_batch_id)
+            && empty($request->quote_batch_id) &&
+            ! isset($request->previous_quote_policy_number)
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
@@ -937,15 +938,23 @@ class CarQuoteService extends BaseService
             $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
             $freshLoad = ! isset($request->page);
             $startDate = isset($request->transaction_approved_dates) ?
-                Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+            Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
             $endDate = isset($request->transaction_approved_dates) ?
-                Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+            Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
             $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
         }
         if (! empty($request->teams) && is_array($request->teams)) {
             $this->query->whereIn('team.id', $request->teams);
+        }
+
+        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+
+            $this->query->where(function ($query) use ($request) {
+                $query->where('cqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('cqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
 
         foreach ($searchProperties as $item) {
