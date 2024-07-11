@@ -23,7 +23,6 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             $data = [
                 'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
-                'premium' => str_replace(' AED', '', $row['deal_value']),
                 'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
             ];
 
@@ -47,28 +46,14 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             if ($classInstance) {
                 $classInstance->update($data);
                 $this->syncQuote($classInstance, $data);
-                info('----------- Importing Personal/Home Qoute Lead  -----------'.$row['deal_cdb_id'].' '.$row['deal_policy_number']);
+                info('----------- Importing Personal/Home Qoute Lead  -----------' . $row['deal_cdb_id'] . ' ' . $row['deal_policy_number']);
             }
         }
     }
 
     public function chunkSize(): int
     {
-        return 5000;
-    }
-    /**
-     * Split the full name into first and last names.
-     *
-     * @param  string  $fullName
-     * @return array
-     */
-    private function splitName($fullName)
-    {
-        $nameParts = explode(' ', $fullName);
-        $firstName = $nameParts[0];
-        $lastName = end($nameParts);
-
-        return [$firstName, $lastName];
+        return 1000;
     }
 
     private function getQuoteStatusId($dealStatus, $dealStage)
