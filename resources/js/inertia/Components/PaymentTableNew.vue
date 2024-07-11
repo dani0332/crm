@@ -173,16 +173,8 @@ const approveProofDocument = props.paymentDocument.find(
 );
 
 let initalPlanDetails = [];
-//commenting send update condition because this condition is only present in child-insly-project-central, but not in parent or test branch
-/*if (props.sendUpdate) {
-  initalPlanDetails = 'Test Plan';
-} else */
-if (
-  props.quoteType == 'Business' ||
-  props.quoteType == 'Home' ||
-  props.isPlanDetailEnabled
-) {
-  initalPlanDetails = props.quoteRequest.insurance_provider_details;
+if (props.quoteType=='Business' || props.quoteType=='Home' || props.isPlanDetailEnabled) {
+  initalPlanDetails = props.quoteRequest.insurance_provider_details ?? props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else {
