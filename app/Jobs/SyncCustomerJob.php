@@ -68,6 +68,7 @@ class SyncCustomerJob implements ShouldQueue
                         foreach ($entries as $entry) {
                             if ($entry->customer_id == $this->newCustomerId) {
                                 $entriesToSkip[] = $entry->id;
+
                                 continue;
                             }
 
@@ -89,7 +90,7 @@ class SyncCustomerJob implements ShouldQueue
                         // insert audits
                         Audit::insert($auditsToCreate);
 
-                        info('SyncCustomerJob - Updated ' . count($entryIds) . ' entries in ' . $modelClass . ' for ' . $this->email . ' - new customer id - ' . $this->newCustomerId);
+                        info('SyncCustomerJob - Updated '.count($entryIds).' entries in '.$modelClass.' for '.$this->email.' - new customer id - '.$this->newCustomerId);
                     });
 
             } catch (Exception $e) {
