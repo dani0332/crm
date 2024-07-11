@@ -40,7 +40,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
-        info('job: SendBookPolicyDocumentsJob started with payload: '.json_encode($this->data));
+        info('job: SendBookPolicyDocumentsJob started');
 
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
@@ -88,12 +88,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
-                $emailData->currentInsurer = $quote->plan->insuranceProvider->text ?? '';
-                $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number ?? '';
+                $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
+                $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
             } else {
-                $emailData->currentInsurer = $quote->insuranceProvider->text ?? '';
-                $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number ?? '';
+                $emailData->currentInsurer = $quote->insuranceProvider->text;
+                $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
             }
+            
             $emailData->emailTemplateId = $templateId;
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
