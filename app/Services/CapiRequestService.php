@@ -70,13 +70,15 @@ class CapiRequestService
                     $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
                     $carQuote->save();
 
-                    CarQuoteRequestDetail::updateOrCreate(
+                    $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
                         ['car_quote_request_id' => $carQuote->id],
                         [
                             'advisor_assigned_date' => now(),
                             'advisor_assigned_by_id' => auth()->id() ?? User::where('name', UserNameEnum::System)->first(),
                         ]
                     );
+
+                    info('handleCarResponse - leadId : '.$carQuote->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                 }
             }
         }

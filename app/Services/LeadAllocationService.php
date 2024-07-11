@@ -661,14 +661,14 @@ class LeadAllocationService extends BaseService
     public function updateCarLeadDetailRecord($leadId)
     {
         info('---- Inside updateCarLeadDetailRecord - leadId : '.$leadId);
-        CarQuoteRequestDetail::updateOrCreate(
+        $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
             ['car_quote_request_id' => $leadId],
             [
                 'advisor_assigned_date' => now(),
                 'advisor_assigned_by_id' => auth()->id(),
             ]
         );
-        info('---- updateCarLeadDetailRecord - updateOrCreate done for advisor data and by id - leadId : '.$leadId);
+        info('---- updateCarLeadDetailRecord - updateOrCreate done for advisor data and by id - leadId : '.$leadId.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
     }
 
     public function getCarUnallocatedLeads()

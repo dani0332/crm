@@ -162,6 +162,8 @@ class CustomerService extends BaseService
     public function makeAdditionalContactPrimary($lead, $key, $value)
     {
         if ($key == GenericRequestEnum::EMAIL) {
+            $customer = null;
+            $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
                 info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
                 $customerArray = [
@@ -248,6 +250,7 @@ class CustomerService extends BaseService
                 }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
             }
+
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
