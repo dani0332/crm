@@ -32,6 +32,7 @@ class ChangeMinMaxColumnTypeInRenewalBatchSlabsTable extends Migration
      */
     public function down()
     {
-        Schema::table('renewal_batch_slabs', function (Blueprint $table) {});
+        Schema::table('renewal_batch_slabs', function (Blueprint $table) {
+        });
     }
 }

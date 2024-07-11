@@ -2,21 +2,19 @@
 
 namespace App\Services;
 
-use Exception;
 use App\Enums\quoteTypeCode;
-use App\Services\BaseService;
 use App\Models\ApplicationStorage;
-use App\Traits\GenericQueriesAllLobs;
-use App\Services\QuoteDocumentService;
-use App\Services\SendEmailCustomerService;
 use App\Repositories\DocumentTypeRepository;
+use App\Traits\GenericQueriesAllLobs;
+use Exception;
+
 use function Laravel\Prompts\error;
 
 // This class is designed for testing and developing the functionality of sending and booking policy emails.
 class SendBookPolicyDocumentsJobLocal extends BaseService
 {
     use GenericQueriesAllLobs;
-    
+
     private $data = null;
 
     public function __construct($payload)
@@ -30,7 +28,7 @@ class SendBookPolicyDocumentsJobLocal extends BaseService
 
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
-        $modelType = ucwords( !empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
+        $modelType = ucwords(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
         $handBookDocuments = [];
@@ -81,7 +79,7 @@ class SendBookPolicyDocumentsJobLocal extends BaseService
             }
             $emailData->emailTemplateId = $templateId;
             $emailData->handBookDocuments = $handBookDocuments;
-            $emailData->roadsideAssistance = $roadsideAssistance; 
+            $emailData->roadsideAssistance = $roadsideAssistance;
             info('Send Book Policy Documents Job Email Data '.json_encode($emailData));
             $response = app(SendEmailCustomerService::class)->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('Send Book Policy Documents Job Response '.json_encode($response));

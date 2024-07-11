@@ -121,7 +121,7 @@ class PersonalQuoteRepository extends BaseRepository
             'doc_uuid' => $docUuid,
             'created_by_id' => auth()->id(),
         ];
-        Log::info('Document array prepared for creation' , $documentsArray);
+        Log::info('Document array prepared for creation', $documentsArray);
 
         return $quote->documents()->create($documentsArray);
     }

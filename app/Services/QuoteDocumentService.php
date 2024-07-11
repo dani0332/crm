@@ -220,8 +220,9 @@ class QuoteDocumentService extends BaseService
         return $displaySendPolicyButton;
     }
 
-   /**
+    /**
      * This method fetches all or a subset of documents linked to a specific quote, based on the provided document type codes.
+     *
      * @return Collection
      */
     public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null)
@@ -241,6 +242,7 @@ class QuoteDocumentService extends BaseService
      * Retrieves all document types associated with a specific quote, fetches active document types & excluding certain categories
      * This method fetches active document types, excluding certain categories, and can further filter them based on
      * It also organizes documents by category and get payment-related documents used for all LOB's
+     *
      * @return array
      */
     public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
@@ -255,6 +257,7 @@ class QuoteDocumentService extends BaseService
             })
             ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer, $businessTypeOfInsurance) {
                 $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
+
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
             })->sortDocumentType()->get();
 
@@ -277,8 +280,8 @@ class QuoteDocumentService extends BaseService
         // Filter for payment-related document types.
         $paymentDocumentCodes = $this->paymentDocumentTypesOptions($quoteTypeId);
         $paymentDocuments = $documentTypes->filter(function ($type) use ($paymentDocumentCodes) {
-                return in_array($type->code, $paymentDocumentCodes);
-            })->values()->all();
+            return in_array($type->code, $paymentDocumentCodes);
+        })->values()->all();
 
         // Organize document types by category.
         $documentTypesByCategory = $documentTypes->groupBy('category');
@@ -328,7 +331,8 @@ class QuoteDocumentService extends BaseService
 
     /**
      * Gets handbook documents linked to a policy and formats them as an array with URLs and names.
-     * @return array 
+     *
+     * @return array
      */
     public function getHandBookDocuments($quote)
     {

@@ -289,6 +289,7 @@ class BusinessQuoteController extends Controller
         }
 
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -363,6 +364,7 @@ class BusinessQuoteController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'bookPolicyDetails' => $bookPolicyDetails,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocuments,
         ]);
     }

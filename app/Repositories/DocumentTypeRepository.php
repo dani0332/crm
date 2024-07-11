@@ -17,23 +17,24 @@ class DocumentTypeRepository extends BaseRepository
         return DocumentType::class;
     }
 
-   /**
+    /**
      * Fetches document type codes required for sending policy documents based on the quote's typex.
      * including handling special cases for business quotes like group medical, business, and corpline insurance types.
-     * @return array 
+     *
+     * @return array
      */
     public function fetchSendPolicyDocumentCodes($quoteType, $quote)
     {
         // Fetch document type codes marked as required for policy sending, filtered by quote type.
         $documentTypeCodes = DocumentType::requiredForSendPolicy()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType));
-        
+
         // Handle special document requirements for business insurance types.
         if (in_array($quoteType, [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::BUSINESS->value, QuoteTypes::CORPLINE->value])) {
             // Retrieve the latest KYC log for additional business/customer details.
             $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)->latest()->first();
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
             $businessTypeOfCustomer = $latestKycLog?->search_type;
-            
+
             // Get the insurer name based on the business type of insurance and get business documents
             $businessInsurerName = $this->fetchBusinessInsurerName($businessTypeOfInsurance);
             $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName);
@@ -44,6 +45,7 @@ class DocumentTypeRepository extends BaseRepository
 
     /**
      * Fetches the document type codes for tax-related documents based on the quote's type and details.
+     *
      * @return array
      */
     public function fetchTaxDocumentsCode($quoteType, $quote)
@@ -54,11 +56,11 @@ class DocumentTypeRepository extends BaseRepository
         // Check if the quote type is Group medical or corpline .
         if (in_array($quoteType, [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::BUSINESS->value, QuoteTypes::CORPLINE->value])) {
             $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)->latest()->first();
-            
+
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
             $businessTypeOfCustomer = $latestKycLog?->search_type;
-            
-            // Get business insurer name and get relevant documents 
+
+            // Get business insurer name and get relevant documents
             $businessInsurerName = $this->fetchBusinessInsurerName($businessTypeOfInsurance);
             $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName);
         }
@@ -70,6 +72,7 @@ class DocumentTypeRepository extends BaseRepository
     /**
      * Fetches document type codes for documents sent to customers based on the quote's type and specifics.
      * Handles special cases for business quotes, including car fleet and group medical insurance types.
+     *
      * @return array
      */
     public function fetchQuoteDocumentsSentToCustomerCode($quoteType, $quote)
@@ -89,6 +92,7 @@ class DocumentTypeRepository extends BaseRepository
                 return $query->byBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
             })->when($latestKycLog?->search_type, function ($query) use ($latestKycLog, $quote) {
                 $businessInsurerName = $this->fetchBusinessInsurerName($quote->business_type_of_insurance_id);
+
                 return $query->byBusinessTypeOfCustomer($latestKycLog?->search_type, $businessInsurerName);
             });
         }
@@ -102,7 +106,8 @@ class DocumentTypeRepository extends BaseRepository
     /**
      * Retrieves the insurer name for a given business insurance type ID. If it value is group medical, car fleet
      * it returns a constant representing the company's business type of customer. Otherwise, it returns false
-     * @return mixed 
+     *
+     * @return mixed
      */
     public function fetchBusinessInsurerName($id)
     {
