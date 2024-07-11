@@ -261,7 +261,7 @@ class SendUpdateLogRepository extends BaseRepository
             $sendUpdate = $this->find($data['id']);
             $isNegative = app(SendUpdateLogService::class)->isNegativeValue($sendUpdate);
 
-            $data = [
+            $bookingDetails = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
                 // 'booking_date' => $data['booking_date'], // commented this because it will update when Sage Invoice created through Send Update
                 'invoice_description' => $data['invoice_description'],
@@ -283,10 +283,10 @@ class SendUpdateLogRepository extends BaseRepository
             ];
             // it will check if send update type is CPD then it will add reversal_invoice to $data because other send update types don't have 2 kind of
             // booking details, so we don't need to add null reversal_invoice on other options details.
-            if ($data['send_update_type'] == SendUpdateLogStatusEnum::CPD) {
-                $data = array_merge($data, ['reversal_invoice' => $data['reversal_invoice']]);
+            if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD) {
+                $bookingDetails = array_merge($bookingDetails, ['reversal_invoice' => $data['reversal_invoice']]);
             }
-            $result = $sendUpdate->update($data);
+            $result = $sendUpdate->update($bookingDetails);
 
             $payment = Payment::where('send_update_log_id', $data['id'])->firstOrFail();
             if ($payment) {
