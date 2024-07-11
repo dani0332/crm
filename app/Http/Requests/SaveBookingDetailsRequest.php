@@ -44,7 +44,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'commission_percentage' => 'required|numeric',
             'vat_on_commission' => 'required|numeric',
             'total_commission' => 'required|numeric',
-            'reversal_invoice' => 'sometimes|string',
+            'reversal_invoice' => 'sometimes',
         ];
 
         $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
