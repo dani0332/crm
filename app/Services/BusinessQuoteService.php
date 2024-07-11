@@ -264,7 +264,7 @@ class BusinessQuoteService extends BaseService
 
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
         if (isset($request->code) && $request->code != '') {
             $this->query->where('bqr.code', $request->code);
@@ -282,7 +282,10 @@ class BusinessQuoteService extends BaseService
             $this->query->where('bqr.policy_number', $request->policy_number);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where(function ($query) use ($request) {
+                $query->where('bqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $this->query->where('bqr.renewal_batch', $request->renewal_batch);
