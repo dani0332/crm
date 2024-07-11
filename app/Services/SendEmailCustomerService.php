@@ -755,6 +755,7 @@ class SendEmailCustomerService extends BaseService
                     'currentInsurer' => $emailData->currentInsurer,
                     'enewalDueDate' => $emailData->renewalDueDate,
                     'policyNumber' => $emailData->policy_number,
+                    'roadsideAssistance' => $emailData->roadsideAssistance,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,

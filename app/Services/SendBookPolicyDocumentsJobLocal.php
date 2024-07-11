@@ -1,50 +1,35 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Services;
 
+use Exception;
 use App\Enums\quoteTypeCode;
+use App\Services\BaseService;
 use App\Models\ApplicationStorage;
-use App\Repositories\DocumentTypeRepository;
+use App\Traits\GenericQueriesAllLobs;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Traits\GenericQueriesAllLobs;
-use Exception;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Queue\SerializesModels;
-use Throwable;
-
+use App\Repositories\DocumentTypeRepository;
 use function Laravel\Prompts\error;
 
-class SendBookPolicyDocumentsJob implements ShouldQueue
+class SendBookPolicyDocumentsJobLocal extends BaseService
 {
-    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
-
-    public $timeout = 100;
-    public $tries = 3;
-
-    /**
-     * Create a new job instance.
-     */
+    use GenericQueriesAllLobs;
+    
     private $data = null;
+
     public function __construct($payload)
     {
         $this->data = $payload;
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
+    public function execute()
     {
         info('job: SendBookPolicyDocumentsJob started with payload: '.json_encode($this->data));
 
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
-        $modelType = ! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
+        $modelType = ucwords( !empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
         $handBookDocuments = [];
@@ -69,14 +54,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
         // Prepare the data to be sent to Brevo for email template dispatch
         if (! empty($templateId)) {
-
             $roadsideAssistance = '';
             $emailData = new \stdClass();
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
             $emailData->policy_number = $quote->policy_number;
-            $emailData->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
+            $emailData->renewalDueDate = date('Y-m-d', strtotime($quote['policy_expiry_date']));
             $emailData->quoteDocuments = $docs;
             $emailData->advisorName = '';
             $emailData->advisorEmail = '';
@@ -98,18 +82,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance; 
             info('Send Book Policy Documents Job Email Data '.json_encode($emailData));
-            $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
+            $response = app(SendEmailCustomerService::class)->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('Send Book Policy Documents Job Response '.json_encode($response));
         }
-    }
-
-    public function failed(Throwable $exception)
-    {
-        info('SendBookPolicyDocumentsJob -: '.$this->data->quote_id.' Error: '.$exception->getMessage());
-    }
-
-    public function middleware()
-    {
-        return [(new WithoutOverlapping($this->data->quote_id))->dontRelease()];
     }
 }
