@@ -160,7 +160,7 @@ class BusinessQuoteService extends BaseService
     {
         return BusinessQuote::where('id', $id)->with([
             'payments' => function ($payment) {
-                $payment->with([                    
+                $payment->with([
                     'paymentSplits' => function ($paymentSplit) {
                         $paymentSplit->with([
                             'paymentStatus',
