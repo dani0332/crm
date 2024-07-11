@@ -46,7 +46,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
                 $lead->update($data);
                 $this->syncQuote($lead, $data);
-                info('----------- Importing Personal/Home Qoute Lead  -----------' . $row['deal_cdb_id'] . ' ' . $row['deal_policy_number']);
+                info('----------- Importing Personal/Home Qoute Lead  -----------'.$row['deal_cdb_id'].' '.$row['deal_policy_number']);
             }
         }
     }
