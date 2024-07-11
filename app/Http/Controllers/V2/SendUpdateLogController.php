@@ -326,16 +326,16 @@ class SendUpdateLogController extends Controller
         return redirect()->back();
     }
 
-    public function savePolicyDetails(SavePolicyDetailsRequest $savePolicyDetailsRequest)
+    public function savePolicyDetails(SavePolicyDetailsRequest $request)
     {
-        SendUpdateLogRepository::savePolicyDetails($savePolicyDetailsRequest->validated());
+        SendUpdateLogRepository::savePolicyDetails($request->validated());
 
         return redirect()->back();
     }
 
-    public function saveBookingDetails(SaveBookingDetailsRequest $saveBookingDetailsRequest)
+    public function saveBookingDetails(SaveBookingDetailsRequest $request)
     {
-        SendUpdateLogRepository::saveBookingDetails($saveBookingDetailsRequest);
+        SendUpdateLogRepository::saveBookingDetails($request);
 
         return redirect()->back();
     }
