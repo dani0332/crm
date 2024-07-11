@@ -38,7 +38,6 @@ class SaleSummaryReportService extends ManagementReport
             Carbon::parse($request['paymentDueDate'][1])->toDateString();
         }
 
-
         // Subquery to get distinct payment splits with minimum due_date
         $distinctPaymentSplits = DB::table('payment_splits as dps')
             ->selectRaw('DISTINCT(code), due_date');
@@ -159,8 +158,8 @@ class SaleSummaryReportService extends ManagementReport
                 EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION_AND_REISSUANCE])
             ->pluck('id')->toArray();
 
-         // Subquery to get distinct payment splits with minimum due_date
-         $distinctPaymentSplits = DB::table('payment_splits as dps')
+        // Subquery to get distinct payment splits with minimum due_date
+        $distinctPaymentSplits = DB::table('payment_splits as dps')
             ->select('dps.code', 'due_date')
             ->groupBy('dps.code');
 
