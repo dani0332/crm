@@ -188,6 +188,7 @@ class BusinessQuoteController extends Controller
         $customerAdditionalContacts = $this->businessQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+        $paymentEntityModel->load('insuranceProviderDetails');
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
 

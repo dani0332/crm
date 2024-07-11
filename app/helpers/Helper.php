@@ -756,8 +756,12 @@ if (! function_exists('apiResponse')) {
 }
 
 if (! function_exists('strToFloat')) {
-    function strToFloat($value): float
+    function strToFloat($value, $isNegative = false): float
     {
+        if ($isNegative) {
+            $value = $value > 0 ? -$value : $value;
+        }
+
         return floatval(str_replace(',', '', $value));
     }
 }
@@ -816,7 +820,10 @@ if (! function_exists('getCardViewRequestFilters')) {
         }
 
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $partialQuery->where('previous_quote_policy_number', $request->previous_quote_policy_number);
+            $partialQuery->where(function ($query) use ($request) {
+                $query->where('policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
 
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
@@ -952,8 +959,8 @@ if (! function_exists('isValidDate')) {
     function isValidDate($date): bool
     {
         return ! empty($date)
-        && $date != '0000-00-00 00:00:00'
-        && $date != '0000-00-00';
+            && $date != '0000-00-00 00:00:00'
+            && $date != '0000-00-00';
     }
 }
 

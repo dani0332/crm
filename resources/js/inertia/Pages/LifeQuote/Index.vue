@@ -49,6 +49,7 @@ const filters = reactive({
   advisor_id: [],
   is_ecommerce: '',
   payment_status_id: '',
+  previous_quote_policy_number_text: '',
   page: 1,
 });
 
@@ -63,6 +64,7 @@ const tableHeader = reactive([
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   {
     text: 'CREATED DATE',
     value: 'created_at',
@@ -74,6 +76,11 @@ const tableHeader = reactive([
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
   { text: 'PRICE', value: 'premium', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
 ]);
 
 const advisorOptions = computed(() => {
@@ -305,6 +312,15 @@ onMounted(() => {
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
+          />
+        </x-field>
+        <x-field label="Policy Number">
+          <x-input
+            v-model="filters.previous_quote_policy_number_text"
+            type="text"
+            name="previous_quote_policy_number"
+            class="w-full"
+            placeholder="Policy Number"
           />
         </x-field>
         <x-select
