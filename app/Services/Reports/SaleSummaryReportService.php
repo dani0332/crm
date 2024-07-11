@@ -38,6 +38,11 @@ class SaleSummaryReportService extends ManagementReport
             Carbon::parse($request['paymentDueDate'][1])->toDateString();
         }
 
+
+        // Subquery to get distinct payment splits with minimum due_date
+        $distinctPaymentSplits = DB::table('payment_splits as dps')
+            ->selectRaw('DISTINCT(code), due_date');
+
         $query = PersonalQuote::query()
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
             ->leftJoin('user_team', 'u.id', '=', 'user_team.user_id')
@@ -99,7 +104,9 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-            $query->join('payment_splits as ps', 'p.code', '=', 'ps.code');
+            $query->joinSub($distinctPaymentSplits, 'ps', function ($join) {
+                $join->on('p.code', '=', 'ps.code');
+            });
         }
 
         $this->applyFilters($query, $request);
@@ -151,6 +158,11 @@ class SaleSummaryReportService extends ManagementReport
                 EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION,
                 EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION_AND_REISSUANCE])
             ->pluck('id')->toArray();
+
+         // Subquery to get distinct payment splits with minimum due_date
+         $distinctPaymentSplits = DB::table('payment_splits as dps')
+            ->select('dps.code', 'due_date')
+            ->groupBy('dps.code');
 
         $endorsementsQuery = SendUpdateLog::query()
             ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
@@ -216,7 +228,9 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-            $endorsementsQuery->join('payment_splits as ps', 'p.code', '=', 'ps.code');
+            $endorsementsQuery->joinSub($distinctPaymentSplits, 'ps', function ($join) {
+                $join->on('p.code', '=', 'ps.code');
+            });
         }
 
         $endorsementsQuery = $this->applyFilters($endorsementsQuery, $request, true);

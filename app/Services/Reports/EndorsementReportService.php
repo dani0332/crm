@@ -56,11 +56,11 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.price_vat_applicable',
                 'send_update_logs.total_vat_amount as vat',
                 'send_update_logs.price_vat_not_applicable',
-                'p.discount_value as discount',
+                'send_update_logs.discount as discount',
                 DB::raw('FORMAT(((
                     IFNULL( send_update_logs.price_vat_applicable , 0 ) +
                     IFNULL( send_update_logs.price_vat_not_applicable , 0 )  +
-                    IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( p.discount_value , 0 )),2) as total_price'),
+                    IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( send_update_logs.discount , 0 )),2) as total_price'),
                 DB::raw('p.commission_vat_applicable as commission_vat_applicable'),
                 DB::raw('p.commission_vat as commission_vat'),
                 DB::raw('p.commission_vat_not_applicable as commission_vat_not_applicable'),
@@ -69,8 +69,8 @@ class EndorsementReportService extends ManagementReport
                 DB::raw('FORMAT(((
                     IFNULL( send_update_logs.price_vat_applicable , 0 ) +
                     IFNULL( send_update_logs.price_vat_not_applicable , 0 ) +
-                    IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( p.discount_value , 0 )) -
-                    IFNULL( p.premium_captured, 0),2) as pending_balance'),
+                    IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( send_update_logs.discount , 0 )) -
+                    IFNULL( send_update_logs.premium_captured, 0),2) as pending_balance'),
                 DB::raw('UPPER(p.collection_type) as collects'),
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
