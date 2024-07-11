@@ -20,7 +20,6 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
     public function model(array $row)
     {
         if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) && strpos($row['deal_batch'], '2024') !== false) {
-
             $data = [
                 'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
                 'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
@@ -53,12 +52,11 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     public function chunkSize(): int
     {
-        return 1000;
+        return 2500;
     }
 
     private function getQuoteStatusId($dealStatus, $dealStage)
     {
-
         if ($dealStatus === PDDealStatus::LOST) {
             return QuoteStatusEnum::Lost;
         }
@@ -110,6 +108,5 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             return $dealStageToQuoteStatus[$dealStage];
         }
-
     }
 }
