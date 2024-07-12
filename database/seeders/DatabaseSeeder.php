@@ -84,6 +84,8 @@ class DatabaseSeeder extends Seeder
             // MarineSeeder::class,
             // ImcrmUsersRolesCleaner::class,
             addPermissionsForInsurerNowPayment::class,
+            AddeTicketDocumentTypeSeeder::class,
+            DocumentVerifyPermissionSeeder::class,
         ]);
     }
 }
