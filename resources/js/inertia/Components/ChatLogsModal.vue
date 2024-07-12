@@ -37,6 +37,9 @@ const computedMessages = computed(() => {
 });
 
 const renderMarkdown = markdownString => {
+  if(!markdownString){
+    return 'no content available.'
+  }
   // Parse the markdown string
   const initialHtml = md.render(markdownString);
 
