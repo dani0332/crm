@@ -14,6 +14,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\DocumentTypeEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -23,6 +24,7 @@ use App\Models\SendUpdateLog;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\TravelQuote;
+use App\Models\CcPaymentProcessJob;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\TravelQuoteService;
 use App\Services\CustomerService;
@@ -575,13 +577,17 @@ class SplitPaymentService
     // function to process the split payment approve
     public function processSplitPaymentApprove($modelType, $quoteId, $splitPaymentId, $amountCollected, $isFromJob=false)
     {
-        $paymentSplit = PaymentSplits::find($splitPaymentId);            
+        $paymentSplit = PaymentSplits::find($splitPaymentId);       
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             //create sage reciept
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
             if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
-                $quoteModel = $this->getQuoteObject($modelType, $quoteId);                
-                
+                $sendUpdateId = $paymentSplit->payment->send_update_log_id;
+                if (!empty($sendUpdateId) && $sendUpdateId > 0) {
+                    $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
+                } else {
+                    $quoteModel = $this->getQuoteObject($modelType, $quoteId);                
+                }                
                 // Create an empty Request object
                 $request = Request::createFromGlobals();
                 $request->merge( [
@@ -594,14 +600,27 @@ class SplitPaymentService
                 if ($sageResponse['status'] == 'success') {
                     $paymentSplit->sage_reciept_id = $sageResponse['response'];
                 } else {
-                    $sageMessage = $sageResponse['response'];
-                    vAbort($sageMessage);
+                    $sageMessage = $sageResponse['response'];                    
+                    if ( $isFromJob ) {
+                        CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => 'failed', 'message' => $sageMessage]);
+                    } else {
+                        vAbort($sageMessage);
+                    }
                 }
             }
             //Marshal Service to capture split payment
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-            $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
-            //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
+            
+            if ($paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+                ////$response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
+                $paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
+            }
+
+            $imcrmReceiptCreated = QuoteDocument::where(['payment_split_id'=>$splitPaymentId,'document_type_text'=>DocumentTypeEnum::RECEIPT])->get();
+            if ($imcrmReceiptCreated->count()===0 && $isFromJob) { 
+                $this->createReceipt($modelType, $quoteId, $paymentSplit);
+            } 
+            
         }
 
         DB::beginTransaction();
@@ -628,17 +647,23 @@ class SplitPaymentService
                     'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
                 ]);
             }
+            if ($isFromJob) {
+                $this->processMasterPaymentApprove($modelType,$quoteId, $parentPayment->send_update_log_id, true);
+            }
             DB::commit();
-        } catch (Exception $exception) {
-            dd($exception->getMessage());
-            Log::error('Error in processSplitPaymentApprove: '.$exception->getMessage());
+        } catch (Exception $exception) {            
+            if ( $isFromJob ) {
+                CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => 'failed', 'message' => $exception->getMessage()]);
+            } else {
+                Log::error('Error in processSplitPaymentApprove: '.$exception->getMessage());
+            }
             DB::rollBack();
         }
         return;
     }
 
     // function to process the master payment approve
-    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob=false)
+    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob=false, $splitPaymentId=0)
     {
         $canCaptureEp = false;
         // On failure, the capture button will render again and the user can try again
@@ -700,10 +725,17 @@ class SplitPaymentService
             if (! $sendUpdateId) {
                 $this->updateLeadStatus($masterPayment); //update lead status
             }
+
+            if ( $isFromJob && $splitPaymentId>0) {
+                CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => 'success', 'message' => 'Transaction Approved']);
+            }
             DB::commit();
         } catch (Exception $exception) {
-            dd($exception->getMessage());
             $canCaptureEp = false;
+            if ( $isFromJob && $splitPaymentId>0) {
+                CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => 'failed', 'message' => $exception->getMessage()]);
+            }
+            Log::error('Error in processMasterPaymentApprove: '.$exception->getMessage());
             DB::rollBack();
         }
 

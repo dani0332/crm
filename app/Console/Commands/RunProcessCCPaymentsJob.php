@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\JobsProcessCCPaymentsJob;
 
+use App\Models\CcPaymentProcessJob;
+
 class RunProcessCCPaymentsJob extends Command
 {
     /**
@@ -26,7 +28,14 @@ class RunProcessCCPaymentsJob extends Command
      */
     public function handle()
     {
-        ProcessCCPaymentsJob::dispatch();
+       
+        $pendingCCRecords = CcPaymentProcessJob::where('status','pending')->get();
+        if($pendingCCRecords->count() > 0){            
+            foreach($pendingCCRecords as $pendingCCRecord){
+                app(SplitPaymentService::class)->processSplitPaymentApprove($pendingCCRecord->model_type,$pendingCCRecord->quote_id, $pendingCCRecord->payment_split_id, $pendingCCRecord->amount_captured,true);
+            }
+        }
+        //ProcessCCPaymentsJob::dispatch();
         $this->info('ProcessCCPaymentsJob has been dispatched.');
         return 0;
 
