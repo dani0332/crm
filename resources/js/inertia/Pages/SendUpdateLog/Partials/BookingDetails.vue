@@ -496,6 +496,7 @@ const sendUpdateValidation = () => {
             responseError[key] === 'Please select Emirate' ||
             responseError[key] === 'Please select Seating capacity'
           ) {
+            updateAdditionalError();
             window.scrollTo(0, 0);
           }
           notification.error({
@@ -683,6 +684,13 @@ const isPriceVatApplicableEditable = computed(() => {
   return (isCIOrCIR.value || isEF.value || isCPD.value) &&
       props.quoteType !== quoteTypeCodeEnum.Life;
 });
+
+const emit = defineEmits(['update-error-status']);
+
+function updateAdditionalError() {
+  const newErrorStatus = 'This field is required.'; // Determine the new status based on your logic
+  emit('update-error-status', newErrorStatus);
+}
 
 </script>
 
