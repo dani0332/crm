@@ -1224,7 +1224,6 @@ const genderList = [
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
 const getupdateDocumentValidate = event => {
-  console.log('getupdateDocumentValidate');
   updateDocumentValidate.show = event;
   page.props.quote.is_documents_valid = event;
 };
