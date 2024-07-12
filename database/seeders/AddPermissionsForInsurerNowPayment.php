@@ -26,7 +26,7 @@ class AddPermissionsForInsurerNowPayment extends Seeder
             RolesEnum::BikeAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::CorplineManager];
         foreach ($roles as $role) {
             $adminRole = Role::where('name', $role)->first();
-            
+
             $rolePermission = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $inplUserPermission->id)->first();
             if ($rolePermission === null) {
                 DB::table('role_has_permissions')->insert(
