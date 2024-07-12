@@ -3,11 +3,10 @@
 namespace Database\Seeders;
 
 use App\Enums\PermissionsEnum;
-use App\Models\Permission;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Enums\RolesEnum;
+use App\Models\Permission;
 use App\Models\Role;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class addPermissionsForInsurerNowPayment extends Seeder
@@ -21,10 +20,10 @@ class addPermissionsForInsurerNowPayment extends Seeder
         Permission::findOrCreate(PermissionsEnum::INPL_APPROVER, 'web');
 
         // Add INPL_USER permissions for specific roles
-        $roles = [RolesEnum::Admin,RolesEnum::OperationExecutive,RolesEnum::ServiceExecutive,RolesEnum::CarAdvisor,
-                  RolesEnum::CarManager,RolesEnum::TravelManager,RolesEnum::TravelAdvisor,
-                  RolesEnum::HomeManager,RolesEnum::HomeAdvisor,RolesEnum::BikeManager,
-                  RolesEnum::BikeAdvisor,RolesEnum::CorpLineAdvisor,RolesEnum::CorplineManager];
+        $roles = [RolesEnum::Admin, RolesEnum::OperationExecutive, RolesEnum::ServiceExecutive, RolesEnum::CarAdvisor,
+            RolesEnum::CarManager, RolesEnum::TravelManager, RolesEnum::TravelAdvisor,
+            RolesEnum::HomeManager, RolesEnum::HomeAdvisor, RolesEnum::BikeManager,
+            RolesEnum::BikeAdvisor, RolesEnum::CorpLineAdvisor, RolesEnum::CorplineManager];
         foreach ($roles as $role) {
             $adminRole = Role::where('name', $role)->first();
             $permission = Permission::findOrCreate(PermissionsEnum::INPL_USER, 'web');
@@ -40,8 +39,8 @@ class addPermissionsForInsurerNowPayment extends Seeder
             }
         }
 
-        // Add INPL_APPROVER permissions for Admin and PA    
-        $roles = [RolesEnum::Admin,RolesEnum::PA];
+        // Add INPL_APPROVER permissions for Admin and PA
+        $roles = [RolesEnum::Admin, RolesEnum::PA];
         foreach ($roles as $role) {
             $adminRole = Role::where('name', $role)->first();
             $permission = Permission::findOrCreate(PermissionsEnum::INPL_APPROVER, 'web');
