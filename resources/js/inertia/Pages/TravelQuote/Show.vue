@@ -1279,6 +1279,18 @@ const documentValidate = async val => {
       updateDocumentValidate.show = false;
     });
 };
+const getGenderDisplay = (val) => {
+      switch (val) {
+        case 'M':
+        case 'male':
+          return 'Male';
+        case 'F':
+        case 'female':
+          return 'Female';
+        default:
+          return '';
+      }
+    }
 </script>
 
 <template>
@@ -1945,7 +1957,7 @@ const documentValidate = async val => {
           {{ relation?.text }}
         </template>
         <template #item-gender="{ gender }">
-          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
+          {{ getGenderDisplay(gender) }}
         </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
@@ -2342,13 +2354,7 @@ const documentValidate = async val => {
           <x-tooltip position="top">
             <x-button
               @click.prevent="getupdateDocumentValidate(true)"
-              v-if="
-                hasAnyRole([
-                  rolesEnum.Admin,
-                  rolesEnum.Engineering,
-                  rolesEnum.TravelHapex,
-                ])
-              "
+              v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
               size="sm"
               color="green"
             >
