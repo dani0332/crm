@@ -73,7 +73,7 @@ class QuoteDocumentRequest extends FormRequest
              */
             if (in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && isset($quote->id) && ! empty(request()->member_detail_id)) {
                 //check for quote records if exists
-                if ($quote->customerMembers()->where('id', request()->member_detail_id)->first()) {
+                if (! $quote->customerMembers()->where('id', request()->member_detail_id)->first()) {
                     $validator->errors()->add('member_detail_id', 'Invalid member detail id provided');
                 }
             }
