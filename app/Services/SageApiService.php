@@ -246,7 +246,7 @@ class SageApiService
         return $sageCustomerNumber;
     }
 
-    public function postToSage300($endPoint, $payLoad, $verb = 'POST')
+    public function postToSage300New($endPoint, $payLoad, $verb = 'POST')
     {
         dd($payLoad);
         $sageEndPoint = $this->sageRequestUrl.$endPoint;
@@ -265,7 +265,7 @@ class SageApiService
 
         return $response;
     }
-    public function postToSage300Curl($endPoint, $payLoad, $verb = 'POST')
+    public function postToSage300($endPoint, $payLoad, $verb = 'POST')
     {
         // Create the payload data for the POST request
         $sageEndPoint = $this->sageRequestUrl.$endPoint;
