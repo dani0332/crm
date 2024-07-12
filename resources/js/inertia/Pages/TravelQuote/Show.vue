@@ -182,7 +182,7 @@ const travelFields = computed(() => {
     'previous_policy_expiry_date',
     'policy_start_date',
     'renewal_batch',
-    'transapp_code'
+    'transapp_code',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -270,9 +270,9 @@ const travelerForm = useForm({
   dob: '',
   nationality_id: null,
   relation_code: null,
-  passport:null,
-  uae_resident:null,
-  emirates_id_number:'',
+  passport: null,
+  uae_resident: null,
+  emirates_id_number: '',
   gender: null,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -833,13 +833,13 @@ const availableSeniorPlansTable = reactive({
 //activities
 
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -1223,58 +1223,62 @@ const genderList = [
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
-const getupdateDocumentValidate = (event) => {
-    console.log("getupdateDocumentValidate");
-    updateDocumentValidate.show = event;
-    page.props.quote.is_documents_valid = event;
-}
+const getupdateDocumentValidate = event => {
+  updateDocumentValidate.show = event;
+  page.props.quote.is_documents_valid = event;
+};
 
 const updateDocumentValidate = reactive({
   show: false,
   title: 'Update',
   message: 'Are all documents correct?',
-  processing:false,
+  processing: false,
   onConfirm: () => {
     updateDocumentValidate.show = false;
   },
 });
 
-const documentValidate = async (val) =>  {
+const documentValidate = async val => {
   updateDocumentValidate.processing = true;
-  if( page.props.quoteDocuments?.length < 1){
+  if (page.props.quoteDocuments?.length < 1) {
     notification.info({
-          title: 'Please upload the documents file first',
-          position: 'top',
-        });
+      title: 'Please upload the documents file first',
+      position: 'top',
+    });
     updateDocumentValidate.processing = false;
     updateDocumentValidate.show = false;
     return false;
   }
-  let data ={"is_documents_valid": val};
-  await axios.post(`/quotes/travel/${page.props.quote.uuid}/update-validate-documents`,data).then((res)=>{
-    if (res.status == 200) {
-      notification.success({
+  let data = { is_documents_valid: val };
+  await axios
+    .post(
+      `/quotes/travel/${page.props.quote.uuid}/update-validate-documents`,
+      data,
+    )
+    .then(res => {
+      if (res.status == 200) {
+        notification.success({
           title: 'Document validity status update successfully.',
           position: 'top',
         });
-     }
-     else {
-      notification.error({
+      } else {
+        notification.error({
           title: 'Documents validity status updated failed',
           position: 'top',
         });
-     }
-    updateDocumentValidate.processing = false;
-    updateDocumentValidate.show = false;
-  }).catch((err)=>{
-    notification.error({
-          title: 'Documents validity status updated failed',
-          position: 'top',
+      }
+      updateDocumentValidate.processing = false;
+      updateDocumentValidate.show = false;
+    })
+    .catch(err => {
+      notification.error({
+        title: 'Documents validity status updated failed',
+        position: 'top',
+      });
+      updateDocumentValidate.processing = false;
+      updateDocumentValidate.show = false;
     });
-    updateDocumentValidate.processing = false;
-    updateDocumentValidate.show = false;
-  })
-}
+};
 </script>
 
 <template>
@@ -1416,17 +1420,17 @@ const documentValidate = async (val) =>  {
                 quote.direction_code != null
                   ? quote.direction_code
                   : quote?.currently_located_in_id_text ==
-                        enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                      quote?.region_cover_for_id !=
-                        enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                    ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                    : quote?.destination_id_text ==
-                          enums.travelQuoteEnum
-                            .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                        quote?.region_cover_for_id ==
-                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                      ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                      : ''
+                      enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                    quote?.region_cover_for_id !=
+                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                  : quote?.destination_id_text ==
+                      enums.travelQuoteEnum
+                        .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                    quote?.region_cover_for_id ==
+                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                  : ''
               }}
             </dt>
           </div>
@@ -1532,10 +1536,10 @@ const documentValidate = async (val) =>  {
                 quote.coverage_code != null
                   ? quote.coverage_code
                   : quote.days_cover_for <= 92
-                    ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                    : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                      '/' +
-                      enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                  ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                  : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                    '/' +
+                    enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
               }}
             </dt>
           </div>
@@ -1553,27 +1557,39 @@ const documentValidate = async (val) =>  {
             <dt class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRAVEL DESTINATION(S)
-            </dt>
+            <dt class="font-medium">TRAVEL DESTINATION(S)</dt>
             <dt class="font-medium">
-                <span v-for="(item, index) in travelDestinations" :key="item.id">
-                    {{ item?.destination?.country_name }}<span v-if="index < travelDestinations?.length - 1">, </span>
-                  </span>
+              <span v-for="(item, index) in travelDestinations" :key="item.id">
+                {{ item?.destination?.country_name
+                }}<span v-if="index < travelDestinations?.length - 1">, </span>
+              </span>
             </dt>
           </div>
 
-          <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="quoteRequest.child || quoteRequest.parent"
+          >
             <template v-if="quoteRequest.child">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     CHILD REF ID
                   </label>
-                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
+                  <template #tooltip
+                    >Navigation key from parent to child in data
+                    hierarchy.</template
+                  >
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.child.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.child.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.child?.code }}
                 </a>
               </dt>
@@ -1581,14 +1597,20 @@ const documentValidate = async (val) =>  {
             <template v-if="quoteRequest.parent">
               <dt>
                 <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                  <label
+                    class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                  >
                     PARENT REF ID
                   </label>
                   <template #tooltip>Parent Ref Id</template>
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
-                <a :href="'/quotes/travel/' + quoteRequest.parent.uuid" target="_blank" class="text-primary-600">
+                <a
+                  :href="'/quotes/travel/' + quoteRequest.parent.uuid"
+                  target="_blank"
+                  class="text-primary-600"
+                >
                   {{ quoteRequest.parent.code }}
                 </a>
               </dt>
@@ -1698,8 +1720,8 @@ const documentValidate = async (val) =>  {
             <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
 
             <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">UAE resident</dt>
-                <dd>{{ customerProfileForm.uae_resident ?? 'N/A' }}</dd>
+              <dt class="font-medium">UAE resident</dt>
+              <dd>{{ customerProfileForm.uae_resident ?? 'N/A' }}</dd>
             </div>
           </dl>
           <dl
@@ -1929,7 +1951,7 @@ const documentValidate = async (val) =>  {
           {{ nationality?.text }}
         </template>
         <template #item-uae_resident="{ uae_resident }">
-            {{ uae_resident === 1 ? 'Yes' : uae_resident === 0 ? 'No' : '' }}
+          {{ uae_resident === 1 ? 'Yes' : uae_resident === 0 ? 'No' : '' }}
         </template>
 
         <template #item-action="item">
@@ -1995,14 +2017,14 @@ const documentValidate = async (val) =>  {
               class="w-full"
             />
             <x-input
-            v-model="travelerForm.emirates_id_number"
-            label="Emirates ID Number"
-            placeholder="Emirates ID Number"
+              v-model="travelerForm.emirates_id_number"
+              label="Emirates ID Number"
+              placeholder="Emirates ID Number"
             />
             <x-input
-                v-model="travelerForm.passport"
-                label="Passport Number"
-                placeholder="Passport Number"
+              v-model="travelerForm.passport"
+              label="Passport Number"
+              placeholder="Passport Number"
             />
             <x-field label="Gender*">
               <x-select
@@ -2308,23 +2330,40 @@ const documentValidate = async (val) =>  {
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-            <Link
-                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${quote.insly_id}`"
-                preserve-scroll
+          <Link
+            v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${quote.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <x-tooltip position="top">
+            <x-button
+              @click.prevent="getupdateDocumentValidate(true)"
+              v-if="
+                hasAnyRole([
+                  rolesEnum.Admin,
+                  rolesEnum.Engineering,
+                  rolesEnum.TravelHapex,
+                ])
+              "
+              size="sm"
+              color="green"
             >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
-            </Link>
-            <x-tooltip position="top">
-                <x-button @click.prevent="getupdateDocumentValidate(true)"  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering,rolesEnum.TravelHapex]) " size="sm" color="green">
-                  Verify Documents
-                </x-button>
-                  <template #tooltip>
-                      Verify Documents: Clicking this button confirms that all submitted documents are accurate and valid.</template>
-              </x-tooltip>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
+              Verify Documents
+            </x-button>
+            <template #tooltip>
+              Verify Documents: Clicking this button confirms that all submitted
+              documents are accurate and valid.</template
+            >
+          </x-tooltip>
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="primary"
+          >
             Upload Documents
           </x-button>
           <x-button
@@ -2420,12 +2459,17 @@ const documentValidate = async (val) =>  {
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-              <div>
-                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
-                  age 0-64
-                </h6>
-              </div>
+            <div>
+              <h6
+                v-if="
+                  aboveAgeMembers > 0 && availablePlansTable.data.length > 0
+                "
+                class="font-semibold text-primary-600 text-ms mb-1"
+              >
+                Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                age 0-64
+              </h6>
+            </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2486,7 +2530,7 @@ const documentValidate = async (val) =>  {
           </div>
           <div v-else>
             <DataTable
-                v-model:items-selected="selectedPlans"
+              v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
@@ -2568,7 +2612,7 @@ const documentValidate = async (val) =>  {
             </div>
             <div>
               <DataTable
-                  v-model:items-selected="selectedPlans"
+                v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed compact"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
@@ -2581,16 +2625,16 @@ const documentValidate = async (val) =>  {
                   <span class="text-primary-600 uppercase">{{
                     item.providerName
                   }}</span>
-                    <div class="flex gap-1">
-                        <x-tag
-                            v-if="item.isDisabled"
-                            size="xs"
-                            color="error"
-                            class="mt-0.5 text-[10px]"
-                        >
-                            Hidden
-                        </x-tag>
-                    </div>
+                  <div class="flex gap-1">
+                    <x-tag
+                      v-if="item.isDisabled"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px]"
+                    >
+                      Hidden
+                    </x-tag>
+                  </div>
                 </template>
                 <template #item-name="item">
                   <span class="text-primary-600 uppercase">{{
@@ -2655,22 +2699,33 @@ const documentValidate = async (val) =>  {
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       quoteType="Travel"
       :payments="payments"
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Travel"
-			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="enums.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
+      v-if="isNewPaymentStructure"
+      quoteType="Travel"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes.QUOTE.filter(
+          item =>
+            item.code === 'TPD' ||
+            item.code === 'TPDR' ||
+            item.code === 'TDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="enums.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -2743,8 +2798,12 @@ const documentValidate = async (val) =>  {
         </template>
       </DataTable>
       <x-modal v-model="updateDocumentValidate.show" show-close backdrop>
-        <template #header> Are all documents correct?  </template>
-        <p>Note: By clicking 'Yes,' you confirm that all submitted documents are accurate and valid. Failure to verify will be considered a breach of the Code of Conduct (COC).</p>
+        <template #header> Are all documents correct? </template>
+        <p>
+          Note: By clicking 'Yes,' you confirm that all submitted documents are
+          accurate and valid. Failure to verify will be considered a breach of
+          the Code of Conduct (COC).
+        </p>
         <template #actions>
           <div class="text-right space-x-4">
             <x-button
@@ -2876,25 +2935,34 @@ const documentValidate = async (val) =>  {
       />
     </div>
     <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
-        <template #header>
-          <div class="text-center">
-            SORRY!
-          </div>
-        </template>
-        <p>Please choose quotes from the same age group for a correct comparison.</p>
-        <template #actions>
-          <div class="text-center space-x-4">
-            <x-button
-              size="sm"
-              color="emerald"
-              @click.prevent="modals.mixInquiryConfirm = false"
-            >
-              Okay, got it!
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+      <template #header>
+        <div class="text-center">SORRY!</div>
+      </template>
+      <p>
+        Please choose quotes from the same age group for a correct comparison.
+      </p>
+      <template #actions>
+        <div class="text-center space-x-4">
+          <x-button
+            size="sm"
+            color="emerald"
+            @click.prevent="modals.mixInquiryConfirm = false"
+          >
+            Okay, got it!
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'TRAVEL'"
+    />
+    <AuditLogs
+      :type="'App\\Models\\TravelQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
   </div>
 </template>
 <style>

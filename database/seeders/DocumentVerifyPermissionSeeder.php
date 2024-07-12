@@ -21,7 +21,7 @@ class DocumentVerifyPermissionSeeder extends Seeder
         if (! empty($roleId)) {
             $docVeirfyPermission = Permission::where('name', PermissionsEnum::DOCUMENT_VERIFY)->first();
             if (empty($docVeirfyPermission->id)) {
-                DB::table('permissions')->insert([
+                $docVeirfyPermissionId = DB::table('permissions')->insertGetId([
                     'name' => PermissionsEnum::DOCUMENT_VERIFY ?? 'document-verify',
                     'guard_name' => 'web',
                     'created_at' => now(),
@@ -30,10 +30,10 @@ class DocumentVerifyPermissionSeeder extends Seeder
                 DB::table('role_has_permissions')->insert(
                     [
                         'role_id' => $roleId,
-                        'permission_id' => $docVeirfyPermission->id,
+                        'permission_id' => $docVeirfyPermissionId,
                     ]);
             } else {
-                info(PermissionsEnum::DOCUMENT_VERIFY.' Permission not found');
+                info(PermissionsEnum::DOCUMENT_VERIFY.' Permission already exists');
             }
         } else {
             info(RolesEnum::TravelHapex.' Role not found');
