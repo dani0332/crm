@@ -228,6 +228,9 @@ const filters = reactive({
   segment_filter: 'all',
   teams: [],
   transaction_approved_dates: page.props.transaction_approved_dates || '',
+  payment_due_at_start: "",
+  payment_due_at_end: "",
+  payment_due_date:""
 });
 
 const teamUsers =
@@ -444,7 +447,10 @@ onMounted(() => {
             filters.code ||
             filters.email ||
             filters.renewal_batch ||
-            filters.quote_batch_id
+            filters.quote_batch_id ||
+            filters.payment_due_at_start ||
+            filters.payment_due_at_end ||
+            filters.payment_due_date
               ? []
               : [isRequired]
           "
@@ -457,7 +463,10 @@ onMounted(() => {
             filters.code ||
             filters.email ||
             filters.renewal_batch ||
-            filters.quote_batch_id
+            filters.quote_batch_id ||
+            filters.payment_due_at_start ||
+            filters.payment_due_at_end ||
+            filters.payment_due_date
               ? []
               : [isRequired]
           "
@@ -633,6 +642,23 @@ onMounted(() => {
           :options="quoteSegments"
           :single="true"
         />
+
+        <DatePicker
+          v-model="filters.payment_due_at_start"
+          label="Payment Due Date Start"
+        />
+        <DatePicker
+          v-model="filters.payment_due_at_end"
+          label="Payment Due Date End"
+        />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+      />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>
