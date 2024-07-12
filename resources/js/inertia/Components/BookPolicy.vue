@@ -1,7 +1,6 @@
 <script setup>
 import { useRoundIt } from '../Composables/utilities';
 import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
-import NProgress from 'nprogress';
 const page = usePage();
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
@@ -37,9 +36,6 @@ const props = defineProps({
     default: true,
   },
 });
-
-const showSageAPILogsModal = ref(false);
-provide('showSageAPILogsModal', showSageAPILogsModal);
 
 const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
@@ -413,67 +409,6 @@ const isShowingTransactionPaymentStatus = computed(() => {
   return policyStatuses.includes(props.quote.quote_status_id);
 });
 
-const sageAPILogs = reactive({
-  data: [],
-  loader: false,
-  table: [
-    { text: 'Id', value: 'id' },
-    { text: 'Request Type', value: 'sage_request_type' },
-    { text: 'API End Point', value: 'sage_end_point' },
-    { text: 'Request Payload', value: 'sage_payload' },
-    { text: 'Request Response', value: 'response' },
-    { text: 'Request Status', value: 'status' },
-    { text: 'Logged At', value: 'created_at' },
-  ],
-});
-provide('sageAPILogs', sageAPILogs);
-const showSageAPILogsButtonAndComponent = computed(() => {
-  return can(permissionsEnum.VIEW_SAGE_API_LOGS) && sageAPILogs.data.length > 0;
-});
-const showSageAPILogs = async () => {
-  try {
-    let sageLogs = await fetchSageAPILogs();
-    if (sageLogs) {
-      if (sageAPILogs.data.length === 0) {
-        notification.error({
-          title: 'No Sage API Logs Found',
-          position: 'top',
-        });
-        return;
-      }
-      showSageAPILogsModal.value = true;
-    } else {
-      notification.error({
-        title: 'Something went wrong. Please try again.',
-        position: 'top',
-      });
-    }
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-const fetchSageAPILogs = async () => {
-  NProgress.start();
-  sageAPILogs.loader = true;
-  const response = await axios.get(route('sage.api.logs', [props.quote.id]), {
-    params: {
-      modelClass: props.modelClass,
-    },
-  });
-  sageAPILogs.loader = false;
-  NProgress.done();
-  if (response.data?.success) {
-    sageAPILogs.data = response?.data?.sageApiLogs;
-    return true;
-  } else {
-    return false;
-  }
-};
-
-onBeforeMount(() => {
-  fetchSageAPILogs();
-});
 </script>
 
 <template>
@@ -830,16 +765,14 @@ onBeforeMount(() => {
             </div>
 
             <div v-if="showActionButtons" class="flex justify-end">
-              <x-button
-                v-if="showSageAPILogsButtonAndComponent"
-                @click="showSageAPILogs"
-                size="sm"
-                class="mt-4 mr-2"
-                color="orange"
-                :disabled="sageAPILogs.loader"
-              >
-                Sage API Logs
-              </x-button>
+              <div class="mt-5 mr-2">
+                <SageAPILogs
+                  :quoteType="props.quoteType"
+                  :record="props.quote"
+                  :modelClass="props.modelClass"
+                  :permissionsEnum="page.props.permissionsEnum"
+                />
+              </div>
               <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
                   v-if="bp.isEditing"
@@ -1103,14 +1036,7 @@ onBeforeMount(() => {
         </x-form>
       </template>
     </Collapsible>
-    <SageAPILogs
-      v-if="showSageAPILogsButtonAndComponent"
-      :show-modal="showSageAPILogsModal"
-      :quote="props.quote"
-      :sage-api-logs="sageAPILogs"
-      :quote-type="props.quoteType"
-      :model-type="props.modelType"
-    />
+    
     <x-modal v-model="modals.sendPolicyConfirm" size="lg" show-close backdrop>
       <template #header> Send Policy </template>
       <x-alert

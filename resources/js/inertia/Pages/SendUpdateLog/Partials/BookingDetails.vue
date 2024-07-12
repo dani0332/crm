@@ -1,5 +1,4 @@
 <script setup>
-import NProgress from 'nprogress';
 const can = permission => useCan(permission);
 
 const { isRequired } = useRules();
@@ -787,73 +786,6 @@ const isPriceVatApplicableEditable = computed(() => {
   );
 });
 
-const showSageAPILogsModal = ref(false);
-provide('showSageAPILogsModal', showSageAPILogsModal);
-
-const sageAPILogs = reactive({
-  data: [],
-  loader: false,
-  table: [
-    { text: 'Id', value: 'id' },
-    { text: 'Request Type', value: 'sage_request_type' },
-    { text: 'API End Point', value: 'sage_end_point' },
-    { text: 'Request Payload', value: 'sage_payload' },
-    { text: 'Request Response', value: 'response' },
-    { text: 'Request Status', value: 'status' },
-    { text: 'Logged At', value: 'created_at' },
-  ],
-});
-provide('sageAPILogs', sageAPILogs);
-const showSageAPILogsButtonAndComponent = computed(() => {
-  return can(permissionsEnum.VIEW_SAGE_API_LOGS) && sageAPILogs.data.length > 0;
-});
-const showSageAPILogs = async () => {
-  try {
-    let sageLogs = await fetchSageAPILogs();
-    if (sageLogs) {
-      if (sageAPILogs.data.length === 0) {
-        notification.error({
-          title: 'No Sage API Logs Found',
-          position: 'top',
-        });
-        return;
-      }
-      showSageAPILogsModal.value = true;
-    } else {
-      notification.error({
-        title: 'Something went wrong. Please try again.',
-        position: 'top',
-      });
-    }
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-const fetchSageAPILogs = async () => {
-  NProgress.start();
-  sageAPILogs.loader = true;
-  const response = await axios.get(
-    route('sage.api.logs', [props.sendUpdateLog.id]),
-    {
-      params: {
-        modelClass: props.modelClass,
-      },
-    },
-  );
-  sageAPILogs.loader = false;
-  NProgress.done();
-  if (response.data?.success) {
-    sageAPILogs.data = response?.data?.sageApiLogs;
-    return true;
-  } else {
-    return false;
-  }
-};
-
-onBeforeMount(() => {
-  fetchSageAPILogs();
-});
 </script>
 
 <template>
@@ -1821,15 +1753,12 @@ onBeforeMount(() => {
           </div>
           <x-divider class="my-4 mt-10" />
           <div class="flex justify-end gap-2">
-            <x-button
-              v-if="showSageAPILogsButtonAndComponent"
-              @click="showSageAPILogs"
-              size="sm"
-              color="orange"
-              :disabled="sageAPILogs.loader"
-            >
-              Sage API Logs
-            </x-button>
+            <SageAPILogs
+              :quoteType="props.quoteType"
+              :record="props.sendUpdateLog"
+              :modelClass="props.modelClass"
+              :permissionsEnum="page.props.permissionsEnum"
+            />
             <template v-if="!state.isEdit">
               <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
               <x-button
@@ -1879,14 +1808,7 @@ onBeforeMount(() => {
         Confirm
       </x-button>
     </sendUpdateCustConfirmBtnTemp>
-    <SageAPILogs
-      v-if="showSageAPILogsButtonAndComponent"
-      :show-modal="showSageAPILogsModal"
-      :quote="props.quote"
-      :sage-api-logs="sageAPILogs"
-      :quote-type="props.quoteType"
-      :model-type="props.modelType"
-    />
+    
     <x-modal v-model="modals.sendConfirm" show-close backdrop>
       <template #header> Send Update </template>
       <x-alert
