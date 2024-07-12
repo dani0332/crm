@@ -701,7 +701,12 @@ class SagePayloadFactory
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $data = $customer->data;
-        $entity = $data['entity'] ?? QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first()?->entity;
+        $entity = $data['entity'] ?? null;
+        if($entity){
+            $quoteEntityMapping = QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first();
+            $entity = $quoteEntityMapping?->entity;
+        }
+
         if ($entity) {
             $payLoad = [
                 'CustomerNumber' => 'C'.$customer->id,

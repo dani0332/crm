@@ -157,7 +157,8 @@ class SageApiService
         $customer = Customer::find($quote->customer_id);
         $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
 
-        $quoteEntity = QuoteRequestEntityMapping::where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quote->id])->first()?->entity;
+        $quoteEntityMapping = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quote->id])->first();
+        $quoteEntity = $quoteEntityMapping?->entity;
         if ($quoteEntity) {
             $customerData['entity'] = $quoteEntity;
             if ($quoteEntity->sage_customer_number) {
@@ -222,9 +223,8 @@ class SageApiService
         $payLoadOptions['endPoint'] = 'AR/ARCustomers';
         $payLoadOptions['payload'] = [];
         $response = '';
-
-        $quoteEntity = QuoteRequestEntityMapping::where(['quote_type_id' => $data['quoteTypeId'], 'quote_request_id' => $data['id']])->first()?->entity;
-
+        $quoteEntityMapping = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $data['quoteTypeId'], 'quote_request_id' => $data['id']])->first();
+        $quoteEntity = $quoteEntityMapping?->entity;
         if ($quoteEntity) {
             $data['entity'] = $quoteEntity;
             if ($quoteEntity->sage_customer_number) {
