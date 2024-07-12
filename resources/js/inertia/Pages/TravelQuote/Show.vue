@@ -1282,16 +1282,10 @@ const documentValidate = async val => {
 const getGenderDisplay = (val) => {
       switch (val) {
         case 'M':
-        case 'm':
-        case 'Male':
         case 'male':
-        case 'MALE':
           return 'Male';
         case 'F':
-        case 'f':
-        case 'Female':
         case 'female':
-        case 'FEMALE':
           return 'Female';
         default:
           return '';
