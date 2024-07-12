@@ -83,7 +83,7 @@ class DatabaseSeeder extends Seeder
             // BusinessTypeInsuranceSeeder::class,
             // MarineSeeder::class,
             // ImcrmUsersRolesCleaner::class,
-            addPermissionsForInsurerNowPayment::class,
+            AddPermissionsForInsurerNowPayment::class,
             AddeTicketDocumentTypeSeeder::class,
             DocumentVerifyPermissionSeeder::class,
         ]);
