@@ -417,14 +417,14 @@ class SendUpdateLogService
 
     public function isNegativeValue($sendUpdateLog): bool
     {
-        $category = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
+        $category = $sendUpdateLog->category->code;
 
         if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
             return true;
         }
 
         if ($category == SendUpdateLogStatusEnum::EF) {
-            $option = LookupRepository::where('id', $sendUpdateLog->option_id)->value('code');
+            $option = $sendUpdateLog?->option?->code;
             if (in_array($option, [
                 SendUpdateLogStatusEnum::MPC,
                 SendUpdateLogStatusEnum::MDOM,
@@ -465,6 +465,7 @@ class SendUpdateLogService
         }
 
         return [
+            'booking_date' => $quote->policy_booking_date ?? null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
@@ -550,32 +551,6 @@ class SendUpdateLogService
         }
 
         return '';
-    }
-
-    public function mergeBookingDetails($bookingDetails, $sendUpdateLog)
-    {
-        $data = [
-            'reversal_invoice' => $sendUpdateLog->reversal_invoice ?? null,
-            'booking_date' => $sendUpdateLog->booking_date,
-            'invoice_description' => $sendUpdateLog->invoice_description,
-            'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
-            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status,
-            'invoice_date' => $sendUpdateLog->invoice_date,
-            'insurer_tax_invoice_number' => $sendUpdateLog->insurer_tax_invoice_number,
-            'insurer_commission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
-            'discount' => $sendUpdateLog->discount,
-            'commission_percentage' => $sendUpdateLog->commission_percentage,
-            'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
-            'vat_on_commission' => $sendUpdateLog->vat_on_commission,
-            'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
-            'total_commission' => $sendUpdateLog->total_commission,
-            'total_vat_amount' => $sendUpdateLog->total_vat_amount,
-            'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
-            'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-            'price_with_vat' => $sendUpdateLog->price_with_vat,
-        ];
-
-        return array_merge($bookingDetails, $data);
     }
 
     public function isPaymentVisible($categoryCode, $optionCode): bool
