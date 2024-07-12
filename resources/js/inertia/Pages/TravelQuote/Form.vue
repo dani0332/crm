@@ -253,10 +253,20 @@ const regionName = (ids) => {
         if (matchedValues[i] === 'United States of America' || matchedValues[i] === 'Canada' || matchedValues[i] === 'United States') {
             updateRegionCover(2);
             return 'Worldwide (incl. US/Canada)';
-        } else if (schengenCountries.includes(matchedValues[i])) {
-            updateRegionCover(4);
+        } else if (schengenCountries.includes(matchedValues[i]) ) {
+            let hasOtherCountry = matchedValues.some(value => schengenCountries.includes(value));
+            if(hasOtherCountry === true && matchedValues.some(value => !schengenCountries.includes(value))) {
+                updateRegionCover(1);
+                return 'Worldwide (excl. US/Canada)';
+            }
+            else {
+
+                updateRegionCover(4);
             return 'Schengen Countries';
+            }
+
         }
+
         else {
             updateRegionCover(1);
         }
