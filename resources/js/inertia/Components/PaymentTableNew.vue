@@ -6,6 +6,7 @@ const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
 const paymentLookups = page.props.paymentLookups;
+const vatValue = page.props.vatValue;
 const can = permission => useCan(permission);
 const props = defineProps({
   payments: Array,
@@ -28,6 +29,10 @@ const props = defineProps({
   isAmlClearedForPayment: {
     type: Boolean,
     default: false,
+  },
+  eCommercePriceWithLP: {
+    type: [String, Number],
+    default: '0',
   },
 });
 
@@ -147,6 +152,27 @@ const calculateTotalAmount = () => {
   calculatePaymentBreakup(false);
 };
 
+// Define a computed property to deduct insure now pay later
+const isInsureNowPayLaterAllowed = computed(() => {
+  //handle edit scenario for insure now pay later
+  if (paymentMethodsForm.status == 'edit' && paymentMethodsForm.collection_type === 'broker') {
+    if (props.payments.length > 0) {
+        let inureNowPayLaterExists = props.payments[0].payment_splits.find(
+          item => item.payment_method.code ===  page.props.paymentMethodsEnum?.InsureNowPayLater,
+        );
+        if (inureNowPayLaterExists) {
+          return true;
+        }
+    }
+  }
+  if ( paymentMethodsForm.collection_type === 'broker' && 
+       can(permissionEnum.INPL_USER) 
+  ) { 
+    return true;
+  }
+  return false;
+});
+
 const { copy, copied } = useClipboard();
 const onCopyPaymentLink = (paymentLink, paymentStatus) => {
   if (paymentStatus == props.paymentStatusEnum.PAID) {
@@ -217,6 +243,15 @@ const handleKeyDown = event => {
 
 const currentFile = computed(() => {
   return filesTest.value[currentFileIndex.value];
+});
+
+// Define a computed property to calculate the initial total price without VAT
+const initialTotalPriceWithoutVat = computed(() => {
+  if ( props.quoteType === 'Health' ) {
+    return props.eCommercePriceWithLP; // premium with loading price,excluding vat
+  }  
+  const vatRate = vatValue ? vatValue / 100 : 0;
+  return (totalPrice.value / (1 + vatRate));
 });
 
 const closeInnerModal = () => {
@@ -325,7 +360,8 @@ const validatePaymentOption = () => {
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
       isDocumentNotUploaded.value[i] = false;
       if (
-        (paymentMethodsModels.value[i] == 'BT' ||
+        (paymentMethodsModels.value[i] == 'IN_PL' ||
+          paymentMethodsModels.value[i] == 'BT' ||
           paymentMethodsModels.value[i] == 'CHQ' ||
           paymentMethodsModels.value[i] == 'PDC' ||
           paymentMethodsModels.value[i] == 'IP') &&
@@ -549,9 +585,12 @@ const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
 
+  const commonExclusions = ['PPR', 'CA', 'MP', 'PP'];
+  const additionalExclusions = isInsureNowPayLaterAllowed.value ? [] : ['IN_PL'];
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-    item => !['IN_PL', 'PPR', 'CA', 'MP', 'PP'].includes(item.value),
+    item => ![...commonExclusions, ...additionalExclusions].includes(item.value)
   );
+
   if (paymentMethodsForm.collection_type === 'insurer') {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item => !['CC', 'BT', 'CHQ', 'CSH'].includes(item.value),
@@ -600,9 +639,13 @@ const handleApprovalReasonChange = () => {
   //customize payment method based on collection type
   if (paymentMethodsForm.credit_approval !== '') {
     paymentTypesFiltered.value = paymentTypes.value;
+
+    const commonExclusion = ['PPR', 'MP', 'PP'];
+    const additionalExclusion = isInsureNowPayLaterAllowed.value ? [] : ['IN_PL'];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item => !['IN_PL', 'PPR', 'MP', 'PP'].includes(item.value),
+      item => ![...commonExclusion, ...additionalExclusion].includes(item.value)
     );
+
     if (paymentMethodsForm.collection_type === 'insurer') {
       if (
         paymentMethodsForm.frequency === 'upfront' ||
@@ -694,20 +737,20 @@ const handleDiscountChange = (editDiscountValue = 0) => {
 
   if (paymentMethodsForm.discount === 'employee_discount') {
     if (props.quoteType === 'Health') {
-      discountValue.value = (totalPrice.value * (5 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (5 / 100)).toFixed(2);
     } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
-      discountValue.value = (totalPrice.value * (15 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (15 / 100)).toFixed(2);
     } else {
-      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); // for car
+      discountValue.value = (initialTotalPriceWithoutVat.value * (12.5 / 100)).toFixed(2); // for car
     }
   }
   if (paymentMethodsForm.discount === 'family_employee_discount') {
     if (props.quoteType === 'Health') {
-      discountValue.value = (totalPrice.value * (2.5 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (2.5 / 100)).toFixed(2);
     } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
-      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2);
+      discountValue.value = (initialTotalPriceWithoutVat.value * (12.5 / 100)).toFixed(2);
     } else {
-      discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
+      discountValue.value = (initialTotalPriceWithoutVat.value * (7.5 / 100)).toFixed(2); // for car
     }
   }
   if (
@@ -3824,8 +3867,13 @@ const isMasterPaymentPaid = computed(() => {
                   v-if="
                     isCreditApprovalView ||
                     (splitPaymentRecord.payment_status_id !=
-                      paymentStatusEnum.PAID &&
-                      can(permissionEnum.ApprovePayments))
+                      paymentStatusEnum.PAID &&                      
+                      (
+                        can(permissionEnum.ApprovePayments)
+                        ||                    
+                        (can(permissionEnum.INPL_APPROVER) && splitPaymentRecord.payment_methods_code == 'IN_PL')
+                      )
+                    )
                   "
                   class="w-full flex justify-end"
                 >

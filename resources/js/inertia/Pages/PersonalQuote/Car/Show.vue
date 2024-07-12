@@ -92,6 +92,7 @@ defineProps({
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   clientInquiryLogs: Array,
+  puaTypeEnum: Object,
 });
 
 
@@ -403,8 +404,9 @@ const notesForCustomersTableItems = computed(() => {
 
 const leadActivities = reactive({
   columns: [
-    { text: 'Title', value: 'title' },
     { text: 'Client Name', value: 'client_name' },
+    { text: 'Lead Status', value: 'quote_status.text' },
+    { text: 'Title', value: 'title' },
     { text: 'Followup Date', value: 'due_date' },
     { text: 'Assigned To', value: 'assignee' },
     { text: 'Done', value: 'status', width: 60, align: 'center' },
@@ -1662,7 +1664,7 @@ const handlePlanSelected = plan => {
         </dl>
         <div class="grid sm:grid-cols-1 mt-3">
           <dt class="font-medium mb-3">ADDONS</dt>
-          <dd v-if="carQuotePlanAddons.length>0">            
+          <dd v-if="carQuotePlanAddons.length>0">
             <table style="width: 100%">
               <thead></thead>
               <tbody>
@@ -1699,7 +1701,7 @@ const handlePlanSelected = plan => {
                   </td>
                 </tr>
               </tbody>
-            </table>            
+            </table>
           </dd>
           <dd v-else>N/A</dd>
         </div>
@@ -1729,7 +1731,6 @@ const handlePlanSelected = plan => {
               v-if="
                 !hasAnyRole([
                   rolesEnum.CarAdvisor,
-                  rolesEnum.CarDeputyManager,
                   rolesEnum.CarManager,
                 ])
               "
@@ -2896,19 +2897,18 @@ const handlePlanSelected = plan => {
             </x-tag>
 
             <x-tag
-              v-if="puaPremium && puaPremium != null && puaType"
+              v-if="puaType"
               size="xs"
               class="mt-0.5 text-[10px] text-white"
               style="background-color: #e00000"
             >
               <x-tooltip position="right">
                 <template #tooltip>
-                  <span class="font-medium">
-                    Pending Underwriter Approval (PUA) indicates that this quote
-                    is prepared using our internal rating calculator. Please
-                    contact the client to get the required documents, to proceed
-                    with generating a quote on the insurer portal and connect
-                    with the underwriter to obtain their approval.
+                  <span class="font-medium" v-if="puaType == puaTypeEnum.PPUA">
+                    {{ puaTypeEnum.PPUA_TOOLTIP }}
+                  </span>
+                  <span class="font-medium" v-else>
+                    {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
                   </span>
                 </template>
                 {{ puaType }}

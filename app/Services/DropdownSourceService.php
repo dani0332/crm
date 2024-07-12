@@ -13,6 +13,7 @@ use App\Models\ClaimHistory;
 use App\Models\CurrencyType;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
+use App\Models\HealthPlanType;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\InsuranceProvider;
@@ -195,7 +196,7 @@ class DropdownSourceService extends BaseService
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
                         ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                        ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR'])->get();
+                        ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR'])->get();
                 } elseif (strtolower($advisorType) == strtolower(quoteTypeCode::Business)) {
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
@@ -321,6 +322,9 @@ class DropdownSourceService extends BaseService
 
                 }
                 // =========== end =================
+                break;
+            case 'plan_type_id':
+                $data = HealthPlanType::where('is_active', 1)->select('id', 'text')->orderBy('id')->get();
                 break;
             default:
                 break;

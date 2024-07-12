@@ -70,15 +70,15 @@ const filters = reactive({
 });
 
 watch(
-    () => filters,
-    () => {
-        if (filters.created_at_start && filters.created_at_end) {
-            canExport.value = true;
-        } else {
-            canExport.value = false;
-        }
-    },
-    { deep: true, immediate: true },
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 const leadStatusOptions = computed(() => {
@@ -285,11 +285,13 @@ const onDataExport = () => {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key].map(value => isNaN(parseInt(value))? value: parseInt(value));
+      filters[key.substring(0, key.length - 2)] = params[key].map(value =>
+        isNaN(parseInt(value)) ? value : parseInt(value),
+      );
     } else {
       filters[key] = params[key];
     }
- }
+  }
 }
 
 onMounted(() => {
@@ -464,42 +466,41 @@ watch(
           />
         </x-field>
         <x-field label="Lead Status">
-            <ComboBox
-                v-model="filters.quote_status_id"
-                placeholder="Search by Lead Status"
-                :options="leadStatusOptions"
-            />
+          <ComboBox
+            v-model="filters.quote_status_id"
+            placeholder="Search by Lead Status"
+            :options="leadStatusOptions"
+          />
         </x-field>
         <x-field label="BUSINESS INSURANCE TYPE">
-            <ComboBox
-                v-model="filters.business_type_of_insurance_id"
-                placeholder="Search by Insurance Type"
-                :options="insuranceTypeOptions"
-            />
+          <ComboBox
+            v-model="filters.business_type_of_insurance_id"
+            placeholder="Search by Insurance Type"
+            :options="insuranceTypeOptions"
+          />
         </x-field>
         <x-field
           label="Advisor"
           v-if="
             !hasAnyRole([
               rolesEnum.CorpLineRenewalAdvisor,
-              rolesEnum.CorpLineNewBusinessAdvisor,
               rolesEnum.CorpLineAdvisor,
             ])
           "
         >
-           <ComboBox
+          <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-            />
+          />
         </x-field>
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"

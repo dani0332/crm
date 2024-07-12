@@ -39,7 +39,6 @@ describe('Group Mediacl Qoutes', () => {
         userPage.getField('1', 'CAR')
         userPage.getField('2', 'Test')
         userPage.getField('3', 'CAR')
-        userPage.getField('4', 'Car Advisor 2 - CAR_DEPUTY_MANAGER')
         commonPage.getButtonByName('Create')
         commonPage.getPopUpAssertion('User has been stored')
 

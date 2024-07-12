@@ -133,6 +133,16 @@ class ApplicationStorageSeeder extends Seeder
             ]);
         }
 
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::BRIDGER_PASSWORD)->exists()) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::BRIDGER_PASSWORD,
+                'value' => '@bridger@0005',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
         if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS)->exists()) {
             ApplicationStorage::insert([
                 'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS,
@@ -149,6 +159,15 @@ class ApplicationStorageSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
+            ]);
+        }
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE,
+                'value' => '677',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }

@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
+            // SICFollowupEmailTemplateIDSeeder::class,
             QuoteStatusTableSeeder::class,
             // RenewalsPermissionSeeder::class,
             // addCarQuoteSearchPermission::class,
@@ -78,10 +79,13 @@ class DatabaseSeeder extends Seeder
             // RevivalConversionReportPermissionSeeder::class,
             // end
             // AddCrossLOBSeeder::class,
-            MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
+            // MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
             // BusinessTypeInsuranceSeeder::class,
-            MarineSeeder::class,
-
+            // MarineSeeder::class,
+            // ImcrmUsersRolesCleaner::class,
+            AddPermissionsForInsurerNowPayment::class,
+            AddeTicketDocumentTypeSeeder::class,
+            DocumentVerifyPermissionSeeder::class,
         ]);
     }
 }

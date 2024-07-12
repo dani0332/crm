@@ -1,4 +1,5 @@
 <script setup>
+import { buildCdbidLink } from '../../Composables/utilities';
 // Component Props and State Initialization
 const props = defineProps({
   activities: Object,
@@ -19,6 +20,7 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 const notification = useNotifications('toast');
+
 const activityForm = useForm({
   title: null,
   description: null,
@@ -31,23 +33,26 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
 });
+
 const filters = reactive({
   assignee_id: '',
   status: '',
-  due_date_start: '',
-  due_date_end: '',
   due_date_time_start: '',
   due_date_time_end: '',
   page: 1,
+  isCustom: false,
 });
+
 const loader = reactive({
   table: false,
   export: false,
 });
+
 const activityTable = [
-  { text: 'Title', value: 'title' },
   { text: 'REF ID', value: 'cdbid' },
   { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
   { text: 'Followup Date', value: 'due_date' },
   { text: 'Assigned To', value: 'assignee.name' },
   { text: 'Done', value: 'status', width: 60, align: 'center' },
@@ -63,11 +68,6 @@ function filterActivities(isValid) {
   if (isOverDue.value) {
     if (filters.status == '1') {
       filters.due_date_end = '1/1/1970';
-    } else {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      filters.due_date_end = yesterday.toLocaleDateString();
     }
   }
 
@@ -76,6 +76,7 @@ function filterActivities(isValid) {
       delete filters[key];
     }
   }
+
   router.visit('/activities', {
     method: 'get',
     data: {
@@ -92,6 +93,7 @@ function filterActivities(isValid) {
     },
   });
 }
+
 function resetFilters() {
   router.visit('/activities', {
     method: 'get',
@@ -101,6 +103,7 @@ function resetFilters() {
     onSuccess: () => (loader.table = false),
   });
 }
+
 function setQueryFilters() {
   let query = router.page.url.split('?')[1];
   if (query) {
@@ -111,7 +114,9 @@ function setQueryFilters() {
     });
   }
 }
+
 function resetDates(option) {
+  
   const today = new Date();
   let startDate, endDate;
   if (isOverDue.value) {
@@ -120,86 +125,66 @@ function resetDates(option) {
   isOverDue.value = false;
   selectedOption.value = option;
   if (option == 'today') {
-    startDate = today.toLocaleDateString();
-    endDate = today.toLocaleDateString();
+
+    startDate = endDate = useDateFormat(today, 'DD-MM-YYYY');
+
   } else if (option == 'tomorrow') {
+
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-    startDate = tomorrow.toLocaleDateString();
-    endDate = tomorrow.toLocaleDateString();
+    startDate = endDate = useDateFormat(tomorrow, 'DD-MM-YYYY');
+
   } else if (option == 'tweek') {
+
     const firstDayOfWeek = new Date(
       today.setDate(today.getDate() - today.getDay() + 1),
     );
     const lastDayOfWeek = new Date(
       today.setDate(today.getDate() - today.getDay() + 7),
     );
-    startDate = firstDayOfWeek.toLocaleDateString();
-    endDate = lastDayOfWeek.toLocaleDateString();
+    startDate = useDateFormat(firstDayOfWeek, 'DD-MM-YYYY');
+    endDate = useDateFormat(lastDayOfWeek, 'DD-MM-YYYY');
+
   } else if (option == 'tmonth') {
+
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayOfMonth = new Date(
       today.getFullYear(),
       today.getMonth() + 1,
       0,
     );
-    startDate = firstDayOfMonth.toLocaleDateString();
-    endDate = lastDayOfMonth.toLocaleDateString();
+    startDate = useDateFormat(firstDayOfMonth, 'DD-MM-YYYY');
+    endDate = useDateFormat(lastDayOfMonth, 'DD-MM-YYYY');
+
   } else if (option == 'overdue') {
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    startDate = '1/1/1970';
     filters.status = '0';
-    isOverDue.value = true;
-    endDate = yesterday.toLocaleDateString();
+    isOverDue.value = false;
+
+    startDate = useDateFormat('01/01/1970', 'DD-MM-YYYY');
+    endDate = useDateFormat(yesterday, 'DD-MM-YYYY');
+
   } else if (option === 'custom') {
     // Handle the custom option by setting the custom start and end dates
     selectedOption.value = option;
     customStartDate.value = null; // Clear previously selected dates
     customEndDate.value = null;
+    filters.isCustom = true;
   }
   if (option != 'custom') {
-    filters.due_date_time_start = '';
-    filters.due_date_time_end = '';
-    filters.due_date_start = startDate;
-    filters.due_date_end = endDate;
+    filters.due_date_time_start = startDate.value;
+    filters.due_date_time_end = endDate.value;
+
     filterActivities(1); // Call the filterActivities function
   }
 }
 function applyCustomDates() {
   if (customStartDate.value && customEndDate.value) {
-    // Update the filters with the selected custom dates
-    filters.due_date_start = '';
-    filters.due_date_end = '';
     filters.due_date_time_start = customStartDate.value;
     filters.due_date_time_end = customEndDate.value;
     filterActivities(1); // Call the filterActivities function
   }
-}
-
-// Helper Functions
-function buildCdbidLink(quote_uuid, quote_type_id) {
-  if (quote_uuid) {
-    var url = '/quotes/' + getQuoteType(quote_type_id, 'id') + '/' + quote_uuid;
-    var quoteTypeCode = getQuoteType(quote_type_id);
-    var CDBID = quoteTypeCode + '-' + quote_uuid.toUpperCase();
-    return "<a target='_blank' href='" + url + "'>" + CDBID + '</a>';
-  } else {
-    return '';
-  }
-}
-function getQuoteType(id, returnType = 'code') {
-  const types = {
-    1: { code: 'CAR-', id: 'car' },
-    2: { code: 'HOM-', id: 'home' },
-    3: { code: 'HEA-', id: 'health' },
-    4: { code: 'LIF-', id: 'life' },
-    5: { code: 'BUS-', id: 'business' },
-    6: { code: 'BIK-', id: 'bike' },
-    7: { code: 'YAC-', id: 'yacht' },
-    8: { code: 'TRA-', id: 'travel' },
-  };
-  return types[id] ? types[id][returnType] : '';
 }
 
 // CRUD Functions
@@ -290,9 +275,11 @@ const onSubmit = isValid => {
 
 // Component hooks
 watch(() => filters, { deep: true, immediate: true });
+
 onBeforeMount(() => {
   resetDates('today');
 });
+
 onMounted(() => {
   setQueryFilters();
 });

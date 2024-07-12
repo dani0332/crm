@@ -4,11 +4,13 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
-use App\Models\Customer;
+use App\Jobs\AlfredFollowupEmailJob;
 use App\Models\PersonalQuote;
-use App\Services\SendEmailCustomerService;
+use App\Services\CustomerService;
+use App\Services\MyAlfredService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class AlfredFollowUpSchedulerCommand extends Command
 {
@@ -21,7 +23,8 @@ class AlfredFollowUpSchedulerCommand extends Command
 
     private $customerData = [];
     private $customerEmailSent = [];
-    private SendEmailCustomerService $sendEmailCustomerService;
+    private $myAlfredService;
+    private $customerService;
     private $appEnv = '';
 
     /**
@@ -29,22 +32,18 @@ class AlfredFollowUpSchedulerCommand extends Command
      *
      * @var string
      */
-    public function __construct(SendEmailCustomerService $sendEmailCustomerService)
-    {
-        parent::__construct();
-        $this->sendEmailCustomerService = $sendEmailCustomerService;
-    }
-
     protected $description = 'sending follow up email';
 
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(MyAlfredService $myAlfredService, CustomerService $customerServic)
     {
         info('start sending follow up email : '.now());
 
         $this->appEnv = config('constants.APP_ENV');
+        $this->myAlfredService = $myAlfredService;
+        $this->customerService = $customerServic;
 
         $emailCampaignName = getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN);
         if (isMyAlfredCampaignEnabled($emailCampaignName)) {
@@ -68,7 +67,7 @@ class AlfredFollowUpSchedulerCommand extends Command
         PersonalQuote::whereNotNull('transaction_approved_at')
             ->whereBetween('transaction_approved_at', [$currentDate, $leadDataEndDate])
             ->join('customer', 'personal_quotes.customer_id', '=', 'customer.id')
-            ->where('customer.campaign_followups', '<', 4)
+            ->where('customer.campaign_followups', '<', 3)
             ->when($this->appEnv != EnvEnum::PRODUCTION, function ($q) {
                 $q->where('personal_quotes.email', 'like', 'abc_abhipfet%');
             })
@@ -95,7 +94,7 @@ class AlfredFollowUpSchedulerCommand extends Command
             })->values();
             info('total eligible customers : '.count($leadsGroupedByCustomerEmail));
             $this->customerData[] = $leadsGroupedByCustomerEmail->toArray();
-            $response = getAlfredEligibleCustomers($leadsGroupedByCustomerEmail->toArray());
+            $response = $this->myAlfredService->getAlfredEligibleCustomers($leadsGroupedByCustomerEmail->toArray());
             if (! empty($response)) {
                 $customersList = $response->data ?? [];
             }
@@ -109,28 +108,47 @@ class AlfredFollowUpSchedulerCommand extends Command
     {
         $customerDataCollapsed = collect($this->customerData)->collapse();
         $this->customerData = $customerDataCollapsed->all();
+        $jobs = [];
         if (! empty($customerFollowUpEmails)) {
             foreach ($customerFollowUpEmails as $customer) {
-                if (! empty($customer->email)) {
+                if (! empty($customer->email) && isValidEmail($customer->email)) {
                     if ($customer->haveRemainingScratches) {
                         $isCustomer = collect($this->customerData)->where('email', $customer->email)->first();
                         $isEmailSent = collect($this->customerEmailSent)->where('email', $customer->email)->first();
                         if (empty($isEmailSent)) {
-                            $checkCustomerFollowUps = Customer::where('id', $isCustomer->customer_id)->first();
+                            $checkCustomerFollowUps = $this->customerService->getCustomerCampaignFollowups($isCustomer->customer_id);
                             if ($checkCustomerFollowUps->campaign_followups < 3) {
                                 $this->customerEmailSent[] = ['email' => $isCustomer->email, 'status' => true];
-                                info("--------start sending email for {$isCustomer->email} -----------");
-                                usleep(200);
-                                $this->sendEmailCustomerService->sendingAlfredFollowupEmail($isCustomer);
-                                info("--------end sending email for {$isCustomer->email} -----------");
-
+                                $jobs[] = new AlfredFollowupEmailJob($isCustomer);
                             }
                         }
                     }
                 } else {
                     info('invaild customer email  received from alfred : '.$customer->email);
+
+                    echo 'invaild customer email  received from alfred : '.$customer->email;
                 }
             }
+            if (count($jobs)) {
+                Haystack::build()
+                    ->addJobs($jobs)
+                    ->then(function () {
+                        info('AlfredFollowUpSchedule - all jobs completed successfully');
+                    })
+                    ->catch(function () {
+                        info('AlfredFollowUpSchedule - one of batch is failed.');
+                    })
+                    ->finally(function () {
+                        info('AlfredFollowUpSchedule - everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(1)
+                    ->dispatch();
+            } else {
+                info('AlfredFollowUpSchedule - No Customer Found to Send Email');
+            }
+        } else {
+            info('AlfredFollowUpSchedule - No Customers Found');
         }
     }
 }

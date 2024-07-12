@@ -20,6 +20,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\PuaEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -208,7 +209,7 @@ class CRUDController extends Controller
 
             if (
                 isset($upcomingBatch->deadline->deadline_date) &&
-                auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
+                auth()->user()->hasAnyRole([RolesEnum::CarAdvisor]) &&
                 UserRepository::isUserMemberOfTeam(auth()->user()->id, [CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::RENEWALS])
             ) {
                 $showDeadlineAlert = true;
@@ -613,6 +614,8 @@ class CRUDController extends Controller
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
                 'is_cold' => $activity->is_cold,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
             ];
             array_push($activities, $updatedActivity);
         }
@@ -633,7 +636,7 @@ class CRUDController extends Controller
         }
 
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
-
+        $puaTypeEnum = PuaEnum::asArray();
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
@@ -742,7 +745,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'isAmlClearedForPayment', 'clientInquiryLogs',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'isAmlClearedForPayment', 'clientInquiryLogs', 'puaTypeEnum',
             ]));
         }
 
@@ -965,6 +968,7 @@ class CRUDController extends Controller
 
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
+                'emailStatuses' => $emailStatuses,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,

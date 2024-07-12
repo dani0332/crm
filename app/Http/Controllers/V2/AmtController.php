@@ -91,7 +91,7 @@ class AmtController extends Controller
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $data->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
         $this->whereBasedOnRole($data, 'bqr');
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
@@ -122,7 +122,7 @@ class AmtController extends Controller
             $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
         }
         if (isset($request->email) && $request->email != '') {
-            $data->where('bqr.email', 'like', '%'.$request->email.'%');
+            $data->where('bqr.email', '=', $request->email);
         }
         if (isset($request->code) && $request->code != '') {
             $data->where('bqr.code', '=', $request->code);
@@ -149,7 +149,10 @@ class AmtController extends Controller
             $data->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $data->where('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $data->where(function ($query) use ($request) {
+                $query->where('bqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $data->where('bqr.renewal_batch', $request->renewal_batch);

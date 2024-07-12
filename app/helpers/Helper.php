@@ -747,7 +747,10 @@ if (! function_exists('getCardViewRequestFilters')) {
         }
 
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $partialQuery->where('previous_quote_policy_number', $request->previous_quote_policy_number);
+            $partialQuery->where(function ($query) use ($request) {
+                $query->where('policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
 
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
@@ -885,5 +888,21 @@ if (! function_exists('getAlfredEligibleCustomers')) {
         }
 
         return null;
+    }
+}
+
+if (! function_exists('isValidEmail')) {
+    function isValidEmail($email)
+    {
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+}
+
+if (! function_exists('isValidDate')) {
+    function isValidDate($date): bool
+    {
+        return ! empty($date)
+            && $date != '0000-00-00 00:00:00'
+            && $date != '0000-00-00';
     }
 }

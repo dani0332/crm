@@ -25,11 +25,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
 const isAllowed = computed(() => {
-  return !hasAnyRole([
-    rolesEnum.HomeAdvisor,
-    rolesEnum.HomeRenewalAdvisor,
-    rolesEnum.HomeNewBusinessAdvisor,
-  ]);
+  return !hasAnyRole([rolesEnum.HomeAdvisor, rolesEnum.HomeRenewalAdvisor]);
 });
 
 const quotes = reactive({
@@ -209,7 +205,7 @@ onUnmounted(() => {
     <sticky-header>
       <template #header>
         <h2 class="text-xl font-semibold">Home List</h2>
-        <!-- PD Revert 
+        <!-- PD Revert
           <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
@@ -329,9 +325,9 @@ onUnmounted(() => {
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"

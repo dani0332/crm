@@ -62,7 +62,7 @@ class UpdateLeadStatusRequest extends FormRequest
             }
 
             //once quote is marked as sold/uncontactable, quote should be locked until have pending request
-            if (isCarLostStatus($quote->quote_status_id) && auth()->user()->hasAnyrole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
+            if (isCarLostStatus($quote->quote_status_id) && auth()->user()->hasAnyrole([RolesEnum::CarAdvisor])) {
                 $quote->load('carLostQuoteLog');
                 if (isset($quote->carLostQuoteLog->id) && $quote->carLostQuoteLog->status == GenericRequestEnum::PENDING) {
                     vAbort('Quote is locked as it has pending request to verify proof document');
@@ -76,14 +76,14 @@ class UpdateLeadStatusRequest extends FormRequest
                 $q->where('quote_status_id', request()->leadStatus);
             })->first();
 
-            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor]) &&
                 isset($batch->deadline)) {
                 if (now()->gt(($batch->deadline->deadline_date.' 23:59:59'))) {
                     vAbort('Not possible to select the lead status after the deadline has passed.');
                 }
             }
 
-            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
                 $rules['proof_document'] = 'required';
             }
 
