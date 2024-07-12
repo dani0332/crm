@@ -10,6 +10,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
+use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -219,53 +220,74 @@ class QuoteDocumentService extends BaseService
         return $displaySendPolicyButton;
     }
 
+    /**
+     * This method fetches all or a subset of documents linked to a specific quote, based on the provided document type codes.
+     *
+     * @return Collection
+     */
     public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null)
     {
         $quote = $this->getQuoteObject($quoteType, $recordId);
 
         if ($quote && $documentTypeCodes) {
+            // Return documents filtered by document type codes if provided
             return $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
         }
 
+        // Return all documents associated with the quote if no specific document type codes are provided
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
 
+    /**
+     * Retrieves all document types associated with a specific quote, fetches active document types & excluding certain categories
+     * This method fetches active document types, excluding certain categories, and can further filter them based on
+     * It also organizes documents by category and get payment-related documents used for all LOB's
+     *
+     * @return array
+     */
     public function getDocumentTypes($quoteTypeId, $businessTypeOfInsurance = null, $businessTypeOfCustomer = null, $quoteType = null)
     {
-
+        // Fetch active document types, excluding 'SEND_UPDATE' and 'ENDORSEMENT_DOCUMENTS' categories, and filter by quote type ID.
         $documentTypes = DocumentType::active()
             ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
             ->byQuoteTypeId($quoteTypeId)
+            // Apply filters for business type of insurance & business type of customer if provided.
             ->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
                 return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
             })
-            ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer) {
-                return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer);
+            ->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer, $businessTypeOfInsurance) {
+                $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
+
+                return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
             })->sortDocumentType()->get();
 
+        // Handle documents for quote types like CORPLINE and GroupMedical.
         if ($quoteTypeId == QuoteTypeId::Business) {
+            if ($quoteType == quoteTypeCode::CORPLINE) {
+                $quoteTypeId = QuoteTypeId::Corpline;
+            }
             $businessDocumetTypes = [];
             if ($quoteType == quoteTypeCode::GroupMedical) {
                 $businessDocumetTypes = [DocumentTypeCode::GMQPD, DocumentTypeCode::GMQPDR, DocumentTypeCode::GMQDPDR, DocumentTypeCode::PPR];
             } elseif ($quoteType == quoteTypeCode::CORPLINE) {
                 $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
             }
-            $businessDocumentTypeCodes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->get();
+            // Fetch additional business document types based on the specific quote type.
+            $businessDocumetTypes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->get();
+            $documentTypes = $documentTypes->merge($businessDocumetTypes);
         }
 
+        // Filter for payment-related document types.
+        $paymentDocumentCodes = $this->paymentDocumentTypesOptions($quoteTypeId);
+        $paymentDocuments = $documentTypes->filter(function ($type) use ($paymentDocumentCodes) {
+            return in_array($type->code, $paymentDocumentCodes);
+        })->values()->all();
+
+        // Organize document types by category.
         $documentTypesByCategory = $documentTypes->groupBy('category');
         $orderedDocumentTypesByCategory = collect();
-        if ($documentTypesByCategory->has('QUOTE') || $quoteTypeId == QuoteTypeId::Business) {
-            if ($quoteTypeId == QuoteTypeId::Business) {
-                $quoteDocumentTypes = $documentTypesByCategory->get('QUOTE');
-                if ($quoteDocumentTypes === null) {
-                    $quoteDocumentTypes = collect();
-                }
-                $quoteDocumentTypes = $quoteDocumentTypes->concat($businessDocumentTypeCodes);
-                $orderedDocumentTypesByCategory->put('QUOTE', $quoteDocumentTypes);
-            } else {
-                $orderedDocumentTypesByCategory->put('QUOTE', $documentTypesByCategory->get('QUOTE'));
-            }
+        if ($documentTypesByCategory->has('QUOTE')) {
+            $orderedDocumentTypesByCategory->put('QUOTE', $documentTypesByCategory->get('QUOTE'));
         }
         if ($documentTypesByCategory->has('MEMBER')) {
             $orderedDocumentTypesByCategory->put('MEMBER', $documentTypesByCategory->get('MEMBER'));
@@ -274,7 +296,8 @@ class QuoteDocumentService extends BaseService
             $orderedDocumentTypesByCategory->put('ISSUING_DOCUMENTS', $documentTypesByCategory->get('ISSUING_DOCUMENTS'));
         }
 
-        return [$orderedDocumentTypesByCategory, $documentTypes, $businessDocumentTypeCodes ?? []];
+        // Return the organized document types by category and the payment-related documents.
+        return [$orderedDocumentTypesByCategory, $paymentDocuments];
     }
 
     public function getQuoteDocumentsForSendUpdates($sendUpdateLogId)
@@ -284,6 +307,9 @@ class QuoteDocumentService extends BaseService
         return $sendUpdateLog->documents()->with('createdBy:id,name,email')->latest()->get();
     }
 
+    /**
+     * Returns an array of document type codes for payment documents based on the quote type ID.
+     */
     public function paymentDocumentTypesOptions($quoteTypeId): array
     {
         $mapping = [
@@ -296,8 +322,36 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Bike => ['BPD', 'BPDR', 'BDPDR'],
             QuoteTypeId::Cycle => ['CYCPD', 'CYCPDR', 'CYCDPDR'],
             QuoteTypeId::Yacht => ['YPD', 'YPDR', 'YDPDR'],
+            QuoteTypeId::Business => ['GMQPD', 'GMQPDR', 'GMQDPDR'],
+            QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
         ];
 
         return $mapping[$quoteTypeId] ?? [];
+    }
+
+    /**
+     * Gets handbook documents linked to a policy and formats them as an array with URLs and names.
+     *
+     * @return array
+     */
+    public function getHandBookDocuments($quote)
+    {
+        if ($quote->policyWording) {
+            $policyWording = $quote->policyWording->map(function ($policyWording) {
+                $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
+                if (strpos($policyWording->link, $baseUrl) !== 0) {
+                    $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
+                }
+
+                return [
+                    'url' => $policyWording->link,
+                    'name' => basename($policyWording->link),
+                ];
+            });
+
+            return $policyWording->toArray();
+        }
+
+        return [];
     }
 }

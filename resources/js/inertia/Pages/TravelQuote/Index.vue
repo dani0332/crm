@@ -351,12 +351,12 @@ onMounted(() => {
           />
         </x-field>
         <x-field label="Payment Status">
-            <ComboBox
-                v-model="filters.payment_status_id"
-                placeholder="Search by Payment Status"
-                :options="paymentStatusOptions"
-                :single="true"
-            />
+          <ComboBox
+            v-model="filters.payment_status_id"
+            placeholder="Search by Payment Status"
+            :options="paymentStatusOptions"
+            :single="true"
+          />
         </x-field>
         <x-field label="Travel Type" required>
           <x-select
@@ -389,9 +389,9 @@ onMounted(() => {
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"

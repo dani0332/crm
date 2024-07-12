@@ -26,7 +26,14 @@ trait FilterCriteria
                             if ($key == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER_TEXT) {
                                 $key = DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER;
                             }
-                            $query->where($key, $value);
+                            if ($key == 'policy_number' || $key == 'previous_quote_policy_number') {
+                                $query->where(function ($query) use ($value) {
+                                    $query->where('policy_number', $value)
+                                        ->orWhere('previous_quote_policy_number', $value);
+                                });
+                            } else {
+                                $query->where($key, $value);
+                            }
                             break;
                         case FilterTypes::FREE:
                             $query->where($key, 'like', '%'.$value.'%');

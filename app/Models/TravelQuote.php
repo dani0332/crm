@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
+use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Config;
@@ -34,6 +35,9 @@ class TravelQuote extends Model implements AuditableContract
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+    ];
+    protected $dispatchesEvents = [
+        'updated' => QuoteEmailUpdated::class,
     ];
 
     public function quoteStatus()
@@ -157,6 +161,7 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
+
     public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
@@ -172,5 +177,10 @@ class TravelQuote extends Model implements AuditableContract
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
+
+    public function policyWording()
+    {
+        return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 }

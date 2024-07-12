@@ -502,20 +502,8 @@ class CarAllocationService extends AllocationService
 
         // Attempt to find an existing car quote detail record for the given lead.
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
-
-        // Initialize a variable to store the old advisor assigned date.
-        $oldAdvisorAssignedDate = '';
-
-        if ($carQuoteDetail) {
-            // If a car quote detail record exists, store its old advisor assigned date.
-            $oldAdvisorAssignedDate = $carQuoteDetail->advisor_assigned_date;
-
-            // Update the existing quote detail record.
-            $this->updateExistingQuoteDetail($carQuoteDetail, $leadId);
-        } else {
-            // If no car quote detail record exists, create a new one.
-            $this->createNewQuoteDetail($leadId, CarQuoteRequestDetail::class, 'car_quote_request_id');
-        }
+        $oldAdvisorAssignedDate = $carQuoteDetail->advisor_assigned_date ?? '';
+        $this->upsertQuoteDetail($leadId, CarQuoteRequestDetail::class, 'car_quote_request_id');
 
         // Return the old advisor assigned date, if applicable.
         return $oldAdvisorAssignedDate;

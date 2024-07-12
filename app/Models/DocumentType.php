@@ -85,24 +85,32 @@ class DocumentType extends Model implements AuditableContract
         return $query->where('business_type_of_insurance_id', $businessTypeOfInsurance);
     }
 
-    public function scopeByBusinessTypeOfCustomer($query, $businessTypeOfCustomer)
+    public function scopeByBusinessTypeOfCustomer($query, $businessTypeOfCustomer, $businessInsurerName = false)
     {
-        if ($businessTypeOfCustomer == CustomerTypeEnum::Business || $businessTypeOfCustomer == CustomerTypeEnum::Entity) {
-            $businessTypeOfCustomer = DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER;
-        } elseif ($businessTypeOfCustomer == CustomerTypeEnum::Individual) {
-            $businessTypeOfCustomer = DocumentTypeCode::INDIVIDUAL_BUSINESS_TYPE_OF_CUSTOMER;
+        if (! $businessInsurerName) {
+            if (in_array($businessTypeOfCustomer, [CustomerTypeEnum::Business, CustomerTypeEnum::Entity])) {
+                $businessTypeOfCustomer = DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER;
+            } elseif ($businessTypeOfCustomer == CustomerTypeEnum::Individual) {
+                $businessTypeOfCustomer = DocumentTypeCode::INDIVIDUAL_BUSINESS_TYPE_OF_CUSTOMER;
+            }
+        } else {
+            $businessTypeOfCustomer = $businessInsurerName;
         }
 
         return $query->where('business_type_of_customer', $businessTypeOfCustomer);
     }
 
-    public function scopeGetBusinessDocument($query, $businessTypeOfInsurance, $businessTypeOfCustomer)
+    public function scopeGetBusinessDocument($query, $businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName = false)
     {
         return $query->when($businessTypeOfInsurance, function ($query) use ($businessTypeOfInsurance) {
             return $query->byBusinessTypeOfInsurance($businessTypeOfInsurance);
-        })->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer) {
-            return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer);
+        })->when($businessTypeOfCustomer, function ($query) use ($businessTypeOfCustomer, $businessInsurerName) {
+            return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
         });
     }
 
+    public function scopeByCompanyBusinessDocument($query)
+    {
+        return $query->where('business_type_of_customer', DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER);
+    }
 }

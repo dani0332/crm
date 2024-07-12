@@ -46,11 +46,48 @@ final class quoteBusinessTypeCode extends Enum
     const smeInsurance = 'SME Insurance';
     const fidelityGuarantee = 'Fidelity Guarantee';
     const goodsInTransit = 'Goods In Transit';
+    const MedicalMalpracticeInsurance = 'Medical Malpractice Insurance';
+    const marineCargo = 'Marine Cargo';
 
     public static function getId($value): int
     {
         return match ($value) {
+            quoteBusinessTypeCode::several => 1,
+            quoteBusinessTypeCode::office => 2,
+            quoteBusinessTypeCode::property => 3,
+            quoteBusinessTypeCode::publicLiability => 4,
             quoteBusinessTypeCode::groupMedical => 5,
+            quoteBusinessTypeCode::groupLife => 6,
+            quoteBusinessTypeCode::groupTravel => 7,
+            quoteBusinessTypeCode::proIndemnity => 8,
+            quoteBusinessTypeCode::carFleet => 9,
+            quoteBusinessTypeCode::marineCargo => 10,
+            quoteBusinessTypeCode::marineHull => 11,
+            quoteBusinessTypeCode::businessInterruption => 12,
+            quoteBusinessTypeCode::machineryBreakdown => 13,
+            quoteBusinessTypeCode::contractorsRisk => 14,
+            quoteBusinessTypeCode::erection => 15,
+            quoteBusinessTypeCode::tradeCredit => 16,
+            quoteBusinessTypeCode::jewellersBlock => 17,
+            quoteBusinessTypeCode::medicalMalpractices => 18,
+            quoteBusinessTypeCode::kidnapRansom => 19,
+            quoteBusinessTypeCode::directorsOfficers => 20,
+            quoteBusinessTypeCode::defenceBased => 21,
+            quoteBusinessTypeCode::extendedWarranties => 22,
+            quoteBusinessTypeCode::drone => 23,
+            quoteBusinessTypeCode::bancassurance => 24,
+            quoteBusinessTypeCode::cyber => 25,
+            quoteBusinessTypeCode::workmens => 26,
+            quoteBusinessTypeCode::photographers => 27,
+            quoteBusinessTypeCode::event => 28,
+            quoteBusinessTypeCode::smeInsurance => 30,
+            quoteBusinessTypeCode::holidayHomes => 37,
+            quoteBusinessTypeCode::moneyInsurance => 35,
+            quoteBusinessTypeCode::liveStock => 36,
+            quoteBusinessTypeCode::fidelityGuarantee => 39,
+            quoteBusinessTypeCode::marineCargoOpenCover => 41,
+            quoteBusinessTypeCode::goodsInTransit => 44,
+            quoteBusinessTypeCode::MedicalMalpracticeInsurance => 40,
             quoteBusinessTypeCode::carFleet => 9,
             quoteBusinessTypeCode::tradeCredit => 16,
         };
