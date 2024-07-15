@@ -126,7 +126,7 @@ const renderMarkdown = markdownString => {
               <div v-html="renderMarkdown(message.msg)"></div>
               <div
                 class="absolute right-[-30px] text-red-600"
-                v-if="message?.whatsapp_request?.type == 'audio'"
+                v-if="message?.whatsapp_request?.type == 'audio'||  message?.whatsapp_request?.type == 'voice'"
               >
                 <x-icon icon="audio" />
               </div>
