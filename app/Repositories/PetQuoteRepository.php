@@ -13,6 +13,7 @@ use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,9 @@ use Illuminate\Support\Facades\DB;
 
 class PetQuoteRepository extends BaseRepository
 {
+    private $query;
+    use GenericQueriesAllLobs;
+    
     public function model()
     {
         return (in_array(quoteTypeCode::Pet, newUi())) ? PersonalQuote::class : PetQuote::class;
@@ -86,7 +90,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
+        $this->query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
             'petQuote.accomodationType:id,text',
@@ -109,8 +113,11 @@ class PetQuoteRepository extends BaseRepository
                 }
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+
+            $this->adjustQueryByDateFilters(request(), 'personal_quotes');
+
+            $this->query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
             //PD Revert
@@ -118,7 +125,7 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $this->query->get() : $this->query;
     }
 
     public function fetchGetBy($column, $value)

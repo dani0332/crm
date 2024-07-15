@@ -40,6 +40,8 @@ let availableFilters = {
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  payment_due_date:"",
+  booking_date: ""
 };
 
 const canExport = ref(false);
@@ -442,6 +444,23 @@ watch(
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+        
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

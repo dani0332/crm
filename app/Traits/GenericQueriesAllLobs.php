@@ -778,7 +778,7 @@ trait GenericQueriesAllLobs
 
     public function adjustQueryByDateFilters($request, $tablePrefix) {
         if($request->payment_due_date){
-            $this->query->leftJoin('payment_splits as pays', 'pays.code', '=', $tablePrefix.'.code');
+            $this->query->join('payment_splits as pays', 'pays.code', '=', $tablePrefix.'.code');
             $this->filterQueryByDateRange($request, 'payment_due_date', 'pays.due_date');
         } else if ($request->booking_date) {
             $this->filterQueryByDateRange($request, 'booking_date', $tablePrefix.'.policy_booking_date');
