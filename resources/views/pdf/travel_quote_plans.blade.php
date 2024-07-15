@@ -385,7 +385,7 @@
             }
 
             // Add Policy Price
-            $policyFee = (isset($providers[$quotePlan->providerId]['travel_policy_fee'])) ? $providers[$quotePlan->providerId]['travel_policy_fee'] : 0;
+            $policyFee = (isset($providers[$quotePlan->insuranceProviderId]['travel_policy_fee'])) ? $providers[$quotePlan->insuranceProviderId]['travel_policy_fee'] : 0;
             $quotePlan->discountPremium += $policyFee;
             // $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
             $quotePlan->total += $policyFee;
