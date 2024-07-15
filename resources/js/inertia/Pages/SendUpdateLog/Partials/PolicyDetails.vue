@@ -21,7 +21,11 @@ const props = defineProps({
     quoteType: {
         type: String,
         required: true,
-    }
+    },
+    isUpdateBooked: {
+      type: Boolean,
+      required: true,
+    },
 });
 
 const state = reactive({
@@ -184,6 +188,17 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 const isMobile = computed(() => {
     return window.innerWidth <= 768; // Adjust the breakpoint as needed
 });
+
+const onEdit = () => {
+  if (props.isUpdateBooked) {
+    notification.error({
+      title: 'Update already booked',
+      position: 'top',
+    });
+  } else {
+    state.isEdit = true;
+  }
+};
 </script>
 
 <template>
@@ -465,7 +480,7 @@ const isMobile = computed(() => {
         </div>
 				<x-divider class="my-4 mt-10" />
         <div class="flex justify-end gap-2">
-          <x-button size="sm" @click="state.isEdit = true" v-if="!state.isEdit">
+          <x-button size="sm" @click="onEdit" v-if="!state.isEdit">
             Edit
           </x-button>
 <template v-else>
