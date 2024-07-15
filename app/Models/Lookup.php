@@ -29,7 +29,7 @@ class Lookup extends Model
             ->when($businessInsuranceTypeId, function ($query) use ($businessInsuranceTypeId) {
                 return $query->where('business_insurance_type_id', $businessInsuranceTypeId);
             })
-            ->when($businessInsuranceTypeId == null, function ($query) {
+            ->when(is_null($businessInsuranceTypeId), function ($query) {
                 return $query->whereNull('business_insurance_type_id');
             })
             ->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id');
