@@ -11,6 +11,7 @@ use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Config;
@@ -25,6 +26,7 @@ class HomeQuoteService extends BaseService
 
     use AddPremiumAllLobs;
     use RolePermissionConditions;
+    use GenericQueriesAllLobs;
 
     protected $leadAllocationService;
 
@@ -227,7 +229,7 @@ class HomeQuoteService extends BaseService
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
@@ -332,6 +334,8 @@ class HomeQuoteService extends BaseService
                 }
             }
         }
+
+        $this->adjustQueryByDateFilters($request, 'hqr');
 
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {
