@@ -257,14 +257,14 @@ class SageApiService
                 'POST' => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
                     ->post($sageEndPoint, $payLoad),
                 default => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
-                    ->get($sageEndPoint),
+                    ->get($sageEndPoint, $payLoad),
             };
-
-            return is_array($response->json()) ? json_encode($response->json()) : $response->json();
+            return is_array($response->json()) ? json_encode($response->json()) : $response->body();
         } catch (\Exception $e) {
             return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
         }
     }
+
     public function postToSage300Curl($endPoint, $payLoad, $verb = 'POST')
     {
         // Create the payload data for the POST request
