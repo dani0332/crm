@@ -246,26 +246,26 @@ class SageApiService
         return $sageCustomerNumber;
     }
 
-    public function postToSage300New($endPoint, $payLoad, $verb = 'POST')
-    {
-        dd($payLoad);
-        $sageEndPoint = $this->sageRequestUrl.$endPoint;
-        $requestMethod = match ($verb) {
-            'PATCH' => 'patch',
-            'GET' => 'get',
-            default => 'post',
-        };
-        $response = Http::retry(times: 5, sleepMilliseconds: 1000)
-            ->withBasicAuth($this->sageLogin, $this->sagePassword)
-            ->withHeaders([
-                'Content-Type' => 'application/json',
-            ])->$requestMethod($sageEndPoint, $payLoad);
-
-        dd($response->body());
-
-        return $response;
-    }
     public function postToSage300($endPoint, $payLoad, $verb = 'POST')
+    {
+        $sageEndPoint = $this->sageRequestUrl.$endPoint;
+        $verb = strtoupper($verb);
+        try {
+            $response = match ($verb) {
+                'PATCH' => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                    ->patch($sageEndPoint, $payLoad),
+                'POST' => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                    ->post($sageEndPoint, $payLoad),
+                default => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                    ->get($sageEndPoint),
+            };
+
+            return is_array($response->json()) ? json_encode($response->json()) : $response->json();
+        } catch (\Exception $e) {
+            return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
+        }
+    }
+    public function postToSage300Curl($endPoint, $payLoad, $verb = 'POST')
     {
         // Create the payload data for the POST request
         $sageEndPoint = $this->sageRequestUrl.$endPoint;
@@ -1315,7 +1315,6 @@ class SageApiService
                 $this->logSageApiCall($createARInvoiceSplitPayments, $postedResponse, $quote, 2, 13, 'fail');
                 $returnMessage['message'] = 'ar split payment failed from sage';
                 $returnMessage['status'] = false;
-
                 $errorMessage = $postedResponse['error']['message']['value'] ?? null;
                 Log::error('SAGE API : '.$errorMessage);
                 $returnMessage['error'] = $errorMessage;
