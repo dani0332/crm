@@ -81,4 +81,9 @@ class PaymentSplits extends Model implements Auditable
 
         return null;
     }
+
+    public function processJob()
+    {
+        return $this->hasOne(CcPaymentProcessJob::class)->failed();
+    }
 }

@@ -39,6 +39,7 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
+use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
@@ -365,6 +366,14 @@ class CentralController extends Controller
     public function updateTotalPrice(UpdateTotalPriceRequest $request)
     {
         $successMessage = PaymentRepository::updateTotalPrice($request);
+
+        return $successMessage;
+    }
+
+    // Update total price
+    public function retrySplitPayment(RetrySplitPaymentRequest $request)
+    {
+        $successMessage = PaymentRepository::retrySplitPayment($request->payment_process_job_id);
 
         return $successMessage;
     }

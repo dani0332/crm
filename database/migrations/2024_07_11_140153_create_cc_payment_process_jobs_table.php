@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('cc_payment_process_jobs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('payment_split_id')->nullable();
-            $table->foreign('payment_split_id')->references('id')->on('payment_splits');            
+            $table->unsignedBigInteger('payment_splits_id')->nullable();
+            $table->foreign('payment_splits_id')->references('id')->on('payment_splits');            
             $table->string('model_type','15');
             $table->unsignedBigInteger('quote_id');
             $table->float('amount_captured', 16, 2);

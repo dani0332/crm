@@ -638,4 +638,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
+
+    public function fetchRetrySplitPayment($paymentProcessJobId)
+    {        
+        \Artisan::call('app:run-process-c-c-payments-job', [
+            'paymentProcessJobId' => $paymentProcessJobId,
+        ]);
+        return response()->json(['message' => 'Payment Retry Successful']);
+    }
 }
