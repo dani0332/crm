@@ -156,7 +156,10 @@ class UpdateLeadStatusRequest extends FormRequest
             }
 
             if (AMLService::checkAMLStatusFailed($quoteTypesIds[request()->modelType], request()->leadId) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
-                $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
+                if (! auth()->user()->hasRole(RolesEnum::TravelHapex) || (auth()->user()->hasRole(RolesEnum::TravelHapex) && strtolower(request()->modelType) !== strtolower(quoteTypeCode::Travel))) {
+                    $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
+
+                }
             }
 
             if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Health)) {
