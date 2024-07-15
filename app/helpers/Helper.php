@@ -747,7 +747,10 @@ if (! function_exists('getCardViewRequestFilters')) {
         }
 
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $partialQuery->where('previous_quote_policy_number', $request->previous_quote_policy_number);
+            $partialQuery->where(function ($query) use ($request) {
+                $query->where('policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
 
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
@@ -795,6 +798,9 @@ if (! function_exists('getCardViewRequestFilters')) {
 if (! function_exists('getMyAlfredCampaign')) {
     function getMyAlfredCampaign($campaignId)
     {
+        // temporary fix to clear cache for prod - will remove later
+        Cache::forget("MA_CAMPAIGN_{$campaignId}");
+
         return Cache::remember("MA_CAMPAIGN_{$campaignId}", now()->addHours(24), function () use ($campaignId) {
             try {
                 $response = Http::timeout(20)->retry(3, 3000)->get(config('constants.MA_V1_ENDPOINT')."/campaigns/{$campaignId}");
@@ -892,5 +898,14 @@ if (! function_exists('isValidEmail')) {
     function isValidEmail($email)
     {
         return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+}
+
+if (! function_exists('isValidDate')) {
+    function isValidDate($date): bool
+    {
+        return ! empty($date)
+            && $date != '0000-00-00 00:00:00'
+            && $date != '0000-00-00';
     }
 }

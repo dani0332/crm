@@ -79,10 +79,13 @@ class DatabaseSeeder extends Seeder
             // RevivalConversionReportPermissionSeeder::class,
             // end
             // AddCrossLOBSeeder::class,
-            MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
+            // MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
             // BusinessTypeInsuranceSeeder::class,
             // MarineSeeder::class,
-            ImcrmUsersRolesCleaner::class,
+            // ImcrmUsersRolesCleaner::class,
+            AddPermissionsForInsurerNowPayment::class,
+            AddeTicketDocumentTypeSeeder::class,
+            DocumentVerifyPermissionSeeder::class,
         ]);
     }
 }

@@ -95,6 +95,7 @@ const tabs = ref([
   { index: 4, label: 'Region coverage & Network list' },
   { index: 5, label: 'Co-pay/Co-insurance' },
   { index: 6, label: 'Maternity cover' },
+  { index: 7, label: 'key Hospitals & Clinics' },
   // { index: 8, label: 'Exclusions' },
   // { index: 9, label: 'Policy Detail' },
 ]);
@@ -1368,14 +1369,17 @@ onUpdated(() => {
             </x-button>
           </div> -->
 
-          <!-- Set Manual plan modification true for CoPay, Requested from API Team-->
+            <!-- Set Manual plan modification true for CoPay, Requested from API Team-->
             <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
               <x-button
                 :disabled="!isManual"
                 color="primary"
                 size="sm"
                 @click="
-                  onLoadingPricesUpdate(props.plan.memberPremiumBreakdown)
+                  onLoadingPricesUpdate(
+                    props.plan.memberPremiumBreakdown,
+                    false,
+                  )
                 "
               >
                 Update & Save
@@ -1392,6 +1396,33 @@ onUpdated(() => {
                 <dt class="font-medium mb-1">{{ data.text }}</dt>
                 <dd>{{ data.value }}</dd>
               </div>
+            </dl>
+          </TabPanel>
+
+          <TabPanel>
+            <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4 p-4">
+                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []).length > 0">
+                    <dt class="font-medium">Key Hospitals:</dt>
+                    <dd>
+                        <div
+                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []"
+                          :key="data.id"
+                        >
+                          {{ data.text }}
+                        </div>
+                    </dd>
+                </div>
+                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []).length > 0">
+                    <dt class="font-medium">Key Clinics:</dt>
+                    <dd>
+                        <div
+                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []"
+                          :key="data.id"
+                        >
+                          {{ data.text }}
+                        </div>
+                    </dd>
+                </div>
             </dl>
           </TabPanel>
 

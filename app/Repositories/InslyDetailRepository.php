@@ -185,55 +185,86 @@ class InslyDetailRepository extends BaseRepository
                     switch (ucfirst($quoteType)) {
 
                         case QuoteTypes::BUSINESS->value:
-                            $obj->businessQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            $obj->businessQuoteRequestDetail()->updateOrCreate(
+                                ['business_quote_request_id' => $obj->id],
+                                ['insly_id' => $policy->_id]
+                            );
                             break;
 
                         case QuoteTypes::CAR->value:
-                            $obj->carQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            $upsertRecord = $obj->carQuoteRequestDetail()->updateOrCreate(
+                                ['car_quote_request_id' => $obj->id],
+                                ['insly_id' => $policy->_id]
+                            );
+                            info('fetchSaveToImcrm - leadId : '.$obj->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                             break;
 
                         case QuoteTypes::LIFE->value:
-                            $obj->lifeQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            $obj->lifeQuoteRequestDetail()->updateOrCreate(
+                                ['life_quote_request_id' => $obj->id],
+                                ['insly_id' => $policy->_id]
+                            );
                             break;
 
                         case QuoteTypes::HOME->value:
-                            $obj->homeQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            $obj->homeQuoteRequestDetail()->updateOrCreate(
+                                ['home_quote_request_id' => $obj->id],
+                                ['insly_id' => $policy->_id]
+                            );
                             break;
 
                         case QuoteTypes::TRAVEL->value:
-                            $obj->travelQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            $obj->travelQuoteRequestDetail()->updateOrCreate(
+                                ['travel_quote_request_id' => $obj->id],
+                                ['insly_id' => $policy->_id]
+                            );
                             break;
 
                         case QuoteTypes::HEALTH->value:
-                            $obj->healthQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
+                            $obj->healthQuoteRequestDetail()->updateOrCreate(
+                                ['health_quote_request_id' => $obj->id],
+                                ['insly_id' => $policy->_id]
+                            );
                             break;
                         case QuoteTypes::PET->value:
                             $obj->petQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
                                 Arr::only($payLoad, (new PetQuote())->allowedColumns())
                             );
-                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                ['insly_id' => $policy->_id]
+                            );
                             break;
                         case QuoteTypes::BIKE->value:
                             $obj->bikeQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
                                 Arr::only($payLoad, (new BikeQuote())->allowedColumns())
                             );
-                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                ['insly_id' => $policy->_id]
+                            );
                             break;
                         case QuoteTypes::CYCLE->value:
                             $obj->cycleQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
                                 Arr::only($payLoad, (new CycleQuote())->allowedColumns())
                             );
-                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                ['insly_id' => $policy->_id]
+                            );
                             break;
                         case QuoteTypes::YACHT->value:
                             $obj->yachtQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
                                 Arr::only($payLoad, (new YachtQuote())->allowedColumns())
                             );
-                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                ['insly_id' => $policy->_id]
+                            );
                             break;
                     }
                     $policy->moved_to_imcrm = true;
