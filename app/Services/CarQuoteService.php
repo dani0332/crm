@@ -876,44 +876,6 @@ class CarQuoteService extends BaseService
 
     public function getGridData($model = null, $request = null)
     {
-        
-        // if ((isset($request->payment_due_at_start) && $request->payment_due_at_start != '') || (isset($request->payment_due_at_end) && $request->payment_due_at_start != '')) {
-        //     $this->query->leftJoin('payment_splits as pays', 'pays.code', '=', 'cqr.code');
-        //     $dateFrom = $this->parseDate($request['payment_due_at_start'], true);
-        //     $dateTo = $this->parseDate($request['payment_due_at_end'], false);
-        //     $this->query->whereBetween('pays.due_date', [$dateFrom, $dateTo]);
-        // }
-
-        if ((isset($request->payment_due_at_start) && $request->payment_due_at_start != '') || (isset($request->payment_due_at_end) && $request->payment_due_at_end != '')) {
-            $this->query->leftJoin('payment_splits as pays', 'pays.code', '=', 'cqr.code');
-            
-            $dateFrom = isset($request->payment_due_at_start) ? $this->parseDate($request->payment_due_at_start, true) : null;
-            $dateTo = isset($request->payment_due_at_end) ? $this->parseDate($request->payment_due_at_end, false) : null;
-            
-            if ($dateFrom && $dateTo) {
-                $this->query->whereBetween('pays.due_date', [$dateFrom, $dateTo]);
-            } elseif ($dateFrom) {
-                $this->query->where('pays.due_date', '>=', $dateFrom);
-            } elseif ($dateTo) {
-                $this->query->where('pays.due_date', '<=', $dateTo);
-            }
-        }
-
-        if ($request->payment_due_date) {
-            $this->query->leftJoin('payment_splits as pays', 'pays.code', '=', 'cqr.code');
-
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-            $freshLoad = ! isset($request->page);
-            $startDate = isset($request->payment_due_date) ?
-            Carbon::parse($request->payment_due_date[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
-
-            $endDate = isset($request->payment_due_date) ?
-            Carbon::parse($request->payment_due_date[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
-
-            $this->query->whereBetween('pays.due_date', [$startDate, $endDate]);
-        }
-
         if ($model == null && $request == null) {
             $searchProperties = $this->fillModelSearchProperties();
             $request = request();
@@ -925,7 +887,6 @@ class CarQuoteService extends BaseService
             $request['created_at'] = $request->created_at_start;
         }
 
-        // if ($request->ajax()) {
         $this->addLeadViewEligibilityCheck();
 
         if (
@@ -950,7 +911,7 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at) && ! isset($request->payment_due_date)) {
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at) && ! isset($request->payment_due_date)  && ! isset($request->booking_date)) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (
@@ -960,8 +921,9 @@ class CarQuoteService extends BaseService
             && empty($request->code)
             && empty($request->renewal_batch)
             && empty($request->quote_batch_id)
-            && empty($request->payment_due_date)  &&
-            ! isset($request->previous_quote_policy_number)
+            && empty($request->payment_due_date)
+            && empty($request->booking_date)  
+            && ! isset($request->previous_quote_policy_number)
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
@@ -989,11 +951,38 @@ class CarQuoteService extends BaseService
         }
 
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-
             $this->query->where(function ($query) use ($request) {
                 $query->where('cqr.policy_number', $request->previous_quote_policy_number)
                     ->orWhere('cqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
+        }
+
+        if ($request->payment_due_date) {
+            $this->query->leftJoin('payment_splits as pays', 'pays.code', '=', 'cqr.code');
+
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+            $freshLoad = ! isset($request->page);
+            $startDate = isset($request->payment_due_date) ?
+            Carbon::parse($request->payment_due_date[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+
+            $endDate = isset($request->payment_due_date) ?
+            Carbon::parse($request->payment_due_date[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+            $this->query->whereBetween('pays.due_date', [$startDate, $endDate]);
+        }
+
+        if ($request->booking_date) {
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+            $freshLoad = ! isset($request->page);
+            $startDate = isset($request->booking_date) ?
+            Carbon::parse($request->booking_date[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+
+            $endDate = isset($request->booking_date) ?
+            Carbon::parse($request->booking_date[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+            $this->query->whereBetween('cqr.policy_booking_date', [$startDate, $endDate]);
         }
 
         foreach ($searchProperties as $item) {
@@ -1033,7 +1022,6 @@ class CarQuoteService extends BaseService
                 }
             }
         }
-        // }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
