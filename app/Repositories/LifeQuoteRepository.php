@@ -9,12 +9,14 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\LifeQuote;
 use App\Traits\CentralTrait;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
 class LifeQuoteRepository extends BaseRepository
 {
     use CentralTrait;
-
+    private $query;
+    
     public function model()
     {
         return LifeQuote::class;
@@ -68,7 +70,7 @@ class LifeQuoteRepository extends BaseRepository
         return $quote;
     }
 
-    public function fetchGetData()
+    public function fetchGetDataOlD()
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
@@ -80,6 +82,21 @@ class LifeQuoteRepository extends BaseRepository
             ->simplePaginate()
             ->withQueryString();
     }
+    public function fetchGetData($request)
+    {
+        $this->query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+            ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('life_quote_request.created_at', 'desc');
+
+        $this->adjustQueryByDateFilters($request, 'life_quote_request');
+
+        return $this->query->simplePaginate()->withQueryString();
+    }
+
 
     public function fetchExport()
     {

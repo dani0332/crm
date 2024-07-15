@@ -51,6 +51,10 @@ const filters = reactive({
   payment_status_id: '',
   previous_quote_policy_number_text: '',
   page: 1,
+  payment_due_date:"",
+  booking_date: "",
+  payment_due_date:"",
+  booking_date: ""
 });
 
 const loader = reactive({
@@ -332,6 +336,22 @@ onMounted(() => {
             { value: 'No', label: 'No' },
             { value: '', label: 'All' },
           ]"
+        />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
 
