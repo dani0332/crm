@@ -175,13 +175,8 @@ class ManagementReport
             }
         }
 
-        if (isset($request['teams']) && ! empty($request['teams']) && count($request['teams']) > 0) {
-            $value = $request['teams'];
-            $query->whereIn('t.id', $value);
-        } else {
-            $teamIds = $this->getUserTeams(auth()->user()->id);
-            $query->whereIn('t.id', $teamIds->pluck('id'));
-        }
+        // filter teams
+        $query = $this->filterTeams($query, $request['teams'] ?? []);
 
         if (isset($request['subTeams']) && ! empty($request['subTeams'])) {
             $query->whereIn('u.sub_team_id', $request['subTeams']);
@@ -197,6 +192,19 @@ class ManagementReport
             } else {
                 $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyBooked);
             }
+        }
+
+        return $query;
+    }
+
+    protected function filterTeams($query, $teams)
+    {
+        if (!empty($teams) && count($teams) > 0) {
+            $value = $teams;
+            $query->whereIn('t.id', $value);
+        } else {
+            $teamIds = $this->getUserTeams(auth()->user()->id);
+            $query->whereIn('t.id', $teamIds->pluck('id'));
         }
 
         return $query;
