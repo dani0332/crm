@@ -728,26 +728,61 @@ if (! function_exists('getAuthorisePaymentCount')) {
         /*  CarQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
           ->where('advisor_id', Auth::user()->id)
           ->count() */
-        $healthCount = HealthQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('advisor_id', Auth::user()->id)
+        $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
+        if (empty($userTeams)) {
+            return 0;
+        }
+        $personalCount = DB::table('personal_quotes')
+            ->select(
+                'users.id as advisor_id',
+                'users.name as advisor_name',
+                DB::raw('COUNT(*) as total_leads'),
+                DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+            )
+            ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
+            ->join('users', 'users.id', 'personal_quotes.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereIn('teams.name', $userTeams)
+            ->groupBy('users.id', 'users.name')
+            ->count();
+        $travelCount = DB::table('travel_quote_request')
+            ->select(
+                'users.id as advisor_id',
+                'users.name as advisor_name',
+                DB::raw('COUNT(*) as total_leads'),
+                DB::raw('SUM(travel_quote_request.premium) as total_premium'),
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+            )
+            ->leftJoin('payments as py', 'py.code', '=', 'travel_quote_request.code')
+            ->join('users', 'users.id', 'travel_quote_request.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereIn('teams.name', $userTeams)
+            ->groupBy('users.id', 'users.name')
             ->count();
 
-        $businessCount = BusinessQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('advisor_id', Auth::user()->id)
+        $lifeCount = DB::table('life_quote_request')
+            ->select(
+                'users.id as advisor_id',
+                'users.name as advisor_name',
+                DB::raw('COUNT(*) as total_leads'),
+                DB::raw('SUM(life_quote_request.premium) as total_premium'),
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+            )
+            ->leftJoin('payments as py', 'py.code', '=', 'life_quote_request.code')
+            ->join('users', 'users.id', 'life_quote_request.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereIn('teams.name', $userTeams)
+            ->groupBy('users.id', 'users.name')
             ->count();
 
-        $travelCount = TravelQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('advisor_id', Auth::user()->id)->count();
-
-        $lifeCount = LifeQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('advisor_id', Auth::user()->id)->count();
-
-        $personalCount = PersonalQuote::leftJoin('payments as pq', 'personal_quotes.code', '=', 'pq.code')
-            ->where('personal_quotes.advisor_id', Auth::user()->id)
-            ->where('pq.payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->count();
-        $totalCount = $carCount + $healthCount + $businessCount + $travelCount + $lifeCount
-            + $personalCount;
+        $totalCount = $personalCount + $travelCount + $lifeCount;
 
         return $totalCount;
     }

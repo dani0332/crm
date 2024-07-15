@@ -596,22 +596,21 @@ class ReportService extends BaseService
                 ->groupBy('users.id', 'users.name')
                 ->orderBy('total_leads', 'desc');
         } elseif ($userRole->hasRole(RolesEnum::TravelManager)) {
-            $query = DB::table('personal_quotes');
+            $query = DB::table('travel_quote_request');
 
             $query
                 ->select(
                     'users.id as advisor_id',
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('SUM(travel_quote_request.premium) as total_premium'),
                     DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
                 )
-                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->leftJoin('payments as py', 'py.code', '=', 'travel_quote_request.code')
+                ->join('users', 'users.id', 'travel_quote_request.advisor_id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->where('personal_quotes.quote_type_id', QuoteTypeId::Travel)
+                ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                 ->whereIn('teams.name', $userTeams)
                 ->groupBy('users.id', 'users.name')
                 ->orderBy('total_leads', 'desc');
@@ -676,22 +675,21 @@ class ReportService extends BaseService
                 ->groupBy('users.id', 'users.name')
                 ->orderBy('total_leads', 'desc');
         } elseif ($userRole->hasRole(RolesEnum::LifeManager)) {
-            $query = DB::table('personal_quotes');
+            $query = DB::table('life_quote_request');
 
             $query
                 ->select(
                     'users.id as advisor_id',
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
+                    DB::raw('SUM(life_quote_request.premium) as total_premium'),
                     DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
                 )
-                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-                ->join('users', 'users.id', 'personal_quotes.advisor_id')
+                ->leftJoin('payments as py', 'py.code', '=', 'life_quote_request.code')
+                ->join('users', 'users.id', 'life_quote_request.advisor_id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->where('personal_quotes.quote_type_id', QuoteTypeId::Life)
+                ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                 ->whereIn('teams.name', $userTeams)
                 ->groupBy('users.id', 'users.name')
                 ->orderBy('total_leads', 'desc');
