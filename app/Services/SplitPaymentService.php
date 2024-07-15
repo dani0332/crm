@@ -15,6 +15,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\DocumentTypeEnum;
+use App\Enum\PaymentProcessJobEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -602,7 +603,8 @@ class SplitPaymentService
                 } else {
                     $sageMessage = $sageResponse['response'];                    
                     if ( $isFromJob ) {
-                        CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => 'failed', 'message' => $sageMessage]);
+                        CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED_STATUS, 'message' => $sageMessage]);
+                        return;
                     } else {
                         vAbort($sageMessage);
                     }
@@ -619,45 +621,48 @@ class SplitPaymentService
             $imcrmReceiptCreated = QuoteDocument::where(['payment_split_id'=>$splitPaymentId,'document_type_text'=>DocumentTypeEnum::RECEIPT])->get();
             if ($imcrmReceiptCreated->count()===0 && $isFromJob) { 
                 $this->createReceipt($modelType, $quoteId, $paymentSplit);
-            } 
-            
+            }            
         }
+        
+        if(!$paymentSplit->payment->is_approved){
+            DB::beginTransaction();
+            try {            
+                if (empty($paymentSplit->verified_at)) {
+                    $paymentSplit->verified_at = now();
+                    $paymentSplit->verified_by = Auth::user()->id;
+                }
+                $paymentSplit->collection_amount = $amountCollected;
+                $paymentSplit->save();
+                $parentPayment = $paymentSplit->payment;
+                /* Create payment receipt for broker */
+                if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
+                    ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard,PaymentMethodsEnum::CreditApproval]) &&
+                    in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])
+                ) {
+                    $this->createReceipt($modelType, $quoteId, $paymentSplit);
+                }
+                $parentPayment->captured_amount = ($parentPayment->captured_amount + $amountCollected);
+                $parentPayment->save();
 
-        DB::beginTransaction();
-        try {            
-            if (empty($paymentSplit->verified_at)) {
-                $paymentSplit->verified_at = now();
-                $paymentSplit->verified_by = Auth::user()->id;
+                if ($parentPayment->send_update_log_id) {
+                    SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
+                        'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+                    ]);
+                }
+                if ($isFromJob) {
+                    $this->processMasterPaymentApprove($modelType,$quoteId, $parentPayment->send_update_log_id, true);
+                }
+                DB::commit();
+            } catch (Exception $exception) {            
+                if ( $isFromJob ) {
+                    CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED_STATUS, 'message' => $exception->getMessage()]);
+                } else {
+                    Log::error('Error in processSplitPaymentApprove: '.$exception->getMessage());
+                }
+                DB::rollBack();
             }
-            $paymentSplit->collection_amount = $amountCollected;
-            $paymentSplit->save();
-            $parentPayment = $paymentSplit->payment;
-            /* Create payment receipt for broker */
-            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
-                ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard,PaymentMethodsEnum::CreditApproval]) &&
-                in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])
-            ) {
-                $this->createReceipt($modelType, $quoteId, $paymentSplit);
-            }
-            $parentPayment->captured_amount = ($parentPayment->captured_amount + $amountCollected);
-            $parentPayment->save();
-
-            if ($parentPayment->send_update_log_id) {
-                SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
-                    'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
-                ]);
-            }
-            if ($isFromJob) {
-                $this->processMasterPaymentApprove($modelType,$quoteId, $parentPayment->send_update_log_id, true);
-            }
-            DB::commit();
-        } catch (Exception $exception) {            
-            if ( $isFromJob ) {
-                CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => 'failed', 'message' => $exception->getMessage()]);
-            } else {
-                Log::error('Error in processSplitPaymentApprove: '.$exception->getMessage());
-            }
-            DB::rollBack();
+        } else if($isFromJob) {
+            CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS_STATUS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
         }
         return;
     }
@@ -727,13 +732,13 @@ class SplitPaymentService
             }
 
             if ( $isFromJob && $splitPaymentId>0) {
-                CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => 'success', 'message' => 'Transaction Approved']);
+                CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS_STATUS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
             }
             DB::commit();
         } catch (Exception $exception) {
             $canCaptureEp = false;
             if ( $isFromJob && $splitPaymentId>0) {
-                CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => 'failed', 'message' => $exception->getMessage()]);
+                CcPaymentProcessJob::where('payment_split_id',$splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED_STATUS, 'message' => $exception->getMessage()]);
             }
             Log::error('Error in processMasterPaymentApprove: '.$exception->getMessage());
             DB::rollBack();

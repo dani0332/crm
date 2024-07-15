@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('payment_split_id')->nullable();
             $table->foreign('payment_split_id')->references('id')->on('payment_splits');            
             $table->string('model_type','15');
-            $table->bigInteger('quote_id');
+            $table->unsignedBigInteger('quote_id');
             $table->float('amount_captured', 16, 2);
             $table->string('status','10')->default('pending');
             $table->string('message','500')->nullable();
