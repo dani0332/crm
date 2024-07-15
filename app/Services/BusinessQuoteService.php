@@ -12,6 +12,7 @@ use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -25,7 +26,7 @@ class BusinessQuoteService extends BaseService
 {
     protected $query;
 
-    use AddPremiumAllLobs, GetUserTreeTrait, RolePermissionConditions;
+    use AddPremiumAllLobs, GetUserTreeTrait, RolePermissionConditions, GenericQueriesAllLobs;
 
     protected $leadAllocationService;
 
@@ -370,6 +371,9 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
+
+        $this->adjustQueryByDateFilters($request, 'bqr');
+
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($request->sortBy, $request->sortType);

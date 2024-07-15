@@ -40,6 +40,8 @@ let availableFilters = {
   is_cold: '',
   stale_at: '',
   advisors: [],
+  payment_due_date:"",
+  booking_date: ""
 };
 
 const filters = reactive(availableFilters);
@@ -435,6 +437,22 @@ watch(
           label="Policy Number"
           class="w-full"
           placeholder="Policy Number"
+        />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

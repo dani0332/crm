@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,9 @@ use Illuminate\Support\Facades\URL;
 
 class CycleQuoteRepository extends BaseRepository
 {
+    private $query;
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -65,7 +69,7 @@ class CycleQuoteRepository extends BaseRepository
         $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
         $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
 
-        $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
+        $this->query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
@@ -78,8 +82,11 @@ class CycleQuoteRepository extends BaseRepository
                 $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy($sort_by, $sort_type);
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+
+            $this->adjustQueryByDateFilters(request(), 'personal_quotes');
+
+            $this->query->orderBy('personal_quotes.'.$sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
             //PD Revert
@@ -87,7 +94,7 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $this->query->get() : $this->query;
     }
 
     public function fetchExport()

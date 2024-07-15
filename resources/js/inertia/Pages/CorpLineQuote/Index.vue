@@ -67,6 +67,8 @@ const filters = reactive({
   payment_status: [],
   is_cold: false,
   is_stale: false,
+  payment_due_date:"",
+  booking_date: ""
 });
 
 watch(
@@ -522,6 +524,23 @@ watch(
             { value: 'No', label: 'No' },
           ]"
           class="w-full"
+        />
+        
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
