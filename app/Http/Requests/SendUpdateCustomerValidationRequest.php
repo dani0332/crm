@@ -55,9 +55,11 @@ class SendUpdateCustomerValidationRequest extends FormRequest
             }
 
             if ($this->sendUpdate->quote_type_id == QuoteTypeId::Car) {
-                if ($option == SendUpdateLogStatusEnum::COE_NFI && empty($this->sendUpdate->emirates_id)) {
+                if ($option == SendUpdateLogStatusEnum::AOCOV && empty($sendUpdateLog->car_addons)) {
+                    return $validator->errors()->add('error', 'Please select Addons');
+                } elseif (in_array($option, [SendUpdateLogStatusEnum::COE_NFI, SendUpdateLogStatusEnum::COE]) && empty($this->sendUpdate->emirates_id)) {
                     return $validator->errors()->add('error', 'Please select Emirate');
-                } elseif ($option == SendUpdateLogStatusEnum::CISC_NFI && empty($this->sendUpdate->seating_capacity)) {
+                } elseif (in_array($option, [SendUpdateLogStatusEnum::CISC_NFI, SendUpdateLogStatusEnum::CISC]) && empty($this->sendUpdate->seating_capacity)) {
                     return $validator->errors()->add('error', 'Please select Seating capacity');
                 }
             }

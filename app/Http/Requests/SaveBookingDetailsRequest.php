@@ -39,11 +39,17 @@ class SaveBookingDetailsRequest extends FormRequest
             'price_vat_applicable' => 'sometimes|numeric',
             'price_vat_not_applicable' => 'sometimes|numeric',
             'price_with_vat' => 'required|numeric',
+            'broker_invoice_number' => 'required|string',
+            'transaction_payment_status' => 'required|string',
+            'commission_percentage' => 'required|numeric',
+            'vat_on_commission' => 'required|numeric',
+            'total_commission' => 'required|numeric',
+            'reversal_invoice' => 'sometimes',
         ];
 
         $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
 
-        $isPriceVatNotApplicableRequired = in_array($this->sendUpdate?->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
+        $isPriceVatNotApplicableRequired = in_array($this->sendUpdate->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
             SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
 
         if ($isPriceVatNotApplicableRequired) {
@@ -51,6 +57,10 @@ class SaveBookingDetailsRequest extends FormRequest
         } else {
             $rules['price_vat_applicable'] = ['required', 'numeric', new NotZero];
             $rules['total_vat_amount'] = 'required|numeric';
+        }
+
+        if ($this->sendUpdate->category?->code == SendUpdateLogStatusEnum::CPD) {
+            $rules['reversal_invoice'] = 'required|string';
         }
 
         return $rules;

@@ -101,11 +101,11 @@ const providerName = computed(() => {
 });
 
 const filledExpiryDate = computed(() => {
-    if (!isEndorsementFinancial.value) {
+    if (isEndorsementFinancial.value) {
         return props.sendUpdateLog?.expiry_date || dateToYMD(props.quote?.renewal_expiry_date) || null;
     }
 
-    return null;
+    return props.sendUpdateLog?.expiry_date || null;
 });
 
 const policyDetailsForm = useForm({

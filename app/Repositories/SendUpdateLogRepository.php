@@ -206,7 +206,7 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSavePolicyDetails($data)
     {
         try {
-            $result = $this->where('id', $data['id'])->update([
+            $result = $this->find($data['id'])->update([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
