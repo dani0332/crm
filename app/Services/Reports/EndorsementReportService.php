@@ -51,7 +51,7 @@ class EndorsementReportService extends ManagementReport
                 DB::raw("CONCAT_WS('-', p.insurer_tax_number, p.notes, p.reference) as transactions"),
                 DB::raw("DATE_FORMAT(send_update_logs.start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as main_lead_policy_start_date"),
-                DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
+                DB::raw("DATE_FORMAT(send_update_logs.invoice_date, '%Y-%m-%d') as payment_due_date"),
                 DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
                 'send_update_logs.price_vat_applicable',
                 'send_update_logs.total_vat_amount as vat',
@@ -64,39 +64,38 @@ class EndorsementReportService extends ManagementReport
                 DB::raw('p.commission_vat_applicable as commission_vat_applicable'),
                 DB::raw('p.commission_vat as commission_vat'),
                 DB::raw('p.commission_vat_not_applicable as commission_vat_not_applicable'),
-                DB::raw('p.premium_captured as collected_amount'),
+                DB::raw('p.captured_amount as collected_amount'),
                 'p.captured_at as payment_date',
                 DB::raw('FORMAT(((
                     IFNULL( send_update_logs.price_vat_applicable , 0 ) +
                     IFNULL( send_update_logs.price_vat_not_applicable , 0 ) +
                     IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( send_update_logs.discount , 0 )) -
-                    IFNULL( send_update_logs.premium_captured, 0),2) as pending_balance'),
-                DB::raw('UPPER(p.collection_type) as collects'),
+                    IFNULL( p.captured_amount, 0),2) as pending_balance'),
+                DB::raw('UPPER(pq.collection_type) as collects'),
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
-                DB::raw("CONCAT(send_update_logs.first_name, ' ', send_update_logs.last_name) as customer_name"),
+                DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
                 'u.name as advisor',
                 'pi.name as policy_issuer',
-                'p.invoice_description as invoice_description',
+                'send_update_logs.invoice_description as invoice_description',
                 'pm.name as payment_method',
                 'pg.text as payment_gateway',
-                'p.insurer_tax_number as insurer_invoice_number',
-                'insurer_invoice_date as insurer_tax_invoice_date',
-                'p.broker_invoice_number',
+                'send_update_logs.insurer_tax_invoice_number as insurer_invoice_number',
+                'send_update_logs.invoice_date as insurer_tax_invoice_date',
+                'send_update_logs.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
                 'l.text as endorsement_sub_type',
                 DB::raw("DATE_FORMAT(send_update_logs.booking_date, '%Y-%m-%d') as booking_date"),
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
+            ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
             ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'personal_quotes.quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
-            ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-            ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
-            ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
+            ->leftJoin('users as pi', 'pi.id', '=', 'pq.policy_issuer_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
@@ -107,11 +106,8 @@ class EndorsementReportService extends ManagementReport
         $this->applyFilters($query, $request);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);
-
         if ($utmGroupBy) {
             $query->groupBy(['personal_quotes.code', $utmGroupBy]);
-        } else {
-            $query->groupBy('send_update_logs.code');
         }
 
         if ($request->export == 1) {
@@ -129,6 +125,18 @@ class EndorsementReportService extends ManagementReport
         } else {
             return $query->simplePaginate(100)->withQueryString();
         }
+    }
+
+    protected function filterTeams($query, $teamIds)
+    {
+        if (empty($teamIds)) {
+            $teamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+        }
+
+        $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
+        $query->whereIn('personal_quotes.advisor_id', $userIds);
+
+        return $query;
     }
 
     public function getDefaultFilters()
