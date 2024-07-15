@@ -787,11 +787,10 @@ trait GenericQueriesAllLobs
 
     private function filterQueryByDateRange($request, $dateType, $columnName) {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        $defaultStartDate = now()->endOfDay();
-        $defaultEndDate = now()->endOfDay();
+        $defaultDate = now()->endOfDay();
 
-        $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultStartDate;
-        $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultEndDate;
+        $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultDate;
+        $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultDate;
 
         $this->query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
