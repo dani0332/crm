@@ -93,7 +93,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'personal_quotes.quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
-            ->leftJoin('users as pi', 'pi.id', '=', 'pq.policy_issuer_id')
+            ->leftJoin('users as pi', 'pi.id', '=', 'send_update_logs.created_by')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
