@@ -119,7 +119,7 @@ class CarQuoteExport
             $quote->currently_insured_with_text,
             $quote->claim_history_id_text,
             date('m/d/Y H:i:s', strtotime($quote->created_at)),
-            $quote->advisor_assigned_date ? date('m/d/Y H:i:s', strtotime($quote->advisor_assigned_date)) : 'N/A',
+            $quote->advisor_assigned_date ? date('m/d/Y H:i:s', strtotime($quote->advisor_assigned_date)) : '',
             $quote->cost_per_lead,
             $quote->quote_status_id_text,
             $quote->payment_status_id_text,
