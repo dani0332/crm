@@ -105,7 +105,7 @@ const filledExpiryDate = computed(() => {
         return props.sendUpdateLog?.expiry_date || dateToYMD(props.quote?.renewal_expiry_date) || null;
     }
 
-    return null;
+    return props.sendUpdateLog?.expiry_date || null;
 });
 
 const policyDetailsForm = useForm({
