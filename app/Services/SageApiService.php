@@ -25,6 +25,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class SageApiService
@@ -249,6 +250,30 @@ class SageApiService
     }
 
     public function postToSage300($endPoint, $payLoad, $verb = 'POST')
+    {
+        $sageEndPoint = $this->sageRequestUrl.$endPoint;
+        $verb = strtoupper($verb);
+        try {
+            $response = match ($verb) {
+                'PATCH' => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                    ->patch($sageEndPoint, $payLoad),
+                'POST' => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                    ->post($sageEndPoint, $payLoad),
+                default => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                    ->get($sageEndPoint, $payLoad),
+            };
+            return is_array($response->json()) ? json_encode($response->json()) : $response->body();
+        } catch (\Exception $e) {
+            return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
+        }
+    }
+
+    /*
+     * this function is renamed and a new function is created with laravel http request for calling sage api
+     *
+     * will be removed once the 2nd function is matured.
+     * */
+    public function postToSage300Curl($endPoint, $payLoad, $verb = 'POST')
     {
         // Create the payload data for the POST request
         $sageEndPoint = $this->sageRequestUrl.$endPoint;
