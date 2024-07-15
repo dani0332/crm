@@ -275,7 +275,7 @@ class CentralController extends Controller
             $data['id'] = $quote->id;
 
             $sageService = new SageApiService();
-            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
+            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data, true, false);
 
             if ($response['status'] === false) {
                 return response()->json(['errors' => [
