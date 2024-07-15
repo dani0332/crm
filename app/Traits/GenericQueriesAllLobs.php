@@ -782,16 +782,12 @@ trait GenericQueriesAllLobs
             $this->filterQueryByDateRange($request, 'payment_due_date', 'pays.due_date');
         } else if ($request->booking_date) {
             $this->filterQueryByDateRange($request, 'booking_date', $tablePrefix.'.policy_booking_date');
-        } else if ($request->transaction_approved_dates) {
-            $this->filterQueryByDateRange($request, 'transaction_approved_dates', $tablePrefix.'.transaction_approved_at');
         }
     }
 
     private function filterQueryByDateRange($request, $dateType, $columnName) {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-        $freshLoad = !isset($request->page);
-        $defaultStartDate = $freshLoad ? now()->startOfDay() : now()->subDays($maxDays)->startOfDay();
+        $defaultStartDate = now()->endOfDay();
         $defaultEndDate = now()->endOfDay();
 
         $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultStartDate;
