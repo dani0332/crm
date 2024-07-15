@@ -135,6 +135,7 @@ onMounted(() => {
           :options="[
             { label: 'Car', value: 'Car' },
             { label: 'Health', value: 'Health' },
+            { label: 'Travel', value: 'Travel' },
           ]"
           placeholder="Select a Quote Type"
           class="w-full"
@@ -177,6 +178,9 @@ onMounted(() => {
     <template #item-quote_id="{ quote_id, quote_type }">
       <span v-if="quote_type.toLowerCase().includes('hea')">
         {{ 'HEA' + '-' + quote_id }}
+      </span>
+      <span v-else-if="quote_type.toLowerCase().includes('travel')">
+        {{ 'TRA' + '-' + quote_id }}
       </span>
       <span v-else>
         {{ quote_type + '-' + quote_id }}
