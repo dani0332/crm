@@ -44,6 +44,8 @@ const filters = reactive({
   coverage_code: '',
   previous_quote_policy_number: '',
   renewal_batch: '',
+  payment_due_date:"",
+  booking_date: ""
 });
 
 const loader = reactive({
@@ -400,6 +402,22 @@ onMounted(() => {
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

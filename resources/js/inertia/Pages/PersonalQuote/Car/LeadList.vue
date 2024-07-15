@@ -228,8 +228,6 @@ const filters = reactive({
   segment_filter: 'all',
   teams: [],
   transaction_approved_dates: page.props.transaction_approved_dates || '',
-  payment_due_at_start: "",
-  payment_due_at_end: "",
   payment_due_date:"",
   booking_date: ""
 });
@@ -648,15 +646,15 @@ onMounted(() => {
           range
           multi-calendars
           multi-calendars-solo
-      />
-      <DatePicker
-        v-model="filters.booking_date"
-        label="Booking Date"
-        class="w-full"
-        range
-        multi-calendars
-        multi-calendars-solo
-      />
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>

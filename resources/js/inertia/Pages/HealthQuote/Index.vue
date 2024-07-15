@@ -139,6 +139,8 @@ const filters = reactive({
   is_cold: false,
   is_stale: false,
   status_filters: null,
+  payment_due_date:"",
+  booking_date: ""
 });
 
 const canExport = ref(false);
@@ -557,6 +559,24 @@ watch(
           v-model="filters.assigned_to_date_end"
           name="assigned_to_date_end"
           label="Advisor Assigned Date End"
+        />
+        
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

@@ -22,6 +22,8 @@ use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Arr;
+use App\Services\ApplicationStorageService;
+use Carbon\Carbon;
 
 trait GenericQueriesAllLobs
 {
@@ -773,4 +775,29 @@ trait GenericQueriesAllLobs
 
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
+
+    public function adjustQueryByDateFilters($request, $tablePrefix) {
+        if($request->payment_due_date){
+            $this->query->leftJoin('payment_splits as pays', 'pays.code', '=', $tablePrefix.'.code');
+            $this->filterQueryByDateRange($request, 'payment_due_date', 'pays.due_date');
+        } else if ($request->booking_date) {
+            $this->filterQueryByDateRange($request, 'booking_date', $tablePrefix.'.policy_booking_date');
+        } else if ($request->transaction_approved_dates) {
+            $this->filterQueryByDateRange($request, 'transaction_approved_dates', $tablePrefix.'.transaction_approved_at');
+        }
+    }
+
+    private function filterQueryByDateRange($request, $dateType, $columnName) {
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = !isset($request->page);
+        $defaultStartDate = $freshLoad ? now()->startOfDay() : now()->subDays($maxDays)->startOfDay();
+        $defaultEndDate = now()->endOfDay();
+
+        $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultStartDate;
+        $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultEndDate;
+
+        $this->query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
+    }
+
 }

@@ -933,19 +933,6 @@ class CarQuoteService extends BaseService
         if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
             CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr');
         }
-        if ($request->transaction_approved_dates) {
-
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-            $freshLoad = ! isset($request->page);
-            $startDate = isset($request->transaction_approved_dates) ?
-            Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
-
-            $endDate = isset($request->transaction_approved_dates) ?
-            Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
-
-            $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
-        }
         if (! empty($request->teams) && is_array($request->teams)) {
             $this->query->whereIn('team.id', $request->teams);
         }
@@ -957,33 +944,7 @@ class CarQuoteService extends BaseService
             });
         }
 
-        if ($request->payment_due_date) {
-            $this->query->leftJoin('payment_splits as pays', 'pays.code', '=', 'cqr.code');
-
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-            $freshLoad = ! isset($request->page);
-            $startDate = isset($request->payment_due_date) ?
-            Carbon::parse($request->payment_due_date[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
-
-            $endDate = isset($request->payment_due_date) ?
-            Carbon::parse($request->payment_due_date[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
-
-            $this->query->whereBetween('pays.due_date', [$startDate, $endDate]);
-        }
-
-        if ($request->booking_date) {
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-            $freshLoad = ! isset($request->page);
-            $startDate = isset($request->booking_date) ?
-            Carbon::parse($request->booking_date[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
-
-            $endDate = isset($request->booking_date) ?
-            Carbon::parse($request->booking_date[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
-
-            $this->query->whereBetween('cqr.policy_booking_date', [$startDate, $endDate]);
-        }
+        $this->adjustQueryByDateFilters($request, 'cqr');
 
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
