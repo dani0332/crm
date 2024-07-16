@@ -809,8 +809,6 @@ const handleApprovalReasonChange = () => {
   if (paymentMethodsForm.credit_approval !== '') { 
     paymentTypesFiltered.value = paymentTypes.value;
 
-    const commonExclusion = ['PPR', 'MP', 'PP'];
-    const additionalExclusion = isInsureNowPayLaterAllowed.value ? [] : ['IN_PL'];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
         ![          
