@@ -24,6 +24,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class SageApiService
@@ -69,7 +70,7 @@ class SageApiService
         // $sageRequest->discount = 2;
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
-        $sageRequest->bookingDate = date('Y-m-d', strtotime($quote['policy_booking_date']));
+        $sageRequest->bookingDate = $quote['policy_booking_date'] ? date('Y-m-d', strtotime($quote['policy_booking_date'])) : Carbon::now()->format('Y-m-d');
         $sageRequest->policyBookingDate = date('Ymd', strtotime($quote['policy_booking_date']));
         $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
         $sageRequest->insurerInvoiceDate = date('Y-m-d', strtotime($payment->insurer_invoice_date));
