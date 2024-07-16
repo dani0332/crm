@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
@@ -123,7 +122,7 @@ class InslyDetailRepository extends BaseRepository
                     $quote->modelType = $quoteType;
                     $data[] = $quote;
 
-                    !$isPersonalQuote && $this->syncQuote($quote, $quote->getDirty());
+                    ! $isPersonalQuote && $this->syncQuote($quote, $quote->getDirty());
 
                     return [
                         'status' => 200,
@@ -162,11 +161,11 @@ class InslyDetailRepository extends BaseRepository
                         }
                         if ($isPersonalQuote) {
                             $item->link = $appUrl.'/personal-quotes/'.strtolower($quoteType).'/'.$item->uuid;
-                        } else {    
+                        } else {
                             $item->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$item->uuid;
                         }
                         $item->modelType = $quoteType;
-                        !$isPersonalQuote && $this->syncQuote($item, $item->getDirty());
+                        ! $isPersonalQuote && $this->syncQuote($item, $item->getDirty());
                         $data[] = $item;
                     }
 
@@ -276,7 +275,7 @@ class InslyDetailRepository extends BaseRepository
                     } else {
                         $policy->imcrm_link = '/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     }
-                    !$isPersonalQuote && $this->syncQuote($obj, $payLoad);
+                    ! $isPersonalQuote && $this->syncQuote($obj, $payLoad);
                     $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
                     $policy->moved_to_imcrm_by = auth()->user()->name;
                     $policy->code = $obj->code;
