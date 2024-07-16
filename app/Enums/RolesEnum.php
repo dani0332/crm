@@ -97,4 +97,8 @@ final class RolesEnum extends Enum
     public const Production = 'PRODUCTION';
     public const MotorHead = 'MOTOR_HEAD';
     public const OperationExecutive = 'OPERATION_EXECUTIVE';
+<<<<<<< HEAD
+=======
+    public const TravelHapex = 'HAPEX';
+>>>>>>> main
 }

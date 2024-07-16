@@ -745,6 +745,7 @@ const handleCollectionTypeChange = () => {
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
     item => !excludedPaymentTypes.includes(item.value),
   );
+
   if (paymentMethodsForm.collection_type === 'insurer') {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
@@ -807,6 +808,9 @@ const handleApprovalReasonChange = () => {
   //customize payment method based on collection type
   if (paymentMethodsForm.credit_approval !== '') { 
     paymentTypesFiltered.value = paymentTypes.value;
+
+    const commonExclusion = ['PPR', 'MP', 'PP'];
+    const additionalExclusion = isInsureNowPayLaterAllowed.value ? [] : ['IN_PL'];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
         ![          
@@ -816,6 +820,7 @@ const handleApprovalReasonChange = () => {
           page.props.paymentMethodsEnum?.PartialPayment,
         ].filter(Boolean).includes(item.value),
     );
+
     if (paymentMethodsForm.collection_type === 'insurer') {
       if (paymentMethodsForm.frequency === 'upfront') {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is  UpFront*/

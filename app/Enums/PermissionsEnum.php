@@ -350,6 +350,10 @@ final class PermissionsEnum extends Enum
     public const EXTRACT_REPORT = 'extract-report';
     public const INPL_USER = 'inpl-user';
     public const INPL_APPROVER = 'inpl-approver';
+<<<<<<< HEAD
+=======
+    public const DOCUMENT_VERIFY = 'document-verify';
+>>>>>>> main
 
     public static function getAdvisorConversionReportPermissions()
     {

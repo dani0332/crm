@@ -31,6 +31,9 @@ class TravelMemberDetailRequest extends FormRequest
             'relation_code' => 'nullable',
             'quote_request_id' => 'sometimes|required',
             'customer_id' => 'required',
+            'uae_resident' => 'nullable',
+            'emirates_id_number' => 'nullable',
+            'passport' => 'nullable',
             'gender' => 'nullable',
         ];
     }

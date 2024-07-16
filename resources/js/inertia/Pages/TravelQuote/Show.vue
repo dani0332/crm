@@ -58,9 +58,13 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
+<<<<<<< HEAD
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array
+=======
+  travelDestinations: Object,
+>>>>>>> main
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -285,6 +289,9 @@ const travelerForm = useForm({
   dob: '',
   nationality_id: null,
   relation_code: null,
+  passport: null,
+  uae_resident: null,
+  emirates_id_number: '',
   gender: null,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -301,8 +308,12 @@ const travelerTable = reactive({
   processing: false,
   columns: [
     {
-      text: 'Member Name',
+      text: 'First Name',
       value: 'first_name',
+    },
+    {
+      text: 'Last Name',
+      value: 'last_name',
     },
     {
       text: 'Nationality',
@@ -319,6 +330,18 @@ const travelerTable = reactive({
     {
       text: 'Relation',
       value: 'relation',
+    },
+    {
+      text: 'Emirates ID Number',
+      value: 'emirates_id_number',
+    },
+    {
+      text: 'Passport Number',
+      value: 'passport',
+    },
+    {
+      text: 'UAE Resident',
+      value: 'uae_resident',
     },
     {
       text: 'Action',
@@ -359,6 +382,9 @@ const addTravelMember = isValid => {
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
+      travelerForm.uae_resident = null;
+      travelerForm.passport = null;
+      travelerForm.emirates_id_number = '';
       travelerForm.id = null;
       travelerForm.gender = null;
       travelerForm.reset();
@@ -372,6 +398,9 @@ const onAddTraveler = () => {
   travelerForm.dob = '';
   travelerForm.nationality_id = '';
   travelerForm.relation_code = '';
+  travelerForm.uae_resident = null;
+  travelerForm.passport = null;
+  travelerForm.emirates_id_number = '';
   travelerForm.id = null;
   travelerTable.addTraveler = true;
   travelerForm.gender = null;
@@ -387,6 +416,9 @@ const onEditTraveler = traveler => {
   travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
   travelerForm.nationality_id = traveler.nationality_id;
+  travelerForm.uae_resident = traveler.uae_resident;
+  travelerForm.emirates_id_number = traveler.emirates_id_number;
+  travelerForm.passport = traveler.passport;
   travelerTable.addTraveler = true;
 };
 
@@ -764,13 +796,13 @@ const availableSeniorPlansTable = reactive({
 //activities
 
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -1153,6 +1185,7 @@ const genderList = [
 ];
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
+<<<<<<< HEAD
 const handleSelectionChange = (tableType, selectedItems) => {
   if (tableType === 'adult' && selectedSeniorPlans.value.length > 0) {
     modals.mixInquiryConfirm = true;
@@ -1192,6 +1225,76 @@ const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
   createReusableTemplate();
 const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
   createReusableTemplate();
+=======
+const getupdateDocumentValidate = event => {
+  updateDocumentValidate.show = event;
+  page.props.quote.is_documents_valid = event;
+};
+
+const updateDocumentValidate = reactive({
+  show: false,
+  title: 'Update',
+  message: 'Are all documents correct?',
+  processing: false,
+  onConfirm: () => {
+    updateDocumentValidate.show = false;
+  },
+});
+
+const documentValidate = async val => {
+  updateDocumentValidate.processing = true;
+  if (page.props.quoteDocuments?.length < 1) {
+    notification.info({
+      title: 'Please upload the documents file first',
+      position: 'top',
+    });
+    updateDocumentValidate.processing = false;
+    updateDocumentValidate.show = false;
+    return false;
+  }
+  let data = { is_documents_valid: val };
+  await axios
+    .post(
+      `/quotes/travel/${page.props.quote.uuid}/update-validate-documents`,
+      data,
+    )
+    .then(res => {
+      if (res.status == 200) {
+        notification.success({
+          title: 'Document validity status update successfully.',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Documents validity status updated failed',
+          position: 'top',
+        });
+      }
+      updateDocumentValidate.processing = false;
+      updateDocumentValidate.show = false;
+    })
+    .catch(err => {
+      notification.error({
+        title: 'Documents validity status updated failed',
+        position: 'top',
+      });
+      updateDocumentValidate.processing = false;
+      updateDocumentValidate.show = false;
+    });
+};
+const getGenderDisplay = (val) => {
+      switch (val) {
+        case 'M':
+        case 'male':
+          return 'Male';
+        case 'F':
+        case 'female':
+          return 'Female';
+        default:
+          return '';
+      }
+    }
+>>>>>>> main
 </script>
 
 <template>
@@ -1354,6 +1457,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
                 <dd>{{ field?.value }}</dd>
               </div>
 
+<<<<<<< HEAD
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="bottom">
@@ -1380,6 +1484,38 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
                   </Link>
                 </dt>
               </div>
+=======
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  TRAVELING WHERE
+                </label>
+                <template #tooltip> Traveling Where</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium uppercase">
+              {{
+                quote.direction_code != null
+                  ? quote.direction_code
+                  : quote?.currently_located_in_id_text ==
+                      enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                    quote?.region_cover_for_id !=
+                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                  : quote?.destination_id_text ==
+                      enums.travelQuoteEnum
+                        .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                    quote?.region_cover_for_id ==
+                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                  : ''
+              }}
+            </dt>
+          </div>
+>>>>>>> main
 
               <div
                 class="grid sm:grid-cols-2"
@@ -1583,9 +1719,19 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
+<<<<<<< HEAD
                 quote.customer_type == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
+=======
+                quote.coverage_code != null
+                  ? quote.coverage_code
+                  : quote.days_cover_for <= 92
+                  ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                  : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                    '/' +
+                    enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+>>>>>>> main
               }}
               Profile
             </h3>
@@ -1598,6 +1744,15 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
               KYC - Complete
             </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRAVEL DESTINATION(S)</dt>
+            <dt class="font-medium">
+              <span v-for="(item, index) in travelDestinations" :key="item.id">
+                {{ item?.destination?.country_name
+                }}<span v-if="index < travelDestinations?.length - 1">, </span>
+              </span>
+            </dt>
           </div>
 
           <div
@@ -1732,6 +1887,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
                   </dd>
                 </div>
 
+<<<<<<< HEAD
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
               </dl>
               <dl
@@ -1831,6 +1987,48 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
                 </div>
               </dl>
               <div class="flex justify-end">
+=======
+            <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
+
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">UAE resident</dt>
+              <dd>{{ customerProfileForm.uae_resident ?? 'N/A' }}</dd>
+            </div>
+          </dl>
+          <dl
+            v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+          >
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">FIRST NAME</dt>
+              <dd>{{ quote.first_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">LAST NAME</dt>
+              <dd>{{ quote.last_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">MOBILE NUMBER</dt>
+              <dd>{{ quote.mobile_no }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMAIL</dt>
+              <dd>{{ quote.email }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY NAME</dt>
+              <dd>{{ customerProfileForm.company_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">TRADE LICENSE NO</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.trade_license_no"
+                  placeholder="TRADE LICENSE NO"
+                  type="text"
+                  class="w-full"
+                />
+>>>>>>> main
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -1930,6 +2128,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
+<<<<<<< HEAD
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -1965,6 +2164,46 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             </x-tooltip>
             <AddMemButtonReuseTemplate v-else />
           </div>
+=======
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Member Details
+          <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+        </h3>
+        <div class="flex flex-wrap gap-3">
+          <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
+            Add Member
+          </x-button>
+        </div>
+      </div>
+      <DataTable
+        table-class-name="tablefixed compact"
+        :headers="travelerTable.columns"
+        :items="travelers || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="travelers.length < 15"
+        show-index
+      >
+        <template #item-index="{ index, code }">
+          <div>{{ code ?? 'Member ' + index }}</div>
+        </template>
+        <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
+
+        <template #item-relation="{ relation }">
+          {{ relation?.text }}
+        </template>
+        <template #item-gender="{ gender }">
+          {{ getGenderDisplay(gender) }}
+        </template>
+        <template #item-nationality="{ nationality }">
+          {{ nationality?.text }}
+        </template>
+        <template #item-uae_resident="{ uae_resident }">
+          {{ uae_resident === 1 ? 'Yes' : uae_resident === 0 ? 'No' : '' }}
+        </template>
+>>>>>>> main
 
           <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
             <x-button
@@ -2097,6 +2336,16 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
               :options="memberRelationOptions"
               placeholder="Select Relation"
               class="w-full"
+            />
+            <x-input
+              v-model="travelerForm.emirates_id_number"
+              label="Emirates ID Number"
+              placeholder="Emirates ID Number"
+            />
+            <x-input
+              v-model="travelerForm.passport"
+              label="Passport Number"
+              placeholder="Passport Number"
             />
             <x-field label="Gender*">
               <x-select
@@ -2314,6 +2563,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
+<<<<<<< HEAD
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -2340,6 +2590,121 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
               <span class="text-primary-600 uppercase">{{ item.reason }}</span>
             </template>
           </DataTable>
+=======
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Documents
+          <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+        </h3>
+        <div class="flex gap-2">
+          <Link
+            v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${quote.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <x-tooltip position="top">
+            <x-button
+              @click.prevent="getupdateDocumentValidate(true)"
+              v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
+              size="sm"
+              color="green"
+            >
+              Verify Documents
+            </x-button>
+            <template #tooltip>
+              Verify Documents: Clicking this button confirms that all submitted
+              documents are accurate and valid.</template
+            >
+          </x-tooltip>
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="primary"
+          >
+            Upload Documents
+          </x-button>
+          <x-button
+            size="sm"
+            color="red"
+            v-if="
+              displaySendPolicyButton &&
+              permissions.notProductionApproval &&
+              permissions.isQuoteDocumentEnabled
+            "
+            @click="sendPolicyToClient"
+          >
+            Send Policy
+          </x-button>
+        </div>
+      </div>
+      <DataTable
+        table-class-name="compact"
+        :headers="quoteDocumentsTable.columns"
+        :items="quoteDocuments || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="quoteDocuments.length < 15"
+      >
+        <template #item-original_name="item">
+          <a
+            :href="cdnPath + item.doc_url"
+            target="_blank"
+            class="text-primary-600"
+          >
+            {{ item.original_name }}
+          </a>
+        </template>
+        <template #item-action="{ doc_name }">
+          <div>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="onDocDelete(doc_name)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+
+      <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+        <template #header> Upload Documents </template>
+
+        <LazyDocumentUploader
+          :members="memberDataDocs(travelers)"
+          :doc-types="documentTypes"
+          :docs="quoteDocuments || []"
+          :cdn="cdnPath"
+        />
+      </x-modal>
+      <x-modal v-model="modals.docConfirm" show-close backdrop>
+        <template #header> Delete Document </template>
+        <p>Are you sure you want to delete this document?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.docConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              @click.prevent="confirmDeleteDoc"
+              :loading="quoteDocumentsTable.isLoading"
+            >
+              Delete
+            </x-button>
+          </div>
+>>>>>>> main
         </template>
       </Collapsible>
     </div>
@@ -2428,7 +2793,11 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
           <div v-else>
             <DataTable
               v-model:items-selected="selectedPlans"
+<<<<<<< HEAD
               table-class-name="tablefixed"
+=======
+              table-class-name="tablefixed compact"
+>>>>>>> main
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
               border-cell
@@ -2508,7 +2877,11 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             <div>
               <DataTable
                 v-model:items-selected="selectedPlans"
+<<<<<<< HEAD
                 table-class-name="tablefixed"
+=======
+                table-class-name="tablefixed compact"
+>>>>>>> main
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
                 border-cell
@@ -2597,6 +2970,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
       :payments="payments"
     />
     <PaymentTableNew
+<<<<<<< HEAD
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
@@ -2610,6 +2984,21 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
       "
       :quoteRequest="quoteRequest"
       :paymentStatusEnum="page.props.paymentStatusEnum"
+=======
+      v-if="isNewPaymentStructure"
+      quoteType="Travel"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes.QUOTE.filter(
+          item =>
+            item.code === 'TPD' ||
+            item.code === 'TPDR' ||
+            item.code === 'TDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="enums.paymentStatusEnum"
+>>>>>>> main
       :paymentTooltipEnum="paymentTooltipEnum"
       :paymentMethods="
         paymentMethods.map(pm => {
@@ -2617,9 +3006,13 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
         })
       "
       :storageUrl="storageUrl"
+<<<<<<< HEAD
       :bookPolicyDetails="bookPolicyDetails"
     />
 
+=======
+    />
+>>>>>>> main
     <PaymentTable
       v-else
       :payments="payments"
@@ -2740,7 +3133,38 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             </template>
           </DataTable>
         </template>
+<<<<<<< HEAD
       </Collapsible>
+=======
+      </DataTable>
+      <x-modal v-model="updateDocumentValidate.show" show-close backdrop>
+        <template #header> Are all documents correct? </template>
+        <p>
+          Note: By clicking 'Yes,' you confirm that all submitted documents are
+          accurate and valid. Failure to verify will be considered a breach of
+          the Code of Conduct (COC).
+        </p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="updateDocumentValidate.show = false"
+            >
+              No
+            </x-button>
+            <x-button
+              size="sm"
+              color="green"
+              @click.prevent="documentValidate(quote.is_documents_valid)"
+              :loading="updateDocumentValidate.processing"
+            >
+              Yes
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+>>>>>>> main
       <x-modal v-model="modals.activity" size="lg" show-close backdrop>
         <template #header>
           {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
@@ -2824,6 +3248,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
+<<<<<<< HEAD
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -2872,6 +3297,34 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
       :expanded="sectionExpanded"
     />
 
+=======
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div v-if="historyData === null" class="text-center py-3">
+        <x-button
+          size="sm"
+          color="primary"
+          outlined
+          @click.prevent="onLoadHistoryData"
+          :loading="historyLoading"
+        >
+          Load History Data
+        </x-button>
+      </div>
+      <DataTable
+        v-else
+        table-class-name="compact"
+        :headers="historyDataTable"
+        :items="historyData || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="historyData.length < 15"
+      />
+    </div>
+>>>>>>> main
     <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
       <template #header>
         <div class="text-center">SORRY!</div>
@@ -2891,6 +3344,19 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
         </div>
       </template>
     </x-modal>
+<<<<<<< HEAD
+=======
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'TRAVEL'"
+    />
+    <AuditLogs
+      :type="'App\\Models\\TravelQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
+>>>>>>> main
   </div>
 </template>
 <style>
