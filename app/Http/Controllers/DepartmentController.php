@@ -31,7 +31,7 @@ class DepartmentController extends Controller
         $request->validate([
             'name' => 'required|unique:departments,name',
             'teams' => 'required|array',
-            'is_active' => 'required',
+            'is_active' => 'required|boolean',
         ]);
 
         $new_department = $this->departmentService->saveDepartment((object) $request->all());
@@ -58,7 +58,7 @@ class DepartmentController extends Controller
         $request->validate([
             'name' => 'required|unique:departments,name,'.$id,
             'teams' => 'required|array',
-            'is_active' => 'required',
+            'is_active' => 'required|boolean',
         ]);
 
         $department = $this->departmentService->updateDepartment((object)$request->all(), $id);

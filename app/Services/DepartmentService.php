@@ -28,7 +28,7 @@ class DepartmentService extends BaseService
             'name' => $data->name,
             'is_active' => $data->is_active,
         ]);
-        foreach ($data['teams'] as $key => $team_id) {
+        foreach ($data->teams as $key => $team_id) {
             $teams = DepartmentTeams::create([
                 'department_id' => $new_department->id,
                 'team_id' => $team_id,
