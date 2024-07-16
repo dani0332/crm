@@ -104,7 +104,8 @@ class UserService extends BaseService
         return false;
     }
 
-    public function getDepartmentsList(){
+    public function getDepartmentsList()
+    {
         return DB::table('departments')->where('is_active', 1)->orderBy('name')->get();
     }
 }

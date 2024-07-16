@@ -85,7 +85,7 @@ class UserController extends Controller
         $teams = [];
         $subTeams = [];
         $permissions = Permission::orderBy('name')->get();
-        $departments  = $this->userService->getDepartmentsList();
+        $departments = $this->userService->getDepartmentsList();
 
         return inertia('Admin/Users/Form', [
             'roles' => $roles,

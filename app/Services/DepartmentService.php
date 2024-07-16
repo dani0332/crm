@@ -62,7 +62,8 @@ class DepartmentService extends BaseService
         return true;
     }
 
-    public function getDepartment($id){
+    public function getDepartment($id)
+    {
         return Department::where('id', $id)->with('departmentTeams')->first();
     }
 
