@@ -785,6 +785,8 @@ trait GenericQueriesAllLobs
             $columnName = 'pays.due_date';
         } elseif ($request->booking_date) {
             $columnName = $tablePrefix.'.policy_booking_date';
+        } else {
+            return;
         }
         $dateType = $request->payment_due_date ? 'payment_due_date' : 'booking_date';
         $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultDate;
