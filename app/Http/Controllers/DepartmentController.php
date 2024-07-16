@@ -58,8 +58,9 @@ class DepartmentController extends Controller
         $request->validate([
             'name' => 'required|unique:departments,name,'.$id,
             'teams' => 'required|array',
-            'status' => 'required',
+            'is_active' => 'required',
         ]);
+
         $department = $this->departmentService->updateDepartment((object)$request->all(), $id);
 
         return redirect()->route('departments.index')->with('success', 'Department updated successfully');

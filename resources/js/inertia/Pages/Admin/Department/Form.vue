@@ -3,7 +3,6 @@ import { ref } from 'vue';
 
 const props = defineProps({
   teams: Array,
-  teams: Object,
   department: Object,
 });
 
@@ -27,11 +26,10 @@ const validTeams = computed(() => {
 });
 
 watch(
-  () => props.department?.department_teams,
+  () => props.department?.teams,
   () => {
-    if (props.department?.department_teams) {
-        props.department?.department_teams.forEach(element => {
-            console.log("team value ", element);
+    if (props.department?.teams) {
+        props.department?.teams.forEach(element => {
             departmentForm.teams.push(+element.team_id);
         });
 

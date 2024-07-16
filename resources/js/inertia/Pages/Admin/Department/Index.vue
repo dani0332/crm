@@ -71,9 +71,8 @@ onMounted(() => {
     <Head title="Department List" />
     <div class="flex justify-between items-center">
         <h2 class="text-xl font-semibold">Departments</h2>
-        <!-- v-if="can(permissionsEnum.DepartmentCreate)" -->
         <div class="space-x-3" >
-          <Link :href="route('departments.create')">
+          <Link :href="route('departments.create')" v-if="can(permissionsEnum.DEPARTMENT_CREATE)">
             <x-button size="sm" color="#ff5e00" tag="div"> Create Department </x-button>
           </Link>
         </div>

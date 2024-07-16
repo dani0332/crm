@@ -86,7 +86,6 @@ class UserController extends Controller
         $subTeams = [];
         $permissions = Permission::orderBy('name')->get();
         $departments = $this->userService->getDepartmentsList();
-
         return inertia('Admin/Users/Form', [
             'roles' => $roles,
             'products' => $products,
@@ -173,6 +172,7 @@ class UserController extends Controller
         $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
         $user->roles = $user->roles->pluck('name')->toArray();
         $user->permissions = $user->permissions->pluck('name')->toArray();
+        $user->department = $user->department ?? '';
         if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
@@ -180,6 +180,8 @@ class UserController extends Controller
         if ($user->sub_team_id) {
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
+
+
 
         return inertia('Admin/Users/Show', [
             'user' => $user,
@@ -217,13 +219,14 @@ class UserController extends Controller
         $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
         $permissions = Permission::orderBy('name')->get();
         $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
-
+        $departments = $this->userService->getDepartmentsList();
         return inertia('Admin/Users/Form', [
             'user' => $user,
             'roles' => $roles,
             'userRole' => $userRole,
             'selectedAdditionalTeams' => $selectedAdditionalTeams,
             'subTeams' => $subTeams,
+            'departments' => $departments,
             'products' => $products,
             'userProductIds' => $userProductIds,
             'teams' => $teams,

@@ -10,8 +10,8 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 let teams  = ref([]);
 const departmentTeams = computed(() => {
-  if (props.department && props.department?.department_teams) {
-    return props.department?.department_teams.map(x => x.team.name).toString();
+  if (props.department && props.department?.teams) {
+    return props.department?.teams.map(x => x.team.name).toString();
   } else return null;
 });
 
@@ -23,13 +23,13 @@ console.log("teams",teams.value)
     <h2 class="text-xl font-semibold">Departments Detail</h2>
     <div class="space-x-3">
       <Link :href="route('departments.index')">
-        <x-button size="sm" color="#ff5e00" tag="div"> department List </x-button>
+        <x-button size="sm" color="#ff5e00" tag="div"> Department List </x-button>
       </Link>
       <Link
-        v-if="can(permissionsEnum.DepartmentUpdate)"
+        v-if="can(permissionsEnum.DEPARTMENT_UPDATE)"
         :href="route('departments.edit', props.department.id)"
       >
-        <x-button size="sm" color="primary" tag="div"> Edit department </x-button>
+        <x-button size="sm" color="primary" tag="div"> Edit Department </x-button>
       </Link>
     </div>
   </div>
@@ -44,7 +44,6 @@ console.log("teams",teams.value)
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Teams</dt>
-          <!-- <dd>{{ permissions ?? 'N/A' }}</dd> -->
           <dd class="break-words flex flex-wrap gap-1">
             <template v-if="departmentTeams">
               <x-tag

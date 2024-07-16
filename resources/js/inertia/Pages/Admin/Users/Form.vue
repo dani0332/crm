@@ -33,7 +33,6 @@ const loader = reactive({
   teamLoader: false,
   subTeamLoader: false,
   managers: false,
-  departmentLoader: false,
 });
 
 const selectedRoles = computed(() => {
@@ -336,7 +335,6 @@ watch(
             placeholder="Select Department"
             :options="computedDepartments"
             :single="true"
-            :loading="loader.departmentLoader"
         />
       </x-field>
 
