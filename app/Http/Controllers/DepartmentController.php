@@ -34,7 +34,7 @@ class DepartmentController extends Controller
             'is_active' => 'required',
         ]);
 
-        $new_department = $this->departmentService->saveDepartment((object)$request->all());
+        $new_department = $this->departmentService->saveDepartment((object) $request->all());
 
         return redirect()->route('departments.index')->with('success', 'Department created successfully');
     }
@@ -60,7 +60,7 @@ class DepartmentController extends Controller
             'teams' => 'required|array',
             'status' => 'required',
         ]);
-        $department = $this->departmentService->updateDepartment((object)$request->all(), $id);
+        $department = $this->departmentService->updateDepartment((object) $request->all(), $id);
 
         return redirect()->route('departments.index')->with('success', 'Department updated successfully');
     }
