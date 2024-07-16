@@ -16,7 +16,7 @@ class RunProcessCCPaymentsJob extends Command
      *
      * @var string
      */
-    protected $signature = 'app:run-process-cc-payments-job';
+    protected $signature = 'RunProcessCCPaymentsJob:cron';
 
     /**
      * The console command description.

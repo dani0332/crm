@@ -1535,31 +1535,29 @@ const closeRetryModal = () => {
 }
 
 const handleRetryPayment = async () => {
-  try {
-    const response = await axios.post('/payments/${props.quoteType}/retry-payment', {
+  let retryData = {
       payment_process_job_id: retryProcessJobId.value,
       model_type: props.quoteType,
       quote_id: props.quoteRequest.id,
+    };
+  retryForm
+    .transform(data => retryData)
+    .post('/payments/' + props.quoteType + '/retry-payment', {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Payment has been retried',
+          position: 'top',
+        });
+        isRetryModalOpen.value = false;        
+      },
+      onError: () => {
+        notification.error({
+          title: 'Payment retry failed',
+          position: 'top',
+        });
+      },
     });
-    if (response.data.success) {
-      notification.success({
-        title: 'Payment has been retried',
-        position: 'top',
-      });
-      isRetryModalOpen.value = false;
-      router.visit(location.href);
-    } else {
-      notification.error({
-        title: 'Payment retry failed',
-        position: 'top',
-      });
-    }
-  } catch (err) {
-    notification.error({
-      title: 'Payment retry failed',
-      position: 'top',
-    });
-  }
 };
 
 const editPaymentModal = (
@@ -2282,6 +2280,10 @@ const documentForm = useForm({
   quote_type_id: null,
   document_type_code: null,
   file: null,
+});
+
+const retryForm = useForm({
+  payment_process_job_id: null,
 });
 
 const deleteDocument = (docName, count) => {
@@ -5343,6 +5345,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 </div>
               </div>
             </div>
+            <x-form @submit="handleRetryPayment" :auto-focus="false">   
             <div class="w-full h-full mt-2 flex flex-col">
               <div
                 class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
@@ -5352,18 +5355,17 @@ const lookupsEnum = page.props.lookupsEnum;
                 </div>
               </div>              
             </div>
-            <div class="w-full h-full mt-2 flex flex-col items-center">              
+            <div class="w-full h-full mt-2 flex flex-col items-center">                         
               <x-button
                 size="lg"
                 type="submit"
                 color="orange"
                 class="px-4 py-2 mt-4 mb-4"
-                :loading="paymentMethodsForm.processing"
-                @click="handleRetryPayment"
+                :loading="retryForm.processing"                
               >
-                <span>Retry</span></x-button>
+                <span>Retry</span></x-button>              
             </div>
-
+          </x-form>
           </div>
         </div>
 

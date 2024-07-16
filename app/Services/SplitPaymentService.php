@@ -596,10 +596,11 @@ class SplitPaymentService
                     'quote_id' => $quoteId,
                     'customer_id' => $quoteModel->customer_id,
                 ]);
-
-                $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
+                
+                $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);                
                 if ($sageResponse['status'] == 'success') {
                     $paymentSplit->sage_reciept_id = $sageResponse['response'];
+                    $paymentSplit->save();
                 } else {
                     $sageMessage = $sageResponse['response'];                    
                     if ( $isFromJob ) {

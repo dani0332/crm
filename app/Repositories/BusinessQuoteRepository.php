@@ -88,6 +88,7 @@ class BusinessQuoteRepository extends BaseRepository
                         'paymentSplits.paymentMethod',
                         'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'quoteRequestEntityMapping' => function ($entityMapping) {

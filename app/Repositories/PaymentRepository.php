@@ -644,7 +644,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {        
         $paymentProcessJob = CcPaymentProcessJob::find($paymentProcessJobId);
         info("Manual CC Payments Job Started For Payment Split ID: ".$paymentProcessJob->payment_splits_id);
-        app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->model_type,$paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured);
-        return response()->json(['message' => 'Payment Retry Successful']);
+        return app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->model_type,$paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);        
     }
 }
