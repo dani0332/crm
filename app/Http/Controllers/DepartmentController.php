@@ -61,7 +61,7 @@ class DepartmentController extends Controller
             'is_active' => 'required',
         ]);
 
-        $department = $this->departmentService->updateDepartment((object)$request->all(), $id);
+        $department = $this->departmentService->updateDepartment((object) $request->all(), $id);
 
         return redirect()->route('departments.index')->with('success', 'Department updated successfully');
     }
