@@ -25,19 +25,23 @@ class DepartmentController extends Controller
         $request->validate([
             'name' => 'required|unique:departments,name',
             'teams' => 'required',
-            'status'=> 'required',
+            'is_active'=> 'required',
         ]);
 
         $new_department = $this->departmentService->saveDepartment($request->all());
+
         return redirect()->route('departments.index')->with('success', 'Department created successfully');
     }
 
     public function show($id){
+
         $department = $this->departmentService->getDepartment($id);
+
         $teams =$this->departmentService->getTeamList();
         return inertia('Admin/Department/Show', compact(['department', 'teams']));
     }
     public function edit($id){
+
         $department = $this->departmentService->getDepartment($id);
         $teams =$this->departmentService->getTeamList();
         return inertia('Admin/Department/Form', compact(['department', 'teams']));
@@ -46,7 +50,7 @@ class DepartmentController extends Controller
         $request->validate([
             'name' => 'required|unique:departments,name,'.$id,
             'teams' => 'required',
-            'status'=> 'required',
+            'is_active'=> 'required',
         ]);
         $department = $this->departmentService->updateDepartment($request->all(), $id);
         return redirect()->route('departments.index')->with('success', 'Department updated successfully');

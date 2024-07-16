@@ -4,6 +4,7 @@ const props = defineProps({
   products: Array,
   teams: Array,
   subTeams: Array,
+  departments: Array,
   user: Object,
   userRole: Object,
   selectedAdditionalTeams: Array,
@@ -22,6 +23,7 @@ const notification = useToast();
 
 const { isRequired, isMobileNo, isEmail, allowEmpty } = useRules();
 const subTeams = ref([]);
+const departments = ref([]);
 const teams = ref([]);
 const managers = ref([]);
 const isError = ref(false);
@@ -59,6 +61,7 @@ const userForm = useForm({
   permissions: props?.userPermissions ?? null,
   calendar_link: props.user?.calendar_link ?? null,
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
+  department_id : props.user?.department_id ?? null,
 });
 
 const isAdvisor = computed(() => {
@@ -88,6 +91,14 @@ const computedSubTeams = computed(() => {
     return subTeams.value.map(item => ({ value: item.id, label: item.name }));
   else return [];
 });
+
+const computedDepartments = computed(() => {
+    console.log("departments",page.props.departments);
+  if (page.props.departments?.length > 0)
+    return page.props.departments?.map(item => ({ value: item.id, label: item.name }));
+  else return [];
+});
+
 
 const validRole = computed(() => {
   return (userForm.roles.length == 0 && isError.value) ?? false;
@@ -319,6 +330,15 @@ watch(
             :loading="loader.subTeamLoader"
         />
       </x-field>
+      <x-field label="Department">
+        <ComboBox
+            v-model="userForm.department_id"
+            placeholder="Select Department"
+            :options="computedDepartments"
+            :single="true"
+        />
+      </x-field>
+
       <x-field label="LOB VISIBILITY">
         <ComboBox
           :multiple="true"

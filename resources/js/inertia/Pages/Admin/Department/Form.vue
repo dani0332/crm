@@ -27,7 +27,7 @@ const validTeams = computed(() => {
 });
 
 watch(
-  () => props.department.department_teams,
+  () => props.department?.department_teams,
   () => {
     if (props.department?.department_teams) {
         props.department?.department_teams.forEach(element => {
@@ -55,7 +55,6 @@ function onSubmit(isValid) {
     let url = isEdit.value
       ? route('departments.update', departmentForm.id)
       : route('departments.store');
-
     departmentForm.submit(method, url, {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {

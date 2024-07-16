@@ -26,7 +26,7 @@ class DepartmentService extends BaseService
     public function saveDepartment($request){
         $new_department = Department::create([
             'name' => $request['name'],
-            'status' => $request['status'],
+            'is_active' => $request['is_active'],
         ]);
         foreach ($request['teams'] as $key => $team_id) {
             $teams = DepartmentTeams::create([
@@ -39,10 +39,9 @@ class DepartmentService extends BaseService
 
     public function updateDepartment($request,$id){
         $department = Department::find($id);
-        $department->update([
-            'name' => $request['name'],
-            'status' => $request['status'],
-        ]);
+        $department->name = $request['name'];
+        $department->is_active = $request['is_active'];
+        $department->save();
         $department->departmentTeams()->delete();
         foreach ($request['teams'] as $key => $team_id) {
             $teams = DepartmentTeams::create([
@@ -59,7 +58,7 @@ class DepartmentService extends BaseService
     }
 
     public function getDepartment($id){
-        return Department::find($id)->with('departmentTeams')->first();
+        return Department::where('id', $id)->with('departmentTeams')->first();
     }
 
     public function getTeamList(){
