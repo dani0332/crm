@@ -49,7 +49,6 @@ class DocumentTypeCode extends Enum
     const GMQDPDR = 'GMQDPDR';
     const PPD = 'PPD';
     const YPD = 'YPD';
-<<<<<<< HEAD
     const PPR = 'PPR';
     const CTIRBB = 'CTIRBB'; // Tax Invoice Raised By Buyer
     const TI = 'TI'; // Tax Invoice
@@ -66,7 +65,5 @@ class DocumentTypeCode extends Enum
     const GMQPD_RECEIPT = 'GMQPDR';
     const PPD_RECEIPT = 'PPDR';
     const YPD_RECEIPT = 'YPDR';
-=======
     const E_TICKETS = 'E_TICKETS';
->>>>>>> main
 }

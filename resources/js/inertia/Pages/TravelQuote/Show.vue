@@ -58,13 +58,10 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
-<<<<<<< HEAD
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
-  paymentDocument: Array
-=======
+  paymentDocument: Array,
   travelDestinations: Object,
->>>>>>> main
 });
 
 const permissionEnum = page.props.permissionsEnum;

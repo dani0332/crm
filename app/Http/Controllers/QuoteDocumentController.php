@@ -277,7 +277,6 @@ class QuoteDocumentController extends Controller
         // return response()->json(['message' => 'Document has been deleted.']);
     }
 
-<<<<<<< HEAD
     /**
      * Create Proforma Payment Request PDF.
      */
@@ -306,7 +305,8 @@ class QuoteDocumentController extends Controller
         } else {
             abort(404);
         }
-=======
+    }
+
     public function validateDocumentsUpdate($quoteType, $quoteUuId, Request $request)
     {
 
@@ -325,6 +325,5 @@ class QuoteDocumentController extends Controller
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
 
         return true;
->>>>>>> main
     }
 }

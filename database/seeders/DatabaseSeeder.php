@@ -49,7 +49,6 @@ class DatabaseSeeder extends Seeder
             // BusinessTypeInsuranceSeeder::class,
             // MarineSeeder::class,
             // ImcrmUsersRolesCleaner::class,
-<<<<<<< HEAD
 
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
@@ -62,11 +61,8 @@ class DatabaseSeeder extends Seeder
             addInsuranceProvidersConfiguration::class,
             RevokeTempPaymentUpdatePermissionsSeeder::class,
             addPermissionsForInsurerNowPayment::class,
-=======
-            AddPermissionsForInsurerNowPayment::class,
             AddeTicketDocumentTypeSeeder::class,
             DocumentVerifyPermissionSeeder::class,
->>>>>>> main
         ]);
     }
 }

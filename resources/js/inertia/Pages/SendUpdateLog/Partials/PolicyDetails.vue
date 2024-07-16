@@ -67,12 +67,6 @@ const issuanceStatusText = computed(() => {
   return (id) => statusMap.get(id);
 });*/
 
-
-
-const isEndorsementFinancial = computed(() => {
-    return props.sendUpdateLog.category.code === props.sendUpdateStatusEnum.EF && props.sendUpdateLog.option.code === props.sendUpdateStatusEnum.PPE
-});
-
 const isCIR = computed(() => {
     return props.sendUpdateLog.category.code === props.sendUpdateStatusEnum.CIR;
 });
@@ -105,7 +99,7 @@ const providerName = computed(() => {
 });
 
 const filledExpiryDate = computed(() => {
-    if (isEndorsementFinancial.value) {
+    if (isCPD.value) {
         return props.sendUpdateLog?.expiry_date || dateToYMD(props.quote?.renewal_expiry_date) || null;
     }
 
