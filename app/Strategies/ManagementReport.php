@@ -146,7 +146,7 @@ class ManagementReport
 
             case ManagementReportCategoriesEnum::ENDORSEMENT:
                 if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                    $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
+                    $dateFilter('send_update_logs.invoice_date', 'paymentDueDate', 'ps.due_date');
                 } elseif ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
                     $dateFilter('send_update_logs.booking_date', 'policyBookDate');
                 }
