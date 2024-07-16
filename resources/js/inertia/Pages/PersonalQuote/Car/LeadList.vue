@@ -379,12 +379,6 @@ onMounted(() => {
   setQueryStringFilters();
 });
 
-const disabledFilters = reactive({
-  created_at_start: false,
-  created_at_end: false,
-  payment_due_date: false,
-  booking_date: false,
-});
 
 const resetFilters = (filterName) => {
   if (filterName === 'payment_due_date') {
