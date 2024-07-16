@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Enum\PaymentProcessJobEnum;
+use App\Enums\PaymentProcessJobEnum;
 
 class CcPaymentProcessJob extends Model
 {
@@ -14,7 +14,7 @@ class CcPaymentProcessJob extends Model
     // Define a scope to filter by status
     public function scopeFailed($query)
     {
-        return $query->where('status', 'failed');
+        return $query->where('status', PaymentProcessJobEnum::FAILED_STATUS);
     }
 
     public function splitPayment()
