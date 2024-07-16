@@ -241,43 +241,36 @@ watch(
   },
 );
 
-const resetFilters = (filterName) => {
-  if (filterName === 'payment_due_date') {
-    filters.created_at_start = '';
-    filters.created_at_end = '';
-    filters.booking_date = '';
-  } else if (filterName === 'booking_date') {
-    filters.payment_due_date = '';
-    filters.created_at_start = '';
-    filters.created_at_end = '';
-  } else if (filterName === 'created_at_start' || filterName === 'created_at_end') {
-    filters.booking_date = '';
-    filters.payment_due_date = '';
-  }
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
 };
 
-watch(() => filters.payment_due_date, (newValue) => {
-  if (newValue) {
-    resetFilters('payment_due_date');
-  }
-});
-
-watch(() => filters.booking_date, (newValue) => {
-  if (newValue) {
-    resetFilters('booking_date');
-  }
-});
-
-watch(() => filters.created_at_start, (newValue) => {
-  if (newValue) {
-    resetFilters('created_at_start');
-  }
-});
-
-watch(() => filters.created_at_end, (newValue) => {
-  if (newValue) {
-    resetFilters('created_at_end');
-  }
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
 });
 </script>
 
