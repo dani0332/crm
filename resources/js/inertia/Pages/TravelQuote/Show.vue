@@ -1182,7 +1182,6 @@ const genderList = [
 ];
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
-<<<<<<< HEAD
 const handleSelectionChange = (tableType, selectedItems) => {
   if (tableType === 'adult' && selectedSeniorPlans.value.length > 0) {
     modals.mixInquiryConfirm = true;
@@ -1222,7 +1221,6 @@ const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
   createReusableTemplate();
 const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
   createReusableTemplate();
-=======
 const getupdateDocumentValidate = event => {
   updateDocumentValidate.show = event;
   page.props.quote.is_documents_valid = event;
@@ -1291,7 +1289,6 @@ const getGenderDisplay = (val) => {
           return '';
       }
     }
->>>>>>> main
 </script>
 
 <template>
@@ -1454,7 +1451,6 @@ const getGenderDisplay = (val) => {
                 <dd>{{ field?.value }}</dd>
               </div>
 
-<<<<<<< HEAD
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="bottom">
@@ -1481,7 +1477,6 @@ const getGenderDisplay = (val) => {
                   </Link>
                 </dt>
               </div>
-=======
           <div class="grid sm:grid-cols-2">
             <dt>
               <x-tooltip position="bottom">
@@ -1512,7 +1507,6 @@ const getGenderDisplay = (val) => {
               }}
             </dt>
           </div>
->>>>>>> main
 
               <div
                 class="grid sm:grid-cols-2"
@@ -1704,8 +1698,18 @@ const getGenderDisplay = (val) => {
                   {{ quote.region_cover_for_id_text }}
                 </dt>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRAVEL DESTINATION(S)</dt>
+                <dt class="font-medium">
+                  <span v-for="(item, index) in travelDestinations" :key="item.id">
+                    {{ item?.destination?.country_name
+                    }}<span v-if="index < travelDestinations?.length - 1">, </span>
+                  </span>
+                </dt>
+              </div>
             </dl>
           </div>
+
         </template>
       </Collapsible>
     </div>
@@ -1716,19 +1720,9 @@ const getGenderDisplay = (val) => {
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-<<<<<<< HEAD
                 quote.customer_type == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
-=======
-                quote.coverage_code != null
-                  ? quote.coverage_code
-                  : quote.days_cover_for <= 92
-                  ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                  : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                    '/' +
-                    enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
->>>>>>> main
               }}
               Profile
             </h3>
@@ -1742,15 +1736,7 @@ const getGenderDisplay = (val) => {
             </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRAVEL DESTINATION(S)</dt>
-            <dt class="font-medium">
-              <span v-for="(item, index) in travelDestinations" :key="item.id">
-                {{ item?.destination?.country_name
-                }}<span v-if="index < travelDestinations?.length - 1">, </span>
-              </span>
-            </dt>
-          </div>
+
 
           <div
             class="grid sm:grid-cols-2"
@@ -1883,8 +1869,6 @@ const getGenderDisplay = (val) => {
                     />
                   </dd>
                 </div>
-
-<<<<<<< HEAD
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
               </dl>
               <dl
@@ -1984,48 +1968,6 @@ const getGenderDisplay = (val) => {
                 </div>
               </dl>
               <div class="flex justify-end">
-=======
-            <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
-
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">UAE resident</dt>
-              <dd>{{ customerProfileForm.uae_resident ?? 'N/A' }}</dd>
-            </div>
-          </dl>
-          <dl
-            v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
-          >
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">FIRST NAME</dt>
-              <dd>{{ quote.first_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">LAST NAME</dt>
-              <dd>{{ quote.last_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">MOBILE NUMBER</dt>
-              <dd>{{ quote.mobile_no }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">COMPANY NAME</dt>
-              <dd>{{ customerProfileForm.company_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">TRADE LICENSE NO</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.trade_license_no"
-                  placeholder="TRADE LICENSE NO"
-                  type="text"
-                  class="w-full"
-                />
->>>>>>> main
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -2125,7 +2067,6 @@ const getGenderDisplay = (val) => {
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
-<<<<<<< HEAD
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -2161,46 +2102,6 @@ const getGenderDisplay = (val) => {
             </x-tooltip>
             <AddMemButtonReuseTemplate v-else />
           </div>
-=======
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Member Details
-          <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
-        </h3>
-        <div class="flex flex-wrap gap-3">
-          <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
-            Add Member
-          </x-button>
-        </div>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="travelerTable.columns"
-        :items="travelers || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="travelers.length < 15"
-        show-index
-      >
-        <template #item-index="{ index, code }">
-          <div>{{ code ?? 'Member ' + index }}</div>
-        </template>
-        <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
-
-        <template #item-relation="{ relation }">
-          {{ relation?.text }}
-        </template>
-        <template #item-gender="{ gender }">
-          {{ getGenderDisplay(gender) }}
-        </template>
-        <template #item-nationality="{ nationality }">
-          {{ nationality?.text }}
-        </template>
-        <template #item-uae_resident="{ uae_resident }">
-          {{ uae_resident === 1 ? 'Yes' : uae_resident === 0 ? 'No' : '' }}
-        </template>
->>>>>>> main
 
           <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
             <x-button
@@ -2560,7 +2461,6 @@ const getGenderDisplay = (val) => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-<<<<<<< HEAD
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -2587,7 +2487,7 @@ const getGenderDisplay = (val) => {
               <span class="text-primary-600 uppercase">{{ item.reason }}</span>
             </template>
           </DataTable>
-=======
+          </template>
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
@@ -2701,8 +2601,8 @@ const getGenderDisplay = (val) => {
               Delete
             </x-button>
           </div>
->>>>>>> main
         </template>
+        </x-modal>
       </Collapsible>
     </div>
 
@@ -2790,11 +2690,7 @@ const getGenderDisplay = (val) => {
           <div v-else>
             <DataTable
               v-model:items-selected="selectedPlans"
-<<<<<<< HEAD
               table-class-name="tablefixed"
-=======
-              table-class-name="tablefixed compact"
->>>>>>> main
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
               border-cell
@@ -2874,11 +2770,7 @@ const getGenderDisplay = (val) => {
             <div>
               <DataTable
                 v-model:items-selected="selectedPlans"
-<<<<<<< HEAD
                 table-class-name="tablefixed"
-=======
-                table-class-name="tablefixed compact"
->>>>>>> main
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
                 border-cell
@@ -2967,7 +2859,6 @@ const getGenderDisplay = (val) => {
       :payments="payments"
     />
     <PaymentTableNew
-<<<<<<< HEAD
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
@@ -2981,21 +2872,6 @@ const getGenderDisplay = (val) => {
       "
       :quoteRequest="quoteRequest"
       :paymentStatusEnum="page.props.paymentStatusEnum"
-=======
-      v-if="isNewPaymentStructure"
-      quoteType="Travel"
-      :payments="payments"
-      :paymentDocument="
-        documentTypes.QUOTE.filter(
-          item =>
-            item.code === 'TPD' ||
-            item.code === 'TPDR' ||
-            item.code === 'TDPDR',
-        )
-      "
-      :quoteRequest="quoteRequest"
-      :paymentStatusEnum="enums.paymentStatusEnum"
->>>>>>> main
       :paymentTooltipEnum="paymentTooltipEnum"
       :paymentMethods="
         paymentMethods.map(pm => {
@@ -3003,13 +2879,9 @@ const getGenderDisplay = (val) => {
         })
       "
       :storageUrl="storageUrl"
-<<<<<<< HEAD
       :bookPolicyDetails="bookPolicyDetails"
     />
 
-=======
-    />
->>>>>>> main
     <PaymentTable
       v-else
       :payments="payments"
@@ -3130,10 +3002,8 @@ const getGenderDisplay = (val) => {
             </template>
           </DataTable>
         </template>
-<<<<<<< HEAD
       </Collapsible>
-=======
-      </DataTable>
+
       <x-modal v-model="updateDocumentValidate.show" show-close backdrop>
         <template #header> Are all documents correct? </template>
         <p>
@@ -3161,7 +3031,6 @@ const getGenderDisplay = (val) => {
           </div>
         </template>
       </x-modal>
->>>>>>> main
       <x-modal v-model="modals.activity" size="lg" show-close backdrop>
         <template #header>
           {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
@@ -3245,7 +3114,6 @@ const getGenderDisplay = (val) => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-<<<<<<< HEAD
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -3294,34 +3162,6 @@ const getGenderDisplay = (val) => {
       :expanded="sectionExpanded"
     />
 
-=======
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div v-if="historyData === null" class="text-center py-3">
-        <x-button
-          size="sm"
-          color="primary"
-          outlined
-          @click.prevent="onLoadHistoryData"
-          :loading="historyLoading"
-        >
-          Load History Data
-        </x-button>
-      </div>
-      <DataTable
-        v-else
-        table-class-name="compact"
-        :headers="historyDataTable"
-        :items="historyData || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="historyData.length < 15"
-      />
-    </div>
->>>>>>> main
     <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
       <template #header>
         <div class="text-center">SORRY!</div>
@@ -3341,19 +3181,12 @@ const getGenderDisplay = (val) => {
         </div>
       </template>
     </x-modal>
-<<<<<<< HEAD
-=======
     <CustomerChatLogs
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'TRAVEL'"
     />
-    <AuditLogs
-      :type="'App\\Models\\TravelQuote'"
-      :id="$page.props.quote.id"
-      :quoteCode="$page.props.quote.code"
-    />
->>>>>>> main
+   
   </div>
 </template>
 <style>
