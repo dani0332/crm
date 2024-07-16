@@ -169,7 +169,7 @@ const bookingDetailsForm = useForm({
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
   transaction_payment_status: transactionPaymentStatus.value || '',
-  invoice_date: props.sendUpdateLog?.invoice_date || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
+  invoice_date: dateToYMD(props.sendUpdateLog?.invoice_date) || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
   insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || '',
   discount: isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || '0.00',
   insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',
