@@ -47,6 +47,10 @@ const props = defineProps({
     required: false,
   },
   paymentStatusEnum: Object,
+  isUpdateBooked: {
+    type: Boolean,
+    required: true,
+  },
 });
 
 const state = reactive({
@@ -90,6 +94,14 @@ const hasTaxDocuments = computed(() => {
 });
 
 const checkSectionTwoEdit = () => {
+  if (props.isUpdateBooked) {
+    notification.error({
+      title: 'Update already booked',
+      position: 'top',
+    });
+
+    return;
+  }
   const taxInvoiceDoc = [
     sendUpdateStatusEnum.EF,
     sendUpdateStatusEnum.CI,
@@ -403,7 +415,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
   bookingDetailsForm.price_vat_applicable = Math.abs(reversalEntry.price_vat_applicable) || null;
   bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
-  bookingDetailsForm.price_vat_not_applicable = Math.abs(reversalEntry.price_vat_not_applicable) || null;
+  bookingDetailsForm.price_vat_not_applicable = Math.abs(reversalEntry.price_vat_not_applicable) || '0.00';
   bookingDetailsForm.vat_on_commission = reversalEntry.vat_on_commission || null;
   bookingDetailsForm.commission_vat_applicable = Math.abs(reversalEntry.commission_vat_applicable) || null;
   bookingDetailsForm.total_commission = reversalEntry.total_commission || null;
@@ -692,6 +704,16 @@ function updateAdditionalError() {
   emit('update-error-status', newErrorStatus);
 }
 
+const onReversalEdit = () => {
+  if (props.isUpdateBooked) {
+    notification.error({
+      title: 'Update already booked',
+      position: 'top',
+    });
+  } else {
+    state.reversalSectionEdit = true;
+  }
+};
 </script>
 
 <template>
@@ -1094,7 +1116,7 @@ function updateAdditionalError() {
         <div class="flex justify-end gap-2">
           <x-button
             size="sm"
-            @click="state.reversalSectionEdit = true"
+            @click="onReversalEdit"
             v-if="!state.reversalSectionEdit"
           >
             Edit
