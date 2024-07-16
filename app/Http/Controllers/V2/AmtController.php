@@ -51,6 +51,7 @@ use Illuminate\Support\Facades\Redirect;
 class AmtController extends Controller
 {
     use GenericQueriesAllLobs, RolePermissionConditions;
+
     private $query;
     /**
      * Display a listing of the resource.

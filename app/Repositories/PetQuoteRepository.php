@@ -23,7 +23,7 @@ class PetQuoteRepository extends BaseRepository
 {
     private $query;
     use GenericQueriesAllLobs;
-    
+
     public function model()
     {
         return (in_array(quoteTypeCode::Pet, newUi())) ? PersonalQuote::class : PetQuote::class;
@@ -115,10 +115,10 @@ class PetQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
 
-            $this->adjustQueryByDateFilters(request(), 'personal_quotes');
-            if(request()->sortBy){
-                $this->query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
-            }
+        $this->adjustQueryByDateFilters(request(), 'personal_quotes');
+        if (request()->sortBy) {
+            $this->query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
+        }
         if ($forTotalLeadsCount) {
             //PD Revert
             return 0;

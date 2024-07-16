@@ -26,7 +26,7 @@ class BusinessQuoteService extends BaseService
 {
     protected $query;
 
-    use AddPremiumAllLobs, GetUserTreeTrait, RolePermissionConditions, GenericQueriesAllLobs;
+    use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
     protected $leadAllocationService;
 

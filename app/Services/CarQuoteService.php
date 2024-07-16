@@ -911,7 +911,7 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at) && ! isset($request->payment_due_date)  && ! isset($request->booking_date)) {
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at) && ! isset($request->payment_due_date) && ! isset($request->booking_date)) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (
@@ -922,7 +922,7 @@ class CarQuoteService extends BaseService
             && empty($request->renewal_batch)
             && empty($request->quote_batch_id)
             && empty($request->payment_due_date)
-            && empty($request->booking_date)  
+            && empty($request->booking_date)
             && ! isset($request->previous_quote_policy_number)
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);

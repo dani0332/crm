@@ -9,14 +9,14 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\LifeQuote;
 use App\Traits\CentralTrait;
-use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
 class LifeQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+
     private $query;
-    
+
     public function model()
     {
         return LifeQuote::class;
@@ -96,7 +96,6 @@ class LifeQuoteRepository extends BaseRepository
 
         return $this->query->simplePaginate()->withQueryString();
     }
-
 
     public function fetchExport()
     {

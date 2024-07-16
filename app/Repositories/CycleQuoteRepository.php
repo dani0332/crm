@@ -84,9 +84,9 @@ class CycleQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
 
-            $this->adjustQueryByDateFilters(request(), 'personal_quotes');
+        $this->adjustQueryByDateFilters(request(), 'personal_quotes');
 
-            $this->query->orderBy('personal_quotes.'.$sort_by, $sort_type);
+        $this->query->orderBy('personal_quotes.'.$sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
             //PD Revert

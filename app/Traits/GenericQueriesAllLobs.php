@@ -21,9 +21,8 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
-use Illuminate\Support\Arr;
-use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 
 trait GenericQueriesAllLobs
 {
@@ -776,16 +775,18 @@ trait GenericQueriesAllLobs
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 
-    public function adjustQueryByDateFilters($request, $tablePrefix) {
-        if($request->payment_due_date){
+    public function adjustQueryByDateFilters($request, $tablePrefix)
+    {
+        if ($request->payment_due_date) {
             $this->query->join('payment_splits as pays', 'pays.code', '=', $tablePrefix.'.code');
             $this->filterQueryByDateRange($request, 'payment_due_date', 'pays.due_date');
-        } else if ($request->booking_date) {
+        } elseif ($request->booking_date) {
             $this->filterQueryByDateRange($request, 'booking_date', $tablePrefix.'.policy_booking_date');
         }
     }
 
-    private function filterQueryByDateRange($request, $dateType, $columnName) {
+    private function filterQueryByDateRange($request, $dateType, $columnName)
+    {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $defaultDate = now()->endOfDay();
 

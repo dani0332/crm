@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\URL;
 
 class YachtQuoteRepository extends BaseRepository
 {
-    private $query ;
+    private $query;
     use GenericQueriesAllLobs;
 
     public function model()
@@ -155,8 +155,8 @@ class YachtQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
-            $this->adjustQueryByDateFilters(request(), 'personal_quotes');
-            $this->orderBy($sort_by, $sort_type);
+        $this->adjustQueryByDateFilters(request(), 'personal_quotes');
+        $this->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
             //PD Revert
