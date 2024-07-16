@@ -465,11 +465,10 @@ class SendUpdateLogService
         }
 
         return [
-            'booking_date' => $quote->policy_booking_date ?? null,
+            'booking_date' => ! is_null($sendUpdateLog->booking_date) ? date('d-m-Y', strtotime($sendUpdateLog->booking_date)) : null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
-            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
         ];
     }
 
