@@ -34,7 +34,7 @@ class DepartmentController extends Controller
             'is_active' => 'required',
         ]);
 
-        $new_department = $this->departmentService->saveDepartment((object)$request->all());
+        $new_department = $this->departmentService->saveDepartment((object) $request->all());
 
         return redirect()->route('departments.index')->with('success', 'Department created successfully');
     }

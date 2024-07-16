@@ -40,7 +40,7 @@ class DepartmentService extends BaseService
 
     public function updateDepartment($data, $id)
     {
-        $department = Department::where('id',$id)->first();
+        $department = Department::where('id', $id)->first();
         if (empty($department)) {
             return false;
         }
@@ -54,12 +54,14 @@ class DepartmentService extends BaseService
                 'team_id' => $team_id,
             ]);
         }
+
         return $department;
     }
     public function deleteDepartment($id)
     {
-        $department = Department::where('id',$id)->first();
+        $department = Department::where('id', $id)->first();
         $department->delete();
+
         return true;
     }
 
