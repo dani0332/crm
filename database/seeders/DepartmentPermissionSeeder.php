@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Enums\RolesEnum;
-use App\Models\Role;
-use App\Models\Permission;
 use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
+use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DepartmentPermissionSeeder extends Seeder
 {
@@ -17,7 +16,7 @@ class DepartmentPermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $permission = Permission::where('name',PermissionsEnum::DepartmentCreate ?? 'department-create')->first();
+        $permission = Permission::where('name', PermissionsEnum::DepartmentCreate ?? 'department-create')->first();
         if ($permission == null) {
             DB::table('permissions')->insert([
                 'name' => PermissionsEnum::DepartmentCreate ?? 'department-create',

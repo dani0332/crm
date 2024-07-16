@@ -325,7 +325,6 @@ final class PermissionsEnum extends Enum
     public const DepartmentCreate = 'department-create';
     public const DepartmentUpdate = 'department-update';
 
-
     public static function getAdvisorConverionReportPermissions()
     {
         return [
