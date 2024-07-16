@@ -11,9 +11,9 @@ class Department extends Model implements AuditableContract
     use Auditable;
 
     protected $table = 'departments';
-    protected $fillable = ['name', 'status', 'created_at', 'updated_at'];
+    protected $fillable = ['name', 'is_active'];
 
-    public function departmentTeams()
+    public function teams()
     {
         return $this->hasMany(DepartmentTeams::class, 'department_id', 'id')->with('team');
     }

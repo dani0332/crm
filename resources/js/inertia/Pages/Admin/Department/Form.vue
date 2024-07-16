@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 const props = defineProps({
   teams: Array,
-  departmentTeams: Object,
+  teams: Object,
   department: Object,
 });
 

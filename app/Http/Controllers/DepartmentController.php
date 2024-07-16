@@ -30,11 +30,11 @@ class DepartmentController extends Controller
     {
         $request->validate([
             'name' => 'required|unique:departments,name',
-            'teams' => 'required',
+            'teams' => 'required|array',
             'is_active' => 'required',
         ]);
 
-        $new_department = $this->departmentService->saveDepartment($request->all());
+        $new_department = $this->departmentService->saveDepartment((object)$request->all());
 
         return redirect()->route('departments.index')->with('success', 'Department created successfully');
     }
@@ -57,10 +57,10 @@ class DepartmentController extends Controller
     {
         $request->validate([
             'name' => 'required|unique:departments,name,'.$id,
-            'teams' => 'required',
+            'teams' => 'required|array',
             'status' => 'required',
         ]);
-        $department = $this->departmentService->updateDepartment($request->all(), $id);
+        $department = $this->departmentService->updateDepartment((object)$request->all(), $id);
 
         return redirect()->route('departments.index')->with('success', 'Department updated successfully');
     }

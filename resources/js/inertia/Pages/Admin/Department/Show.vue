@@ -1,7 +1,7 @@
 <script setup>
 const props = defineProps({
   department: Object,
-  departmentTeams: Object,
+  teams: Object,
   permission: Object,
 });
 

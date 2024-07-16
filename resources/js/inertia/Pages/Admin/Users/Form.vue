@@ -33,6 +33,7 @@ const loader = reactive({
   teamLoader: false,
   subTeamLoader: false,
   managers: false,
+  departmentLoader: false,
 });
 
 const selectedRoles = computed(() => {
@@ -61,7 +62,7 @@ const userForm = useForm({
   permissions: props?.userPermissions ?? null,
   calendar_link: props.user?.calendar_link ?? null,
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
-  department_id : props.user?.department_id ?? null,
+  department_id: props.user?.department_id ?? null,
 });
 
 const isAdvisor = computed(() => {
@@ -93,7 +94,6 @@ const computedSubTeams = computed(() => {
 });
 
 const computedDepartments = computed(() => {
-    console.log("departments",page.props.departments);
   if (page.props.departments?.length > 0)
     return page.props.departments?.map(item => ({ value: item.id, label: item.name }));
   else return [];
@@ -336,6 +336,7 @@ watch(
             placeholder="Select Department"
             :options="computedDepartments"
             :single="true"
+            :loading="loader.departmentLoader"
         />
       </x-field>
 

@@ -8,7 +8,7 @@ use App\Models\Team;
 
 class DepartmentService extends BaseService
 {
-    public function getGridData($request = null)
+    public function getGridData()
     {
         $departments = Department::latest();
         if (! empty(request('name'))) {
@@ -22,13 +22,13 @@ class DepartmentService extends BaseService
 
     }
 
-    public function saveDepartment($request)
+    public function saveDepartment($data)
     {
         $new_department = Department::create([
-            'name' => $request['name'],
-            'is_active' => $request['is_active'],
+            'name' => $data->name,
+            'is_active' => $data->is_active,
         ]);
-        foreach ($request['teams'] as $key => $team_id) {
+        foreach ($data['teams'] as $key => $team_id) {
             $teams = DepartmentTeams::create([
                 'department_id' => $new_department->id,
                 'team_id' => $team_id,
@@ -38,33 +38,34 @@ class DepartmentService extends BaseService
         return $new_department;
     }
 
-    public function updateDepartment($request, $id)
+    public function updateDepartment($data, $id)
     {
-        $department = Department::find($id);
-        $department->name = $request['name'];
-        $department->is_active = $request['is_active'];
+        $department = Department::where('id',$id)->first();
+        if (empty($department)) {
+            return false;
+        }
+        $department->name = $data->name;
+        $department->is_active = $data->is_active;
         $department->save();
-        $department->departmentTeams()->delete();
-        foreach ($request['teams'] as $key => $team_id) {
+        $department->teams()->delete();
+        foreach ($data->teams as $key => $team_id) {
             $teams = DepartmentTeams::create([
                 'department_id' => $department->id,
                 'team_id' => $team_id,
             ]);
         }
-
         return $department;
     }
     public function deleteDepartment($id)
     {
-        $department = Department::find($id);
+        $department = Department::where('id',$id)->first();
         $department->delete();
-
         return true;
     }
 
     public function getDepartment($id)
     {
-        return Department::where('id', $id)->with('departmentTeams')->first();
+        return Department::where('id', $id)->with('teams')->first();
     }
 
     public function getTeamList()
