@@ -364,6 +364,6 @@ class User extends Authenticatable implements AuditableContract
 
     public function department()
     {
-        return $this->belongsTo(Department::class)->select('id','name');
+        return $this->belongsTo(Department::class)->select('id', 'name');
     }
 }

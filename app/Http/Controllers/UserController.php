@@ -86,6 +86,7 @@ class UserController extends Controller
         $subTeams = [];
         $permissions = Permission::orderBy('name')->get();
         $departments = $this->userService->getDepartmentsList();
+
         return inertia('Admin/Users/Form', [
             'roles' => $roles,
             'products' => $products,
@@ -181,8 +182,6 @@ class UserController extends Controller
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
 
-
-
         return inertia('Admin/Users/Show', [
             'user' => $user,
             'teamName' => $teamName,
@@ -220,6 +219,7 @@ class UserController extends Controller
         $permissions = Permission::orderBy('name')->get();
         $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
         $departments = $this->userService->getDepartmentsList();
+
         return inertia('Admin/Users/Form', [
             'user' => $user,
             'roles' => $roles,
