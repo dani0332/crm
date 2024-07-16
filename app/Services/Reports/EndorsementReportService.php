@@ -65,7 +65,7 @@ class EndorsementReportService extends ManagementReport
                 DB::raw('p.commission_vat as commission_vat'),
                 DB::raw('p.commission_vat_not_applicable as commission_vat_not_applicable'),
                 DB::raw('p.captured_amount as collected_amount'),
-                'p.captured_at as payment_date',
+                'ps.verified_at as payment_date',
                 DB::raw('FORMAT(((
                     IFNULL( send_update_logs.price_vat_applicable , 0 ) +
                     IFNULL( send_update_logs.price_vat_not_applicable , 0 ) +
