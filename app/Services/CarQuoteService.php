@@ -81,7 +81,7 @@ class CarQuoteService extends BaseService
                 'cqr.policy_number',
                 'cqr.previous_quote_id',
                 'cqr.renewal_batch',
-//                DB::raw('DATE_FORMAT(cqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
+                DB::raw('DATE_FORMAT(cqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
                 'cqr.order_reference',
                 'cqr.payment_reference',
                 'cqr.calculated_value',
