@@ -153,6 +153,43 @@ watch(
   },
   { deep: true, immediate: true },
 );
+const resetDateFilters = (filterName) => {
+  if (filterName === 'payment_due_date') {
+    filters.created_at_start = '';
+    filters.created_at_end = '';
+    filters.booking_date = '';
+  } else if (filterName === 'booking_date') {
+    filters.payment_due_date = '';
+    filters.created_at_start = '';
+    filters.created_at_end = '';
+  } else if (filterName === 'created_at_start' || filterName === 'created_at_end') {
+    filters.booking_date = '';
+    filters.payment_due_date = '';
+  }
+};
+watch(() => filters.payment_due_date, (newValue) => {
+  if (newValue) {
+    resetDateFilters('payment_due_date');
+  }
+});
+
+watch(() => filters.booking_date, (newValue) => {
+  if (newValue) {
+    resetDateFilters('booking_date');
+  }
+});
+
+watch(() => filters.created_at_start, (newValue) => {
+  if (newValue) {
+    resetDateFilters('created_at_start');
+  }
+});
+
+watch(() => filters.created_at_end, (newValue) => {
+  if (newValue) {
+    resetDateFilters('created_at_end');
+  }
+});
 </script>
 
 <template>
