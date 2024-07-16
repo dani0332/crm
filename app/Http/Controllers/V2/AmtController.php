@@ -306,7 +306,7 @@ class AmtController extends Controller
                 SendUpdateLogStatusEnum::COA,
             ];
 
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
@@ -360,7 +360,7 @@ class AmtController extends Controller
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $record->payments->toArray() ?? [],
+            'payments' => collect($record?->payments)->sortByDesc('created_at')->values()->toArray(),
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocuments,
         ]);

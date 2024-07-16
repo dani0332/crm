@@ -47,6 +47,10 @@ const props = defineProps({
     required: false,
   },
   paymentStatusEnum: Object,
+  isUpdateBooked: {
+    type: Boolean,
+    required: true,
+  },
 });
 
 const state = reactive({
@@ -90,6 +94,14 @@ const hasTaxDocuments = computed(() => {
 });
 
 const checkSectionTwoEdit = () => {
+  if (props.isUpdateBooked) {
+    notification.error({
+      title: 'Update already booked',
+      position: 'top',
+    });
+
+    return;
+  }
   const taxInvoiceDoc = [
     sendUpdateStatusEnum.EF,
     sendUpdateStatusEnum.CI,
@@ -151,7 +163,7 @@ const bookingDetailsForm = useForm({
   booking_date: props.bookingDetails?.booking_date || props.sendUpdateLog?.booking_date,
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
-  transaction_payment_status: props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value,
+  transaction_payment_status: props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value || '',
   invoice_date: props.sendUpdateLog?.invoice_date || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
   insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || '',
   discount: isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || '0.00',
@@ -366,7 +378,7 @@ function reverseValue(value) {
 }
 
 function updateReversalEntries(payment, sendUpdateLog) {
-  reversalEntry.transaction_payment_status = payment?.transaction_payment_status || '';
+  reversalEntry.transaction_payment_status = payment?.transaction_payment_status || sendUpdateLog?.transaction_payment_status || '';
   reversalEntry.booking_date = payment?.policy_booking_date || sendUpdateLog?.booking_date || '';
   reversalEntry.invoice_date = payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = (payment?.insurer_tax_number) ? (payment.insurer_tax_number + '-REV') : (sendUpdateLog.insurer_tax_invoice_number + '-REV');
@@ -395,7 +407,7 @@ onMounted(() => {
 
 const onUpdateReversal = () => {
   state.reversalSectionEdit = !state.reversalSectionEdit;
-  bookingDetailsForm.transaction_payment_status = null;
+  bookingDetailsForm.transaction_payment_status = reversalEntry.transaction_payment_status || null;
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
   bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
@@ -403,7 +415,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
   bookingDetailsForm.price_vat_applicable = Math.abs(reversalEntry.price_vat_applicable) || null;
   bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
-  bookingDetailsForm.price_vat_not_applicable = Math.abs(reversalEntry.price_vat_not_applicable) || null;
+  bookingDetailsForm.price_vat_not_applicable = Math.abs(reversalEntry.price_vat_not_applicable) || '0.00';
   bookingDetailsForm.vat_on_commission = reversalEntry.vat_on_commission || null;
   bookingDetailsForm.commission_vat_applicable = Math.abs(reversalEntry.commission_vat_applicable) || null;
   bookingDetailsForm.total_commission = reversalEntry.total_commission || null;
@@ -496,6 +508,7 @@ const sendUpdateValidation = () => {
             responseError[key] === 'Please select Emirate' ||
             responseError[key] === 'Please select Seating capacity'
           ) {
+            updateAdditionalError();
             window.scrollTo(0, 0);
           }
           notification.error({
@@ -684,6 +697,23 @@ const isPriceVatApplicableEditable = computed(() => {
       props.quoteType !== quoteTypeCodeEnum.Life;
 });
 
+const emit = defineEmits(['update-error-status']);
+
+function updateAdditionalError() {
+  const newErrorStatus = 'This field is required.'; // Determine the new status based on your logic
+  emit('update-error-status', newErrorStatus);
+}
+
+const onReversalEdit = () => {
+  if (props.isUpdateBooked) {
+    notification.error({
+      title: 'Update already booked',
+      position: 'top',
+    });
+  } else {
+    state.reversalSectionEdit = true;
+  }
+};
 </script>
 
 <template>
@@ -1086,7 +1116,7 @@ const isPriceVatApplicableEditable = computed(() => {
         <div class="flex justify-end gap-2">
           <x-button
             size="sm"
-            @click="state.reversalSectionEdit = true"
+            @click="onReversalEdit"
             v-if="!state.reversalSectionEdit"
           >
             Edit
