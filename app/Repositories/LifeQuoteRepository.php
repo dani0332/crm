@@ -92,7 +92,7 @@ class LifeQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria()
             ->orderBy('life_quote_request.created_at', 'desc');
 
-        $this->adjustQueryByDateFilters($request, 'life_quote_request');
+        $this->adjustQueryByDateFilters('life_quote_request');
 
         return $this->query->simplePaginate()->withQueryString();
     }

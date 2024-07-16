@@ -492,7 +492,7 @@ class HealthQuoteService extends BaseService
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
         }
 
-        $this->adjustQueryByDateFilters($request, 'hqr');
+        $this->adjustQueryByDateFilters('hqr');
 
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {

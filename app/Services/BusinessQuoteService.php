@@ -372,7 +372,7 @@ class BusinessQuoteService extends BaseService
             }
         }
 
-        $this->adjustQueryByDateFilters($request, 'bqr');
+        $this->adjustQueryByDateFilters('bqr');
 
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {

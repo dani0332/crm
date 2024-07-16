@@ -180,7 +180,7 @@ class BikeQuoteRepository extends BaseRepository
             ->filter(! $forExport)
             ->withFakeLeadCriteria();
 
-        $this->adjustQueryByDateFilters(request(), 'personal_quotes');
+        $this->adjustQueryByDateFilters('personal_quotes');
         $this->orderBy('personal_quotes.created_at', 'desc');
 
         return ($forExport) ? $this->query->get() : $this->query->simplePaginate();

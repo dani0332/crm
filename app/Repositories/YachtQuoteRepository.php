@@ -155,7 +155,7 @@ class YachtQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
-        $this->adjustQueryByDateFilters(request(), 'personal_quotes');
+        $this->adjustQueryByDateFilters('personal_quotes');
         $this->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {

@@ -115,7 +115,7 @@ class PetQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
 
-        $this->adjustQueryByDateFilters(request(), 'personal_quotes');
+        $this->adjustQueryByDateFilters('personal_quotes');
         if (request()->sortBy) {
             $this->query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
         }
