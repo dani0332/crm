@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class DepartmentTeams extends Model
@@ -10,7 +9,8 @@ class DepartmentTeams extends Model
     protected $table = 'department_teams';
     protected $fillable = ['team_id', 'department_id', 'created_at', 'updated_at'];
 
-    public function team(){
+    public function team()
+    {
         return $this->belongsTo(Team::class, 'team_id', 'id');
     }
 }

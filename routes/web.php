@@ -17,6 +17,7 @@ use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FailedJobsController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
@@ -71,8 +72,6 @@ use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DepartmentController;
-
 
 /*
 |--------------------------------------------------------------------------
