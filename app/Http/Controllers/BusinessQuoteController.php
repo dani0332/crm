@@ -183,11 +183,12 @@ class BusinessQuoteController extends Controller
         $quoteDocuments = $this->businessQuoteService->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->businessQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
         $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)->latest()->first();
-        @[$documentTypes, , $businessDocumentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(self::TYPE_ID, $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::CORPLINE);
+        @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(self::TYPE_ID, $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::CORPLINE);
         $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->businessQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+        $paymentEntityModel->load('insuranceProviderDetails');
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
 
@@ -283,12 +284,13 @@ class BusinessQuoteController extends Controller
                 SendUpdateLogStatusEnum::WOWPA,
             ];
 
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -360,10 +362,11 @@ class BusinessQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'documentTypeCodes' => $businessDocumentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'bookPolicyDetails' => $bookPolicyDetails,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocuments,
         ]);
     }
 

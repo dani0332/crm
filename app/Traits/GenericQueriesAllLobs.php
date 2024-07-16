@@ -22,7 +22,6 @@ use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
 
 trait GenericQueriesAllLobs
 {
@@ -216,13 +215,17 @@ trait GenericQueriesAllLobs
 
     /**
      * add comments & improvements needed
+     * This method called when we visit all LOB's details page
+     * Based on this method we decide to show buttons and  checking lacking payment and other stuff
      *
      * @return array
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
+        info('fn: bookPolicyPayload called for '.$record->uuid);
         $infoMessage = 'QC '.$record->code.' ';
         $insuranceProviderLeadCount = $insuranceProviderCode = $sendUpdateInvoiceDescription = $sendUpdateBrokerInvoice = '';
+        // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
             $insurance_provider_id = $payment->insurance_provider_id;
@@ -253,10 +256,13 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
-        $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails;
+        $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails.' IEQD: '.empty($quoteDocuments);
         $bookPolicyDetails['policyCancelled'] = false;
+        $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
+        $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
+
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
-        if (! in_array($record->quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]) && $isFilledPolicyDetails) {
+        if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
                 $isAllRequiredDocumentUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record);
                 $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
@@ -275,7 +281,9 @@ trait GenericQueriesAllLobs
                         $infoMessage .= ' BDS '.$areBookingDetailsFilled;
 
                         if ($areBookingDetailsFilled) {
-                            if (! $this->checkMainLead($record, $quoteType) || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
+                            $isMainLead = $this->checkMainLead($record, $quoteType);
+                            $infoMessage .= ' IML '.$isMainLead;
+                            if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
                                 $bookPolicyDetails['bookButton'] = true;
                                 $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
                                 $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::SAGE;
@@ -288,11 +296,12 @@ trait GenericQueriesAllLobs
             }
         }
 
+        // If quote status id is policy sent to customer then we set text book policy
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
-        Log::info($infoMessage);
-        Log::info('Book Policy Details: ', $bookPolicyDetails);
+        info($infoMessage);
+        info('Book Policy Details: ', $bookPolicyDetails);
 
         return $bookPolicyDetails;
     }
@@ -307,24 +316,29 @@ trait GenericQueriesAllLobs
         return $leadCodeArray[0];
     }
 
+    /**
+     * Updates quote & policy issuance status, first will check if the quote's current status is not already set to 'Policy Sent to Customer'
+     * We check policy issuance status is not 'Policy Issued' & if afilled policy details & required documents are uploaded
+     * This will trigger once policy details section update or new document upload from upload document section
+     */
     public function updateQuoteStatus($type, $id)
     {
-
         if ($type == 'send-update') {
             return true;
         }
         if (request()->has('quote_type')) {
             $type = request()->quote_type;
         }
+
         $quote = $this->getQuoteObject($type, $id);
-        Log::info('Updating quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
+        info('fn: updateQuoteStatus called for : '.$quote->uuid);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-            Log::info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
+            info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
                 $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
-                Log::info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
+                info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
                 if ($isAllRequiredDocumentAreUploaded) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
@@ -332,24 +346,44 @@ trait GenericQueriesAllLobs
                         'policy_issuance_status_other' => '',
                     ]);
                 }
-                Log::info('Update done for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
+                info('update Quote Status complete for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
             }
         }
     }
 
+    /**
+     * Retrieves the transaction payment status and associated tooltip information from payment table
+     * Invoking from bookPolicyPayload function.
+     *
+     * @return array
+     */
     private function transactionPaymentStatus($payment, $quote)
     {
+        // If no payment has been created for the lead, return an unpaid payment status along with the relevant tooltip
         if (! $payment) {
             return $this->getUnpaidStatus();
         }
 
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked && $payment->transaction_payment_status == null) {
+        // List of statuses where the payment allocation status needs updating if payment status is set to null
+        $statusesTriggeringUpdate = [
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+        $updateRequired = in_array($quote->quote_status_id, $statusesTriggeringUpdate) && is_null($payment->transaction_payment_status);
+        if ($updateRequired) {
             $this->updatePaymentAllocationStatus($quote);
         }
 
         return $this->getPaymentStatus($payment);
     }
 
+    /**
+     * This will return unpaid payment status and tool tip.
+     *
+     * @return array
+     */
     private function getUnpaidStatus()
     {
         return [
@@ -358,6 +392,11 @@ trait GenericQueriesAllLobs
         ];
     }
 
+    /**
+     * Retrieves the payment status and its corresponding tooltip based on the transaction payment status of a payment.
+     *
+     * @return array
+     */
     private function getPaymentStatus($payment)
     {
         if ($payment->transaction_payment_status == TransactionPaymentStatusEnum::UNPAID_TEXT) {
@@ -376,13 +415,17 @@ trait GenericQueriesAllLobs
         return [$paymentStatus, $paymentStatusTooltip];
     }
 
+    /**
+     * Updates the total payment price for all payment frequencies and the total amount for upfront payments.
+     * Invoked when update in the policy details section
+     * It also checks for discrepancies between the total amount of child payments and the total price of the parent payment.
+     */
     public function updatePriceAndDiscount($quoteModel): bool
     {
-        Log::info('Updating price & discount for: '.$quoteModel->uuid);
+        info('fn: updatePriceAndDiscount called for : '.$quoteModel->uuid);
 
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         $priceWithVat = $quoteModel->price_with_vat;
-        $paymentTotalPrice = $payment->total_price;
 
         if ($payment) {
 
@@ -400,10 +443,16 @@ trait GenericQueriesAllLobs
         return $this->isLackingPayment($payment);
     }
 
+    /**
+     * Updates the total payment price when payment frequency is upfront and payment is paid
+     * Invoked when update in the policy details section
+     *
+     * @return void
+     */
     private function updateTotalAmount($payment)
     {
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-            Log::info('Updating TA for PC: '.$payment->code);
+            info('Updating TA for PC: '.$payment->code);
             $captureAmount = $payment->captured_amount;
             $totalPrice = $payment->total_price;
             $discountValue = $payment->discount_value;
@@ -412,57 +461,93 @@ trait GenericQueriesAllLobs
             } else {
                 $totalAmount = $totalPrice - $discountValue;
             }
+            info('updateTotalAmount totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
             $payment->save();
-
-            if ($payment->paymentSplits) {
-                $splitPayment = $payment->paymentSplits()->first();
-                Log::info('Updating PA for PC: '.$payment->code.' BTA: '.$splitPayment->payment_amount.' WTA: '.$totalAmount);
-                $splitPayment->payment_amount = $totalAmount;
-                $splitPayment->save();
-            }
         }
     }
 
+    /**
+     * Evaluates if all necessary policy details are filled for a given quote.
+     * such as policy number, policy issuance date, policy start date, renewal expiry date, and price with VAT are present.
+     * Triggering from bookPolicyPayload
+     *
+     * @return bool
+     */
     private function isFilledPolicyDetails($type, $quote)
     {
-        if (! empty($quote->policy_number) && ! empty($quote->policy_issuance_date) && ! empty($quote->policy_start_date) && ! empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0) {
-            if (in_array(ucfirst($type), [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
-                if (! empty($quote->insurer_quote_number)) {
-                    return true;
-                }
-            } else {
-                return true;
-            }
+        info('Logging filled policy details for '.$quote->code, [
+            'policy_number' => $quote->policy_number,
+            'policy_issuance_date' => $quote->policy_issuance_date,
+            'policy_start_date' => $quote->policy_start_date,
+            'renewal_expiry_date' => $quote->renewal_expiry_date,
+            'insurer_quote_number' => $quote->insurer_quote_number,
+        ]);
+
+        $hasBasicPolicyDetails = ! empty($quote->policy_number) &&
+                                ! empty($quote->policy_issuance_date) &&
+                                ! empty($quote->policy_start_date) &&
+                                ! empty($quote->renewal_expiry_date) &&
+                                $quote->price_with_vat > 0;
+
+        if (! $hasBasicPolicyDetails) {
+            return false;
         }
 
-        return false;
+        $isCarOrBike = in_array(ucfirst($type), [QuoteTypes::CAR->value, QuoteTypes::BIKE->value]);
+        $hasInsurerQuoteNumber = ! empty($quote->insurer_quote_number);
+
+        // For CAR or BIKE types, ensure insurer_quote_number is also filled
+        if ($isCarOrBike && ! $hasInsurerQuoteNumber) {
+            return false;
+        }
+
+        return true;
     }
 
+    /**
+     * Check if all required documents are uplaoded to enable send policy to customer & book policybutton in book policy section
+     * Triggering from updateQuoteStatus & bookPolicyPayload
+     *
+     * @return bool
+     */
     private function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)
     {
         $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
 
-        info('isAllRequiredDocumentAreUploaded: '.$record->code.' Total number of document required: '.count($documentTypeCodes).' Upload nber of document: '.$quoteDocumentsCount);
+        info('isAllRequiredDocumentAreUploaded: '.$record->code.' Total number of document required: '.count($documentTypeCodes).' Upload number of document: '.$quoteDocumentsCount);
         info('documentTypeCodes: ', $documentTypeCodes);
 
         return $quoteDocumentsCount == count($documentTypeCodes);
     }
 
+    /**
+     * Checks if the given payment is lacking based on its total price and the sum of its split payments.
+     * It calculates the total price and the sum of split payments including payment discount value
+     * Triggering from updatePriceAndDiscount & bookPolicyPayload
+     *
+     * @return bool
+     */
     private function isLackingPayment($payment)
     {
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
-            Log::info('isLackingPayment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' Split payment count '.$sumOfSplitPayment);
+            info('Checking Lacking Payment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
 
             return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
 
         return true;
     }
-
+    /**
+     * Checks if the payment is insufficient based on its payment status.
+     * This method sets appropriate headings and descriptions based on the specific payment status
+     * Triggering from bookPolicyPayload and used in book policy section before sending policy
+     *
+     * @return array
+     */
     private function checkForInsufficientPayment($paymnet)
     {
         $paymentStatusHeading = '';
@@ -508,6 +593,10 @@ trait GenericQueriesAllLobs
         return [$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription];
     }
 
+    /**
+     * This method will set payment status in payment table
+     * This method trigger when policy details section update
+     */
     public function setPaymentStatusAsPerPrice($quoteModel, mixed $payment, mixed $difference): void
     {
         $priceWithVat = round($quoteModel->price_with_vat, 2);
@@ -521,7 +610,11 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * @return float|mixed
+     * This method calculates the difference between the price with VAT and the total payment amount, which includes the captured amount and any discount value.
+     * If the difference is less than $1 but more than $0, it adjusts the payment's discount value to account for this difference
+     * This method trigger when policy details section update
+     *
+     * @return float
      */
     public function handleSmallAmountDifference(mixed $payment, mixed $priceWithVat): mixed
     {
@@ -559,11 +652,18 @@ trait GenericQueriesAllLobs
             }
         }
 
-        Log::info($infoMessage);
+        info($infoMessage);
 
         return $difference;
     }
 
+    /**
+     * Determines if all below mentiooned fields are filled or not
+     * Based on this we will show book policy button inj booking details section
+     * Triggering from bookPolicyPayload
+     *
+     * @return bool
+     */
     private function areBookingDetailsFilled($payment)
     {
 
@@ -577,6 +677,12 @@ trait GenericQueriesAllLobs
             && (! empty($payment->commission_vat_not_applicable) || ! empty($payment->commission_vat_applicable));
     }
 
+    /**
+     * Updates the transaction payment status of a payment associated with a given quote.
+     * This method is triggered during the booking policy process
+     *
+     * @return null
+     */
     private function updatePaymentAllocationStatus($quote)
     {
 
@@ -603,6 +709,13 @@ trait GenericQueriesAllLobs
         }
     }
 
+    /**
+     * Determines if the provided quote is the main lead or child lead based on parent_duplicate_quote_id column.
+     * If child lead and parent lead status is not cancellation pending we weill show only send policy to customer button
+     * Triggering from bookPolicyPayload
+     *
+     * @return bool
+     */
     private function checkMainLead($quote, $quoteType)
     {
         if ($quote->parent_duplicate_quote_id == null) {
@@ -619,12 +732,22 @@ trait GenericQueriesAllLobs
         return false;
     }
 
+    /**
+     * For each payment split, if the parent payment's frequency is UPFRONT and its status is PAID,
+     * the method updates the payment split's payment amount to match the parent payment's total amount and logs this update.
+     * If the collection amount is greater than or equal to the payment amount, the payment split's status is set to PAID, otherwise, it is set to PARTIALLY_PAID
+     * This method trigger when policy details section update
+     */
     private function updateChildPaymentStatus($payment)
     {
-        Log::info('Updating child payment status for: '.$payment->code);
+        info('Updating child payment status for: '.$payment->code);
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {
+                if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+                    info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
+                    $paymentSplit->payment_amount = $payment->total_amount;
+                }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
                     if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
@@ -635,5 +758,19 @@ trait GenericQueriesAllLobs
                 }
             }
         }
+    }
+
+    /**
+     * Determines if a quote's status indicates that the policy is either cancelled, pending cancellation, or cancelled and reissued.
+     * Based on this we show tooltip and disbaled button related to send & book policy
+     * Triggering from bookPolicyPayload and used in book policy & policy details section
+     *
+     * @return bool
+     */
+    private function isPolicyCancelledOrPending($quote)
+    {
+        $quote_status_id = $quote->quote_status_id;
+
+        return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 }

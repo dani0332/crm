@@ -3,8 +3,6 @@ import moment from 'moment';
 
 const page = usePage();
 
-const { price_vat_notapplicable, price_vat_applicable, isNumber } = useRules();
-
 const props = defineProps({
   quote: {
     type: Object,
@@ -47,6 +45,8 @@ const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const isPolicyCancelledOrPending = page.props?.bookPolicyDetails?.isPolicyCancelledOrPending;
+const isPolicyCancelledOrPendingToolTtip = page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip;
 
 const policyIssuanceStatusOptions = computed(() => {
   let policyIssuanceStatus = page.props.policyIssuanceStatus;
@@ -150,15 +150,95 @@ const caculateVatAmount = () => {
     policyDetailsForm.amount_with_vat = ''; // temperate setting empty
   }
 };
+const quoteType = page.props.quoteType.toLowerCase();
+const isLifeQuote = quoteType == quoteTypeCodeEnum.Life.toLowerCase();
+const isPriceVatApplicableRequired = computed(() => {
+  if (isLifeQuote) {
+    return true;
+  } else if (
+    [
+      quoteTypeCodeEnum.Health.toLowerCase(),
+      quoteTypeCodeEnum.Yacht.toLowerCase(),
+      quoteTypeCodeEnum.GroupMedical.toLowerCase(),
+      quoteTypeCodeEnum.CORPLINE.toLowerCase(),
+      quoteTypeCodeEnum.BusinessQuote.toLowerCase(),
+    ].includes(quoteType) &&
+    policyDetailsForm.price_vat_applicable == ''
+  ) {
+    //for health, corpline, groupmedical, yatch, price vat not applicable is required when price vat applicable is empty
+    return true;
+  }
+  return false;
+});
+
+const isCarOrBikeQuote = [
+  quoteTypeCodeEnum.Car.toLowerCase(),
+  quoteTypeCodeEnum.Bike.toLowerCase(),
+].includes(quoteType);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
+  quote_policy_number: v => {
+    return !!v || 'This field is required';
+  },
+  price_vat_applicable: v => {
+    //for life, price vat applicable is not required
+    if (isLifeQuote) return true;
+    if (v) {
+      return (
+        /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
+      );
+    }
+    return !!v || 'This field is required';
+  },
+  price_vat_not_applicable: v => {
+    //for life, price vat not applicable is required
+    if (isLifeQuote) {
+      if (v) {
+        return (
+          /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
+        );
+      }
+      return !!v || 'This field is required';
+    } else if (
+      [
+        quoteTypeCodeEnum.Health.toLowerCase(),
+        quoteTypeCodeEnum.Yacht.toLowerCase(),
+        quoteTypeCodeEnum.GroupMedical.toLowerCase(),
+        quoteTypeCodeEnum.CORPLINE.toLowerCase(),
+        quoteTypeCodeEnum.BusinessQuote.toLowerCase(),
+      ].includes(quoteType) &&
+      policyDetailsForm.price_vat_applicable == ''
+    ) {
+      //for health, corpline, groupmedical, yatch, price vat not applicable is required when price vat applicable is empty
+      if (v) {
+        return (
+          /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
+        );
+      }
+      return !!v || 'This field is required';
+    }
+    return true;
+  },
+  quote_plan_insurer_quote_number: v => {
+    if (isCarOrBikeQuote) {
+      return !!v || 'This field is required';
+    }
+    return true;
+  },
+  quote_policy_issuance_date: v => {
+    if (v) {
+      const date = new Date(v);
+      return isNaN(date.getTime());
+    }
+    return !!v || 'This field is required';
+  },
   start_date: v => {
     if (v) {
       const date = new Date(v);
-      return !isNaN(date.getTime());
+      return isNaN(date.getTime());
     }
-    return true;
+    return !!v || 'This field is required';
   },
   expiry_date: v => {
     if (v) {
@@ -169,7 +249,7 @@ const rules = {
       }
       return isNaN(date.getTime());
     }
-    return false;
+    return !!v || 'This field is required';
   },
 };
 
@@ -237,6 +317,8 @@ watch(
   },
 );
 
+const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusableTemplate();
+
 const setQuotePlanInsurerNumber = () => {
   policyDetailsForm.quote_plan_insurer_quote_number =
     planQuoteInsurerNumber.value ||
@@ -252,6 +334,7 @@ watch(
     setQuotePlanInsurerNumber();
   },
 );
+
 </script>
 
 <template>
@@ -270,7 +353,7 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Policy Number</label
+                    >Policy Number <span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span>{{
@@ -283,6 +366,12 @@ watch(
                   type="text"
                   placeholder="Policy Number"
                   class="w-full"
+                  :custom-error="
+                    rules.quote_policy_number(
+                      policyDetailsForm.quote_policy_number,
+                    )
+                  "
+                  :rules="[rules.quote_policy_number]"
                   :disabled="!policyDetailsState.isEditing"
                 />
               </div>
@@ -290,7 +379,7 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >ISSUANCE DATE</label
+                    >ISSUANCE DATE <span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span>{{
@@ -301,6 +390,12 @@ watch(
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_issuance_date"
                   :disabled="!policyDetailsState.isEditing"
+                  :custom-error="
+                    rules.quote_policy_issuance_date(
+                      policyDetailsForm.quote_policy_issuance_date,
+                    )
+                  "
+                  :rules="[rules.quote_policy_issuance_date]"
                   type="date"
                   class="w-full"
                 />
@@ -309,11 +404,16 @@ watch(
 
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
-                <x-tooltip
-                  ><label
+                <x-tooltip>
+                  <label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Price (VAT NOT APPLICABLE)</label
-                  >
+                    >Price (VAT NOT APPLICABLE)
+                    <span
+                      v-if="isPriceVatApplicableRequired"
+                      class="text-red-500"
+                      >*</span
+                    >
+                  </label>
                   <template #tooltip>
                     <span>{{
                       productionProcessTooltipEnum.PRICE_VAT_NOT_APPLICABLE
@@ -323,7 +423,12 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_notapplicable"
                   @change="caculateVatAmount"
-                  :rules="[price_vat_notapplicable, isNumber]"
+                  :custom-error="
+                    rules.price_vat_not_applicable(
+                      policyDetailsForm.price_vat_notapplicable,
+                    )
+                  "
+                  :rules="[rules.price_vat_not_applicable]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
                   class="w-full"
@@ -339,7 +444,7 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Start Date</label
+                    >Start Date <span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span>{{ productionProcessTooltipEnum.START_DATE }}</span>
@@ -361,7 +466,10 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Price (VAT APPLICABLE)</label
+                    >Price (VAT APPLICABLE)
+                    <span v-if="!isLifeQuote" class="text-red-500"
+                      >*</span
+                    ></label
                   >
                   <template #tooltip>
                     <span>{{
@@ -372,7 +480,12 @@ watch(
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_applicable"
                   @change="caculateVatAmount"
-                  :rules="[price_vat_applicable, isNumber]"
+                  :custom-error="
+                    rules.price_vat_applicable(
+                      policyDetailsForm.price_vat_applicable,
+                    )
+                  "
+                  :rules="[rules.price_vat_applicable]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"
                   class="w-full"
@@ -388,7 +501,7 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Expiry Date</label
+                    >Expiry Date <span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span>{{ productionProcessTooltipEnum.EXPIRY_DATE }}</span>
@@ -396,11 +509,7 @@ watch(
                 </x-tooltip>
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_expiry_date"
-                  :custom-error="
-                    rules.expiry_date(
-                      policyDetailsForm.quote_policy_expiry_date,
-                    )
-                  "
+                  :rules="[rules.expiry_date]"
                   type="date"
                   placeholder="Expiry Date"
                   class="w-full"
@@ -456,7 +565,10 @@ watch(
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Insurer Quote Number</label
+                    >Insurer Quote Number
+                    <span v-if="isCarOrBikeQuote" class="text-red-500"
+                      >*</span
+                    ></label
                   >
                   <template #tooltip>
                     <span>{{
@@ -468,6 +580,12 @@ watch(
                   v-model="policyDetailsForm.quote_plan_insurer_quote_number"
                   type="text"
                   placeholder="Insurer Quote Number"
+                  :custom-error="
+                    rules.quote_plan_insurer_quote_number(
+                      policyDetailsForm.quote_plan_insurer_quote_number,
+                    )
+                  "
+                  :rules="[rules.quote_plan_insurer_quote_number]"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
                 />
@@ -514,9 +632,30 @@ watch(
               <div class="w-full md:w-1/2" />
             </div>
 
+            <EditPolicyButtonTemplate v-slot="{ isDisabled }" >
+              <x-button
+                class="mt-4"
+                color="emerald"
+                size="sm"
+                @click.prevent="policyDetailsState.isEditing = true"
+                :disabled="isDisabled"
+              >
+              Edit
+              </x-button>
+            </EditPolicyButtonTemplate>
+
+            <div v-if="isPolicyCancelledOrPending" class="flex justify-end"> 
+              <x-tooltip>
+                <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
+                  Edit
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content"> {{ isPolicyCancelledOrPendingToolTtip }} </span>
+                </template>
+              </x-tooltip>
+            </div>
             <div class="flex justify-end">
               <template
-                class="flex justify-end"
                 v-if="
                   quote.quote_status_id ==
                     quoteStatusEnum.TransactionApproved ||
@@ -554,36 +693,17 @@ watch(
                   Update
                 </x-button>
 
-                <template
-                  v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()"
-                >
-                  <x-button
-                    v-if="
-                      !policyDetailsState.isEditing &&
-                      can(permissionsEnum.POLICY_DETAILS_ADD)
-                    "
-                    class="mt-4"
-                    color="emerald"
-                    size="sm"
-                    @click.prevent="policyDetailsState.isEditing = true"
-                  >
-                    Edit
-                  </x-button></template
-                >
+                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
+                  <template v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()">
+                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && can(permissionsEnum.POLICY_DETAILS_ADD)" :isDisabled="true"/>
+                  </template>
+                  <template #tooltip>TThis lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+                </x-tooltip>
+
                 <template v-else>
-                  <x-button
-                    v-if="
-                      !policyDetailsState.isEditing &&
-                      can(permissionsEnum.POLICY_DETAILS_ADD)
-                    "
-                    class="mt-4"
-                    color="emerald"
-                    size="sm"
-                    @click.prevent="policyDetailsState.isEditing = true"
-                  >
-                    Edit
-                  </x-button></template
-                >
+                  <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && can(permissionsEnum.POLICY_DETAILS_ADD)"/>
+                </template>
+
               </template>
               <template v-else>
                 <x-tooltip>
@@ -596,7 +716,7 @@ watch(
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      'The button is not accessable because policy has been booked'
+                      "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
                     }}</span>
                   </template>
                 </x-tooltip>

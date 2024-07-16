@@ -52,8 +52,9 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -291,6 +292,8 @@ const linkEntity = () => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 </script>
 
 <template>
@@ -335,12 +338,20 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             Cycle Quotes
           </x-button>
         </Link>
-        <Link
-          v-if="can(permissionsEnum.CycleQuotesEdit)"
-          :href="route('cycle-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link v-if="!isDisabled" :href="route('cycle-quotes-edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
+          </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.CycleQuotesEdit)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.CycleQuotesEdit)"/>
+        </template>
       </template>
     </StickyHeader>
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
@@ -937,7 +948,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :paymentDocument="documentTypeCodes.filter(item => ['CYCPD', 'CYCPDR', 'CYCDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
