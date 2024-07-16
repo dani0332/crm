@@ -100,7 +100,7 @@ const providerName = computed(() => {
 
 const filledExpiryDate = computed(() => {
     if (isCPD.value) {
-        return props.sendUpdateLog?.expiry_date || dateToYMD(props.quote?.renewal_expiry_date) || null;
+        return props.sendUpdateLog?.expiry_date || props.quote?.renewal_expiry_date || null;
     }
 
     return props.sendUpdateLog?.expiry_date || null;
@@ -116,7 +116,7 @@ const policyDetailsForm = useForm({
     policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
     issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
     start_date: props.sendUpdateLog?.start_date || dateToYMD(props.quote?.policy_start_date) || null,
-    expiry_date: filledExpiryDate.value,
+    expiry_date: dateToYMD(filledExpiryDate.value),
     insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null,
     issuance_status_id: props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null,
     id: props.sendUpdateLog.id,
