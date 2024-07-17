@@ -9,6 +9,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\SageEnum;
 use App\Factories\SagePayloadFactory;
 use App\Jobs\BookPolicyOnSageJob;
+use App\Jobs\SendUpdateSageJob;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\Customer;
@@ -26,6 +27,7 @@ use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class SageApiService
 {
@@ -342,7 +344,6 @@ class SageApiService
 
         if ($sageCustomerNumber) {
             info('Book Update - Customer found in Sage300 - Customer Number: '.$sageCustomerNumber.' - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-            $response = '';
             $getingPaymentDetails = $this->getPaymentDetails($request, $extras);
 
             if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
@@ -384,12 +385,27 @@ class SageApiService
                     if ($request->send_update_type == SageEnum::SUT_REVE_CORR) {
                         $extras['reverse_invoice'] = $request->reversalInvoice;
                     }
-                    $response = $this->handleSendUpdateCalls($quote, $sageRequestPayload, $getingPaymentDetails['payment'], $getingPaymentDetails['splitPayments'], $extras);
-                    break;
-            }
 
-            if (! empty($response)) {
-                return ['status' => $response['status'], 'message' => $response['message']];
+                    Haystack::build()
+                    ->addJob(new SendUpdateSageJob($quote, $sageRequestPayload, $getingPaymentDetails['payment'], $getingPaymentDetails['splitPayments'], $extras))
+                    ->catch(function($sageResponse) use ($request, $extras){
+                        logger()->error('Book Update - Job failed to process. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                    })
+                    ->finally(function($sageResponse) use ($request, $extras){
+                        if ($sageResponse['response']['status']) {
+                            // Send Update Data move to main lead page as per Send update Type
+                            info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                            $impactResponse = (new SendUpdateLogService)->updatesMoveToLead($request, $extras['send_update_log']);
+
+                            if ($impactResponse['status']) {
+                                info('Book Update - Process Completed Successfully. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']);
+                            }
+                        }
+                    })
+                    ->onQueue('sageQueue')
+                    ->dispatch();
+
+                    return ['status' => true, 'message' => SageEnum::SAGE_REQUEST_BEING_PROCESS];
             }
 
             logger()->error('Book Update - Something went wrong');
@@ -467,8 +483,11 @@ class SageApiService
         }
     }
 
-    private function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
+    public function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
     {
+        // Temp return should be remove before merge
+        return ['status' => false, 'message' => 'No Invoices found for Reverse and Correction'];
+
         $quoteModelObject = ! empty($extras['send_update_log']) ? $extras['send_update_log'] : $quote;
 
         if ($extras['send_update_type'] == SageEnum::SUT_REVE_CORR) {
