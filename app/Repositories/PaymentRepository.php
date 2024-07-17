@@ -364,26 +364,20 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     public function fetchUpdateSplitPaymentsApprove($request)
-    {
-        $parentQuoteModel =
-        $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-
-        if (! $quoteModel) {
-            return response()->json(['success' => false]);
-        }
-
-        if ($request->send_update_id) {
-            $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
-        }
-
-        $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
+    {                
         if ($request->is_declined) {
+            if ($request->send_update_id>0) {
+                $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+            } else {
+                $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+            }    
+            $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
             $firstPayment->update([
                 'decline_reason_id' => $request->declined_reason,
                 'decline_custom_reason' => $request->declined_custom_reason,
                 'updated_by' => Auth::user()->id,
             ]);
-            if ($request->send_update_id) {
+            if ($request->send_update_id>0) {
                 $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
             } else {
                 $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
@@ -391,8 +385,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->save();
             $successMessage = 'Transaction declined';
         } else {
-            
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
             if ($request->is_capture) { //update collected amount in childs
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();

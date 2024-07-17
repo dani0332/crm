@@ -155,33 +155,34 @@
                 27th floor, Control Tower, Motor City, Dubai, United Arab Emirates, PO Box - 26423 | Tel: 800 ALFRED (800 253 733) | insurancemarket.ae
             </h6>
         </h5>
-        <table style="width=100%; font-size: 9px; padding:2px;">
-        <tr>
-            <td style="width=65%; verticle-align:top">
-                
-                UAE Central Bank Registration number 85<br>
-                Registered member of the Emirates Insurance Association<br>
-                Department of Economy & Tourism in Dubai Trade License number 238534<br>
-                Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority <br>
-                Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry
-            </td>
-            @if (!empty($data['advisor_name']))
-                <td style="width=20%; verticle-align:top; text-align:right;">
-                    Insurer Advisor: {{ $data['advisor_name'] }}<br>
-                    Email: {{ $data['advisor_email'] }}<br>
-                    Mobile Number: {{ $data['advisor_mobile_no'] }}<br>
-                    Direct Line: {{ $data['advisor_landline_no'] }}<br>
-                    <br>                
+        <table style="width: 100%; font-size: 8px; padding:2px;">
+            <tr>
+                <td style="width: 62%; vertical-align: top;">
+                    
+                    UAE Central Bank Registration number 85<br>
+                    Registered member of the Emirates Insurance Association<br>
+                    Department of Economy & Tourism in Dubai Trade License number 238534<br>
+                    Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority <br>
+                    Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry
                 </td>
+                @if (!empty($data['advisor_name']))
+                    <td style="width: 30%; vertical-align:top; text-align:right;">
+                        Insurance Advisor: {{ $data['advisor_name'] }}<br>
+                        Email: {{ $data['advisor_email'] }}<br>
+                        Mobile Number: {{ $data['advisor_mobile_no'] }}<br>
+                        Direct Line: {{ $data['advisor_landline_no'] }}<br>
+                        <br>                
+                    </td>
 
-                <td style="width=15%; verticle-align:top">            
-                    @if (!empty($data['profile_photo_path']))
-                        <img style="border-radius: 50%; width: 60px; height: 60px;" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($data['profile_photo_path']))}}" alt="Insurance Market Logo">
-                    @endif
-                </td>
-            @endif
-        </tr>
-      </table>
+                    <td style="width: 8%; vertical-align:top">            
+                        @if (!empty($data['profile_photo_path']))
+                            <img style="border-radius: 50%; width: 60px; height: 60px;" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($data['profile_photo_path']))}}" alt="Insurance Market Logo">
+                        @endif
+                    </td>
+                @endif
+            </tr>
+        </table>
+    </di
     </div>
 </body>
 </html>

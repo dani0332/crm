@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Jobs\ProcessCCPaymentsJob;
 
 use App\Models\CcPaymentProcessJob;
 use App\Services\SplitPaymentService;
