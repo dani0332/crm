@@ -6,10 +6,8 @@ use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
-use App\Models\LeadStatus;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
-use App\Services\DropdownSourceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -166,7 +164,7 @@ class AlfredChatController extends Controller
             ];
         }
 
-         // missing in db
+        // missing in db
         if (isset($request->transaction_type) && $request->transaction_type != '') {
             $chatPipeline = [
                 ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]],
@@ -237,7 +235,7 @@ class AlfredChatController extends Controller
                 ['$match' => ['report' => $request->report]],
             ];
         }
-        
+
         // Add $group, $sort, $skip, and $limit stages for pagination
         $chatPipeline[] = [
             '$group' => [
@@ -296,6 +294,6 @@ class AlfredChatController extends Controller
 
     public function extractChatReport(Request $request)
     {
-        
+
     }
 }

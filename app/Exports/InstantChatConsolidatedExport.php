@@ -4,34 +4,35 @@ namespace App\Exports;
 
 use App\Traits\ExcelExportable;
 
-class InstantChatConsolidatedExport {
+class InstantChatConsolidatedExport
+{
     use ExcelExportable;
 
     public function collection()
     {
-        
+
     }
 
     public function headings(): array
     {
         return [
-          'QUOTE TYPE',
-          'REF ID',
-          'DATE OF FIRST INTERACTION',
-          'COMMUNICATION CHANNEL',
-          'BATCH',
-          'TRANSACTION TYPE',
-          'SEGMENT',
-          'NO. OF INTERACTIONS WITH IA',
-          'COUNT OF FALLBACKS',
-          'PAYMENT STATUS',
-          'SALE LEADS',
-          'PROVIDER NAME',
-          'PLAN TYPE',
-          'PLAN NAME',
-          'PRICE',
-          'PAYMENT DATE',
-          'EP PURCHASED'
+            'QUOTE TYPE',
+            'REF ID',
+            'DATE OF FIRST INTERACTION',
+            'COMMUNICATION CHANNEL',
+            'BATCH',
+            'TRANSACTION TYPE',
+            'SEGMENT',
+            'NO. OF INTERACTIONS WITH IA',
+            'COUNT OF FALLBACKS',
+            'PAYMENT STATUS',
+            'SALE LEADS',
+            'PROVIDER NAME',
+            'PLAN TYPE',
+            'PLAN NAME',
+            'PRICE',
+            'PAYMENT DATE',
+            'EP PURCHASED',
         ];
     }
 
