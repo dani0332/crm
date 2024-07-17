@@ -466,7 +466,7 @@ class SendUpdateLogService
         }
 
         return [
-            'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format('d-m-Y') : null,
+            'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format(config('constants.DATE_DISPLAY_FORMAT')) : null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
