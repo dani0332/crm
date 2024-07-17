@@ -2,20 +2,21 @@
 
 namespace App\Repositories;
 
-use App\Enums\PaymentMethodsEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
+use Carbon\Carbon;
 use App\Facades\Capi;
+use App\Enums\QuoteTypeId;
+use Illuminate\Support\Arr;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatusLog;
+use App\Enums\PaymentStatusEnum;
 use App\Services\CentralService;
-use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
+use App\Enums\PaymentMethodsEnum;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Traits\GenericQueriesAllLobs;
+use App\Services\QuoteDocumentService;
 
 class PersonalQuoteRepository extends BaseRepository
 {
@@ -74,6 +75,8 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
+        $quoteDocumentService = app(QuoteDocumentService::class);
+
         $query = DocumentTypeRepository::where('code', $data['document_type_code']);
         if (request()->quote_type_id) {
             $query->where('quote_type_id', request()->quote_type_id);
@@ -84,6 +87,13 @@ class PersonalQuoteRepository extends BaseRepository
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
         $fileMimeType = $file->getClientMimeType();
+
+        // watermark only for pdf files
+        if ($fileMimeType == 'application/pdf') {
+            $quoteDocumentService->watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+        } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
+            $quoteDocumentService->watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+        }
 
         //upload file to azure
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;

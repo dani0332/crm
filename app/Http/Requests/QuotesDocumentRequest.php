@@ -32,6 +32,8 @@ class QuotesDocumentRequest extends FormRequest
         $rules = [
             'file' => 'required|file',
             'document_type_code' => 'required|exists:document_types,code,is_active,1',
+            'quote_id' => 'required|exists:personal_quotes,id',
+            'quote_uuid' => 'required|exists:personal_quotes,code',
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->where('quote_type_id', request()->quote_type_id ?? 0)->first())) {

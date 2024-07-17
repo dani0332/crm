@@ -15,11 +15,14 @@
         "bensampo/laravel-enum": "^v6.6.3",
         "beyondcode/laravel-websockets": "^1.14",
         "doctrine/dbal": "^3.3",
+        "filippo-toso/pdf-watermarker": "^1.1",
         "guzzlehttp/guzzle": "^7.4",
         "hidehalo/nanoid-php": "^1.1",
         "illuminate/contracts": "^10.0",
         "illuminate/support": "^10.0",
         "inertiajs/inertia-laravel": "^0.6.9",
+        "intervention/image": "^3.7",
+        "jjaffeux/postmark-inbound-php": ">=3.0",
         "laravel/framework": "^10.0",
         "laravel/horizon": "^5.10",
         "laravel/jetstream": "^2.3",
@@ -45,8 +48,7 @@
         "spatie/laravel-navigation": "^1.2",
         "spatie/laravel-permission": "^5.11.0",
         "tightenco/ziggy": "^2.0",
-        "yajra/laravel-datatables-oracle": "^10.8",
-        "jjaffeux/postmark-inbound-php": ">=3.0"
+        "yajra/laravel-datatables-oracle": "^10.8"
     },
     "require-dev": {
         "spatie/laravel-ignition": "^2.3",

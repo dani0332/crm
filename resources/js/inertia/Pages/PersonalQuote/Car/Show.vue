@@ -360,6 +360,7 @@ const documentsTable = reactive({
   columns: [
     { text: 'Document Type', value: 'document_type_text' },
     { text: 'Document Name', value: 'document_name_text' },
+    { text: 'Watermarked', value: 'is_watermarked' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Created By', value: 'created_by' },
   ],
@@ -376,6 +377,7 @@ const documentsTableItems = computed(() => {
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
       created_by: doc.created_by ? doc.created_by.name : '',
+      is_watermarked: doc.is_watermarked ? 'Yes' : 'No',
     };
   });
 });
@@ -3488,6 +3490,9 @@ const handlePlanSelected = plan => {
           <a target="_blank" :href="storageUrl + item.doc_url">{{
             item.document_original_name
           }}</a>
+        </template>
+        <template #item-is_watermarked="item">
+            {{ item.is_watermarked }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2">

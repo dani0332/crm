@@ -21,6 +21,10 @@ const quoteDocumentsTable = reactive({
             value: 'original_name',
         },
         {
+            text: 'Watermarked',
+            value: 'is_watermarked',
+        },
+        {
             text: 'Created At',
             value: 'created_at',
         },
@@ -143,6 +147,9 @@ const uploadFile = (doc, filesWithInfo) => {
                 <a :href="storageUrl + item.doc_url" target="_blank" class="text-primary-600">
                     {{ item.original_name }}
                 </a>
+            </template>
+            <template #item-is_watermarked="item">
+                {{ item.is_watermarked == 1 ? 'Yes' : 'No' }}
             </template>
             <template #item-action="{ doc_name }">
                 <div>
