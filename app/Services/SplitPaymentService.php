@@ -615,8 +615,8 @@ class SplitPaymentService
             
             if ($paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-                ////$response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
-                $paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
+                $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
+                //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
             }
 
             $imcrmReceiptCreated = QuoteDocument::where(['payment_split_id'=>$splitPaymentId,'document_type_text'=>DocumentTypeEnum::RECEIPT])->get();
@@ -714,12 +714,12 @@ class SplitPaymentService
                 $quoteModel->save();
                 $canCaptureEp = true;
                 // Berlin Service - Extend Customer Subscription on Shaji request
-                /*$customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
+                $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
                 if ($customerData) {
                     $quoteOptions = QuoteTypeId::getOptions();
                     $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
                     info('Transaction Approved responseExtend: '.$responseExtend);
-                }*/
+                }
 
                 //Create duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $sendUpdateId) {
