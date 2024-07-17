@@ -29,6 +29,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
@@ -465,11 +466,10 @@ class SendUpdateLogService
         }
 
         return [
-            'booking_date' => $quote->policy_booking_date ?? null,
+            'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format(config('constants.DATE_DISPLAY_FORMAT')) : null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
-            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
         ];
     }
 
@@ -513,6 +513,11 @@ class SendUpdateLogService
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
         $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
+
+        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
+
+            return SendUpdateLogStatusEnum::SU; // Book Update
+        }
 
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
@@ -568,6 +573,8 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::MDOV,
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::ACB,
+            SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
         ];
@@ -825,6 +832,8 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::ACB,
+                SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
             ])) {
             return false;
