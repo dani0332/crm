@@ -167,6 +167,9 @@ class PetQuoteController extends Controller
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
+        $sortedPayments = collect($quote->payments)->sortByDesc(function($column) {
+            return strtotime($column->created_at);
+        })->values()->toArray();
 
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
@@ -203,7 +206,7 @@ class PetQuoteController extends Controller
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => collect($quote?->payments)->sortByDesc('created_at')->values()->toArray(),
+            'payments' => $sortedPayments,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateOptions' => $sendUpdateOptions,

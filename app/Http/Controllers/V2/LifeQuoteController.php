@@ -166,6 +166,9 @@ class LifeQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $sortedPayments = collect($payments)->sortByDesc(function($column) {
+            return strtotime($column->created_at);
+        })->values()->toArray();
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -193,7 +196,7 @@ class LifeQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'paymentMethods' => (new LookupService())->getPaymentMethods(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'payments' => $payments,
+            'payments' => $sortedPayments,
             'insuranceProviders' => $insuranceProviders,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
