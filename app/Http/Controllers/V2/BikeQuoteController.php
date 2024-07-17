@@ -185,7 +185,7 @@ class BikeQuoteController extends Controller
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $quote->payments->toArray() ?? [],
+            'payments' => collect($quote?->payments)->sortByDesc('created_at')->values()->toArray(),
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,

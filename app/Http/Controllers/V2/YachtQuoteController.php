@@ -210,7 +210,7 @@ class YachtQuoteController extends Controller
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $quote->payments->toArray() ?? [],
+            'payments' => collect($quote?->payments)->sortByDesc('created_at')->values()->toArray(),
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
         ]);
