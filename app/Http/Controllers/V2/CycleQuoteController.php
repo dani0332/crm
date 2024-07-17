@@ -45,6 +45,7 @@ use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CycleQuoteController extends Controller
@@ -189,8 +190,8 @@ class CycleQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-        $sortedPayments = collect($quote->payments)->sortByDesc(function ($column) {
-            return strtotime($column->created_at);
+        $sortedPayments = collect($quote?->payments)->sortByDesc(function($column) {
+            return Carbon::parse($column->created_at)->timestamp;
         })->values()->toArray();
 
         return inertia('CycleQuote/Show', [
