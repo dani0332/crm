@@ -1038,9 +1038,9 @@ class SageApiService
 
         } else {
             ${$processDetails['methodName']} = SagePayloadFactory::{$processDetails['methodName']}(
-                $sageRequestPayload, 
-                $extras['splitPayments'], 
-                $extras['entryType'], 
+                $sageRequestPayload,
+                $extras['splitPayments'],
+                $extras['entryType'],
                 $reverseInvoiceResponse,
                 [
                     'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
