@@ -1,21 +1,62 @@
 <script setup>
 const props = defineProps({
   logs: Object,
+  leadStatuses : Array,
+  batches : Array
 });
+
+
+const page = usePage();
+
 const filters = reactive({
   quoteId: null,
   start_date: null,
   end_date: null,
   page: 1,
+  transaction_type :  [],
+  batch : [],
+  lead_status : [],
+  payment_status : [],
+  sale_leads : null,
+  fallback : null,
+  message_channel : null,
+  segment : null,
+  mobile_number : null,
+  report : null,
 });
 
 const params = useUrlSearchParams('history');
+
+const leadStatus = computed(() => {
+  return props.leadStatuses.map((status) => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
+
+const leadBatches = computed(() => {
+  return props.batches.map((status) => ({
+    value: status.id,
+    label: status.name,
+  }));
+});
+
+const paymentStatus = computed(() => {
+  return [...Object.keys(page.props.paymentStatusEnum)].map((status) => ({
+    value: status,
+    label: status,
+  }));
+})
+
+const quoteSegments = page.props.quoteSegments;
+
+
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 
 const { isRequired } = useRules();
 const isError = ref(false);
-const page = usePage();
+
 const loader = reactive({
   table: false,
   view: false,
@@ -166,7 +207,9 @@ onMounted(() =>
       </x-field>
       <x-field label="Transaction Type"
                >
-        <combo-box :options="[
+        <combo-box
+         v-model="filters.transaction_type"
+         :options="[
           { label: 'New Business', value: 'Car' },
           { label: 'Existing Customer\'s Renewal', value: 'Health' },
           { label: 'Existing Customer\'s New Business', value: 'Travel' },
@@ -177,30 +220,35 @@ onMounted(() =>
       </x-field>
       <x-field label="Batch"
                >
-        <combo-box :options="[]"
+        <combo-box 
+         v-model="filters.batch"
+        :options="leadBatches"
                    placeholder="Search by Batch"
                    class="w-full">
         </combo-box>
       </x-field>
       <x-field label="Lead Status"
                >
-        <combo-box :options="[]"
+        <combo-box
+         v-model="filters.lead_status"
+        :options="leadStatus"
                    placeholder="Select the Lead status"
                    class="w-full">
         </combo-box>
       </x-field>
-      <x-field label="Payment status"
+      <x-field label="Payment Status"
                >
-        <x-select :options="[{ value: null, label: 'All' },
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-        ]"
+        <combo-box
+         v-model="filters.payment_status"
+        :options="paymentStatus"
                   placeholder="Search by Payment status"
                   class="w-full" />
       </x-field>
       <x-field label="Sale leads"
                >
-        <x-select :options="[{ value: null, label: 'All' },
+        <x-select
+         v-model="filters.sale_leads"
+        :options="[{ value: null, label: 'All' },
         { value: 'yes', label: 'Yes' },
         { value: 'no', label: 'No' },
         ]"
@@ -209,7 +257,9 @@ onMounted(() =>
       </x-field>
       <x-field label="Fallback"
                >
-        <x-select :options="[{ value: null, label: 'All' },
+        <x-select
+         v-model="filters.fallback"
+        :options="[{ value: null, label: 'All' },
         { value: 'yes', label: 'Yes' },
         { value: 'no', label: 'No' },
         ]"
@@ -218,36 +268,43 @@ onMounted(() =>
       </x-field>
       <x-field label=" Message channel"
                >
-        <x-select :options="[{ value: null, label: 'All' },
-        { value: 'whatsapp', label: 'Whatsapp' },
+        <x-select
+         v-model="filters.message_channel"
+        :options="[{ value: null, label: 'All' },
+        { value: 'WHATSAPP', label: 'Whatsapp' },
         { value: 'e-commerce', label: 'E-commerce' },
+        { value: 'WEBSITE', label: 'Website' },
         ]"
                   placeholder="Search by Message channel"
                   class="w-full" />
       </x-field>
       <x-field label="Segment"
                >
-        <x-select :options="[{ value: null, label: 'All' },
-        { value: 'SIC', label: 'SIC' },
-        { value: 'Non-SIC', label: 'Non-SIC' },
-        { value: 'SIC renewals', label: 'SIC renewals' },
-        ]"
+        <x-select 
+        v-model="filters.segment"
+        :options="quoteSegments"
                   placeholder="Search by SIC"
                   class="w-full" />
       </x-field>
       <x-field label="Email"
                >
-        <x-input placeholder="Search by Email"
+        <x-input 
+        v-model="filters.email"
+        placeholder="Search by Email"
                   class="w-full" />
       </x-field>
       <x-field label="Mobile Number"
                >
-        <x-input placeholder="Search by Mobile number"
+        <x-input 
+        v-model="filters.mobile_number"
+        placeholder="Search by Mobile number"
                   class="w-full" />
       </x-field>
       <x-field label="Report"
                >
-               <x-select :options="[{ value: null, label: 'All' },
+               <x-select
+                v-model="filters.report"
+               :options="[{ value: null, label: 'All' },
         { value: 'Consolidated Report', label: 'Consolidated Report' },
         { value: 'Detailed Report', label: 'Detailed Report' },
         ]"

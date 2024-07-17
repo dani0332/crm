@@ -6,6 +6,10 @@ use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
+use App\Models\LeadStatus;
+use App\Models\QuoteBatches;
+use App\Models\QuoteStatus;
+use App\Services\DropdownSourceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -78,6 +82,7 @@ class AlfredChatController extends Controller
 
     public function logs(Request $request)
     {
+
         $quoteId = null;
         $quoteType = null;
         if ($request->has('quoteId')) {
@@ -161,6 +166,78 @@ class AlfredChatController extends Controller
             ];
         }
 
+         // missing in db
+        if (isset($request->transaction_type) && $request->transaction_type != '') {
+            $chatPipeline = [
+                ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]],
+            ];
+        }
+
+        //  // missing in db
+        if (isset($request->batch) && $request->batch != '') {
+            $chatPipeline = [
+                ['$match' => ['ken_response.quotes.batch' => ['$in' => $request->batch]]],
+            ];
+        }
+
+        // // missing in db
+        if (isset($request->lead_status) && $request->lead_status != '') {
+            $chatPipeline = [
+                ['$match' => ['ken_response.quotes.lead_status' => ['$in' => $request->lead_status]]],
+            ];
+        }
+
+        if (isset($request->payment_status) && $request->payment_status != '') {
+            $chatPipeline = [
+                ['$match' => ['payment_status' => ['$in' => $request->payment_status]]],
+            ];
+
+        }
+
+        if (isset($request->sale_leads) && $request->sale_leads != '') {
+            $chatPipeline = [
+                ['$match' => ['ken_response.quotes.sale_leads' => $request->sale_leads]],
+            ];
+        }
+
+        if (isset($request->fallback) && $request->fallback != '') {
+            $chatPipeline = [
+                ['$match' => ['fallback' => $request->fallback == 'yes' ? true : false]],
+            ];
+        }
+
+        if (isset($request->message_channel) && $request->message_channel != '') {
+            $chatPipeline = [
+                ['$match' => ['channel' => $request->message_channel]],
+            ];
+        }
+
+        // missing in db
+        if (isset($request->segment) && $request->segment != '') {
+            $chatPipeline = [
+                ['$match' => ['ken_response.quotes.isSIC' => $request->segment]],
+            ];
+        }
+
+        if (isset($request->mobile_number) && $request->mobile_number != '') {
+            $chatPipeline = [
+                ['$match' => ['ken_response.quotes.mobile' => $request->mobile_number]],
+            ];
+
+        }
+
+        if (isset($request->email) && $request->email != '') {
+            $chatPipeline = [
+                ['$match' => ['ken_response.quotes.email' => $request->email]],
+            ];
+        }
+
+        if (isset($request->report) && $request->report != '') {
+            $chatPipeline = [
+                ['$match' => ['report' => $request->report]],
+            ];
+        }
+        
         // Add $group, $sort, $skip, and $limit stages for pagination
         $chatPipeline[] = [
             '$group' => [
@@ -183,6 +260,7 @@ class AlfredChatController extends Controller
         // Execute the aggregation pipeline to fetch paginated chat records
         $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline));
 
+        // dd($chat);
         // Calculate pagination indices
         $startIndex = ($page - 1) * $perPage;
         $endIndex = max($startIndex + $perPage, $totalDocumentsCount);
@@ -213,7 +291,11 @@ class AlfredChatController extends Controller
         ];
 
         // Now you can pass these variables to your pagination component
-        return inertia('AlfredChat/Index', ['logs' => $pagination]);
+        return inertia('AlfredChat/Index', ['logs' => $pagination, 'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
     }
 
+    public function extractChatReport(Request $request)
+    {
+        
+    }
 }
