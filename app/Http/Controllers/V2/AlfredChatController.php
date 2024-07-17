@@ -6,10 +6,8 @@ use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
-use App\Models\LeadStatus;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
-use App\Services\DropdownSourceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -17,7 +15,7 @@ class AlfredChatController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
+        $this->middleware('permission:' . PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
     }
 
     /**
@@ -83,57 +81,10 @@ class AlfredChatController extends Controller
     public function logs(Request $request)
     {
 
-        $quoteId = null;
-        $quoteType = null;
-        if ($request->has('quoteId')) {
-            if (strpos($request->quoteId, '-') !== false) {
-                $quote = explode('-', $request->quoteId);
-                $quoteId = $quote[1];
-            } else {
-                $quoteId = $request->quoteId;
-            }
-        }
-        if ($request->get('quoteType')) {
-            $quoteType = strtoupper($request->quoteType);
-        }
-
-        if (isset($quoteType)) {
-            $totalPipeline = [
-                ['$match' => ['quote_type' => $quoteType]],
-            ];
-        }
-
-        if (isset($quoteId)) {
-            $totalPipeline = [
-                ['$match' => ['quote_id' => $quoteId]],
-            ];
-        }
-
-        // Apply date range filter if provided
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toIso8601String();
-            $end_date = Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()->toIso8601String();
-
-            $totalPipeline[] = [
-                '$match' => [
-                    'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
-                ],
-            ];
-        }
-
-        // Add a $group stage to count total documents
-        $totalPipeline[] = ['$group' => [
-            '_id' => ['quote_id' => '$quote_id',
-                ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
-                    'date' => ['$toDate' => '$created_at']]]],
-            'quote_type' => ['$first' => '$quote_type'],
-            'quote_id' => ['$first' => '$quote_id'],
-        ],
-        ];
-        $totalPipeline[] = ['$count' => 'total'];
+        $totalPipeline = $this->createPipeline($request, 'total');
 
         // Execute the aggregation pipeline to get the total count
-        $totalDocuments = AlfredChat::raw(fn ($collection) => $collection->aggregate($totalPipeline))->toArray();
+        $totalDocuments = AlfredChat::raw(fn($collection) => $collection->aggregate($totalPipeline))->toArray();
 
         $totalDocumentsCount = empty($totalDocuments) ? 0 : $totalDocuments[0]['total'];
 
@@ -142,125 +93,15 @@ class AlfredChatController extends Controller
         $page = $request->has('page') ? max(1, (int) $request->page) : 1;
         $skip = ($page - 1) * $perPage;
 
-        if (isset($quoteType)) {
-            $chatPipeline = [
-                ['$match' => ['quote_type' => $quoteType]],
-            ];
-        }
-
-        // Define the aggregation pipeline for fetching paginated chat records
-        if (isset($quoteId)) {
-            $chatPipeline = [
-                ['$match' => ['quote_id' => $quoteId]],
-            ];
-        }
-
-        // Apply date range filter if provided
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toIso8601String();
-            $end_date = Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()->toIso8601String();
-            $chatPipeline[] = [
-                '$match' => [
-                    'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
-                ],
-            ];
-        }
-
-         // missing in db
-        if (isset($request->transaction_type) && $request->transaction_type != '') {
-            $chatPipeline = [
-                ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]],
-            ];
-        }
-
-        //  // missing in db
-        if (isset($request->batch) && $request->batch != '') {
-            $chatPipeline = [
-                ['$match' => ['ken_response.quotes.batch' => ['$in' => $request->batch]]],
-            ];
-        }
-
-        // // missing in db
-        if (isset($request->lead_status) && $request->lead_status != '') {
-            $chatPipeline = [
-                ['$match' => ['ken_response.quotes.lead_status' => ['$in' => $request->lead_status]]],
-            ];
-        }
-
-        if (isset($request->payment_status) && $request->payment_status != '') {
-            $chatPipeline = [
-                ['$match' => ['payment_status' => ['$in' => $request->payment_status]]],
-            ];
-
-        }
-
-        if (isset($request->sale_leads) && $request->sale_leads != '') {
-            $chatPipeline = [
-                ['$match' => ['ken_response.quotes.sale_leads' => $request->sale_leads]],
-            ];
-        }
-
-        if (isset($request->fallback) && $request->fallback != '') {
-            $chatPipeline = [
-                ['$match' => ['fallback' => $request->fallback == 'yes' ? true : false]],
-            ];
-        }
-
-        if (isset($request->message_channel) && $request->message_channel != '') {
-            $chatPipeline = [
-                ['$match' => ['channel' => $request->message_channel]],
-            ];
-        }
-
-        // missing in db
-        if (isset($request->segment) && $request->segment != '') {
-            $chatPipeline = [
-                ['$match' => ['ken_response.quotes.isSIC' => $request->segment]],
-            ];
-        }
-
-        if (isset($request->mobile_number) && $request->mobile_number != '') {
-            $chatPipeline = [
-                ['$match' => ['ken_response.quotes.mobile' => $request->mobile_number]],
-            ];
-
-        }
-
-        if (isset($request->email) && $request->email != '') {
-            $chatPipeline = [
-                ['$match' => ['ken_response.quotes.email' => $request->email]],
-            ];
-        }
-
-        if (isset($request->report) && $request->report != '') {
-            $chatPipeline = [
-                ['$match' => ['report' => $request->report]],
-            ];
-        }
-        
-        // Add $group, $sort, $skip, and $limit stages for pagination
-        $chatPipeline[] = [
-            '$group' => [
-                '_id' => ['quote_id' => '$quote_id',
-                    ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
-                        'date' => ['$toDate' => '$created_at']]]],
-                'created_at' => ['$first' => '$created_at'],
-                'role' => ['$first' => '$role'],
-                'msg' => ['$first' => '$msg'],
-                'quote_id' => ['$first' => '$quote_id'],
-                'quote_type' => ['$first' => '$quote_type'],
-                'count' => ['$sum' => 1],
-            ],
-        ];
+        $chatPipeline = $this->createPipeline($request, 'chat');
 
         $chatPipeline[] = ['$sort' => ['created_at' => -1]];
         $chatPipeline[] = ['$skip' => $skip];
         $chatPipeline[] = ['$limit' => $perPage];
 
         // Execute the aggregation pipeline to fetch paginated chat records
-        $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline));
+        $chat = AlfredChat::raw(fn($collection) => $collection->aggregate($chatPipeline));
 
-        // dd($chat);
         // Calculate pagination indices
         $startIndex = ($page - 1) * $perPage;
         $endIndex = max($startIndex + $perPage, $totalDocumentsCount);
@@ -272,18 +113,18 @@ class AlfredChatController extends Controller
             'data' => $chat,
             'current_page' => $page,
 
-            'prev_page_url' => $prevPage ? $request->url().'?page='.$prevPage.
-            ($request->start_date ? '&start_date='.$request->start_date : '').
-            ($request->end_date ? '&end_date='.$request->end_date : '').
-            ($request->quoteType ? '&quoteType='.$request->quoteType : '').
-            ($request->quoteId ? '&quoteId='.$request->quoteId : '')
+            'prev_page_url' => $prevPage ? $request->url() . '?page=' . $prevPage .
+            ($request->start_date ? '&start_date=' . $request->start_date : '') .
+            ($request->end_date ? '&end_date=' . $request->end_date : '') .
+            ($request->quoteType ? '&quoteType=' . $request->quoteType : '') .
+            ($request->quoteId ? '&quoteId=' . $request->quoteId : '')
             : null,
 
-            'next_page_url' => $nextPage ? $request->url().'?page='.$nextPage.
-            ($request->start_date ? '&start_date='.$request->start_date : '').
-            ($request->end_date ? '&end_date='.$request->end_date : '').
-            ($request->quoteType ? '&quoteType='.$request->quoteType : '').
-            ($request->quoteId ? '&quoteId='.$request->quoteId : '')
+            'next_page_url' => $nextPage ? $request->url() . '?page=' . $nextPage .
+            ($request->start_date ? '&start_date=' . $request->start_date : '') .
+            ($request->end_date ? '&end_date=' . $request->end_date : '') .
+            ($request->quoteType ? '&quoteType=' . $request->quoteType : '') .
+            ($request->quoteId ? '&quoteId=' . $request->quoteId : '')
             : null,
 
             'from' => $startIndex + 1,
@@ -294,8 +135,97 @@ class AlfredChatController extends Controller
         return inertia('AlfredChat/Index', ['logs' => $pagination, 'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
     }
 
-    public function extractChatReport(Request $request)
+    public function createPipeline(Request $request, $type)
     {
-        
+        $quoteId = null;
+        $quoteType = null;
+        $pipeline = [];
+
+        if ($request->has('quoteId')) {
+            if (strpos($request->quoteId, '-') !== false) {
+                $quote = explode('-', $request->quoteId);
+                $quoteId = $quote[1];
+            } else {
+                $quoteId = $request->quoteId;
+            }
+        }
+
+        if ($request->get('quoteType')) {
+            $quoteType = strtoupper($request->quoteType);
+        }
+
+        if (isset($quoteType)) {
+            $pipeline[] = ['$match' => ['quote_type' => $quoteType]];
+        }
+
+        if (isset($quoteId)) {
+            $pipeline[] = ['$match' => ['quote_id' => $quoteId]];
+        }
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toIso8601String();
+            $end_date = Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()->toIso8601String();
+            $pipeline[] = ['$match' => ['created_at' => ['$gte' => $start_date, '$lte' => $end_date]]];
+        }
+
+        if (isset($request->transaction_type) && $request->transaction_type != '') {
+            $pipeline[] = ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]];
+        }
+        if (isset($request->batch) && $request->batch != '') {
+            $pipeline[] = ['$match' => ['ken_response.quotes.batch' => ['$in' => $request->batch]]];
+        }
+        if (isset($request->lead_status) && $request->lead_status != '') {
+            $pipeline[] = ['$match' => ['ken_response.quotes.lead_status' => ['$in' => $request->lead_status]]];
+        }
+        if (isset($request->payment_status) && $request->payment_status != '') {
+            $pipeline[] = ['$match' => ['payment_status' => ['$in' => $request->payment_status]]];
+        }
+        if (isset($request->sale_leads) && $request->sale_leads != '') {
+            $pipeline[] = ['$match' => ['ken_response.quotes.sale_leads' => $request->sale_leads]];
+        }
+        if (isset($request->fallback) && $request->fallback != '') {
+            $pipeline[] = ['$match' => ['fallback' => $request->fallback == 'yes' ? true : false]];
+        }
+        if (isset($request->message_channel) && $request->message_channel != '') {
+            $pipeline[] = ['$match' => ['channel' => $request->message_channel]];
+        }
+        if (isset($request->segment) && $request->segment != '') {
+            $pipeline[] = ['$match' => ['ken_response.quotes.isSIC' => $request->segment]];
+        }
+        if (isset($request->mobile_number) && $request->mobile_number != '') {
+            $pipeline[] = ['$match' => ['ken_response.quotes.mobile' => $request->mobile_number]];
+        }
+        if (isset($request->email) && $request->email != '') {
+            $pipeline[] = ['$match' => ['ken_response.quotes.email' => $request->email]];
+        }
+        if (isset($request->report) && $request->report != '') {
+            $pipeline[] = ['$match' => ['report' => $request->report]];
+        }
+
+        if ($type === 'chat') {
+            $pipeline[] = [
+                '$group' => [
+                    '_id' => ['quote_id' => '$quote_id', ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d', 'date' => ['$toDate' => '$created_at']]]],
+                    'created_at' => ['$first' => '$created_at'],
+                    'role' => ['$first' => '$role'],
+                    'msg' => ['$first' => '$msg'],
+                    'quote_id' => ['$first' => '$quote_id'],
+                    'quote_type' => ['$first' => '$quote_type'],
+                    'count' => ['$sum' => 1],
+                ],
+            ];
+        } else if ($type === 'total') {
+            $pipeline[] = [
+                '$group' => [
+                    '_id' => ['quote_id' => '$quote_id', ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d', 'date' => ['$toDate' => '$created_at']]]],
+                    'quote_type' => ['$first' => '$quote_type'],
+                    'quote_id' => ['$first' => '$quote_id'],
+                ],
+            ];
+            $pipeline[] = ['$count' => 'total'];
+        }
+
+        return $pipeline;
     }
+
 }
