@@ -65,6 +65,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'code' => $code,
                 'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : '',
                 'insurance_provider_id' => $personalQuote->insurance_provider_id ?? null,
+                'created_by' => auth()->user()->id,
             ]);
             // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
