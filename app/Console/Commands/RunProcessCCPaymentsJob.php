@@ -26,10 +26,9 @@ class RunProcessCCPaymentsJob extends Command
     /**
      * Execute the console command.
      */
-    
     public function handle()
     {
-        info("CC Payments Job Started");
+        info('CC Payments Job Started');
 
         CcPaymentProcessJob::where('status', PaymentProcessJobEnum::PENDING_STATUS)
             ->chunk(100, function ($pendingCCRecords) {
@@ -50,13 +49,13 @@ class RunProcessCCPaymentsJob extends Command
                         info("CC Payments Job Ended For Payment Split ID: {$pendingCCRecord->payment_splits_id}");
                     } catch (\Exception $exception) {
                         // Handle the exception here
-                        info("CC Payment Processing Failed for Payment Split ID: {$pendingCCRecord->payment_splits_id} - Error: " . $exception->getMessage());
+                        info("CC Payment Processing Failed for Payment Split ID: {$pendingCCRecord->payment_splits_id} - Error: ".$exception->getMessage());
                     }
                 }
             });
 
-        info("CC Payments Job Ended");
+        info('CC Payments Job Ended');
 
         return 0;
-    }     
+    }
 }
