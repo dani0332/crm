@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -363,7 +364,16 @@ class SendUpdateLogRepository extends BaseRepository
             $businessInsuranceTypeId = null;
         }
 
-        return $query->sendUpdateOptions($quoteTypeId, $parentId, $businessInsuranceTypeId)->get();
+        $response = $query->sendUpdateOptions($quoteTypeId, $parentId, $businessInsuranceTypeId)->get();
+
+        $checkAdditionalBookingPermission = auth()->user()->hasPermissionTo(PermissionsEnum::SEND_UPDATE_ADD_BOOKING);
+        if (! $checkAdditionalBookingPermission) {
+            $response = $response->filter(function ($item) {
+                return ! in_array($item->slug, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]);
+            });
+        }
+
+        return $response;
     }
 
     /*
