@@ -50,7 +50,7 @@ class SaveBookingDetailsRequest extends FormRequest
         $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
 
         $isPriceVatNotApplicableRequired = in_array($this->sendUpdate->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
-            SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
+                SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
 
         if ($isPriceVatNotApplicableRequired) {
             $rules['price_vat_not_applicable'] = ['required', 'numeric', new NotZero];
@@ -72,7 +72,8 @@ class SaveBookingDetailsRequest extends FormRequest
             $skipRules = ['insurer_commission_invoice_number', 'vat_on_commission', 'commission_percentage', 'commission_vat_applicable', 'commission_vat_not_applicable', 'total_commission'];
             $rules = array_diff_key($rules, array_flip($skipRules));
 
-        return $rules;
+            return $rules;
+        }
     }
 
 }
