@@ -335,7 +335,7 @@ class SageApiService
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
                     'price_vat_applicable' => $getingPaymentDetails['payment']->total_price,
-                    'price_with_vat' => $getingPaymentDetails['payment']->total_amount,
+                    'price_with_vat' => abs($sendUpdateLog->price_with_vat),
                 ];
 
                 if (isset($getingPaymentDetails['mainLeadDetails'])) {
@@ -411,7 +411,7 @@ class SageApiService
                 $payment = $getQuoteDetails->payments->first();
                 $splitPayments = $payment->paymentSplits;
 
-                // Most CPD cases have no vaalue then should it set as Credit Note - Need to verify this with Denber
+                // Most CPD cases have no vaalue then should it set as Credit Note
                 $mainLeadDetails = [
                     'payment' => [
                         'insurer_tax_number' => $payment->insurer_tax_number,
@@ -420,16 +420,16 @@ class SageApiService
                 ];
 
                 $payment->fill([
-                    'discount_value' => $extras['send_update_log']->discount, // --
+                    'discount_value' => $extras['send_update_log']->discount,
                     'invoice_description' => $extras['send_update_log']->invoice_description,
                     'insurer_invoice_date' => $extras['send_update_log']->invoice_date,
                     'commission_vat' => '', // Need to verify this field
-                    'total_price' => $extras['send_update_log']->price_without_vat, // Need to verify this field
-                    'total_amount' => $extras['send_update_log']->price_vat_applicable, // Need to verify this field
-                    'commission' => $extras['send_update_log']->total_commission,
-                    'commission_vat_applicable' => $extras['send_update_log']->commission_vat_applicable,
-                    'commission_vat_not_applicable' => $extras['send_update_log']->commission_vat_not_applicable,
-                    'commmission_percentage' => $extras['send_update_log']->commission_percentage,
+                    'total_price' => abs($extras['send_update_log']->price_without_vat), // Need to verify this field
+                    'total_amount' => abs($extras['send_update_log']->price_vat_applicable),
+                    'commission' => abs($extras['send_update_log']->total_commission),
+                    'commission_vat_applicable' => abs($extras['send_update_log']->commission_vat_applicable),
+                    'commission_vat_not_applicable' => abs($extras['send_update_log']->commission_vat_not_applicable),
+                    'commmission_percentage' => abs($extras['send_update_log']->commission_percentage),
                     'insurer_tax_number' => $extras['send_update_log']->insurer_tax_invoice_number,
                     'insurer_commmission_invoice_number' => $extras['send_update_log']->insurer_commission_invoice_number,
                     'policy_expiry_date' => $extras['send_update_log']->expiry_date,
@@ -439,8 +439,8 @@ class SageApiService
 
                 $splitPayments->first()->fill([
                     'due_date' => $extras['send_update_log']->invoice_date,
-                    'payment_amount' => $extras['send_update_log']->price_vat_applicable, //+ abs($extras['send_update_log']->total_commission), // Need to verify with Denber
-                    'collection_amount' => $extras['send_update_log']->price_vat_applicable, // Need to verify this field, I think we should add discount here
+                    'payment_amount' => $extras['send_update_log']->price_vat_applicable,
+                    'collection_amount' => abs($extras['send_update_log']->price_vat_applicable),
                 ]);
 
                 return ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
