@@ -29,6 +29,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
@@ -465,7 +466,7 @@ class SendUpdateLogService
         }
 
         return [
-            'booking_date' => ! is_null($sendUpdateLog->booking_date) ? date('d-m-Y', strtotime($sendUpdateLog->booking_date)) : null,
+            'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format('d-m-Y') : null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
