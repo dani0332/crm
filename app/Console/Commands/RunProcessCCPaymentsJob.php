@@ -2,11 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-
+use App\Enums\PaymentProcessJobEnum;
 use App\Models\CcPaymentProcessJob;
 use App\Services\SplitPaymentService;
-use App\Enums\PaymentProcessJobEnum;
+use Illuminate\Console\Command;
 
 class RunProcessCCPaymentsJob extends Command
 {

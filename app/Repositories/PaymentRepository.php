@@ -11,11 +11,10 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
-use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
+use App\Models\CcPaymentProcessJob;
 use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -23,14 +22,9 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
-use App\Models\CcPaymentProcessJob;
 use App\Services\ApplicationStorageService;
-use App\Services\BerlinService;
-use App\Services\CRUDService;
-use App\Services\CustomerService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
-use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use Exception;
@@ -364,20 +358,20 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     public function fetchUpdateSplitPaymentsApprove($request)
-    {                
+    {
         if ($request->is_declined) {
-            if ($request->send_update_id>0) {
+            if ($request->send_update_id > 0) {
                 $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
             } else {
                 $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-            }    
+            }
             $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
             $firstPayment->update([
                 'decline_reason_id' => $request->declined_reason,
                 'decline_custom_reason' => $request->declined_custom_reason,
                 'updated_by' => Auth::user()->id,
             ]);
-            if ($request->send_update_id>0) {
+            if ($request->send_update_id > 0) {
                 $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
             } else {
                 $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
@@ -390,12 +384,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
                         // process split payment approve
-                        app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType,$request->quote_id, $paymentSplit->id, $splitAmount);
+                        app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
                     }
                 }
-            }            
+            }
             // process master payment approve
-            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType,$request->quote_id, $request->send_update_id);            
+            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id);
         }
 
         return $successMessage;
@@ -633,9 +627,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     public function fetchRetrySplitPayment($paymentProcessJobId)
-    {        
+    {
         $paymentProcessJob = CcPaymentProcessJob::find($paymentProcessJobId);
-        info("Manual CC Payments Job Started For Payment Split ID: ".$paymentProcessJob->payment_splits_id);
-        return app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->model_type,$paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);        
+        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+
+        return app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->model_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
     }
 }

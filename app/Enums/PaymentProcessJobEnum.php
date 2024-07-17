@@ -10,5 +10,5 @@ final class PaymentProcessJobEnum extends Enum
     const INPROCESS_STATUS = 'in-process';
     const FAILED_STATUS = 'failed';
     const SUCCESS_STATUS = 'success';
-    const SUCCESS_MESSAGE = 'transaction completed successfully';    
+    const SUCCESS_MESSAGE = 'transaction completed successfully';
 }

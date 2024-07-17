@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentProcessJobEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Enums\PaymentProcessJobEnum;
 
 class CcPaymentProcessJob extends Model
 {
     use HasFactory;
+
     protected $table = 'cc_payment_process_jobs';
 
     // Define a scope to filter by status
