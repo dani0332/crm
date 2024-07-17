@@ -150,7 +150,6 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
 
-
             if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelTransactionCheck) {
 
                 $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
