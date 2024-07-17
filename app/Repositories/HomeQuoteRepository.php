@@ -6,9 +6,13 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\HomeQuote;
+use App\Traits\GenericQueriesAllLobs;
 
 class HomeQuoteRepository extends BaseRepository
 {
+    private $query;
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return HomeQuote::class;
@@ -23,7 +27,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        $query = $this->with([
+        $this->query = $this->with([
             'quoteStatus',
             'homeQuoteRequestDetail.lostReason',
             'accommodationType:id,text',
@@ -36,7 +40,9 @@ class HomeQuoteRepository extends BaseRepository
                 $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy('created_at', 'desc');
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+            $this->adjustQueryByDateFilters("home_quote_request");
+            $this->query->orderBy('home_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
             //PD Revert
@@ -45,7 +51,7 @@ class HomeQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $this->query->get() : $this->query->simplePaginate();
     }
 
     public function fetchCreateDuplicate(array $dataArr): object

@@ -10,6 +10,9 @@ use App\Traits\CentralTrait;
 class TravelQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+
+    private $query;
+
     public function model()
     {
         return TravelQuote::class;
@@ -17,7 +20,7 @@ class TravelQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false)
     {
-        $query = $this->with([
+        $this->query = $this->with([
             'travelQuoteRequestDetail.lostReason',
             'quoteStatus',
             'travelCoverFor',
@@ -32,10 +35,13 @@ class TravelQuoteRepository extends BaseRepository
             'insuranceProvider',
         ])
             ->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->withFakeLeadCriteria();
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+            $this->adjustQueryByDateFilters('travel_quote_request');
+
+            $this->query->orderBy('travel_quote_request.created_at', 'desc');
+
+        return ($forExport) ? $this->query->get() : $this->query->simplePaginate();
     }
     public function fetchExport()
     {

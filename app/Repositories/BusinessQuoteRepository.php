@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 class BusinessQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+    private $query;
 
     public function model()
     {
@@ -32,7 +33,7 @@ class BusinessQuoteRepository extends BaseRepository
      */
     public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false)
     {
-        $query = $this->with([
+        $this->query = $this->with([
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
@@ -59,14 +60,15 @@ class BusinessQuoteRepository extends BaseRepository
             $query->where('advisor_id', auth()->user()->id);
         })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy('created_at', 'desc');
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+            $this->adjustQueryByDateFilters('business_quote_request');
+            $this->query->orderBy('business_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            return $this->query->count();
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $this->query->get() : $this->query->simplePaginate();
     }
 
     /**

@@ -70,18 +70,6 @@ class LifeQuoteRepository extends BaseRepository
         return $quote;
     }
 
-    public function fetchGetDataOlD()
-    {
-        return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
-            ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
-            })
-            ->filter()
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate()
-            ->withQueryString();
-    }
     public function fetchGetData($request)
     {
         $this->query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
@@ -172,10 +160,11 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchExportData()
     {
-        return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+        $this->query =  $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->filter(false)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
+            ->withFakeLeadCriteria();
+            $this->adjustQueryByDateFilters("life_quote_request");
+            return $this->query->orderBy('life_quote_request.created_at', 'desc')
             ->get();
     }
 

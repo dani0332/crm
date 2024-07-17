@@ -103,13 +103,32 @@ class CentralController extends Controller
                     request()->query->remove('created_at');
                 }
 
-                $request->validate([
-                    'created_at_start' => 'required',
-                    'created_at_end' => 'required',
-                ]);
+                if (request()->has('payment_due_date')) {
+                    $request->validate([
+                        'payment_due_date' => 'required',
+                    ]);
 
-                $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-                $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+                    $defaultDate = now()->endOfDay();
+            
+                    $created_at_start = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][0])->startOfDay() : $defaultDate;
+                    $created_at_end = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][1])->endOfDay() : $defaultDate;
+                } else if (request()->has('booking_date')) {
+                    $request->validate([
+                        'booking_date' => 'required',
+                    ]);
+                    $defaultDate = now()->endOfDay();
+            
+                    $created_at_start = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][0])->startOfDay() : $defaultDate;
+                    $created_at_end = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][1])->endOfDay() : $defaultDate;
+                } else {
+                    $request->validate([
+                        'created_at_start' => 'required',
+                        'created_at_end' => 'required',
+                    ]);
+    
+                    $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+                    $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+                }  
             }
 
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
