@@ -73,8 +73,6 @@ class SaveBookingDetailsRequest extends FormRequest
             $rules = array_diff_key($rules, array_flip($skipRules));
         }
 
-        }
-        
         return $rules;
     }
 }
