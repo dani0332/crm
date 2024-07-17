@@ -189,7 +189,7 @@ class CycleQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-        $sortedPayments = collect($quote->payments)->sortByDesc(function($column) {
+        $sortedPayments = collect($quote->payments)->sortByDesc(function ($column) {
             return strtotime($column->created_at);
         })->values()->toArray();
 

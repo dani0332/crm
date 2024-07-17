@@ -170,7 +170,7 @@ class YachtQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::YACHT->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::YACHT->value, $quote->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-        $sortedPayments = collect($quote->payments)->sortByDesc(function($column) {
+        $sortedPayments = collect($quote->payments)->sortByDesc(function ($column) {
             return strtotime($column->created_at);
         })->values()->toArray();
 

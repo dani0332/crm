@@ -166,7 +166,7 @@ class LifeQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-        $sortedPayments = collect($payments)->sortByDesc(function($column) {
+        $sortedPayments = collect($payments)->sortByDesc(function ($column) {
             return strtotime($column->created_at);
         })->values()->toArray();
 

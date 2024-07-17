@@ -167,7 +167,7 @@ class PetQuoteController extends Controller
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
-        $sortedPayments = collect($quote->payments)->sortByDesc(function($column) {
+        $sortedPayments = collect($quote->payments)->sortByDesc(function ($column) {
             return strtotime($column->created_at);
         })->values()->toArray();
 

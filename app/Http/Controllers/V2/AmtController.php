@@ -313,7 +313,7 @@ class AmtController extends Controller
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
-        $sortedPayments = collect($record->payments)->sortByDesc(function($column) {
+        $sortedPayments = collect($record->payments)->sortByDesc(function ($column) {
             return strtotime($column->created_at);
         })->values()->toArray();
 
