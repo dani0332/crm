@@ -72,7 +72,8 @@ class SaveBookingDetailsRequest extends FormRequest
             $skipRules = ['insurer_commission_invoice_number', 'vat_on_commission', 'commission_percentage', 'commission_vat_applicable', 'commission_vat_not_applicable', 'total_commission'];
             $rules = array_diff_key($rules, array_flip($skipRules));
 
+        }
+        
         return $rules;
     }
-
 }
