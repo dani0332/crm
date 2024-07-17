@@ -50,7 +50,7 @@ class SaveBookingDetailsRequest extends FormRequest
         $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
 
         $isPriceVatNotApplicableRequired = in_array($this->sendUpdate->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
-                SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
+            SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
 
         if ($isPriceVatNotApplicableRequired) {
             $rules['price_vat_not_applicable'] = ['required', 'numeric', new NotZero];
