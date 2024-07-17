@@ -798,12 +798,11 @@ class CRUDService extends BaseService
             ->first() !== null;
     }
 
-    public function getTravelLeadStatus($leadType, $leadId)
+    public function getTravelQuoteStatus($leadType, $leadId)
     {
 
         $leadType = ucwords($leadType);
         $audits = DB::table('audits as a')
-            ->select(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id')) as quote_status_id"))
             ->where(function ($query) use ($leadId, $leadType) {
                 $query->where('a.auditable_type', 'App\Models\\'.$leadType.'Quote')
                     ->where('a.auditable_id', $leadId)

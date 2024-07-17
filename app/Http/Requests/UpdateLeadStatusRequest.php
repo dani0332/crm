@@ -144,8 +144,8 @@ class UpdateLeadStatusRequest extends FormRequest
 
             $isTravelTransactionCheck = true;
             if ((auth()->user()->hasRole(RolesEnum::TravelHapex) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
-                $getLeadStatus = app(CRUDService::class)->getTravelLeadStatus(request()->modelType, request()->leadId);
-                if ((int) $getLeadStatus->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+                $previousQuoteStatus = app(CRUDService::class)->getTravelQuoteStatus(request()->modelType, request()->leadId);
+                if (isset($previousQuoteStatus->id)) {
                     $isTravelTransactionCheck = false;
                 }
             }
@@ -164,11 +164,8 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
 
-            if (AMLService::checkAMLStatusFailed($quoteTypesIds[request()->modelType], request()->leadId) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
-                if (! auth()->user()->hasRole(RolesEnum::TravelHapex) || (auth()->user()->hasRole(RolesEnum::TravelHapex) && strtolower(request()->modelType) !== strtolower(quoteTypeCode::Travel))) {
-                    $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
-
-                }
+            if (AMLService::checkAMLStatusFailed($quoteTypesIds[request()->modelType], request()->leadId) && request()->leadStatus == QuoteStatusEnum::TransactionApproved && $isTravelTransactionCheck) {
+                $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
             }
 
             if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Health)) {
