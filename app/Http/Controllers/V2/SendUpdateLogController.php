@@ -11,6 +11,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveBookingDetailsRequest;
@@ -362,24 +363,26 @@ class SendUpdateLogController extends Controller
     public function sendUpdateToCustomer(UpdateToCustomerRequest $request)
     {
         $data = $request->validated();
-
         $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
 
         if (! empty($log->message)) {
             vAbort($log->message);
         }
-        $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
+
+        $_response[] = ['message' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, 'status' => 200];
 
         if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
             $sendUpdateRequest = new SendUpdateRequest();
 
             $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($data));
             if ($isSendUpdateSuccess->status() == 200) {
-                $message[] = SendUpdateLogStatusEnum::UPDATE_BOOKED;
+                $_response[] = ['message' => isset($isSendUpdateSuccess->original['impactUpdated']) ? SendUpdateLogStatusEnum::UPDATE_BOOKED : SageEnum::SAGE_REQUEST_BEING_PROCESS, 'status' => 200];
+            } else {
+                $_response[] = ['message' => $isSendUpdateSuccess->original['message'], 'status' => 500];
             }
         }
 
-        return response()->json($message);
+        return response()->json($_response);
     }
 
     public function isBookingDetailsVisible($categoryCode, $quoteDocuments): bool
@@ -437,26 +440,28 @@ class SendUpdateLogController extends Controller
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
             // SendUpdateToSagae 3rd parameter: False: Without AP Patch, True: With AP Patch
             // TODO :: This is temporary solution, need to remove third param, this after AP Split patch working fine
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate, false);
-            if ($sageResponse['status'] === false) {
+            $response = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate, false);
+            if ($response['status'] === false) {
 
-                return response()->json(['message' => $sageResponse['message']], 500);
+                return response()->json(['message' => $response['message']], 500);
+            } else {
+                // Send Update Data move to main lead page as per Send update Type
+                info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+                $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
+
+                if ($response['status']) {
+                    info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+
+                    return response()->json(['message' => $response['message'], 'impactUpdated' => true]);
+                }
+
+                logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+                
+                return response()->json(['message' => $response['message']], 500);
             }
         }
 
-        // Send Update Data move to main lead page as per Send update Type
-        info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-        $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
-
-        if ($response['status']) {
-            info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-
-            return response()->json(['message' => $response['message']]);
-        }
-
-        logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-
-        return response()->json(['message' => $response['message']], 500);
+        return response()->json(['message' => 'Something went wrong'], 500);
     }
 
     public function getOptions(Request $request)
