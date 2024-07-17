@@ -14,25 +14,27 @@ class BookPolicyOnSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
+    public $tries = 1;
     public $timeout = 30;
     private $sageRequest;
     private $quote;
     private $payment;
+    private $sageLogArray;
+    private $request;
     private $paymentSplits;
-    private $isPaymentFrequencyUpfront;
-    private $isPaymentFrequencySplitPayment;
     private $skipAPInvoicePatchAndPosting;
     private $aPInvoicePatchAndPostingOnly;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($sageRequest, $quote, $payment, $paymentSplits, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)
+    public function __construct($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)
     {
         $this->sageRequest = $sageRequest;
         $this->quote = $quote;
         $this->payment = $payment;
+        $this->sageLogArray = $sageLogArray;
+        $this->request = $request;
         $this->paymentSplits = $paymentSplits;
         $this->skipAPInvoicePatchAndPosting = $skipAPInvoicePatchAndPosting;
         $this->aPInvoicePatchAndPostingOnly = $aPInvoicePatchAndPostingOnly;
@@ -41,9 +43,11 @@ class BookPolicyOnSageJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle()
     {
-        (new SageApiService())->bookPolicyOnSage($this->sageRequest, $this->quote, $this->payment, $this->paymentSplits, $this->skipAPInvoicePatchAndPosting, $this->aPInvoicePatchAndPostingOnly);
+        info('BookPolicyOnSageJob - '.$this->quote->code.' - Started');
+        $response = (new SageApiService())->bookPolicyOnSage($this->sageRequest, $this->quote, $this->payment, $this->paymentSplits, $this->sageLogArray, $this->request, $this->skipAPInvoicePatchAndPosting, $this->aPInvoicePatchAndPostingOnly);
+        info('BookPolicyOnSageJob - '.$this->quote->code.' - Response: '.json_encode($response));
     }
 
     public function middleware()

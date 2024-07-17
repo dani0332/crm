@@ -93,7 +93,9 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <x-tooltip>
+  <x-tooltip
+    v-if="sageAPILogs?.data?.find(item => item.status === 'fail')?.length > 0"
+  >
     <x-button
       v-if="isSageLogButtonEnable"
       size="sm"
@@ -105,16 +107,23 @@ onBeforeMount(() => {
       Sage API Logs
     </x-button>
     <template #tooltip>
-      <span
-        class="custom-tooltip-content"
-        v-if="
-          sageAPILogs?.data?.filter(item => item.status === 'fail')?.length > 0
-        "
-      >
+      <span class="custom-tooltip-content">
         Booking Failed! Check sage logs and Try again booking this Policy!.
       </span>
     </template>
   </x-tooltip>
+  <template v-else>
+    <x-button
+      v-if="isSageLogButtonEnable"
+      size="sm"
+      color="primary"
+      outlined
+      @click="showSageAPILogs"
+      :loading="sageAPILogs.loader"
+    >
+      Sage API Logs
+    </x-button>
+  </template>
 
   <div>
     <x-modal v-model="sageLogModel" size="xl" backdrop show-close>

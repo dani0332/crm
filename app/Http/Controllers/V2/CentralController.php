@@ -277,27 +277,6 @@ class CentralController extends Controller
             $sageService = new SageApiService();
             $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data, true, false);
 
-            if ($response['status'] === false) {
-                return response()->json(['errors' => [
-                    'message' => $response['message'],
-                    'sageError' => isset($response['error']) ? 'SAGE API : '.$response['error'] : null,
-                ]], 500);
-            }
-
-            if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-                // dispath job to send email
-                dispatch(new SendBookPolicyDocumentsJob($request));
-            }
-
-            $quote->update([
-                'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-                'policy_booking_date' => Carbon::now(),
-            ]);
-
-            (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
-
-            $this->updatePaymentAllocationStatus($quote);
-
             return response()->json(['message' => $response['message']], 200);
         }
     }

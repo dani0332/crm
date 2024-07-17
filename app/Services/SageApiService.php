@@ -5,10 +5,13 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SageEnum;
 use App\Factories\SagePayloadFactory;
 use App\Jobs\BookPolicyOnSageJob;
+use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\Customer;
@@ -24,8 +27,10 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class SageApiService
 {
@@ -67,6 +72,7 @@ class SageApiService
 
         $sageRequest = new \stdClass();
 
+        $sageRequest->userId = auth()->id();
         // $sageRequest->discount = 2;
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
@@ -1192,18 +1198,15 @@ class SageApiService
             return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
         }
 
-        BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $paymentSplits, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)->onQueue('sage-book-policy');
+        BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)->onQueue('sage-book-policy');
 
-        /*$response = $this->bookPolicyOnSage($sageRequest, $quote, $payment, $paymentSplits, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly);
-        if (! $response['status']) {
-            return $response;
-        }*/
 
-        return ['status' => true, 'message' => 'Policy is being Booked'];
+        return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a whilet to check the status!'];
     }
 
-    public function bookPolicyOnSage($sageRequest, $quote, $payment, $paymentSplits, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)
+    public function bookPolicyOnSage($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)
     {
+        $quote->userId = $sageRequest->userId;
         info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
         info('Sage API - Payment frequency : '.$payment->frequency.' for '.$quote->uuid);
         if ($aPInvoicePatchAndPostingOnly) {
@@ -1719,13 +1722,12 @@ class SageApiService
                 }
 
                 if (! empty($postedResponse['BatchNumber'])) {
+                    $url = 'AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')';
+                    info('SAGE API: '.$quote->uuid.' : createAPInvoiceSplitPayments - '.$postedResponse['BatchNumber'].' completed successfully');
+                    if ($isLiveApiCallStep6) {
+                        $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 6, 15);
+                    }
                     if (! $skipAPInvoicePatchAndPosting) {
-                        $url = 'AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')';
-                        info('SAGE API: '.$quote->uuid.' : createAPInvoiceSplitPayments - '.$postedResponse['BatchNumber'].' completed successfully');
-                        if ($isLiveApiCallStep6) {
-                            $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 6, 15);
-                        }
-
                         info('SAGE API:  Prepare Patch payload for SpitPayments  for '.$quote->uuid);
                         foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
                             // add discount amount to amount due for the first child payment in sage for balancing the amount
@@ -1955,12 +1957,12 @@ class SageApiService
                 $currentStep = 13;
                 $isLiveApiCallStep13 = true;
                 if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
-                    info('SAGE API:  createPaymontRecieptOneInvoice  Sent Already for '.$quote->uuid);
+                    info('SAGE API:  createPaymentReceiptOneInvoice  Sent Already for '.$quote->uuid);
                     $isLiveApiCallStep13 = false;
                     $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
                 } else {
-                    info('SAGE API:  Send createPaymontRecieptOneInvoice  for '.$quote->uuid);
-                    $payLoadOptions = SagePayloadFactory::createPaymontRecieptOneInvoice($quote, $sageCustomerNumber, $payment, $paymentSplits, true);
+                    info('SAGE API:  Send createPaymentReceiptOneInvoice  for '.$quote->uuid);
+                    $payLoadOptions = SagePayloadFactory::createPaymentReceiptOneInvoice($quote, $sageRequest->customerId, $payment, $paymentSplits, true);
                     $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
                     $postedResponse = json_decode($resp, true);
                 }
@@ -2061,7 +2063,7 @@ class SageApiService
                     $response = json_decode($sageLogArray[$currentStep]['response'], true);
                 } else {
                     info('SAGE API:  Send arSplitPrepaymentPayload  for '.$quote->uuid);
-                    $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageCustomerNumber, $payment, $paymentSplits, true);
+                    $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageRequest->customerId, $payment, $paymentSplits, true);
 
                     $resp = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'POST');
                     $response = json_decode($resp, true);
@@ -2164,7 +2166,7 @@ class SageApiService
                     $response = json_decode($sageLogArray[$currentStep]['response'], true);
                 } else {
                     info('SAGE API:  Send arSplitPrepaymentPayload  for '.$quote->uuid);
-                    $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageCustomerNumber, $payment, $paymentSplits, false);
+                    $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageRequest->customerId, $payment, $paymentSplits, false);
 
                     $resp = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'POST');
                     $response = json_decode($resp, true);
@@ -2252,8 +2254,31 @@ class SageApiService
                 info('SAGE API: '.$quote->uuid.' : aRPostReceipts - BatchNumber '.$batchNumber.' completed successfully');
                 info('  ########## End arSplitPrepaymentPayload for : '.$quote->code.' ########## ');
             }
+            info('################################## Sage Policy Booked for : '.$quote->code.'##################################');
         }
-        info('################################## Sage Policy Booked for : '.$quote->code.'##################################');
+
+        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+            info('################################## Send Customer Documents to customer after booking of : '.$quote->code.'##################################');
+            // dispath job to send email
+            dispatch(new SendBookPolicyDocumentsJob($request));
+        }
+
+        info('################################## mark status as policy booked for : '.$quote->code.'##################################');
+        unset($quote->userId);
+        $quote->update([
+            'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            'policy_booking_date' => Carbon::now(),
+        ]);
+
+        info('################################## straightforwardPayments for : '.$quote->code.'##################################');
+        (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
+
+        info('################################## updatePaymentAllocationStatus for : '.$quote->code.'##################################');
+        $this->updatePaymentAllocationStatus($quote);
+
+        info('########## End of Policy Booked for : '.$quote->code.' ##########');
+
+        return ['status' => true, 'message' => 'Policy is Booked'];
     }
     private function convertResponseToArray($response)
     {

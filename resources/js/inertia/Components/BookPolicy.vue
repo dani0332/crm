@@ -1036,7 +1036,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
         </x-form>
       </template>
     </Collapsible>
-    
+
     <x-modal v-model="modals.sendPolicyConfirm" size="lg" show-close backdrop>
       <template #header> Send Policy </template>
       <x-alert

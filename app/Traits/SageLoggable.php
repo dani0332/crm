@@ -11,7 +11,7 @@ trait SageLoggable
     public function logSageApiCall($payload, $response = [], $section = null, $step = null, $totalSteps = null, $status = 'success')
     {
         try {
-            $userId = Auth::id();
+            $userId = $section->userId ?? Auth::id();
             // Ensure mandatory fields are populated
             SageApiLog::updateOrCreate(
                 [
