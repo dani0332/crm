@@ -199,6 +199,11 @@ const onKeyPress = event => {
     event.preventDefault();
   }
 };
+
+const isAdditionalFieldError = ref(false);
+function handleErrorStatusUpdate(newStatus) {
+  isAdditionalFieldError.value = newStatus;
+}
 </script>
 
 <template>
@@ -370,7 +375,8 @@ const onKeyPress = event => {
                     :disabled="!state.edit"
                     :class="{ 'pointer-events-none': !state.edit }"
                     multiple
-                  />
+                  :error="isAdditionalFieldError"
+                    />
                 </dd>
               </template>
               <template
@@ -397,7 +403,8 @@ const onKeyPress = event => {
                     :options="additionalFieldOptions"
                     size="xs"
                     :disabled="!state.edit"
-                  />
+                  :error="isAdditionalFieldError"
+                    />
                 </dd>
               </template>
               <template
@@ -425,6 +432,7 @@ const onKeyPress = event => {
                     :disabled="!state.edit"
                     type="number"
                     @keypress="onKeyPress"
+                    :error="isAdditionalFieldError"
                   />
                 </dd>
               </template>
@@ -538,6 +546,7 @@ const onKeyPress = event => {
       :uploaded-documents="props.uploadedDocuments"
       :payments="props.payments"
       :modelClass="modelClass"
+      @update-error-status="handleErrorStatusUpdate"
     />
 
     <AuditLogs

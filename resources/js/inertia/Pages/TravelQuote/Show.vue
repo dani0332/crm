@@ -1240,9 +1240,10 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link :href="route('travel.edit', quote.uuid)">
-            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <Link v-if="!isDisabled" :href="route('travel.edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
           </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
         </LeadEditBtnTemplate>
 
         <x-tooltip

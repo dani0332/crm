@@ -311,9 +311,10 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
         </x-button>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link :href="route('pet-quotes-edit', quote.uuid)">
-            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <Link v-if="!isDisabled" :href="route('pet-quotes-edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
           </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
         </LeadEditBtnTemplate>
 
         <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">

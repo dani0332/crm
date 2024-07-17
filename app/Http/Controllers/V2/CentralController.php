@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SendPolicyTypeEnum;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
@@ -60,7 +61,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CentralController extends Controller
 {
@@ -221,6 +221,8 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
+        info('fn: updateBookingPolicy called');
+
         $validatedData = $bookPolicyRequest->validated();
 
         $paymentInformation = [
@@ -243,7 +245,7 @@ class CentralController extends Controller
         $payment->update($paymentInformation);
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
         $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
-        Log::info('Book policy details update successfully for : '.$quote->uuid);
+        info('Book policy details update successfully for : '.$quote->uuid);
 
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
@@ -253,16 +255,20 @@ class CentralController extends Controller
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        if ($request->send_policy_type == 'customer') {
+        info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
+
+        if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             dispatch(new SendBookPolicyDocumentsJob($request));
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
             ]);
 
+            info('Policy send to customer for '.$quote->uuid);
+
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
-        if ($request->send_policy_type == 'sage') {
+        if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
