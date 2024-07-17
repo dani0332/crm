@@ -2,11 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-
+use App\Enums\PaymentProcessJobEnum;
 use App\Models\CcPaymentProcessJob;
 use App\Services\SplitPaymentService;
-use App\Enums\PaymentProcessJobEnum;
+use Illuminate\Console\Command;
 
 class RunProcessCCPaymentsJob extends Command
 {
@@ -28,18 +27,19 @@ class RunProcessCCPaymentsJob extends Command
      * Execute the console command.
      */
     public function handle()
-    {   
-        info("CC Payments Job Started");
-        $pendingCCRecords = CcPaymentProcessJob::where('status',PaymentProcessJobEnum::PENDING_STATUS)->get();
-        if($pendingCCRecords->count() > 0){            
-            foreach($pendingCCRecords as $pendingCCRecord){
-                info("CC Payments Job Started For Payment Split ID: ".$pendingCCRecord->payment_splits_id);
-                CcPaymentProcessJob::where('payment_splits_id',$pendingCCRecord->payment_splits_id)->update(['status' => PaymentProcessJobEnum::INPROCESS_STATUS]);
-                app(SplitPaymentService::class)->processSplitPaymentApprove($pendingCCRecord->model_type,$pendingCCRecord->quoteable_id, $pendingCCRecord->payment_splits_id, $pendingCCRecord->amount_captured,true);
-                info("CC Payments Job Ended For Payment Split ID: ".$pendingCCRecord->payment_splits_id);
+    {
+        info('CC Payments Job Started');
+        $pendingCCRecords = CcPaymentProcessJob::where('status', PaymentProcessJobEnum::PENDING_STATUS)->get();
+        if ($pendingCCRecords->count() > 0) {
+            foreach ($pendingCCRecords as $pendingCCRecord) {
+                info('CC Payments Job Started For Payment Split ID: '.$pendingCCRecord->payment_splits_id);
+                CcPaymentProcessJob::where('payment_splits_id', $pendingCCRecord->payment_splits_id)->update(['status' => PaymentProcessJobEnum::INPROCESS_STATUS]);
+                app(SplitPaymentService::class)->processSplitPaymentApprove($pendingCCRecord->model_type, $pendingCCRecord->quoteable_id, $pendingCCRecord->payment_splits_id, $pendingCCRecord->amount_captured, true);
+                info('CC Payments Job Ended For Payment Split ID: '.$pendingCCRecord->payment_splits_id);
             }
         }
-        info("CC Payments Job Ended");        
+        info('CC Payments Job Ended');
+
         return 0;
     }
 }

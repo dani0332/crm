@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-use App\Traits\GenericQueriesAllLobs;
 use App\Models\CcPaymentProcessJob;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Foundation\Http\FormRequest;
 
 class RetrySplitPaymentRequest extends FormRequest
 {
@@ -26,7 +26,7 @@ class RetrySplitPaymentRequest extends FormRequest
     {
         return [
             'model_type' => 'required|string',
-            'quote_id' => 'required|integer',          
+            'quote_id' => 'required|integer',
             'payment_process_job_id' => 'required|integer',
         ];
     }
@@ -40,14 +40,14 @@ class RetrySplitPaymentRequest extends FormRequest
             $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
             if (! $quoteModel) {
                 $validator->errors()->add('value', 'Quote Not Exists');
-            }            
+            }
         });
 
         $validator->after(function ($validator) {
             $paymentProcessJob = CcPaymentProcessJob::find(request()->payment_process_job_id);
             if (! $paymentProcessJob) {
                 $validator->errors()->add('value', 'Payment Process Job Not Exists');
-            }            
+            }
         });
     }
 }
