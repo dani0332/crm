@@ -75,7 +75,8 @@ const dateToYMD = date => {
     const [day, month, year] = date.split('-');
     return `${year}-${month}-${day}`;
   }
-  return '';
+
+  return null;
 }
 
 const isEF = computed(() => {
