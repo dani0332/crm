@@ -455,7 +455,7 @@ class SendUpdateLogController extends Controller
                 }
 
                 logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-                
+
                 return response()->json(['message' => $response['message']], 500);
             }
         }

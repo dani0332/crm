@@ -12,8 +12,8 @@ use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Jobs\BookPolicyOnSageJob;
-use App\Jobs\SendUpdateSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Jobs\SendUpdateSageJob;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\Customer;
@@ -394,23 +394,23 @@ class SageApiService
                     }
 
                     Haystack::build()
-                    ->addJob(new SendUpdateSageJob($quote, $sageRequestPayload, $getingPaymentDetails['payment'], $getingPaymentDetails['splitPayments'], $extras))
-                    ->catch(function($sageResponse) use ($request, $extras){
-                        logger()->error('Book Update - Job failed to process. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-                    })
-                    ->finally(function($sageResponse) use ($request, $extras){
-                        if ($sageResponse['response']['status']) {
-                            // Send Update Data move to main lead page as per Send update Type
-                            info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-                            $impactResponse = (new SendUpdateLogService)->updatesMoveToLead($request, $extras['send_update_log']);
+                        ->addJob(new SendUpdateSageJob($quote, $sageRequestPayload, $getingPaymentDetails['payment'], $getingPaymentDetails['splitPayments'], $extras))
+                        ->catch(function ($sageResponse) use ($request, $extras) {
+                            logger()->error('Book Update - Job failed to process. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                        })
+                        ->finally(function ($sageResponse) use ($request, $extras) {
+                            if ($sageResponse['response']['status']) {
+                                // Send Update Data move to main lead page as per Send update Type
+                                info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                                $impactResponse = (new SendUpdateLogService)->updatesMoveToLead($request, $extras['send_update_log']);
 
-                            if ($impactResponse['status']) {
-                                info('Book Update - Process Completed Successfully. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']);
+                                if ($impactResponse['status']) {
+                                    info('Book Update - Process Completed Successfully. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']);
+                                }
                             }
-                        }
-                    })
-                    ->onQueue('sageQueue')
-                    ->dispatch();
+                        })
+                        ->onQueue('sageQueue')
+                        ->dispatch();
 
                     return ['status' => true, 'message' => SageEnum::SAGE_REQUEST_BEING_PROCESS];
             }
@@ -1239,7 +1239,6 @@ class SageApiService
         }
 
         BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)->onQueue('sage-book-policy');
-
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a whilet to check the status!'];
     }
