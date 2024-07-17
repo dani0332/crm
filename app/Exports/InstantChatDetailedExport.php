@@ -4,30 +4,31 @@ namespace App\Exports;
 
 use App\Traits\ExcelExportable;
 
-class InstantChatDetailedExport {
+class InstantChatDetailedExport
+{
     use ExcelExportable;
 
     public function collection()
     {
-        
+
     }
 
     public function headings(): array
     {
         return [
-          'QUOTE TYPE',
-          'REF ID',
-          'CREATED AT',
-          'MESSAGE',
-          'ROLE',
-          'EMPLOYEE FLAG',
-          'EMAIL ID',
-          'USER SYSTEM',
-          'USER IP ADDRESS',
-          'COMMUNICATION CHANNEL',
-          'INPUT TOKENS USAGE',
-          'OUTPUT TOKENS USAGE',
-          'TOTAL TOKENS USED',
+            'QUOTE TYPE',
+            'REF ID',
+            'CREATED AT',
+            'MESSAGE',
+            'ROLE',
+            'EMPLOYEE FLAG',
+            'EMAIL ID',
+            'USER SYSTEM',
+            'USER IP ADDRESS',
+            'COMMUNICATION CHANNEL',
+            'INPUT TOKENS USAGE',
+            'OUTPUT TOKENS USAGE',
+            'TOTAL TOKENS USED',
         ];
     }
 
