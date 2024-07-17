@@ -696,6 +696,7 @@ class SendUpdateLogService
                         'policy_booking_date' => $sendUpdateLog->booking_date,
                         'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
                         'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
+                        'price_with_vat' => $sendUpdateLog->price_with_vat,
                     ]);
                 }
             }
