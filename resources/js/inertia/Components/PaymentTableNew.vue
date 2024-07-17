@@ -2784,6 +2784,9 @@ const discountTypeLabel = computed(() => {
   );
   if (discountType) {
     if (systemAplliedDiscount !== '') {
+      if (discountType.label == systemAplliedDiscount){
+        return discountType.label;
+      }
       return discountType.label + ' + ' + systemAplliedDiscount;
     } else {
       return discountType.label;

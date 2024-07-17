@@ -514,6 +514,11 @@ class SendUpdateLogService
         $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
+        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
+
+            return SendUpdateLogStatusEnum::SU; // Book Update
+        }
+
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
@@ -568,6 +573,8 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::MDOV,
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::ACB,
+            SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
         ];
@@ -828,6 +835,8 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::ACB,
+                SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
             ])) {
             return false;
