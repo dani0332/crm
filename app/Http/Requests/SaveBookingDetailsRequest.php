@@ -63,6 +63,16 @@ class SaveBookingDetailsRequest extends FormRequest
             $rules['reversal_invoice'] = 'required|string';
         }
 
+        if ($this->get('send_update_option') !== null && $this->get('send_update_option') === SendUpdateLogStatusEnum::ACB) {
+            $skipRules = ['insurer_tax_invoice_number', 'total_vat_amount', 'commission_percentage', 'price_vat_applicable', 'price_vat_not_applicable', 'total_price'];
+            $rules = array_diff_key($rules, array_flip($skipRules));
+        }
+
+        if ($this->get('send_update_option') !== null && $this->get('send_update_option') === SendUpdateLogStatusEnum::ATIB) {
+            $skipRules = ['insurer_commission_invoice_number', 'vat_on_commission', 'commission_percentage', 'commission_vat_applicable', 'commission_vat_not_applicable', 'total_commission'];
+            $rules = array_diff_key($rules, array_flip($skipRules));
+        }
+
         return $rules;
     }
 
