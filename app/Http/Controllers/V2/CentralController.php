@@ -370,7 +370,7 @@ class CentralController extends Controller
         return $successMessage;
     }
 
-    // Update total price
+    // Retry CC split payment
     public function retrySplitPayment(RetrySplitPaymentRequest $request)
     {
         $successMessage = PaymentRepository::retrySplitPayment($request->payment_process_job_id);
