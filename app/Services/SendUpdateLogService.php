@@ -694,6 +694,8 @@ class SendUpdateLogService
                         'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
                         'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
                         'policy_booking_date' => $sendUpdateLog->booking_date,
+                        'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
+                        'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
                     ]);
                 }
             }
