@@ -67,11 +67,17 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const dateToYMD = date => {
   if (date) {
-    const [year, month, day] = date.split('-');
+    // Check if date is already in YMD format
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
+    const [day, month, year] = date.split('-');
     return `${year}-${month}-${day}`;
   }
-  return '';
-};
+
+  return null;
+}
 
 const isEF = computed(() => {
   return props.sendUpdateLog.category.code === sendUpdateStatusEnum.EF;
@@ -160,11 +166,11 @@ function isNotZero(value) {
 
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
-  booking_date: props.bookingDetails?.booking_date || props.sendUpdateLog?.booking_date,
+  booking_date: props.bookingDetails?.booking_date,
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
-  transaction_payment_status: props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value || '',
-  invoice_date: props.sendUpdateLog?.invoice_date || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
+  transaction_payment_status: transactionPaymentStatus.value || '',
+  invoice_date: dateToYMD(props.sendUpdateLog?.invoice_date) || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
   insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || '',
   discount: isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || '0.00',
   insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',

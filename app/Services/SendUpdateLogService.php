@@ -29,6 +29,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
@@ -465,11 +466,10 @@ class SendUpdateLogService
         }
 
         return [
-            'booking_date' => $quote->policy_booking_date ?? null,
+            'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format(config('constants.DATE_DISPLAY_FORMAT')) : null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
-            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
         ];
     }
 
