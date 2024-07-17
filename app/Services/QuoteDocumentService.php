@@ -6,6 +6,7 @@ use App\Enums\RolesEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use PhpOffice\PhpWord\IOFactory;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\ImageManager;
 use App\Traits\GenericQueriesAllLobs;
@@ -138,16 +139,18 @@ class QuoteDocumentService extends BaseService
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
                 $fileMimeType = $fileOrBase64->getClientMimeType();
 
+                // Set the filename for Azure storage
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+
                 // watermark only for pdf files
                 if ($fileMimeType == 'application/pdf') {
                     $this->watermarkPdf($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
                 } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
                     $this->watermarkImage($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+                } else if ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') {
+                    $this->watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
                 }
-
-                // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
-                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
             }
 
             // Generate a unique UUID
@@ -336,4 +339,24 @@ class QuoteDocumentService extends BaseService
         unlink(public_path('temp/' . $docName));
     }
 
+    public function watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
+    {
+        if (!file_exists(public_path('/temp'))) {
+            mkdir(public_path('/temp'), 0777, true);
+        }
+
+        $tempFile = $fileOrBase64->move(public_path('/temp'), $docName)->getRealPath();
+
+        $phpWord = IOFactory::load($tempFile);
+        $section = $phpWord->getSection(0);
+        // Define the watermark style
+        $header = $section->addHeader();
+        $header->addWatermark(public_path('images/watermark1.png'));
+
+        // Save the modified document
+        $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+        $objWriter->save($tempFile);
+
+        $this->storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+    }
 }

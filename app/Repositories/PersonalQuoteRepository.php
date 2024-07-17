@@ -87,17 +87,18 @@ class PersonalQuoteRepository extends BaseRepository
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
         $fileMimeType = $file->getClientMimeType();
+        //upload file to azure
+        $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
+        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
 
         // watermark only for pdf files
         if ($fileMimeType == 'application/pdf') {
             $quoteDocumentService->watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
         } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
             $quoteDocumentService->watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+        } else if ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            $quoteDocumentService->watermarkWordDocs($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
         }
-
-        //upload file to azure
-        $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
-        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
 
         //generate unique uuid
         $docUuid = uniqid();

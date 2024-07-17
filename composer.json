@@ -39,6 +39,7 @@
         "mongodb/laravel-mongodb": "^4.0",
         "owen-it/laravel-auditing": "^13.0",
         "parsecsv/php-parsecsv": "^1.3",
+        "phpoffice/phpword": "^1.2",
         "predis/predis": "^2.2",
         "pusher/pusher-php-server": "^7.2",
         "rappasoft/laravel-livewire-tables": "^2.8",
