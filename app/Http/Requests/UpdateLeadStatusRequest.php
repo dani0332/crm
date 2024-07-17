@@ -14,6 +14,7 @@ use App\Models\Customer;
 use App\Models\KycLog;
 use App\Models\RenewalBatch;
 use App\Services\AMLService;
+use App\Services\CRUDService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -141,7 +142,16 @@ class UpdateLeadStatusRequest extends FormRequest
                 $ryuFilter->orWhereNull('decision');
             })->whereNull('screenshot')->latest()->first();
 
-            if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort) {
+            $isTravelTransactionCheck = true;
+            if ((auth()->user()->hasRole(RolesEnum::TravelHapex) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
+                $getLeadStatus = app(CRUDService::class)->getTravelLeadStatus(request()->modelType, request()->leadId);
+                if ((int) $getLeadStatus->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+                    $isTravelTransactionCheck = false;
+                }
+            }
+
+
+            if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelTransactionCheck) {
 
                 $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
                     'insured_first_name',
