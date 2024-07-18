@@ -931,7 +931,7 @@ class SendUpdateLogService
             }
 
             if (! empty($quote->plan->insuranceProvider->code) && ! in_array($categoryCode, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) && $optionCode != SendUpdateLogStatusEnum::MPC) {
-                $roadsideAssistanceNumber = constant(('App\Enums\CarRoadsideAssistanceEnum::'.$quote->plan->insuranceProvider->code));
+                $roadsideAssistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? $quote?->plan?->insuranceProvider?->roadside_phone_number ?? null;
                 if (! is_null($roadsideAssistanceNumber) && $roadsideAssistanceNumber != 0) {
                     $emailData->roadsideAssistance = $roadsideAssistanceNumber;
                 }
