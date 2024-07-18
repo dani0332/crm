@@ -77,7 +77,7 @@ class ManagementReport
             'transactionTypes' => $transactionTypes,
         ];
     }
-    public function applyFilters($query, $request)
+    public function applyFilters($query, $request, $endorsementsQuery = false)
     {
         //secondOptionalFieldName to be used in case of transaction due date, coming from a different table 'payment_splits'
         $dateFilter = function ($fieldName, $filterKey, $secondOptionalFieldName = null) use ($query, $request) {
@@ -101,8 +101,8 @@ class ManagementReport
                 }
             }
             $dateRange = $request[$filterKey] ?? [
-                Carbon::parse(now())->startOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
-                Carbon::parse(now())->endOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
+                Carbon::today()->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
+                Carbon::today()->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
             ];
 
             if ($secondOptionalFieldName) {
@@ -119,8 +119,12 @@ class ManagementReport
         switch ($request['reportCategory']) {
             case ManagementReportCategoriesEnum::SALE_SUMMARY:
             case ManagementReportCategoriesEnum::SALE_DETAIL:
-                if ($request['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
-                    $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
+                if ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
+                    if ($endorsementsQuery) {
+                        $dateFilter('send_update_logs.booking_date', 'policyBookDate');
+                    } else {
+                        $dateFilter('personal_quotes.policy_booking_date', 'policyBookDate');
+                    }
                 } elseif ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
                     $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
                 }
@@ -135,6 +139,16 @@ class ManagementReport
             case ManagementReportCategoriesEnum::TRANSACTION:
                 if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
                     $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
+                } elseif ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
+                    $dateFilter('personal_quotes.policy_booking_date', 'policyBookDate');
+                }
+                break;
+
+            case ManagementReportCategoriesEnum::ENDORSEMENT:
+                if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+                    $dateFilter('send_update_logs.invoice_date', 'paymentDueDate', 'ps.due_date');
+                } elseif ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
+                    $dateFilter('send_update_logs.booking_date', 'policyBookDate');
                 }
                 break;
 
@@ -248,6 +262,7 @@ class ManagementReport
 
             $data = collect($data);
             foreach ($data as $index => $quote) {
+
                 fputcsv($handle, $this->map($quote));
 
                 // Update sums
@@ -300,5 +315,50 @@ class ManagementReport
         $item->sub_type_line_of_business = $businessTypeOfInsurance ? $businessTypeOfInsurance->text : 'N/A';
 
         return $item;
+    }
+
+    /**
+     * process endorsements data function
+     *
+     * @param [type] $reportData
+     * @param [type] $endorsementData
+     * @param [type] $request
+     * @return void
+     */
+    public static function processEndorsementsData($reportData, $endorsementData, $request)
+    {
+        /**
+         * map the endorsement data to the report data
+         */
+        $reportData = $reportData->map(function ($item) use ($request, $endorsementData) {
+            foreach ($endorsementData as $endorsement) {
+                if ($item[$request->groupBy] === $endorsement[$request->groupBy]) {
+                    $item->total_endorsements = $endorsement->total_endorsements ?? 0;
+                    $item->total_transaction = $item->total_policies + $item->total_endorsements;
+                    $item->endorsements_amount = (float) $endorsement->total_endorsement_amount;
+                    $item->total_price =
+                        ($item->total_price ? (float) $item->total_price : 0) +
+                        ($endorsement->total_endorsement_amount ? (float) $endorsement->total_endorsement_amount : 0);
+                }
+            }
+
+            return $item;
+        });
+
+        /**
+         * check if there are any endorsements that are not in the report data
+         */
+        foreach ($endorsementData as $endorsement) {
+            $found = $reportData->contains($request->groupBy, $endorsement[$request->groupBy]);
+            if (! $found) {
+                $endorsement->total_policies = 0;
+                $endorsement->endorsements_amount = (float) $endorsement->total_endorsement_amount;
+                $endorsement->total_transaction = $endorsement->total_endorsements;
+                $endorsement->total_price = (float) $endorsement->total_endorsement_amount;
+                $reportData->push($endorsement);
+            }
+        }
+
+        return $reportData;
     }
 }

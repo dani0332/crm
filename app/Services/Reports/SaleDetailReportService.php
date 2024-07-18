@@ -20,12 +20,12 @@ class SaleDetailReportService extends ManagementReport
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_DETAIL;
-        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ISSUED_POLICIES;
+        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::BOOKED_POLICIES;
 
-        if ($request['policyIssuanceDate'] && ! empty($request['policyIssuanceDate']) && is_array($request['policyIssuanceDate'])) {
-            $this->reportDateRange = Carbon::parse($request['policyIssuanceDate'][0])->toDateString()
+        if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
+            $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
                 .' - '.
-                Carbon::parse($request['policyIssuanceDate'][1])->toDateString();
+                Carbon::parse($request['policyBookDate'][1])->toDateString();
         } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
             $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
             .' - '.
@@ -35,7 +35,7 @@ class SaleDetailReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->select(
                 DB::raw('DISTINCT(personal_quotes.policy_number)'),
-                DB::raw("CONCAT(p.reference, ' ', p.insurer_tax_number) as transactions"),
+                DB::raw("CONCAT_WS('-', p.insurer_tax_number, p.notes, p.reference) as transactions"),
                 DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
                 DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
                 DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
@@ -50,16 +50,16 @@ class SaleDetailReportService extends ManagementReport
                     IFNULL( personal_quotes.price_vat_applicable , 0 ) +
                     IFNULL( personal_quotes.price_vat_not_applicable , 0 )  +
                     IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )),2) as total_price'),
-                DB::raw('FORMAT(p.commission_vat_applicable,2) as commission_vat_applicable'),
-                DB::raw('FORMAT(p.commission_vat,2) as commission_vat'),
-                DB::raw('FORMAT(p.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
+                DB::raw('p.commission_vat_applicable as commission_vat_applicable'),
+                DB::raw('p.commission_vat as commission_vat'),
+                DB::raw('p.commission_vat_not_applicable as commission_vat_not_applicable'),
                 DB::raw('FORMAT(( IFNULL( commission_vat_applicable , 0 ) + IFNULL( commission_vat , 0 )),2) as total_commission'),
                 DB::raw('UPPER(p.collection_type) as collects'),
                 'p.insurer_tax_number as insurer_tax_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
-                DB::raw('FORMAT(personal_quotes.premium_captured,2) as collected_amount'),
+                DB::raw('personal_quotes.premium_captured as collected_amount'),
                 DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
                 'cm.code as customer_type',
                 'ip.code as insurer',
@@ -87,6 +87,8 @@ class SaleDetailReportService extends ManagementReport
 
         if ($utmGroupBy) {
             $query->groupBy($utmGroupBy);
+        } else {
+            $query->groupBy('personal_quotes.code');
         }
 
         if ($request->export == 1) {
@@ -115,9 +117,9 @@ class SaleDetailReportService extends ManagementReport
         ];
 
         return [
-            'policyIssuanceDate' => $defaultDate,
+            'policyBookDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::SALE_DETAIL,
-            'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
+            'reportType' => ManagementReportTypeEnum::BOOKED_POLICIES,
         ];
     }
 
@@ -158,10 +160,10 @@ class SaleDetailReportService extends ManagementReport
     public function map($quote): array
     {
         return [
-            $quote->policy_number ?? 'N/A',
-            $quote->transactions ?? 0,
+            $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
+            $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ?? 'N/A',
-            $quote->payment_due_date ?? 'N/A',
+            $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
             $quote->source ?? 'N/A',
             $quote->team ?? 'N/A',
             $quote->price_vat_applicable ?? '0.00',

@@ -133,6 +133,14 @@ const tableHeader = reactive([
     text: 'Broker Invoice No',
     value: 'broker_invoice_number',
   },
+  {
+    text: 'Booking Date',
+    value: 'booking_date',
+  },
+  {
+    text: 'Endorsement Sub-type',
+    value: 'endorsement_sub_type',
+  }
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -166,14 +174,14 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
-    <template #item-policy_number="{ policy_number }">
-      {{ policy_number ?? 'N/A' }}
+    <template #item-policy_number="{ policy_number, main_lead_policy_number }">
+      {{ policy_number ? policy_number : (main_lead_policy_number ?? 'N/A') }}
     </template>
     <template #item-transactions="{ transactions }">
       {{ transactions ? transactions : 'N/A' }}
     </template>
-    <template #item-policy_start_date="{ policy_start_date }">
-      {{ policy_start_date ?? 'N/A' }}
+    <template #item-policy_start_date="{ policy_start_date, main_lead_policy_start_date }">
+      {{ policy_start_date ? policy_start_date : (main_lead_policy_start_date ?? 'N/A') }}
     </template>
     <template #item-payment_due_date="{payment_due_date, due_date}">
       {{ (payment_due_date ? payment_due_date : (due_date ? due_date : 'N/A')) }}
@@ -254,6 +262,12 @@ const isIntegerColumn = key => {
     </template>
     <template #item-broker_invoice_number="{ broker_invoice_number }">
       {{ broker_invoice_number ?? 'N/A' }}
+    </template>
+    <template #item-booking_date="{ booking_date }">
+      {{ booking_date ?? 'N/A' }}
+    </template>
+    <template #item-endorsement_sub_type="{ endorsement_sub_type }">
+      {{ endorsement_sub_type ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">

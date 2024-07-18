@@ -138,7 +138,7 @@ const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
   // For example, check if the key corresponds to an integer column
   return [
-    'transactions',
+    // 'transactions',
     'price_vat_applicable',
     'vat',
     'price_vat_not_applicable',
@@ -170,7 +170,7 @@ const isIntegerColumn = key => {
       {{ policy_number }}
     </template>
     <template #item-transactions="{ transactions }">
-      {{ transactions ?? 0 }}
+      {{ transactions ? transactions : 'N/A' }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
