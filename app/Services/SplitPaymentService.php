@@ -677,7 +677,7 @@ class SplitPaymentService
             } else {
                 $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             }
-            $masterPayment = $quoteModel->payments()->where('code', $quoteModel->code)->first();
+            $masterPayment = ($sendUpdateId > 0) ? $quoteModel->payments()->where('send_update_log_id', $sendUpdateId)->first() : $quoteModel->payments()->where('code', $quoteModel->code)->first();
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $masterPaymentStatus = $masterPayment->payment_status_id;
             $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
