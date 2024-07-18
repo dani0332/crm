@@ -199,9 +199,8 @@ class YachtQuoteController extends Controller
     {
         $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
-        if ($request->is_renewal === null &&
-        (in_array(TeamNameEnum::YACHT_TEAM, $userTeams) && in_array(TeamNameEnum::YACHT_RENEWALS, $userTeams))
-         && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
+        $areBothTeamsPresent = in_array(TeamNameEnum::YACHT_TEAM, $userTeams) && in_array(TeamNameEnum::YACHT_RENEWALS, $userTeams);
+        if ($request->is_renewal === null && $areBothTeamsPresent && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
             $request->merge(['is_renewal' => 'Yes']);
         }
 

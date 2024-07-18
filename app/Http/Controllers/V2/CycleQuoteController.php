@@ -205,9 +205,8 @@ class CycleQuoteController extends Controller
     {
         $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
-        if ($request->is_renewal === null &&
-        (in_array(TeamNameEnum::CYCLE, $userTeams) && in_array(TeamNameEnum::CYCLE_RENEWALS, $userTeams))
-         && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
+        $areBothTeamsPresent = in_array(TeamNameEnum::CYCLE, $userTeams) && in_array(TeamNameEnum::CYCLE_RENEWALS, $userTeams);
+        if ($request->is_renewal === null && $areBothTeamsPresent && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
             $request->merge(['is_renewal' => 'Yes']);
         }
 
