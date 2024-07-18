@@ -70,7 +70,7 @@ class LifeQuoteRepository extends BaseRepository
         return $quote;
     }
 
-    public function fetchGetData($request)
+    public function fetchGetData()
     {
         $this->query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {

@@ -49,9 +49,9 @@ class LifeQuoteController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
-        $lifeQuotes = LifeQuoteRepository::getData($request);
+        $lifeQuotes = LifeQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
 
