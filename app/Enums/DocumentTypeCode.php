@@ -65,4 +65,5 @@ class DocumentTypeCode extends Enum
     const GMQPD_RECEIPT = 'GMQPDR';
     const PPD_RECEIPT = 'PPDR';
     const YPD_RECEIPT = 'YPDR';
+    const E_TICKETS = 'E_TICKETS';
 }
