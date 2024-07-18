@@ -2,8 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\RuleTypeEnum;
-use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CommercialKeyword;
 use App\Models\Rule;
@@ -39,5 +37,5 @@ class RuleRepository extends BaseRepository
 
         return $_return;
     }
-   
+
 }
