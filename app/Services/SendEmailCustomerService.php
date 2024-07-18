@@ -951,7 +951,6 @@ class SendEmailCustomerService extends BaseService
 
             $body['cc'] = array_merge($ccAdvisor, $ebServiceTeam);
 
-            // need to discuss this.
             $sendPolicyUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL);
             info('Send Policy Update email fetched. email: '.$sendPolicyUpdateEmail);
 
