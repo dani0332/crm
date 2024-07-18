@@ -242,13 +242,13 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (!file_exists(public_path('/temp'))) {
-            mkdir(public_path('/temp'), 0777, true);
+        if (!file_exists(storage_path('/app/temp'))) {
+            mkdir(storage_path('/app/temp'), 0777, true);
         }
 
         ImageWatermarker::input($file)
             ->watermark(public_path('images/watermark1.png'))
-            ->output(public_path('temp/' . $docName))
+            ->output(storage_path('app/temp/' . $docName))
             ->position(Position::MIDDLE_CENTER, 0, 0)
             ->asBackground()
             ->resolution(96)
@@ -272,8 +272,8 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (!file_exists(public_path('/temp'))) {
-            mkdir(public_path('/temp'), 0777, true);
+        if (!file_exists(storage_path('/app/temp'))) {
+            mkdir(storage_path('/app/temp'), 0777, true);
         }
 
         $manager = new ImageManager(new Driver());
@@ -288,7 +288,7 @@ class QuoteDocumentService extends BaseService
             15
         );
 
-        $image->save(public_path('temp/'.$docName));
+        $image->save(storage_path('app/temp/'.$docName));
 
         $this->storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType);
     }
@@ -306,7 +306,7 @@ class QuoteDocumentService extends BaseService
      */
     public function storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        $watermarkedFile = new \Illuminate\Http\File(public_path('temp/' . $docName));
+        $watermarkedFile = new \Illuminate\Http\File(storage_path('app/temp/' . $docName));
 
         // Set the filename for Azure storage
         $watermarkedFileNameAzure = uniqid() . '_' . $data['quote_uuid'] . '_watermarked_' . $docName;
@@ -336,16 +336,16 @@ class QuoteDocumentService extends BaseService
         ]);
 
         // delete temp file
-        unlink(public_path('temp/' . $docName));
+        unlink(storage_path('temp/' . $docName));
     }
 
     public function watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (!file_exists(public_path('/temp'))) {
-            mkdir(public_path('/temp'), 0777, true);
+        if (!file_exists(storage_path('/app/temp'))) {
+            mkdir(storage_path('/app/temp'), 0777, true);
         }
 
-        $tempFile = $fileOrBase64->move(public_path('/temp'), $docName)->getRealPath();
+        $tempFile = $fileOrBase64->move(storage_path('/app/temp'), $docName)->getRealPath();
 
         $phpWord = IOFactory::load($tempFile);
         $section = $phpWord->getSection(0);
