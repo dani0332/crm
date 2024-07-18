@@ -123,7 +123,13 @@ const renderMarkdown = markdownString => {
               >
             </div>
             <div class="chat-bubble text-sm relative flex items-center">
-              <div v-html="renderMarkdown(message.msg)"></div>
+              <div v-if="message.whatsapp_request?.type.toLowerCase() === 'image'">
+                <span>User has shared an image</span>
+              </div>
+              <div v-else-if="['document', 'location', 'contacts', 'video', 'sticker'].includes(message.whatsapp_request?.type.toLowerCase())">
+                <span>User has shared a {{message.whatsapp_request.type}}</span>
+              </div>
+              <div v-else="message.msg" v-html="renderMarkdown(message.msg)"></div>
               <div
                 class="absolute right-[-30px] text-red-600"
                 v-if="message?.whatsapp_request?.type == 'audio'||  message?.whatsapp_request?.type == 'voice'"
