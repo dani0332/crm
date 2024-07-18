@@ -469,6 +469,7 @@ class BusinessQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,
+            'teams' => $userTeams,
             'insuranceTypeOptions' => $insuranceTypeOptions,
             'quoteTypeId' => QuoteTypes::BUSINESS->id(),
             'quoteType' => QuoteTypes::BUSINESS->value,

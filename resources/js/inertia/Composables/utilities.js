@@ -344,3 +344,9 @@ export function buildCdbidLink(quote_uuid, quote_type_id)
     return '';
   }
 }
+
+export const userHasRequiredTeams = (givenTeams, userTeams) =>
+{
+  const teams = new Set(givenTeams);
+  return userTeams.every(team => teams.has(team));
+}

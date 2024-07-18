@@ -11,14 +11,15 @@ const props = defineProps({
   leadStatuses: Array,
   advisors: Array,
   insuranceTypeOptions: Array,
+  teams: Object,
 });
 
 const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
-const HasTeams = teams => useHasTeams(teams);
-const teamsEnum = page.props.teamsEnum;
+const hasTeams = teams => userHasRequiredTeams(teams, props.teams);
+const teamsEnum = page.props.teamsEnum
 
 const isAllowed = computed(() => {
   return !hasAnyRole([
@@ -90,7 +91,7 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
-  is_renewal: HasTeams([teamsEnum.CORPLINE_TEAM, teamsEnum.CORPLINE_RENEWALS]) ? 'Yes' : null,
+  is_renewal: hasTeams([teamsEnum.CORPLINE_TEAM, teamsEnum.CORPLINE_RENEWALS]) ? 'Yes' : null,
   payment_status: [],
   is_cold: false,
   is_stale: false,
@@ -183,7 +184,7 @@ const setIntialState = () => {
     page: 1,
     previous_quote_policy_number: '',
     renewal_batch: '',
-    is_renewal: HasTeams([teamsEnum.CORPLINE_TEAM, teamsEnum.CORPLINE_RENEWALS]) ? 'Yes' : null,
+    is_renewal: hasTeams([teamsEnum.CORPLINE_TEAM, teamsEnum.CORPLINE_RENEWALS]) ? 'Yes' : null,
     payment_status: [],
     is_cold: false,
     is_stale: false,

@@ -24,8 +24,8 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-const HasTeams = teams => useHasTeams(teams);
-const teamsEnum = page.props.teamsEnum;
+const hasTeams = teams => userHasRequiredTeams(teams, props.teams);
+const teamsEnum = page.props.teamsEnum
 
 const isAllowed = computed(() => {
   return !hasAnyRole([rolesEnum.HomeAdvisor, rolesEnum.HomeRenewalAdvisor]);
@@ -84,7 +84,7 @@ const filters = reactive({
   quote_status: [],
   advisors: [],
   is_ecommerce: '',
-  is_renewal: HasTeams([teamsEnum.HOME, teamsEnum.HOME_RENEWALS]) ? 'Yes' : null,
+  is_renewal: hasTeams([teamsEnum.HOME, teamsEnum.HOME_RENEWALS]) ? 'Yes' : null,
   previous_quote_policy_number: '',
   renewal_batch: '',
   date: null,

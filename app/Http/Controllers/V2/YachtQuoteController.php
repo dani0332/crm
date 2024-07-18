@@ -296,6 +296,7 @@ class YachtQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,
+            'teams' => $userTeams,
             'quoteTypeId' => QuoteTypes::YACHT->id(),
             'quoteType' => QuoteTypes::YACHT->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : YachtQuoteRepository::getData(true, true),

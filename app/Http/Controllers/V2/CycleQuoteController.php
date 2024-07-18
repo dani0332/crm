@@ -289,6 +289,7 @@ class CycleQuoteController extends Controller
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
+            'teams' => $userTeams,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
             'quoteType' => QuoteTypes::CYCLE->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : CycleQuoteRepository::getData(true, true),

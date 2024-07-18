@@ -51,10 +51,3 @@ export const useCanAny = permissions =>
 
   return hasPermission;
 };
-
-export const useHasTeams = (userTeams) =>
-{
-  const teams = usePage().props.auth.teams;
-  const teamsSet = new Set(teams);
-  return userTeams.every(team => teamsSet.has(team));
-}

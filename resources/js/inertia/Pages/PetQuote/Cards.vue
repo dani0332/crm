@@ -21,8 +21,8 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-const HasTeams = teams => useHasTeams(teams);
-const teamsEnum = page.props.teamsEnum;
+const hasTeams = teams => userHasRequiredTeams(teams, props.teams);
+const teamsEnum = page.props.teamsEnum
 
 const isAllowed = computed(() => {
   return !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor]);
@@ -64,7 +64,6 @@ const channel = pusher.subscribe(
 const listen = () => {
   channel.bind('leads.count', function (e) {
     leadsCount.value = e.totalLeadsCount;
-    console.log('leads.count', e.totalLeadsCount);
   });
 };
 
@@ -88,7 +87,7 @@ const filters = reactive({
   quote_status: [],
   advisors: [],
   is_ecommerce: '',
-  is_renewal: HasTeams([teamsEnum.PET_TEAM, teamsEnum.PET_RENEWALS]) ? 'Yes' : null,
+  is_renewal: hasTeams([teamsEnum.PET_TEAM, teamsEnum.PET_RENEWALS]) ? 'Yes' : null,
   page: 1,
   previous_quote_policy_number_text: '',
   renewal_batch: '',

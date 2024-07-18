@@ -10,6 +10,7 @@ const props = defineProps({
   },
   leadStatuses: Array,
   advisors: Array,
+  teams : Object
 });
 
 const page = usePage();
@@ -17,8 +18,8 @@ const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
-const HasTeams = teams => useHasTeams(teams);
-const teamsEnum = page.props.teamsEnum;
+const hasTeams = teams => userHasRequiredTeams(teams, props.teams);
+const teamsEnum = page.props.teamsEnum
 
 const isAllowed = computed(() => {
   return !hasAnyRole([
@@ -85,7 +86,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
-  is_renewal: HasTeams([teamsEnum.CYCLE, teamsEnum.CYCLE_RENEWALS]) ? 'Yes' : null,
+  is_renewal: hasTeams([teamsEnum.CYCLE, teamsEnum.CYCLE_RENEWALS]) ? 'Yes' : null,
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
