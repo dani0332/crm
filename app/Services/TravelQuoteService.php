@@ -434,7 +434,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
-        $this->adjustQueryByDateFilters('tqr');
+        $this->adjustQueryByDateFilters($this->query, 'tqr');
 
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';

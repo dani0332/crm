@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\URL;
 
 class CycleQuoteRepository extends BaseRepository
 {
-    private $query;
     use GenericQueriesAllLobs;
 
     public function model()
@@ -69,7 +68,7 @@ class CycleQuoteRepository extends BaseRepository
         $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
         $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
 
-        $this->query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
+        $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
@@ -84,9 +83,9 @@ class CycleQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
 
-        $this->adjustQueryByDateFilters('personal_quotes');
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        $this->query->orderBy('personal_quotes.'.$sort_by, $sort_type);
+        $query->orderBy('personal_quotes.'.$sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
             //PD Revert
@@ -94,7 +93,7 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $this->query->get() : $this->query;
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchExport()

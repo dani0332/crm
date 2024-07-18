@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\URL;
 
 class YachtQuoteRepository extends BaseRepository
 {
-    private $query;
     use GenericQueriesAllLobs;
 
     public function model()
@@ -145,7 +144,7 @@ class YachtQuoteRepository extends BaseRepository
         $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
         $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
 
-        $this->query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
+        $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
@@ -155,7 +154,7 @@ class YachtQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
-        $this->adjustQueryByDateFilters('personal_quotes');
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
         $this->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
@@ -164,7 +163,7 @@ class YachtQuoteRepository extends BaseRepository
             return 0;
         }
 
-        return ($forExport) ? $this->query->get() : $this->query;
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchExport()

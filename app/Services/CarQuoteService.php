@@ -959,7 +959,7 @@ class CarQuoteService extends BaseService
             });
         }
 
-        $this->adjustQueryByDateFilters('cqr');
+        $this->adjustQueryByDateFilters($this->query, 'cqr');
 
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {

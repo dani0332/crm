@@ -25,7 +25,6 @@ use Illuminate\Support\Facades\Log;
 class BusinessQuoteService extends BaseService
 {
     protected $query;
-
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
     protected $leadAllocationService;
@@ -372,7 +371,7 @@ class BusinessQuoteService extends BaseService
             }
         }
 
-        $this->adjustQueryByDateFilters('bqr');
+        $this->adjustQueryByDateFilters($this->query, 'bqr');
 
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {

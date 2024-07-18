@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\DB;
 
 class PetQuoteRepository extends BaseRepository
 {
-    private $query;
     use GenericQueriesAllLobs;
 
     public function model()
@@ -90,7 +89,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        $this->query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
+        $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
             'petQuote.accomodationType:id,text',
@@ -115,9 +114,9 @@ class PetQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
 
-        $this->adjustQueryByDateFilters('personal_quotes');
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
         if (request()->sortBy) {
-            $this->query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
+            $query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
         }
         if ($forTotalLeadsCount) {
             //PD Revert
@@ -125,7 +124,7 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $this->query->get() : $this->query;
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchGetBy($column, $value)

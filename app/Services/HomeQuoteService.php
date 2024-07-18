@@ -335,7 +335,7 @@ class HomeQuoteService extends BaseService
             }
         }
 
-        $this->adjustQueryByDateFilters('hqr');
+        $this->adjustQueryByDateFilters($this->query, 'hqr');
 
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {

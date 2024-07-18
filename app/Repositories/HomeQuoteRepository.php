@@ -10,7 +10,6 @@ use App\Traits\GenericQueriesAllLobs;
 
 class HomeQuoteRepository extends BaseRepository
 {
-    private $query;
     use GenericQueriesAllLobs;
 
     public function model()
@@ -27,7 +26,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        $this->query = $this->with([
+        $query = $this->with([
             'quoteStatus',
             'homeQuoteRequestDetail.lostReason',
             'accommodationType:id,text',
@@ -41,8 +40,8 @@ class HomeQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
-        $this->adjustQueryByDateFilters('home_quote_request');
-        $this->query->orderBy('home_quote_request.created_at', 'desc');
+        $this->adjustQueryByDateFilters($query, 'home_quote_request');
+        $query->orderBy('home_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
             //PD Revert
@@ -51,7 +50,7 @@ class HomeQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $this->query->get() : $this->query->simplePaginate();
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 
     public function fetchCreateDuplicate(array $dataArr): object

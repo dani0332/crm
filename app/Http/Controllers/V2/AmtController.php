@@ -163,7 +163,7 @@ class AmtController extends Controller
         }
 
         $this->adjustQueryByDateFilters($data, 'bqr');
-
+        
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {

@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\URL;
 
 class BikeQuoteRepository extends BaseRepository
 {
-    private $query;
     use GenericQueriesAllLobs;
 
     public function model()
@@ -169,7 +168,7 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetData($forExport = false)
     {
-        $this->query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
+        $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
@@ -180,10 +179,10 @@ class BikeQuoteRepository extends BaseRepository
             ->filter(! $forExport)
             ->withFakeLeadCriteria();
 
-        $this->adjustQueryByDateFilters('personal_quotes');
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
         $this->orderBy('personal_quotes.created_at', 'desc');
 
-        return ($forExport) ? $this->query->get() : $this->query->simplePaginate();
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 
     public function fetchExport()
