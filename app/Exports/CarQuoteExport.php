@@ -138,7 +138,6 @@ class CarQuoteExport
             $quote->premium,
             $quote->lost_reason,
             $quote->quote_link,
-            $quote->quote_tag_value,
         ];
     }
 
