@@ -203,7 +203,7 @@ class YachtQuoteController extends Controller
         $isAdvisorOrManagerOrDeputy = auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy();
 
         if ($request->is_renewal === null && $areBothTeamsPresent && $isAdvisorOrManagerOrDeputy) {
-            $request->merge(['is_renewal' => 'Yes']);
+            $request->merge(['is_renewal' => quoteTypeCode::yesText]);
         }
 
         $quotes = [

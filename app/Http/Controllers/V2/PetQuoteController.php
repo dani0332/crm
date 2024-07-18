@@ -221,7 +221,7 @@ class PetQuoteController extends Controller
         $isAdvisorOrManagerOrDeputy = auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy();
         
         if ($request->is_renewal === null && $areBothTeamsPresent && $isAdvisorOrManagerOrDeputy) {
-            $request->merge(['is_renewal' => 'Yes']);
+            $request->merge(['is_renewal' => quoteTypeCode::yesText]);
         }
         $quotes = [
             ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::NewLead, $request)],
