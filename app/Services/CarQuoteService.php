@@ -469,13 +469,15 @@ class CarQuoteService extends BaseService
         $childRecord = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date ?? null;
 
-        CarQuoteRequestDetail::updateOrCreate(
+        $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
             ['car_quote_request_id' => $id],
             [
                 'advisor_assigned_date' => Carbon::now(),
                 'advisor_assigned_by_id' => Auth::user()->id,
             ]
         );
+
+        info('updateChildRecord - leadId : '.$id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
 
         return $oldAdvisorAssignedDate;
     }
