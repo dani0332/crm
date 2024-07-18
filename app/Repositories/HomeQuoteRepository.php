@@ -41,8 +41,8 @@ class HomeQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
-            $this->adjustQueryByDateFilters("home_quote_request");
-            $this->query->orderBy('home_quote_request.created_at', 'desc');
+        $this->adjustQueryByDateFilters('home_quote_request');
+        $this->query->orderBy('home_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
             //PD Revert

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 class BusinessQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+
     private $query;
 
     public function model()
@@ -61,8 +62,8 @@ class BusinessQuoteRepository extends BaseRepository
         })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
-            $this->adjustQueryByDateFilters('business_quote_request');
-            $this->query->orderBy('business_quote_request.created_at', 'desc');
+        $this->adjustQueryByDateFilters('business_quote_request');
+        $this->query->orderBy('business_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
             return $this->query->count();

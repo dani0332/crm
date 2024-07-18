@@ -160,11 +160,12 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchExportData()
     {
-        $this->query =  $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+        $this->query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->filter(false)
             ->withFakeLeadCriteria();
-            $this->adjustQueryByDateFilters("life_quote_request");
-            return $this->query->orderBy('life_quote_request.created_at', 'desc')
+        $this->adjustQueryByDateFilters('life_quote_request');
+
+        return $this->query->orderBy('life_quote_request.created_at', 'desc')
             ->get();
     }
 

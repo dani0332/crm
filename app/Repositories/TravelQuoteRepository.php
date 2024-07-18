@@ -37,9 +37,9 @@ class TravelQuoteRepository extends BaseRepository
             ->filter(! $forExport)
             ->withFakeLeadCriteria();
 
-            $this->adjustQueryByDateFilters('travel_quote_request');
+        $this->adjustQueryByDateFilters('travel_quote_request');
 
-            $this->query->orderBy('travel_quote_request.created_at', 'desc');
+        $this->query->orderBy('travel_quote_request.created_at', 'desc');
 
         return ($forExport) ? $this->query->get() : $this->query->simplePaginate();
     }
