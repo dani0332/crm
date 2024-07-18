@@ -346,8 +346,11 @@ final class PermissionsEnum extends Enum
     public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
     public const ADD_MANUAL_HEALTH_PLAN = 'add-manual-health-plan';
     public const DOCUMENT_DELETE = 'document-delete';
+    public const SEND_UPDATE_ADD_BOOKING = 'send-update-add-booking';
     public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
     public const EXTRACT_REPORT = 'extract-report';
+    public const INPL_USER = 'inpl-user';
+    public const INPL_APPROVER = 'inpl-approver';
 
     public static function getAdvisorConversionReportPermissions()
     {

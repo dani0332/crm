@@ -475,14 +475,15 @@ class CarQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date ?? null;
 
-        if (! $childRecord) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        CarQuoteRequestDetail::updateOrCreate(
+            ['car_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
 
         return $oldAdvisorAssignedDate;
     }
@@ -573,26 +574,15 @@ class CarQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return CarQuoteRequestDetail::create([
-            'car_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return CarQuoteRequestDetail::firstOrCreate(
+            ['car_quote_request_id' => $id],
+        );
     }
 
     public function getEntityPlain($id)
     {
         return CarQuote::where('id', $id)->with([
+            'insuranceProviderDetails',
             'payments' => function ($payment) {
                 $payment->with([
                     'paymentSplits' => function ($paymentSplit) {
@@ -939,7 +929,8 @@ class CarQuoteService extends BaseService
             && empty($request->email)
             && empty($request->code)
             && empty($request->renewal_batch)
-            && empty($request->quote_batch_id)
+            && empty($request->quote_batch_id) &&
+            ! isset($request->previous_quote_policy_number)
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
@@ -955,15 +946,23 @@ class CarQuoteService extends BaseService
             $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
             $freshLoad = ! isset($request->page);
             $startDate = isset($request->transaction_approved_dates) ?
-                Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+            Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
             $endDate = isset($request->transaction_approved_dates) ?
-                Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+            Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
             $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
         }
         if (! empty($request->teams) && is_array($request->teams)) {
             $this->query->whereIn('team.id', $request->teams);
+        }
+
+        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+
+            $this->query->where(function ($query) use ($request) {
+                $query->where('cqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('cqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
 
         foreach ($searchProperties as $item) {

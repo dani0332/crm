@@ -41,6 +41,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use League\CommonMark\Extension\SmartPunct\Quote;
 use Log;
 
 class CentralService
@@ -382,6 +383,57 @@ class CentralService
         return $planModel::find($planId);
     }
 
+    public function lockLeadSectionsDetails($quote)
+    {
+        $quote = (object) $quote;
+        $lockFunctionalities = [
+            'plan_selection' => false,
+            'plan_details' => false,
+            'lead_status' => false,
+            'lead_details' => false,
+            'member_details' => false,
+            'manage_payment' => false,
+        ];
+
+        $quoteStatuses = [
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        // Lock functionality check for Available Plans, Plan Details and Member Details
+        $quoteStatusForPlansAndMembers = array_merge($quoteStatuses, [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+        ]);
+
+        if (in_array($quote->quote_status_id, $quoteStatusForPlansAndMembers)) {
+            $lockFunctionalities['plan_selection'] = true;
+            $lockFunctionalities['member_details'] = true;
+        }
+
+        // Lock functionality check for Lead status Section
+        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined]);
+        if (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
+            $lockFunctionalities['lead_status'] = true;
+        }
+
+        // Lock functionality check for edit lead details
+        if (in_array($quote->quote_status_id, $quoteStatuses)) {
+            $lockFunctionalities['plan_details'] = true;
+            $lockFunctionalities['lead_details'] = true;
+        }
+
+        // Lock functionality check for Manage Payment
+        $quoteStatusForManagePayment = array_merge($quoteStatuses, [QuoteStatusEnum::PolicyBooked]);
+        if (in_array($quote->quote_status_id, $quoteStatusForManagePayment)) {
+            $lockFunctionalities['manage_payment'] = true;
+        }
+
+        return $lockFunctionalities;
+    }
+
     // This method is used to update payment allocation status when lead status is updated
     public function updatePaymentAllocation($modelType, $quote_uuid)
     {
@@ -392,6 +444,12 @@ class CentralService
         }
     }
 
+    /**
+     * After booking policy Processes payments by updating their allocation status based on the payment frequency and splits.
+     * This method handles different payment frequencies (e.g., upfront, semi-annual, quarterly, monthly, custom, split payments)
+     *
+     * @param void
+     */
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
         if ($payment) {
@@ -407,12 +465,22 @@ class CentralService
         }
     }
 
+    /**
+     * This method handles just update payment allocation status
+     *
+     * @param void
+     */
     private function updatePaymentAllocationStatus($payment, $quote)
     {
         $payment->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote);
         $payment->save();
     }
 
+    /**
+     * This method return payment allocation status based on quote status
+     *
+     * @param string
+     */
     private function calculateAllocationStatus($payment, $quote, $paymentSplit = null)
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
@@ -434,12 +502,20 @@ class CentralService
         }
     }
 
+    /**
+     * Updates the allocation status of the first payment split based on the payment and quote details.
+     * This method is specifically used for payments with frequencies like upfront, semi-annual, quarterly, monthly and custom.
+     */
     private function firstSplitAllocationStatus($payment, $paymentSplit, $quote)
     {
         $paymentSplit->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote, $paymentSplit);
         $paymentSplit->save();
     }
 
+    /**
+     * Updates the allocation status of the all payment  based on the payment and quote details.
+     * This method is specifically used for payments with frequency split payment
+     */
     private function updatePaymentSplitAllocationStatus($paymentSplits, $quote)
     {
         $collectedAmount = 0;
@@ -450,6 +526,9 @@ class CentralService
         }
     }
 
+    /**
+     * This method is used to final payment allocation status based in payment status and collected amount and price
+     */
     private function calculateSplitAllocationStatusWithCollectedAmount($paymentSplit, $quote, $collectedAmount)
     {
         if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {

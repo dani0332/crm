@@ -8,6 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SageEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
@@ -410,7 +411,7 @@ class SageApiService
                 $payment = $getQuoteDetails->payments->first();
                 $splitPayments = $payment->paymentSplits;
 
-                // Most CPD cases have no vaalue then should it set as Credit Note - Need to verify this with Denber
+                // Most CPD cases have no vaalue then should it set as Credit Note
                 $mainLeadDetails = [
                     'payment' => [
                         'insurer_tax_number' => $payment->insurer_tax_number,
@@ -419,16 +420,16 @@ class SageApiService
                 ];
 
                 $payment->fill([
-                    'discount_value' => $extras['send_update_log']->discount, // --
+                    'discount_value' => $extras['send_update_log']->discount,
                     'invoice_description' => $extras['send_update_log']->invoice_description,
                     'insurer_invoice_date' => $extras['send_update_log']->invoice_date,
                     'commission_vat' => '', // Need to verify this field
-                    'total_price' => $extras['send_update_log']->price_without_vat, // Need to verify this field
-                    'total_amount' => $extras['send_update_log']->price_vat_applicable, // Need to verify this field
-                    'commission' => $extras['send_update_log']->total_commission,
-                    'commission_vat_applicable' => $extras['send_update_log']->commission_vat_applicable,
-                    'commission_vat_not_applicable' => $extras['send_update_log']->commission_vat_not_applicable,
-                    'commmission_percentage' => $extras['send_update_log']->commission_percentage,
+                    'total_price' => abs($extras['send_update_log']->price_without_vat), // Need to verify this field
+                    'total_amount' => abs($extras['send_update_log']->price_vat_applicable),
+                    'commission' => abs($extras['send_update_log']->total_commission),
+                    'commission_vat_applicable' => abs($extras['send_update_log']->commission_vat_applicable),
+                    'commission_vat_not_applicable' => abs($extras['send_update_log']->commission_vat_not_applicable),
+                    'commmission_percentage' => abs($extras['send_update_log']->commission_percentage),
                     'insurer_tax_number' => $extras['send_update_log']->insurer_tax_invoice_number,
                     'insurer_commmission_invoice_number' => $extras['send_update_log']->insurer_commission_invoice_number,
                     'policy_expiry_date' => $extras['send_update_log']->expiry_date,
@@ -438,8 +439,8 @@ class SageApiService
 
                 $splitPayments->first()->fill([
                     'due_date' => $extras['send_update_log']->invoice_date,
-                    'payment_amount' => $extras['send_update_log']->price_vat_applicable, //+ abs($extras['send_update_log']->total_commission), // Need to verify with Denber
-                    'collection_amount' => $extras['send_update_log']->price_vat_applicable, // Need to verify this field, I think we should add discount here
+                    'payment_amount' => $extras['send_update_log']->price_vat_applicable,
+                    'collection_amount' => abs($extras['send_update_log']->price_vat_applicable),
                 ]);
 
                 return ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
@@ -519,19 +520,27 @@ class SageApiService
                 'requestType' => SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
+                'extras' => [
+                    'option_id' => $extras['option'] ?? null,
+                ],
             ]);
 
-            info('Book Update - Creating AP Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 2,
-                'startingStep' => ($startingStep + 3),
-                'totalSteps' => $totalSteps,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'requestType' => SageEnum::SRT_CREATE_AP_PREM_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
-            ]);
+            if ($extras['option'] !== SendUpdateLogStatusEnum::ACB) {
+                info('Book Update - Creating AP Invoice and mark as posted');
+                $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                    'iterator' => 0,
+                    'lastIteration' => 2,
+                    'startingStep' => ($startingStep + 3),
+                    'totalSteps' => $totalSteps,
+                    'entryType' => SageEnum::SCT_STRAIGHT,
+                    'requestType' => SageEnum::SRT_CREATE_AP_PREM_INV,
+                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
+                    'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
+                    'extras' => [
+                        'option_id' => $extras['option'] ?? null,
+                    ],
+                ]);
+            }
 
             $startingStep = 8;
             $totalSteps = 13;
@@ -548,6 +557,9 @@ class SageApiService
                 'payment' => $payment,
                 'splitPayments' => $splitPayments,
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
+                'extras' => [
+                    'option_id' => $extras['option'] ?? null,
+                ],
             ]);
 
             info('Book Update - Creating AP Split Payment Invoice and mark as posted');
@@ -562,6 +574,9 @@ class SageApiService
                 'splitPayments' => $splitPayments,
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 'apPatchCallEnable' => $extras['ap_patch_call_enable'],
+                'extras' => [
+                    'option_id' => $extras['option'] ?? null,
+                ],
             ]);
 
             $startingStep = 10;
@@ -805,7 +820,7 @@ class SageApiService
             ((in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV])) ||
             (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) && ($extraParams['revCorrSplitPayment'] ?? false)))) {
 
-            $invoiceType = in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV]) ? SageEnum::AR_INVOICE : SageEnum::AP_INVOICE;
+            // $invoiceType = in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV]) ? SageEnum::AR_INVOICE : SageEnum::AP_INVOICE;
             $splitPaymentResponse = $this->splitPaymentsPatch($quote, $sageRequestPayload, $sageLogArray, $extraParams, $sageInvResponse);
 
             if (isset($splitPaymentResponse['status']) && $splitPaymentResponse['status'] == false) {
@@ -845,7 +860,10 @@ class SageApiService
                 case 'createARInvoicePremAndComm':
                 case 'createAPInvoicePrem':
                 case 'createARInvoiceDis':
-                    $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, $sageInvResponse, ['mainLeadDetails' => $extraParams['mainLeadDetails'] ?? []]);
+                    $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, $sageInvResponse, [
+                        'mainLeadDetails' => $extraParams['mainLeadDetails'] ?? [],
+                        'extras' => $extraParams['extras'] ?? [],
+                    ]);
                     break;
 
                 case 'arSplitPrepaymentPayload':
@@ -859,7 +877,10 @@ class SageApiService
                         if ($methodName == 'createPaymontRecieptOneInvoice') {
                             $payLoadOptions = SagePayloadFactory::{$methodName}($quote, $sageRequestPayload->customerId, $extraParams['payment'], $extraParams['splitPayments'], true);
                         } else {
-                            $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, SageEnum::SCT_STRAIGHT, ['sage_request_type' => $extraParams['requestType']]);
+                            $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, SageEnum::SCT_STRAIGHT, [
+                                'sage_request_type' => $extraParams['requestType'],
+                                'extras' => $extraParams['extras'] ?? [],
+                            ]);
                         }
                     }
                     break;
@@ -967,6 +988,7 @@ class SageApiService
                 'revCorrSplitPayment' => $extraParams['revCorrSplitPayment'] ?? false,
                 'paymentDetails' => $paymentDetails ?? [],
                 'apPatchCallEnable' => $extraParams['apPatchCallEnable'] ?? true, // TODO :: This is temporary solution, this after AP Split patch working fine
+                'extras' => $extraParams['extras'],
             ];
 
             if (isset($extraParams['batchNumber']) && isset($extraParams['invoiceType'])) {

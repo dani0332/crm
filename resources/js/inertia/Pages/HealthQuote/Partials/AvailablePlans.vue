@@ -8,6 +8,8 @@ const props = defineProps({
   memebersDetailsChanged: Boolean,
 });
 
+const page = usePage();
+
 const emit = defineEmits([
   'copayUpdate',
   'update:modelValue',
@@ -526,20 +528,32 @@ onUpdated(() => {
       Number(totalLoadingPrice.value) + Number(data.price);
   });
 });
+const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReusableTemplate();
 </script>
 
 <template>
   <x-modal v-model="showModal" size="xl" show-close backdrop>
     <template #header>
+      <ToggleManualButtonTemplate v-slot="{ isDisabled }">
+        <x-toggle
+          v-model="isManual"
+          color="success"
+          label="Manual"
+          :loading="toggleLoader"
+          :disabled="isDisabled"
+        />
+      </ToggleManualButtonTemplate>
+
       <div class="flex justify-between items-center">
         <h3>{{ plan.providerName }} - {{ plan.name }}</h3>
         <div class="flex gap-3 pr-8">
-          <x-toggle
-            v-model="isManual"
-            color="success"
-            label="Manual"
-            :loading="toggleLoader"
-          />
+          <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
+            <ToggleManualButtonReuseTemplate :isDisabled="true"/>
+            <template #tooltip>
+              No further action allowed on issued policy, If changes are required, such as increase in price, please proceed through the 'Send Update' feature using the 'Correction of Policy' option.
+            </template>
+          </x-tooltip>
+          <ToggleManualButtonReuseTemplate v-else/>
           <x-toggle
             v-model="hidePlan"
             color="error"
@@ -1376,7 +1390,10 @@ onUpdated(() => {
                 color="primary"
                 size="sm"
                 @click="
-                  onLoadingPricesUpdate(props.plan.memberPremiumBreakdown)
+                  onLoadingPricesUpdate(
+                    props.plan.memberPremiumBreakdown,
+                    false,
+                  )
                 "
               >
                 Update & Save

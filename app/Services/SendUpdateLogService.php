@@ -29,6 +29,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
@@ -417,14 +418,14 @@ class SendUpdateLogService
 
     public function isNegativeValue($sendUpdateLog): bool
     {
-        $category = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
+        $category = $sendUpdateLog->category->code;
 
         if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
             return true;
         }
 
         if ($category == SendUpdateLogStatusEnum::EF) {
-            $option = LookupRepository::where('id', $sendUpdateLog->option_id)->value('code');
+            $option = $sendUpdateLog?->option?->code;
             if (in_array($option, [
                 SendUpdateLogStatusEnum::MPC,
                 SendUpdateLogStatusEnum::MDOM,
@@ -465,10 +466,10 @@ class SendUpdateLogService
         }
 
         return [
+            'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format(config('constants.DATE_DISPLAY_FORMAT')) : null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
-            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
         ];
     }
 
@@ -513,6 +514,11 @@ class SendUpdateLogService
         $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
+        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
+
+            return SendUpdateLogStatusEnum::SU; // Book Update
+        }
+
         // check if required documents not uploaded then show Send Update to Customer.
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
@@ -552,32 +558,6 @@ class SendUpdateLogService
         return '';
     }
 
-    public function mergeBookingDetails($bookingDetails, $sendUpdateLog)
-    {
-        $data = [
-            'reversal_invoice' => $sendUpdateLog->reversal_invoice ?? null,
-            'booking_date' => $sendUpdateLog->booking_date,
-            'invoice_description' => $sendUpdateLog->invoice_description,
-            'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
-            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status,
-            'invoice_date' => $sendUpdateLog->invoice_date,
-            'insurer_tax_invoice_number' => $sendUpdateLog->insurer_tax_invoice_number,
-            'insurer_commission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
-            'discount' => $sendUpdateLog->discount,
-            'commission_percentage' => $sendUpdateLog->commission_percentage,
-            'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
-            'vat_on_commission' => $sendUpdateLog->vat_on_commission,
-            'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
-            'total_commission' => $sendUpdateLog->total_commission,
-            'total_vat_amount' => $sendUpdateLog->total_vat_amount,
-            'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
-            'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-            'price_with_vat' => $sendUpdateLog->price_with_vat,
-        ];
-
-        return array_merge($bookingDetails, $data);
-    }
-
     public function isPaymentVisible($categoryCode, $optionCode): bool
     {
         // categories in which we have to show manage payments.
@@ -593,6 +573,8 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::MDOV,
             SendUpdateLogStatusEnum::ED,
             SendUpdateLogStatusEnum::DM,
+            SendUpdateLogStatusEnum::ACB,
+            SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
         ];
@@ -719,6 +701,9 @@ class SendUpdateLogService
                         'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
                         'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
                         'policy_booking_date' => $sendUpdateLog->booking_date,
+                        'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
+                        'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
+                        'price_with_vat' => $sendUpdateLog->price_with_vat,
                     ]);
                 }
             }
@@ -751,8 +736,8 @@ class SendUpdateLogService
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
                     ]);
                 }
-                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
-                    if (! empty($sendUpdateLog->car_addons)) { // will work on Add optional cover.
+                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
+                    if (! empty($sendUpdateLog->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) { // will work on Add optional cover.
                         foreach ($sendUpdateLog->car_addons as $addonId) {
                             CarQuoteRequestAddOn::updateOrCreate([
                                 'quote_request_id' => $quote->id,
@@ -763,9 +748,10 @@ class SendUpdateLogService
                                 'price' => 0,
                             ]);
                         }
-                    } elseif (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirate.
+                    } elseif (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) { // will work on Change of Emirate.
                         $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
-                    } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity.
+                        info('emirate id : '.$sendUpdateLog->emirates_id);
+                    } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0 && $optionCode == SendUpdateLogStatusEnum::CISC) { // will work on Change in seating capacity.
                         $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                     }
                 }
@@ -849,6 +835,8 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::ED,
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::ACB,
+                SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
             ])) {
             return false;

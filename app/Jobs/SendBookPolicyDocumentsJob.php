@@ -40,27 +40,37 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        info('job: SendBookPolicyDocumentsJob started');
+
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
         $modelType = ! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
+        $handBookDocuments = [];
 
         try {
+            // This will give handbook document from relevant policy wording table only for mentioned LOB's
+            if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
+                $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
+                info('Handbook documents retrieved: '.json_encode($handBookDocuments));
+            }
+            // First Retrieve document types marked for sending to the customer, then fetch the corresponding uploaded documents
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
-            $quoteDocuments = $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
+            $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
+            info('Quote documents which need to send to customer through email retrieved: '.json_encode($docs));
         } catch (Exception $ex) {
-            error('SendBookPolicyDocumentsJobError '.$ex->getMessage());
+            error('Send BookPolicy Documents Job Error '.$ex->getMessage());
             $docs = [];
         }
 
         $quote->load('advisor');
 
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
-
-        info('SendBookPolicyDocumentsJobData '.json_encode($quote));
-
+        // Prepare the data to be sent to Brevo for email template dispatch
         if (! empty($templateId)) {
+
+            $roadsideAssistance = '';
             $emailData = new \stdClass();
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
@@ -78,14 +88,19 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
-                $emailData->currentInsurer = $quote->plan->insuranceProvider->text ?? '';
+                $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
+                $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
             } else {
-                $emailData->currentInsurer = $quote->insuranceProvider->text ?? '';
+                $emailData->currentInsurer = $quote->insuranceProvider->text;
+                $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
             }
+
             $emailData->emailTemplateId = $templateId;
-            info('SendBookPolicyDocumentsJobEmailData '.json_encode($emailData));
+            $emailData->handBookDocuments = $handBookDocuments;
+            $emailData->roadsideAssistance = $roadsideAssistance;
+            info('Send Book Policy Documents Job Email Data '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-            info('SendBookPolicyDocumentsJobResponse '.json_encode($response));
+            info('Send Book Policy Documents Job Response '.json_encode($response));
         }
     }
 

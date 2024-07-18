@@ -161,6 +161,7 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
+
     public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
@@ -176,5 +177,10 @@ class TravelQuote extends Model implements AuditableContract
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
+
+    public function policyWording()
+    {
+        return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 }
