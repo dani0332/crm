@@ -5,6 +5,7 @@ namespace App\Models;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -67,5 +68,10 @@ class YachtQuote extends Model implements AuditableContract
     public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function advisor(): HasOne
+    {
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 }

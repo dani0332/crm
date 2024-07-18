@@ -65,8 +65,8 @@ class DocumentTypeRepository extends BaseRepository
             $documentTypeCodes->getBusinessDocument($businessTypeOfInsurance, $businessTypeOfCustomer, $businessInsurerName);
         }
 
-        // Return the document type codes as an array.
-        return $documentTypeCodes->pluck('code')->toArray();
+        // Return the unique document type codes as an array.
+        return $documentTypeCodes->select('code')->distinct()->pluck('code')->toArray();
     }
 
     /**
