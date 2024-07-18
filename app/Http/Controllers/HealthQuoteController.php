@@ -300,9 +300,9 @@ class HealthQuoteController extends Controller
         $userId = auth()->id();
         $userTeams = auth()->user()->getUserTeams($userId)->toArray();
 
-        if($request->is_renewal === null && 
+        if ($request->is_renewal === null &&
         (in_array(TeamNameEnum::RM_NB, $userTeams) && in_array(TeamNameEnum::RM_RENEWALS, $userTeams))
-         && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())){
+         && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
             $request->merge(['is_renewal' => 'Yes']);
         }
 
@@ -350,25 +350,25 @@ class HealthQuoteController extends Controller
             QuoteStatusEnum::PolicyBooked => 9,
         ];
 
-        if($request->is_renewal == quoteTypeCode::yesText){
-            $quotes = array_filter($quotes, function($quote) use ($renewals) {
+        if ($request->is_renewal == quoteTypeCode::yesText) {
+            $quotes = array_filter($quotes, function ($quote) use ($renewals) {
                 return in_array($quote['id'], array_keys($renewals));
             });
-        
+
             // Sort filtered quotes based on the renewals array order
-            usort($quotes, function($a, $b) use ($renewals) {
+            usort($quotes, function ($a, $b) use ($renewals) {
                 return $renewals[$a['id']] <=> $renewals[$b['id']];
             });
-        }elseif($request->is_renewal == quoteTypeCode::noText){
-            $quotes = array_filter($quotes, function($quote) use ($newBusiness) {
+        } elseif ($request->is_renewal == quoteTypeCode::noText) {
+            $quotes = array_filter($quotes, function ($quote) use ($newBusiness) {
                 return in_array($quote['id'], array_keys($newBusiness));
             });
-        
+
             // Sort filtered quotes based on the renewals array order
-            usort($quotes, function($a, $b) use ($newBusiness) {
+            usort($quotes, function ($a, $b) use ($newBusiness) {
                 return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
             });
-        }elseif (array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Lost,
                 QuoteStatusEnum::Allocated,
