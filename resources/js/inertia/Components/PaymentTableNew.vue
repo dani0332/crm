@@ -199,6 +199,28 @@ const calculateTotalAmount = () => {
   calculatePaymentBreakup(false);
 };
 
+// Define a computed property to deduct insure now pay later
+const isInsureNowPayLaterAllowed = computed(() => {
+  
+  //handle edit scenario for insure now pay later
+  if (paymentMethodsForm.status == 'edit' && paymentMethodsForm.collection_type === 'broker') {
+    if (props.payments.length > 0) {
+        let inureNowPayLaterExists = props.payments[0].payment_splits.find(
+          item => item.payment_method.code ===  page.props.paymentMethodsEnum?.InsureNowPayLater,
+        );
+        if (inureNowPayLaterExists) {
+          return true;
+        }
+    }
+  }
+  if ( paymentMethodsForm.collection_type === 'broker' && 
+       can(permissionEnum.INPL_USER) 
+  ) { 
+    return true;
+  }
+  return false;
+});
+
 const isPolicyIssuanceDiscount = computed(() => {
   if (
     can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
@@ -436,8 +458,11 @@ const validatePaymentOption = () => {
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
       isDocumentNotUploaded.value[i] = false;
       if (
-        (paymentMethodsModels.value[i] ==
-          page.props.paymentMethodsEnum?.BankTransfer ||
+        (
+          paymentMethodsModels.value[i] ==
+            page.props.paymentMethodsEnum?.InsureNowPayLater ||
+          paymentMethodsModels.value[i] ==
+            page.props.paymentMethodsEnum?.BankTransfer ||
           paymentMethodsModels.value[i] ==
             page.props.paymentMethodsEnum?.Cheque ||
           paymentMethodsModels.value[i] ==
@@ -697,6 +722,13 @@ const handleCollectionTypeChange = () => {
     page.props.paymentMethodsEnum?.MultiplePayment,
     page.props.paymentMethodsEnum?.PartialPayment,
   ];
+  
+  if ( isInsureNowPayLaterAllowed.value ) { 
+    excludedPaymentTypes = excludedPaymentTypes.filter(
+      (paymentType) => paymentType !== page.props.paymentMethodsEnum?.InsureNowPayLater
+    );
+  }
+
   if (paymentMethodsForm.frequency != 'upfront') {
     /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
     excludedPaymentTypes.push(
@@ -777,12 +809,12 @@ const handleApprovalReasonChange = () => {
     paymentTypesFiltered.value = paymentTypes.value;
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
-        ![
-          page.props.paymentMethodsEnum?.InsureNowPayLater,
+        ![          
+          isInsureNowPayLaterAllowed.value ? null : page.props.paymentMethodsEnum?.InsureNowPayLater,
           page.props.paymentMethodsEnum?.ProformaPaymentRequest,
           page.props.paymentMethodsEnum?.MultiplePayment,
           page.props.paymentMethodsEnum?.PartialPayment,
-        ].includes(item.value),
+        ].filter(Boolean).includes(item.value),
     );
     if (paymentMethodsForm.collection_type === 'insurer') {
       if (paymentMethodsForm.frequency === 'upfront') {
@@ -1715,7 +1747,7 @@ const editPaymentModal = (
       isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
-    }
+    }   
   }
   if (paymentMethodsForm.status == 'view') {
     totalPrice.value = payment.total_price;
@@ -2752,6 +2784,9 @@ const discountTypeLabel = computed(() => {
   );
   if (discountType) {
     if (systemAplliedDiscount !== '') {
+      if (discountType.label == systemAplliedDiscount){
+        return discountType.label;
+      }
       return discountType.label + ' + ' + systemAplliedDiscount;
     } else {
       return discountType.label;
@@ -4824,7 +4859,13 @@ const lookupsEnum = page.props.lookupsEnum;
                 isCreditApprovalView ||
                 (splitPaymentRecord.payment_status_id !=
                   paymentStatusEnum.PAID &&
-                  can(permissionEnum.ApprovePayments))
+                  (
+                    can(permissionEnum.ApprovePayments)
+                    ||                    
+                    (can(permissionEnum.INPL_APPROVER) && splitPaymentRecord.payment_methods_code == paymentMethodsEnum?.InsureNowPayLater)
+                  )
+                  
+                )
               "
               class="w-full flex justify-end"
             >

@@ -119,6 +119,17 @@ const onCancel = () => {
     props.sendUpdateLog?.price_vat_not_applicable || null;
   planDetailsForm.price_with_vat = props.sendUpdateLog?.price_with_vat || null;
 };
+
+const onEdit = () => {
+  if (props.isUpdateBooked) {
+    notification.error({
+      title: 'Update already booked',
+      position: 'top',
+    });
+  } else {
+    state.isEdit = true;
+  }
+};
 </script>
 
 <template>
@@ -310,7 +321,7 @@ const onCancel = () => {
           </dl>
         </div>
         <div class="flex justify-end gap-2">
-          <x-button size="sm" @click="state.isEdit = true" v-if="!state.isEdit">
+          <x-button size="sm" @click="onEdit" v-if="!state.isEdit">
             Edit
           </x-button>
           <template v-else>

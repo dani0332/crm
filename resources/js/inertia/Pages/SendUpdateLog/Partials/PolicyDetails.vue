@@ -21,7 +21,11 @@ const props = defineProps({
     quoteType: {
         type: String,
         required: true,
-    }
+    },
+    isUpdateBooked: {
+      type: Boolean,
+      required: true,
+    },
 });
 
 const state = reactive({
@@ -63,12 +67,6 @@ const issuanceStatusText = computed(() => {
   return (id) => statusMap.get(id);
 });*/
 
-
-
-const isEndorsementFinancial = computed(() => {
-    return props.sendUpdateLog.category.code === props.sendUpdateStatusEnum.EF && props.sendUpdateLog.option.code === props.sendUpdateStatusEnum.PPE
-});
-
 const isCIR = computed(() => {
     return props.sendUpdateLog.category.code === props.sendUpdateStatusEnum.CIR;
 });
@@ -101,11 +99,11 @@ const providerName = computed(() => {
 });
 
 const filledExpiryDate = computed(() => {
-    if (!isEndorsementFinancial.value) {
-        return props.sendUpdateLog?.expiry_date || dateToYMD(props.quote?.renewal_expiry_date) || null;
+    if (isCPD.value) {
+        return props.sendUpdateLog?.expiry_date || props.quote?.renewal_expiry_date || null;
     }
 
-    return null;
+    return props.sendUpdateLog?.expiry_date || null;
 });
 
 const policyDetailsForm = useForm({
@@ -118,7 +116,7 @@ const policyDetailsForm = useForm({
     policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
     issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
     start_date: props.sendUpdateLog?.start_date || dateToYMD(props.quote?.policy_start_date) || null,
-    expiry_date: filledExpiryDate.value,
+    expiry_date: dateToYMD(filledExpiryDate.value),
     insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null,
     issuance_status_id: props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null,
     id: props.sendUpdateLog.id,
@@ -184,6 +182,17 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 const isMobile = computed(() => {
     return window.innerWidth <= 768; // Adjust the breakpoint as needed
 });
+
+const onEdit = () => {
+  if (props.isUpdateBooked) {
+    notification.error({
+      title: 'Update already booked',
+      position: 'top',
+    });
+  } else {
+    state.isEdit = true;
+  }
+};
 </script>
 
 <template>
@@ -465,7 +474,7 @@ const isMobile = computed(() => {
         </div>
 				<x-divider class="my-4 mt-10" />
         <div class="flex justify-end gap-2">
-          <x-button size="sm" @click="state.isEdit = true" v-if="!state.isEdit">
+          <x-button size="sm" @click="onEdit" v-if="!state.isEdit">
             Edit
           </x-button>
 <template v-else>
