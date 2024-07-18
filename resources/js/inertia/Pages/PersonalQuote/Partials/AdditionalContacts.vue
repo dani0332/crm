@@ -84,6 +84,11 @@ const onAdditionalContactSubmit = isValid => {
                   title: res.props.flash.success,
                   position: 'top',
               });
+          }else{
+              notification.success({
+                  title: 'Additional Contact Added',
+                  position: 'top',
+              });
           }
       },
       onError: err => {
@@ -91,10 +96,6 @@ const onAdditionalContactSubmit = isValid => {
       },
       onFinish: () => {
           modals.addContact = false;
-          notification.success({
-              title: 'Additional Contact Added',
-              position: 'top',
-          });
 
       },
     },
