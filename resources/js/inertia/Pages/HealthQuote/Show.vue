@@ -1708,13 +1708,13 @@ watch(
 const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
 
 const contentLoader = ref(false);
-const formModal = {
-    quote : page.props.quote,
-    quoteDocuments : page.props.quoteDocuments,
-}
 
 const downloadDocument = async () => {
     try {
+        const formModal = {
+            quote : page.props.quote,
+            quoteDocuments : page.props.quoteDocuments,
+        }
         contentLoader.value = true;
         let urls = `/download/documents`;
         const response = await axios.post(urls, formModal, { responseType: 'blob' });
