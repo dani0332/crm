@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -206,7 +207,7 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSavePolicyDetails($data)
     {
         try {
-            $result = $this->where('id', $data['id'])->update([
+            $result = $this->find($data['id'])->update([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
@@ -244,6 +245,10 @@ class SendUpdateLogRepository extends BaseRepository
             $result = $sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             ]);
+
+            if ($result) {
+                app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $data['action']);
+            }
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
@@ -363,7 +368,16 @@ class SendUpdateLogRepository extends BaseRepository
             $businessInsuranceTypeId = null;
         }
 
-        return $query->sendUpdateOptions($quoteTypeId, $parentId, $businessInsuranceTypeId)->get();
+        $response = $query->sendUpdateOptions($quoteTypeId, $parentId, $businessInsuranceTypeId)->get();
+
+        $checkAdditionalBookingPermission = auth()->user()->hasPermissionTo(PermissionsEnum::SEND_UPDATE_ADD_BOOKING);
+        if (! $checkAdditionalBookingPermission) {
+            $response = $response->filter(function ($item) {
+                return ! in_array($item->slug, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]);
+            });
+        }
+
+        return $response;
     }
 
     /*
