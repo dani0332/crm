@@ -244,7 +244,7 @@ class CycleQuoteController extends Controller
             QuoteStatusEnum::PolicyIssued => 5,
         ];
 
-               if ($request->is_renewal == quoteTypeCode::yesText) {
+        if ($request->is_renewal == quoteTypeCode::yesText) {
             $quotes = array_filter($quotes, function ($quote) use ($renewals) {
                 return in_array($quote['id'], array_keys($renewals));
             });
@@ -262,7 +262,7 @@ class CycleQuoteController extends Controller
             usort($quotes, function ($a, $b) use ($newBusiness) {
                 return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
             });
-        }elseif (array_intersect([TeamNameEnum::CYCLE], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::CYCLE], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
