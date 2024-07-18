@@ -1173,7 +1173,7 @@ class CRUDController extends Controller
             ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PaymentPending, $request)],
             ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::TransactionApproved, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PolicyIssued, $request)],
-        ];  
+        ];
 
         $newBusiness = [
             QuoteStatusEnum::NewLead => 0,
@@ -1192,7 +1192,6 @@ class CRUDController extends Controller
             QuoteStatusEnum::TransactionApproved => 4,
             QuoteStatusEnum::PolicyIssued => 5,
         ];
-
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -1215,7 +1214,7 @@ class CRUDController extends Controller
             usort($quotes, function ($a, $b) use ($newBusiness) {
                 return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
             });
-        }elseif (array_intersect([TeamNameEnum::HOME], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::HOME], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
