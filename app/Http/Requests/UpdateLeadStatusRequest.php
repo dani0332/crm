@@ -142,14 +142,14 @@ class UpdateLeadStatusRequest extends FormRequest
                 $ryuFilter->orWhereNull('decision');
             })->whereNull('screenshot')->latest()->first();
 
-            $isTravelTransactionCheck = true;
+            $isTravelLeadTransactionApproved = true;
             if ((auth()->user()->hasRole(RolesEnum::TravelHapex) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
                 $transactionApprovedQuoteStatus = app(TravelQuoteService::class)->getTransactionApprovedQuoteStatus(request()->leadId);
                 if (isset($transactionApprovedQuoteStatus->id)) {
-                    $isTravelTransactionCheck = false;
+                    $isTravelLeadTransactionApproved = false;
                 }
             }
-            if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelTransactionCheck) {
+            if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelLeadTransactionApproved) {
 
                 $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
                     'insured_first_name',
@@ -163,7 +163,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
 
-            if (AMLService::checkAMLStatusFailed($quoteTypesIds[request()->modelType], request()->leadId) && request()->leadStatus == QuoteStatusEnum::TransactionApproved && $isTravelTransactionCheck) {
+            if (AMLService::checkAMLStatusFailed($quoteTypesIds[request()->modelType], request()->leadId) && request()->leadStatus == QuoteStatusEnum::TransactionApproved && $isTravelLeadTransactionApproved) {
                 $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
             }
 
