@@ -276,7 +276,33 @@
             display: none;
         }
 
-
+        .header {
+            background: #1d83bc;
+            color: #ffffff;
+            font-size: 19px;
+            text-align: center;
+            padding: 8px 10px;
+            width: 100%;
+            height: 60px;
+            max-height: 60px;
+        }
+        .header .logo {
+            float: left;
+            background-color: white;
+            border-radius: 5px;
+            padding: 5px 10px 5px 0px;
+            height: 50px;
+            max-height: 50px;
+        }
+        .header .logo img {
+            max-height: 50px;
+            height: 50px;
+        }
+        .header h3 {
+            float: right;
+            text-align: right;
+            padding-right: 18px;
+        }
     </style>
 </head>
 <body>
@@ -410,8 +436,11 @@
 
     {{-- PDF Page Header --}}
     <header>
-        <div>
-            <img src="{{public_path('images/header.png')}}">
+        <div class="header">
+            <div class="logo">
+                <img class="im-logo" src="{{getIMLogo(true)}}" />
+            </div>
+            <h3>Your Tailor Made <br />Travel Insurance Comparison Table</h3>
         </div>
     </header>
 
@@ -542,7 +571,7 @@
                     <td class="{{@$feature['heading_class']}}"><p class="text-left">{{@$feature['title']}}</p></td>
                     @foreach($planIds as $planId)
                         <?php $return_value = '';
-                            ?>
+                   ?>
                         @if($feature['type'] == 'info')
 
                             @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
@@ -580,11 +609,11 @@
                         @endif
                         <td class="{{@$feature['col_class']}}">
                             <p>
-                    <?php if($return_value == 'Excluded'){
-                            $planIterate++;
-                    ?>
+                    <?php if ($return_value == 'Excluded') {
+                        $planIterate++;
+                        ?>
                                 Excluded
-                    <?php }else{
+                    <?php } else {
                         $planIterate = 0;
                         ?>
                         <?php echo $return_value ?>
@@ -593,9 +622,8 @@
                   </p>
 
                         </td>
-                            <?php if(count($planIds) == $planIterate){
-
-                            ?>
+                            <?php if (count($planIds) == $planIterate) {
+                                ?>
                             <style>
                                 .row_<?php echo $featCount; ?>{
                                     display: none !important;
@@ -603,8 +631,8 @@
                             </style>
                     <?php
 
-                        }
-                        ?>
+                            }
+                   ?>
 
                     @endforeach
                 </tr>

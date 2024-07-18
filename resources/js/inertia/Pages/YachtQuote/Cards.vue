@@ -361,9 +361,9 @@ function onReset() {
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

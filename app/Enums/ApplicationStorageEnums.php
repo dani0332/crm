@@ -75,4 +75,5 @@ final class ApplicationStorageEnums extends Enum
     public const ALFRED_FOLLOWUP_TEMPLATE = 'ALFRED_FOLLOWUP_TEMPLATE';
     public const SIC_FOLLOWUP_TEMPLATE_ID = 'SIC_FOLLOWUP_TEMPLATE_ID';
     public const BRIDGER_PASSWORD = 'BRIDGER_PASSWORD';
+    public const HEALTH_OCB_EMAIL_TEMPLATE = 'HEALTH_OCB_EMAIL_TEMPLATE';
 }

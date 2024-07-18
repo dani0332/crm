@@ -46,15 +46,15 @@ const canExport = ref(false);
 const filters = reactive(availableFilters);
 
 watch(
-    () => filters,
-    () => {
-        if (filters.created_at_start && filters.created_at_end) {
-            canExport.value = true;
-        } else {
-            canExport.value = false;
-        }
-    },
-    { deep: true, immediate: true },
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 let params = useUrlSearchParams('history');
@@ -394,10 +394,7 @@ watch(
         <x-field
           label="Advisor"
           v-if="
-            !hasAnyRole([
-              rolesEnum.PetAdvisor,
-              rolesEnum.PetRenewalAdvisor,
-            ])
+            !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor])
           "
         >
           <ComboBox
@@ -434,9 +431,9 @@ watch(
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -542,8 +539,8 @@ watch(
         {{ currently_insured_with?.text }}
       </template>
 
-      <template #item-policy_number="{ pet_quote }">
-        {{ pet_quote?.policy_number }}
+      <template #item-policy_number="{ policy_number }">
+        {{ policy_number }}
       </template>
       <template #item-type_of_pet="{ pet_quote }">
         {{ pet_quote?.pet_type?.text }}
@@ -581,6 +578,11 @@ watch(
         <div class="text-center">
           {{ is_ecommerce ? 'Yes' : 'No' }}
         </div>
+      </template>
+      <template
+        #item-previous_quote_policy_number="{ previous_quote_policy_number }"
+      >
+        {{ previous_quote_policy_number ?? 'N/A' }}
       </template>
     </DataTable>
 

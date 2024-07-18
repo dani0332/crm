@@ -968,6 +968,7 @@ class CRUDController extends Controller
 
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
+                'emailStatuses' => $emailStatuses,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
