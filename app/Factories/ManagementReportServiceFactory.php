@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Services\ApplicationStorageService;
 use App\Services\Reports\ActivePoliciesReportService;
 use App\Services\Reports\EndingPoliciesReportService;
+use App\Services\Reports\InstallmentReportService;
 use App\Services\Reports\SaleDetailReportService;
 use App\Services\Reports\SaleSummaryReportService;
 use App\Services\Reports\TransactionReportService;
@@ -32,6 +33,8 @@ class ManagementReportServiceFactory
             $strategy = new TransactionReportService();
         } elseif ($reportCategory == ManagementReportCategoriesEnum::ACTIVE_POLICIES) {
             $strategy = new ActivePoliciesReportService();
+        } elseif ($reportCategory == ManagementReportCategoriesEnum::INSTALLMENT) {
+            $strategy = new InstallmentReportService();
         } else {
             info('No strategy found for report category : '.$reportCategory);
         }

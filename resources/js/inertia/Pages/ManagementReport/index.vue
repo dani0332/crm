@@ -5,6 +5,8 @@ import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
 import SalesSummary from './Partials/SaleSummary.vue';
 import Transaction from './Partials/Transaction.vue';
+import Installment from './Partials/Installment.vue';
+import moment from 'moment';
 
 const props = defineProps({
   reportData: Object,
@@ -21,6 +23,7 @@ const reportComponents = {
   'Sales Detail': SalesDetail,
   Transaction: Transaction,
   'Sales Summary': SalesSummary,
+  Installment: Installment,
 };
 
 const params = useUrlSearchParams('history');
@@ -37,7 +40,8 @@ const filterkeys = () => {
   if (
     filters.reportCategory != 'Sales Summary' &&
     filters.reportCategory != 'Sales Detail' &&
-    filters.reportCategory != 'Transaction'
+    filters.reportCategory != 'Transaction' &&
+    filters.reportCategory != 'Installment'
   ) {
     delete filters.policyIssuanceDate;
     delete filters.paymentDueDate;
@@ -70,9 +74,9 @@ let filters = reactive({
     new Date(),
     new Date(),
   ],
-  paymentDueDate: [new Date(), new Date()],
-  policyExpiredDate: [new Date(), new Date()],
-  createdAt: new Date(),
+  paymentDueDate: [moment().format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')],
+  policyExpiredDate: [moment().format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')],
+  createdAt: moment().format('YYYY-MM-DD'),
   transactionType: props.defaultFilters.transactionType ?? [],
   teams: [],
   subTeams: [],
@@ -90,7 +94,6 @@ const loaders = reactive({
 });
 
 let selectedReport = computed(() => {
-  console.log(props.reportName);
   return reportComponents[props.reportName] ?? SalesSummary;
 });
 
@@ -178,6 +181,11 @@ const reportTypes = ref([
     label: 'Active Policies',
     value: 'Active Policies',
     report: ['Active Policies'],
+  },
+  {
+    label: 'Transaction Payments',
+    value: 'Transaction Payments',
+    report: ['Installment'],
   },
 ]);
 
@@ -430,7 +438,8 @@ onMounted(() => {
         size="sm"
         color="#48bb78"
         @click.prevent="onDataExport(1)"
-      >
+        :disabled="loaders.table"
+        >
         Export to Excel
       </x-button>
       <x-button
