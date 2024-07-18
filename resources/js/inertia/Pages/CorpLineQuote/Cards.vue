@@ -17,6 +17,9 @@ const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
+const HasTeams = teams => useHasTeams(teams);
+const teamsEnum = page.props.teamsEnum;
+
 const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.CorpLineRenewalAdvisor,
@@ -87,7 +90,7 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
-  is_renewal: '',
+  is_renewal: HasTeams([teamsEnum.CORPLINE_TEAM, teamsEnum.CORPLINE_RENEWALS]) ? 'Yes' : null,
   payment_status: [],
   is_cold: false,
   is_stale: false,
@@ -180,7 +183,7 @@ const setIntialState = () => {
     page: 1,
     previous_quote_policy_number: '',
     renewal_batch: '',
-    is_renewal: '',
+    is_renewal: HasTeams([teamsEnum.CORPLINE_TEAM, teamsEnum.CORPLINE_RENEWALS]) ? 'Yes' : null,
     payment_status: [],
     is_cold: false,
     is_stale: false,
@@ -387,7 +390,7 @@ watch(
         />
         <x-select
           v-model="filters.is_renewal"
-          label="Is Renewal"
+          label="Renewal"
           placeholder="Search by Renewal"
           :options="[
             { value: '', label: 'All' },

@@ -369,6 +369,15 @@ class BusinessQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+
+        if ($request->is_renewal === null &&
+        (in_array(TeamNameEnum::CORPLINE_TEAM, $userTeams) && in_array(TeamNameEnum::CORPLINE_RENEWALS, $userTeams))
+         && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
+            $request->merge(['is_renewal' => 'Yes']);
+        }
+
         $quotes = [
             ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::NewLead, $request)],
             ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::Allocated, $request)],
@@ -386,9 +395,46 @@ class BusinessQuoteController extends Controller
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        $userId = auth()->id();
-        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if (array_intersect([TeamNameEnum::CORPLINE_TEAM], $userTeams)) {
+        $newBusiness = [
+            QuoteStatusEnum::NewLead => 0,
+            QuoteStatusEnum::ProposalFormRequested => 1,
+            QuoteStatusEnum::ProposalFormReceived => 2,
+            QuoteStatusEnum::AdditionalInformationRequested => 3,
+            QuoteStatusEnum::QuoteRequested => 4,
+            QuoteStatusEnum::Quoted => 5,
+            QuoteStatusEnum::FinalizingTerms => 6,
+            QuoteStatusEnum::PolicyIssued => 7,
+        ];
+
+        $renewals = [
+            QuoteStatusEnum::Allocated => 0,
+            QuoteStatusEnum::FollowedUp => 1,
+            QuoteStatusEnum::PendingRenewalInformation => 2,
+            QuoteStatusEnum::QuoteRequested => 3,
+            QuoteStatusEnum::Quoted => 4,
+            QuoteStatusEnum::FinalizingTerms => 5,
+            QuoteStatusEnum::PolicyIssued => 6,
+        ];
+       
+        if ($request->is_renewal == quoteTypeCode::yesText) {
+            $quotes = array_filter($quotes, function ($quote) use ($renewals) {
+                return in_array($quote['id'], array_keys($renewals));
+            });
+
+            // Sort filtered quotes based on the renewals array order
+            usort($quotes, function ($a, $b) use ($renewals) {
+                return $renewals[$a['id']] <=> $renewals[$b['id']];
+            });
+        } elseif ($request->is_renewal == quoteTypeCode::noText) {
+            $quotes = array_filter($quotes, function ($quote) use ($newBusiness) {
+                return in_array($quote['id'], array_keys($newBusiness));
+            });
+
+            // Sort filtered quotes based on the renewals array order
+            usort($quotes, function ($a, $b) use ($newBusiness) {
+                return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
+            });
+        }elseif (array_intersect([TeamNameEnum::CORPLINE_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::FollowedUp,
