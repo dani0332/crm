@@ -336,7 +336,7 @@ class QuoteDocumentService extends BaseService
         ]);
 
         // delete temp file
-        unlink(storage_path('temp/' . $docName));
+        unlink(storage_path('app/temp/' . $docName));
     }
 
     public function watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
