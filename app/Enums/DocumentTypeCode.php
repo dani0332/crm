@@ -67,4 +67,5 @@ class DocumentTypeCode extends Enum
     const YPD_RECEIPT = 'YPDR';
     const QD = 'QD';
     const AML = 'AML';
+    const E_TICKETS = 'E_TICKETS';
 }
