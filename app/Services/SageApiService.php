@@ -263,6 +263,7 @@ class SageApiService
                 default => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
                     ->get($sageEndPoint, $payLoad),
             };
+
             return is_array($response->json()) ? json_encode($response->json()) : $response->body();
         } catch (\Exception $e) {
             return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
