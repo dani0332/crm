@@ -1154,6 +1154,16 @@ class CRUDController extends Controller
 
     public function cardsViewHome(Request $request)
     {
+
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+
+        if ($request->is_renewal === null &&
+        (in_array(TeamNameEnum::HOME, $userTeams) && in_array(TeamNameEnum::HOME_RENEWALS, $userTeams))
+         && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
+            $request->merge(['is_renewal' => 'Yes']);
+        }
+
         $quotes = [
             ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::NewLead, $request)],
             ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::Allocated, $request)],
@@ -1163,15 +1173,49 @@ class CRUDController extends Controller
             ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PaymentPending, $request)],
             ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::TransactionApproved, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PolicyIssued, $request)],
+        ];  
+
+        $newBusiness = [
+            QuoteStatusEnum::NewLead => 0,
+            QuoteStatusEnum::Quoted => 1,
+            QuoteStatusEnum::FollowedUp => 2,
+            QuoteStatusEnum::PaymentPending => 3,
+            QuoteStatusEnum::TransactionApproved => 4,
+            QuoteStatusEnum::PolicyIssued => 5,
         ];
+
+        $renewals = [
+            QuoteStatusEnum::Allocated => 0,
+            QuoteStatusEnum::Quoted => 1,
+            QuoteStatusEnum::FollowedUp => 2,
+            QuoteStatusEnum::PaymentPending => 3,
+            QuoteStatusEnum::TransactionApproved => 4,
+            QuoteStatusEnum::PolicyIssued => 5,
+        ];
+
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HomeManager, RolesEnum::Admin]);
 
-        $userId = auth()->id();
-        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if (array_intersect([TeamNameEnum::HOME], $userTeams)) {
+        if ($request->is_renewal == quoteTypeCode::yesText) {
+            $quotes = array_filter($quotes, function ($quote) use ($renewals) {
+                return in_array($quote['id'], array_keys($renewals));
+            });
+
+            // Sort filtered quotes based on the renewals array order
+            usort($quotes, function ($a, $b) use ($renewals) {
+                return $renewals[$a['id']] <=> $renewals[$b['id']];
+            });
+        } elseif ($request->is_renewal == quoteTypeCode::noText) {
+            $quotes = array_filter($quotes, function ($quote) use ($newBusiness) {
+                return in_array($quote['id'], array_keys($newBusiness));
+            });
+
+            // Sort filtered quotes based on the renewals array order
+            usort($quotes, function ($a, $b) use ($newBusiness) {
+                return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
+            });
+        }elseif (array_intersect([TeamNameEnum::HOME], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
