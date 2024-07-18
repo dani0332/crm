@@ -245,8 +245,9 @@ class CycleQuoteController extends Controller
         ];
 
         if ($request->is_renewal === quoteTypeCode::yesText) {
-            $quotes = array_filter($quotes, function ($quote) use ($renewals) {
-                return in_array($quote['id'], array_keys($renewals));
+            $renewalKeys = array_keys($renewals);
+            $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                return in_array($quote['id'], $renewalKeys);
             });
 
             // Sort filtered quotes based on the renewals array order
@@ -254,11 +255,12 @@ class CycleQuoteController extends Controller
                 return $renewals[$a['id']] <=> $renewals[$b['id']];
             });
         } elseif ($request->is_renewal === quoteTypeCode::noText) {
-            $quotes = array_filter($quotes, function ($quote) use ($newBusiness) {
-                return in_array($quote['id'], array_keys($newBusiness));
+            $newBusinessKeys = array_keys($newBusiness);
+            $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
+                return in_array($quote['id'], $newBusinessKeys);
             });
 
-            // Sort filtered quotes based on the renewals array order
+            // Sort filtered quotes based on the newBusiness array order
             usort($quotes, function ($a, $b) use ($newBusiness) {
                 return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
             });
