@@ -10,6 +10,7 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadsCountService;
@@ -53,6 +54,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()) {
             $permissions = auth()->user()->getAllPermissions()->pluck('name')->toArray();
             $roles = auth()->user()->getRoleNames()->toArray();
+            $teams = auth()->user()->getUserTeams(auth()->user()->id)->toArray();
             $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         }
 
@@ -63,9 +65,11 @@ class HandleInertiaRequests extends Middleware
                 : null,
             'auth.permissions' => fn () => $permissions,
             'auth.roles' => fn () => $roles,
+            'auth.teams' => fn () => $teams,
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
+            'teamsEnum' => TeamNameEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),

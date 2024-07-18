@@ -43,6 +43,9 @@ const filtersCount = ref(0);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
+const HasTeams = teams => useHasTeams(teams);
+const teamsEnum = page.props.teamsEnum;
+
 const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.RMAdvisor,
@@ -51,6 +54,8 @@ const isAllowed = computed(() => {
     rolesEnum.HealthAdvisor,
   ]);
 });
+
+
 
 const filters = reactive({
   code: '',
@@ -64,7 +69,7 @@ const filters = reactive({
   quote_status: [],
   advisors: [],
   is_ecommerce: '',
-  is_renewal: '',
+  is_renewal: HasTeams([teamsEnum.RM_RENEWALS, teamsEnum.RM_NB]) ? 'Yes' : null,
   previous_quote_policy_number: '',
   renewal_batch: '',
   date: null,
@@ -177,7 +182,14 @@ function onSubmit(isValid) {
   }
 }
 
+// const setInitialFilters = () => {
+//   if(HasTeams([teamsEnum.RM_RENEWALS, teamsEnum.RM_NB])){
+//     filters.is_renewal = 'Yes';
+//   }
+// }
+
 onMounted(() => {
+  // setInitialFilters();
   setQueryStringFilters(params, filters);
 
   let filtersCleaned = cleanObj(filters);
@@ -348,7 +360,7 @@ function onReset() {
         />
         <x-select
           v-model="filters.is_renewal"
-          label="Is Renewal"
+          label="Renewals"
           placeholder="Search by Renewal"
           :options="[
             { value: '', label: 'All' },
