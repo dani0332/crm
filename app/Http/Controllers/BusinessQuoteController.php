@@ -415,7 +415,7 @@ class BusinessQuoteController extends Controller
             QuoteStatusEnum::FinalizingTerms => 5,
             QuoteStatusEnum::PolicyIssued => 6,
         ];
-       
+
         if ($request->is_renewal == quoteTypeCode::yesText) {
             $quotes = array_filter($quotes, function ($quote) use ($renewals) {
                 return in_array($quote['id'], array_keys($renewals));
@@ -434,7 +434,7 @@ class BusinessQuoteController extends Controller
             usort($quotes, function ($a, $b) use ($newBusiness) {
                 return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
             });
-        }elseif (array_intersect([TeamNameEnum::CORPLINE_TEAM], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::CORPLINE_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::FollowedUp,

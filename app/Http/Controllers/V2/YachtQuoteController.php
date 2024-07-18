@@ -265,7 +265,7 @@ class YachtQuoteController extends Controller
             usort($quotes, function ($a, $b) use ($newBusiness) {
                 return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
             });
-        } elseif(array_intersect([TeamNameEnum::YACHT_TEAM], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::YACHT_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
