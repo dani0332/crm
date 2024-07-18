@@ -673,6 +673,9 @@ class SageApiService
                         'requestType' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
+                        'extras' => [
+                            'option_id' => $extras['option'] ?? null,
+                        ],
                     ]);
                 }
 
@@ -689,6 +692,9 @@ class SageApiService
                         'requestType' => SageEnum::SRT_REV_CORR_AP_PREM_INV,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
+                        'extras' => [
+                            'option_id' => $extras['option'] ?? null,
+                        ],
                     ]);
                 }
 
@@ -710,6 +716,9 @@ class SageApiService
                         'splitPayments' => $splitPayments,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
+                        'extras' => [
+                            'option_id' => $extras['option'] ?? null,
+                        ],
                     ]);
                 }
 
@@ -729,6 +738,10 @@ class SageApiService
                         'splitPayments' => $splitPayments,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
+                        'apPatchCallEnable' => $extras['ap_patch_call_enable'], // TODO :: This is temporary solution, this after AP Split patch working fine
+                        'extras' => [
+                            'option_id' => $extras['option'] ?? null,
+                        ],
                     ]);
                 }
 
