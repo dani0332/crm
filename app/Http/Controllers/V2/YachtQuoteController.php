@@ -197,8 +197,7 @@ class YachtQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
-        $userId = auth()->id();
-        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
         if ($request->is_renewal === null &&
         (in_array(TeamNameEnum::YACHT_TEAM, $userTeams) && in_array(TeamNameEnum::YACHT_RENEWALS, $userTeams))

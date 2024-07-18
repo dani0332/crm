@@ -1155,8 +1155,7 @@ class CRUDController extends Controller
     public function cardsViewHome(Request $request)
     {
 
-        $userId = auth()->id();
-        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
         if ($request->is_renewal === null &&
         (in_array(TeamNameEnum::HOME, $userTeams) && in_array(TeamNameEnum::HOME_RENEWALS, $userTeams))

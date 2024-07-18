@@ -203,8 +203,7 @@ class CycleQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
-        $userId = auth()->id();
-        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
         if ($request->is_renewal === null &&
         (in_array(TeamNameEnum::CYCLE, $userTeams) && in_array(TeamNameEnum::CYCLE_RENEWALS, $userTeams))
