@@ -968,9 +968,9 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
-            if ($messageId) {
-                info('fn: sendUpdateToCustomerEmail, email sending completed. messageId: '.$messageId);
+            $message = json_decode($clientRequest->getBody()->getContents());
+            if (isset($message->messageId)) {
+                info('fn: sendUpdateToCustomerEmail, email sending completed. messageId: '.$message->messageId);
                 $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
                 $responseCode = $clientRequest->getStatusCode();
 
