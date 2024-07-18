@@ -35,7 +35,6 @@ use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
-use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -109,9 +108,9 @@ class RenewalsUploadService
     }
 
     /*
-    * @name generateUUID()
-    * @returns a 16 character UUIDv4 string
-    */
+     * @name generateUUID()
+     * @returns a 16 character UUIDv4 string
+     */
     public function generateUUID($quoteType, $quoteTypeId)
     {
         info('UAT FN: generateUUID QuoteTypeId: '.$quoteTypeId);
@@ -728,7 +727,7 @@ class RenewalsUploadService
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
-            $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
+            $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
 
             //advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
@@ -1259,7 +1258,7 @@ class RenewalsUploadService
                 if ($responseCode == 201) {
                     //update quote status to quoted
                     $notes = 'Change quote status to Quoted as OCB sent';
-                    app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id, $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
+                    app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id(), $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
 
                     //record ocb sent datetime
                     $carQuote->carQuoteRequestDetail->updateOrCreate(

@@ -871,6 +871,9 @@ if (! function_exists('getCardViewRequestFilters')) {
 if (! function_exists('getMyAlfredCampaign')) {
     function getMyAlfredCampaign($campaignId)
     {
+        // temporary fix to clear cache for prod - will remove later
+        Cache::forget("MA_CAMPAIGN_{$campaignId}");
+
         return Cache::remember("MA_CAMPAIGN_{$campaignId}", now()->addHours(24), function () use ($campaignId) {
             try {
                 $response = Http::timeout(20)->retry(3, 3000)->get(config('constants.MA_V1_ENDPOINT')."/campaigns/{$campaignId}");

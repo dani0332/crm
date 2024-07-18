@@ -38,6 +38,7 @@ use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
@@ -99,7 +100,7 @@ class LifeQuoteController extends Controller
     public function show($uuid)
     {
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
-        $payments = $quote->payments;
+        $payments = $quote?->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
@@ -166,6 +167,9 @@ class LifeQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $sortedPayments = collect($payments)->sortByDesc(function ($column) {
+            return Carbon::parse($column->created_at)->timestamp;
+        })->values()->toArray();
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -193,7 +197,7 @@ class LifeQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'paymentMethods' => (new LookupService())->getPaymentMethods(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'payments' => $payments,
+            'payments' => $sortedPayments,
             'insuranceProviders' => $insuranceProviders,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,

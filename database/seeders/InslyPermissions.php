@@ -92,5 +92,13 @@ class InslyPermissions extends Seeder
 
         $permission8->assignRole($group4);
         $permission9->assignRole($group4);
+
+        // Create new Permission for Endorsment Financial subtypes.
+        $addBookingSUPermission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::SEND_UPDATE_ADD_BOOKING,
+            'guard_name' => 'web',
+        ]);
+        $addBookingSUPermission->assignRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering]);
+
     }
 }
