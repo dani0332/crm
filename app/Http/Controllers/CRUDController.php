@@ -1195,7 +1195,7 @@ class CRUDController extends Controller
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        if ($request->is_renewal == quoteTypeCode::yesText) {
+        if ($request->is_renewal === quoteTypeCode::yesText) {
             $quotes = array_filter($quotes, function ($quote) use ($renewals) {
                 return in_array($quote['id'], array_keys($renewals));
             });
@@ -1204,7 +1204,7 @@ class CRUDController extends Controller
             usort($quotes, function ($a, $b) use ($renewals) {
                 return $renewals[$a['id']] <=> $renewals[$b['id']];
             });
-        } elseif ($request->is_renewal == quoteTypeCode::noText) {
+        } elseif ($request->is_renewal === quoteTypeCode::noText) {
             $quotes = array_filter($quotes, function ($quote) use ($newBusiness) {
                 return in_array($quote['id'], array_keys($newBusiness));
             });
