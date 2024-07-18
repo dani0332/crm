@@ -182,14 +182,8 @@ function onSubmit(isValid) {
   }
 }
 
-// const setInitialFilters = () => {
-//   if(HasTeams([teamsEnum.RM_RENEWALS, teamsEnum.RM_NB])){
-//     filters.is_renewal = 'Yes';
-//   }
-// }
 
 onMounted(() => {
-  // setInitialFilters();
   setQueryStringFilters(params, filters);
 
   let filtersCleaned = cleanObj(filters);
@@ -360,7 +354,7 @@ function onReset() {
         />
         <x-select
           v-model="filters.is_renewal"
-          label="Renewals"
+          label="Renewal"
           placeholder="Search by Renewal"
           :options="[
             { value: '', label: 'All' },
