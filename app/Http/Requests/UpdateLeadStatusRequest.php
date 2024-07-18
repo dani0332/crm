@@ -14,7 +14,6 @@ use App\Models\Customer;
 use App\Models\KycLog;
 use App\Models\RenewalBatch;
 use App\Services\AMLService;
-use App\Services\CRUDService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
