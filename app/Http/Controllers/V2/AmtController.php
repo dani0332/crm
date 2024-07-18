@@ -52,7 +52,6 @@ class AmtController extends Controller
 {
     use GenericQueriesAllLobs, RolePermissionConditions;
 
-    private $query;
     /**
      * Display a listing of the resource.
      *
@@ -60,7 +59,7 @@ class AmtController extends Controller
      */
     public function index(Request $request)
     {
-        $this->query = DB::table('business_quote_request as bqr')
+        $data = DB::table('business_quote_request as bqr')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqr.id', '=', 'bqrd.business_quote_request_id')
             ->leftJoin('business_type_of_insurance as bit', 'bqr.business_type_of_insurance_id', '=', 'bit.id')
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
@@ -96,9 +95,9 @@ class AmtController extends Controller
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
+            $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
-        $this->whereBasedOnRole($this->query, 'bqr');
+        $this->whereBasedOnRole($data, 'bqr');
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
@@ -113,57 +112,57 @@ class AmtController extends Controller
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no) && empty($request->renewal_batch) && empty($request->previous_quote_policy_number)
         ) {
-            $this->query->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
+            $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->first_name) && $request->first_name != '') {
-            $this->query->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
+            $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
         }
         if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-            $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
+            $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
         if (isset($request->last_name) && $request->last_name != '') {
-            $this->query->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
+            $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
         }
         if (isset($request->email) && $request->email != '') {
-            $this->query->where('bqr.email', '=', $request->email);
+            $data->where('bqr.email', '=', $request->email);
         }
         if (isset($request->code) && $request->code != '') {
-            $this->query->where('bqr.code', '=', $request->code);
+            $data->where('bqr.code', '=', $request->code);
         }
         if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $this->query->where('bqr.mobile_no', '=', $request->mobile_no);
+            $data->where('bqr.mobile_no', '=', $request->mobile_no);
         }
         if (isset($request->leadStatus) && $request->leadStatus != '') {
-            $this->query->whereIn('qs.id', $request->leadStatus);
+            $data->whereIn('qs.id', $request->leadStatus);
         }
         if (isset($request->advisor_id) && is_array($request->advisor_id) && count($request->advisor_id) > 0) {
             if (count($request->advisor_id) === 1 && $request->advisor_id[0] == '-1') {
-                $this->query->whereNull('bqr.advisor_id');
+                $data->whereNull('bqr.advisor_id');
             } else {
-                $this->query->whereIn('bqr.advisor_id', $request->advisor_id);
+                $data->whereIn('bqr.advisor_id', $request->advisor_id);
             }
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date_end)->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+            $data->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $this->query->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+            $data->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where(function ($query) use ($request) {
+            $data->where(function ($query) use ($request) {
                 $query->where('bqr.policy_number', $request->previous_quote_policy_number)
                     ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('bqr.renewal_batch', $request->renewal_batch);
+            $data->where('bqr.renewal_batch', $request->renewal_batch);
         }
 
-        $this->adjustQueryByDateFilters('bqr');
+        $this->adjustQueryByDateFilters($data, 'bqr');
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -177,13 +176,13 @@ class AmtController extends Controller
             if ($column == 8) {
                 $column = 'bqrd.next_followup_date';
             }
-            $this->query->orderBy('bqr.advisor_id')->orderBy($column, $direction);
+            $data->orderBy('bqr.advisor_id')->orderBy($column, $direction);
         } else {
-            $this->query->orderBy('bqr.created_at', 'DESC')->orderBy('bqr.advisor_id');
+            $data->orderBy('bqr.created_at', 'DESC')->orderBy('bqr.advisor_id');
         }
 
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
-        $quotes = $this->query->simplePaginate(15)->withQueryString();
+        $quotes = $data->simplePaginate(15)->withQueryString();
 
         return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed'));
     }
