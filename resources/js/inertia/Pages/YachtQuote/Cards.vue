@@ -18,6 +18,9 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
+const HasTeams = teams => useHasTeams(teams);
+const teamsEnum = page.props.teamsEnum;
+
 const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.YachtAdvisor,
@@ -84,7 +87,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
-  previous_quote_policy_number: '',
+  is_renewal: HasTeams([teamsEnum.YACHT_TEAM, teamsEnum.YACHT_RENEWALS]) ? 'Yes' : null,
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
@@ -343,9 +346,9 @@ function onReset() {
             placeholder="Search by Renewal Batch"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
-            v-model="filters.previous_quote_policy_number"
+            v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[
               { value: '', label: 'All' },

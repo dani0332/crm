@@ -197,23 +197,56 @@ class YachtQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+
+        if ($request->is_renewal === null &&
+        (in_array(TeamNameEnum::YACHT_TEAM, $userTeams) && in_array(TeamNameEnum::YACHT_RENEWALS, $userTeams))
+         && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
+            $request->merge(['is_renewal' => 'Yes']);
+        }
+
         $quotes = [
             ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::NewLead, $request)],
+            ['id' => QuoteStatusEnum::ProposalFormRequested, 'title' => quoteStatusCode::PROPOSAL_FORM_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::ProposalFormRequested, $request)],
+            ['id' => QuoteStatusEnum::ProposalFormReceived, 'title' => quoteStatusCode::PROPOSAL_FORM_RECEIVED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::ProposalFormReceived, $request)],
+            ['id' => QuoteStatusEnum::AdditionalInformationRequested, 'title' => quoteStatusCode::ADDITIONAL_INFORMATION_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::AdditionalInformationRequested, $request)],
             ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::Allocated, $request)],
+            ['id' => QuoteStatusEnum::QuoteRequested, 'title' => quoteStatusCode::QUOTE_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::QuoteRequested, $request)],
             ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::Quoted, $request)],
             ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::FollowedUp, $request)],
+            ['id' => QuoteStatusEnum::PendingRenewalInformation, 'title' => quoteStatusCode::PENDING_RENEWAL_INFORMATION, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PendingRenewalInformation, $request)],
             ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::InNegotiation, $request)],
             ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PaymentPending, $request)],
             ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::FinalizingTerms, 'title' => quoteStatusCode::FINALIZING_TERMS, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::FinalizingTerms, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        $userId = auth()->id();
-        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        // dd($userTeams);
+        $newBusiness = [
+            QuoteStatusEnum::NewLead => 0,
+            QuoteStatusEnum::ProposalFormRequested => 1,
+            QuoteStatusEnum::ProposalFormReceived => 2,
+            QuoteStatusEnum::AdditionalInformationRequested => 3,
+            QuoteStatusEnum::QuoteRequested => 4,
+            QuoteStatusEnum::Quoted => 5,
+            QuoteStatusEnum::FinalizingTerms => 6,
+            QuoteStatusEnum::PolicyIssued => 7,
+        ];
+
+        $renewals = [
+            QuoteStatusEnum::Allocated => 0,
+            QuoteStatusEnum::FollowedUp => 1,
+            QuoteStatusEnum::PendingRenewalInformation => 2,
+            QuoteStatusEnum::QuoteRequested => 3,
+            QuoteStatusEnum::Quoted => 4,
+            QuoteStatusEnum::FinalizingTerms => 5,
+            QuoteStatusEnum::PolicyIssued => 6,
+        ];
+
         if (array_intersect([TeamNameEnum::YACHT_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
