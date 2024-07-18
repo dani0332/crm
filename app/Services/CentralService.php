@@ -223,7 +223,6 @@ class CentralService
                             foreach ($plans as $plan) {
                                 if (isset($plan->planTypeId)) {
                                     $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
-
                                 } else {
                                     $plan->plan_type = 'N/A';
                                 }
@@ -307,7 +306,7 @@ class CentralService
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
                 $data = [
-                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteTypeId' => QuoteTypeId::Travel,
                     'quoteUID' => $uuid,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                     'plans' => [
