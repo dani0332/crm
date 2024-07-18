@@ -933,7 +933,7 @@ class TravelQuoteService extends BaseService
             return ['error' => 'Quote plans not available'];
         }
 
-        $providerIds = collect($quotePlans->quotes->plans)->pluck('insuranceProviderId')->toArray();
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('providerId')->toArray();
         $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
