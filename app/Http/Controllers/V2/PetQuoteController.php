@@ -218,7 +218,9 @@ class PetQuoteController extends Controller
         $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
         $areBothTeamsPresent = in_array(TeamNameEnum::PET_TEAM, $userTeams) && in_array(TeamNameEnum::PET_RENEWALS, $userTeams);
-        if ($request->is_renewal === null && $areBothTeamsPresent && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
+        $isAdvisorOrManagerOrDeputy = auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy();
+        
+        if ($request->is_renewal === null && $areBothTeamsPresent && $isAdvisorOrManagerOrDeputy) {
             $request->merge(['is_renewal' => 'Yes']);
         }
         $quotes = [

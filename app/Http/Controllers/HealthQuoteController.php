@@ -301,7 +301,9 @@ class HealthQuoteController extends Controller
 
         $areBothTeamsPresent = in_array(TeamNameEnum::RM_NB, $userTeams) && in_array(TeamNameEnum::RM_RENEWALS, $userTeams);
 
-        if ($request->is_renewal === null && $areBothTeamsPresent && (auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy())) {
+        $isAdvisorOrManagerOrDeputy = auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy();
+        
+        if ($request->is_renewal === null && $areBothTeamsPresent && $isAdvisorOrManagerOrDeputy) {
             $request->merge(['is_renewal' => 'Yes']);
         }
 
