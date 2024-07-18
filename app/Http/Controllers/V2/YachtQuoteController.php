@@ -247,7 +247,25 @@ class YachtQuoteController extends Controller
             QuoteStatusEnum::PolicyIssued => 6,
         ];
 
-        if (array_intersect([TeamNameEnum::YACHT_TEAM], $userTeams)) {
+        if ($request->is_renewal == quoteTypeCode::yesText) {
+            $quotes = array_filter($quotes, function ($quote) use ($renewals) {
+                return in_array($quote['id'], array_keys($renewals));
+            });
+
+            // Sort filtered quotes based on the renewals array order
+            usort($quotes, function ($a, $b) use ($renewals) {
+                return $renewals[$a['id']] <=> $renewals[$b['id']];
+            });
+        } elseif ($request->is_renewal == quoteTypeCode::noText) {
+            $quotes = array_filter($quotes, function ($quote) use ($newBusiness) {
+                return in_array($quote['id'], array_keys($newBusiness));
+            });
+
+            // Sort filtered quotes based on the renewals array order
+            usort($quotes, function ($a, $b) use ($newBusiness) {
+                return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
+            });
+        } elseif(array_intersect([TeamNameEnum::YACHT_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
