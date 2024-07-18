@@ -15,6 +15,7 @@ use App\Models\KycLog;
 use App\Models\RenewalBatch;
 use App\Services\AMLService;
 use App\Services\CRUDService;
+use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -144,12 +145,11 @@ class UpdateLeadStatusRequest extends FormRequest
 
             $isTravelTransactionCheck = true;
             if ((auth()->user()->hasRole(RolesEnum::TravelHapex) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
-                $previousQuoteStatus = app(CRUDService::class)->getTravelQuoteStatus(request()->modelType, request()->leadId);
-                if (isset($previousQuoteStatus->id)) {
+                $transactionApprovedQuoteStatus = app(TravelQuoteService::class)->getTransactionApprovedQuoteStatus(request()->leadId);
+                if (isset($transactionApprovedQuoteStatus->id)) {
                     $isTravelTransactionCheck = false;
                 }
             }
-
             if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelTransactionCheck) {
 
                 $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
