@@ -26,8 +26,8 @@ const quoteDocumentsTable = reactive({
       value: 'original_name',
     },
     {
-      text: 'Watermarked',
-      value: 'is_watermarked',
+      text: 'Original Document',
+      value: 'doc_name',
     },
     {
       text: 'Created At',
@@ -38,6 +38,22 @@ const quoteDocumentsTable = reactive({
       value: 'created_by.email',
     },
   ],
+});
+
+const documentsTableItems = computed(() => {
+  return page.props.quoteDocuments.map(doc => {
+    return {
+      document_type_text:
+        doc.document_type_text.length > 0 ? doc.document_type_text : '',
+      doc_name: doc.doc_name,
+      original_name: doc.original_name,
+      created_at: doc.created_at,
+      doc_uuid: doc.doc_uuid,
+      doc_url: doc.doc_url,
+      created_by: doc.created_by ? doc.created_by.name : '',
+      watermarked_doc_url: doc.watermarked_doc_url ?? doc.doc_url,
+    };
+  });
 });
 
 const confirmDeleteData = reactive({
@@ -132,7 +148,7 @@ const uploadFile = (doc, filesWithInfo) => {
   <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
     <h3 class="font-semibold text-primary-800 text-lg">
       Documents
-      <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+      <x-tag size="sm">{{ documentsTableItems.length || 0 }}</x-tag>
     </h3>
     <template #content>
       <x-divider class="mb-4 mt-1" />
@@ -144,23 +160,29 @@ const uploadFile = (doc, filesWithInfo) => {
       <DataTable
         table-class-name="compact"
         :headers="quoteDocumentsTable.columns"
-        :items="quoteDocuments || []"
+        :items="documentsTableItems || []"
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
-        :hide-footer="quoteDocuments.length < 15"
+        :hide-footer="documentsTableItems.length < 15"
       >
         <template #item-original_name="item">
           <a
-            :href="storageUrl + item.doc_url"
+            :href="storageUrl + item.watermarked_doc_url"
             target="_blank"
             class="text-primary-600"
           >
             {{ item.original_name }}
           </a>
         </template>
-        <template #item-is_watermarked="item">
-            {{ item.is_watermarked == 1 ? 'Yes' : 'No' }}
+        <template #item-doc_name="item">
+          <a
+            :href="storageUrl + item.doc_url"
+            target="_blank"
+            class="text-primary-600"
+          >
+            {{ item.doc_name }}
+          </a>
         </template>
         <template #item-action="{ doc_name }">
           <div>

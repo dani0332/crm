@@ -88,16 +88,16 @@ class PersonalQuoteRepository extends BaseRepository
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
         $fileMimeType = $file->getClientMimeType();
         //upload file to azure
-        $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
+        $fileNameAzure = uniqid().'_'.$quote->uuid.'_original_'.$docName;
         $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
 
         // watermark only for pdf files
         if ($fileMimeType == 'application/pdf') {
-            $quoteDocumentService->watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+            $watermarkData = $quoteDocumentService->watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
         } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
-            $quoteDocumentService->watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+            $watermarkData = $quoteDocumentService->watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
         } else if ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-            $quoteDocumentService->watermarkWordDocs($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+            $watermarkData = $quoteDocumentService->watermarkWordDocs($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
         }
 
         //generate unique uuid
@@ -107,9 +107,11 @@ class PersonalQuoteRepository extends BaseRepository
         }
 
         return $quote->documents()->create([
-            'doc_name' => $docName,
+            'doc_name' => 'original_'.$docName,
+            'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
             'original_name' => $originalName,
             'doc_url' => $filePathAzure,
+            'watermarked_doc_url' => $watermarkData['watermared_doc_url'] ?? null,
             'doc_mime_type' => $fileMimeType,
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,

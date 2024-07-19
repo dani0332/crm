@@ -359,8 +359,8 @@ watch(availablePlansTable, (newPlans) =>  {
 const documentsTable = reactive({
   columns: [
     { text: 'Document Type', value: 'document_type_text' },
-    { text: 'Document Name', value: 'document_name_text' },
-    { text: 'Watermarked', value: 'is_watermarked' },
+    { text: 'Document Name', value: 'document_original_name' },
+    { text: 'Original Document', value: 'doc_name' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Created By', value: 'created_by' },
   ],
@@ -377,7 +377,7 @@ const documentsTableItems = computed(() => {
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
       created_by: doc.created_by ? doc.created_by.name : '',
-      is_watermarked: doc.is_watermarked ? 'Yes' : 'No',
+      watermarked_doc_url: doc.watermarked_doc_url ?? doc.doc_url,
     };
   });
 });
@@ -3486,13 +3486,15 @@ const handlePlanSelected = plan => {
         hide-rows-per-page
         hide-footer
       >
-        <template #item-document_name_text="item">
-          <a target="_blank" :href="storageUrl + item.doc_url">{{
+        <template #item-document_original_name="item">
+          <a target="_blank" :href="storageUrl + item.watermarked_doc_url">{{
             item.document_original_name
           }}</a>
         </template>
-        <template #item-is_watermarked="item">
-            {{ item.is_watermarked }}
+        <template #item-doc_name="item">
+          <a target="_blank" :href="storageUrl + item.doc_url">{{
+            item.document_name_text
+          }}</a>
         </template>
         <template #item-action="item">
           <div class="flex gap-2">
