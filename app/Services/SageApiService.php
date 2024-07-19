@@ -1234,18 +1234,25 @@ class SageApiService
 
     private function checkRequiredSageIds($sageRequest): array
     {
+        $missingFields = [];
         if (empty($sageRequest->customerId)) {
-            return ['status' => false, 'message' => 'Customer not found in sage'];
+            $missingFields[] = 'Customer Sage ID';
         }
 
-        if (! $sageRequest->insurerGlLiaiblityAccount && ! $sageRequest->sageVenderId && ! $sageRequest->sageInsurerCustomerId) {
-            return ['status' => false, 'message' => 'Sage Vendor ID, Sage Insurer Customer ID and GL Account for Insurance Provider not found.'];
-        } elseif (! $sageRequest->insurerGlLiaiblityAccount) {
-            return ['status' => false, 'message' => 'GL Account for Insurance Provider not found.'];
-        } elseif (! $sageRequest->sageVenderId) {
-            return ['status' => false, 'message' => 'Sage Vendor ID for Insurance Provider not found.'];
-        } elseif (! $sageRequest->sageInsurerCustomerId) {
-            return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
+        if (! $sageRequest->insurerGlLiaiblityAccount) {
+            $missingFields[] = 'GL Account for Insurance Provider';
+        }
+        if (! $sageRequest->sageVenderId) {
+            $missingFields[] = 'Sage Vendor ID for Insurance Provider';
+        }
+        if (! $sageRequest->sageInsurerCustomerId) {
+            $missingFields[] = 'Sage Insurer Customer ID for Insurance Provider';
+        }
+
+        if (! empty($missingFields)) {
+            $message = implode(', ', $missingFields).' not found.';
+
+            return ['status' => false, 'message' => $message];
         }
 
         return ['status' => true, 'message' => ''];
@@ -2184,7 +2191,7 @@ class SageApiService
         }
 
         $returnMessage['status'] = true;
-        $returnMessage['message'] = 'Apply Prepayments on sage';
+        $returnMessage['message'] = 'Prepayments applied on sage';
 
         return $returnMessage;
     }
