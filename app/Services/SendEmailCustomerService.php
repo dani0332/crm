@@ -735,7 +735,7 @@ class SendEmailCustomerService extends BaseService
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
-                        'name' => basename($documentURL),
+                        'name' => "InsuranceMarket.ae™ ".$document->document_type_text." for Policy Number " . $emailData->policy_number ,
                     ];
                 }
             }
@@ -819,7 +819,7 @@ class SendEmailCustomerService extends BaseService
             $response = '';
             $responseCode = $ex->getCode();
             $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
-            error($responseDetail);
+            info($responseDetail);
             info('Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
         }
 
