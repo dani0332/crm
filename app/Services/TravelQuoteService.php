@@ -339,7 +339,7 @@ class TravelQuoteService extends BaseService
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
@@ -434,6 +434,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+        $this->adjustQueryByDateFilters($this->query, 'tqr');
 
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
