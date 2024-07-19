@@ -22,10 +22,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
 const isAllowed = computed(() => {
-  return !hasAnyRole([
-    rolesEnum.PetAdvisor,
-    rolesEnum.PetRenewalAdvisor,
-  ]);
+  return !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor]);
 });
 
 watch(
@@ -96,6 +93,8 @@ const filters = reactive({
   is_cold: '',
   stale_at: '',
 });
+
+provide('filters', filters);
 
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
@@ -345,9 +344,9 @@ onUnmounted(() => {
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"

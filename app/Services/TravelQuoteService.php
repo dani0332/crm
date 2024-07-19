@@ -15,6 +15,7 @@ use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\QuoteBatches;
+use App\Models\TravelDestination;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
@@ -110,6 +111,7 @@ class TravelQuoteService extends BaseService
             'tqr.primary_member_id',
             'tqr.risk_score',
             'tqr.kyc_decision',
+            'tqr.is_documents_valid',
             //'tqr.prefill_plan_id',
             DB::raw('IF(EXISTS (
                 SELECT *
@@ -163,6 +165,8 @@ class TravelQuoteService extends BaseService
             'email' => $request->email,
             'mobileNo' => $request->mobile_no,
             'nationalityId' => $request->nationality_id,
+            'destinationIds' => $request->destination_ids ?? [],
+            'tripStarted' => $request->has_arrived_uae == '1' ? 1 : 0,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
         ];
@@ -174,12 +178,16 @@ class TravelQuoteService extends BaseService
                 if (isset($member['primary'])) {
                     $memberData->primary = true;
                     $travelQuote['dob'] = $memberDob;
+                } else {
+                    $memberData->primary = false;
                 }
                 if (isset($member['id'])) {
                     $memberData->id = $member['id'];
                 }
                 $memberData->dob = $memberDob;
                 $memberData->gender = $member['gender'];
+                $memberData->uaeResident = (bool) (isset($member['uae_resident']) && $member['uae_resident'] == '1') ? true : false;
+                $memberData->nationalityId = $request->nationality_id;
                 array_push($members, $memberData);
             }
             $travelQuote['members'] = $members;
@@ -355,10 +363,13 @@ class TravelQuoteService extends BaseService
         }
         if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('tqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where(function ($query) use ($request) {
+                $query->where('tqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $this->query->where('tqr.renewal_batch', $request->renewal_batch);
@@ -572,6 +583,7 @@ class TravelQuoteService extends BaseService
             'premium' => 'input|number|title',
             'policy_number' => 'input|text',
             'nationality_id' => 'select|title|required',
+            'destination_id' => 'select' | 'title',
             'previous_quote_id' => 'readonly|title',
             'renewal_expiry_date' => 'input|date|title|range',
             'is_renewal' => '|static|Yes,No',
@@ -975,6 +987,25 @@ class TravelQuoteService extends BaseService
         }
 
         return true;
+    }
+
+    public function getTravelDestinations($id)
+    {
+        return TravelDestination::where('quote_id', $id)->with('destination:id,code,country_name')->get();
+    }
+
+    public function getTransactionApprovedQuoteStatus($leadId)
+    {
+        $transactionApprovedAudit = DB::table('audits as a')
+            ->where(function ($query) use ($leadId) {
+                $query->where('a.auditable_type', 'App\Models\\'.QuoteTypes::TRAVEL->value.'Quote')
+                    ->where('a.auditable_id', $leadId)
+                    ->where(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))"), QuoteStatusEnum::TransactionApproved);
+            })
+            ->orderBy('a.created_at', 'DESC')
+            ->first();
+
+        return $transactionApprovedAudit;
     }
 
 }
