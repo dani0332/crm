@@ -29,12 +29,10 @@ class RunProcessCCPaymentsJob extends Command
     public function handle()
     {
         info('CC Payments Job Started');
-
         CcPaymentProcessJob::where('status', PaymentProcessJobEnum::PENDING_STATUS)
             ->chunk(100, function ($pendingCCRecords) {
-                foreach ($pendingCCRecords as $pendingCCRecord) {
+                foreach ($pendingCCRecords as $pendingCCRecord) { 
                     info("CC Payments Job Started For Payment Split ID: {$pendingCCRecord->payment_splits_id}");
-
                     try {
                         $pendingCCRecord->update(['status' => PaymentProcessJobEnum::INPROCESS_STATUS]);
 
@@ -45,7 +43,6 @@ class RunProcessCCPaymentsJob extends Command
                             $pendingCCRecord->amount_captured,
                             true
                         );
-
                         info("CC Payments Job Ended For Payment Split ID: {$pendingCCRecord->payment_splits_id}");
                     } catch (\Exception $exception) {
                         // Handle the exception here
