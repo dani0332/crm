@@ -1003,7 +1003,7 @@ class SageApiService
                 'revCorrSplitPayment' => $extraParams['revCorrSplitPayment'] ?? false,
                 'paymentDetails' => $paymentDetails ?? [],
                 'apPatchCallEnable' => $extraParams['apPatchCallEnable'] ?? true, // TODO :: This is temporary solution, this after AP Split patch working fine
-                'extras' => $extraParams['extras'],
+                'extras' => $extraParams['extras'] ?? [],
             ];
 
             if (isset($extraParams['batchNumber']) && isset($extraParams['invoiceType'])) {
