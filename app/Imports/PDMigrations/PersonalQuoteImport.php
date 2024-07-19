@@ -19,7 +19,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
     use PersonalQuoteSyncTrait;
 
     public function model(array $row)
-    {   
+    {
         $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('MY');
         if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) && strpos($dealBatch, '2024') !== false) {
             $data = [
@@ -44,7 +44,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             //     $lead = PersonalQuote::where($searchCriteria)->first();
             // }
 
-            // for testing purpose on UAT 
+            // for testing purpose on UAT
             $lead = PersonalQuote::where($searchCriteria)->first();
             if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
                 $lead->update($data);
