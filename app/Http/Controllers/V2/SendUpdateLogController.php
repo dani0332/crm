@@ -9,7 +9,6 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
@@ -192,12 +191,7 @@ class SendUpdateLogController extends Controller
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
-        if ($quoteTypeId == QuoteTypeId::Business) {
-            $businessQuoteType = $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical) ? QuoteTypeId::GroupMedical : QuoteTypeId::Corpline;
-            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($businessQuoteType);
-        } else {
-            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
-        }
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
 
         return inertia('SendUpdateLog/Show', [

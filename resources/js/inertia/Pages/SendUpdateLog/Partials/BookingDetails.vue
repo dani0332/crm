@@ -502,7 +502,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
-  bookingDetailsForm.price_vat_applicable = Math.abs(reversalEntry.price_vat_applicable) || null;
+  bookingDetailsForm.price_vat_applicable = Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
   bookingDetailsForm.price_vat_not_applicable = Math.abs(reversalEntry.price_vat_not_applicable) || '0.00';
   bookingDetailsForm.vat_on_commission = reversalEntry.vat_on_commission || null;

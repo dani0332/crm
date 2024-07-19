@@ -819,7 +819,7 @@ class SendEmailCustomerService extends BaseService
             $response = '';
             $responseCode = $ex->getCode();
             $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
-            error($responseDetail);
+            Log::error($responseDetail);
             info('Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
         }
 
@@ -876,6 +876,120 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $user->email);
 
         return $responseCode;
+    }
+
+    public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
+    {
+        try {
+            info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
+
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
+
+            if ($emailAttachments) {
+                $attachments = [];
+                foreach ($emailAttachments as $emailAttachment) {
+                    $attachments[] = [
+                        'url' => storageUrl().$emailAttachment,
+                        'name' => basename($emailAttachment),
+                    ];
+                }
+            }
+
+            $sendUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_UPDATE_EMAIL);
+            info('send update email fetched. email: '.$sendUpdateEmail);
+            info('template id is : '.$emailTemplateId);
+
+            $body = [
+                'sender' => [
+                    'email' => $sendUpdateEmail,
+                    'name' => 'InsuranceMarket.ae',
+                ],
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->clientFullName,
+                ]],
+                'templateId' => (int) $emailTemplateId,
+                'params' => $emailData,
+                'tags' => [
+                    $tag,
+                ],
+                'attachment' => isset($attachments) ? $attachments : null,
+            ];
+
+            $checkIsHealthOrGroupMedical = $quoteTypeId == QuoteTypeId::Health || $emailData->isGroupMedical;
+
+            $ebServiceTeam = [];
+            if ($checkIsHealthOrGroupMedical) {
+                $ebServiceEmail = getAppStorageValueByKey(ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL);
+                info('IM EB Service team email fetched. email: '.$ebServiceEmail);
+                $ebServiceTeam = [[
+                    'email' => $ebServiceEmail,
+                    'name' => 'IM EB Service',
+                ]];
+            }
+
+            $ccAdvisor = [];
+            if (isset($emailData->advisor->email) && isset($emailData->advisor->name)) {
+                $ccAdvisor = [[
+                    'email' => $emailData->advisor->email,
+                    'name' => $emailData->advisor->name,
+                ]];
+
+                $body['replyTo'] = [
+                    'email' => $emailData->advisor->email,
+                    'name' => $emailData->advisor->name,
+                ];
+            }
+
+            $body['cc'] = array_merge($ccAdvisor, $ebServiceTeam);
+
+            $sendPolicyUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL);
+            info('Send Policy Update email fetched. email: '.$sendPolicyUpdateEmail);
+
+            $body['bcc'] = [[
+                'email' => $sendPolicyUpdateEmail,
+            ]];
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => json_encode($body),
+                    'timeout' => 10000,
+                ]
+            );
+
+            $message = json_decode($clientRequest->getBody()->getContents());
+            if (isset($message->messageId)) {
+                info('fn: sendUpdateToCustomerEmail, email sending completed. messageId: '.$message->messageId);
+                $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+                $responseCode = $clientRequest->getStatusCode();
+
+                if ($responseCode == 201) {
+                    $isEmailSent = 1;
+                }
+            } else {
+                $isEmailSent = 0;
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
+            $responseDetail = 'Send Update Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            info($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
     }
 
     public function sendingAlfredFollowupEmail($customer)
