@@ -60,7 +60,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
             info('Quote documents which need to send to customer through email retrieved: '.json_encode($docs));
         } catch (Exception $ex) {
-            error('Send BookPolicy Documents Job Error '.$ex->getMessage());
+            info('Send BookPolicy Documents Job Error '.$ex->getMessage());
             $docs = [];
         }
 
