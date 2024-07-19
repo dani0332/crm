@@ -12,14 +12,16 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 {
     use PersonalQuoteSyncTrait;
 
     public function model(array $row)
-    {
-        if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) && strpos($row['deal_batch'], '2024') !== false) {
+    {   
+        $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('MY');
+        if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) && strpos($dealBatch, '2024') !== false) {
             $data = [
                 'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
                 'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
@@ -27,7 +29,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             $searchCriteria = [];
 
-            $searchCriteria = ['renewal_batch' => $row['deal_batch']];
+            $searchCriteria = ['renewal_batch' => strtoupper($dealBatch)];
 
             if (isset($row['deal_cdb_id'])) {
                 [, $value] = explode('-', $row['deal_cdb_id']);
@@ -36,12 +38,14 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number'];
             }
 
-            if ($row['deal_type_of_insurance'] === QuoteTypes::HOME->value) {
-                $lead = HomeQuote::where($searchCriteria)->first();
-            } else {
-                $lead = PersonalQuote::where($searchCriteria)->first();
-            }
+            // if ($row['deal_type_of_insurance'] === QuoteTypes::HOME->value) {
+            //     $lead = HomeQuote::where($searchCriteria)->first();
+            // } else {
+            //     $lead = PersonalQuote::where($searchCriteria)->first();
+            // }
 
+            // for testing purpose on UAT 
+            $lead = PersonalQuote::where($searchCriteria)->first();
             if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
                 $lead->update($data);
                 $this->syncQuote($lead, $data);
