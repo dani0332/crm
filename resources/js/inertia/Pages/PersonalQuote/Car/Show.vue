@@ -7,7 +7,7 @@ import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
 import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
-import { onMounted, watch } from 'vue';
+import {onMounted, ref, watch} from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
 
@@ -1587,6 +1587,56 @@ const handlePlanSelected = plan => {
     preserveScroll: true,
     only: ['payments','paymentEntityModel'],
   });
+};
+
+const contentLoader = ref(false);
+
+const downloadDocument = async () => {
+    try {
+        const formModal = {
+            quote : page.props.quote,
+            quoteDocuments : page.props.quoteDocuments,
+        }
+        contentLoader.value = true;
+        let urls = `/download/documents`;
+        const response = await axios.post(urls, formModal, { responseType: 'blob' });
+
+        // Extract filename from response headers
+        const contentDisposition = response.headers['content-disposition'];
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(contentDisposition);
+        let filename = 'documents.zip';
+
+        if (matches != null && matches[1]) {
+            filename = matches[1].replace(/['"]/g, '');
+        }
+
+        const blob = new Blob([response.data], { type: 'application/zip' });
+        const url = window.URL.createObjectURL(blob);
+
+        // Create anchor link element
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+
+        // Append anchor to body, click it and remove it afterwards
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        contentLoader.value = false;
+        notification.success({
+            title: 'Documents has been Downloaded',
+            position: 'top',
+        });
+
+    } catch (error) {
+        contentLoader.value = false;
+        notification.success({
+            title: 'Error Downloading Documents',
+            position: 'top',
+        });
+        console.error('Error downloading ZIP file:', error);
+    }
 };
 </script>
 
@@ -3427,6 +3477,16 @@ const handlePlanSelected = plan => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
         <div>
+            <x-button
+                class="mr-2"
+                v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENT)"
+                size="sm"
+                color="emerald"
+                :loading="contentLoader"
+                @click="downloadDocument"
+            >
+                Download all documents
+            </x-button>
             <Link
                 v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
                 :href="`/legacy-policy/${record.insly_id}`"
