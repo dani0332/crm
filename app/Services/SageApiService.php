@@ -334,7 +334,7 @@ class SageApiService
                     'policy_number' => $sendUpdateLog->policy_number,
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
-                    'price_vat_applicable' => $getingPaymentDetails['payment']->total_price,
+                    'price_vat_applicable' => abs($getingPaymentDetails['payment']->total_price),
                     'price_with_vat' => abs($sendUpdateLog->price_with_vat),
                 ];
 
@@ -439,7 +439,7 @@ class SageApiService
 
                 $splitPayments->first()->fill([
                     'due_date' => $extras['send_update_log']->invoice_date,
-                    'payment_amount' => $extras['send_update_log']->price_vat_applicable,
+                    'payment_amount' => abs($extras['send_update_log']->price_vat_applicable),
                     'collection_amount' => abs($extras['send_update_log']->price_vat_applicable),
                 ]);
 
@@ -557,6 +557,7 @@ class SageApiService
                 'payment' => $payment,
                 'splitPayments' => $splitPayments,
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
+                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
                 'extras' => [
                     'option_id' => $extras['option'] ?? null,
                 ],
@@ -574,6 +575,7 @@ class SageApiService
                 'splitPayments' => $splitPayments,
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 'apPatchCallEnable' => $extras['ap_patch_call_enable'],
+                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
                 'extras' => [
                     'option_id' => $extras['option'] ?? null,
                 ],
@@ -592,6 +594,7 @@ class SageApiService
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_DISC_INV,
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
+                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
             ]);
 
             $totalSteps = $startingStep == 8 ? 13 : 15;
@@ -694,6 +697,9 @@ class SageApiService
                         'requestType' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
+                        'extras' => [
+                            'option_id' => $extras['option'] ?? null,
+                        ],
                     ]);
                 }
 
@@ -710,6 +716,9 @@ class SageApiService
                         'requestType' => SageEnum::SRT_REV_CORR_AP_PREM_INV,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
+                        'extras' => [
+                            'option_id' => $extras['option'] ?? null,
+                        ],
                     ]);
                 }
 
@@ -731,6 +740,9 @@ class SageApiService
                         'splitPayments' => $splitPayments,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
+                        'extras' => [
+                            'option_id' => $extras['option'] ?? null,
+                        ],
                     ]);
                 }
 
@@ -751,6 +763,9 @@ class SageApiService
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
                         'apPatchCallEnable' => $extras['ap_patch_call_enable'], // TODO :: This is temporary solution, this after AP Split patch working fine
+                        'extras' => [
+                            'option_id' => $extras['option'] ?? null,
+                        ],
                     ]);
                 }
 
@@ -988,7 +1003,7 @@ class SageApiService
                 'revCorrSplitPayment' => $extraParams['revCorrSplitPayment'] ?? false,
                 'paymentDetails' => $paymentDetails ?? [],
                 'apPatchCallEnable' => $extraParams['apPatchCallEnable'] ?? true, // TODO :: This is temporary solution, this after AP Split patch working fine
-                'extras' => $extraParams['extras'],
+                'extras' => $extraParams['extras'] ?? [],
             ];
 
             if (isset($extraParams['batchNumber']) && isset($extraParams['invoiceType'])) {
@@ -1034,7 +1049,16 @@ class SageApiService
             info('Book Update - Sage API Call - Method Name ('.$processDetails['methodName'].') Already called - '.(! empty($extras['sendUpdateLog']) ? 'SendUpdateUUID' : 'QuoteUUID').': '.$quoteObject->uuid);
 
         } else {
-            ${$processDetails['methodName']} = SagePayloadFactory::{$processDetails['methodName']}($sageRequestPayload, $extras['splitPayments'], $extras['entryType'], $reverseInvoiceResponse);
+            ${$processDetails['methodName']} = SagePayloadFactory::{$processDetails['methodName']}(
+                $sageRequestPayload,
+                $extras['splitPayments'],
+                $extras['entryType'],
+                $reverseInvoiceResponse,
+                [
+                    'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
+                    'extras' => $extras['extras'] ?? [],
+                ]
+            );
             $resp = $this->postToSage300(${$processDetails['methodName']}['endPoint'], ${$processDetails['methodName']}['payload']);
             $postedResponse = json_decode($resp, true);
         }
