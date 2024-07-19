@@ -16,6 +16,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
+use Illuminate\Support\Facades\Log;
 
 use function Laravel\Prompts\error;
 
@@ -60,7 +61,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
             info('Quote documents which need to send to customer through email retrieved: '.json_encode($docs));
         } catch (Exception $ex) {
-            info('Send BookPolicy Documents Job Error '.$ex->getMessage());
+            Log::error('Send BookPolicy Documents Job Error '.$ex->getMessage());
             $docs = [];
         }
 
