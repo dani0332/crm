@@ -223,9 +223,6 @@ class ManagementReport
         }
 
         return $query;
-        if (isset($request['department_id']) && ! empty($request['department_id'])) {
-            $query->where('u.department_id', $request['department_id']);
-        }
     }
 
     public function getUtmGroup($request, $query)
