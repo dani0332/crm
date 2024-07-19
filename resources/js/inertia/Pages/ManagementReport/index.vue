@@ -103,6 +103,13 @@ const leadSource = computed(() => {
   }));
 });
 
+const departments = computed(() => {
+  return props.filterOptions?.departments?.map((item)=>{
+    return {value: item.id, label: item.name}
+  });
+});
+console.log("props.filterOptions?.departments",props.filterOptions?.departments)
+
 const teams = computed(() => {
   return Object.keys(props.filterOptions?.teams).map(key => ({
     value: key,
@@ -144,6 +151,7 @@ const groupBy = reactive([
   { label: 'Customer Group', value: 'customer_group' },
   { label: 'Insurer', value: 'insurer' },
   { label: 'Line of Business', value: 'line_of_business' },
+  { label: 'Department', value: 'department' },
 ]);
 
 const umtGroup = reactive([
@@ -395,8 +403,17 @@ onMounted(() => {
           class="w-full"
         /> -->
       </x-field>
-    </div>
+      <x-field label="Departments" >
+        <ComboBox
+          :single="true"
+          v-model="filters.department_id"
+          placeholder="Search by Department"
+          :options="departments"
+        />
 
+    </x-field>
+
+    </div>
     <div class="flex gap-3 justify-end">
       <x-button size="sm" color="#ff5e00" type="submit" :disabled="loaders.table">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset" :disabled="loaders.table">

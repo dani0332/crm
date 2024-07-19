@@ -25,6 +25,7 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('send_update_logs as sul', 'personal_quotes.id', '=', 'sul.personal_quote_id')
             ->leftJoin('lookups as l', 'sul.category_id', '=', 'l.id')
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('user_team', 'u.id', '=', 'user_team.user_id')
             ->leftJoin('teams as t', 'user_team.team_id', '=', 't.id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
@@ -59,8 +60,13 @@ class SaleSummaryReportService extends ManagementReport
             });
 
         if ($request->groupBy == 'advisor') {
-            $query->addSelect('u.name as advisor');
+            $query->addSelect('u.name as advisor','dp.name as department');
             $query->whereNotNull('advisor_id');
+        }
+
+        if ($request->groupBy == 'department') {
+            $query->addSelect('dp.name as department');
+            $query->whereNotNull('u.department_id');
         }
 
         if ($request->groupBy == 'customer_group') {
@@ -85,7 +91,6 @@ class SaleSummaryReportService extends ManagementReport
             $query->addSelect('quote_type.code as line_of_business');
             $query->whereNotNull('quote_type.code');
         }
-
         $this->applyFilters($query, $request);
 
         return $query->simplePaginate(100)->withQueryString();
@@ -99,6 +104,7 @@ class SaleSummaryReportService extends ManagementReport
             'insurer' => 'p.insurance_provider_id',
             'advisor' => 'u.name',
             'line_of_business' => 'quote_type.code',
+            'department_group' => 'u.department_id',
         ];
 
         return $mapping[$groupBy] ?? $groupBy;

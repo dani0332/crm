@@ -28,6 +28,7 @@ class EndingPoliciesReportService extends ManagementReport
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'p.payment_status_id')
             ->leftJoin('customer as c', 'c.id', '=', 'customer_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->join('teams as t', 't.id', '=', 'ut.team_id')
@@ -50,6 +51,7 @@ class EndingPoliciesReportService extends ManagementReport
                 DB::raw('FORMAT(SUM(p.commission_vat_not_applicable), 2) as commission_vat_not_applicable'),
                 'pi.name as policy_issuer',
                 'u.name as advisor',
+                'dp.name as department',
                 'personal_quotes.source',
                 'personal_quotes.notes',
             );
