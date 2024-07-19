@@ -94,6 +94,8 @@ const filters = reactive({
   stale_at: '',
 });
 
+provide('filters', filters);
+
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
     value: status.id,
