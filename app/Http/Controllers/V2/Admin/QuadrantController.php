@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QuadrantRequest;
 use App\Models\Quadrant;
@@ -16,19 +17,30 @@ class QuadrantController extends Controller
     public function index()
     {
         $data = Quadrant::orderBy('id');
+
         if (request()->name) {
-            $data->where('name', 'LIKE', '%'.request()->name.'%');
+            $data->where('name', 'LIKE', '%' . request()->name . '%');
         }
 
-        $quadrants = $data->simplePaginate(10)->withQueryString();
-        $quadrants->load([
+        $quadrants = $data->with([
             'users' => function ($users) {
-                return $users->select('id', 'name');
+                $users->select('id', 'name');
             },
-            'tiers' => function ($tier) {
-                return $tier->select('id', 'name');
+            'tiers' => function ($tiers) {
+                $tiers->select('id', 'name');
             },
-        ]);
+        ])->selectRaw('quadrants.*, GROUP_CONCAT(DISTINCT teams.name ORDER BY teams.id SEPARATOR ",") AS line_of_business')
+            ->leftJoin('quad_users as qu', 'qu.quad_id', '=', 'quadrants.id')
+            ->leftJoin('users as u', 'u.id', '=', 'qu.user_id')
+            ->leftJoin('user_products as up', 'up.user_id', '=', 'u.id')
+            ->leftJoin('teams as teams', function ($join) {
+                $join->on('teams.id', '=', 'up.product_id')
+                    ->where('teams.type', TeamTypeEnum::PRODUCT)
+                    ->where('teams.is_active', 1);
+            })
+            ->groupBy('quadrants.id')
+            ->simplePaginate(10)
+            ->withQueryString();
 
         return inertia('Admin/AllocationConfig/Quadrants/Index', [
             'quadrants' => $quadrants,
@@ -123,5 +135,4 @@ class QuadrantController extends Controller
 
         return redirect(route('quadrants.show', $id))->with('success', 'Quadrant updated successfully');
     }
-
 }

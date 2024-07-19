@@ -55,7 +55,7 @@ class AjaxController extends Controller
     public function carModelBasedOnCarMakeId(Request $request)
     {
         $carMakeCode = CarMake::activeWithId($request->id)->value('code');
-        if (! $carMakeCode) {
+        if (!$carMakeCode) {
             $carMakeCode = $request->id;
         }
         $carmodel = CarModel::activeWithCode($carMakeCode)
@@ -77,7 +77,7 @@ class AjaxController extends Controller
             ->select('cylinder', 'seating_capacity as seat_capacity', 'vehicle_type_id', 'text', 'id', 'is_default')
             ->where('car_model_id', $request->car_model_id)
             ->get();
-        if (! $carModelDetail) {
+        if (!$carModelDetail) {
             $carModelDetail = CarModel::active()
                 ->select('cylinder', 'seat_capacity', 'vehicle_type_id')
                 ->whereId($request->car_model_id)
@@ -100,11 +100,11 @@ class AjaxController extends Controller
     public function updatePaymentStatus(Request $request)
     {
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-        if (! $quoteModel) {
+        if (!$quoteModel) {
             return response()->json(['success' => false]);
         }
         $payment = Payment::where('code', $request->code)->first();
-        if (! $payment) {
+        if (!$payment) {
             return response()->json(['success' => false]);
         }
 
@@ -130,7 +130,7 @@ class AjaxController extends Controller
     public function generatePaymentLink(Request $request)
     {
         $payment = Payment::where('code', '=', $request->paymentCode)->first();
-        if (! $payment) {
+        if (!$payment) {
             return response()->json(['success' => false]);
         }
         if ($payment->payment_link != null && now() < Carbon::parse($payment->payment_link_created_at)->addDays(3)) {
@@ -143,13 +143,13 @@ class AjaxController extends Controller
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
-            $paymentLink = $payment->payment_methods_code == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
+            $paymentLink = $payment->payment_methods_code == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink . 'tabby' : $paymentLink . 'checkout';
 
             $paymentParams = [
                 'code' => $payment->code,
                 'quoteTypeId' => $quoteTypeId,
             ];
-            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+            $paymentLinkURL = $paymentLink . '?' . http_build_query($paymentParams);
 
             $invoiceRequestData = [
                 'firstName' => $quoteModel->first_name,
@@ -173,7 +173,7 @@ class AjaxController extends Controller
                 'merchantOrderReference' => strtoupper($payment->code),
             ];
 
-            info('Request object for '.$quoteModel->uuid.' is '.json_encode($invoiceRequestData));
+            info('Request object for ' . $quoteModel->uuid . ' is ' . json_encode($invoiceRequestData));
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
@@ -215,7 +215,7 @@ class AjaxController extends Controller
             $data['professional_title_text'] = LookupRepository::where('code', $data['professional_title'])->where('key', LookupsEnum::PROFESSIONAL_TITLE)->value('text');
             $data['premium'] = $quote->premium;
             $data['payment_method'] = isset($quote->payments[0]) ? $quote->payments[0]->paymentMethod->name : '';
-            $data['product_type'] = ucfirst($quoteType).' Insurance';
+            $data['product_type'] = ucfirst($quoteType) . ' Insurance';
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
@@ -276,7 +276,7 @@ class AjaxController extends Controller
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
-            info("KYC Individual $request->quote_uuid - ERROR:".$ex->getMessage());
+            info("KYC Individual $request->quote_uuid - ERROR:" . $ex->getMessage());
         }
 
         return response()->json(['error' => false]);
@@ -286,7 +286,7 @@ class AjaxController extends Controller
     {
         try {
             $quote = $this->getQuoteObjectBy($quoteType, $request->quote_uuid, 'uuid');
-            if (! isset($quote->quoteRequestEntityMapping)) {
+            if (!isset($quote->quoteRequestEntityMapping)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }
             $data = $request->validated();
@@ -349,9 +349,33 @@ class AjaxController extends Controller
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
-            info("KYC Entity $request->quote_uuid - ERROR:".$ex->getMessage());
+            info("KYC Entity $request->quote_uuid - ERROR:" . $ex->getMessage());
         }
 
         return response()->json(['message' => 'Something went wrong, contact to administrator.']);
+    }
+
+    public function bikeModelBasedOnCarMakeId(Request $request)
+    {
+        $carMakeCode = CarMake::activeWithId($request->id)->value('code');
+        if (!$carMakeCode) {
+            $carMakeCode = $request->id;
+        }
+        $carmodel = CarModel::activeWithCode($carMakeCode)
+            ->select('id', 'text', 'code', 'car_make_code')
+            ->where('quote_type_id', QuoteTypeId::Bike)
+            ->orderBy('text')
+            ->get();
+
+        return response()->json($carmodel);
+    }
+    public function getBikeModelDetails(Request $request)
+    {
+        $bikeModelDetail = CarModelDetail::active()
+            ->select('cubic_capacity', 'seating_capacity as seat_capacity')
+            ->where('car_model_id', $request->bike_model_id)
+            ->get();
+
+        return response()->json($bikeModelDetail);
     }
 }
