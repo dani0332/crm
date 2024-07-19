@@ -541,6 +541,7 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
+
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
@@ -588,6 +589,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->gender = $request->gender;
         $healthQuote->dob = $request->dob;
         $healthQuote->policy_start_date = $request->policy_start_date;
+        $healthQuote->health_plan_type_id = $request->plan_type_id;
         $healthQuote->save();
 
         if (isset($request->return_to_view)) {
