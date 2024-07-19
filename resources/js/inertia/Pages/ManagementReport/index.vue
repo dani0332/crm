@@ -571,10 +571,11 @@ onMounted(() => {
         </div>
         <x-field label="Departments" >
             <ComboBox
-              :single="true"
+              :single="false"
               v-model="filters.department_id"
               placeholder="Search by Department"
               :options="departments"
+              deselect-all
             />
         </x-field>
     </div>

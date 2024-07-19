@@ -197,6 +197,9 @@ class ManagementReport
         if (isset($request['leadSources']) && ! empty($request['leadSources'])) {
             $query->whereIn('personal_quotes.source', $request['leadSources']);
         }
+        if (isset($request['department_id']) && ! empty($request['department_id'])){
+            $query->whereIn('u.department_id', $request['department_id'] ?? []);
+        }
 
         if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies'])) {
             if ($request['includeCancelledPolicies'] == 'Yes') {
