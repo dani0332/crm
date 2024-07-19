@@ -84,7 +84,7 @@ class CentralController extends Controller
         if (! $quoteType) {
             return abort(404);
         }
-
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                 $error_fields = 'paid at';
@@ -93,8 +93,8 @@ class CentralController extends Controller
                     'paid_at_start' => 'required',
                     'paid_at_end' => 'required',
                 ]);
-                $created_at_start = Carbon::parse($request->paid_at_start)->format('Y-m-d');
-                $created_at_end = Carbon::parse($request->paid_at_end)->format('Y-m-d');
+                $created_at_start = Carbon::parse($request->paid_at_start)->format($dateFormat);
+                $created_at_end = Carbon::parse($request->paid_at_end)->format($dateFormat);
             } else {
                 $error_fields = 'created date';
 
@@ -126,8 +126,8 @@ class CentralController extends Controller
                         'created_at_end' => 'required',
                     ]);
 
-                    $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-                    $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+                    $created_at_start = Carbon::parse($request->created_at_start)->format($dateFormat);
+                    $created_at_end = Carbon::parse($request->created_at_end)->format($dateFormat);
                 }
             }
 
