@@ -356,20 +356,19 @@ class PaymentExpireNotification extends Command
         }
 
         // Travel QUOTE  PAYMENT EXPIRE NOTIFICATION
-        $travelNotification = DB::table('personal_quotes as pq')
-            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
+        $travelNotification = DB::table('travel_quote_request as tqr')
+            ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->select(
-                'pq.id',
-                'pq.code as uuid',
-                'pq.advisor_id as advisor_id',
-                'pq.payment_status_id as payment_status_id',
+                'tqr.id',
+                'tqr.code as uuid',
+                'tqr.advisor_id as advisor_id',
+                'tqr.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 3 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
-            ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->where('pq.quote_type_id', QuoteTypeId::Travel)
+            ->where('tqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->having('expiry_days', '=', 1)
             ->get();
 
@@ -378,8 +377,10 @@ class PaymentExpireNotification extends Command
             foreach ($travelNotification as $travel) {
                 $model = $this->getModelObject(strtolower('travel'));
                 $model = $model::find($travel->id);
-                $url .= "/quotes/travel/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                if (isset($model->uuid)) {
+                    $travelUrl = $url.'/quotes/travel/'.$model->uuid;
+                    event(new PaymentExpireNotifications($model, $travelUrl));
+                }
             }
         }
 
