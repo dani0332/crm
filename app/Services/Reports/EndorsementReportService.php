@@ -76,6 +76,7 @@ class EndorsementReportService extends ManagementReport
                 'quote_type.text as line_of_business',
                 DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
                 'u.name as advisor',
+                'dp.name as department',
                 'pi.name as policy_issuer',
                 'send_update_logs.invoice_description as invoice_description',
                 'pm.name as payment_method',
@@ -94,6 +95,7 @@ class EndorsementReportService extends ManagementReport
             ->join('quote_type', 'quote_type.id', '=', 'personal_quotes.quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'send_update_logs.created_by')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
