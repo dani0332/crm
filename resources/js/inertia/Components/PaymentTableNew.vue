@@ -2723,6 +2723,9 @@ watch(
       props.isPlanDetailEnabled
     ) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+      if (props.sendUpdate) {
+        initalPlanDetails = props.quoteRequest.insurance_provider_details ?? props.quoteRequest.insurance_provider;
+      }
     } else if (quoteTypesToCheck.includes(props.quoteType)) {
       initalPlanDetails = props.quoteRequest.plan;
     } else {
