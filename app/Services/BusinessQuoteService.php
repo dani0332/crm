@@ -95,6 +95,15 @@ class BusinessQuoteService extends BaseService
                 'bqr.price_vat_not_applicable',
                 'bqr.price_with_vat',
                 'bqr.company_name as business_company_name',
+                'ent.emirate_of_registration_id',
+                'bqr.price_vat_applicable',
+                'bqr.vat',
+                'bqr.insurer_quote_number',
+                'bqr.policy_issuance_status_id',
+                'bqr.policy_issuance_status_other',
+                'bqr.policy_booking_date',
+                'policy_start_date',
+                'policy_issuance_date',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -149,9 +158,23 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        return BusinessQuote::where('id', $id)->with([
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                // This condition added to get the latest payment first for fetching Booking Details accordingly
+                $payment->orderBy('created_at', 'desc');
+            },
+        ])->first();
     }
 
     public function updateChildRecord($id)

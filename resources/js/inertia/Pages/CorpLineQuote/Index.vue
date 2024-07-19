@@ -289,7 +289,9 @@ function setQueryStringFilters() {
         isNaN(parseInt(value)) ? value : parseInt(value),
       );
     } else {
-      filters[key] = params[key];
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
     }
   }
 }

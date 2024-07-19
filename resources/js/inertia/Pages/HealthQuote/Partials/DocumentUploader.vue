@@ -1,6 +1,4 @@
 <script setup>
-// const emit = defineEmits(["update:uploadedFiles"]);
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 defineProps({
   members: Array,
   docTypes: Object,
@@ -74,40 +72,42 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
     </x-alert>
     <x-tab-group v-model="memberTabs" class="pb-10" variant="block">
       <x-tab value="quote-documents" label="Documents">
-        <div
-          v-for="docType in docTypes['QUOTE']"
-          :key="docType.id"
-          class="grid md:grid-cols-2 gap-2 my-4 border-b"
-        >
-          <div class="flex flex-col gap-1">
-            <h5 class="text-sm font-semibold">
-              {{ docType.text }}
-            </h5>
-            <p class="text-xs">Max files: {{ docType.max_files }}</p>
-            <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
-            <p class="text-xs">Max file size: {{ docType.max_size }} MB</p>
+        <template v-for="docuType in docTypes">
+          <div
+            v-for="docType in docuType"
+            :key="docType.id"
+            class="grid md:grid-cols-2 gap-2 my-4 border-b"
+          >
+            <div class="flex flex-col gap-1">
+              <h5 class="text-sm font-semibold">
+                {{ docType.text }} {{ docType.is_required ? '*' : ''}}
+              </h5>
+              <p class="text-xs">Max files: {{ docType.max_files }}</p>
+              <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
+              <p class="text-xs">Max file size: {{ docType.max_size }} MB</p>
+            </div>
+            <div class="pb-4">
+              <Dropzone
+                :id="docType.id"
+                :accept="docType.accepted_files"
+                :max-files="docType.max_files"
+                :max-size="docType.max_size"
+                @change="uploadFile(docType, null, $event)"
+              />
+              <a
+                v-for="doc in docs.filter(
+                  d => d.document_type_code == docType.code,
+                )"
+                :key="doc.id"
+                :href="cdn + doc.doc_url"
+                target="_blank"
+                class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+              >
+                {{ doc.original_name || doc.doc_name }}
+              </a>
+            </div>
           </div>
-          <div class="pb-4">
-            <Dropzone
-              :id="docType.id"
-              :accept="docType.accepted_files"
-              :max-files="docType.max_files"
-              :max-size="docType.max_size"
-              @change="uploadFile(docType, null, $event)"
-            />
-            <a
-              v-for="doc in docs.filter(
-                d => d.document_type_code == docType.code,
-              )"
-              :key="doc.id"
-              :href="cdn + doc.doc_url"
-              target="_blank"
-              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-            >
-              {{ doc.original_name || doc.doc_name }}
-            </a>
-          </div>
-        </div>
+        </template>
       </x-tab>
       <x-tab
         v-for="member in members"
@@ -122,7 +122,7 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
         >
           <div class="flex flex-col gap-1">
             <h5 class="text-sm font-semibold">
-              {{ docType.text }}
+              {{ docType.text }} {{ docType.is_required ? '*' : ''}}
             </h5>
             <p class="text-xs">Max files: {{ docType.max_files }}</p>
             <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
