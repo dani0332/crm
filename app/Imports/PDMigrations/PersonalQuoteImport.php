@@ -38,17 +38,10 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number'];
             }
 
-            // if ($row['deal_type_of_insurance'] === QuoteTypes::HOME->value) {
-            //     $lead = HomeQuote::where($searchCriteria)->first();
-            // } else {
-            //     $lead = PersonalQuote::where($searchCriteria)->first();
-            // }
-
-            // for testing purpose on UAT
-            $lead = PersonalQuote::where($searchCriteria)->first();
+            $lead = HomeQuote::where($searchCriteria)->first();
             if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
                 $lead->update($data);
-                $this->syncQuote($lead, $data);
+                // $this->syncQuote($lead, $data);
                 info('Personal/Home Qoute Import - Quote found: '.$lead->uuid.' - Quote updated');
             }
         }
