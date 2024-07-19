@@ -1018,4 +1018,19 @@ class TravelQuoteService extends BaseService
     {
         return TravelDestination::where('quote_id', $id)->with('destination:id,code,country_name')->get();
     }
+
+    public function getTransactionApprovedQuoteStatus($leadId)
+    {
+        $transactionApprovedAudit = DB::table('audits as a')
+            ->where(function ($query) use ($leadId) {
+                $query->where('a.auditable_type', 'App\Models\\'.QuoteTypes::TRAVEL->value.'Quote')
+                    ->where('a.auditable_id', $leadId)
+                    ->where(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))"), QuoteStatusEnum::TransactionApproved);
+            })
+            ->orderBy('a.created_at', 'DESC')
+            ->first();
+
+        return $transactionApprovedAudit;
+    }
+
 }
