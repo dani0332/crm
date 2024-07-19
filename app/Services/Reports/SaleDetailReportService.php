@@ -65,6 +65,7 @@ class SaleDetailReportService extends ManagementReport
                 'ip.code as insurer',
                 'quote_type.text as line_of_business',
                 'u.name as advisor',
+                'dp.name as department',
                 'pi.name as policy_issuer',
                 'btoi.text as sub_type_line_of_business',
             )
@@ -75,6 +76,7 @@ class SaleDetailReportService extends ManagementReport
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
+            ->leftJoin('departments as dp', 'u.department_id', '=', 'dp.id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')

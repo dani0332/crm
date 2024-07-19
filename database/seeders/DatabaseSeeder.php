@@ -63,6 +63,7 @@ class DatabaseSeeder extends Seeder
             addPermissionsForInsurerNowPayment::class,
             AddeTicketDocumentTypeSeeder::class,
             DocumentVerifyPermissionSeeder::class,
+            DepartmentPermissionSeeder::class,
         ]);
     }
 }

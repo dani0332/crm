@@ -93,6 +93,10 @@ const userRoles = computed(() => {
           <dt class="font-medium">SUB TEAMS</dt>
           <dd>{{ subTeamName ?? 'N/A' }}</dd>
         </div>
+        <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Department</dt>
+            <dd>{{ user?.department?.name ?? 'N/A' }}</dd>
+        </div>
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">LOB VISIBILITY TEAM</dt>

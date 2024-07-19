@@ -69,12 +69,18 @@ class ManagementReport
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        $departments = DB::table('departments')
+                           ->where('is_active', 1)
+                           ->orderBy('name')
+                           ->get();
+
         return [
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
             'teams' => $teams,
             'reportCategories' => $reportCategories,
             'transactionTypes' => $transactionTypes,
+            'departments' => $departments,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false)
@@ -214,6 +220,9 @@ class ManagementReport
         }
 
         return $query;
+        if (isset($request['department_id']) && ! empty($request['department_id'])) {
+            $query->where('u.department_id', $request['department_id']);
+        }
     }
 
     public function getUtmGroup($request, $query)
