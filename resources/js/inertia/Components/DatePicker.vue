@@ -3,7 +3,7 @@ const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps({
   modelValue: {
-    type: [String, Array, Date],
+    type: [String, Array, Date, Object],
     default: '',
   },
   label: {
