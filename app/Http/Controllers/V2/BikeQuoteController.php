@@ -3,19 +3,30 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarPlanAddonsCode;
+use App\Enums\CarPlanExclusionsCode;
+use App\Enums\CarPlanFeaturesCode;
+use App\Enums\CarPlanType;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TiersEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
+use App\Http\Requests\ChangeInsurerRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
+use App\Models\Tier;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -29,29 +40,18 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
-use App\Services\CentralService;
-use App\Services\CRUDService;
-use App\Services\LookupService;
-use App\Services\QuoteDocumentService;
-use App\Services\SendUpdateLogService;
-use App\Services\SplitPaymentService;
-use App\Traits\GenericQueriesAllLobs;
-use App\Enums\CarPlanAddonsCode;
-use App\Enums\CarPlanExclusionsCode;
-use App\Enums\CarPlanFeaturesCode;
-use App\Enums\CarPlanType;
-use App\Enums\GenericRequestEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\TiersEnum;
-use App\Http\Requests\ChangeInsurerRequest;
-use App\Models\PersonalQuote;
-use App\Models\Tier;
 use App\Services\BikeEmailService;
 use App\Services\BikeQuoteService;
+use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\EmailStatusService;
+use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SendUpdateLogService;
+use App\Services\SplitPaymentService;
 use App\Services\UserService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -93,7 +93,7 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(BikeQuoteRequest $request)
@@ -247,8 +247,8 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
-     * @param    $quoteId
+     * @param  $quoteTypeCode
+     * @param  $quoteId
      * @return void
      */
     public function update($uuid, BikeQuoteRequest $request)

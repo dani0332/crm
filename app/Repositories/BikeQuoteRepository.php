@@ -27,7 +27,7 @@ class BikeQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -150,7 +150,7 @@ class BikeQuoteRepository extends BaseRepository
                     ]);
                 },
                 'paymentStatus',
-                'plans.insuranceProvider',
+                'plan.insuranceProvider',
                 'carPlan',
                 'carPlan.insuranceProvider',
                 'createdBy',
@@ -271,20 +271,19 @@ class BikeQuoteRepository extends BaseRepository
 
     public function fetchBikeQuotePlanAddons($id)
     {
-        $listCarQuotePlanAddons = DB::table('car_addon_option')
+        return DB::table('bike_quote_request')
             ->select(
-                'car_addon.text AS car_addon_text',
-                'car_addon_option.value AS car_addon_option_value',
-                'car_addon_option.price AS car_addon_option_price',
-                'car_quote_request_addon.price AS car_quote_request_addon_price',
-                'car_addon.type AS car_addon_type'
+                'ca.text AS car_addon_text',
+                'cao.value AS car_addon_option_value',
+                'cao.price AS car_addon_option_price',
+                'bqra.price AS bike_quote_request_addon_price',
+                'ca.type AS car_addon_type'
             )
-            ->leftJoin('car_addon', 'car_addon.id', '=', 'car_addon_option.addon_id')
-            ->leftJoin('car_quote_request_addon', 'car_addon_option.id', '=', 'car_quote_request_addon.addon_option_id')
-            ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'car_quote_request_addon.quote_request_id')
-            ->where('personal_quotes.uuid', $id)->get();
-
-        return $listCarQuotePlanAddons;
+            ->join('bike_quote_request_addon as bqra', 'bike_quote_request.id', '=', 'bqra.quote_request_id')
+            ->join('car_addon_option as cao', 'bqra.addon_option_id', '=', 'cao.id')
+            ->join('car_addon as ca', 'cao.addon_id', '=', 'ca.id')
+            ->where('bike_quote_request.uuid', $id)
+            ->get();
     }
 
     public function fetchChangeInsurer($data)

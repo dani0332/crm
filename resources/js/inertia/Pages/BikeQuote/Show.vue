@@ -348,7 +348,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
                   </div>
               </dl>
 
-              <AddOn :quotePlanAddons="bikeQuotePlanAddons" />
+              <AddOn v-if="bikeQuotePlanAddons.length > 0" :quotePlanAddons="bikeQuotePlanAddons" />
           </div>
       </div>
 

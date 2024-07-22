@@ -337,7 +337,6 @@ class CentralService
                     'planId' => intval($data->plan_id),
                     'quoteTypeId' => QuoteTypeId::Bike,
                     'quoteUID' => $uuid,
-                    'addonOptionIds' => [],
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
