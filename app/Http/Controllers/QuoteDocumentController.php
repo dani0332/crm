@@ -288,8 +288,7 @@ class QuoteDocumentController extends Controller
 
     public function downloadAllDocuments(Request $request)
     {
-
-        if (auth()->user()->can(PermissionsEnum::DOWNLOAD_ALL_DOCUMENTS)) {
+        if (! auth()->user()->can(PermissionsEnum::DOWNLOAD_ALL_DOCUMENTS)) {
             return response()->json(['message' => 'User Has No Permission to Download Documents.'], 403);
 
         }

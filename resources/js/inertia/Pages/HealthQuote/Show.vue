@@ -3336,7 +3336,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
         </h3>
         <div class="flex gap-2">
             <DownloadDocuments
-                v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
+            v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
             :quote="props.quote"
             :quoteDocuments="props.quoteDocuments"
             />

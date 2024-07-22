@@ -303,7 +303,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('quotes/{quoteType}/{quoteId}/documents/{documentTypeCode}/get-uploaded', [QuoteDocumentController::class, 'getQuoteDocumentsUploaded']);
     Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
 
-    Route::post('/download/documents', [QuoteDocumentController::class, 'downloadalldocuments']);
+    Route::post('/download/documents', [QuoteDocumentController::class, 'downloadAllDocuments']);
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');

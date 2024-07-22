@@ -48,7 +48,7 @@ const downloadDocument = async () => {
 
     } catch (error) {
         contentLoader.value = false;
-        notification.success({
+        notification.error({
             title: 'Error Downloading Documents',
             position: 'top',
         });
