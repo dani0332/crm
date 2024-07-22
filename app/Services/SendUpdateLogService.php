@@ -15,6 +15,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarAddOn;
+use App\Models\CarAddOnOption;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestAddOn;
 use App\Models\CycleQuote;
@@ -704,14 +705,17 @@ class SendUpdateLogService
                     // Addons for Car move to main lead
                     if (! empty($sendUpdateLog->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
                         foreach ($sendUpdateLog->car_addons as $addonId) {
-                            CarQuoteRequestAddOn::updateOrCreate([
-                                'quote_request_id' => $quote->id,
-                                'addon_option_id' => $addonId,
-                            ], [
-                                'quote_request_id' => $quote->id,
-                                'addon_option_id' => $addonId,
-                                'price' => 0,
-                            ]);
+                            $plansAddons = CarAddOnOption::where('addon_id', $addonId)->get();
+                            foreach ($plansAddons as $planAddon) {
+                                CarQuoteRequestAddOn::updateOrCreate([
+                                    'quote_request_id' => $quote->id,
+                                    'addon_option_id' => $planAddon->id,
+                                ], [
+                                    'quote_request_id' => $quote->id,
+                                    'addon_option_id' => $planAddon->id,
+                                    'price' => 0,
+                                ]);
+                            }
                         }
                     }
                     // Emirate of Registration for Car move to main lead
