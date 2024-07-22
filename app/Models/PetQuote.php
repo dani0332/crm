@@ -75,7 +75,7 @@ class PetQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
     /**
@@ -125,4 +125,10 @@ class PetQuote extends Model implements AuditableContract
     {
         return $this->allowedColumns;
     }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
 }

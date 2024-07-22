@@ -109,7 +109,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function insuranceProvider()
     {
-        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
 
     public function wcAdvisor()
@@ -166,6 +166,10 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
     public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
@@ -205,5 +209,10 @@ class HealthQuote extends Model implements AuditableContract
         }
 
         return 'Price';
+    }
+
+    public function policyWording()
+    {
+        return $this->hasMany(HealthPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 }

@@ -132,4 +132,5 @@ return [
     'MA_V1_PASSWORD' => env('MA_V1_PASSWORD', ''),
     'MA_V1_USERNAME' => env('MA_V1_USERNAME', ''),
     'MA_BREVO_KEY' => env('MA_BREVO_KEY', ''),
+    'RECEIPT_ORDER_DATE' => env('RECEIPT_ORDER_DATE', 'd-m-Y \a\t H:i'),
 ];
