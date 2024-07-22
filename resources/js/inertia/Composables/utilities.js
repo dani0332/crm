@@ -347,6 +347,5 @@ export function buildCdbidLink(quote_uuid, quote_type_id)
 
 export const userHasRequiredTeams = (givenTeams, userTeams) =>
 {
-  const teams = new Set(givenTeams);
-  return userTeams.every(team => teams.has(team));
+  return givenTeams.every(team => userTeams.includes(team));
 }

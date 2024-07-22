@@ -349,9 +349,9 @@ function onReset() {
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[
-              { value: '', label: 'All' },
-              { value: 0, label: 'Yes' },
-              { value: 1, label: 'No' },
+              { value: null, label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
             ]"
             class="w-full"
           />
