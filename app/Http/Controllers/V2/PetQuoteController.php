@@ -226,9 +226,9 @@ class PetQuoteController extends Controller
         
         if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
-        }elseif($newBusinessTeam){
+        }elseif($request->is_renewal === null && $newBusinessTeam){
             $request->merge(['is_renewal' => quoteTypeCode::noText]);
-        }elseif($renewalsTeam){
+        }elseif($request->is_renewal === null && $renewalsTeam){
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
         }
 
