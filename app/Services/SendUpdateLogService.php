@@ -469,12 +469,20 @@ class SendUpdateLogService
             $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
         }
 
-        return [
+        $response = [
             'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format(config('constants.DATE_DISPLAY_FORMAT')) : null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
         ];
+
+        $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+
+        if ($payment) {
+            $response['isLackingOfPayment'] = $this->isLackingPayment($payment);
+        }
+
+        return $response;
     }
 
     public function getPayments($quoteId, $quoteUuid, $quoteType)
@@ -977,5 +985,10 @@ class SendUpdateLogService
 
             return $documentType;
         }, $documentTypes);
+    }
+
+    public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
+    {
+        $this->updatePriceAndDiscount($sendUpdateLog, $payment);
     }
 }

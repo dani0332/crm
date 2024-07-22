@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -295,22 +294,7 @@ class SendUpdateLogRepository extends BaseRepository
 
             $payment = Payment::where('send_update_log_id', $data['id'])->firstOrFail();
             if ($payment) {
-                $bookingDetailsTotalPrice = floatval($data['price_with_vat']);
-                if ($bookingDetailsTotalPrice > $payment->total_amount) {
-                    $diff = number_format($bookingDetailsTotalPrice - $payment->total_amount, 2);
-                    if ($diff < 1) {
-                        $payment->discount_value = $diff;
-                        $payment->discount_type = LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT;
-                    } else {
-                        $payment->total_price = $bookingDetailsTotalPrice;
-                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
-                    }
-                } elseif ($bookingDetailsTotalPrice == $payment->total_amount && $payment->discount_value && $payment->discount_type == LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT->value) {
-                    $payment->discount_value = 0;
-                    $payment->discount_type = null;
-                }
-
-                $payment->save();
+                app(SendUpdateLogService::class)->sendUpdatePriceAndDiscount($sendUpdate, $payment);
             }
         } catch (\Exception $ex) {
             $result = (object) [
