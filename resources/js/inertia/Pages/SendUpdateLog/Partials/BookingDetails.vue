@@ -299,6 +299,8 @@ const calculateCommission = () => {
         bookingDetailsForm.commission_percentage = convertToNegative(
           (total_commission / price_with_vat) * 100,
         );
+
+        checkDiscount(price_with_vat);
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -803,6 +805,20 @@ const onReversalEdit = () => {
     state.reversalSectionEdit = true;
   }
 };
+
+const isCI = computed(() => {
+  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI;
+});
+
+const checkDiscount = (newPrice) => {
+  let total_price = props.sendUpdateLog?.price_with_vat;
+  let difference =  newPrice - total_price;
+  if (newPrice > total_price && difference <= 0.99 && (isEF || isCI || isCPD)) {
+    bookingDetailsForm.discount = Number(difference).toFixed(2);
+  } else {
+    bookingDetailsForm.discount = 0.00;
+  }
+}
 </script>
 
 <template>
