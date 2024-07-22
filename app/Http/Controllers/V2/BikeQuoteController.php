@@ -168,20 +168,20 @@ class BikeQuoteController extends Controller
             })->values();
         }
 
-        $sendUpdateOptions = [];
-        $sendUpdateLogs = [];
-        $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+        // $sendUpdateOptions = [];
+        // $sendUpdateLogs = [];
+        // $sendUpdateEnum = (object) [];
+        // $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
-        if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BIKE->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
-            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        }
+        // if ($hasPolicyIssuedStatus) {
+        //     $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BIKE->id());
+        //     $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+        //     $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        // }
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BIKE->value);
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BIKE->value, $quote->id);
-        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::BIKE->value, $quote->payments, $quoteDocuments);
+        // $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::BIKE->value, $quote->payments, $quoteDocuments);
         $yearsOfManufacture = app(LookupService::class)->getYearsOfManufacture();
 
         // We user personal quotes id in email status
@@ -228,12 +228,12 @@ class BikeQuoteController extends Controller
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
-            'bookPolicyDetails' => $bookPolicyDetails,
+            // 'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],
-            'sendUpdateOptions' => $sendUpdateOptions,
-            'sendUpdateLogs' => $sendUpdateLogs,
-            'sendUpdateEnum' => $sendUpdateEnum,
-            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            // 'sendUpdateOptions' => $sendUpdateOptions,
+            // 'sendUpdateLogs' => $sendUpdateLogs,
+            // 'sendUpdateEnum' => $sendUpdateEnum,
+            // 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'documentTypeCodes' => $documentTypeCodes,
             // 'linkedQuoteDetails' => $linkedQuoteDetails,
             'record' => $quote,
