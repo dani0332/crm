@@ -478,7 +478,7 @@ class SendUpdateLogService
 
         $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
 
-        if (! empty($payment)) {
+        if ($payment) {
             $response['isLackingOfPayment'] = $this->isLackingPayment($payment);
         }
 
