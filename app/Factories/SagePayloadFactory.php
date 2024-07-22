@@ -687,7 +687,7 @@ class SagePayloadFactory
         $entryType = SageEnum::SCT_STRAIGHT;
         $data = $customer->data;
         $entity = $data['entity'] ?? null;
-        if($entity){
+        if ($entity) {
             $quoteEntityMapping = QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first();
             $entity = $quoteEntityMapping?->entity;
         }
