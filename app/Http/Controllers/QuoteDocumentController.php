@@ -297,7 +297,7 @@ class QuoteDocumentController extends Controller
         $quoteDocuments = $request->input('quoteDocuments');
         // Check if quoteDocuments is an array and has at least one document
         if (! is_array($quoteDocuments) || count($quoteDocuments) === 0) {
-            return response()->json(['message' => 'No documents provided.'], 40);
+            return response()->json(['message' => 'No documents provided.'], 400);
         }
 
         $disk = Storage::disk('azureIM');
