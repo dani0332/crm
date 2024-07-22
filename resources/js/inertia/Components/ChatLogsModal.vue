@@ -48,6 +48,19 @@ const renderMarkdown = markdownString => {
 
   return adjustedHtml;
 };
+
+const checkCaption = (request) => {
+  const data = request?.document ?? request?.location ?? request?.contacts ?? request?.video ?? request?.sticker;
+  if(data){
+    const {caption, mime_type} = {...JSON.parse(data)}
+    if(caption){
+      return `User has shared a ${mime_type} with a message: ${caption}`
+    }else{
+      return `User has shared a ${request.type}`
+    }
+  }
+ 
+}
 </script>
 <template>
   <AppModal
@@ -124,10 +137,10 @@ const renderMarkdown = markdownString => {
             </div>
             <div class="chat-bubble text-sm relative flex items-center">
               <div v-if="message.whatsapp_request?.type.toLowerCase() === 'image'">
-                <span>User has shared an image</span>
+                <span> {{ checkCaption(message.whatsapp_request) ?? 'User has shared a Image' }}</span>
               </div>
               <div v-else-if="['document', 'location', 'contacts', 'video', 'sticker'].includes(message.whatsapp_request?.type.toLowerCase())">
-                <span>User has shared a {{message.whatsapp_request.type}}</span>
+                <span> {{ checkCaption(message.whatsapp_request) }}</span>
               </div>
               <div v-else="message.msg" v-html="renderMarkdown(message.msg)"></div>
               <div
