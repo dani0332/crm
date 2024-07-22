@@ -81,7 +81,7 @@ class InstallmentReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
-        
+
         if ($request->export == 1) {
             $data = $query->get();
 

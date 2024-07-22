@@ -205,7 +205,7 @@ class ManagementReport
 
     protected function filterTeams($query, $teams)
     {
-        if (!empty($teams) && count($teams) > 0) {
+        if (! empty($teams) && count($teams) > 0) {
             $value = $teams;
             $query->whereIn('t.id', $value);
         } else {
