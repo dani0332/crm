@@ -763,6 +763,7 @@ class SendEmailCustomerService extends BaseService
                     'carQuoteId' => $emailData->code,
                     'currentInsurer' => $emailData->currentInsurer,
                     'renewalDueDate' => $emailData->renewalDueDate,
+                    'policyStartDate' => $emailData->policyStartDate,
                     'policyNumber' => $emailData->policy_number,
                     'roadsideAssistance' => $emailData->roadsideAssistance,
                     'advisor' => (object) [
