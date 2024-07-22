@@ -55,7 +55,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
             }
 
             if ($this->sendUpdate->quote_type_id == QuoteTypeId::Car) {
-                if ($option == SendUpdateLogStatusEnum::AOCOV && empty($sendUpdateLog->car_addons)) {
+                if ($option == SendUpdateLogStatusEnum::AOCOV && empty($this->sendUpdate->car_addons)) {
                     return $validator->errors()->add('error', 'Please select Addons');
                 } elseif (in_array($option, [SendUpdateLogStatusEnum::COE_NFI, SendUpdateLogStatusEnum::COE]) && empty($this->sendUpdate->emirates_id)) {
                     return $validator->errors()->add('error', 'Please select Emirate');
