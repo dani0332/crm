@@ -289,7 +289,7 @@ class QuoteDocumentController extends Controller
     public function downloadAllDocuments(Request $request)
     {
 
-        if (! auth()->user()->can(PermissionsEnum::DOWNLOAD_ALL_DOCUMENTS)) {
+        if (auth()->user()->can(PermissionsEnum::DOWNLOAD_ALL_DOCUMENTS)) {
             return response()->json(['message' => 'User Has No Permission to Download Documents.'], 403);
 
         }
@@ -301,7 +301,7 @@ class QuoteDocumentController extends Controller
         }
 
         $disk = Storage::disk('azureIM');
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         $zipFileName = "{$request->quote['first_name']} {$request->quote['last_name']}_{$request->quote['code']}.zip";
         $tmpFile = tempnam(sys_get_temp_dir(), 'zip');

@@ -47,7 +47,6 @@
         "tightenco/ziggy": "^2.0",
         "yajra/laravel-datatables-oracle": "^10.8",
         "jjaffeux/postmark-inbound-php": ">=3.0",
-        "ext-zip": "*"
     },
     "require-dev": {
         "spatie/laravel-ignition": "^2.3",
