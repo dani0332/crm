@@ -46,43 +46,37 @@ class ExportValidationRequest extends FormRequest
         $validator->after(function ($validator) {
             $diffInDays = 120;
             $exportTye = $this->route('exportTye');
-            $quoteType = $this->input('quoteType'); 
+            $quoteType = $this->route('quoteType'); 
 
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $diffInDays = 31;
             }
 
-            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
-                $start = Carbon::parse($this->input('paid_at_start'));
-                $end = Carbon::parse($this->input('paid_at_end'));
-                $diff = $start->diffInDays($end);
-                if ($diff > $diffInDays) {
-                    $validator->errors()->add('error', 'Maximum of '.$diffInDays.' days are allowed to be exported.');
+            if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
+                if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                    $start = Carbon::parse($this->input('paid_at_start'));
+                    $end = Carbon::parse($this->input('paid_at_end'));
+                    $error_fields = 'paid at';
                 }
-            } else {
-                if (request()->has('payment_due_date')) {
+                else if (request()->has('payment_due_date')) {
                     $start = Carbon::parse($this->input('payment_due_date')[0])->startOfDay();
                     $end = Carbon::parse($this->input('payment_due_date')[1])->endOfDay();
-                    $diff = $start->diffInDays($end);
-                    if ($diff > $diffInDays) {
-                        $validator->errors()->add('error', 'Maximum of '.$diffInDays.' days are allowed to be exported.');
-                    }
+                    $error_fields = 'payment due date';
                 } 
-                if (request()->has('booking_date')) {
+                else if (request()->has('booking_date')) {
                     $start = Carbon::parse($this->input('booking_date')[0])->startOfDay();
                     $end = Carbon::parse($this->input('booking_date')[1])->endOfDay();
-                    $diff = $start->diffInDays($end);
-                    if ($diff > $diffInDays) {
-                        $validator->errors()->add('error', 'Maximum of '.$diffInDays.' days are allowed to be exported.');
-                    }
+                    $error_fields = 'booking date';
                 }
-                if ($this->has('created_at_start') && $this->has('created_at_end')) {
+                else if ($this->has('created_at_start') && $this->has('created_at_end')) {
                     $start = Carbon::parse($this->input('created_at_start'));
                     $end = Carbon::parse($this->input('created_at_end'));
-                    $diff = $start->diffInDays($end);
-                    if ($diff > $diffInDays) {
-                        $validator->errors()->add('error', 'Maximum of '.$diffInDays.' days are allowed to be exported.');
-                    }
+                    $error_fields = 'created date';
+                }
+
+                $diff = $start->diffInDays($end);
+                if ($diff > $diffInDays) {
+                    $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
                 }
             }
         });
