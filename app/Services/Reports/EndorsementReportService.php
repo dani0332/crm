@@ -104,11 +104,7 @@ class EndorsementReportService extends ManagementReport
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
 
         $this->applyFilters($query, $request);
-
-        $utmGroupBy = $this->getUtmGroup($request, $query);
-        if ($utmGroupBy) {
-            $query->groupBy(['personal_quotes.code', $utmGroupBy]);
-        }
+        $this->getUtmGroup($request, $query);
 
         if ($request->export == 1) {
             $data = $query->get();
