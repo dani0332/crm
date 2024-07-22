@@ -49,7 +49,7 @@ class AuditableController extends Controller
 
         if ($code != '') {
             $query->orWhere(function ($query) use ($code, $auditableTypes) {
-                $query->where('old_values', 'like', '%"code":"' . $code . '"%')
+                $query->where('old_values', 'like', '%"code":"'.$code.'"%')
                     ->whereIn('auditable_type', $auditableTypes);
             });
         }

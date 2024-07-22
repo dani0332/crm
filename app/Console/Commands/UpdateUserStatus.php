@@ -63,7 +63,7 @@ class UpdateUserStatus extends Command
         info('----------- UpdateUserStatus Command Started -----------');
         [$userInactiveThreshold, $inactiveThreshold] = $this->getInactiveThreshold();
 
-        info('Inactive Threshold right now is : ' . $userInactiveThreshold . ' and last activity time matched will be : ' . $inactiveThreshold);
+        info('Inactive Threshold right now is : '.$userInactiveThreshold.' and last activity time matched will be : '.$inactiveThreshold);
 
         $sessions = $this->getSessions();
 
@@ -89,7 +89,7 @@ class UpdateUserStatus extends Command
                 }
 
                 if (($newStatus != $currentUserStatus && $currentUserStatus != UserStatusEnum::MANUAL_OFFLINE) || ($newStatus != $currentUserStatus && $currentUserStatus == UserStatusEnum::MANUAL_OFFLINE && $newStatus != UserStatusEnum::OFFLINE)) {
-                    info('System will now change status from : ' . $currentUserStatus . ' to : ' . $newStatus . ' for user : ' . $session->user->name);
+                    info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus.' for user : '.$session->user->name);
                     User::where('id', $userId)->update(['status' => $newStatus]);
                     event(new UserStatusChanged($userId, $newStatus, $session->user->name));
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
@@ -97,15 +97,15 @@ class UpdateUserStatus extends Command
                         $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()->pluck('id');
                         $bikeId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Bike)->first()->pluck('id');
                         if ($this->userHaveProduct($userId, $carId)) {
-                            info('System triggered car reassignment job for user : ' . $session->user->name);
+                            info('System triggered car reassignment job for user : '.$session->user->name);
                             ReAssignCarLeadsJob::dispatch(new CarAllocationService(), $userId);
                         }
                         if ($this->userHaveProduct($userId, $healthId)) {
-                            info('System triggered health reassignment job for user : ' . $session->user->name);
+                            info('System triggered health reassignment job for user : '.$session->user->name);
                             ReAssignHealthLeadsJob::dispatch(new HealthAllocationService(), $userId);
                         }
                         if ($this->userHaveProduct($userId, $bikeId)) {
-                            info('System triggered bike reassignment job for user : ' . $session->user->name);
+                            info('System triggered bike reassignment job for user : '.$session->user->name);
                             ReAssignBikeLeadsJob::dispatch(new BikeAllocationService(), $userId);
                         }
                     }
@@ -128,7 +128,7 @@ class UpdateUserStatus extends Command
                     }
                 }
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE && $currentUserStatus != UserStatusEnum::MANUAL_OFFLINE) {
-                info('System will now change the status to Active from status : ' . $currentUserStatus . ' for user : ' . $session->user->name);
+                info('System will now change the status to Active from status : '.$currentUserStatus.' for user : '.$session->user->name);
                 event(new UserStatusChanged($userId, UserStatusEnum::ONLINE, $session->user->name));
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
             }

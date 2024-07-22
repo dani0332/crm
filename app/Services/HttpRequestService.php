@@ -2,13 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\CarQuote;
-
 class HttpRequestService extends BaseService
 {
     public function processRequest($data, $creds)
     {
-        $authBasic = base64_encode($creds['apiUserName'] . ':' . $creds['apiPassword']);
+        $authBasic = base64_encode($creds['apiUserName'].':'.$creds['apiPassword']);
 
         $kenClient = new \GuzzleHttp\Client();
         try {
@@ -18,7 +16,7 @@ class HttpRequestService extends BaseService
                     'headers' => [
                         'Content-Type' => 'application/json', 'Accept' => 'application/json',
                         'x-api-token' => $creds['apiToken'],
-                        'Authorization' => 'Basic ' . $authBasic,
+                        'Authorization' => 'Basic '.$authBasic,
                     ],
                     'body' => json_encode($data),
                     'timeout' => $creds['apiTimeout'],
@@ -47,23 +45,23 @@ class HttpRequestService extends BaseService
         $modelName = 'CarQuote';
         $type = 'Car';
 
-        if (!empty($quoteType) && $quoteType != '') {
+        if (! empty($quoteType) && $quoteType != '') {
             // check in checkPersonalQuotes to access PersonalQuote Model
             $modelName = checkPersonalQuotes(ucfirst($quoteType)) ? 'PersonalQuote' : 'CarQuote';
             $type = $quoteType;
         }
 
-        $model = '\\App\\Models\\' . $modelName;
+        $model = '\\App\\Models\\'.$modelName;
         // Get the Quote UUID
         $quoteUuId = $model::where('uuid', '=', $id)->value('uuid');
 
         // Configuration values
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-' . lcfirst($type) . '-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-'.lcfirst($type).'-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
         // Prepare the request data
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -96,7 +94,7 @@ class HttpRequestService extends BaseService
                         'Content-Type' => 'application/json',
                         'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic ' . $authBasic,
+                        'Authorization' => 'Basic '.$authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
@@ -115,8 +113,8 @@ class HttpRequestService extends BaseService
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             // add info for error and exception along with stack trace
-            info('exception occurred in quote plans call with error : ' . $e->getMessage());
-            info('exception occurred in quote plans call with error stack as  : ' . $e->getTraceAsString());
+            info('exception occurred in quote plans call with error : '.$e->getMessage());
+            info('exception occurred in quote plans call with error stack as  : '.$e->getTraceAsString());
             // Handle exceptions and errors
             $response = $e->getResponse();
             $contents = (string) $response->getBody();

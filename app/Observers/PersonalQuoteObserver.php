@@ -59,7 +59,7 @@ class PersonalQuoteObserver
                     event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
                 }
             } catch (Exception $e) {
-                Log::error('PersonalQuoteObserver Error: ' . $e->getMessage());
+                Log::error('PersonalQuoteObserver Error: '.$e->getMessage());
             }
         }
     }

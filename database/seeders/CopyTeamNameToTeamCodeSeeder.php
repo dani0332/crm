@@ -25,18 +25,18 @@ class CopyTeamNameToTeamCodeSeeder extends Seeder
                     $suffix = '';
                     $counter = 1;
                     while ($existingCode) {
-                        $suffix = '_' . $counter;
-                        $existingCode = Team::where('code', $code . $suffix)->first();
+                        $suffix = '_'.$counter;
+                        $existingCode = Team::where('code', $code.$suffix)->first();
                         $counter++;
                     }
 
-                    $team->code = $code . $suffix;
+                    $team->code = $code.$suffix;
                     $team->save();
                 }
             } catch (ModelNotFoundException $e) {
-                info('Team with code "' . $code . '" not found during update for team ID: ' . $team->id . ' and team name: ' . $team->name);
+                info('Team with code "'.$code.'" not found during update for team ID: '.$team->id.' and team name: '.$team->name);
             } catch (\Exception $e) {
-                info('Error in CopyTeamNameToTeamCodeSeeder against this team id: ' . $team->id . ' and this team name: ' . $team->name . ' with message: ' . $e->getMessage());
+                info('Error in CopyTeamNameToTeamCodeSeeder against this team id: '.$team->id.' and this team name: '.$team->name.' with message: '.$e->getMessage());
             }
         }
     }

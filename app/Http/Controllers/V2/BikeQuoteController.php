@@ -93,18 +93,18 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @param  $quoteTypeCode
+     * @param    $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(BikeQuoteRequest $request)
     {
         $response = BikeQuoteRepository::create($request->validated());
 
-        if (!empty($response->errors) || !empty($response->msg)) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 
-        return redirect('personal-quotes/bike/' . $response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/bike/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     /**
@@ -189,7 +189,7 @@ class BikeQuoteController extends Controller
         $carPlanFeaturesCodeEnum = CarPlanFeaturesCode::asArray();
         $carPlanAddonsCodeEnum = CarPlanAddonsCode::asArray();
         $ecomBikeInsuranceQuoteUrl = config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL');
-        $planURL = $ecomBikeInsuranceQuoteUrl . $quote->uuid;
+        $planURL = $ecomBikeInsuranceQuoteUrl.$quote->uuid;
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
         return inertia('BikeQuote/Show', [
@@ -247,15 +247,15 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @param  $quoteTypeCode
-     * @param  $quoteId
+     * @param    $quoteTypeCode
+     * @param    $quoteId
      * @return void
      */
     public function update($uuid, BikeQuoteRequest $request)
     {
         BikeQuoteRepository::update($uuid, $request->validated());
 
-        return redirect('personal-quotes/bike/' . $uuid)->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/bike/'.$uuid)->with('message', 'Quote updated successfully');
     }
     public function bikeAssumptionsUpdate(Request $request)
     {
@@ -285,19 +285,19 @@ class BikeQuoteController extends Controller
 
     public function sendEmailOneClickBuy(Request $request)
     {
-        Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: ' . $request->quote_uuid);
+        Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
 
         //get Car quote by uuid using model
         $bikeQuote = PersonalQuote::where('uuid', $request->quote_uuid)->first();
 
         $previousAdvisor = null;
-        if (!empty($bikeQuote->previous_advisor_id)) {
+        if (! empty($bikeQuote->previous_advisor_id)) {
             $previousAdvisor = app(UserService::class)->getUserById($bikeQuote->previous_advisor_id);
         }
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->bikeQuoteService->getPlans($request->quote_uuid, true, true);
 
-        info('sendEmailOneClickBuy OCB email plans fetched for quote uuid: ' . $request->quote_uuid);
+        info('sendEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
 
         $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
         $emailTemplateId = (int) app(CRUDService::class)->getOcbCustomerEmailTemplate($quotePlansCount, quoteTypeCode::Bike);
@@ -308,18 +308,18 @@ class BikeQuoteController extends Controller
 
         $emailData = (new BikeEmailService(app(SendEmailCustomerService::class), $bikeQuote))->buildEmailData($bikeQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
-        info('sendEmailOneClickBuy OCB email data built for quote uuid: ' . $request->quote_uuid);
+        info('sendEmailOneClickBuy OCB email data built for quote uuid: '.$request->quote_uuid);
 
         $responseCode = app(SendEmailCustomerService::class)->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'bike-quote-one-click-buy');
 
         if ($responseCode == 201) {
-            info('sendEmailOneClickBuy OCB email sent to customer for quote uuid: ' . $request->quote_uuid);
+            info('sendEmailOneClickBuy OCB email sent to customer for quote uuid: '.$request->quote_uuid);
 
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-            Log::info('sendEmailOneClickBuy OCB email sending failed for quote uuid: ' . $request->quote_uuid . ' with error code: ' . $responseCode);
+            Log::info('sendEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
 
-            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: ' . $responseCode], 500);
+            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
     }
 
@@ -333,7 +333,7 @@ class BikeQuoteController extends Controller
         $quotePlanId = [];
 
         foreach ($quotePlans as $key => $quotePlan) {
-            if (!isset($quotePlan->id)) {
+            if (! isset($quotePlan->id)) {
                 continue;
             }
 
@@ -371,7 +371,7 @@ class BikeQuoteController extends Controller
             } else {
                 $responseMessage = $response;
             }
-            $message = 'Bike Plan has not been updated ' . $responseMessage;
+            $message = 'Bike Plan has not been updated '.$responseMessage;
         }
 
         return redirect()->back()->withErrors($message);

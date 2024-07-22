@@ -52,25 +52,25 @@ class CarPlanService extends BaseService
                 $this->query->whereBetween('cp.created_at', [$dateFrom, $dateTo]);
             }
             if (in_array('text_ar', $searchProperties) && isset($request->text_ar) && $request->text_ar != '') {
-                $this->query->Where('cp.text_ar', 'like', '%' . $request->text_ar . '%');
+                $this->query->Where('cp.text_ar', 'like', '%'.$request->text_ar.'%');
             }
             if (in_array('text', $searchProperties) && isset($request->text) && $request->text != '') {
-                $this->query->Where('cp.text', 'like', '%' . $request->text . '%');
+                $this->query->Where('cp.text', 'like', '%'.$request->text.'%');
             }
             if (in_array('code', $searchProperties) && isset($request->code) && $request->code != '') {
-                $this->query->Where('cp.code', 'like', '%' . $request->code . '%');
+                $this->query->Where('cp.code', 'like', '%'.$request->code.'%');
             }
             if (in_array('repair_type', $searchProperties) && isset($request->repair_type) && $request->repair_type != '') {
-                $this->query->Where('cp.repair_type', 'like', '%' . $request->repair_type . '%');
+                $this->query->Where('cp.repair_type', 'like', '%'.$request->repair_type.'%');
             }
             if (in_array('insurance_type', $searchProperties) && isset($request->insurance_type) && $request->insurance_type != '') {
-                $this->query->Where('cp.insurance_type', 'like', '%' . $request->insurance_type . '%');
+                $this->query->Where('cp.insurance_type', 'like', '%'.$request->insurance_type.'%');
             }
             if (in_array('provider_id', $searchProperties) && isset($request->provider_id) && $request->provider_id != '') {
-                $this->query->Where('cp.provider_id', 'like', '%' . $request->provider_id . '%');
+                $this->query->Where('cp.provider_id', 'like', '%'.$request->provider_id.'%');
             }
             foreach ($searchProperties as $item) {
-                if (!empty($request[$item]) && $item != 'created_at') {
+                if (! empty($request[$item]) && $item != 'created_at') {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     }
@@ -213,7 +213,7 @@ class CarPlanService extends BaseService
             'id',
             'text',
             'repair_type',
-            DB::raw('IF(repair_type = "' . CarPlanType::COMP . '", CONCAT(text, " (NON-AGENCY)"), CONCAT(text, " (", repair_type, ")")) as plan_name'),
+            DB::raw('IF(repair_type = "'.CarPlanType::COMP.'", CONCAT(text, " (NON-AGENCY)"), CONCAT(text, " (", repair_type, ")")) as plan_name'),
         ])
             ->where('provider_id', $insuranceProviderId)
             ->whereNotIn('id', $quotePlanId)

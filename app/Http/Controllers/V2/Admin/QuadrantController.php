@@ -19,7 +19,7 @@ class QuadrantController extends Controller
         $data = Quadrant::orderBy('id');
 
         if (request()->name) {
-            $data->where('name', 'LIKE', '%' . request()->name . '%');
+            $data->where('name', 'LIKE', '%'.request()->name.'%');
         }
 
         $quadrants = $data->with([

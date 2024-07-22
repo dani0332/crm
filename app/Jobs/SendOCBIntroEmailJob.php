@@ -52,17 +52,17 @@ class SendOCBIntroEmailJob implements ShouldQueue
         try {
             $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
 
-            if (!$lead) {
-                info('SendOCBIntroEmailJob - Lead not found for uuid: ' . $this->quoteUuid);
+            if (! $lead) {
+                info('SendOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
 
                 return;
             }
             if ($lead->sic_flow_enabled) {
-                info('SendOCBIntroEmailJob - SIC work flow is enabled on this lead already : ' . $this->quoteUuid);
+                info('SendOCBIntroEmailJob - SIC work flow is enabled on this lead already : '.$this->quoteUuid);
 
                 return;
             } else {
-                info('SendOCBIntroEmailJob - Lead found for uuid: ' . $this->quoteUuid);
+                info('SendOCBIntroEmailJob - Lead found for uuid: '.$this->quoteUuid);
 
                 if (($lead->assignment_type == AssignmentTypeEnum::MANUAL_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) && $lead->source == LeadSourceEnum::DUBAI_NOW) {
                     $this->sendDubaiNowEmail($lead);
@@ -74,14 +74,14 @@ class SendOCBIntroEmailJob implements ShouldQueue
 
                     $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService, $this->triggerSICWorkflow);
                     if (in_array($responseCode, [200, 201])) {
-                        info('SendOCBIntroEmailJob - OCB INTRO Email Sent: ' . $responseCode . ' Customer Email Address: ' . $lead->email . ' Quote UuId: ' . $this->quoteUuid);
+                        info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                     } else {
-                        Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: ' . $responseCode . ' Customer EmailAddress:' . $lead->email);
+                        Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
                     }
                 }
             }
         } catch (Exception $e) {
-            info('SendOCBIntroEmailJob - Error: ' . $e->getMessage() . ' with stack trace: ' . $e->getTraceAsString());
+            info('SendOCBIntroEmailJob - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
         }
     }
 
@@ -111,12 +111,12 @@ class SendOCBIntroEmailJob implements ShouldQueue
             'TemplateAlias' => 'payment-internal-notification-car-dubai-now',
             'TemplateModel' => [
                 'params' => [
-                    'customerName' => $lead->first_name . ' ' . $lead->last_name,
+                    'customerName' => $lead->first_name.' '.$lead->last_name,
                     'referenceCode' => $lead->code,
                     'providerName' => $insuranceProviderName,
                     'totalPremium' => $amountPaid,
                 ],
-                'subject' => (config('constants.APP_ENV') != 'production' ? config('constants.APP_ENV') . ' - ' : '') . 'DubaiNow || ' . $lead->first_name . ' has paid for ' . $lead->code,
+                'subject' => (config('constants.APP_ENV') != 'production' ? config('constants.APP_ENV').' - ' : '').'DubaiNow || '.$lead->first_name.' has paid for '.$lead->code,
             ],
             'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
@@ -124,9 +124,9 @@ class SendOCBIntroEmailJob implements ShouldQueue
         // Attempt to send email and log response or errors
         try {
             $response = PostMark::sendEmail($body);
-            info('SendDubaiNowInternalEmail - Response: ' . json_encode($response));
+            info('SendDubaiNowInternalEmail - Response: '.json_encode($response));
         } catch (Exception $e) {
-            Log::error('SendDubaiNowInternalEmail - ERROR:' . $e->getMessage());
+            Log::error('SendDubaiNowInternalEmail - ERROR:'.$e->getMessage());
         }
     }
 }

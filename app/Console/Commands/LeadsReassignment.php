@@ -48,30 +48,30 @@ class LeadsReassignment extends Command
     {
         $currentIteration = now();
 
-        info('------------------- Lead Reassignment Command Started At : ' . $currentIteration . ' -------------------');
+        info('------------------- Lead Reassignment Command Started At : '.$currentIteration.' -------------------');
 
         $start_time = Carbon::createFromFormat('H:i', $applicationStorageService->getValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
         $end_time = Carbon::createFromFormat('H:i', $applicationStorageService->getValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
         $enableLeadReassignment = $applicationStorageService->getValueByKey(ApplicationStorageEnums::ENABLE_LEAD_REASSIGNMENT);
         $shouldProceed = now()->between($start_time, $end_time) && ((int) config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 1) && ($enableLeadReassignment == 1);
-        info('shouldProceed for lead reassignment started at : ' . $currentIteration . ' and value is : ' . $shouldProceed);
+        info('shouldProceed for lead reassignment started at : '.$currentIteration.' and value is : '.$shouldProceed);
 
         $isHoliday = $this->isHoliday();
 
-        if ($shouldProceed && !now()->isWeekend() && !$isHoliday) {
+        if ($shouldProceed && ! now()->isWeekend() && ! $isHoliday) {
             dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), 0));
-            info('Car lead reassignment job  for ' . $currentIteration . ' is dispatched');
+            info('Car lead reassignment job  for '.$currentIteration.' is dispatched');
 
             dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), 0));
-            info('Health lead reassignment job  for ' . $currentIteration . ' is dispatched');
+            info('Health lead reassignment job  for '.$currentIteration.' is dispatched');
 
             dispatch(new ReAssignBikeLeadsJob(app(BikeAllocationService::class), 0));
-            info('Bike lead reassignment job  for ' . $currentIteration . ' is dispatched');
+            info('Bike lead reassignment job  for '.$currentIteration.' is dispatched');
 
-            info('------------------- Lead reassignment Command Finished for ' . $currentIteration . ' -------------------');
+            info('------------------- Lead reassignment Command Finished for '.$currentIteration.' -------------------');
         } else {
             info('Lead reassignment time is off');
-            info('------------------- Lead reassignment Command Finished for ' . $currentIteration . ' -------------------');
+            info('------------------- Lead reassignment Command Finished for '.$currentIteration.' -------------------');
 
             return;
         }

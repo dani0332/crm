@@ -213,7 +213,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
     });
 
-    Route::group(['middleware' => ['permission:' . PermissionsEnum::EXTRACT_REPORT]], function () {
+    Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
 
@@ -241,7 +241,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('config:clear');
         Artisan::call('view:clear');
 
-        return '<h1>All cache cleared. LARAVEL Version=' . app()->version() . '</h1>';
+        return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
@@ -396,7 +396,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('business', BusinessQuoteController::class);
         }
         Route::resource('travel', CRUDController::class);
-        if (!in_array(quoteTypeCode::Pet, newUi())) {
+        if (! in_array(quoteTypeCode::Pet, newUi())) {
             Route::resource('pet', CRUDController::class);
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
@@ -438,7 +438,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('{quoteType}/risk-rating-details/{quoteId}', [CRUDController::class, 'riskRatingDetails'])->name('risk-rating-details');
         Route::post('{quoteType}/{quoteUuId}/send-ocb', [CentralController::class, 'sendOCBEmail'])->name('sendOCBEmail');
 
-        if (!in_array(quoteTypeCode::Life, newUi())) {
+        if (! in_array(quoteTypeCode::Life, newUi())) {
             Route::resource('life', CRUDController::class);
         }
 

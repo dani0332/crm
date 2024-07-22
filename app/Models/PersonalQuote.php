@@ -128,7 +128,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @param  $date
+     * @param    $date
      * @return string
      */
     public function getDobAttribute($value)

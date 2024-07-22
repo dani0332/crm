@@ -40,7 +40,7 @@ class AddLOBsClaimHistoryOptionsSeeder extends Seeder
 
             Log::info("ClaimHistory record with code '{$codeToInsert}' inserted successfully.");
         } catch (\Exception $exception) {
-            Log::error('Error inserting ClaimHistory record: ' . $exception->getMessage());
+            Log::error('Error inserting ClaimHistory record: '.$exception->getMessage());
         }
     }
 
@@ -67,7 +67,7 @@ class AddLOBsClaimHistoryOptionsSeeder extends Seeder
                 return; // exit if record is found and handled (update or skip)
             }
         } catch (\Exception $exception) {
-            Log::error('Error updating ClaimHistory record: ' . $exception->getMessage());
+            Log::error('Error updating ClaimHistory record: '.$exception->getMessage());
         }
     }
 }
