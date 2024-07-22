@@ -81,14 +81,10 @@ class CentralController extends Controller
     {
         $diffInDays = 120;
 
-        if (! $quoteType) {
-            return abort(404);
-        }
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                 $error_fields = 'paid at';
-
                 $request->validate([
                     'paid_at_start' => 'required',
                     'paid_at_end' => 'required',
@@ -96,36 +92,30 @@ class CentralController extends Controller
                 $created_at_start = Carbon::parse($request->paid_at_start)->format($dateFormat);
                 $created_at_end = Carbon::parse($request->paid_at_end)->format($dateFormat);
             } else {
-                $error_fields = 'created date';
-
                 if (request()->has('created_at')) {
                     request()->merge(['created_at_start' => request()->get('created_at')]);
                     request()->query->remove('created_at');
                 }
-
                 if (request()->has('payment_due_date')) {
+                    $error_fields = 'payment due date';
                     $request->validate([
                         'payment_due_date' => 'required',
                     ]);
-
-                    $defaultDate = now()->endOfDay();
-
-                    $created_at_start = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][0])->startOfDay() : $defaultDate;
-                    $created_at_end = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][1])->endOfDay() : $defaultDate;
+                    $created_at_start = Carbon::parse($request['payment_due_date'][0])->startOfDay();
+                    $created_at_end = Carbon::parse($request['payment_due_date'][1])->endOfDay();
                 } elseif (request()->has('booking_date')) {
+                    $error_fields = 'booking date';
                     $request->validate([
                         'booking_date' => 'required',
                     ]);
-                    $defaultDate = now()->endOfDay();
-
-                    $created_at_start = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][0])->startOfDay() : $defaultDate;
-                    $created_at_end = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][1])->endOfDay() : $defaultDate;
+                    $created_at_start = Carbon::parse($request['booking_date'][0])->startOfDay();
+                    $created_at_end = Carbon::parse($request['booking_date'][1])->endOfDay();
                 } else {
+                    $error_fields = 'created date';
                     $request->validate([
                         'created_at_start' => 'required',
                         'created_at_end' => 'required',
                     ]);
-
                     $created_at_start = Carbon::parse($request->created_at_start)->format($dateFormat);
                     $created_at_end = Carbon::parse($request->created_at_end)->format($dateFormat);
                 }
