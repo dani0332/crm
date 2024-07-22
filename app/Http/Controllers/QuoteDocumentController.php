@@ -309,9 +309,6 @@ class QuoteDocumentController extends Controller
             $docUrl = $document['doc_url'];
             $originalName = $document['original_name'];
 
-            $entryName = $originalName;
-            $counter = 1;
-
             $pathPrefix = '';
             if (! empty($document['member_detail_id'])) {
                 $member = CustomerMembers::find($document['member_detail_id']);
@@ -323,16 +320,10 @@ class QuoteDocumentController extends Controller
                 }
             }
 
-            while ($zip->statName($pathPrefix.$entryName)) {
-                $info = pathinfo($originalName);
-                $entryName = $info['filename'].'_'.$counter.'.'.$info['extension'];
-                $counter++;
-            }
-
             if ($disk->exists($docUrl)) {
                 try {
                     $contents = $disk->get($docUrl);
-                    $zip->addFromString($pathPrefix.$entryName, $contents);
+                    $zip->addFromString($pathPrefix.$originalName, $contents);
                     $processedDocuments[] = $originalName;
                 } catch (\Exception $e) {
                     info("Error processing document: {$originalName} - ".$e->getMessage());
@@ -357,7 +348,6 @@ class QuoteDocumentController extends Controller
         $response->headers->set('Content-Type', 'application/zip');
         $response->headers->set('Content-Disposition', 'attachment; filename="'.$zipFileName.'"');
 
-        // Clean up the temporary file after sending response
         register_shutdown_function(function () use ($tmpFile) {
             unlink($tmpFile);
         });

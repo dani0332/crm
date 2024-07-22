@@ -3387,7 +3387,7 @@ const downloadDocument = async () => {
         </h3>
         <div class="flex gap-2">
             <x-button
-                v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENT)"
+                v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
                 size="sm"
                 color="emerald"
                 :loading="contentLoader"

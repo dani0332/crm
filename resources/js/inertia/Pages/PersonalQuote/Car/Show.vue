@@ -3479,7 +3479,7 @@ const downloadDocument = async () => {
         <div>
             <x-button
                 class="mr-2"
-                v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENT)"
+                v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
                 size="sm"
                 color="emerald"
                 :loading="contentLoader"
