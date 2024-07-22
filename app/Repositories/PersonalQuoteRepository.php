@@ -111,7 +111,7 @@ class PersonalQuoteRepository extends BaseRepository
             'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
             'original_name' => $originalName,
             'doc_url' => $filePathAzure,
-            'watermarked_doc_url' => $watermarkData['watermared_doc_url'] ?? null,
+            'watermarked_doc_url' => $watermarkData['watermarked_doc_url'] ?? null,
             'doc_mime_type' => $fileMimeType,
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,
