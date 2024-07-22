@@ -21,6 +21,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
 trait GenericQueriesAllLobs
@@ -420,11 +421,16 @@ trait GenericQueriesAllLobs
      * Invoked when update in the policy details section
      * It also checks for discrepancies between the total amount of child payments and the total price of the parent payment.
      */
-    public function updatePriceAndDiscount($quoteModel): bool
+    public function updatePriceAndDiscount($quoteModel, $sendUpdatePayment = null): bool
     {
         info('fn: updatePriceAndDiscount called for : '.$quoteModel->uuid);
 
-        $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        // it will check for send update payments.
+        if (! $sendUpdatePayment) {
+            $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        } else {
+            $payment = $sendUpdatePayment;
+        }
         $priceWithVat = $quoteModel->price_with_vat;
 
         if ($payment) {
@@ -773,4 +779,24 @@ trait GenericQueriesAllLobs
 
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
+
+    public function adjustQueryByDateFilters($query, $tablePrefix)
+    {
+        $request = request();
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $defaultDate = now()->endOfDay();
+        if ($request->payment_due_date) {
+            $query->join('payment_splits as pays', 'pays.code', '=', $tablePrefix.'.code');
+            $columnName = 'pays.due_date';
+        } elseif ($request->booking_date) {
+            $columnName = $tablePrefix.'.policy_booking_date';
+        } else {
+            return;
+        }
+        $dateType = $request->payment_due_date ? 'payment_due_date' : 'booking_date';
+        $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultDate;
+        $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultDate;
+        $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
+    }
+
 }
