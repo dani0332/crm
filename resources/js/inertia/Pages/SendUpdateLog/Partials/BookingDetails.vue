@@ -196,7 +196,7 @@ const bookingDetailsForm = useForm({
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
   transaction_payment_status: 'N/A',
   invoice_date: dateToYMD(props.sendUpdateLog?.invoice_date) || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
-  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || '',
+  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || null,
   discount: isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || '0.00',
   insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_percentage: props.sendUpdateLog?.commission_percentage || props?.payments[0]?.commmission_percentage || '',
