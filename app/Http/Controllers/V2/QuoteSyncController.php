@@ -103,6 +103,11 @@ class QuoteSyncController extends Controller
 
     public function addStuckEntriesForSyncing(QuoteSyncService $quoteSyncService)
     {
-        $quoteSyncService->addStuckEntriesForSyncing();
+        $quoteSyncService->addEntriesForReSyncing(QuoteSyncStatus::INPROGRESS);
+    }
+
+    public function addFailedEntriesForSyncing(QuoteSyncService $quoteSyncService)
+    {
+        $quoteSyncService->addEntriesForReSyncing(QuoteSyncStatus::FAILED);
     }
 }
