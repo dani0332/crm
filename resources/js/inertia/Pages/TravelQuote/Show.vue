@@ -1190,6 +1190,10 @@ onMounted(() => {
   }
 });
 
+const isEmbeddedProduct = (code) => {
+  return code.includes('TAP-CAR');
+};
+
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const selectedPlanIds = computed(() => {
   return page.props.payments.length > 0
@@ -1297,7 +1301,12 @@ const getGenderDisplay = (val) => {
   <div>
     <Head title="Travel Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Travel Detail</h2>
+      <h2 class="text-xl font-semibold">
+        Travel Detail
+        <span class="inline-flex items-center rounded-md bg-yellow-300 px-2 py-1 text-xs font-medium text-yellow-900 ring-1 ring-inset ring-yellow-300/10" v-if="isEmbeddedProduct(quote.code)">
+          {{ 'Car Embedded Product' }}
+        </span>
+      </h2>
       <div class="flex gap-2">
         <Link
           v-if="quote?.insly_id"
