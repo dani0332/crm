@@ -1105,7 +1105,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
                 quote.payments.find(
                 item =>
                     item.payment_methods_code ===
-                    page.props.paymentMethodsEnum.ProformaPaymentRequest,
+                    page.props?.paymentMethodsEnum?.ProformaPaymentRequest,
                 )
             "
 			:quoteRequest="quote"

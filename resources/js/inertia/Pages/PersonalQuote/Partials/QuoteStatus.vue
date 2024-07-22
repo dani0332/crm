@@ -53,8 +53,8 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    (props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved ||
-      props.quote.quote_status_id == props.quoteStatusEnum.Lost) ??
+    (props.quote.quote_status_id == props.quoteStatusEnum?.TransactionApproved ||
+      props.quote.quote_status_id == props.quoteStatusEnum?.Lost) ??
     false
   );
 });
@@ -98,7 +98,7 @@ const allowStatusUpdate = computed(() => {
               required
               v-if="
                 quoteStatusForm.quote_status_id ==
-                props.quoteStatusEnum.TransactionApproved
+                props.quoteStatusEnum?.TransactionApproved
               "
             >
               <x-input
@@ -113,7 +113,7 @@ const allowStatusUpdate = computed(() => {
               label="Lost Reason"
               required
               v-if="
-                quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost
+                quoteStatusForm.quote_status_id == props.quoteStatusEnum?.Lost
               "
             >
               <x-select
@@ -182,7 +182,7 @@ const allowStatusUpdate = computed(() => {
           required
           v-if="
             quoteStatusForm.quote_status_id ==
-            props.quoteStatusEnum.TransactionApproved
+            props.quoteStatusEnum?.TransactionApproved
           "
         >
           <x-input
@@ -196,7 +196,7 @@ const allowStatusUpdate = computed(() => {
         <x-field
           label="Lost Reason"
           required
-          v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost"
+          v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum?.Lost"
         >
           <x-select
             v-model="quoteStatusForm.lost_reason_id"
