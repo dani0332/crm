@@ -420,11 +420,16 @@ trait GenericQueriesAllLobs
      * Invoked when update in the policy details section
      * It also checks for discrepancies between the total amount of child payments and the total price of the parent payment.
      */
-    public function updatePriceAndDiscount($quoteModel): bool
+    public function updatePriceAndDiscount($quoteModel, $sendUpdatePayment = null): bool
     {
         info('fn: updatePriceAndDiscount called for : '.$quoteModel->uuid);
 
-        $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        // it will check for send update payments.
+        if (! $sendUpdatePayment) {
+            $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        } else {
+            $payment = $sendUpdatePayment;
+        }
         $priceWithVat = $quoteModel->price_with_vat;
 
         if ($payment) {
