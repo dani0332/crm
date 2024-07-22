@@ -109,7 +109,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('home', function () {
         return inertia('Home/Home', ['im_logo' => getIMLogo()]);
-    });
+    })->name('dashboard.home');
 
     Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
 
@@ -281,7 +281,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('get-team-managers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
     Route::post('get-sub-teams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
     Route::post('get-product-teams', [UserController::class, 'getProductTeams'])->name('getProductTeams');
-    Route::get('/customer-upload', [V2CustomerController::class, 'uploadCustomers']);
+    Route::get('/customer-upload', [V2CustomerController::class, 'uploadCustomers'])->name('customer.upload');
     Route::post('/customer-process', [V2CustomerController::class, 'processCustomerUpload']);
     Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
     Route::post('/customer-additional-contact/{id}/make-primary', [CustomerController::class, 'makeAdditionalContactPrimary']);
@@ -345,7 +345,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])
         ->middleware('check_lead_report_access')
         ->name('lead-list-report');
-    Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
+    Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats'])->name('dashboard.conversion.stats');
     Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
 
     Route::group(['prefix' => 'admin'], function () {
