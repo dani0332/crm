@@ -74,7 +74,7 @@ class SageApiService
         // $sageRequest->discount = 2;
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
-        $sageRequest->bookingDate = $quote['policy_booking_date'] ? date('Y-m-d', strtotime($quote['policy_booking_date'])) : Carbon::now()->format('Y-m-d');
+        $sageRequest->bookingDate = $quote['policy_booking_date'] ? date('Y-m-d', strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = date('Ymd', strtotime($quote['policy_booking_date']));
         $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
         $sageRequest->insurerInvoiceDate = date('Y-m-d', strtotime($payment->insurer_invoice_date));
