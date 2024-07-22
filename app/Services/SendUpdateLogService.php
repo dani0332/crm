@@ -679,9 +679,7 @@ class SendUpdateLogService
             DB::beginTransaction();
 
             $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
-
-            if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
-
+            if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
                 if ($payment) {
                     info('Book Update - Updating Payment Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $payment->update([
@@ -690,11 +688,54 @@ class SendUpdateLogService
                     ]);
                 }
 
+                // Cases for Endorsment Financial Start
                 if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
                     info('Book Update - Updating Renewal Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
                 }
 
+                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
+                    // Addons for Car move to main lead
+                    if (! empty($sendUpdateLog->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) { 
+                        foreach ($sendUpdateLog->car_addons as $addonId) {
+                            CarQuoteRequestAddOn::updateOrCreate([
+                                'quote_request_id' => $quote->id,
+                                'addon_option_id' => $addonId,
+                            ], [
+                                'quote_request_id' => $quote->id,
+                                'addon_option_id' => $addonId,
+                                'price' => 0,
+                            ]);
+                        }
+                    } 
+                    // Emirate of Registration for Car move to main lead
+                    elseif (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) { 
+                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
+                        info('emirate id : '.$sendUpdateLog->emirates_id);
+                    } 
+                    // Seat Capacity for Car move to main lead
+                    elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0 && $optionCode == SendUpdateLogStatusEnum::CISC) { 
+                        $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
+                    }
+                }
+                // Cases for Endorsment Financial End
+
+                // Cases for Cancel Inception and Cancel Inception Reissue Start
+                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
+                        // 'quote_status_id' => QuoteStatusEnum::PolicyCancelled, // Below code overrides status, it should be PolicyCancelledReissued not PolicyCancelled
+                        'quote_batch_id' => null,
+                    ]);
+                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
+                } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                    ]);
+                }
+                // Cases for Cancel Inception and Cancel Inception Reissue End
+
+                // Cases for Correct Policy Details Start
                 if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
                     info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update([
@@ -710,6 +751,7 @@ class SendUpdateLogService
                         'price_with_vat' => $sendUpdateLog->price_with_vat,
                     ]);
                 }
+                // Cases for Correct Policy Details End
             }
 
             if ($payment) {
@@ -727,63 +769,6 @@ class SendUpdateLogService
                 'transaction_payment_status' => $status ?? '',
                 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
             ]);
-
-            if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
-                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
-                        'quote_batch_id' => null,
-                    ]);
-                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
-                } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-                    ]);
-                }
-                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
-                    if (! empty($sendUpdateLog->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) { // will work on Add optional cover.
-                        foreach ($sendUpdateLog->car_addons as $addonId) {
-                            CarQuoteRequestAddOn::updateOrCreate([
-                                'quote_request_id' => $quote->id,
-                                'addon_option_id' => $addonId,
-                            ], [
-                                'quote_request_id' => $quote->id,
-                                'addon_option_id' => $addonId,
-                                'price' => 0,
-                            ]);
-                        }
-                    } elseif (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) { // will work on Change of Emirate.
-                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
-                        info('emirate id : '.$sendUpdateLog->emirates_id);
-                    } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0 && $optionCode == SendUpdateLogStatusEnum::CISC) { // will work on Change in seating capacity.
-                        $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
-                    }
-                }
-                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-                        'quote_batch_id' => null,
-                    ]);
-                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
-                }
-
-                $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
-
-                if ($payment->captured_amount < 1) {
-                    $status = SendUpdateLogStatusEnum::UNPAID;
-                } elseif (($payment->captured_amount + $payment->discount_value) < $payment->total_price) {
-                    $status = SendUpdateLogStatusEnum::PARTIALLY_PAID;
-                } elseif (($payment->captured_amount + $payment->discount_value) >= $payment->total_price) {
-                    $status = SendUpdateLogStatusEnum::FULL_PAID;
-                }
-
-                $sendUpdateLog->update([
-                    'booking_date' => now(),
-                    'transaction_payment_status' => $status ?? '',
-                    'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
-                ]);
-
-            }
 
             DB::commit();
 
