@@ -469,12 +469,20 @@ class SendUpdateLogService
             $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
         }
 
-        return [
+        $response = [
             'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format(config('constants.DATE_DISPLAY_FORMAT')) : null,
             'broker_invoice_number' => $brokerInvoiceNumber,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
         ];
+
+        $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+
+        if ($payment) {
+            $response['isLackingOfPayment'] = $this->isLackingPayment($payment);
+        }
+
+        return $response;
     }
 
     public function getPayments($quoteId, $quoteUuid, $quoteType)
@@ -625,7 +633,7 @@ class SendUpdateLogService
         return $payment->update($sendUpdatePaymentDetails);
     }
 
-    public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog, $apPatchCallEnable = true)
+    public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
     {
         $categoryCode = $sendUpdateLog->category?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
@@ -640,7 +648,6 @@ class SendUpdateLogService
                     'category' => $categoryCode,
                     'option' => $sendUpdateLog->option->code,
                     'send_update_log' => $sendUpdateLog,
-                    'ap_patch_call_enable' => $apPatchCallEnable, // TODO :: This is temporary solution, this after AP Split patch working fine
                 ]
             );
 
@@ -656,7 +663,6 @@ class SendUpdateLogService
                     'category' => $categoryCode,
                     'send_update_log' => $sendUpdateLog,
                     'reverse_invoice' => $sendUpdateRequest->reversalInvoice,
-                    'ap_patch_call_enable' => $apPatchCallEnable, // TODO :: This is temporary solution, this after AP Split patch working fine
                 ]
             );
 
@@ -962,5 +968,10 @@ class SendUpdateLogService
 
             return $documentType;
         }, $documentTypes);
+    }
+
+    public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
+    {
+        $this->updatePriceAndDiscount($sendUpdateLog, $payment);
     }
 }

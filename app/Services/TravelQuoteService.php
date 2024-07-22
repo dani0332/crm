@@ -339,7 +339,7 @@ class TravelQuoteService extends BaseService
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
@@ -434,6 +434,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+        $this->adjustQueryByDateFilters($this->query, 'tqr');
 
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -1017,4 +1018,19 @@ class TravelQuoteService extends BaseService
     {
         return TravelDestination::where('quote_id', $id)->with('destination:id,code,country_name')->get();
     }
+
+    public function getTransactionApprovedQuoteStatus($leadId)
+    {
+        $transactionApprovedAudit = DB::table('audits as a')
+            ->where(function ($query) use ($leadId) {
+                $query->where('a.auditable_type', 'App\Models\\'.QuoteTypes::TRAVEL->value.'Quote')
+                    ->where('a.auditable_id', $leadId)
+                    ->where(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))"), QuoteStatusEnum::TransactionApproved);
+            })
+            ->orderBy('a.created_at', 'DESC')
+            ->first();
+
+        return $transactionApprovedAudit;
+    }
+
 }
