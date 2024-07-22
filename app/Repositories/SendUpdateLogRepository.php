@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
