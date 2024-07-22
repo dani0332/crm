@@ -299,7 +299,10 @@ class HealthQuoteController extends Controller
 
         $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
-        $areBothTeamsPresent = in_array(TeamNameEnum::RM_NB, $userTeams) && in_array(TeamNameEnum::RM_RENEWALS, $userTeams);
+        $newBusinessTeam = in_array(TeamNameEnum::RM_NB, $userTeams);
+        $renewalsTeam = in_array(TeamNameEnum::RM_RENEWALS, $userTeams);
+
+        $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
 
         $isAdvisorOrManagerOrDeputy = auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy();
         
@@ -351,17 +354,31 @@ class HealthQuoteController extends Controller
             QuoteStatusEnum::PolicyBooked => 9,
         ];
 
-        if ($request->is_renewal === quoteTypeCode::yesText) {
-            $renewalKeys = array_keys($renewals);
-            $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
-                return in_array($quote['id'], $renewalKeys);
-            });
+        if($areBothTeamsPresent || $isAdvisorOrManagerOrDeputy) {
+            if ($request->is_renewal === quoteTypeCode::yesText) {
+                $renewalKeys = array_keys($renewals);
+                $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                    return in_array($quote['id'], $renewalKeys);
+                });
+    
+                // Sort filtered quotes based on the renewals array order
+                usort($quotes, function ($a, $b) use ($renewals) {
+                    return $renewals[$a['id']] <=> $renewals[$b['id']];
+                });
+            } 
+            if ($request->is_renewal === quoteTypeCode::noText) {
+                $newBusinessKeys = array_keys($newBusiness);
+                $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
+                    return in_array($quote['id'], $newBusinessKeys);
+                });
+    
+                // Sort filtered quotes based on the newBusiness array order
+                usort($quotes, function ($a, $b) use ($newBusiness) {
+                    return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
+                });
+            } 
 
-            // Sort filtered quotes based on the renewals array order
-            usort($quotes, function ($a, $b) use ($renewals) {
-                return $renewals[$a['id']] <=> $renewals[$b['id']];
-            });
-        } elseif ($request->is_renewal === quoteTypeCode::noText) {
+        }elseif($newBusinessTeam) {
             $newBusinessKeys = array_keys($newBusiness);
             $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
                 return in_array($quote['id'], $newBusinessKeys);
@@ -371,7 +388,17 @@ class HealthQuoteController extends Controller
             usort($quotes, function ($a, $b) use ($newBusiness) {
                 return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
             });
-        } elseif (array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)) {
+        }elseif($renewalsTeam){
+            $renewalKeys = array_keys($renewals);
+                $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                    return in_array($quote['id'], $renewalKeys);
+                });
+    
+                // Sort filtered quotes based on the renewals array order
+                usort($quotes, function ($a, $b) use ($renewals) {
+                    return $renewals[$a['id']] <=> $renewals[$b['id']];
+                });
+        }elseif (array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Lost,
                 QuoteStatusEnum::Allocated,
