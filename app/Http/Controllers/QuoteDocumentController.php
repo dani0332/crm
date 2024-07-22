@@ -340,6 +340,7 @@ class QuoteDocumentController extends Controller
         if (count($processedDocuments) === 0) {
             return response()->json(['message' => 'No documents were added to the ZIP file.'], 400);
         }
+
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
