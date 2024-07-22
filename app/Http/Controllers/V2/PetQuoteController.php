@@ -217,12 +217,21 @@ class PetQuoteController extends Controller
 
         $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
-        $areBothTeamsPresent = in_array(TeamNameEnum::PET_TEAM, $userTeams) && in_array(TeamNameEnum::PET_RENEWALS, $userTeams);
-        $isAdvisorOrManagerOrDeputy = auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy();
+        $newBusinessTeam = in_array(TeamNameEnum::PET_TEAM, $userTeams);
+        $renewalsTeam = in_array(TeamNameEnum::PET_RENEWALS, $userTeams);
+
+        $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
+
+        $isManagerOrDeputy = auth()->user()->isManagerOrDeputy();
         
-        if ($request->is_renewal === null && $areBothTeamsPresent && $isAdvisorOrManagerOrDeputy) {
+        if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
+            $request->merge(['is_renewal' => quoteTypeCode::yesText]);
+        }elseif($newBusinessTeam){
+            $request->merge(['is_renewal' => quoteTypeCode::noText]);
+        }elseif($renewalsTeam){
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
         }
+
         $quotes = [
             ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::NewLead, $request)],
             ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::Allocated, $request)],
@@ -255,17 +264,31 @@ class PetQuoteController extends Controller
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        if ($request->is_renewal === quoteTypeCode::yesText) {
-            $renewalKeys = array_keys($renewals);
-            $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
-                return in_array($quote['id'], $renewalKeys);
-            });
+        if($areBothTeamsPresent || $isManagerOrDeputy) {
+            if ($request->is_renewal === quoteTypeCode::yesText) {
+                $renewalKeys = array_keys($renewals);
+                $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                    return in_array($quote['id'], $renewalKeys);
+                });
+    
+                // Sort filtered quotes based on the renewals array order
+                usort($quotes, function ($a, $b) use ($renewals) {
+                    return $renewals[$a['id']] <=> $renewals[$b['id']];
+                });
+            } 
+            if ($request->is_renewal === quoteTypeCode::noText) {
+                $newBusinessKeys = array_keys($newBusiness);
+                $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
+                    return in_array($quote['id'], $newBusinessKeys);
+                });
+    
+                // Sort filtered quotes based on the newBusiness array order
+                usort($quotes, function ($a, $b) use ($newBusiness) {
+                    return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
+                });
+            } 
 
-            // Sort filtered quotes based on the renewals array order
-            usort($quotes, function ($a, $b) use ($renewals) {
-                return $renewals[$a['id']] <=> $renewals[$b['id']];
-            });
-        } elseif ($request->is_renewal === quoteTypeCode::noText) {
+        }elseif($newBusinessTeam) {
             $newBusinessKeys = array_keys($newBusiness);
             $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
                 return in_array($quote['id'], $newBusinessKeys);
@@ -275,6 +298,16 @@ class PetQuoteController extends Controller
             usort($quotes, function ($a, $b) use ($newBusiness) {
                 return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
             });
+        }elseif($renewalsTeam){
+            $renewalKeys = array_keys($renewals);
+                $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                    return in_array($quote['id'], $renewalKeys);
+                });
+    
+                // Sort filtered quotes based on the renewals array order
+                usort($quotes, function ($a, $b) use ($renewals) {
+                    return $renewals[$a['id']] <=> $renewals[$b['id']];
+                });
         } elseif (array_intersect([TeamNameEnum::PET_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,

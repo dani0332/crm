@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
@@ -56,6 +58,17 @@ const isAllowed = computed(() => {
   ]);
 });
 
+const renewalInitialState = () => {
+  if (hasTeams([teamsEnum.RM_RENEWALS, teamsEnum.RM_NB])) {
+    return 'Yes';
+  } else if (hasTeams([teamsEnum.RM_RENEWALS])) {
+    return 'Yes';
+  } else if (hasTeams([teamsEnum.RM_NB])) {
+    return 'No';
+  } else {
+    return null;
+  }
+};
 
 
 const filters = reactive({
@@ -70,7 +83,7 @@ const filters = reactive({
   quote_status: [],
   advisors: [],
   is_ecommerce: '',
-  is_renewal: hasTeams([teamsEnum.RM_RENEWALS, teamsEnum.RM_NB]) ? 'Yes' : null,
+  is_renewal: renewalInitialState(),
   previous_quote_policy_number: '',
   renewal_batch: '',
   date: null,
@@ -354,6 +367,7 @@ function onReset() {
           class="w-full"
         />
         <x-select
+          :disabled="!hasTeams([teamsEnum.RM_RENEWALS, teamsEnum.RM_NB])"
           v-model="filters.is_renewal"
           label="Renewal"
           placeholder="Search by Renewal"

@@ -304,9 +304,13 @@ class HealthQuoteController extends Controller
 
         $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
 
-        $isAdvisorOrManagerOrDeputy = auth()->user()->isAdvisor() || auth()->user()->isManagerOrDeputy();
+        $isManagerOrDeputy = auth()->user()->isManagerOrDeputy();
         
-        if ($request->is_renewal === null && $areBothTeamsPresent && $isAdvisorOrManagerOrDeputy) {
+        if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
+            $request->merge(['is_renewal' => quoteTypeCode::yesText]);
+        }elseif($newBusinessTeam){
+            $request->merge(['is_renewal' => quoteTypeCode::noText]);
+        }elseif($renewalsTeam){
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
         }
 
@@ -354,7 +358,7 @@ class HealthQuoteController extends Controller
             QuoteStatusEnum::PolicyBooked => 9,
         ];
 
-        if($areBothTeamsPresent || $isAdvisorOrManagerOrDeputy) {
+        if($areBothTeamsPresent || $isManagerOrDeputy) {
             if ($request->is_renewal === quoteTypeCode::yesText) {
                 $renewalKeys = array_keys($renewals);
                 $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {

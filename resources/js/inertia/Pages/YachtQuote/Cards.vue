@@ -77,6 +77,19 @@ const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
+
+const renewalInitialState = () => {
+  if (hasTeams([teamsEnum.YACHT_TEAM, teamsEnum.YACHT_RENEWALS])) {
+    return 'Yes';
+  } else if (hasTeams([teamsEnum.YACHT_RENEWALS])) {
+    return 'Yes';
+  } else if (hasTeams([teamsEnum.YACHT_TEAM])) {
+    return 'No';
+  } else {
+    return null;
+  }
+};
+
 const filters = reactive({
   date: null,
   status_filters: null,
@@ -88,7 +101,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
-  is_renewal: hasTeams([teamsEnum.YACHT_TEAM, teamsEnum.YACHT_RENEWALS]) ? 'Yes' : null,
+  is_renewal: renewalInitialState(),
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
@@ -349,12 +362,13 @@ function onReset() {
         </x-field>
         <x-field label="Renewal">
           <x-select
+           :disabled="!hasTeams([teamsEnum.YACHT_TEAM, teamsEnum.YACHT_RENEWALS])"
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[
               { value: '', label: 'All' },
-              { value: 0, label: 'Yes' },
-              { value: 1, label: 'No' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
             ]"
             class="w-full"
           />
