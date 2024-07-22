@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\WorkflowTypeEnum;
@@ -287,10 +288,16 @@ class QuoteDocumentController extends Controller
 
     public function downloadAllDocuments(Request $request)
     {
+
+        if (auth()->user()->can(PermissionsEnum::DOWNLOAD_ALL_DOCUMENTS)) {
+            return response()->json(['message' => 'User Has No Permission to Download Documents.'], 403);
+
+        }
+
         $quoteDocuments = $request->input('quoteDocuments');
         // Check if quoteDocuments is an array and has at least one document
         if (! is_array($quoteDocuments) || count($quoteDocuments) === 0) {
-            return response()->json(['message' => 'No documents provided.'], 400);
+            return response()->json(['message' => 'No documents provided.'], 40);
         }
 
         $disk = Storage::disk('azureIM');

@@ -136,6 +136,7 @@ const uploadFile = (doc, filesWithInfo) => {
       <x-divider class="mb-4 mt-1" />
       <div class="flex justify-end gap-4 items-center mb-4">
           <DownloadDocuments
+              v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
               :quote="page.props.quote"
               :quoteDocuments="page.props.quote.documents ?? page.props.quoteDocuments"
           />

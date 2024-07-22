@@ -3429,6 +3429,7 @@ const handlePlanSelected = plan => {
         <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
         <div>
             <DownloadDocuments
+                v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
                 :quote="page.props.quote"
                 :quoteDocuments="page.props.quoteDocuments"
             />
