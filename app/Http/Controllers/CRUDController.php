@@ -972,6 +972,7 @@ class CRUDController extends Controller
 
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
+                'emailStatuses' => $emailStatuses,
                 'quote' => $record,
                 'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
@@ -1680,6 +1681,8 @@ class CRUDController extends Controller
 
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
+        info('fn: updateQuotePolicy called');
+
         $request = (object) $policyDetailRequest->validated();
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {

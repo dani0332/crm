@@ -535,14 +535,15 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link :href="route('home.edit', quote.uuid)">
-            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <Link v-if="!isDisabled" :href="route('home.edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
           </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
         </LeadEditBtnTemplate>
 
         <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
           <LeadEditBtnReuseTemplate :isDisabled="true"/>
-          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
         </x-tooltip>
         <LeadEditBtnReuseTemplate v-else/>
       </template>

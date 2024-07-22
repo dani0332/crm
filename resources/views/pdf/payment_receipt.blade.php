@@ -14,10 +14,10 @@
             font-family: 'DejaVu Sans', serif !important;
             padding: 0;
         }
-       
+
         table {
             width: 100%;
-            border-collapse: collapse;            
+            border-collapse: collapse;
         }
 
         th, td {
@@ -30,7 +30,7 @@
             background-color: #1d83bc;
             color: white;
         }
-       
+
         #footer {
             margin: 300px -50px 0 -50px !important;
             background-color: rgb(29 131 188);
@@ -44,7 +44,7 @@
             margin: 0;
             font-weight: 400;
             font-size: 9px;
-        }       
+        }
 
         .pl-6 {
             padding-left: 5px;
@@ -53,7 +53,7 @@
         .text-center {
             text-align: center;
         }
-       
+
         .no-border {
             border-style: none !important;
         }
@@ -76,15 +76,15 @@
         }
     </style>
 </head>
-<body>    
-    <table class="header" style="border: none;">           
+<body>
+    <table class="header" style="border: none;">
         <tbody>
             <tr style="border: none;">
                 <td style="width: 70%; border: none; vertical-align:top;">
-                <img src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" alt="Insurance Market Logo">
+                    <img src="{{getIMLogo(true)}}" alt="Insurance Market Logo" width="300">
                 </td>
                 <td style="vertical-align:middle; text-align:right; border: none; font-size:20px;">
-                <strong>Payment Receipt</strong>                
+                <strong>Payment Receipt</strong>
                 </td>
             </tr>
         </tbody>
@@ -129,22 +129,22 @@
                     <td class="table-height" style="vertical-align:top; text-align:right;">{{ $data['order_amount'] }} AED</td>
                 </tr>
             </tbody>
-        </table>      
-        
-        <table style="border: none;">           
+        </table>
+
+        <table style="border: none;">
             <tbody>
                 <tr style="border: none;">
                     <td style="width: 50%; border: none; vertical-align:top;">
                     <strong>Remarks:</strong> {{ $data['remarks'] }}
                     </td>
                     <td style="vertical-align:top; text-align:right; border: none;">
-                        <strong>Total Amount(AED): {{ $data['order_amount'] }}</strong>                    
+                        <strong>Total Amount(AED): {{ $data['order_amount'] }}</strong>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-   
+
     <p style="font-size: 11px; text-align: center;">
         <i>***This is a system generated receipt, manual signature is not required***</i>
     </p>
