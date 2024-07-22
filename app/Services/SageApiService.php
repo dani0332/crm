@@ -1398,6 +1398,7 @@ class SageApiService
                 $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
                 $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
             }
+            $patchPayload = $postedResponse;
             //3
             $isLiveApiCallStep3 = true;
             if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == 'success') {
@@ -1410,7 +1411,8 @@ class SageApiService
                 $postedResponse = json_decode($resp, true);
             }
             $postedResponse['endPoint'] = $url;
-            $postedResponse['payload'] = $postedResponse;
+            $postedResponse['payload'] = $patchPayload;
+            $postedResponse['response'] = $postedResponse;
             if (isset($postedResponse['error'])) {
                 Log::error('SAGE API: '.$quote->uuid.' : Patch Request failed');
                 $this->logSageApiCall($postedResponse, $postedResponse, $quote, 3, 13, 'fail');
