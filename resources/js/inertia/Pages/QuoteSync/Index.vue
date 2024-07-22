@@ -119,6 +119,29 @@ function syncStuckEntries() {
 
 }
 
+function syncFailedEntries() {
+
+  if (!confirm("Are you sure you want to sync failed entries?")) {
+    return;
+  }
+
+  router.visit(
+    route('admin.quotesync.sync-failed-entries'),
+    {
+      method: 'post',
+      preserveState: true,
+      preserveScroll: true,
+      onFinish: () => {
+        filterLogs(true);
+      },
+      onBefore: () => {
+        loader.table = true;
+      },
+    },
+  );
+
+}
+
 function setQueryFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
@@ -217,6 +240,7 @@ const distinctOptions = computed(() => {
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="resetFilters">Reset</x-button>
           <x-button size="sm" color="error" @click.prevent="syncStuckEntries">Sync Stuck Entries</x-button>
+          <x-button size="sm" color="error" @click.prevent="syncFailedEntries">Sync Failed Entries</x-button>
         </div>
       </div>
     </x-form>
