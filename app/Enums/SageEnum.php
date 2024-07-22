@@ -11,6 +11,13 @@ use BenSampo\Enum\Enum;
  */
 final class SageEnum extends Enum
 {
+    // Sage Custom API Enums
+    const SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE = 'Invalid token';
+    const SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY = 'sage-customer-api-token';
+    const SAGE_CUSTOM_API_GET_AP_PAYMENT_SCHEDULE_ENDPOINT = '/api/APBatch/GetInvoiceBatchWise/';
+    const SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT = '/api/APBatch/';
+    const SAGE_CUSTOM_API_GET_AUTH_TOKEN_ENDPOINT = '/api/User/Login';
+
     // Endpoints
     const END_POINT_AR_CUSTOMER = 'AR/ARCustomers';
 
