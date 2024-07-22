@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Carbon\Carbon;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
+use Carbon\Carbon;
+use Illuminate\Foundation\Http\FormRequest;
 
 class ExportValidationRequest extends FormRequest
 {
@@ -18,7 +18,7 @@ class ExportValidationRequest extends FormRequest
     {
         $rules = [];
 
-        $exportType = $this->route('exportType'); 
+        $exportType = $this->route('exportType');
 
         if ($exportType != GenericRequestEnum::EXPORT_MAKES_MODELS) {
             if ($exportType == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
@@ -46,7 +46,7 @@ class ExportValidationRequest extends FormRequest
         $validator->after(function ($validator) {
             $diffInDays = 120;
             $exportTye = $this->route('exportTye');
-            $quoteType = $this->route('quoteType'); 
+            $quoteType = $this->route('quoteType');
 
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $diffInDays = 31;
@@ -57,18 +57,15 @@ class ExportValidationRequest extends FormRequest
                     $start = Carbon::parse($this->input('paid_at_start'));
                     $end = Carbon::parse($this->input('paid_at_end'));
                     $error_fields = 'paid at';
-                }
-                else if (request()->has('payment_due_date')) {
+                } elseif (request()->has('payment_due_date')) {
                     $start = Carbon::parse($this->input('payment_due_date')[0])->startOfDay();
                     $end = Carbon::parse($this->input('payment_due_date')[1])->endOfDay();
                     $error_fields = 'payment due date';
-                } 
-                else if (request()->has('booking_date')) {
+                } elseif (request()->has('booking_date')) {
                     $start = Carbon::parse($this->input('booking_date')[0])->startOfDay();
                     $end = Carbon::parse($this->input('booking_date')[1])->endOfDay();
                     $error_fields = 'booking date';
-                }
-                else if ($this->has('created_at_start') && $this->has('created_at_end')) {
+                } elseif ($this->has('created_at_start') && $this->has('created_at_end')) {
                     $start = Carbon::parse($this->input('created_at_start'));
                     $end = Carbon::parse($this->input('created_at_end'));
                     $error_fields = 'created date';

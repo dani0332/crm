@@ -337,7 +337,7 @@ class QuoteDocumentService extends BaseService
     public function getHandBookDocuments($quote)
     {
         if ($quote->policyWording) {
-            $policyWording = $quote->policyWording->map(function ($policyWording) use($quote) {
+            $policyWording = $quote->policyWording->map(function ($policyWording) use ($quote) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
                 if (strpos($policyWording->link, $baseUrl) !== 0) {
                     $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
@@ -345,9 +345,10 @@ class QuoteDocumentService extends BaseService
 
                 return [
                     'url' => $policyWording->link,
-                    'name' => "InsuranceMarket.ae™ Policy Handbook for Policy Number " . $quote->policy_number .".".pathinfo($policyWording->link, PATHINFO_EXTENSION)
+                    'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.pathinfo($policyWording->link, PATHINFO_EXTENSION),
                 ];
             });
+
             return $policyWording->toArray();
         }
 

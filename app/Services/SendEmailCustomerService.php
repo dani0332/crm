@@ -735,7 +735,7 @@ class SendEmailCustomerService extends BaseService
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
-                        'name' => "InsuranceMarket.ae™ ".$document->document_type_text." for Policy Number " . $emailData->policy_number.".".pathinfo($documentURL, PATHINFO_EXTENSION),
+                        'name' => 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }
