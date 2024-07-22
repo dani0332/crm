@@ -11,7 +11,6 @@ defineProps({
   planURL: String,
   insuranceProviders: Array,
   websiteURL: String,
-  linkedQuoteDetails: Object,
 });
 const toggleLoader = ref(false);
 const selectedPlans = ref([]);
@@ -623,9 +622,6 @@ const handlePlanSelected = plan => {
               @update:selectedPlanChanged="handlePlanSelected"
               :plan="item"
               :quoteType="'Bike'"
-              :has-child-lead="
-                page.props.linkedQuoteDetails.childLeadsCount > 0
-              "
               :uuid="quote.uuid"
             />
 
