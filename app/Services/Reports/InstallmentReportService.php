@@ -31,6 +31,9 @@ class InstallmentReportService extends ManagementReport
 
         $query = PersonalQuote::query()
             ->select(
+                'personal_quotes.quote_type_id',
+                'personal_quotes.business_type_of_insurance_id',
+                'personal_quotes.uuid',
                 'personal_quotes.policy_number',
                 'personal_quotes.code',
                 'ps.reference',
@@ -99,6 +102,9 @@ class InstallmentReportService extends ManagementReport
             );
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
+            $data->map(function ($item) {
+                $item->routeName = $this->getQuoteRouteName($item->quote_type_id, $item->business_type_of_insurance_id);
+            });
             $this->formatData($data);
 
             return $data;
@@ -151,6 +157,7 @@ class InstallmentReportService extends ManagementReport
     public function headings(): array
     {
         return [
+            'Ref-ID',
             'Policy Number',
             'Transactions',
             'Policy Start Date',
@@ -186,6 +193,7 @@ class InstallmentReportService extends ManagementReport
     public function map($quote): array
     {
         return [
+            $quote->code ?? 'N/A',
             $quote->policy_number ?? 'N/A',
             $quote->transactions ?? 'N/A',
             $quote->policy_start_date ?? 'N/A',

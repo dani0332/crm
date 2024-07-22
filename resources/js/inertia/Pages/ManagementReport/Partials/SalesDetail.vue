@@ -18,6 +18,10 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Ref-ID',
+    value: 'uuid',
+  },
+  {
     text: 'Policy No.',
     value: 'policy_number',
   },
@@ -166,6 +170,11 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template #item-uuid="{ uuid, routeName, code }">
+      <a :href="route(routeName, uuid)" class="text-primary-500 hover:underline" target="_blank">
+          {{ code }}
+      </a>
+    </template>
     <template #item-policy_number="{ policy_number }">
       {{ policy_number }}
     </template>

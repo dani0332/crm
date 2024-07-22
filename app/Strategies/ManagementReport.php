@@ -373,4 +373,28 @@ class ManagementReport
 
         return ! empty($val) ? $val : null;
     }
+
+    protected function getQuoteRouteName($quoteTypeID, $btoi)
+    {
+        $types = [
+            1 => 'car.show',
+            2 => 'home.show',
+            3 => 'health.show',
+            4 => 'life-quotes-show',
+            5 => 'business.show',
+            6 => 'bike-quotes-show',
+            7 => 'yacht-quotes-show',
+            8 => 'travel.show',
+            9 => 'pet-quotes-show',
+            10 => 'cycle-quotes-show',
+            11 => 'jetski-quotes-show',
+        ];
+
+        $routeName = $types[$quoteTypeID];
+        if($quoteTypeID == 5 && $btoi == 5) {
+            $routeName = 'amt.show';
+        }
+
+        return $routeName;
+    }
 }

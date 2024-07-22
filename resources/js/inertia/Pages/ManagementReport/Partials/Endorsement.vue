@@ -20,6 +20,14 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Ref-ID',
+    value: 'quote_uuid',
+  },
+  {
+    text: 'SU Ref-ID',
+    value: 'code',
+  },
+  {
     text: 'Policy Number',
     value: 'policy_number',
   },
@@ -174,6 +182,14 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template #item-quote_uuid="{ quote_uuid, routeName, main_lead_code }">
+      <a :href="route(routeName, quote_uuid)" class="text-primary-500 hover:underline" target="_blank">
+          {{ main_lead_code }}
+      </a>
+    </template>
+    <template #item-code="{ uuid, code }">
+      <a :href="route('send-update.show', { uuid: uuid, refURL: $page.url })" class="text-primary-800 underline" target="_blank">{{ code }}</a>
+    </template>
     <template #item-policy_number="{ policy_number, main_lead_policy_number }">
       {{ policy_number ? policy_number : (main_lead_policy_number ?? 'N/A') }}
     </template>

@@ -40,6 +40,9 @@ class SaleDetailReportService extends ManagementReport
                 'personal_quotes.policy_start_date',
                 'p.payment_due_date',
                 'ps.due_date',
+                'personal_quotes.quote_type_id',
+                'personal_quotes.business_type_of_insurance_id',
+                'personal_quotes.uuid',
                 'personal_quotes.source',
                 'personal_quotes.code',
                 't.name as team',
@@ -108,6 +111,9 @@ class SaleDetailReportService extends ManagementReport
             );
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
+            $data->map(function ($item) {
+                $item->routeName = $this->getQuoteRouteName($item->quote_type_id, $item->business_type_of_insurance_id);
+            });
             $this->formatData($data);
 
             return $data;
@@ -146,6 +152,7 @@ class SaleDetailReportService extends ManagementReport
     public function headings(): array
     {
         return [
+            'Ref-ID',
             'Policy No.',
             'Transactions',
             'Policy Start Date',
@@ -180,6 +187,7 @@ class SaleDetailReportService extends ManagementReport
     public function map($quote): array
     {
         return [
+            $quote->code ?? 'N/A',
             $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ?? 'N/A',

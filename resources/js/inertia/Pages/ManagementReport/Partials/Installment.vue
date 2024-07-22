@@ -20,6 +20,10 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Ref-ID',
+    value: 'uuid',
+  },
+  {
     text: 'Policy Number',
     value: 'policy_number',
   },
@@ -160,6 +164,11 @@ const isIntegerColumn = key => {
   <DataTable class="mt-4" table-class-name="" :loading="loader" :headers="tableHeader"
     :items="props.reportData.data || []" border-cell :empty-message="'No Records Available'" :sort-by="'net_conversion'"
     :sort-type="'desc'" hide-footer :rows-per-page="100">
+    <template #item-uuid="{ uuid, routeName, code }">
+      <a :href="route(routeName, uuid)" class="text-primary-500 hover:underline" target="_blank">
+          {{ code }}
+      </a>
+    </template>
     <template #item-policy_number="{ policy_number }">
       {{ policy_number ?? 'N/A' }}
     </template>
