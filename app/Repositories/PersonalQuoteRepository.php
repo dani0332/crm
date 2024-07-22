@@ -2,21 +2,21 @@
 
 namespace App\Repositories;
 
-use Carbon\Carbon;
-use App\Facades\Capi;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use Illuminate\Support\Arr;
+use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
-use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatusLog;
-use App\Enums\PaymentStatusEnum;
 use App\Services\CentralService;
-use App\Enums\PaymentMethodsEnum;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use App\Traits\GenericQueriesAllLobs;
 use App\Services\QuoteDocumentService;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PersonalQuoteRepository extends BaseRepository
 {
@@ -96,7 +96,7 @@ class PersonalQuoteRepository extends BaseRepository
             $watermarkData = $quoteDocumentService->watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
         } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
             $watermarkData = $quoteDocumentService->watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-        } else if ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        } elseif ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
             $watermarkData = $quoteDocumentService->watermarkWordDocs($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
         }
 
