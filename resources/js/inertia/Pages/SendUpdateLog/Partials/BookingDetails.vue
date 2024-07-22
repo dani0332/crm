@@ -813,10 +813,21 @@ const isCI = computed(() => {
 const checkDiscount = (newPrice) => {
   let total_price = props.sendUpdateLog?.price_with_vat;
   let difference =  newPrice - total_price;
+  let previousDiscount = isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || 0.00;
+  let paymentDiscount = props?.payments[0]?.discount_value || 0.00;
   if (newPrice > total_price && difference <= 0.99 && (isEF || isCI || isCPD)) {
-    bookingDetailsForm.discount = Number(difference).toFixed(2);
+    if (previousDiscount > 0) {
+      bookingDetailsForm.discount = Number(bookingDetailsForm.discount + difference).toFixed(2);
+    } else {
+      bookingDetailsForm.discount = Number(difference).toFixed(2);
+    }
   } else {
-    bookingDetailsForm.discount = 0.00;
+    let lessDifference = Number(total_price - newPrice).toFixed(2);
+    if (paymentDiscount > 0 && lessDifference <= 0.99) {
+      bookingDetailsForm.discount = Number(paymentDiscount - lessDifference).toFixed(2);
+    } else {
+      bookingDetailsForm.discount = previousDiscount;
+    }
   }
 }
 </script>
