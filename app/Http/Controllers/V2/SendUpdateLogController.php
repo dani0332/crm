@@ -428,9 +428,7 @@ class SendUpdateLogController extends Controller
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            // SendUpdateToSagae 3rd parameter: False: Without AP Patch, True: With AP Patch
-            // TODO :: This is temporary solution, need to remove third param, this after AP Split patch working fine
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate, false);
+            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] === false) {
 
                 return response()->json(['message' => $sageResponse['message']], 500);
