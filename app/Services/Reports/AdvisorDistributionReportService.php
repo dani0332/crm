@@ -388,6 +388,7 @@ class AdvisorDistributionReportService extends BaseService
             'lob' => count($lobs) == 1 ? reset($lobs) : '',
             'advisorAssignedDates' => $advisorAssignedDates,
             'isCommercial' => 'All',
+            'isEmbeddedProducts' => false,
         ];
     }
 
