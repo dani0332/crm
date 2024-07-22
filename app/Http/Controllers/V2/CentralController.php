@@ -39,6 +39,7 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
+use App\Http\Requests\ExportValidationRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
@@ -77,61 +78,8 @@ class CentralController extends Controller
         return back()->with('message', 'Quote is created successfully.');
     }
 
-    public function exportLeads(Request $request, $quoteType, $exportTye = null)
+    public function exportLeads(ExportValidationRequest $request, $quoteType, $exportTye = null)
     {
-        $diffInDays = 120;
-
-        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
-                $error_fields = 'paid at';
-                $request->validate([
-                    'paid_at_start' => 'required',
-                    'paid_at_end' => 'required',
-                ]);
-                $created_at_start = Carbon::parse($request->paid_at_start)->format($dateFormat);
-                $created_at_end = Carbon::parse($request->paid_at_end)->format($dateFormat);
-            } else {
-                if (request()->has('created_at')) {
-                    request()->merge(['created_at_start' => request()->get('created_at')]);
-                    request()->query->remove('created_at');
-                }
-                if (request()->has('payment_due_date')) {
-                    $error_fields = 'payment due date';
-                    $request->validate([
-                        'payment_due_date' => 'required',
-                    ]);
-                    $created_at_start = Carbon::parse($request['payment_due_date'][0])->startOfDay();
-                    $created_at_end = Carbon::parse($request['payment_due_date'][1])->endOfDay();
-                } elseif (request()->has('booking_date')) {
-                    $error_fields = 'booking date';
-                    $request->validate([
-                        'booking_date' => 'required',
-                    ]);
-                    $created_at_start = Carbon::parse($request['booking_date'][0])->startOfDay();
-                    $created_at_end = Carbon::parse($request['booking_date'][1])->endOfDay();
-                } else {
-                    $error_fields = 'created date';
-                    $request->validate([
-                        'created_at_start' => 'required',
-                        'created_at_end' => 'required',
-                    ]);
-                    $created_at_start = Carbon::parse($request->created_at_start)->format($dateFormat);
-                    $created_at_end = Carbon::parse($request->created_at_end)->format($dateFormat);
-                }
-            }
-
-            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
-                $diffInDays = 31;
-            }
-
-            $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
-
-            if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
-            }
-        }
-
         // For Personal Quotes
         if (in_array(ucfirst($quoteType), [
             QuoteTypes::BIKE->value,
