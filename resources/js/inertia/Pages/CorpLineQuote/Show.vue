@@ -1136,18 +1136,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </div>
           </div>
           <div class="w-full md:w-2/3">
-            <x-input
-              v-if="
-                leadStatusForm.leadStatus ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              :disabled="disableStatusSection"
-              v-model="leadStatusForm.trans_code"
-              label="TRANSAPP CODE"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
             <x-select
               v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
               v-model="leadStatusForm.lostReason"
