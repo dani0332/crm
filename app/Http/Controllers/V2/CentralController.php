@@ -84,7 +84,7 @@ class CentralController extends Controller
         if (! $quoteType) {
             return abort(404);
         }
-
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                 $error_fields = 'paid at';
@@ -93,8 +93,8 @@ class CentralController extends Controller
                     'paid_at_start' => 'required',
                     'paid_at_end' => 'required',
                 ]);
-                $created_at_start = Carbon::parse($request->paid_at_start)->format('Y-m-d');
-                $created_at_end = Carbon::parse($request->paid_at_end)->format('Y-m-d');
+                $created_at_start = Carbon::parse($request->paid_at_start)->format($dateFormat);
+                $created_at_end = Carbon::parse($request->paid_at_end)->format($dateFormat);
             } else {
                 $error_fields = 'created date';
 
@@ -103,13 +103,32 @@ class CentralController extends Controller
                     request()->query->remove('created_at');
                 }
 
-                $request->validate([
-                    'created_at_start' => 'required',
-                    'created_at_end' => 'required',
-                ]);
+                if (request()->has('payment_due_date')) {
+                    $request->validate([
+                        'payment_due_date' => 'required',
+                    ]);
 
-                $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-                $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+                    $defaultDate = now()->endOfDay();
+
+                    $created_at_start = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][0])->startOfDay() : $defaultDate;
+                    $created_at_end = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][1])->endOfDay() : $defaultDate;
+                } elseif (request()->has('booking_date')) {
+                    $request->validate([
+                        'booking_date' => 'required',
+                    ]);
+                    $defaultDate = now()->endOfDay();
+
+                    $created_at_start = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][0])->startOfDay() : $defaultDate;
+                    $created_at_end = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][1])->endOfDay() : $defaultDate;
+                } else {
+                    $request->validate([
+                        'created_at_start' => 'required',
+                        'created_at_end' => 'required',
+                    ]);
+
+                    $created_at_start = Carbon::parse($request->created_at_start)->format($dateFormat);
+                    $created_at_end = Carbon::parse($request->created_at_end)->format($dateFormat);
+                }
             }
 
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
@@ -244,7 +263,6 @@ class CentralController extends Controller
         }
         $payment->update($paymentInformation);
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
         info('Book policy details update successfully for : '.$quote->uuid);
 
         return redirect()->back()->with('success', 'Booking details has been updated.');
@@ -281,7 +299,7 @@ class CentralController extends Controller
             $data['id'] = $quote->id;
 
             $sageService = new SageApiService();
-            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data, true, false);
+            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
 
             if ($response['status'] === false) {
                 return response()->json(['errors' => [

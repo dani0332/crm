@@ -2723,6 +2723,9 @@ watch(
       props.isPlanDetailEnabled
     ) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+      if (props.sendUpdate) {
+        initalPlanDetails = props.quoteRequest.insurance_provider_details ?? props.quoteRequest.insurance_provider;
+      }
     } else if (quoteTypesToCheck.includes(props.quoteType)) {
       initalPlanDetails = props.quoteRequest.plan;
     } else {
@@ -2763,7 +2766,7 @@ const isMasterPaymentPaid = computed(() => {
 });
 
 let is_lacking_payment = ref(
-  page.props?.bookPolicyDetails?.isLackingOfPayment || false,
+  page.props?.bookPolicyDetails?.isLackingOfPayment || page.props?.bookingDetails?.isLackingOfPayment || false,
 );
 
 watch(
@@ -2771,6 +2774,13 @@ watch(
   newVal => {
     is_lacking_payment.value = newVal || false;
   },
+);
+
+watch(
+    () => page.props?.bookingDetails?.isLackingOfPayment,
+    newVal => {
+      is_lacking_payment.value = newVal || false;
+    },
 );
 
 const discountTypeLabel = computed(() => {
@@ -3116,9 +3126,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   <td>
                     <div class="flex gap-2">
                       <template
-                        v-if="
-                          item.send_update_log_id == null && is_lacking_payment
-                        "
+                        v-if="is_lacking_payment"
                       >
                         <x-tooltip position="left" class="arrow-r">
                           <x-badge
