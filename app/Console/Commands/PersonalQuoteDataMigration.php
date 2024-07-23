@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Imports\PersonalQuoteImport;
+use App\Imports\PDMigrations\PersonalQuoteImport;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;

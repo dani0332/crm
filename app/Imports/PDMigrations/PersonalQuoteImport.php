@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Imports;
+namespace App\Imports\PDMigrations;
 
 use App\Enums\PDMigrations\DealStageEnum;
 use App\Enums\PDMigrations\PDDealStatus;
