@@ -97,7 +97,7 @@ class EndingPoliciesReportService extends ManagementReport
     private function formatData(&$data)
     {
         $data->map(function ($item) {
-            $item->customer_name = $item->first_name.' '.$item->last_name;
+            $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
             $item->policy_end_date = ! empty($item->policy_end_date) ? Carbon::parse($item->policy_end_date)->format('Y-m-d') : null;
             $item->collected_amount = number_format($item->collected_amount, 2);

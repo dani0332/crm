@@ -134,9 +134,7 @@ class EndorsementReportService extends ManagementReport
     {
         $data->map(function ($item) {
 
-            $item->transactions = implode('-', array_filter([$item->insurer_tax_number, $item->notes, $item->reference], function ($value) {
-                return ! empty($value);
-            }));
+            $item->transactions = $this->concatValues([$item->insurer_tax_number, $item->notes, $item->reference], '-');
             $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
             $item->main_lead_policy_start_date = ! empty($item->main_lead_policy_start_date) ? Carbon::parse($item->main_lead_policy_start_date)->format('Y-m-d') : null;
             $item->payment_due_date = ! empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
@@ -145,7 +143,7 @@ class EndorsementReportService extends ManagementReport
             $item->total_price = number_format($item->total_price, 2);
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->collects = strtoupper($item->collects);
-            $item->customer_name = $item->first_name.' '.$item->last_name;
+            $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
         });
     }
 

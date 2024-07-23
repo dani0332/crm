@@ -115,9 +115,9 @@ class InstallmentReportService extends ManagementReport
             $item->commission_vat = number_format($item->commission_vat, 2);
             $item->commission_vat_not_applicable = number_format($item->commission_vat_not_applicable, 2);
             $item->pending_balance = number_format($item->pending_balance, 2);
-            $item->transactions = $item->reference.' '.$item->tax_invoice_number;
             $item->collects = strtoupper($item->collects);
-            $item->customer_name = $item->first_name.' '.$item->last_name;
+            $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
+            $item->transaction = $this->concatValues([$item->reference, $item->tax_invoice_number], '-');
         });
     }
 
@@ -187,7 +187,7 @@ class InstallmentReportService extends ManagementReport
     {
         return [
             $quote->policy_number ?? 'N/A',
-            $quote->transactions ?? 0,
+            $quote->transactions ?? 'N/A',
             $quote->policy_start_date ?? 'N/A',
             $quote->due_date ?? 'N/A',
             $quote->price_vat_applicable ?? '0.00',

@@ -164,7 +164,7 @@ const isIntegerColumn = key => {
       {{ policy_number ?? 'N/A' }}
     </template>
     <template #item-transactions="{ transactions }">
-      {{ transactions ?? 0 }}
+      {{ transactions ?? 'N/A' }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
