@@ -19,7 +19,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
     public function model(array $row)
     {
         $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('MY');
-        if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number'])) && strpos($dealBatch, '2024') !== false) {
+        if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number']))) {
             $data = [
                 'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
                 'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
@@ -39,7 +39,6 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             $lead = HomeQuote::where($searchCriteria)->first();
             if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
                 $lead->update($data);
-                // $this->syncQuote($lead, $data);
                 info('Personal/Home Qoute Import - Quote found: '.$lead->uuid.' - Quote updated');
             }
         }
@@ -47,7 +46,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     public function chunkSize(): int
     {
-        return 2500;
+        return 1000;
     }
 
     private function getQuoteStatusId($dealStatus, $dealStage)
