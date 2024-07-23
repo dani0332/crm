@@ -1757,8 +1757,14 @@ watch(
   { immediate: true },
 );
 
-
 const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
+
+const onAddUpdate = () => {
+  selectedProviderPlan.value.id = null;
+  selectedProviderPlan.value.planName = '';
+  selectedProviderPlan.value.providerName = '';
+  selectedProviderPlan.value.premium = '';
+}
 
 </script>
 
@@ -3563,6 +3569,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
