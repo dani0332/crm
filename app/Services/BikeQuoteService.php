@@ -36,7 +36,7 @@ class BikeQuoteService extends BaseService
         } else {
             if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
                 $listQuotePlans = $quotePlans->quotes->plans;
-            } elseif (! isset($quotePlans->quotes->plans)) {
+            } elseif (!isset($quotePlans->quotes->plans)) {
                 $listQuotePlans = 'Plans not available!';
             } else {
                 $listQuotePlans = $quotePlans;
@@ -48,7 +48,7 @@ class BikeQuoteService extends BaseService
 
     public function updateManualPlansBulk($request)
     {
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-bike-quote-plan';
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT') . '/save-manual-bike-quote-plan';
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
         $apiUserName = config('constants.KEN_API_USER');
@@ -93,7 +93,7 @@ class BikeQuoteService extends BaseService
             $quotePlans = app(CentralService::class)->getQuotePlans(quoteTypeCode::Bike, $data['quote_uuid']);
         }
 
-        if (! isset($quotePlans->quotes->plans)) {
+        if (!isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
         }
 
@@ -106,7 +106,7 @@ class BikeQuoteService extends BaseService
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.bike_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
@@ -117,7 +117,7 @@ class BikeQuoteService extends BaseService
             'id',
             'text',
             'repair_type',
-            DB::raw('IF(repair_type = "'.CarPlanType::COMP.'", CONCAT(text, " (NON-AGENCY)"), CONCAT(text, " (", repair_type, ")")) as plan_name'),
+            DB::raw('IF(repair_type = "' . CarPlanType::COMP . '", CONCAT(text, " (NON-AGENCY)"), CONCAT(text, " (", repair_type, ")")) as plan_name'),
         ])
             ->where('provider_id', $insuranceProviderId)
             ->whereNotIn('id', $quotePlanId)
@@ -128,7 +128,7 @@ class BikeQuoteService extends BaseService
     public function bikePlanModify($request)
     {
         if (($response = $this->isPlanModifyAllowed($request->all())) === true) {
-            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-bike-quote-plan';
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT') . '/save-manual-bike-quote-plan';
             $apiToken = config('constants.KEN_API_TOKEN');
             $apiTimeout = config('constants.KEN_API_TIMEOUT');
             $apiUserName = config('constants.KEN_API_USER');
@@ -164,7 +164,7 @@ class BikeQuoteService extends BaseService
                     [
                         'planId' => (int) $request->bike_plan_id,
                         'actualPremium' => (float) $request->actual_premium,
-                        'carValue' => (float) $request->bike_value,
+                        'bikeValue' => (float) $request->bike_value,
                         'excess' => (float) $request->excess,
                         'discountPremium' => (float) $discountedPremium,
                         'isDisabled' => isset($request->is_disabled) ? (bool) $request->is_disabled : (bool) false,
@@ -202,7 +202,7 @@ class BikeQuoteService extends BaseService
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             $bikePayment = Payment::where('code', '=', $quote->code)->first();
-            if (! empty($bikePayment->captured_at)) {
+            if (!empty($bikePayment->captured_at)) {
                 $paymentCapturedAt = $bikePayment->captured_at;
                 $today = Carbon::today();
 
@@ -210,11 +210,11 @@ class BikeQuoteService extends BaseService
                 $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
 
                 if (Auth::user()->hasRole(RolesEnum::BikeAdvisor) && $today->lte($dateLimitForAdvisor)) {
-                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
+                    info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' and captured days diff is ' . $paymentCapturedAt);
 
                     return true;
                 } elseif (Auth::user()->hasRole(RolesEnum::BikeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
-                    info($logPrefix.' plan modify allowed to bike manager for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
+                    info($logPrefix . ' plan modify allowed to bike manager for uuid ' . $quote->uuid . ' and captured days diff is ' . $paymentCapturedAt);
 
                     return true;
                 }
@@ -222,7 +222,7 @@ class BikeQuoteService extends BaseService
         }
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::BikeAdvisor, RolesEnum::BikeManager])) {
-            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+            info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid);
 
             return true;
         }
@@ -231,12 +231,12 @@ class BikeQuoteService extends BaseService
             $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
                 && Auth::user()->hasAnyRole([RolesEnum::BikeAdvisor,  RolesEnum::BikeManager]))
         ) {
-            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+            info($logPrefix . ' plan modify allowed for uuid ' . $quote->uuid);
 
             return true;
         }
 
-        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+        info($logPrefix . ' plan modification is not allowed for uuid ' . $quote->uuid);
 
         return 'Plan Modification is not allowed';
     }
