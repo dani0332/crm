@@ -22,7 +22,7 @@ class CcPaymentProcessJob extends Model
     // Define a scope to filter by status
     public function scopeFailed($query)
     {
-        return $query->where('status', PaymentProcessJobEnum::FAILED_STATUS);
+        return $query->where('status', PaymentProcessJobEnum::FAILED);
     }
 
     public function splitPayment()
