@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -146,6 +147,11 @@ class ComprehensiveConversionDashboardService extends BaseService
             'isCommercial' => [
                 'lobs' => [
                     quoteTypeCode::Car,
+                ],
+            ],
+            'isEmbeddedProducts' => [
+                'lobs' => [
+                    quoteTypeCode::Travel,
                 ],
             ],
             'insurance_type' => [
@@ -361,6 +367,11 @@ class ComprehensiveConversionDashboardService extends BaseService
             if ((! empty($filters->insurance_type) && $filters->insurance_type != '')) {
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
                 $query->where('travel_quote_request.coverage_code', $filters->insurance_type);
+            }
+
+            // TODO confirm BA he wants include or only show report for embedded products
+            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false') {
+                $query->where('source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             }
         }
 
