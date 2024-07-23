@@ -363,16 +363,16 @@ class ManagementReport
     }
 
     /**
-     * @param array $values
-     * @param string $separater
+     * @param  array  $values
+     * @param  string  $separater
      * @return string|null
      */
     protected function concatValues($values, $separater)
     {
         $val = implode($separater, array_filter($values, function ($value) {
-            return !empty($value);
+            return ! empty($value);
         }));
 
-        return !empty($val) ? $val : null;
+        return ! empty($val) ? $val : null;
     }
 }
