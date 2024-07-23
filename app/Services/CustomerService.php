@@ -250,14 +250,13 @@ class CustomerService extends BaseService
                 }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
             }
-
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
             // REMOVE Mobile Number TO MAKE PRIMARY IN ADDITIONAL CONTACT
             $removeMobileNumber = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                 ->where('value', $value)
                 ->where('key', 'mobile_no')
                 ->first();
-            if (isset($removeMobileNumber->id)) {
+            if ($removeMobileNumber) {
                 $removeMobileNumber->delete();
             }
             $isExist = CustomerAdditionalContact::where('key', 'mobile_no')
