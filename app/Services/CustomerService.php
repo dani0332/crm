@@ -256,7 +256,7 @@ class CustomerService extends BaseService
                 ->where('value', $value)
                 ->where('key', 'mobile_no')
                 ->first();
-            if ($removeMobileNumber) {
+            if (isset($removeMobileNumber->id)) {
                 $removeMobileNumber->delete();
             }
             $isExist = CustomerAdditionalContact::where('key', 'mobile_no')
