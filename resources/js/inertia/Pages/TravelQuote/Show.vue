@@ -4,7 +4,7 @@ import MigratePayment from './../../Components/MigratePayment.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import {computed, ref} from 'vue';
+import {computed} from 'vue';
 import DownloadDocuments from "../../Components/DownloadDocuments.vue";
 
 const page = usePage();
