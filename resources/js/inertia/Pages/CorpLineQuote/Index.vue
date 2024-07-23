@@ -67,18 +67,20 @@ const filters = reactive({
   payment_status: [],
   is_cold: false,
   is_stale: false,
+  payment_due_date:"",
+  booking_date: ""
 });
 
 watch(
-    () => filters,
-    () => {
-        if (filters.created_at_start && filters.created_at_end) {
-            canExport.value = true;
-        } else {
-            canExport.value = false;
-        }
-    },
-    { deep: true, immediate: true },
+  () => filters,
+  () => {
+    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 const leadStatusOptions = computed(() => {
@@ -285,13 +287,15 @@ const onDataExport = () => {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key].map(value => isNaN(parseInt(value))? value: parseInt(value));
+      filters[key.substring(0, key.length - 2)] = params[key].map(value =>
+        isNaN(parseInt(value)) ? value : parseInt(value),
+      );
     } else {
       filters[key] = isNaN(parseInt(params[key]))
         ? params[key]
         : parseInt(params[key]);
     }
- }
+  }
 }
 
 onMounted(() => {
@@ -324,6 +328,37 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
 </script>
 
 <template>
@@ -466,18 +501,18 @@ watch(
           />
         </x-field>
         <x-field label="Lead Status">
-            <ComboBox
-                v-model="filters.quote_status_id"
-                placeholder="Search by Lead Status"
-                :options="leadStatusOptions"
-            />
+          <ComboBox
+            v-model="filters.quote_status_id"
+            placeholder="Search by Lead Status"
+            :options="leadStatusOptions"
+          />
         </x-field>
         <x-field label="BUSINESS INSURANCE TYPE">
-            <ComboBox
-                v-model="filters.business_type_of_insurance_id"
-                placeholder="Search by Insurance Type"
-                :options="insuranceTypeOptions"
-            />
+          <ComboBox
+            v-model="filters.business_type_of_insurance_id"
+            placeholder="Search by Insurance Type"
+            :options="insuranceTypeOptions"
+          />
         </x-field>
         <x-field
           label="Advisor"
@@ -488,19 +523,19 @@ watch(
             ])
           "
         >
-           <ComboBox
+          <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-            />
+          />
         </x-field>
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -521,6 +556,23 @@ watch(
           ]"
           class="w-full"
         />
+        
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -537,7 +589,7 @@ watch(
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

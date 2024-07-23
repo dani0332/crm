@@ -1935,9 +1935,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           <x-divider class="mb-4 mt-4" />
           
           <LeadEditBtnTemplate v-slot="{ isDisabled }">
-            <Link :href="route('car.edit', record.uuid)">
-              <x-button :disabled="isDisabled" size="sm" color="primary" tag="div">Edit</x-button>
+            <Link v-if="!isDisabled" :href="route('car.edit', record.uuid)">
+              <x-button size="sm" color="primary" tag="div">Edit</x-button>
             </Link>
+            <x-button v-else :disabled="isDisabled" size="sm" color="primary" tag="div">Edit</x-button>
           </LeadEditBtnTemplate>
 
           <div v-if="quote.quote_status_id !=

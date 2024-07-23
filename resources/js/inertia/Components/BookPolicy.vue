@@ -141,7 +141,7 @@ const bpForm = useForm({
   parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
   booking_date:
     dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
-    currentDateTime.value,
+    '',
   transaction_payment_status:
     page.props.bookPolicyDetails.transactionPaymentStatus,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
@@ -166,8 +166,10 @@ const bpForm = useForm({
   transaction_payment_status_tool_tip:
     page.props.bookPolicyDetails.paymentStatusTooltip,
   line_of_business: page.props?.bookPolicyDetails?.lineOfBusiness,
-  isPolicyCancelledOrPending: page.props?.bookPolicyDetails?.isPolicyCancelledOrPending,
-  isPolicyCancelledOrPendingToolTtip: page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip
+  isPolicyCancelledOrPending:
+    page.props?.bookPolicyDetails?.isPolicyCancelledOrPending,
+  isPolicyCancelledOrPendingToolTtip:
+    page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
 });
 
 let is_lacking_payment = ref(
@@ -184,7 +186,6 @@ watch(
 const onUpdatebookPolicyDetails = isValid => {
   showInsufficientPaymentAlert();
   if (isValid) {
-    bpForm.booking_date = currentDateTime;
     bpForm.post('/quotes/update-booking-policy', {
       preserveScroll: true,
       onSuccess: () => {
@@ -410,18 +411,18 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
-const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] = createReusableTemplate();
+const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] =
+  createReusableTemplate();
 
 const isShowingTransactionPaymentStatus = computed(() => {
   const policyStatuses = [
     page.props.quoteStatusEnum.PolicyBooked,
     page.props.quoteStatusEnum.CancellationPending,
     page.props.quoteStatusEnum.PolicyCancelled,
-    page.props.quoteStatusEnum.PolicyCancelledReissued
+    page.props.quoteStatusEnum.PolicyCancelledReissued,
   ];
   return policyStatuses.includes(props.quote.quote_status_id);
 });
-
 </script>
 
 <template>
@@ -498,9 +499,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <template
-                  v-if="isShowingTransactionPaymentStatus"
-                >
+                <template v-if="isShowingTransactionPaymentStatus">
                   <x-tooltip position="center">
                     <dd class="border-b border-dotted border-black">
                       {{ bpForm.transaction_payment_status }}
@@ -750,17 +749,20 @@ const isShowingTransactionPaymentStatus = computed(() => {
 
             <EditBookPolicyBtnTemplate v-slot="{ isDisabled }">
               <x-button
-                  class="mt-4 mr-2"
-                  color="emerald"
-                  size="sm"
-                  @click.prevent="bp.isEditing = true"
-                  :disabled="isDisabled"
-                >
-                  Edit
-                </x-button>
+                class="mt-4 mr-2"
+                color="emerald"
+                size="sm"
+                @click.prevent="bp.isEditing = true"
+                :disabled="isDisabled"
+              >
+                Edit
+              </x-button>
             </EditBookPolicyBtnTemplate>
 
-            <div v-if="bpForm.isPolicyCancelledOrPending" class="flex justify-end">
+            <div
+              v-if="bpForm.isPolicyCancelledOrPending"
+              class="flex justify-end"
+            >
               <x-tooltip>
                 <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
                   Edit
@@ -769,7 +771,9 @@ const isShowingTransactionPaymentStatus = computed(() => {
                   Send and Book Policy
                 </x-button>
                 <template #tooltip>
-                  <span class="custom-tooltip-content">{{bpForm.isPolicyCancelledOrPendingToolTtip}}</span>
+                  <span class="custom-tooltip-content">{{
+                    bpForm.isPolicyCancelledOrPendingToolTtip
+                  }}</span>
                 </template>
               </x-tooltip>
             </div>
@@ -801,15 +805,33 @@ const isShowingTransactionPaymentStatus = computed(() => {
                 >
                   Update
                 </x-button>
-                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
-                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="true"/>
+                <x-tooltip
+                  v-if="page.props.lockLeadSectionsDetails.lead_details"
+                  position="bottom"
+                >
+                  <EditBookPolicyBtnResuseTemplate
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
+                    :isDisabled="true"
+                  />
                   <template #tooltip>
-                    This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed, go to 'Send Update', select 'Add
+                    Update', and choose 'Correction of Policy'
                   </template>
                 </x-tooltip>
 
                 <template v-else>
-                  <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)"/>
+                  <EditBookPolicyBtnResuseTemplate
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
+                  />
                 </template>
                 <x-tooltip>
                   <x-button
@@ -924,15 +946,34 @@ const isShowingTransactionPaymentStatus = computed(() => {
                     Update
                   </x-button>
 
-                  <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
-                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="true"/>
+                  <x-tooltip
+                    v-if="page.props.lockLeadSectionsDetails.lead_details"
+                    position="bottom"
+                  >
+                    <EditBookPolicyBtnResuseTemplate
+                      v-if="
+                        !bp.isEditing &&
+                        props.bookPolicyDetails?.editButton &&
+                        can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                      "
+                      :isDisabled="true"
+                    />
                     <template #tooltip>
-                      This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
+                      This lead is now locked as the policy has been booked. If
+                      changes are needed, go to 'Send Update', select 'Add
+                      Update', and choose 'Correction of Policy'
                     </template>
                   </x-tooltip>
 
                   <template v-else>
-                    <EditBookPolicyBtnResuseTemplate v-if="!bp.isEditing && props.bookPolicyDetails?.editButton && can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)" :isDisabled="!props.bookPolicyDetails?.editButton"/>
+                    <EditBookPolicyBtnResuseTemplate
+                      v-if="
+                        !bp.isEditing &&
+                        props.bookPolicyDetails?.editButton &&
+                        can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                      "
+                      :isDisabled="!props.bookPolicyDetails?.editButton"
+                    />
                   </template>
 
                   <template
