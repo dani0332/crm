@@ -36,6 +36,7 @@ const isLoading = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const kycEnums = page.props.kycEnums;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
@@ -139,9 +140,7 @@ const binAsInsurerCommissionTaxInvoiceNumber = () => {
 };
 const bpForm = useForm({
   parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
-  booking_date:
-    dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
-    '',
+  booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) || '',
   transaction_payment_status:
     page.props.bookPolicyDetails.transactionPaymentStatus,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
@@ -346,6 +345,7 @@ const showSendAndBookPolicyButtonBlock = computed(() => {
 
   return [TransactionApproved, PolicyIssued].includes(quote_status_id);
 });
+
 const showSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -354,6 +354,7 @@ const showSendAndBookPolicyButton = computed(() => {
   }
   return props.bookPolicyDetails?.sendButton && can(permission);
 });
+
 const disableSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -369,6 +370,26 @@ const disableSendAndBookPolicyButton = computed(() => {
     !can(permission)
   );
 });
+
+const disableBookPolicyButton = computed(() => {
+  return (
+    !props.bookPolicyDetails?.bookButton ||
+    bp.isEditing ||
+    !can(permissionsEnum.BOOK_POLICY_BUTTON)
+  );
+});
+
+const isTravelQuoteAndAMLCleared = computed(() => {
+  const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
+  const isPolicyAMLScreeningCleared =
+    props.quote.kyc_decision == kycEnums.COMPLETE;
+  if (isQuoteTypeTravel) {
+    return isPolicyAMLScreeningCleared;
+  }
+  return true;
+});
+console.log('isTravelQuoteAndAMLCleared : ', isTravelQuoteAndAMLCleared.value);
+
 const showActionButtons = computed(() => {
   // Hide buttons only when policy is cancelled and have a chilrd lead
   return (
@@ -988,11 +1009,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                         size="sm"
                         class="mt-4 mr-2"
                         color="orange"
-                        :disabled="
-                          !props.bookPolicyDetails?.bookButton ||
-                          bp.isEditing ||
-                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
-                        "
+                        :disabled="disableBookPolicyButton"
                         @click.prevent="confirmSendPolicy"
                       >
                         {{ props.bookPolicyDetails?.text }}
@@ -1009,11 +1026,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       size="sm"
                       class="mt-4 mr-2"
                       color="orange"
-                      :disabled="
-                        !props.bookPolicyDetails?.bookButton ||
-                        bp.isEditing ||
-                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
-                      "
+                      :disabled="disableBookPolicyButton"
                       @click.prevent="confirmSendPolicy"
                     >
                       {{ props.bookPolicyDetails?.text }}
