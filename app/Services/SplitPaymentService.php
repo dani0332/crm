@@ -575,16 +575,17 @@ class SplitPaymentService
     public function processSplitPaymentApprove($modelType, $quoteId, $splitPaymentId, $amountCollected, $isFromJob = false)
     {
         $paymentSplit = PaymentSplits::find($splitPaymentId);
+        $sendUpdateId = $paymentSplit->payment->send_update_log_id;
+        if (! empty($sendUpdateId) && $sendUpdateId > 0) {
+            $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
+        } else {
+            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+        }
+        
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             //create sage reciept
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-            if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
-                $sendUpdateId = $paymentSplit->payment->send_update_log_id;
-                if (! empty($sendUpdateId) && $sendUpdateId > 0) {
-                    $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
-                } else {
-                    $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-                }
+            if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {                
                 // Create an empty Request object
                 $request = Request::createFromGlobals();
                 $request->merge([
@@ -610,7 +611,7 @@ class SplitPaymentService
             }
             //Marshal Service to capture split payment
 
-            if ($paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
+            if ( !in_array($paymentSplit->payment_status_id,[PaymentStatusEnum::PAID,PaymentStatusEnum::PARTIALLY_PAID]) ) {
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
                 $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
                 //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
