@@ -396,6 +396,7 @@ class SendUpdateLogRepository extends BaseRepository
             ->where('quote_uuid', $quoteUuid)
             ->where('quote_type_id', $quoteTypeId)
             ->where('status', SendUpdateLogStatusEnum::UPDATE_BOOKED)
+            ->whereNotNull('insurer_tax_invoice_number')
             ->get()
             ->pluck('insurer_tax_invoice_number');
     }

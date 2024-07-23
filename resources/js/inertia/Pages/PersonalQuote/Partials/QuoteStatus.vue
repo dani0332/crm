@@ -42,7 +42,6 @@ const onLeadStatus = () => {
         notification.error({ title: errors.value, position: 'top' });
       },
       onSuccess: () => {
-        router.reload({ only: ['quote'] });
         notification.success({
           title: 'Quote status is updated',
           position: 'top',
@@ -85,7 +84,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         </div>
       </template>
       <template #body>
-        <x-divider class="my-4" />
+       <x-divider class="my-4" />
         <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
           <div class="w-full md:w-1/2">
             <div class="flex flex-col gap-4">
@@ -111,37 +110,34 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </div>
           </div>
           <div class="w-full md:w-2/3">
-            <x-field
-              label="Lost Reason"
-              class="uppercase"
-              required
-              v-if="
-                quoteStatusForm.quote_status_id ==
-                page.props.quoteStatusEnum.Lost
-              "
-            >
-              <x-select
-                v-model="quoteStatusForm.lost_reason_id"
-                :options="
-                  lostReasons?.map(item => ({
-                    value: item.id,
-                    label: item.text,
-                  }))
-                "
-                placeholder="Lost Reason is required"
-                class="w-full"
-                :error="quoteStatusForm.errors.lost_reason_id"
-                :disabled="page.props.lockLeadSectionsDetails.lead_status"
-              />
-            </x-field>
-            <x-field class="uppercase" label="Transaction Type">
-              <x-input
-                type="text"
-                :value="quote.transaction_type_text"
-                class="w-full"
-                :disabled="true"
-              />
-            </x-field>
+            <div class="flex flex-col gap-4">
+              <x-field
+                label="Lost Reason"
+               class="uppercase" required
+                v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost"
+              >
+                <x-select
+                  v-model="quoteStatusForm.lost_reason_id"
+                  :options="
+                    lostReasons?.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  placeholder="Lost Reason is required"
+                  class="w-full"
+                  :error="quoteStatusForm.errors.lost_reason_id"
+                />
+              </x-field>
+              <x-field class="uppercase"label="Transaction Type">
+                <x-input
+                  type="text"
+                  :value="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
+              </x-field>
+            </div>
           </div>
         </div>
         <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
