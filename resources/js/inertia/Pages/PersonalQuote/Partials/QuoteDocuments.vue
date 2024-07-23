@@ -142,7 +142,7 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    docForm.setError({ error: useFileUploadErrorMessage(doc, rejectReason) });
     return false;
   }
   isUploading.value = true;
