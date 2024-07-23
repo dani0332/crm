@@ -134,7 +134,7 @@ class DashboardController extends Controller
     public function getRecentDailyStats(Request $request)
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        if(isset($request->range) && $request->range != null) {
+        if (isset($request->range) && $request->range != null) {
             $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
             $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
         } else {
