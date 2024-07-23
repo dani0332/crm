@@ -41,7 +41,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 $lead = PersonalQuote::where($searchCriteria)->first();
                 if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
                     $lead->update($data);
-                    info('Personal/Cycle Quote Import - Quote found: '.$lead->uuid.' - Quote updated'.$data['quote_status_id'].'');
+                    info('Personal/Cycle Quote Import - Quote found: '.$lead->uuid.' - Quote updated '.$data['quote_status_id'].'');
                 }
             }
 
