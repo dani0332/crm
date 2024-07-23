@@ -489,4 +489,11 @@ class ReportsController extends Controller
             'filterOptions' => $reportService->getDefaultFiltersForTotalPremium(),
         ]);
     }
+
+    public function renderRetentionReport(Request $request,  AdvisorConversionReportService $advisorConversionReportService){
+        return inertia('Reports/RetentionReport', [
+            'filterOptions' => $advisorConversionReportService->getFilterOptions(),
+            'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
+        ]);
+    }
 }

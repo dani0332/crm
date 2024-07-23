@@ -883,8 +883,8 @@ const getAdvisorLabel = () => {
         placeholder="Search by Lead Source"
         :options="
             Object.keys(filterOptions.leadSources).map(key => ({
-            value: key,
-            label: filterOptions.leadSources[key],
+              value: key,
+              label: filterOptions.leadSources[key],
             }))
         "
         :max-limit="3"
