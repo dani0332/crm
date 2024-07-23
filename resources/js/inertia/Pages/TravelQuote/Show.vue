@@ -1289,6 +1289,14 @@ const getGenderDisplay = (val) => {
           return '';
       }
     }
+
+const onAddUpdate = () => {
+  selectedProviderPlan.value.id = null;
+  selectedProviderPlan.value.planName = '';
+  selectedProviderPlan.value.providerName = '';
+  selectedProviderPlan.value.premium = '';
+}
+
 </script>
 
 <template>
@@ -3153,6 +3161,7 @@ const getGenderDisplay = (val) => {
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <AuditLogs
