@@ -4,6 +4,7 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import DownloadDocuments from "../../Components/DownloadDocuments.vue";
 
 const props = defineProps({
   quote: Object,
@@ -1706,7 +1707,6 @@ watch(
 
 
 const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
-
 </script>
 
 <template>
@@ -3335,6 +3335,11 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
+            <DownloadDocuments
+            v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
+            :quote="props.quote"
+            :quoteDocuments="props.quoteDocuments"
+            />
           <Link
             v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${quote.insly_id}`"
