@@ -67,6 +67,6 @@ const downloadDocument = async () => {
         :loading="contentLoader"
         @click="downloadDocument"
     >
-        Download all documents
+        Download All Documents
     </x-button>
 </template>
