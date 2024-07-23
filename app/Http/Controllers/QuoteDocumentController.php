@@ -267,7 +267,6 @@ class QuoteDocumentController extends Controller
 
     public function validateDocumentsUpdate($quoteType, $quoteUuId, Request $request)
     {
-
         $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
         $quoteModel->is_documents_valid = $request->is_documents_valid;
         $quoteModel->save();
@@ -298,7 +297,7 @@ class QuoteDocumentController extends Controller
 
         $disk = Storage::disk('azureIM');
         $zipFileName = "{$request->quote['first_name']} {$request->quote['last_name']}_{$request->quote['code']}.zip";
-        $zipFilePath = storage_path($zipFileName);
+        $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new ZipArchive;
 
         if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
@@ -343,5 +342,4 @@ class QuoteDocumentController extends Controller
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
-
 }
