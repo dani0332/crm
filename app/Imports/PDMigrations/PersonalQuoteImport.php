@@ -57,7 +57,7 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
     private function getQuoteStatusId($dealStatus, $dealStage)
     {
 
-        if ($dealStatus === PDDealStatus::LOST && $dealStage === DealStageEnum::FOLLOW_UP) {
+        if ($dealStatus === PDDealStatus::LOST) {
             return QuoteStatusEnum::Lost;
         }
 
