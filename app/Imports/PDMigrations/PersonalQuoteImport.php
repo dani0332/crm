@@ -21,23 +21,23 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
         $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('MY');
         if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number']))) {
             $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
-            if($quoteStatusId){
+            if ($quoteStatusId) {
                 $data = [
                     'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
                     'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
                 ];
-    
+
                 $searchCriteria = [];
-    
+
                 $searchCriteria = ['renewal_batch' => strtoupper($dealBatch)];
-    
+
                 if (isset($row['deal_cdb_id'])) {
                     [, $value] = explode('-', $row['deal_cdb_id']);
                     $searchCriteria['uuid'] = $value;
                 } elseif (isset($row['deal_policy_number'])) {
                     $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number'];
                 }
-    
+
                 $lead = PersonalQuote::where($searchCriteria)->first();
                 if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
                     $lead->update($data);
