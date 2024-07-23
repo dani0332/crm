@@ -117,7 +117,7 @@ class InstallmentReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
-            $item->transaction = $this->concatValues([$item->reference, $item->tax_invoice_number], '-');
+            $item->transaction = $this->concatValues([$item->reference, $item->tax_invoice_number], ' ');
         });
     }
 
