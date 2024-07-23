@@ -7,7 +7,7 @@ import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
 import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
-import {onMounted, watch} from 'vue';
+import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
 import DownloadDocuments from "../../../Components/DownloadDocuments.vue";
