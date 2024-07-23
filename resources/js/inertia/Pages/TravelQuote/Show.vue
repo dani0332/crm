@@ -2503,10 +2503,6 @@ const onAddUpdate = () => {
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-            <DownloadDocuments
-                :quote="page.props.quote"
-                :quoteDocuments="page.props.quoteDocuments"
-            />
           <Link
             v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${quote.insly_id}`"
@@ -3200,7 +3196,7 @@ const onAddUpdate = () => {
       :quoteId="quote.uuid"
       :quoteType="'TRAVEL'"
     />
-   
+
   </div>
 </template>
 <style>
