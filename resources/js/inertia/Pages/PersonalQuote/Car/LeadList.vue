@@ -37,6 +37,7 @@ const tableHeader = [
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LEAD SOURCE', value: 'source' },
+  { text: 'ADVISOR REQUESTED', value: 'sic_advisor_requested' },
   { text: 'NATIONALITY', value: 'nationality_id_text' },
   { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for_id_text' },
   { text: 'CAR MAKE', value: 'car_make_id_text' },
@@ -225,11 +226,12 @@ const filters = reactive({
   page: 1,
   paid_at_start: '',
   paid_at_end: '',
+  sic_advisor_requested: '',
   segment_filter: 'all',
   teams: [],
   transaction_approved_dates: page.props.transaction_approved_dates || '',
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
 });
 
 const teamUsers =
@@ -255,7 +257,11 @@ const canExportLeadsAndPlan = ref(false);
 watch(
   () => filters,
   () => {
-    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -379,7 +385,6 @@ onMounted(() => {
   setQueryStringFilters();
 });
 
-
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -411,7 +416,6 @@ const resetDateFilters = filterName => {
     },
   );
 });
-
 </script>
 
 <template>
@@ -673,6 +677,17 @@ const resetDateFilters = filterName => {
           :options="quoteSegments"
           :single="true"
         />
+         <x-select
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+        />
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -710,7 +725,8 @@ const resetDateFilters = filterName => {
             </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -829,6 +845,13 @@ const resetDateFilters = filterName => {
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
             {{ is_ecommerce ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-sic_advisor_requested="{ sic_advisor_requested }">
+        <div class="text-center">
+          <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
+            {{ sic_advisor_requested ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>
