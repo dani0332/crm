@@ -1,9 +1,4 @@
 <script setup>
-import {computed, reactive, ref} from 'vue';
-import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import MigratePayment from './../../Components/MigratePayment.vue';
-import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 
@@ -67,7 +62,7 @@ const props = defineProps({
   hashCollapsibleStatuses: Boolean,
   emailStatuses: Array,
   quoteNotes: Object,
-  paymentDocument: Array
+  paymentDocument: Array,
 });
 
 const isManualPlansCount = ref(0);
@@ -107,7 +102,7 @@ const fixedValue = number => {
   }
 };
 const confirmData = reactive({
-    contactPrimary: null,
+  contactPrimary: null,
 });
 
 const allowStatusUpdate = computed(() => {
@@ -134,7 +129,7 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
   planFilters: false,
-    sendConfirm: false,
+  sendConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -168,17 +163,17 @@ const onCreateDuplicate = isValid => {
   });
 };
 const emailTableColumns = reactive({
-    columns: [
-        { text: 'Id', value: 'id' },
-        { text: 'Email Subject', value: 'email_subject' },
-        { text: 'Email Address', value: 'email_address' },
-        { text: 'Status', value: 'email_status' },
-        { text: 'Reason', value: 'reason' },
-        { text: 'Template Id', value: 'template_id' },
-        { text: 'Customer Id', value: 'customer_id' },
-        { text: 'Created At', value: 'created_at' },
-        { text: 'Updated At', value: 'updated_at' },
-    ],
+  columns: [
+    { text: 'Id', value: 'id' },
+    { text: 'Email Subject', value: 'email_subject' },
+    { text: 'Email Address', value: 'email_address' },
+    { text: 'Status', value: 'email_status' },
+    { text: 'Reason', value: 'reason' },
+    { text: 'Template Id', value: 'template_id' },
+    { text: 'Customer Id', value: 'customer_id' },
+    { text: 'Created At', value: 'created_at' },
+    { text: 'Updated At', value: 'updated_at' },
+  ],
 });
 
 const confirmDeleteData = reactive({
@@ -940,8 +935,8 @@ const onPlanFiltersSubmit = () => {
     );
   });
   modals.planFilters = false;
-  if(planDataTable.value) {
-      planDataTable.value.updatePage(1);
+  if (planDataTable.value) {
+    planDataTable.value.updatePage(1);
   }
 };
 
@@ -1113,13 +1108,13 @@ const confirmDeleteDoc = () => {
 
 //activities
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -1632,98 +1627,102 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
 const salaryBrandMapping = {
   1: 'AED 4000 and below',
 };
-const validateEmailSending = () =>{
-    if (selectedPlans.value.length === 0) {
-        modals.sendConfirm = true;
-        return;
-    }
-    const hiddenPlans = selectedPlans.value.filter(plan => plan.isHidden);
-    if (hiddenPlans.length > 0) {
-        notification.error({
-            title: 'You cannot select a hidden plan',
-            position: 'top',
-        });
-        modals.sendConfirm = false;
-        return;
-    }
-    if (selectedPlans.value.length < 6) {
-        notification.error({
-            title: 'Minimum 6 plans should be selected',
-            position: 'top',
-        });
-        modals.sendConfirm = false;
-        return;
-    }
-    if(selectedPlans.value.length > 6){
-        notification.error({
-            title: 'Maximum 6 plans can be selected',
-            position: 'top',
-        });
-        modals.sendConfirm = false;
-        return;
-    }
+const validateEmailSending = () => {
+  if (selectedPlans.value.length === 0) {
     modals.sendConfirm = true;
-}
+    return;
+  }
+  const hiddenPlans = selectedPlans.value.filter(plan => plan.isHidden);
+  if (hiddenPlans.length > 0) {
+    notification.error({
+      title: 'You cannot select a hidden plan',
+      position: 'top',
+    });
+    modals.sendConfirm = false;
+    return;
+  }
+  if (selectedPlans.value.length < 6) {
+    notification.error({
+      title: 'Minimum 6 plans should be selected',
+      position: 'top',
+    });
+    modals.sendConfirm = false;
+    return;
+  }
+  if (selectedPlans.value.length > 6) {
+    notification.error({
+      title: 'Maximum 6 plans can be selected',
+      position: 'top',
+    });
+    modals.sendConfirm = false;
+    return;
+  }
+  modals.sendConfirm = true;
+};
 const loader = ref({
-    link: false,
+  link: false,
 });
 
 const isOcaButtonDisabled = ref(false);
 const confirmSendEmail = () => {
-    loader.value.link = true;
-    const first_name = page.props.quote.first_name || '';
-    const last_name = page.props.quote.last_name || '';
-    axios
-        .post(
-            `/quotes/health/${page.props.quote.uuid}/send-ocb`,
-            {
-                quote_type_id: page.props.quoteTypeId,
-                quote_id: page.props.quote.id,
-                quote_uuid: page.props.quote.uuid,
-                quote_cdb_id: page.props.quote.code,
-                quote_previous_expiry_date:
-                page.props.quote.previous_policy_expiry_date,
-                quote_previous_policy_number:
-                page.props.quote.previous_quote_policy_number,
-                customer_name: `${first_name} ${last_name}`,
-                customer_email: page.props.quote.email,
-                customer_id : page.props.quote.customer_id,
-                advisor_name: page.props.quote.advisor_id_text ? page.props.quote.advisor_id_text : null,
-                advisor_email: page.props.quote.advisor_email ? page.props.quote.advisor_email : null,
-                advisor_mobile_no: page.props.quote.advisor_mobile_no
-                    ? page.props.quote.advisor_mobile_no
-                    : null,
-                advisor_landline_no: page.props.quote.advisor_landline_no
-                    ? page.props.quote.advisor_landline_no
-                    : null,
-                selected_plans: selectedPlans.value
-            },
-            {
-                responseType: 'json',
-            },
-        )
-        .then(response => {
-            notification.success({
-                title: response.data.success,
-                position: 'top',
-            });
-            isOcaButtonDisabled.value = true;
-            router.reload({
-                replace: true,
-                preserveScroll: true,
-                preserveState: true,
-            });
-        })
-        .catch(error => {
-            notification.error({
-                title: "OCB email sending failed, please try again.",
-                position: 'top',
-            });
-        })
-        .finally(() => {
-            modals.sendConfirm = false;
-            loader.value.link = false;
-        });
+  loader.value.link = true;
+  const first_name = page.props.quote.first_name || '';
+  const last_name = page.props.quote.last_name || '';
+  axios
+    .post(
+      `/quotes/health/${page.props.quote.uuid}/send-ocb`,
+      {
+        quote_type_id: page.props.quoteTypeId,
+        quote_id: page.props.quote.id,
+        quote_uuid: page.props.quote.uuid,
+        quote_cdb_id: page.props.quote.code,
+        quote_previous_expiry_date:
+          page.props.quote.previous_policy_expiry_date,
+        quote_previous_policy_number:
+          page.props.quote.previous_quote_policy_number,
+        customer_name: `${first_name} ${last_name}`,
+        customer_email: page.props.quote.email,
+        customer_id: page.props.quote.customer_id,
+        advisor_name: page.props.quote.advisor_id_text
+          ? page.props.quote.advisor_id_text
+          : null,
+        advisor_email: page.props.quote.advisor_email
+          ? page.props.quote.advisor_email
+          : null,
+        advisor_mobile_no: page.props.quote.advisor_mobile_no
+          ? page.props.quote.advisor_mobile_no
+          : null,
+        advisor_landline_no: page.props.quote.advisor_landline_no
+          ? page.props.quote.advisor_landline_no
+          : null,
+        selected_plans: selectedPlans.value,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+      isOcaButtonDisabled.value = true;
+      router.reload({
+        replace: true,
+        preserveScroll: true,
+        preserveState: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: 'OCB email sending failed, please try again.',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      modals.sendConfirm = false;
+      loader.value.link = false;
+    });
 };
 
 watch(
@@ -1757,9 +1756,7 @@ watch(
   { immediate: true },
 );
 
-
 const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
-
 </script>
 
 <template>
@@ -1805,7 +1802,9 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           <Link v-if="!isDisabled" :href="route('health.edit', quote.uuid)">
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
         </LeadEditBtnTemplate>
 
         <x-tooltip
@@ -1899,9 +1898,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
                 </x-button>
               </div>
             </div>
-            <div
-              class="w-full md:w-1/2 flex gap-2 items-end"
-            >
+            <div class="w-full md:w-1/2 flex gap-2 items-end">
               <ComboBox
                 v-model="assignLead"
                 label="Assign Lead"
@@ -1931,8 +1928,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-xl font-semibold text-primary-800">
-            </h3>
+            <h3 class="text-xl font-semibold text-primary-800"></h3>
           </div>
         </template>
 
@@ -2427,144 +2423,144 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
       </dl>
     </x-modal>
 
-    <x-collapse
-      show-icon
-      class="p-4 rounded shadow mb-6 bg-white"
+    <x-accordion
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+      show-icon
     >
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Member Details
-        <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
-      </h3>
-      <template #content>
-        <x-divider class="mb-4 mt-1" />
-        <AddMemberButtonTemplate v-slot="{ isDisabled }">
-          <x-button
-            @click.prevent="onAddMemberModal"
-            size="sm"
-            color="orange"
-            :disabled="isDisabled"
+      <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Member Details
+          <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
+        </h3>
+        <template #content>
+          <x-divider class="mb-4 mt-1" />
+          <AddMemberButtonTemplate v-slot="{ isDisabled }">
+            <x-button
+              @click.prevent="onAddMemberModal"
+              size="sm"
+              color="orange"
+              :disabled="isDisabled"
+            >
+              Add Member
+            </x-button>
+          </AddMemberButtonTemplate>
+          <div class="flex mb-3 justify-end">
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.member_details"
+              position="bottom"
+            >
+              <AddMemButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                This lead is now locked as the policy has been booked. If
+                changes are needed such midterm addition of member, go to 'Send
+                Update', select 'Add Update', and choose 'Endorsement Financial'
+              </template>
+            </x-tooltip>
+            <AddMemButtonReuseTemplate v-else />
+          </div>
+          <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              @click.prevent="onEditMember(item)"
+              :disabled="isDisabled"
+            >
+              Edit
+            </x-button>
+          </EditMemberButtonTemplate>
+          <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="memberDelete(item.id)"
+              :disabled="isDisabled"
+            >
+              Delete
+            </x-button>
+          </DeleteMemberButtonTemplate>
+          <DataTable
+            table-class-name="tablefixed overflow-auto"
+            :headers="memberDetailsTable.columns"
+            :items="membersDetail || []"
+            border-cell
+            hide-rows-per-page
+            hide-footer
           >
-            Add Member
-          </x-button>
-        </AddMemberButtonTemplate>
-        <div class="flex mb-3 justify-end">
-          <x-tooltip
-            v-if="lockLeadSectionsDetails.member_details"
-            position="bottom"
-          >
-            <AddMemButtonReuseTemplate :isDisabled="true" />
-            <template #tooltip>
-              This lead is now locked as the policy has been booked. If changes
-              are needed such midterm addition of member, go to 'Send Update',
-              select 'Add Update', and choose 'Endorsement Financial'
+            <template #item-first_name="{ first_name, last_name }">
+              {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
             </template>
-          </x-tooltip>
-          <AddMemButtonReuseTemplate v-else />
-        </div>
-        <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
-          <x-button
-            size="xs"
-            color="primary"
-            outlined
-            @click.prevent="onEditMember(item)"
-            :disabled="isDisabled"
-          >
-            Edit
-          </x-button>
-        </EditMemberButtonTemplate>
-        <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
-          <x-button
-            size="xs"
-            color="error"
-            outlined
-            @click.prevent="memberDelete(item.id)"
-            :disabled="isDisabled"
-          >
-            Delete
-          </x-button>
-        </DeleteMemberButtonTemplate>
-        <DataTable
-          table-class-name="tablefixed overflow-auto"
-          :headers="memberDetailsTable.columns"
-          :items="membersDetail || []"
-          border-cell
-          hide-rows-per-page
-          hide-footer
-        >
-          <template #item-first_name="{ first_name, last_name }">
-            {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
-          </template>
 
-          <template #item-gender="{ gender }">
-            {{ genderText(gender).value }}
-          </template>
+            <template #item-gender="{ gender }">
+              {{ genderText(gender).value }}
+            </template>
 
-          <template #item-dob="{ dob }">
-            {{ dateFormat(dob) }}
-          </template>
+            <template #item-dob="{ dob }">
+              {{ dateFormat(dob) }}
+            </template>
 
-          <template #item-relation="{ relation }">
-            {{ relation?.text }}
-          </template>
+            <template #item-relation="{ relation }">
+              {{ relation?.text }}
+            </template>
 
-          <template #item-nationality="{ nationality }">
-            {{ nationality?.text }}
-          </template>
+            <template #item-nationality="{ nationality }">
+              {{ nationality?.text }}
+            </template>
 
-          <template #item-emirate="{ emirate }">
-            {{ emirate?.text }}
-          </template>
+            <template #item-emirate="{ emirate }">
+              {{ emirate?.text }}
+            </template>
 
-          <template #item-member_category_id="{ member_category_id }">
-            {{ memberCategoryText(member_category_id).value }}
-          </template>
+            <template #item-member_category_id="{ member_category_id }">
+              {{ memberCategoryText(member_category_id).value }}
+            </template>
 
-          <template #item-action="item">
-            <div class="flex gap-2">
-              <x-tooltip
-                v-if="lockLeadSectionsDetails.member_details"
-                position="left"
-                align="center"
-                class="yoyo-tip"
-              >
-                <EditMemberButtonReuseTemplate
-                  :isDisabled="true"
-                  :item="item"
-                />
-                <template #tooltip>
-                  <div class="whitespace-normal text-xs">
-                    This lead is now locked as the policy has been booked. If
-                    changes are needed such midterm deletion of member or
-                    marital status change, go to 'Send Update', select 'Add
-                    Update', and choose 'Endorsement Financial'
-                  </div>
-                </template>
-              </x-tooltip>
-              <EditMemberButtonReuseTemplate v-else :item="item" />
-              <x-tooltip
-                v-if="page.props.lockLeadSectionsDetails.member_details"
-                position="left"
-                align="center"
-                class="yoyo-tip"
-              >
-                <DeleteMemberButtonReuseTemplate
-                  :isDisabled="true"
-                  :item="item"
-                />
-                <template #tooltip>
-                  <div class="whitespace-normal text-xs">
-                    This lead is now locked as the policy has been booked. If
-                    changes are needed such midterm deletion of member or
-                    marital status change, go to 'Send Update', select 'Add
-                    Update', and choose 'Endorsement Financial'
-                  </div>
-                </template>
-              </x-tooltip>
-              <DeleteMemberButtonReuseTemplate v-else :item="item" />
-            </div>
-          </template>
-        </DataTable>
+            <template #item-action="item">
+              <div class="flex gap-2">
+                <x-tooltip
+                  v-if="lockLeadSectionsDetails.member_details"
+                  position="left"
+                  align="center"
+                  class="yoyo-tip"
+                >
+                  <EditMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
+                  <template #tooltip>
+                    <div class="whitespace-normal text-xs">
+                      This lead is now locked as the policy has been booked. If
+                      changes are needed such midterm deletion of member or
+                      marital status change, go to 'Send Update', select 'Add
+                      Update', and choose 'Endorsement Financial'
+                    </div>
+                  </template>
+                </x-tooltip>
+                <EditMemberButtonReuseTemplate v-else :item="item" />
+                <x-tooltip
+                  v-if="page.props.lockLeadSectionsDetails.member_details"
+                  position="left"
+                  align="center"
+                  class="yoyo-tip"
+                >
+                  <DeleteMemberButtonReuseTemplate
+                    :isDisabled="true"
+                    :item="item"
+                  />
+                  <template #tooltip>
+                    <div class="whitespace-normal text-xs">
+                      This lead is now locked as the policy has been booked. If
+                      changes are needed such midterm deletion of member or
+                      marital status change, go to 'Send Update', select 'Add
+                      Update', and choose 'Endorsement Financial'
+                    </div>
+                  </template>
+                </x-tooltip>
+                <DeleteMemberButtonReuseTemplate v-else :item="item" />
+              </div>
+            </template>
+          </DataTable>
 
         <x-modal v-model="modals.member" size="lg"
          :title="`${memberActionEdit ? 'Edit' : 'Add'} Member`"
@@ -2621,123 +2617,124 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
                 :hasError="memberFieldReq.nationality"
               />
 
-              <x-select
-                v-model="memberForm.emirate_of_your_visa_id"
-                label="Emirate of Visa*"
-                :options="emiratesOptions"
-                :rules="[isRequired]"
-                placeholder="Select Emirate of Visa"
-                class="w-full"
-              />
+                <x-select
+                  v-model="memberForm.emirate_of_your_visa_id"
+                  label="Emirate of Visa*"
+                  :options="emiratesOptions"
+                  :rules="[isRequired]"
+                  placeholder="Select Emirate of Visa"
+                  class="w-full"
+                />
 
-              <x-select
-                v-model="memberForm.member_category_id"
-                label="Member Category*"
-                :options="memberCategoriesOptions"
-                :rules="[isRequired]"
-                placeholder="Select Member Category"
-                class="w-full"
-              />
+                <x-select
+                  v-model="memberForm.member_category_id"
+                  label="Member Category*"
+                  :options="memberCategoriesOptions"
+                  :rules="[isRequired]"
+                  placeholder="Select Member Category"
+                  class="w-full"
+                />
 
-              <x-select
-                v-model="memberForm.gender"
-                label="Gender*"
-                :options="genderSelect"
-                :rules="[isRequired]"
-                placeholder="Select Gender"
-                class="w-full"
-              />
-              <DatePicker
-                v-model="memberForm.dob"
-                label="DOB*"
-                :max-date="new Date()"
-                :rules="[isRequired]"
-                :hasError="memberFieldReq.dob"
-              />
-              <x-select
-                v-model="memberForm.relation_code"
-                label="Relation"
-                :options="memberRelationOptions"
-                placeholder="Select Relation"
-                class="w-full"
-              />
-              <x-select
-                v-model="memberForm.salary_band_id"
-                label="Salary Band"
-                :options="salaryBandsOptions"
-                placeholder="Select Salary Band"
-                class="w-full"
-              />
-            </div>
+                <x-select
+                  v-model="memberForm.gender"
+                  label="Gender*"
+                  :options="genderSelect"
+                  :rules="[isRequired]"
+                  placeholder="Select Gender"
+                  class="w-full"
+                />
+                <DatePicker
+                  v-model="memberForm.dob"
+                  label="DOB*"
+                  :max-date="new Date()"
+                  :rules="[isRequired]"
+                  :hasError="memberFieldReq.dob"
+                />
+                <x-select
+                  v-model="memberForm.relation_code"
+                  label="Relation"
+                  :options="memberRelationOptions"
+                  placeholder="Select Relation"
+                  class="w-full"
+                />
+                <x-select
+                  v-model="memberForm.salary_band_id"
+                  label="Salary Band"
+                  :options="salaryBandsOptions"
+                  placeholder="Select Salary Band"
+                  class="w-full"
+                />
+              </div>
 
-            <div class="flex justify-end gap-3">
-              <x-button size="sm" @click.prevent="modals.member = false">
-                Cancel
-              </x-button>
+              <div class="flex justify-end gap-3">
+                <x-button size="sm" @click.prevent="modals.member = false">
+                  Cancel
+                </x-button>
 
-              <x-button
-                size="sm"
-                color="emerald"
-                :loading="memberForm.processing"
-                type="submit"
-                class="px-6"
-              >
-                {{ memberActionEdit ? 'Update' : 'Save' }}
-              </x-button>
-            </div>
-          </x-form>
-        </x-modal>
-
-        <x-modal v-model="modals.memberConfirm" title="Delete Member Detail" show-close backdrop>
-          <div
-            v-if="isManualPlansCount > 0"
-            class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
-            role="alert"
-          >
-            <div class="flex">
-              <div class="py-1">
-                <svg
-                  class="fill-current h-6 w-6 text-read-900 mr-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
+                <x-button
+                  size="sm"
+                  color="emerald"
+                  :loading="memberForm.processing"
+                  type="submit"
+                  class="px-6"
                 >
-                  <path
-                    d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
-                  />
-                </svg>
+                  {{ memberActionEdit ? 'Update' : 'Save' }}
+                </x-button>
               </div>
-              <div>
-                <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
-                <p class="text-sm">
-                  Please revist all manual plan(s) and update the per member
-                  price
-                </p>
+            </x-form>
+          </x-modal>
+
+          <x-modal v-model="modals.memberConfirm" title="Delete Member Detail" show-close backdrop>
+              <div
+              v-if="isManualPlansCount > 0"
+              class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+              role="alert"
+            >
+              <div class="flex">
+                <div class="py-1">
+                  <svg
+                    class="fill-current h-6 w-6 text-read-900 mr-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+                  <p class="text-sm">
+                    Please revist all manual plan(s) and update the per member
+                    price
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-          <p>Are you sure you want to delete this?</p>
-          <template #actions>
-            <div class="text-right space-x-4">
-              <x-button
-                size="sm"
-                ghost
-                @click.prevent="modals.memberConfirm = false"
-              >
-                Cancel
-              </x-button>
-              <x-button
-                size="sm"
-                color="error"
-                @click.prevent="memberDeleteConfirmed"
-                :loading="memberForm.processing"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </x-modal>
-      </template>
-    </x-collapse>
+            <p>Are you sure you want to delete this?</p>
+            <template #actions>
+              <div class="text-right space-x-4">
+                <x-button
+                  size="sm"
+                  ghost
+                  @click.prevent="modals.memberConfirm = false"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="error"
+                  @click.prevent="memberDeleteConfirmed"
+                  :loading="memberForm.processing"
+                >
+                  Delete
+                </x-button>
+              </div>
+            </template>
+          </x-modal>
+        </template>
+      </x-accordion-item>
+    </x-accordion>
     <UBODetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
       :quote="quote"
@@ -3082,15 +3079,15 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             >
               Download PDF
             </x-button>
-              <x-button
-                  @click.prevent="validateEmailSending"
-                  size="sm"
-                  color="orange"
-                  :disabled="doesEmailStatusExist || isOcaButtonDisabled"
-              >
-                  Send OCA Email to Customer
-              </x-button>
-              <x-button
+            <x-button
+              @click.prevent="validateEmailSending"
+              size="sm"
+              color="orange"
+              :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+            >
+              Send OCA Email to Customer
+            </x-button>
+            <x-button
               v-if="plansTable.data.length > 0"
               size="sm"
               color="orange"
@@ -3469,7 +3466,9 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-      :eCommercePriceWithLP="ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0"
+      :eCommercePriceWithLP="
+        ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
+      "
       :bookPolicyDetails="bookPolicyDetails"
     />
 
@@ -3494,23 +3493,23 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
       :expanded="sectionExpanded"
     />
 
-      <div class="p-4 rounded shadow mb-6 bg-white">
-          <div class="flex justify-between items-center mb-4">
-              <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-          </div>
-          <DataTable
-              table-class-name="tablefixed compact"
-              :headers="emailTableColumns.columns"
-              :items="emailStatuses || []"
-              show-index
-              border-cell
-              fixed-checkbox
-              hide-rows-per-page
-              hide-footer
-          >
-          </DataTable>
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
       </div>
-      <x-divider class="my-4" />
+      <DataTable
+        table-class-name="tablefixed compact"
+        :headers="emailTableColumns.columns"
+        :items="emailStatuses || []"
+        show-index
+        border-cell
+        fixed-checkbox
+        hide-rows-per-page
+        hide-footer
+      >
+      </DataTable>
+    </div>
+    <x-divider class="my-4" />
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
