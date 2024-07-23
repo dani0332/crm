@@ -469,13 +469,15 @@ class CarQuoteService extends BaseService
         $childRecord = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date ?? null;
 
-        CarQuoteRequestDetail::updateOrCreate(
+        $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
             ['car_quote_request_id' => $id],
             [
                 'advisor_assigned_date' => Carbon::now(),
                 'advisor_assigned_by_id' => Auth::user()->id,
             ]
         );
+
+        info('updateChildRecord - leadId : '.$id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
 
         return $oldAdvisorAssignedDate;
     }
@@ -888,7 +890,6 @@ class CarQuoteService extends BaseService
             $request['created_at'] = $request->created_at_start;
         }
 
-        // if ($request->ajax()) {
         $this->addLeadViewEligibilityCheck();
 
         if (
@@ -913,7 +914,7 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at)) {
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at) && ! isset($request->payment_due_date) && ! isset($request->booking_date)) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (
@@ -922,8 +923,10 @@ class CarQuoteService extends BaseService
             && empty($request->email)
             && empty($request->code)
             && empty($request->renewal_batch)
-            && empty($request->quote_batch_id) &&
-            ! isset($request->previous_quote_policy_number)
+            && empty($request->quote_batch_id)
+            && empty($request->payment_due_date)
+            && empty($request->booking_date)
+            && ! isset($request->previous_quote_policy_number)
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
@@ -951,12 +954,13 @@ class CarQuoteService extends BaseService
         }
 
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-
             $this->query->where(function ($query) use ($request) {
                 $query->where('cqr.policy_number', $request->previous_quote_policy_number)
                     ->orWhere('cqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
         }
+
+        $this->adjustQueryByDateFilters($this->query, 'cqr');
 
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
@@ -995,7 +999,6 @@ class CarQuoteService extends BaseService
                 }
             }
         }
-        // }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';

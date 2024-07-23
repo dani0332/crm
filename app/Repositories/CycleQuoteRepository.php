@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\URL;
 
 class CycleQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -78,8 +81,11 @@ class CycleQuoteRepository extends BaseRepository
                 $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy($sort_by, $sort_type);
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        $query->orderBy('personal_quotes.'.$sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
             //PD Revert

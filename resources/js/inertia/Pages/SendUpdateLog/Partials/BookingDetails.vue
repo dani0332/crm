@@ -194,9 +194,9 @@ const bookingDetailsForm = useForm({
   booking_date: props.bookingDetails?.booking_date,
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
-  transaction_payment_status: transactionPaymentStatus.value || '',
+  transaction_payment_status: 'N/A',
   invoice_date: dateToYMD(props.sendUpdateLog?.invoice_date) || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
-  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || '',
+  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || null,
   discount: isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || '0.00',
   insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_percentage: props.sendUpdateLog?.commission_percentage || props?.payments[0]?.commmission_percentage || '',
@@ -299,6 +299,8 @@ const calculateCommission = () => {
         bookingDetailsForm.commission_percentage = convertToNegative(
           (total_commission / price_with_vat) * 100,
         );
+
+        checkDiscount(price_with_vat);
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -467,7 +469,7 @@ function reverseValue(value) {
 }
 
 function updateReversalEntries(payment, sendUpdateLog) {
-  reversalEntry.transaction_payment_status = payment?.transaction_payment_status || sendUpdateLog?.transaction_payment_status || '';
+  reversalEntry.transaction_payment_status = 'N/A';
   reversalEntry.booking_date = payment?.policy_booking_date || sendUpdateLog?.booking_date || '';
   reversalEntry.invoice_date = payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = (payment?.insurer_tax_number) ? (payment.insurer_tax_number + '-REV') : (sendUpdateLog.insurer_tax_invoice_number + '-REV');
@@ -496,13 +498,13 @@ onMounted(() => {
 
 const onUpdateReversal = () => {
   state.reversalSectionEdit = !state.reversalSectionEdit;
-  bookingDetailsForm.transaction_payment_status = reversalEntry.transaction_payment_status || null;
+  bookingDetailsForm.transaction_payment_status = 'N/A';
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
   bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
-  bookingDetailsForm.price_vat_applicable = Math.abs(reversalEntry.price_vat_applicable) || null;
+  bookingDetailsForm.price_vat_applicable = Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
   bookingDetailsForm.price_vat_not_applicable = Math.abs(reversalEntry.price_vat_not_applicable) || '0.00';
   bookingDetailsForm.vat_on_commission = reversalEntry.vat_on_commission || null;
@@ -803,6 +805,31 @@ const onReversalEdit = () => {
     state.reversalSectionEdit = true;
   }
 };
+
+const isCI = computed(() => {
+  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI;
+});
+
+const checkDiscount = (newPrice) => {
+  let total_price = props.sendUpdateLog?.price_with_vat;
+  let difference =  newPrice - total_price;
+  let previousDiscount = isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || 0.00;
+  let paymentDiscount = props?.payments[0]?.discount_value || 0.00;
+  if (newPrice > total_price && difference <= 0.99 && (isEF || isCI || isCPD)) {
+    if (previousDiscount > 0) {
+      bookingDetailsForm.discount = Number(bookingDetailsForm.discount + difference).toFixed(2);
+    } else {
+      bookingDetailsForm.discount = Number(difference).toFixed(2);
+    }
+  } else {
+    let lessDifference = Number(total_price - newPrice).toFixed(2);
+    if (paymentDiscount > 0 && lessDifference <= 0.99) {
+      bookingDetailsForm.discount = Number(paymentDiscount - lessDifference).toFixed(2);
+    } else {
+      bookingDetailsForm.discount = previousDiscount;
+    }
+  }
+}
 </script>
 
 <template>

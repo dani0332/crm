@@ -15,9 +15,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Throwable;
-
-use function Laravel\Prompts\error;
 
 class SendBookPolicyDocumentsJob implements ShouldQueue
 {
@@ -60,7 +59,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
             info('Quote documents which need to send to customer through email retrieved: '.json_encode($docs));
         } catch (Exception $ex) {
-            error('Send BookPolicy Documents Job Error '.$ex->getMessage());
+            Log::error('Send BookPolicy Documents Job Error '.$ex->getMessage());
             $docs = [];
         }
 
@@ -76,7 +75,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->customerEmail = $quote->email;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
             $emailData->policy_number = $quote->policy_number;
-            $emailData->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
+            $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['renewal_expiry_date']));
+            $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));
             $emailData->quoteDocuments = $docs;
             $emailData->advisorName = '';
             $emailData->advisorEmail = '';

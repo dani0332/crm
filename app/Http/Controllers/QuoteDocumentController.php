@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\WorkflowTypeEnum;
 use App\Http\Requests\PaymentDocumentRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Models\DocumentType;
@@ -17,6 +18,7 @@ use App\Services\CustomerService;
 use App\Services\ExportDocumentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SIBService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -303,5 +305,25 @@ class QuoteDocumentController extends Controller
         } else {
             abort(404);
         }
+    }
+
+    public function validateDocumentsUpdate($quoteType, $quoteUuId, Request $request)
+    {
+
+        $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
+        $quoteModel->is_documents_valid = $request->is_documents_valid;
+        $quoteModel->save();
+        if ($request->is_documents_valid) {
+            $this->stopHapexReminder($quoteModel);
+        }
+
+        return redirect()->back()->with('message', 'Document validity status update successfully.');
+    }
+
+    public function stopHapexReminder($quote)
+    {
+        SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+
+        return true;
     }
 }
