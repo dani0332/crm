@@ -15,7 +15,7 @@ const downloadDocument = async () => {
             quoteDocuments : page.props.quote.documents ?? page.props.quoteDocuments,
         }
         contentLoader.value = true;
-        let urls = `/download/documents`;
+        let urls = `/documents/download`;
         const response = await axios.post(urls, formModal, { responseType: 'blob' });
 
         // Extract filename from response headers
