@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\PaymentProcessJobEnum;
-use App\Models\CcPaymentProcessJob;
+use App\Models\CcPaymentProcess;
 use App\Services\SplitPaymentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,7 +24,7 @@ class ProcessCCPaymentJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(CcPaymentProcessJob $paymentRecord)
+    public function __construct(CcPaymentProcess $paymentRecord)
     {
         $this->paymentRecord = $paymentRecord;
     }

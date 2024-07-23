@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\CcPaymentProcessJob;
+use App\Models\CcPaymentProcess;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -44,7 +44,7 @@ class RetrySplitPaymentRequest extends FormRequest
         });
 
         $validator->after(function ($validator) {
-            $paymentProcessJob = CcPaymentProcessJob::find(request()->payment_process_job_id);
+            $paymentProcessJob = CcPaymentProcess::find(request()->payment_process_job_id);
             if (! $paymentProcessJob) {
                 $validator->errors()->add('value', 'Payment Process Job Not Exists');
             }

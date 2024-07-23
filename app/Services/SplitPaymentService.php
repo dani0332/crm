@@ -18,7 +18,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
-use App\Models\CcPaymentProcessJob;
+use App\Models\CcPaymentProcess;
 use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -601,7 +601,7 @@ class SplitPaymentService
                 } else {
                     $sageMessage = $sageResponse['response'];
                     if ($isFromJob) {
-                        CcPaymentProcessJob::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $sageMessage]);
+                        CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $sageMessage]);
 
                         return;
                     } else {
@@ -654,14 +654,14 @@ class SplitPaymentService
                 DB::commit();
             } catch (Exception $exception) {
                 if ($isFromJob) {
-                    CcPaymentProcessJob::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
+                    CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
                 } else {
                     Log::error('Error in processSplitPaymentApprove: '.$exception->getMessage());
                 }
                 DB::rollBack();
             }
         } elseif ($isFromJob) {
-            CcPaymentProcessJob::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
+            CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
         }
 
     }
@@ -731,13 +731,13 @@ class SplitPaymentService
             }
 
             if ($isFromJob && $splitPaymentId > 0) {
-                CcPaymentProcessJob::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
             }
             DB::commit();
         } catch (Exception $exception) {
             $canCaptureEp = false;
             if ($isFromJob && $splitPaymentId > 0) {
-                CcPaymentProcessJob::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
             }
             Log::error('Error in processMasterPaymentApprove: '.$exception->getMessage());
             DB::rollBack();
