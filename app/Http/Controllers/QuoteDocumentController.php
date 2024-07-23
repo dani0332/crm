@@ -298,7 +298,7 @@ class QuoteDocumentController extends Controller
 
         $disk = Storage::disk('azureIM');
         $zipFileName = "{$request->quote['first_name']} {$request->quote['last_name']}_{$request->quote['code']}.zip";
-        $zipFilePath = public_path($zipFileName);
+        $zipFilePath = storage_path($zipFileName);
         $zip = new ZipArchive;
 
         if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
