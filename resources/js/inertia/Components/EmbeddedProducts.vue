@@ -265,8 +265,9 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
 <template>
-  <div v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_VIEW, permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL])">
-    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
+  <x-accordion v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_VIEW, permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL])" show-icon>
+
+    <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
 
       <div class="flex flex-wrap gap-4 justify-between items-center">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -352,6 +353,6 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           </x-form>
         </x-modal>
       </template>
-    </x-collapse>
-  </div>
+    </x-accordion-item>
+  </x-accordion>
 </template>

@@ -532,7 +532,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
 </script>
 
 <template>
-  <x-modal v-model="showModal" size="xl" :title="`${plan.providerName} - ${plan.name}`" show-close backdrop :has-actions="false">
+  <x-modal v-model="showModal" size="xl" :title="`${plan?.providerName} - ${plan?.name}`" show-close backdrop :has-actions="false">
     <div class="flex justify-end">
       <ToggleManualButtonTemplate v-slot="{ isDisabled }">
         <x-toggle

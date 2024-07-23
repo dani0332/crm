@@ -355,21 +355,20 @@ watch(
           <template v-if="note.length < 40">
             {{ note }}
           </template>
-          <x-collapse
-            :expanded="expandNotes"
-            v-else
-            icon="chevronDown"
-            show-icon
-          >
-            <div class="bg-gray-10 w-80">
-              {{ note.slice(0, 40) }}
-            </div>
-            <template #content>
-              <div>
-                {{ note.slice(40, note.length) }}
-              </div>
-            </template>
-          </x-collapse>
+          <x-accordion v-else show-icon icon="chevronDown">
+              <x-accordion-item
+                :expanded="expandNotes"
+              >
+                <div class="bg-gray-10 w-80">
+                  {{ note.slice(0, 40) }}
+                </div>
+                <template #content>
+                  <div>
+                    {{ note.slice(40, note.length) }}
+                  </div>
+                </template>
+              </x-accordion-item>
+          </x-accordion>
         </template>
         <template #item-action="item">
           <div class="flex gap-2">
