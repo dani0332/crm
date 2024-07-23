@@ -3,10 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Enums\PaymentProcessJobEnum;
-use App\Models\CcPaymentProcessJob;
-use App\Services\SplitPaymentService;
-use Illuminate\Console\Command;
 use App\Jobs\ProcessCCPaymentJob;
+use App\Models\CcPaymentProcessJob;
+use Illuminate\Console\Command;
 
 class ProcessCCPaymentsCommand extends Command
 {
@@ -28,15 +27,16 @@ class ProcessCCPaymentsCommand extends Command
      * Execute the console command.
      */
     public function handle()
-    {   
+    {
         info('CC Payments Job Started');
         CcPaymentProcessJob::where('status', PaymentProcessJobEnum::PENDING)
             ->chunk(100, function ($pendingCCRecords) {
                 foreach ($pendingCCRecords as $pendingCCRecord) {
-                    ProcessCCPaymentJob::dispatch($pendingCCRecord);                    
+                    ProcessCCPaymentJob::dispatch($pendingCCRecord);
                 }
             });
         info('CC Payments Job Ended');
+
         return 0;
     }
 }
