@@ -117,14 +117,16 @@ class SaleDetailReportService extends ManagementReport
     private function formatData(&$data)
     {
         $data->map(function ($item) {
-            $item->transactions = implode('-', array_filter([$item->insurer_tax_invoice_number, $item->notes, $item->reference], function ($value) { return !empty($value); }));
-            $item->policy_start_date = !empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
-            $item->payment_due_date = !empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
-            $item->due_date = !empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
+            $item->transactions = implode('-', array_filter([$item->insurer_tax_invoice_number, $item->notes, $item->reference], function ($value) {
+                return ! empty($value);
+            }));
+            $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
+            $item->payment_due_date = ! empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
+            $item->due_date = ! empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
             $item->total_price = number_format($item->total_price, 2);
             $item->total_commission = number_format($item->total_commission, 2);
             $item->collects = strtoupper($item->collects);
-            $item->customer_name = $item->first_name . ' ' . $item->last_name;
+            $item->customer_name = $item->first_name.' '.$item->last_name;
         });
     }
 
