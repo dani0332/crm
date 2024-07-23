@@ -36,36 +36,38 @@ class TransactionReportService extends ManagementReport
             ->select(
                 'personal_quotes.policy_number',
                 'personal_quotes.code',
-                DB::raw("CONCAT_WS('-', p.insurer_tax_number, p.notes, p.reference) as transactions"),
-                DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
-                DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
-                DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
+                'p.notes',
+                'p.reference',
+                'personal_quotes.policy_start_date',
+                'p.payment_due_date as payment_due_date',
+                'ps.due_date',
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
                 'personal_quotes.price_vat_not_applicable',
                 'p.discount_value as discount',
-                DB::raw('FORMAT(((
+                DB::raw('((
                     IFNULL( personal_quotes.price_vat_applicable , 0 ) +
                     IFNULL( personal_quotes.price_vat_not_applicable , 0 )  +
-                    IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )),2) as total_price'),
-                DB::raw('p.commission_vat_applicable as commission_vat_applicable'),
-                DB::raw('p.commission_vat as commission_vat'),
-                DB::raw('p.commission_vat_not_applicable as commission_vat_not_applicable'),
-                DB::raw('p.captured_amount as collected_amount'),
+                    IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )) as total_price'),
+                'p.commission_vat_applicable',
+                'p.commission_vat',
+                'p.commission_vat_not_applicable',
+                'p.captured_amount as collected_amount',
                 DB::raw('(SELECT pss.verified_at
                 FROM payment_splits pss
                 WHERE pss.code = p.code
                 and pss.sr_no = 1
                 LIMIT 1) as payment_date'),
-                DB::raw('FORMAT(((
+                DB::raw('((
                     IFNULL( personal_quotes.price_vat_applicable , 0 ) +
                     IFNULL( personal_quotes.price_vat_not_applicable , 0 ) +
                     IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )) -
-                    IFNULL( p.captured_amount, 0),2) as pending_balance'),
-                DB::raw('UPPER(p.collection_type) as collects'),
+                    IFNULL( p.captured_amount, 0) as pending_balance'),
+                'p.collection_type as collects',
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
-                DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
+                'personal_quotes.first_name',
+                'personal_quotes.last_name',
                 'u.name as advisor',
                 'pi.name as policy_issuer',
                 'p.invoice_description as invoice_description',
@@ -101,6 +103,7 @@ class TransactionReportService extends ManagementReport
 
         if ($request->export == 1) {
             $data = $query->get();
+            $this->formatData($data);
 
             // Columns that are not integar and should not be summed
             $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
@@ -112,8 +115,25 @@ class TransactionReportService extends ManagementReport
                 $nonIntegarIndexes
             );
         } else {
-            return $query->simplePaginate(100)->withQueryString();
+            $data = $query->simplePaginate(100)->withQueryString();
+            $this->formatData($data);
+
+            return $data;
         }
+    }
+
+    private function formatData(&$data)
+    {
+        $data->map(function ($item) {
+            $item->transactions = implode('-', array_filter([$item->insurer_invoice_number, $item->notes, $item->reference], function ($value) { return !empty($value); }));
+            $item->policy_start_date = !empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
+            $item->payment_due_date = !empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
+            $item->due_date = !empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
+            $item->total_price = number_format($item->total_price, 2);
+            $item->collects = strtoupper($item->collects);
+            $item->pending_balance = number_format($item->pending_balance, 2);
+            $item->customer_name = $item->first_name . ' ' . $item->last_name;
+        });
     }
 
     public function getDefaultFilters()

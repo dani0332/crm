@@ -48,33 +48,36 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.policy_number',
                 'personal_quotes.policy_number as main_lead_policy_number',
                 'send_update_logs.code',
-                DB::raw("CONCAT_WS('-', p.insurer_tax_number, p.notes, p.reference) as transactions"),
-                DB::raw("DATE_FORMAT(send_update_logs.start_date, '%Y-%m-%d') as policy_start_date"),
-                DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as main_lead_policy_start_date"),
-                DB::raw("DATE_FORMAT(send_update_logs.invoice_date, '%Y-%m-%d') as payment_due_date"),
-                DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
+                'p.insurer_tax_number',
+                'p.notes',
+                'p.reference',
+                'send_update_logs.start_date as policy_start_date',
+                'personal_quotes.policy_start_date as main_lead_policy_start_date',
+                'send_update_logs.invoice_date as payment_due_date',
+                'ps.due_date as due_date',
                 'send_update_logs.price_vat_applicable',
                 'send_update_logs.total_vat_amount as vat',
                 'send_update_logs.price_vat_not_applicable',
                 'send_update_logs.discount as discount',
-                DB::raw('FORMAT(((
+                DB::raw('((
                     IFNULL( send_update_logs.price_vat_applicable , 0 ) +
                     IFNULL( send_update_logs.price_vat_not_applicable , 0 )  +
-                    IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( send_update_logs.discount , 0 )),2) as total_price'),
-                DB::raw('p.commission_vat_applicable as commission_vat_applicable'),
-                DB::raw('p.commission_vat as commission_vat'),
-                DB::raw('p.commission_vat_not_applicable as commission_vat_not_applicable'),
-                DB::raw('p.captured_amount as collected_amount'),
+                    IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( send_update_logs.discount , 0 )) as total_price'),
+                'p.commission_vat_applicable as commission_vat_applicable',
+                'p.commission_vat as commission_vat',
+                'p.commission_vat_not_applicable as commission_vat_not_applicable',
+                'p.captured_amount as collected_amount',
                 'ps.verified_at as payment_date',
-                DB::raw('FORMAT(((
+                DB::raw('((
                     IFNULL( send_update_logs.price_vat_applicable , 0 ) +
                     IFNULL( send_update_logs.price_vat_not_applicable , 0 ) +
                     IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( send_update_logs.discount , 0 )) -
-                    IFNULL( p.captured_amount, 0),2) as pending_balance'),
-                DB::raw('UPPER(pq.collection_type) as collects'),
+                    IFNULL( p.captured_amount, 0) as pending_balance'),
+                'pq.collection_type as collects',
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
-                DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
+                'personal_quotes.first_name',
+                'personal_quotes.last_name',
                 'u.name as advisor',
                 'pi.name as policy_issuer',
                 'send_update_logs.invoice_description as invoice_description',
@@ -85,7 +88,7 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
                 'l.text as endorsement_sub_type',
-                DB::raw("DATE_FORMAT(send_update_logs.booking_date, '%Y-%m-%d') as booking_date"),
+                "send_update_logs.booking_date",
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -108,6 +111,7 @@ class EndorsementReportService extends ManagementReport
 
         if ($request->export == 1) {
             $data = $query->get();
+            $this->formatData($data);
 
             // Columns that are not integar and should not be summed
             $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
@@ -119,8 +123,28 @@ class EndorsementReportService extends ManagementReport
                 $nonIntegarIndexes
             );
         } else {
-            return $query->simplePaginate(100)->withQueryString();
+            $data = $query->simplePaginate(100)->withQueryString();
+            $this->formatData($data);
+
+            return $data;
         }
+    }
+    
+    private function formatData(&$data)
+    {
+        $data->map(function ($item) {
+            
+            $item->transactions = implode('-', array_filter([$item->insurer_tax_number, $item->notes, $item->reference], function ($value) { return !empty($value); }));
+            $item->policy_start_date = !empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
+            $item->main_lead_policy_start_date = !empty($item->main_lead_policy_start_date) ? Carbon::parse($item->main_lead_policy_start_date)->format('Y-m-d') : null;
+            $item->payment_due_date = !empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
+            $item->due_date = !empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
+            $item->booking_date = !empty($item->booking_date) ? Carbon::parse($item->booking_date)->format('Y-m-d') : null;
+            $item->total_price = number_format($item->total_price, 2);
+            $item->pending_balance = number_format($item->pending_balance, 2);
+            $item->collects = strtoupper($item->collects);
+            $item->customer_name = $item->first_name . ' ' . $item->last_name;
+        });
     }
 
     protected function filterTeams($query, $teamIds)

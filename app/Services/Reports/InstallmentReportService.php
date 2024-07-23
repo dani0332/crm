@@ -33,24 +33,26 @@ class InstallmentReportService extends ManagementReport
             ->select(
                 'personal_quotes.policy_number',
                 'personal_quotes.code',
-                DB::raw('CONCAT(ps.reference, " ", p.tax_invoice_number) as transactions'),
-                DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
-                DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
+                'ps.reference',
+                'p.tax_invoice_number',
+                'personal_quotes.policy_start_date',
+                'ps.due_date',
                 DB::raw('IFNULL(personal_quotes.price_vat_applicable, 0) / IFNULL(p.total_payments, 1) as price_vat_applicable'),
                 DB::raw('IFNULL(personal_quotes.vat, 0) / IFNULL(p.total_payments, 1) as vat'),
                 DB::raw('IFNULL(personal_quotes.price_vat_not_applicable, 0) / IFNULL(p.total_payments, 1) as price_vat_not_applicable'),
                 'ps.discount_value as discount',
-                DB::raw('FORMAT(ps.payment_amount, 2) as total_price'),
-                DB::raw('FORMAT(IFNULL(p.commission_vat_applicable, 0) / IFNULL(p.total_payments, 1),2) as commission_vat_applicable'),
-                DB::raw('FORMAT(CASE WHEN ps.sr_no=1 THEN IFNULL(p.commission_vat, 0) ELSE 0 END, 2) as commission_vat'),
-                DB::raw('FORMAT(IFNULL(p.commission_vat_not_applicable, 0) / IFNULL(p.total_payments, 1),2) as commission_vat_not_applicable'),
+                'ps.payment_amount as total_price',
+                DB::raw('IFNULL(p.commission_vat_applicable, 0) / IFNULL(p.total_payments, 1) as commission_vat_applicable'),
+                DB::raw('CASE WHEN ps.sr_no=1 THEN IFNULL(p.commission_vat, 0) ELSE 0 END as commission_vat'),
+                DB::raw('IFNULL(p.commission_vat_not_applicable, 0) / IFNULL(p.total_payments, 1) as commission_vat_not_applicable'),
                 DB::raw('IFNULL(ps.collection_amount, 0) as collected_amount'),
                 'ps.verified_at as payment_date',
-                DB::raw('FORMAT(IFNULL(ps.payment_amount, 0) - IFNULL(ps.collection_amount, 0), 2) as pending_balance'),
-                DB::raw('UPPER(p.collection_type) as collects'),
+                DB::raw('IFNULL(ps.payment_amount, 0) - IFNULL(ps.collection_amount, 0) as pending_balance'),
+                'p.collection_type as collects',
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
-                DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
+                'personal_quotes.first_name',
+                'personal_quotes.last_name',
                 'u.name as advisor',
                 'pi.name as policy_issuer',
                 'p.invoice_description as invoice_description',
@@ -84,6 +86,7 @@ class InstallmentReportService extends ManagementReport
 
         if ($request->export == 1) {
             $data = $query->get();
+            $this->formatData($data);
 
             // Columns that are not integar and should not be summed
             $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
@@ -95,8 +98,26 @@ class InstallmentReportService extends ManagementReport
                 $nonIntegarIndexes
             );
         } else {
-            return $query->simplePaginate(100)->withQueryString();
+            $data = $query->simplePaginate(100)->withQueryString();
+            $this->formatData($data);
+            return $data;
         }
+    }
+
+    private function formatData(&$data)
+    {
+        $data->map(function ($item) {
+            $item->policy_start_date = !empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
+            $item->due_date = !empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
+            $item->total_price = number_format($item->total_price, 2);
+            $item->commission_vat_applicable = number_format($item->commission_vat_applicable, 2);
+            $item->commission_vat = number_format($item->commission_vat, 2);
+            $item->commission_vat_not_applicable = number_format($item->commission_vat_not_applicable, 2);
+            $item->pending_balance = number_format($item->pending_balance, 2);
+            $item->transactions = $item->reference . ' ' . $item->tax_invoice_number;
+            $item->collects = strtoupper($item->collects);
+            $item->customer_name = $item->first_name . ' ' . $item->last_name;
+        });
     }
 
     protected function filterTeams($query, $teamIds)

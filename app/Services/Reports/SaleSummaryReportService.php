@@ -52,12 +52,12 @@ class SaleSummaryReportService extends ManagementReport
             ->selectRaw('
             COUNT(DISTINCT(personal_quotes.uuid)) as total_policies,
             COUNT(DISTINCT(personal_quotes.uuid)) as total_transaction,
-            FORMAT( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)), 2) as price_vat_applicable,
-            FORMAT(IFNULL(SUM(personal_quotes.vat) / COUNT(DISTINCT(user_team.team_id)),0), 2) as total_vat,
-            FORMAT(IFNULL(SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)),0), 2) as price_vat_not_applicable,
-            FORMAT(IFNULL(SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)),0), 2) as discount,
-            FORMAT(IFNULL(SUM(p.commission_vat_applicable) / COUNT(DISTINCT(user_team.team_id)),0), 2) as commission_vat_applicable,
-                IFNULL( ( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
+            SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) as price_vat_applicable,
+            IFNULL(SUM(personal_quotes.vat) / COUNT(DISTINCT(user_team.team_id)),0) as total_vat,
+            IFNULL(SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)),0) as price_vat_not_applicable,
+            IFNULL(SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)),0) as discount,
+            IFNULL(SUM(p.commission_vat_applicable) / COUNT(DISTINCT(user_team.team_id)),0) as commission_vat_applicable,
+            IFNULL( ( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
                 IFNULL( ( SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
                 IFNULL( ( SUM(personal_quotes.vat) / COUNT(DISTINCT(user_team.team_id)) ), 0) -
                 IFNULL( ( SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)) ), 0) as total_price
@@ -109,9 +109,10 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         $this->applyFilters($query, $request);
+        $data = $query->get();
+        $this->formatData($data);
 
         if ($request->export == 1) {
-            $data = $query->get();
 
             /**
              * Get endorsements data
@@ -133,7 +134,7 @@ class SaleSummaryReportService extends ManagementReport
                 $nonIntegarIndexes
             );
         } else {
-            return $query->get();
+            return $data;
         }
     }
 
@@ -236,6 +237,17 @@ class SaleSummaryReportService extends ManagementReport
         $endorsementsQuery = $this->applyFilters($endorsementsQuery, $request, true);
 
         return $endorsementsQuery->get();
+    }
+
+    private function formatData(&$data)
+    {
+        $data->map(function ($item) {
+            $item->price_vat_applicable = number_format($item->price_vat_applicable, 2);
+            $item->total_vat = number_format($item->total_vat, 2);
+            $item->price_vat_not_applicable = number_format($item->price_vat_not_applicable, 2);
+            $item->discount = number_format($item->discount, 2);
+            $item->commission_vat_applicable = number_format($item->commission_vat_applicable, 2);
+        });
     }
 
     private function resolveGroupByColumn($groupBy)

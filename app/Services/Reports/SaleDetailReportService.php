@@ -35,10 +35,11 @@ class SaleDetailReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->select(
                 DB::raw('DISTINCT(personal_quotes.policy_number)'),
-                DB::raw("CONCAT_WS('-', p.insurer_tax_number, p.notes, p.reference) as transactions"),
-                DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
-                DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
-                DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
+                'p.notes',
+                'p.reference',
+                'personal_quotes.policy_start_date',
+                'p.payment_due_date',
+                'ps.due_date',
                 'personal_quotes.source',
                 'personal_quotes.code',
                 't.name as team',
@@ -46,21 +47,22 @@ class SaleDetailReportService extends ManagementReport
                 'personal_quotes.vat',
                 'personal_quotes.price_vat_not_applicable',
                 'p.discount_value as discount',
-                DB::raw('FORMAT(((
+                DB::raw('((
                     IFNULL( personal_quotes.price_vat_applicable , 0 ) +
                     IFNULL( personal_quotes.price_vat_not_applicable , 0 )  +
-                    IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )),2) as total_price'),
-                DB::raw('p.commission_vat_applicable as commission_vat_applicable'),
-                DB::raw('p.commission_vat as commission_vat'),
-                DB::raw('p.commission_vat_not_applicable as commission_vat_not_applicable'),
-                DB::raw('FORMAT(( IFNULL( commission_vat_applicable , 0 ) + IFNULL( commission_vat , 0 )),2) as total_commission'),
-                DB::raw('UPPER(p.collection_type) as collects'),
+                    IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )) as total_price'),
+                'p.commission_vat_applicable',
+                'p.commission_vat',
+                'p.commission_vat_not_applicable',
+                DB::raw('(IFNULL( commission_vat_applicable , 0 ) + IFNULL( commission_vat , 0 )) as total_commission'),
+                'p.collection_type as collects',
                 'p.insurer_tax_number as insurer_tax_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
-                DB::raw('personal_quotes.premium_captured as collected_amount'),
-                DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
+                'personal_quotes.premium_captured as collected_amount',
+                'personal_quotes.first_name',
+                'personal_quotes.last_name',
                 'cm.code as customer_type',
                 'ip.code as insurer',
                 'quote_type.text as line_of_business',
@@ -93,6 +95,7 @@ class SaleDetailReportService extends ManagementReport
 
         if ($request->export == 1) {
             $data = $query->get();
+            $this->formatData($data);
 
             // Columns that are not integar and should not be summed
             $nonIntegarIndexes = [0, 1, 2, 3, 4, 5, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27];
@@ -104,8 +107,25 @@ class SaleDetailReportService extends ManagementReport
                 $nonIntegarIndexes
             );
         } else {
-            return $query->simplePaginate(100)->withQueryString();
+            $data = $query->simplePaginate(100)->withQueryString();
+            $this->formatData($data);
+
+            return $data;
         }
+    }
+
+    private function formatData(&$data)
+    {
+        $data->map(function ($item) {
+            $item->transactions = implode('-', array_filter([$item->insurer_tax_invoice_number, $item->notes, $item->reference], function ($value) { return !empty($value); }));
+            $item->policy_start_date = !empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
+            $item->payment_due_date = !empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
+            $item->due_date = !empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
+            $item->total_price = number_format($item->total_price, 2);
+            $item->total_commission = number_format($item->total_commission, 2);
+            $item->collects = strtoupper($item->collects);
+            $item->customer_name = $item->first_name . ' ' . $item->last_name;
+        });
     }
 
     public function getDefaultFilters()
