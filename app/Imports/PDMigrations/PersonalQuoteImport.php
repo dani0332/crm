@@ -5,13 +5,12 @@ namespace App\Imports;
 use App\Enums\PDMigrations\DealStageEnum;
 use App\Enums\PDMigrations\PDDealStatus;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
-use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use App\Traits\PersonalQuoteSyncTrait;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 {
@@ -19,68 +18,40 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     public function model(array $row)
     {
-        $fullName = $row['deal_contact_person']; // Adjust the key based on your column name
-        [$firstName, $lastName] = $this->splitName($fullName);
-        if (isset($row['deal_cdb_id'])) {
-            [, $value] = explode('-', $row['deal_cdb_id']);
-            $classInstance = null;
-
-            if ($row['deal_type_of_insurance'] === QuoteTypes::HOME->value) {
+        $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('MY');
+        if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number']))) {
+            $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
+            if($quoteStatusId){
                 $data = [
-                    'first_name' => $firstName,
-                    'last_name' => $lastName,
-                    'previous_quote_policy_number' => $row['deal_policy_number'],
-                    'mobile_no' => $row['person_phone_work'],
-                    'source' => $row['deal_source_of_inquiry'],
-                    'email' => $row['person_email_work'],
-                    'code' => $row['deal_cdb_id'],
-                    'uuid' => $value,
-                    'premium' => str_replace(' AED', '', $row['deal_value']),
+                    'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
                     'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
                 ];
-                $classInstance = HomeQuote::updateOrCreate(['uuid' => $data['uuid']], $data);
-
-            } else {
-
-                $data = [
-                    'first_name' => $firstName,
-                    'last_name' => $lastName,
-                    'previous_quote_policy_number' => $row['deal_policy_number'],
-                    'mobile_no' => $row['person_phone_work'],
-                    'source' => $row['deal_source_of_inquiry'],
-                    'email' => $row['person_email_work'],
-                    'code' => $row['deal_cdb_id'],
-                    'uuid' => $value,
-                    'premium' => $row['deal_value'],
-                    'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
-                ];
-
-                $classInstance = PersonalQuote::updateOrCreate(['uuid' => $data['uuid']], $data);
-
+    
+                $searchCriteria = [];
+    
+                $searchCriteria = ['renewal_batch' => strtoupper($dealBatch)];
+    
+                if (isset($row['deal_cdb_id'])) {
+                    [, $value] = explode('-', $row['deal_cdb_id']);
+                    $searchCriteria['uuid'] = $value;
+                } elseif (isset($row['deal_policy_number'])) {
+                    $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number'];
+                }
+    
+                $lead = PersonalQuote::where($searchCriteria)->first();
+                if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
+                    $lead->update($data);
+                    info('Personal/Pet Quote Import - Quote found: '.$lead->uuid.' - Quote updated');
+                }
             }
+            info('Personal/Pet Quote Import - Quote status not defined');
 
-            info('----------- Importing Personal/Home Qoute Lead  -----------'.$row['deal_cdb_id']);
-            $this->syncQuote($classInstance, $classInstance->toArray());
         }
     }
 
     public function chunkSize(): int
     {
-        return 5000;
-    }
-    /**
-     * Split the full name into first and last names.
-     *
-     * @param  string  $fullName
-     * @return array
-     */
-    private function splitName($fullName)
-    {
-        $nameParts = explode(' ', $fullName);
-        $firstName = $nameParts[0];
-        $lastName = end($nameParts);
-
-        return [$firstName, $lastName];
+        return 1000;
     }
 
     private function getQuoteStatusId($dealStatus, $dealStage)
