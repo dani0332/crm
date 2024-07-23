@@ -212,7 +212,7 @@ class SendUpdateLogController extends Controller
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog),
-            'paymentInvoices' => isset($paymentInvoices) ? array_unique($paymentInvoices) : [],
+            'paymentInvoices' => isset($paymentInvoices) ? array_values(array_unique($paymentInvoices)) : [], // array_values to reset index.
             'uploadedDocuments' => $uploadedDocuments,
             'isPaymentVisible' => $this->sendUpdateLogService->isPaymentVisible($categoryCode, $optionCode),
             'payments' => $sendUpdatePayments,
@@ -428,9 +428,7 @@ class SendUpdateLogController extends Controller
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            // SendUpdateToSagae 3rd parameter: False: Without AP Patch, True: With AP Patch
-            // TODO :: This is temporary solution, need to remove third param, this after AP Split patch working fine
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate, false);
+            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] === false) {
 
                 return response()->json(['message' => $sageResponse['message']], 500);

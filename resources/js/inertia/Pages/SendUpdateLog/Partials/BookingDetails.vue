@@ -196,7 +196,7 @@ const bookingDetailsForm = useForm({
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
   transaction_payment_status: 'N/A',
   invoice_date: dateToYMD(props.sendUpdateLog?.invoice_date) || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
-  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || '',
+  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || null,
   discount: isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || '0.00',
   insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_percentage: props.sendUpdateLog?.commission_percentage || props?.payments[0]?.commmission_percentage || '',
@@ -299,6 +299,8 @@ const calculateCommission = () => {
         bookingDetailsForm.commission_percentage = convertToNegative(
           (total_commission / price_with_vat) * 100,
         );
+
+        checkDiscount(price_with_vat);
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -803,6 +805,31 @@ const onReversalEdit = () => {
     state.reversalSectionEdit = true;
   }
 };
+
+const isCI = computed(() => {
+  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI;
+});
+
+const checkDiscount = (newPrice) => {
+  let total_price = props.sendUpdateLog?.price_with_vat;
+  let difference =  newPrice - total_price;
+  let previousDiscount = isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || 0.00;
+  let paymentDiscount = props?.payments[0]?.discount_value || 0.00;
+  if (newPrice > total_price && difference <= 0.99 && (isEF || isCI || isCPD)) {
+    if (previousDiscount > 0) {
+      bookingDetailsForm.discount = Number(bookingDetailsForm.discount + difference).toFixed(2);
+    } else {
+      bookingDetailsForm.discount = Number(difference).toFixed(2);
+    }
+  } else {
+    let lessDifference = Number(total_price - newPrice).toFixed(2);
+    if (paymentDiscount > 0 && lessDifference <= 0.99) {
+      bookingDetailsForm.discount = Number(paymentDiscount - lessDifference).toFixed(2);
+    } else {
+      bookingDetailsForm.discount = previousDiscount;
+    }
+  }
+}
 </script>
 
 <template>
