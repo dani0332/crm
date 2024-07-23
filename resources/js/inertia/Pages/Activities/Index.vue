@@ -116,7 +116,7 @@ function setQueryFilters() {
 }
 
 function resetDates(option) {
-  
+
   const today = new Date();
   let startDate, endDate;
   if (isOverDue.value) {
@@ -492,11 +492,9 @@ onMounted(() => {
       }"
     />
 
-    <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-      <template #header>
-        {{ activityActionEdit ? 'Edit' : 'Add' }} Activity
-      </template>
-
+    <x-modal v-model="modals.activity" size="lg"
+    :title="`${activityActionEdit ? 'Edit' : 'Add'} Activity`"
+     show-close backdrop>
       <x-form @submit="onSubmit" :auto-focus="false">
         <div class="grid gap-4">
           <x-input
@@ -555,8 +553,7 @@ onMounted(() => {
       </x-form>
     </x-modal>
 
-    <x-modal v-model="modals.activityConfirm" show-close backdrop>
-      <template #header> Delete Activity </template>
+    <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
       <p>Are you sure you want to delete this activity?</p>
       <template #actions>
         <div class="text-right space-x-4">

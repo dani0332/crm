@@ -1202,10 +1202,7 @@ const getAdvisorLabel = () => {
       </div>
     </div>
 
-    <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
-      <template #header>
-        <div class="text-center">{{ currentTypeTitle }}</div>
-      </template>
+    <x-modal v-model="totalLeads.modal" size="xl" :title="`${currentTypeTitle}`" show-close backdrop>
       <section class="min-h-[70vh]">
         <div v-if="!loaders.advisorLeadTable">
           <PaginateClient

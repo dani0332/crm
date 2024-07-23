@@ -563,8 +563,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       </div>
     </div>
 
-    <x-modal v-model="modalsDuplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
+    <x-modal v-model="modalsDuplicate" size="lg" title="Duplicate Lead" show-close backdrop>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
           <x-field label="LOBs" required>
@@ -1362,11 +1361,9 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </DataTable>
         </template>
       </Collapsible>
-      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-        <template #header>
-          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-        </template>
-
+      <x-modal v-model="modals.activity" size="lg"
+      :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
+      show-close backdrop>
         <x-form @submit="onActivitySubmit" :auto-focus="false">
           <div class="grid gap-4">
             <x-field label="Title" required>
@@ -1417,8 +1414,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </div>
         </x-form>
       </x-modal>
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
-        <template #header> Delete Activity </template>
+      <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
           <div class="text-right space-x-4">

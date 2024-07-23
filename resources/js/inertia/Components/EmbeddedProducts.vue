@@ -330,10 +330,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             </div>
           </template>
         </DataTable>
-        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" v-model="modals.cancelPayment" size="lg"
+        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" title="Cancel Payment" v-model="modals.cancelPayment" size="lg"
           show-close backdrop>
-          <template #header> Cancel Payment </template>
-
           <x-form @submit="onActivitySubmit" :auto-focus="false">
             <div class="grid gap-4">
               <x-input v-model="paymentForm.amount" label="Amount" :rules="[isRequired, isNumber]" class="w-full" />

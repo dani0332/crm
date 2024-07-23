@@ -161,10 +161,9 @@ const onLoadAuditLogData = async () => {
     </Collapsible>
   </div>
 
-  <x-modal v-model="modals.apiLog" size="lg" show-close backdrop>
-    <template #header>
-      Insurance Request Response Details: {{ selectedLog.id }}
-    </template>
+  <x-modal v-model="modals.apiLog" size="lg"
+    :title="`Insurance Request Response Details:  ${selectedLog?.id}`"
+    show-close backdrop>
 
     <div>
       <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">

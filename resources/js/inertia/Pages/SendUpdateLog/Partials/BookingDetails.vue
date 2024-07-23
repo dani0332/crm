@@ -1253,7 +1253,7 @@ const onReversalEdit = () => {
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
                   <x-tooltip position="left">
-                    <label 
+                    <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INVOICE DESCRIPTION
@@ -1271,8 +1271,8 @@ const onReversalEdit = () => {
                 </div>
               </div>
               <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB &&
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
                 class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
                   <x-tooltip position="left">
@@ -1292,8 +1292,8 @@ const onReversalEdit = () => {
                 </div>
               </div>
               <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB &&
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
                 class="grid sm:grid-cols-2 pb-1.5">
                 <div>
                   <x-tooltip position="left">
@@ -1448,8 +1448,8 @@ const onReversalEdit = () => {
                 </div>
               </div>
               <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB &&
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
                 class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
@@ -1504,8 +1504,8 @@ const onReversalEdit = () => {
                 </div>
               </div>
               <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"  
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB &&
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
                 class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
@@ -1520,7 +1520,7 @@ const onReversalEdit = () => {
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ (bookingDetailsForm.commission_percentage !== '') ? 
+                  <span>{{ (bookingDetailsForm.commission_percentage !== '') ?
                     bookingDetailsForm.commission_percentage + '%' :
                     'N/A'
                   }}</span>
@@ -1756,8 +1756,7 @@ const onReversalEdit = () => {
       </x-button>
     </sendUpdateCustConfirmBtnTemp>
 
-    <x-modal v-model="modals.sendConfirm" show-close backdrop>
-      <template #header> Send Update </template>
+    <x-modal v-model="modals.sendConfirm" title="Send Update" show-close backdrop>
       <x-alert
         color="orange"
         light
@@ -1794,8 +1793,7 @@ const onReversalEdit = () => {
       </template>
     </x-modal>
 
-    <x-modal v-model="modals.paymentConfirmation" backdrop>
-      <template #header> Are you sure you want to continue? </template>
+    <x-modal v-model="modals.paymentConfirmation" title="Are you sure you want to continue?" backdrop>
       <div class="text-center">
         <p class="font-semibold">{{ paymentConfirmationMessage.status }}</p>
         <p>{{ paymentConfirmationMessage.message }}</p>
@@ -1833,8 +1831,7 @@ const onReversalEdit = () => {
       </x-button>
     </sendUpdateConfirmBtnTemp>
 
-    <x-modal v-model="modals.attestRecord" size="md" show-close backdrop>
-      <template #header> Send Update </template>
+    <x-modal v-model="modals.attestRecord" size="md" title="Send Update" show-close backdrop>
       <x-checkbox
         v-model="confirmationCheck"
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."

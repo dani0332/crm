@@ -201,7 +201,7 @@ const calculateTotalAmount = () => {
 
 // Define a computed property to deduct insure now pay later
 const isInsureNowPayLaterAllowed = computed(() => {
-  
+
   //handle edit scenario for insure now pay later
   if (paymentMethodsForm.status == 'edit' && paymentMethodsForm.collection_type === 'broker') {
     if (props.payments.length > 0) {
@@ -213,9 +213,9 @@ const isInsureNowPayLaterAllowed = computed(() => {
         }
     }
   }
-  if ( paymentMethodsForm.collection_type === 'broker' && 
-       can(permissionEnum.INPL_USER) 
-  ) { 
+  if ( paymentMethodsForm.collection_type === 'broker' &&
+       can(permissionEnum.INPL_USER)
+  ) {
     return true;
   }
   return false;
@@ -228,10 +228,10 @@ const isPolicyIssuanceDiscount = computed(() => {
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved ||
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyIssued ||
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicySentToCustomer
-    )  
+    )
   ) {
     return true;
-  }  
+  }
   return false;
 });
 
@@ -311,7 +311,7 @@ const currentFile = computed(() => {
 const initialTotalPriceWithoutVat = computed(() => {
   if ( props.quoteType === 'Health' ) {
     return props.eCommercePriceWithLP; // premium with loading price,excluding vat
-  }  
+  }
   const vatRate = vatValue ? vatValue / 100 : 0;
   return (totalPrice.value / (1 + vatRate));
 });
@@ -384,7 +384,7 @@ const isPaymentLocked = computed(() => {
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyCancelledReissued)
       ) {
     return true;
-  }  
+  }
   return false;
 });
 
@@ -435,7 +435,7 @@ const validatePaymentOption = () => {
       issueFound = true;
     }
   } else if (
-    totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2) 
+    totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)
   ) {
     isPaymentCalculationError.value = true;
     issueFound = true;
@@ -722,8 +722,8 @@ const handleCollectionTypeChange = () => {
     page.props.paymentMethodsEnum?.MultiplePayment,
     page.props.paymentMethodsEnum?.PartialPayment,
   ];
-  
-  if ( isInsureNowPayLaterAllowed.value ) { 
+
+  if ( isInsureNowPayLaterAllowed.value ) {
     excludedPaymentTypes = excludedPaymentTypes.filter(
       (paymentType) => paymentType !== page.props.paymentMethodsEnum?.InsureNowPayLater
     );
@@ -806,12 +806,12 @@ const handleApprovalReasonChange = () => {
     isCustomReasonEnabled.value = false;
   }
   //customize payment method based on collection type
-  if (paymentMethodsForm.credit_approval !== '') { 
+  if (paymentMethodsForm.credit_approval !== '') {
     paymentTypesFiltered.value = paymentTypes.value;
 
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
-        ![          
+        ![
           isInsureNowPayLaterAllowed.value ? null : page.props.paymentMethodsEnum?.InsureNowPayLater,
           page.props.paymentMethodsEnum?.ProformaPaymentRequest,
           page.props.paymentMethodsEnum?.MultiplePayment,
@@ -910,7 +910,7 @@ const resetCreditApproval = () => {
         continue;
       }
       paymentMethodsModels.value[i] ='';
-    }  
+    }
   }
 };
 
@@ -1681,10 +1681,10 @@ const editPaymentModal = (
     paymentMethodsModels.value[i] =
       payment.payment_splits[i - 1].payment_method.code;
     splitAmountModels.value[i] = payment.payment_splits[i - 1].payment_amount;
-    
+
     const dueDate = payment.payment_splits[i - 1].due_date;
     dueDateModels.value[i] = dueDate ? moment(dueDate).format('YYYY-MM-DD') : '';
-    
+
     collectionAmountModels.value[i] =
       payment.payment_splits[i - 1].collection_amount;
 
@@ -1733,7 +1733,7 @@ const editPaymentModal = (
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price - payment.discount_value;
 
-    
+
     if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
     } else if (
@@ -1750,7 +1750,7 @@ const editPaymentModal = (
       isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
-    }   
+    }
   }
   if (paymentMethodsForm.status == 'view') {
     totalPrice.value = payment.total_price;
@@ -3302,23 +3302,12 @@ const lookupsEnum = page.props.lookupsEnum;
       </div>
     </div>
 
-    <x-modal v-model="createPaymentModal" size="xl" show-close backdrop>
-      <template #header>
-        <span class=" ">
-          <template v-if="isCreditCardView">Capture Transaction</template>
-          <template v-else-if="isCreditApprovalView"
-            >Approve Transaction</template
-          >
-          <template v-else-if="isViewEnabled">View Payment</template>
-          <template v-else>
-            {{
-              paymentMethodsForm.status == 'create'
-                ? 'Add Manual Payment'
-                : 'Edit Payment'
-            }}
-          </template>
-        </span>
-      </template>
+    <x-modal v-model="createPaymentModal" size="xl"
+        :title="isCreditCardView ? 'Capture Transaction' :
+        isCreditApprovalView ? 'Approve Transaction' :
+        isViewEnabled ? 'View Payment' :
+        (paymentMethodsForm.status == 'create' ? 'New Payment' : 'Update Payment')"
+        show-close backdrop>
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-3">
           <div>
@@ -3335,7 +3324,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 v-if="!isFieldReadonly"
                 name="collection_date"
                 v-model="paymentMethodsForm.collection_date"
-                :rules="[rules.isRequired]"                
+                :rules="[rules.isRequired]"
               />
             </x-field>
           </div>
@@ -3380,7 +3369,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 v-model="paymentMethodsForm.collection_type"
                 :rules="[rules.isRequired]"
                 @change="handleCollectionTypeChange"
-                :disabled="isTotalPriceUpdated"                
+                :disabled="isTotalPriceUpdated"
               >
                 <template v-for="option in collectionTypes" :key="option.value">
                   <option :value="option.value" :title="option.tooltip">
@@ -3437,7 +3426,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 class="custom-select"
                 v-model="paymentMethodsForm.frequency"
                 :rules="[rules.isRequired]"
-                @change="handleFrequencyChange"                
+                @change="handleFrequencyChange"
               >
                 <template v-for="option in frequencyTypes" :key="option.value">
                   <option :value="option.value" :title="option.tooltip">
@@ -3622,7 +3611,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 <select
                   class="custom-select"
                   v-model="paymentMethodsForm.discount"
-                  @change="handleDiscountChange"                  
+                  @change="handleDiscountChange"
                 >
                   <template v-for="option in discountTypes" :key="option.value">
                     <option
@@ -3681,7 +3670,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 class="custom-select"
                 v-model="paymentMethodsForm.discount_reason"
                 :rules="[rules.isRequired]"
-                @change="handleDiscountReasonChange"                
+                @change="handleDiscountReasonChange"
               >
                 <template v-for="option in discountReasons" :key="option.value">
                   <option :value="option.value" :title="option.tooltip">
@@ -3728,7 +3717,7 @@ const lookupsEnum = page.props.lookupsEnum;
             "
             label="CUSTOM DISCOUNT REASON"
             :required="!isFieldReadonly"
-            class="w-full"            
+            class="w-full"
           >
             <span v-if="isFieldReadonly">{{
               paymentMethodsForm.discount_custom_reason
@@ -3776,7 +3765,7 @@ const lookupsEnum = page.props.lookupsEnum;
                     :max-files="discountProofDocument.max_files"
                     :max-size="discountProofDocument.max_size"
                     :loading="documentForm.processing"
-                    @change="uploadDocument(discountProofDocument, $event, 0)"                    
+                    @change="uploadDocument(discountProofDocument, $event, 0)"
                   />
                 </span>
                 <div
@@ -3875,7 +3864,7 @@ const lookupsEnum = page.props.lookupsEnum;
                 :class="{ 'custom-select-error': isDiscountError }"
                 v-model="discountValue"
                 name="discount_value"
-                @keyup="calculateTotalAmount()"                
+                @keyup="calculateTotalAmount()"
               />
               <sup
                 v-if="isDiscountError"
@@ -4872,10 +4861,10 @@ const lookupsEnum = page.props.lookupsEnum;
                   paymentStatusEnum.PAID &&
                   (
                     can(permissionEnum.ApprovePayments)
-                    ||                    
+                    ||
                     (can(permissionEnum.INPL_APPROVER) && splitPaymentRecord.payment_methods_code == paymentMethodsEnum?.InsureNowPayLater)
                   )
-                  
+
                 )
               "
               class="w-full flex justify-end"

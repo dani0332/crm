@@ -401,8 +401,7 @@ const show = ref(true);
   </AppModal>
 
   <!-- Individual Type Insured Form -->
-  <x-modal v-model="modals.individualView" size="xl" show-close backdrop>
-    <template #header>Update and Verify</template>
+  <x-modal v-model="modals.individualView" size="xl" title="Update and Verify" show-close backdrop>
     <p class="text-center mb-10">
       Please confirm the Name, Nationality, and Date of Birth of the insured
       person(s) as per the Emirates ID

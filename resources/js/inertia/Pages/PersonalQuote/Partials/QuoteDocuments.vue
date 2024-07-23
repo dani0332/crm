@@ -373,9 +373,7 @@ const sendUpdatePermissionCheck = computed(() => {
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-
+    <x-modal v-model="modals.doc" size="xl" title="Upload Documents" show-close backdrop>
       <x-alert
         color="error"
         class="mb-5"
@@ -438,8 +436,7 @@ const sendUpdatePermissionCheck = computed(() => {
       </div>
     </x-modal>
 
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
+    <x-modal v-model="modals.docConfirm" title="Delete Document" show-close backdrop>
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
@@ -470,8 +467,7 @@ const sendUpdatePermissionCheck = computed(() => {
       </x-button>
     </sendUpdateCustConfirmBtnTemp>
 
-    <x-modal v-model="modals.sendConfirm" show-close backdrop>
-      <template #header> Send Update </template>
+    <x-modal v-model="modals.sendConfirm" title="Send Update" show-close backdrop>
       <x-alert
           color="orange"
           light

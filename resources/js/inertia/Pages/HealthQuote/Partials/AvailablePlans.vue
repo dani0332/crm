@@ -532,8 +532,8 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
 </script>
 
 <template>
-  <x-modal v-model="showModal" size="xl" show-close backdrop>
-    <template #header>
+  <x-modal v-model="showModal" size="xl" :title="`${plan.providerName} - ${plan.name}`" show-close backdrop :has-actions="false">
+    <div class="flex justify-end">
       <ToggleManualButtonTemplate v-slot="{ isDisabled }">
         <x-toggle
           v-model="isManual"
@@ -545,7 +545,6 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
       </ToggleManualButtonTemplate>
 
       <div class="flex justify-between items-center">
-        <h3>{{ plan.providerName }} - {{ plan.name }}</h3>
         <div class="flex gap-3 pr-8">
           <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
             <ToggleManualButtonReuseTemplate :isDisabled="true"/>
@@ -563,7 +562,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
           />
         </div>
       </div>
-    </template>
+    </div>
     <div class="w-full">
       <TabGroup>
         <TabList

@@ -246,9 +246,7 @@ const uploadDocumentModal = () => {
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-
+    <x-modal v-model="modals.doc" size="xl" title="Upload Documents" show-close backdrop>
       <x-tab-group v-model="selectedTab" class="pb-10" variant="block">
         <x-tab
           :value="index"
@@ -322,8 +320,7 @@ const uploadDocumentModal = () => {
         </x-tab>
       </x-tab-group>
     </x-modal>
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
+    <x-modal v-model="modals.docConfirm" title="Delete Document" show-close backdrop>
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">

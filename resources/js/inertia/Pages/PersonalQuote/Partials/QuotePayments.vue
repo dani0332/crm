@@ -313,14 +313,9 @@ const rolesEnum = page.props.rolesEnum;
       </template>
     </Collapsible>
 
-    <x-modal v-model="paymentModal" size="lg" show-close backdrop>
-      <template #header>
-        <span class="text-primary-800 font-semibold">
-          {{
-            paymentForm.status == 'create' ? 'New Payment' : 'Update Payment'
-          }}
-        </span>
-      </template>
+    <x-modal v-model="paymentModal" size="lg"
+    :title="`${paymentForm.status == 'create' ? 'New Payment' : 'Update Payment'}`"
+    show-close backdrop>
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">
           <x-input

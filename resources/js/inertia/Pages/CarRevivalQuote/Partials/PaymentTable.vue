@@ -295,16 +295,11 @@ const providerId = computed(() => {
         </div>
       </template>
     </DataTable>
-    <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
-      <template #header>
-        <span class="text-primary-800 font-semibold">
-          {{
-            paymentMethodsForm.status == 'create'
-              ? 'New Payment'
-              : 'Update Payment'
-          }}
-        </span>
-      </template>
+    <x-modal v-model="createPaymentModal"
+        :title="`${ paymentMethodsForm.status == 'create'
+            ? 'New Payment'
+            : 'Update Payment'}`"
+        size="lg" show-close backdrop>
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">
           <x-input

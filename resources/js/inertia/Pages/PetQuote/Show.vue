@@ -334,8 +334,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       </template>
     </StickyHeader>
 
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
+    <x-modal v-model="modals.duplicate" size="lg" title="Duplicate Lead" show-close backdrop>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
           <x-field label="LOBs" required>
@@ -950,7 +949,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
             item.payment_methods_code ===
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
-      "			
+      "
       :quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

@@ -320,10 +320,9 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.member" size="lg" show-close backdrop>
-      <template #header>
-        {{ memberActionEdit ? 'Edit' : 'Add' }} Member
-      </template>
+    <x-modal v-model="modals.member" size="lg"
+    :title="`${memberActionEdit ? 'Edit' : 'Add'} Member`"
+    show-close backdrop>
 
       <x-form @submit="onMemberSubmit" :auto-focus="false">
         <div class="grid md:grid-cols-2 gap-4">
@@ -374,8 +373,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
       </x-form>
     </x-modal>
 
-    <x-modal v-model="modals.memberConfirm" show-close backdrop>
-      <template #header> Delete Member Detail </template>
+    <x-modal v-model="modals.memberConfirm" title="Delete Member Detail" show-close backdrop>
       <p>Are you sure you want to delete this?</p>
       <template #actions>
         <div class="text-right space-x-4">

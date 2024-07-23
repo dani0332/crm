@@ -301,7 +301,7 @@ const providerId = computed(() => {
           <template #item-status_changed_at="item">
             {{ item.payment_status_logs.length > 0 ? item.payment_status_logs.at(-1).created_at : '' }}
           </template>
-    
+
           <template #item-actions="item">
             <div class="flex gap-2">
                 <template v-if="!can(permissionEnum.ApprovePayments) && enableManageOptions">
@@ -337,16 +337,7 @@ const providerId = computed(() => {
         </DataTable>
       </template>
     </Collapsible>
-    <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
-      <template #header>
-        <span class="text-primary-800 font-semibold">
-          {{
-            paymentMethodsForm.status == 'create'
-              ? 'New Payment'
-              : 'Update Payment'
-          }}
-        </span>
-      </template>
+    <x-modal v-model="createPaymentModal" size="lg" :title="`${ paymentMethodsForm.status == 'create' ? 'New Payment' : 'Update Payment'}`" show-close backdrop>
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">
           <x-field label="Price Including VAT" required>

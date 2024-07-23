@@ -216,11 +216,7 @@ const onDeleteConfirmation = () => {
         </DataTable>
       </template>
     </Collapsible>
-    <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-      <template #header>
-        {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-      </template>
-
+    <x-modal v-model="modals.activity" size="lg" :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`" show-close backdrop>
       <x-form @submit="onSubmit" :auto-focus="false">
         <div class="grid gap-4">
           <x-input
@@ -273,8 +269,7 @@ const onDeleteConfirmation = () => {
       </x-form>
     </x-modal>
 
-    <x-modal v-model="modals.activityConfirm" show-close backdrop>
-      <template #header> Delete Activity </template>
+    <x-modal v-model="modals.activityConfirm" title="Delete Activity"show-close backdrop>
       <p>Are you sure you want to delete this activity?</p>
       <template #actions>
         <div class="text-right space-x-4">

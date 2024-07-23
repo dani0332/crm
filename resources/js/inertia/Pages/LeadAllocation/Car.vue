@@ -501,11 +501,11 @@ onMounted(() => {
 
     <x-modal
       v-model="statusModal.show"
+      title="Select Reason of Unavailability"
       show-close
       backdrop
       @update:model-value="onStatusModalClose($event)"
     >
-      <template #header> Select Reason of Unavailability </template>
       <x-select
         v-model="statusModal.data.reason"
         placeholder="Select Reason"
@@ -537,11 +537,11 @@ onMounted(() => {
 
     <x-modal
       v-model="confirmModal.show"
+      title="Status Change"
       show-close
       backdrop
       @update:model-value="onConfirmClose($event)"
     >
-      <template #header> Status Change </template>
       <p>
         Are you sure you want to change
         <strong>{{ confirmModal.title }}</strong> status?

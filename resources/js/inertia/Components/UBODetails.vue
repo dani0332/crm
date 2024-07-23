@@ -301,9 +301,9 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTe
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.UBO" size="lg" show-close backdrop>
-      <template #header> {{ UBOActionEdit ? 'Edit' : 'Add' }} UBO </template>
-
+    <x-modal v-model="modals.UBO" size="lg"
+        :title="`${UBOActionEdit ? 'Edit' : 'Add' } UBO`"
+        show-close backdrop>
       <x-form @submit="onUBOSubmit" :auto-focus="false">
         <div class="grid md:grid-cols-2 gap-4">
           <input type="hidden" :value="UBOForm.id" />
@@ -355,8 +355,8 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTe
       </x-form>
     </x-modal>
 
-    <x-modal v-model="modals.UBOConfirm" show-close backdrop>
-      <template #header> Delete UBO Detail </template>
+    <x-modal v-model="modals.UBOConfirm" title="Delete UBO Detail" show-close backdrop>
+      <template #header> </template>
       <p>Are you sure you want to delete this?</p>
       <template #actions>
         <div class="text-right space-x-4">

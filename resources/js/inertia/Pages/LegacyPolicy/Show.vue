@@ -656,15 +656,15 @@ const dateFormat = date => {
       </template>
     </div>
 
-    <x-modal v-model="moveToImcrmModal" size="lg" show-close backdrop>
+    <x-modal v-model="moveToImcrmModal" size="lg"
+        :title="`${!single ? 'Lead Detail' : ''}`"
+        show-close backdrop>
       <div v-if="single">
         This policy already exists in IMCRM as REF:ID
         <Link :href="`${lobLink}`" class="text-primary-500 hover:underline">
           {{ lobCode }}
         </Link>
       </div>
-
-      <template #header v-if="!single"> Lead Detail </template>
       <p v-if="!single">Do you want to use existing details?</p>
       <template #actions> </template>
 

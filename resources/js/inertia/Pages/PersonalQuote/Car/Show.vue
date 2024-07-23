@@ -1530,7 +1530,7 @@ watch(
   },
 );
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate(); 
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
 
@@ -1933,7 +1933,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
-          
+
           <LeadEditBtnTemplate v-slot="{ isDisabled }">
             <Link v-if="!isDisabled" :href="route('car.edit', record.uuid)">
               <x-button size="sm" color="primary" tag="div">Edit</x-button>
@@ -1954,8 +1954,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       </Collapsible>
     </div>
 
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
+    <x-modal v-model="modals.duplicate" size="lg" title="Duplicate Lead" show-close backdrop>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
           <x-field label="LOBs" required>
@@ -2650,7 +2649,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               Change Status
             </x-button>
           </StatusUpdateButtonTemplate>
-  
+
           <div class="flex justify-end">
             <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
               <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
@@ -2659,7 +2658,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               </template>
             </x-tooltip>
             <StatusUpdateButtonReuseTemplate v-else />
-            
+
           </div>
         </template>
       </Collapsible>
@@ -2937,7 +2936,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 Add Plan
               </x-button>
             </AddPlanButtonTemplate>
-            
+
             <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
               <AddPlanButtonReuseTemplate :isDisabled="true"/>
               <template #tooltip>No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.</template>
@@ -3213,8 +3212,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         </template>
       </Collapsible>
 
-      <x-modal v-model="modals.changeInsurer" show-close backdrop>
-        <template #header> Change Insurer </template>
+      <x-modal v-model="modals.changeInsurer" title="Change Insurer" show-close backdrop>
         <p>Are you sure to change insurer?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -3247,10 +3245,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         :kyoEndPoint="kyoEndPoint"
       />
 
-      <x-modal v-model="modals.plan" size="xl" show-close backdrop>
-        <template #header>
-          {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
-        </template>
+      <x-modal v-model="modals.plan" size="xl"
+      :title="`${
+        selectedPlan?.providerName
+      } - ${selectedPlan?.name}`"
+      show-close backdrop :has-actions="false">
         <LazyAvailablePlan
           :plan="selectedPlan"
           :genders="genderOptions"
@@ -3277,8 +3276,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         />
       </x-modal>
 
-      <x-modal v-model="modals.sendConfirm" show-close backdrop>
-        <template #header> Send Email </template>
+      <x-modal v-model="modals.sendConfirm" title="Send Email" show-close backdrop>
         <p>Are you sure send email to customer?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -3328,8 +3326,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </div>
         </template>
       </AppModal>
-      <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
-        <template #header> Create Car Quote </template>
+      <x-modal v-model="modals.createPlan" size="xl" title="Create Car Quote" show-close backdrop>
         <LazyCreatePlan
           :record="record"
           :insuranceProviders="insuranceProviders"
@@ -3368,7 +3365,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -3390,10 +3387,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       <x-modal
         v-model="modals.showEmailEventsModal"
         size="lg"
+        title="Email Events"
         show-close
         backdrop
       >
-        <template #header> Email Events </template>
         <DataTable
           table-class-name="compact"
           :headers="emailEventsTable"
@@ -3708,8 +3705,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </DataTable>
         </template>
       </Collapsible>
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
-        <template #header> Delete Activity </template>
+      <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -3731,11 +3727,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </div>
         </template>
       </x-modal>
-      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-        <template #header>
-          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-        </template>
-
+      <x-modal v-model="modals.activity" size="lg" :title="`${activityActionEdit ? 'Edit' : 'Add' } Lead Activity`" show-close backdrop>
         <x-form @submit="onActivitySubmit" :auto-focus="false">
           <div class="grid gap-4">
             <x-field label="Title" required>

@@ -1362,8 +1362,7 @@ const getGenderDisplay = (val) => {
       </div>
     </div>
 
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
+    <x-modal v-model="modals.duplicate" size="lg" title="Duplicate Lead" show-close backdrop>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
           <x-field label="LOBs" required>
@@ -2200,12 +2199,10 @@ const getGenderDisplay = (val) => {
       <x-modal
         v-model="travelerTable.addTraveler"
         size="lg"
+        :title="`${travelerForm.id ? 'Edit' : 'Add'} Member`"
         show-close
         backdrop
       >
-        <template #header>
-          {{ travelerForm.id ? 'Edit' : 'Add' }} Member
-        </template>
         <x-form @submit="submitTraveler" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4">
             <x-input
@@ -2283,8 +2280,7 @@ const getGenderDisplay = (val) => {
       :expanded="sectionExpanded"
     />
 
-    <x-modal v-model="confirmModal.show" show-close backdrop>
-      <template #header> {{ confirmModal.title }} </template>
+    <x-modal v-model="confirmModal.show" :title="`${confirmModal.title}`" show-close backdrop>
       <p>{{ confirmModal.message }}</p>
       <template #actions>
         <div class="text-right space-x-4">
@@ -2570,9 +2566,7 @@ const getGenderDisplay = (val) => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-        <template #header> Upload Documents </template>
-
+      <x-modal v-model="modals.doc" size="xl" title="Upload Documents" show-close backdrop>
         <LazyDocumentUploader
           :members="memberDataDocs(travelers)"
           :doc-types="documentTypes"
@@ -2580,8 +2574,7 @@ const getGenderDisplay = (val) => {
           :cdn="cdnPath"
         />
       </x-modal>
-      <x-modal v-model="modals.docConfirm" show-close backdrop>
-        <template #header> Delete Document </template>
+      <x-modal v-model="modals.docConfirm" title="Delete Document" show-close backdrop>
         <p>Are you sure you want to delete this document?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -2843,8 +2836,7 @@ const getGenderDisplay = (val) => {
             </div>
           </div>
 
-          <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>
-            <template #header> {{ planDetails.providerName }} </template>
+          <x-modal v-model="modals.planDetails" size="xl" :title="`${planDetails?.providerName}`" show-close backdrop>
             <LazyAvailablePlan :plan="planDetails" />
           </x-modal>
         </template>
@@ -3004,8 +2996,7 @@ const getGenderDisplay = (val) => {
         </template>
       </Collapsible>
 
-      <x-modal v-model="updateDocumentValidate.show" show-close backdrop>
-        <template #header> Are all documents correct? </template>
+      <x-modal v-model="updateDocumentValidate.show" title="Are all documents correct?" show-close backdrop>
         <p>
           Note: By clicking 'Yes,' you confirm that all submitted documents are
           accurate and valid. Failure to verify will be considered a breach of
@@ -3031,11 +3022,7 @@ const getGenderDisplay = (val) => {
           </div>
         </template>
       </x-modal>
-      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-        <template #header>
-          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-        </template>
-
+      <x-modal v-model="modals.activity" size="lg" :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"  show-close backdrop>
         <x-form @submit="onActivitySubmit" :auto-focus="false">
           <div class="grid gap-4">
             <x-field label="Title" required>
@@ -3088,8 +3075,7 @@ const getGenderDisplay = (val) => {
           </div>
         </x-form>
       </x-modal>
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
-        <template #header> Delete Activity </template>
+      <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -3162,10 +3148,7 @@ const getGenderDisplay = (val) => {
       :expanded="sectionExpanded"
     />
 
-    <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
-      <template #header>
-        <div class="text-center">SORRY!</div>
-      </template>
+    <x-modal v-model="modals.mixInquiryConfirm" title="SORRY!" show-close backdrop>
       <p>
         Please choose quotes from the same age group for a correct comparison.
       </p>
@@ -3186,7 +3169,7 @@ const getGenderDisplay = (val) => {
       :quoteId="quote.uuid"
       :quoteType="'TRAVEL'"
     />
-   
+
   </div>
 </template>
 <style>

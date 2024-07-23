@@ -272,13 +272,11 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
 
   <x-modal
     v-model="showModal"
+    title="Kinldy choose a reason for marking as 'Lost' "
     showClose
     backdrop
     @update:modelValue="handleConfirmation(false)"
   >
-    <template #header>
-      <span>Kinldy choose a reason for marking as 'Lost' </span>
-    </template>
 
     <x-form @submit="onSubmit" :auto-focus="false">
       <x-field label="Lost Reason" required>

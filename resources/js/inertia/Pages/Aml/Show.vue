@@ -332,7 +332,9 @@ function complianceRules () {
           True Match - Accept Risk
         </x-button>
       </div>
-      <x-modal v-model="decisionNotesModal" backdrop>
+      <x-modal v-model="decisionNotesModal"
+      :title="`${decisionModalHeading}`"
+      backdrop>
         <template #header>
           {{ decisionModalHeading }}
         </template>

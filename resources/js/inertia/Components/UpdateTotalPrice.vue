@@ -5,7 +5,7 @@ const props = defineProps({
     quoteId: Number,
     paymentCode: String,
     totalPrice: Number,
-    totalPaidPrice: Number,  
+    totalPaidPrice: Number,
 });
 
 const updatePriceModal = ref(false);
@@ -20,7 +20,7 @@ const rules = {
             return true;
       } else {
         return 'The entered amount should be greater than '+props.totalPaidPrice+' AED';
-      }     
+      }
   },
   verifyDecimalPlaces: v => {
         let regex = /^\d+(\.\d{1,2})?$/;
@@ -29,10 +29,10 @@ const rules = {
         } else {
             return true;
         }
-  }, 
+  },
 };
 
-const submitTotalPrice = isValid => {  
+const submitTotalPrice = isValid => {
     if (!isValid) return;
     isLoading.value = true;
 
@@ -40,9 +40,9 @@ const submitTotalPrice = isValid => {
         'model_type' : props.quoteType,
         'quote_id' : props.quoteId,
         'payment_code' : props.paymentCode,
-        'total_price' : newTotalPrice.value,      
+        'total_price' : newTotalPrice.value,
     }
-    
+
     axios.post(`/payments/${props.quoteType}/update-total-price`, data)
         .then(res => {
             isLoading.value = false;
@@ -57,14 +57,14 @@ const submitTotalPrice = isValid => {
                     title:  res.data.message,
                     position: 'top',
                 });
-            }           
-            updatePriceModal.value = false;    
-            
+            }
+            updatePriceModal.value = false;
+
             setTimeout(() => {
                 location.reload();
-            }, 500);           
+            }, 500);
         })
-        .catch(err => {           
+        .catch(err => {
             console.log(err)
             isLoading.value = false;
             notification.error({
@@ -75,7 +75,7 @@ const submitTotalPrice = isValid => {
 }
 
 const showPriceModel = () => {
-    updatePriceModal.value = true;    
+    updatePriceModal.value = true;
 };
 </script>
 
@@ -86,42 +86,35 @@ const showPriceModel = () => {
                 size="sm"
                 color="orange"
                 @click.prevent="showPriceModel()"
-                class="ml-auto"               
+                class="ml-auto"
             >
             <span class="border-b border-dotted">Update Total Price</span>
             </x-button>
             <template #tooltip>
               <span>Click this if you need to modify the total price to collect additional payments.</span>
           </template>
-        </x-tooltip>  
-        <x-modal v-model="updatePriceModal" size="xl" show-close backdrop>
-            
-            <template #header>
-                <span class=" ">
-                Update Total Price
-                </span>
-            </template> 
-            
+        </x-tooltip>
+        <x-modal v-model="updatePriceModal" size="xl" title="Update Total Price" show-close backdrop>
             <x-form @submit="submitTotalPrice" :auto-focus="false">
-                <div class="w-full grid md:grid-cols-1 gap-3">          
+                <div class="w-full grid md:grid-cols-1 gap-3">
                     <div>
-                        Total Price      
+                        Total Price
                         <x-field class="w-full">
                             <x-input
                                 class="w-full"
-                                v-model="newTotalPrice"                                
-                                :rules="[rules.isRequired, rules.isTotalAmountLess, rules.verifyDecimalPlaces]"                              
+                                v-model="newTotalPrice"
+                                :rules="[rules.isRequired, rules.isTotalAmountLess, rules.verifyDecimalPlaces]"
                             />
                         </x-field>
                     </div>
                 </div>
-                <div class="w-full md:col-span-4 flex justify-end"> 
+                <div class="w-full md:col-span-4 flex justify-end">
                     <div>
                     <x-button color="emerald" type="submit" tabindex="0" class="focus:outline-black" :loading="isLoading"   >
                         Update
                     </x-button>
-                    </div>          
-                </div>            
+                    </div>
+                </div>
             </x-form>
         </x-modal>
     </div>

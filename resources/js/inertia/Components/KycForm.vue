@@ -55,10 +55,7 @@ onMounted(() => {
     KYC - Complete
   </x-button>
 
-  <x-modal size="xl" v-model="modals.kycDocModal" show-close backdrop v-if="props.quote.customer_type == 'Individual'">
-    <template #header>
-      KYC Individual Form
-    </template>
+  <x-modal size="xl" v-model="modals.kycDocModal" title="KYC Individual Form" show-close backdrop v-if="props.quote.customer_type == 'Individual'">
     <KycIndividualModal
         :roles="props.roles"
         :quote="props.quote"
@@ -76,10 +73,7 @@ onMounted(() => {
     />
   </x-modal>
 
-  <x-modal size="xl" v-model="modals.kycDocModal" show-close backdrop v-else>
-    <template #header>
-      KYC Entity Form
-    </template>
+  <x-modal size="xl" v-model="modals.kycDocModal" title="KYC Entity Form" show-close backdrop v-else>
     <KycEntityModal
         :roles="props.roles"
         :quote="props.quote"

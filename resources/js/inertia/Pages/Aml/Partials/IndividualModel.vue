@@ -329,8 +329,7 @@ watch(
 <template>
   <div>
     <!-- Individual Type Insured Form -->
-    <x-modal v-model="showModal" size="xl" show-close backdrop>
-      <template #header>Update and Verify</template>
+    <x-modal v-model="showModal" size="xl" title="Update and Verify"how-close backdrop>
       <p class="text-center mb-10">
         Please confirm the Name, Nationality, and Date of Birth of the insured
         person(s) as per the Emirates ID
@@ -479,8 +478,7 @@ watch(
     </x-modal>
 
     <!-- Entity Type Insured Form -->
-    <x-modal v-model="modals.entityView" size="xl" show-close backdrop>
-      <template #header>Update and Verify</template>
+    <x-modal v-model="modals.entityView" size="xl" title="Update and Verify" show-close backdrop>
       <p class="text-center mb-10">
         Please Enter Entity details to change the Customer Type to 'Entity'
       </p>

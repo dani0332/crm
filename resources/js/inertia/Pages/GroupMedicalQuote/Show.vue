@@ -434,8 +434,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         </template>
       </div>
     </div>
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
+    <x-modal v-model="modals.duplicate" size="lg" title="Duplicate Lead" show-close backdrop>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
           <x-select
@@ -1011,14 +1010,14 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       :vatPrice="vatPercentage"
     />
 
-    <MigratePayment       
+    <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode="quote.code"
       :quoteType="page.props.quoteType"
       :payments="quote.payments"
     />
-    
+
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"

@@ -245,9 +245,7 @@ const additionalContactDeleteConfirmed = () => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-        <template #header> Add Additional Contacts </template>
-
+      <x-modal v-model="modals.addContact" size="lg" title = "Add Additional Contacts" show-close backdrop>
         <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
           <div class="grid gap-4">
             <x-select
@@ -296,8 +294,7 @@ const additionalContactDeleteConfirmed = () => {
         </x-form>
       </x-modal>
 
-      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-        <template #header> Primary Additional Contact </template>
+      <x-modal v-model="modals.contactPrimaryConfirm" title="Primary Additional Contact" show-close backdrop>
         <p>Are you sure you want to make this information as Primary?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -322,10 +319,10 @@ const additionalContactDeleteConfirmed = () => {
 
       <x-modal
         v-model="modals.customerAlreadyPrimaryConfirm"
+        title="Alert: Primary Contact Update"
         show-close
         backdrop
       >
-        <template #header> Alert: Primary Contact Update </template>
         <p>
           You are about to set this "email" as the primary contact for this
           lead. This action will add this lead to the list of other existing
@@ -354,8 +351,7 @@ const additionalContactDeleteConfirmed = () => {
         </template>
       </x-modal>
 
-      <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
-        <template #header> Delete Additional Contact </template>
+      <x-modal v-model="modals.contactDeleteConfirm" title="Delete Additional Contact" show-close backdrop>
         <p>Are you sure you want to delete this?</p>
         <template #actions>
           <div class="text-right space-x-4">

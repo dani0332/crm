@@ -1824,8 +1824,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
     </StickyHeader>
     <x-divider class="my-4" />
 
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
+    <x-modal v-model="modals.duplicate" size="lg" title="Duplicate Lead" show-close backdrop>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
           <x-select
@@ -1940,7 +1939,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
-         
+
           </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
@@ -2567,11 +2566,9 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           </template>
         </DataTable>
 
-        <x-modal v-model="modals.member" size="lg" show-close backdrop>
-          <template #header>
-            <span>{{ memberActionEdit ? 'Edit' : 'Add' }} Member</span>
-          </template>
-
+        <x-modal v-model="modals.member" size="lg"
+         :title="`${memberActionEdit ? 'Edit' : 'Add'} Member`"
+         show-close backdrop>
           <x-form @submit="onMemberSubmit" :auto-focus="false">
             <div
               v-if="isManualPlansCount > 0"
@@ -2691,8 +2688,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           </x-form>
         </x-modal>
 
-        <x-modal v-model="modals.memberConfirm" show-close backdrop>
-          <template #header> Delete Member Detail </template>
+        <x-modal v-model="modals.memberConfirm" title="Delete Member Detail" show-close backdrop>
           <div
             v-if="isManualPlansCount > 0"
             class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
@@ -2807,9 +2803,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
         </template>
       </Collapsible>
 
-      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-        <template #header> Add Additional Contacts </template>
-
+      <x-modal v-model="modals.addContact" size="lg" title="Add Additional Contacts" show-close backdrop>
         <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
           <div class="grid gap-4">
             <x-select
@@ -2854,8 +2848,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
         </x-form>
       </x-modal>
 
-      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-        <template #header> Primary Additional Contact </template>
+      <x-modal v-model="modals.contactPrimaryConfirm" title="Primary Additional Contact" show-close backdrop>
         <p>Are you sure you want to make this information as Primary?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -3107,9 +3100,8 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             >
               Copy Link
             </x-button>
-              <x-modal v-model="modals.sendConfirm" show-close backdrop>
-                  <template #header> Send Email </template>
-                  <p>Are you sure send email to customer?</p>
+              <x-modal v-model="modals.sendConfirm" title="Send Email" show-close backdrop>
+=                  <p>Are you sure send email to customer?</p>
                   <template #actions>
                       <div class="text-right space-x-4">
                           <x-button
@@ -3349,8 +3341,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
       @markPlanAsManual="onMarkPlanAsManual"
     />
 
-    <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
-      <template #header> Add Plan </template>
+    <x-modal v-model="modals.createPlan" size="xl" title="Add Plan" show-close backdrop>
       <LazyCreatePlan
         :uuid="quote.uuid"
         :members="membersDetail"
@@ -3360,9 +3351,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
       />
     </x-modal>
 
-    <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
-      <template #header> Filters </template>
-
+    <x-modal v-model="modals.planFilters" size="lg" title="Filters" show-close backdrop>
       <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
         <ComboBox
           v-model="planFilters.insurer"
@@ -3647,11 +3636,9 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
         </template>
       </Collapsible>
     </div>
-    <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-      <template #header>
-        {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-      </template>
-
+    <x-modal v-model="modals.activity" size="lg"
+      :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
+      show-close backdrop>
       <x-form @submit="onActivitySubmit" :auto-focus="false">
         <div class="grid gap-4">
           <x-input
@@ -3703,8 +3690,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
         </div>
       </x-form>
     </x-modal>
-    <x-modal v-model="modals.activityConfirm" show-close backdrop>
-      <template #header> Delete Activity </template>
+    <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
       <p>Are you sure you want to delete this activity?</p>
       <template #actions>
         <div class="text-right space-x-4">

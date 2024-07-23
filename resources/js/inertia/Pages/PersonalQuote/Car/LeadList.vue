@@ -867,10 +867,7 @@ const resetDateFilters = filterName => {
       }"
     />
 
-    <x-modal v-model="createLead.modal" size="lg" show-close backdrop>
-      <template #header>
-        <span class="text-primary-800 font-semibold"> Create Lead </span>
-      </template>
+    <x-modal v-model="createLead.modal" size="lg" title="Create Lead" show-close backdrop>
       <x-form :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">
           <p class="text-md font-bold text-gray-500">

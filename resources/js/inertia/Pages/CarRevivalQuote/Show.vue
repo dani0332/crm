@@ -1186,15 +1186,13 @@ const sendPolicyToClient = () => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.plan" size="xl" show-close backdrop>
-        <template #header>
-          {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
-        </template>
+      <x-modal v-model="modals.plan" size="xl"
+      :title="`${selectedPlan?.providerName} - ${selectedPlan?.name}`"
+      show-close backdrop>
         <LazyAvailablePlan :plan="selectedPlan" :quote="quote" />
       </x-modal>
 
-      <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
-        <template #header> Create Car Quote</template>
+      <x-modal v-model="modals.createPlan" size="lg" title="Create Car Quote" show-close backdrop>
         <LazyCreatePlan
           :uuid="quote.uuid"
           @success="onCreatePlan"
@@ -1257,16 +1255,14 @@ const sendPolicyToClient = () => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-        <template #header> Upload Documents</template>
+      <x-modal v-model="modals.doc" size="xl" title="Upload Documents" show-close backdrop>
         <LazyDocumentUploader
           :doc-types="documentTypes"
           :docs="quoteDocuments || []"
           :cdn="cdnPath"
         />
       </x-modal>
-      <x-modal v-model="modals.docConfirm" show-close backdrop>
-        <template #header> Delete Document</template>
+      <x-modal v-model="modals.docConfirm" title="Delete Document" show-close backdrop>
         <p>Are you sure you want to delete this document?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -1343,11 +1339,9 @@ const sendPolicyToClient = () => {
           </div>
         </template>
       </DataTable>
-      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-        <template #header>
-          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-        </template>
-
+      <x-modal v-model="modals.activity" size="lg"
+      :title="`${ activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
+       show-close backdrop>
         <x-form @submit="onActivitySubmit" :auto-focus="false">
           <div class="grid gap-4">
             <x-input
@@ -1399,8 +1393,7 @@ const sendPolicyToClient = () => {
           </div>
         </x-form>
       </x-modal>
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
-        <template #header> Delete Activity</template>
+      <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -1466,8 +1459,7 @@ const sendPolicyToClient = () => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-        <template #header> Add Additional Contacts</template>
+      <x-modal v-model="modals.addContact" size="lg" title="Add Additional Contacts" show-close backdrop>
 
         <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
           <div class="grid gap-4">
@@ -1513,8 +1505,7 @@ const sendPolicyToClient = () => {
         </x-form>
       </x-modal>
 
-      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-        <template #header> Primary Additional Contact</template>
+      <x-modal v-model="modals.contactPrimaryConfirm" title="Primary Additional Contact" show-close backdrop>
         <p>Are you sure you want to make this information as Primary?</p>
         <template #actions>
           <div class="text-right space-x-4">

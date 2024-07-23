@@ -1018,8 +1018,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
         </x-form>
       </template>
     </Collapsible>
-    <x-modal v-model="modals.sendPolicyConfirm" size="lg" show-close backdrop>
-      <template #header> Send Policy </template>
+    <x-modal v-model="modals.sendPolicyConfirm" size="lg" title="Send Policy" show-close backdrop>
       <x-alert
         color="orange"
         light
@@ -1060,8 +1059,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
         </div>
       </template>
     </x-modal>
-    <x-modal v-model="modals.sendPolicyPopup" show-close backdrop>
-      <template #header> Are you sure you want to continue? </template>
+    <x-modal v-model="modals.sendPolicyPopup" title="Are you sure you want to continue?" show-close backdrop>
       <div class="text-center">
         <p class="font-semibold pt-3">
           {{ props.bookPolicyDetails.paymentStatusHeading }}
