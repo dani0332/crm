@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -188,7 +190,8 @@ class DashboardService extends BaseService
 
     public function getTotalUnAssignedLeads($filters)
     {
-        $query = CarQuote::leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        $query = CarQuote::select('is_ecommerce', 'source')
+            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->whereNull('advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('tiers.name', '!=', TiersEnum::TIER_R)
@@ -197,9 +200,8 @@ class DashboardService extends BaseService
                 $query->distinct()
                     ->select('quote_uuid')
                     ->from('quote_tags')
-                    ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
-                    ->where('quote_tags.name', 'SIC')
-                    ->where('quote_type.code', quoteTypeCode::Car);
+                    ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                    ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
             });
 
         if ($filters['applyTotalUnAssignedLeadsDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
