@@ -1,7 +1,6 @@
 <script setup>
 import { useRoundIt } from '../Composables/utilities';
 import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
-import { useRoundIt } from '../Composables/utilities';
 const page = usePage();
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
@@ -145,9 +144,7 @@ const binAsInsurerCommissionTaxInvoiceNumber = () => {
 };
 const bpForm = useForm({
   parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
-  booking_date:
-    dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
-    '',
+  booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) || '',
   transaction_payment_status:
     page.props.bookPolicyDetails.transactionPaymentStatus,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
