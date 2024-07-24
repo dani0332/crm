@@ -33,7 +33,7 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
-const isQuoteTypeTravelAndAMLNotCleared = ref(false);
+const isAMLNotClearedForTravelQuote = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -222,7 +222,7 @@ const confirmSendPolicy = () => {
 };
 
 const submitPolicy = () => {
-  if (isQuoteTypeTravelAndAMLNotCleared.value) {
+  if (isAMLNotClearedForTravelQuote.value) {
     notification.error({
       title: 'Kindly clear the AML.',
       position: 'top',
@@ -397,20 +397,8 @@ const isTravelQuoteAndAMLNotCleared = () => {
       position: 'top',
       timeout: 30000,
     });
-    console.log(
-      'isTravelQuoteAndAMLNotCleared : ',
-      isQuoteTypeTravel,
-      isPolicyAMLScreeningCleared,
-      isQuoteTypeTravelAndAMLNotCleared.value,
-    );
-    isQuoteTypeTravelAndAMLNotCleared.value = true;
+    isAMLNotClearedForTravelQuote.value = true;
   }
-  console.log(
-    'isTravelQuoteAndAMLNotCleared 1 :',
-    isQuoteTypeTravel,
-    isPolicyAMLScreeningCleared,
-    isQuoteTypeTravelAndAMLNotCleared.value,
-  );
 };
 
 const showActionButtons = computed(() => {
@@ -923,7 +911,7 @@ onBeforeMount(() => {
                     :disabled="
                       bp.isEditing ||
                       is_lacking_payment ||
-                      isQuoteTypeTravelAndAMLNotCleared
+                      isAMLNotClearedForTravelQuote
                     "
                     v-if="showSendAndBookPolicyButton"
                   >
@@ -1041,7 +1029,7 @@ onBeforeMount(() => {
                         color="orange"
                         :disabled="
                           disableBookPolicyButton ||
-                          isQuoteTypeTravelAndAMLNotCleared
+                          isAMLNotClearedForTravelQuote
                         "
                         @click.prevent="confirmSendPolicy"
                       >
@@ -1060,8 +1048,7 @@ onBeforeMount(() => {
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        disableBookPolicyButton ||
-                        isQuoteTypeTravelAndAMLNotCleared
+                        disableBookPolicyButton || isAMLNotClearedForTravelQuote
                       "
                       @click.prevent="confirmSendPolicy"
                     >
