@@ -517,7 +517,18 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="flex justify-center gap-3 mt-7">
+    <template #secondary-action>
+        <x-button
+            ghost
+            tabindex="-1"
+            size="sm"
+            @click.prevent="status(false)"
+            class="px-6"
+        >
+            Cancel
+        </x-button>
+    </template>
+    <template #primary-action>
       <x-button
         :loading="isLoading"
         size="sm"
@@ -527,6 +538,6 @@ onMounted(() => {
       >
         Save
       </x-button>
-    </div>
+    </template>
   </x-form>
 </template>

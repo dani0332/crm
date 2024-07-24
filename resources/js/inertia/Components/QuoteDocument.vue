@@ -247,7 +247,7 @@ const uploadDocumentModal = () => {
     </Collapsible>
 
     <x-modal v-model="modals.doc" size="xl" title="Upload Documents" show-close backdrop>
-      <x-tab-group v-model="selectedTab" class="pb-10" variant="block">
+      <x-tab-group v-model="selectedTab" variant="block">
         <x-tab
           :value="index"
           :label="key.replace(/_/g, ' ')"

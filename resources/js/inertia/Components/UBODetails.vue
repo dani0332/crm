@@ -303,8 +303,7 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTe
 
     <x-modal v-model="modals.UBO" size="lg"
         :title="`${UBOActionEdit ? 'Edit' : 'Add' } UBO`"
-        show-close backdrop>
-      <x-form @submit="onUBOSubmit" :auto-focus="false">
+        show-close backdrop is-form @submit="onUBOSubmit">
         <div class="grid md:grid-cols-2 gap-4">
           <input type="hidden" :value="UBOForm.id" />
           <x-input
@@ -338,11 +337,12 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTe
           />
         </div>
 
-        <div class="text-right space-x-4 mt-8">
-          <x-button size="sm" @click.prevent="modals.UBO = false">
+        <template #secondary-action>
+          <x-button ghost tabindex="-1" size="sm" @click.prevent="modals.UBO = false">
             Cancel
           </x-button>
-
+        </template>
+        <template #primary-action>
           <x-button
             size="sm"
             color="emerald"
@@ -351,8 +351,7 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] = createReusableTe
           >
             {{ UBOActionEdit ? 'Update' : 'Save' }}
           </x-button>
-        </div>
-      </x-form>
+        </template>
     </x-modal>
 
     <x-modal v-model="modals.UBOConfirm" title="Delete UBO Detail" show-close backdrop>

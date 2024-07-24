@@ -322,9 +322,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
 
     <x-modal v-model="modals.member" size="lg"
     :title="`${memberActionEdit ? 'Edit' : 'Add'} Member`"
-    show-close backdrop>
-
-      <x-form @submit="onMemberSubmit" :auto-focus="false">
+    show-close backdrop is-form @submit="onMemberSubmit">
         <div class="grid md:grid-cols-2 gap-4">
           <input type="hidden" :value="memberForm.id" />
           <x-input
@@ -356,11 +354,12 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
           />
         </div>
 
-        <div class="text-right space-x-4 mt-8">
-          <x-button size="sm" @click.prevent="modals.member = false">
+        <template #secondary-action>
+          <x-button ghost tabindex="-1" size="sm" @click.prevent="modals.member = false">
             Cancel
           </x-button>
-
+        </template>
+        <template #primary-action>
           <x-button
             size="sm"
             color="emerald"
@@ -369,8 +368,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
           >
             {{ memberActionEdit ? 'Update' : 'Save' }}
           </x-button>
-        </div>
-      </x-form>
+        </template>
     </x-modal>
 
     <x-modal v-model="modals.memberConfirm" title="Delete Member Detail" show-close backdrop>

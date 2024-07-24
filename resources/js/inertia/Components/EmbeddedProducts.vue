@@ -331,9 +331,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             </div>
           </template>
         </DataTable>
-        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" title="Cancel Payment" v-model="modals.cancelPayment" size="lg"
-          show-close backdrop>
-          <x-form @submit="onActivitySubmit" :auto-focus="false">
+        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" title="Cancel Payment" v-model="modals.cancelPayment" size="md"
+          show-close backdrop is-form @submit="onActivitySubmit">
             <div class="grid gap-4">
               <x-input v-model="paymentForm.amount" label="Amount" :rules="[isRequired, isNumber]" class="w-full" />
 
@@ -341,16 +340,16 @@ const hasAnyRole = roles => useHasAnyRole(roles);
                 class="w-full" />
             </div>
 
-            <div class="text-right space-x-4 mt-12">
-              <x-button size="sm" @click.prevent="modals.cancelPayment = false">
+            <template #secondary-action>
+              <x-button size="sm" ghost tabindex="-1" @click.prevent="modals.cancelPayment = false">
                 Cancel
               </x-button>
-
+            </template>
+            <template #primary-action>
               <x-button size="sm" color="emerald" :loading="paymentForm.processing" type="submit">
                 Cancel Payment
               </x-button>
-            </div>
-          </x-form>
+            </template>
         </x-modal>
       </template>
     </x-accordion-item>

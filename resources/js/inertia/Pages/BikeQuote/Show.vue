@@ -701,6 +701,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
           </dd>
         </div>
       </dl>
+      <template #actions>
       <div class="flex justify-end">
         <x-button
           class="mt-4"
@@ -712,6 +713,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
           Search
         </x-button>
       </div>
+    </template>
     </x-modal>
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
@@ -754,12 +756,14 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
             />
           </dd>
         </div>
+      </dl>
+      <template #actions>
         <div class="text-left space-x-4">
           <x-button size="sm" color="orange" @click.prevent="linkEntity">
             Link
           </x-button>
         </div>
-      </dl>
+      </template>
     </x-modal>
 
     <MemberDetails

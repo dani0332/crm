@@ -94,8 +94,7 @@ const showPriceModel = () => {
               <span>Click this if you need to modify the total price to collect additional payments.</span>
           </template>
         </x-tooltip>
-        <x-modal v-model="updatePriceModal" size="xl" title="Update Total Price" show-close backdrop>
-            <x-form @submit="submitTotalPrice" :auto-focus="false">
+        <x-modal v-model="updatePriceModal" size="lg" title="Update Total Price" show-close backdrop is-form @submit="submitTotalPrice">
                 <div class="w-full grid md:grid-cols-1 gap-3">
                     <div>
                         Total Price
@@ -108,14 +107,16 @@ const showPriceModel = () => {
                         </x-field>
                     </div>
                 </div>
-                <div class="w-full md:col-span-4 flex justify-end">
-                    <div>
+                <template #secondary-action>
+                    <x-button ghost tabindex="-1" @click.prevent="updatePriceModal = false">
+                        Cancel
+                    </x-button>
+                </template>
+                <template #primary-action>
                     <x-button color="emerald" type="submit" tabindex="0" class="focus:outline-black" :loading="isLoading"   >
                         Update
                     </x-button>
-                    </div>
-                </div>
-            </x-form>
+                </template>
         </x-modal>
     </div>
 </template>

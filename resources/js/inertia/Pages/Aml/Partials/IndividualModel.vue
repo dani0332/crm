@@ -329,7 +329,7 @@ watch(
 <template>
   <div>
     <!-- Individual Type Insured Form -->
-    <x-modal v-model="showModal" size="xl" title="Update and Verify"how-close backdrop>
+    <x-modal v-model="showModal" size="xl" title="Update and Verify"how-close backdrop is-form>
       <p class="text-center mb-10">
         Please confirm the Name, Nationality, and Date of Birth of the insured
         person(s) as per the Emirates ID

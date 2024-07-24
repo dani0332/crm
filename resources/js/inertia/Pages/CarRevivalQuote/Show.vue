@@ -1341,8 +1341,7 @@ const sendPolicyToClient = () => {
       </DataTable>
       <x-modal v-model="modals.activity" size="lg"
       :title="`${ activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
-       show-close backdrop>
-        <x-form @submit="onActivitySubmit" :auto-focus="false">
+       show-close backdrop is-form @submit="onActivitySubmit">
           <div class="grid gap-4">
             <x-input
               v-model="activityForm.title"
@@ -1377,11 +1376,12 @@ const sendPolicyToClient = () => {
             />
           </div>
 
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.activity = false">
+          <template #secondary-action>
+            <x-button ghost tabindex="-1" size="sm" @click.prevent="modals.activity = false">
               Cancel
             </x-button>
-
+          </template>
+          <template #primary-action>
             <x-button
               size="sm"
               color="emerald"
@@ -1390,8 +1390,7 @@ const sendPolicyToClient = () => {
             >
               {{ activityActionEdit ? 'Update' : 'Save' }}
             </x-button>
-          </div>
-        </x-form>
+          </template>
       </x-modal>
       <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
         <p>Are you sure you want to delete this activity?</p>
@@ -1459,9 +1458,7 @@ const sendPolicyToClient = () => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.addContact" size="lg" title="Add Additional Contacts" show-close backdrop>
-
-        <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+      <x-modal v-model="modals.addContact" size="lg" title="Add Additional Contacts" show-close backdrop is-form @submit="onAdditionalContactSubmit">
           <div class="grid gap-4">
             <x-select
               v-model="additionalContact.additional_contact_type"
@@ -1488,11 +1485,12 @@ const sendPolicyToClient = () => {
             />
           </div>
 
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.addContact = false">
+          <template #secondary-action>
+            <x-button ghost size="sm" @click.prevent="modals.addContact = false">
               Cancel
             </x-button>
-
+          </template>
+          <template #primary-action>
             <x-button
               size="sm"
               color="emerald"
@@ -1501,8 +1499,7 @@ const sendPolicyToClient = () => {
             >
               Save
             </x-button>
-          </div>
-        </x-form>
+          </template>
       </x-modal>
 
       <x-modal v-model="modals.contactPrimaryConfirm" title="Primary Additional Contact" show-close backdrop>
