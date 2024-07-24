@@ -19,9 +19,9 @@ class AlfredProtect extends EmbeddedProduct
      */
     public function getCertificateDocument($ep, $transaction, $quoteObject)
     {
-        $documents = $ep->documents()->count();
+        $documents = $transaction->documents()->count();
         if ($documents > 0) {
-            $document = $ep->documents()->first();
+            $document = $transaction->documents()->first();
             $file = Storage::disk('azureIM')->get($document->doc_url);
 
             $fileInfo = new finfo(FILEINFO_MIME_TYPE);
@@ -35,7 +35,7 @@ class AlfredProtect extends EmbeddedProduct
         } else {
             $sukoonDemocrance = new SukoonDemocranceService();
             $sukoonDemocrance->processDemocranceSubmission($quoteObject, $ep, $transaction);
-            $document = $ep->documents()->first();
+            $document = $transaction->documents()->first();
             $file = Storage::disk('azureIM')->get($document->doc_url);
 
             return [

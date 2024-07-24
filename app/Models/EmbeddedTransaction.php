@@ -32,4 +32,9 @@ class EmbeddedTransaction extends Model
     {
         return $this->morphTo();
     }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
 }
