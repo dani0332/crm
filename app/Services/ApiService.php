@@ -14,7 +14,6 @@ use App\Models\MyAlFredUser;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
 
 class ApiService
 {
@@ -133,9 +132,10 @@ class ApiService
         info('------ Lead allocation started for lead : '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
 
-        if (is_null($allocationStrategy)) {
-            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
-            throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
+        if (! $allocationStrategy) {
+            info('Allocation strategy for type '.$allocationType.' -- '.$allocationId.' not found.');
+
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Allocation strategy not found for params!');
         }
 
         $assignedAdvisorId = $allocationStrategy->executeSteps();
