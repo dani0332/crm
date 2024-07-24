@@ -112,6 +112,8 @@ const filters = reactive({
   advisors: [],
 });
 
+provide('filters', filters);
+
 const serverOptions = ref({
   page: 1,
   sortBy: 'created_at',
