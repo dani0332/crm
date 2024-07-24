@@ -164,7 +164,6 @@ const onLoadAuditLogData = async () => {
   <x-modal v-model="modals.apiLog" size="lg"
     :title="`Insurance Request Response Details:  ${selectedLog?.id}`"
     show-close backdrop>
-
     <div>
       <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
         <div class="grid sm:grid-cols-2">
@@ -221,10 +220,12 @@ const onLoadAuditLogData = async () => {
         </div>
       </dl>
     </div>
-    <div class="text-right space-x-4 mt-12">
-      <x-button size="sm" @click.prevent="modals.apiLog = false">
-        Close
-      </x-button>
-    </div>
+    <template #actions>
+        <div class="text-right space-x-4">
+        <x-button size="sm" ghost tabindex="-1" @click.prevent="modals.apiLog = false">
+            Close
+        </x-button>
+        </div>
+    </template>
   </x-modal>
 </template>
