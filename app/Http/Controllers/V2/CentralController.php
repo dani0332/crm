@@ -127,7 +127,6 @@ class CentralController extends Controller
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
-            dd('found');
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                 return app(CarQuoteExportWithPlans::class)->download(ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL));
             } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
