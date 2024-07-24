@@ -630,6 +630,17 @@ class RenewalBatchReportService extends BaseService
             ->orderByDesc('end_date')
             ->get();
 
+        if(empty($defaultBatchRange)) {
+            $lastBatch = RenewalBatch::select('end_date')->orderByDesc('end_date')->fisrt();
+            $previousMonth = ltrim(Carbon::parse($lastBatch->end_date)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
+            $nextMonth = ltrim(Carbon::parse($lastBatch->end_date)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
+            $defaultBatchRange = RenewalBatch::query()
+                ->select('name', 'start_date', 'end_date', 'id')
+                ->whereBetween('month', [$previousMonth, $nextMonth])
+                ->orderByDesc('end_date')
+                ->get();
+        }
+
         if ($defaultBatchRange) {
             $startDate = Carbon::parse($defaultBatchRange->last()->start_date)->startOfDay()->format($dateTimeFormat);
             $endDate = Carbon::parse($defaultBatchRange->first()->end_date)->endOfDay()->format($dateTimeFormat);
