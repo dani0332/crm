@@ -33,6 +33,7 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
+const isQuoteTypeTravelAndAMLNotCleared = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -221,6 +222,13 @@ const confirmSendPolicy = () => {
 };
 
 const submitPolicy = () => {
+  if (isQuoteTypeTravelAndAMLNotCleared.value) {
+    notification.error({
+      title: 'Kindly clear the AML.',
+      position: 'top',
+    });
+    return;
+  }
   isLoading.value = true;
   let url = '/quotes/send-booking-policy';
   let data = {
@@ -379,16 +387,31 @@ const disableBookPolicyButton = computed(() => {
   );
 });
 
-const isTravelQuoteAndAMLCleared = computed(() => {
+const isTravelQuoteAndAMLNotCleared = () => {
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
   const isPolicyAMLScreeningCleared =
     props.quote.kyc_decision == kycEnums.COMPLETE;
-  if (isQuoteTypeTravel) {
-    return isPolicyAMLScreeningCleared;
+  if (isQuoteTypeTravel && !isPolicyAMLScreeningCleared) {
+    notification.error({
+      title: 'Kindly clear the AML.',
+      position: 'top',
+      timeout: 30000,
+    });
+    console.log(
+      'isTravelQuoteAndAMLNotCleared : ',
+      isQuoteTypeTravel,
+      isPolicyAMLScreeningCleared,
+      isQuoteTypeTravelAndAMLNotCleared.value,
+    );
+    isQuoteTypeTravelAndAMLNotCleared.value = true;
   }
-  return true;
-});
-console.log('isTravelQuoteAndAMLCleared : ', isTravelQuoteAndAMLCleared.value);
+  console.log(
+    'isTravelQuoteAndAMLNotCleared 1 :',
+    isQuoteTypeTravel,
+    isPolicyAMLScreeningCleared,
+    isQuoteTypeTravelAndAMLNotCleared.value,
+  );
+};
 
 const showActionButtons = computed(() => {
   // Hide buttons only when policy is cancelled and have a chilrd lead
@@ -443,6 +466,9 @@ const isShowingTransactionPaymentStatus = computed(() => {
     page.props.quoteStatusEnum.PolicyCancelledReissued,
   ];
   return policyStatuses.includes(props.quote.quote_status_id);
+});
+onBeforeMount(() => {
+  isTravelQuoteAndAMLNotCleared();
 });
 </script>
 
@@ -894,7 +920,11 @@ const isShowingTransactionPaymentStatus = computed(() => {
                     color="orange"
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
-                    :disabled="bp.isEditing || is_lacking_payment"
+                    :disabled="
+                      bp.isEditing ||
+                      is_lacking_payment ||
+                      isQuoteTypeTravelAndAMLNotCleared
+                    "
                     v-if="showSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
@@ -1009,7 +1039,10 @@ const isShowingTransactionPaymentStatus = computed(() => {
                         size="sm"
                         class="mt-4 mr-2"
                         color="orange"
-                        :disabled="disableBookPolicyButton"
+                        :disabled="
+                          disableBookPolicyButton ||
+                          isQuoteTypeTravelAndAMLNotCleared
+                        "
                         @click.prevent="confirmSendPolicy"
                       >
                         {{ props.bookPolicyDetails?.text }}
@@ -1026,7 +1059,10 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       size="sm"
                       class="mt-4 mr-2"
                       color="orange"
-                      :disabled="disableBookPolicyButton"
+                      :disabled="
+                        disableBookPolicyButton ||
+                        isQuoteTypeTravelAndAMLNotCleared
+                      "
                       @click.prevent="confirmSendPolicy"
                     >
                       {{ props.bookPolicyDetails?.text }}
