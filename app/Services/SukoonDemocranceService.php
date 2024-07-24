@@ -189,7 +189,30 @@ class SukoonDemocranceService
         }
     }
 
-    public function processDemocranceSubmission($quote, $ep = null, $transaction)
+    public function getTransactionDetails()
+    {
+        $data = ['template' => $this->invoiceBuyer];
+
+        try {
+            $result = $this->request('/policy/'.$this->documentPolicyNumber, 'post', $data, [
+                'x-session-id' => $this->sessionId,
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ])->json();
+
+            if ($result) {
+                return $result;
+            }
+
+            throw new Exception('Transaction Detail Api failed');
+        } catch (Exception $e) {
+            $this->logFailure('Transaction Detail Api Complete', $e->getMessage(), $data);
+            throw $e;
+        }
+    }
+
+    public function processDemocranceSubmission($quote, $ep, $transaction)
     {
         try {
             $this->currentQuote = $quote;
@@ -234,9 +257,20 @@ class SukoonDemocranceService
             $this->request('/policy/'.$this->policyNumber.'/confirm/', 'post', ['confirm' => 'true'], ['x-session-id' => $this->sessionId]);
             $this->paymentInitiate();
             $this->paymentComplete();
-            $this->getCOIDocument($quote, $ep);
+            $transactionDetail = $this->getTransactionDetails();
+
+            log("Transaction Details", $transactionDetail);
+            $commissionVat = $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] * 0.05 ?? 0;
+
             $transaction->update([
                 'certificate_number' => $this->documentPolicyNumber,
+                'tax_invoice_no' => $transactionDetail['additional_data']['tax_invoice_document_number'] ?? null, 
+                'tax_invoice_buyer_no' => $transactionDetail['additional_data']['tax_invoice_buyer_document_number'] ?? null,
+                'credit_note_no' => $transactionDetail['additional_data']['credit_note_document_number'] ?? null,
+                'credit_note_buyer_no' => $transactionDetail['additional_data']['credit_note_buyer_document_number'] ?? null,
+                'commission_with_vat' =>  $commissionVat ?? null,
+                'commission_without_vat' => $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] ?? null,
+                'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
             ]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
