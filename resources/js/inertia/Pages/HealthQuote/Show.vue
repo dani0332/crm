@@ -1823,7 +1823,13 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
     </StickyHeader>
     <x-divider class="my-4" />
 
-    <x-modal v-model="modals.duplicate" size="lg" title="Duplicate Lead" show-close backdrop>
+    <x-modal
+      v-model="modals.duplicate"
+      size="lg"
+      title="Duplicate Lead"
+      show-close
+      backdrop
+    >
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
           <x-select
@@ -1934,9 +1940,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
 
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-
-          </div>
+          <div class="flex gap-2 mb-3 justify-end"></div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -2562,60 +2566,64 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             </template>
           </DataTable>
 
-        <x-modal v-model="modals.member" size="lg"
-         :title="`${memberActionEdit ? 'Edit' : 'Add'} Member`"
-         show-close backdrop>
-          <x-form @submit="onMemberSubmit" :auto-focus="false">
-            <div
-              v-if="isManualPlansCount > 0"
-              class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
-              role="alert"
-            >
-              <div class="flex">
-                <div class="py-1">
-                  <svg
-                    class="fill-current h-6 w-6 text-read-900 mr-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
-                  <p class="text-sm">
-                    Please revist all manual plan(s) and update the per member
-                    price
-                  </p>
+          <x-modal
+            v-model="modals.member"
+            size="lg"
+            :title="`${memberActionEdit ? 'Edit' : 'Add'} Member`"
+            show-close
+            backdrop
+          >
+            <x-form @submit="onMemberSubmit" :auto-focus="false">
+              <div
+                v-if="isManualPlansCount > 0"
+                class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+                role="alert"
+              >
+                <div class="flex">
+                  <div class="py-1">
+                    <svg
+                      class="fill-current h-6 w-6 text-read-900 mr-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+                    <p class="text-sm">
+                      Please revist all manual plan(s) and update the per member
+                      price
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="grid md:grid-cols-2 gap-4 md:pb-16">
-              <input type="hidden" :value="memberForm.id" />
-              <x-input
-                maxLength="60"
-                v-model="memberForm.first_name"
-                label="First Name"
-                placeholder="First Name"
-                :rules="[isRequired]"
-              />
-              <x-input
-                maxLength="60"
-                v-model="memberForm.last_name"
-                label="Last Name"
-                placeholder="Last Name"
-                :rules="[isRequired]"
-              />
-              <ComboBox
-                v-model="memberForm.nationality_id"
-                label="Nationality"
-                :options="nationalityOptions"
-                placeholder="Select Nationality"
-                :single="true"
-                :hasError="memberFieldReq.nationality"
-              />
+              <div class="grid md:grid-cols-2 gap-4 md:pb-16">
+                <input type="hidden" :value="memberForm.id" />
+                <x-input
+                  maxLength="60"
+                  v-model="memberForm.first_name"
+                  label="First Name"
+                  placeholder="First Name"
+                  :rules="[isRequired]"
+                />
+                <x-input
+                  maxLength="60"
+                  v-model="memberForm.last_name"
+                  label="Last Name"
+                  placeholder="Last Name"
+                  :rules="[isRequired]"
+                />
+                <ComboBox
+                  v-model="memberForm.nationality_id"
+                  label="Nationality"
+                  :options="nationalityOptions"
+                  placeholder="Select Nationality"
+                  :single="true"
+                  :hasError="memberFieldReq.nationality"
+                />
 
                 <x-select
                   v-model="memberForm.emirate_of_your_visa_id"
@@ -2684,8 +2692,13 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             </x-form>
           </x-modal>
 
-          <x-modal v-model="modals.memberConfirm" title="Delete Member Detail" show-close backdrop>
-              <div
+          <x-modal
+            v-model="modals.memberConfirm"
+            title="Delete Member Detail"
+            show-close
+            backdrop
+          >
+            <div
               v-if="isManualPlansCount > 0"
               class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
               role="alert"
@@ -2800,52 +2813,63 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
         </template>
       </Collapsible>
 
-      <x-modal v-model="modals.addContact" size="lg" title="Add Additional Contacts" show-close backdrop>
-        <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-select
-              v-model="additionalContact.additional_contact_type"
-              label="Type"
-              :options="[
-                { value: 'email', label: 'Email' },
-                { value: 'mobile_no', label: 'Mobile Number' },
-              ]"
-              :rules="[isRequired]"
-              placeholder="Select Type"
-              class="w-full"
-            />
+      <x-modal
+        v-model="modals.addContact"
+        size="md"
+        title="Add Additional Contacts"
+        show-close
+        backdrop
+        is-form
+        @submit="onAdditionalContactSubmit"
+      >
+        <div class="grid gap-4">
+          <x-select
+            v-model="additionalContact.additional_contact_type"
+            label="Type"
+            :options="[
+              { value: 'email', label: 'Email' },
+              { value: 'mobile_no', label: 'Mobile Number' },
+            ]"
+            :rules="[isRequired]"
+            placeholder="Select Type"
+            class="w-full"
+          />
 
-            <x-input
-              v-model="additionalContact.additional_contact_val"
-              label="Value"
-              :rules="[
-                isRequired,
-                additionalContact.additional_contact_type === 'email'
-                  ? isEmail
-                  : isNumber,
-              ]"
-              class="w-full"
-            />
-          </div>
+          <x-input
+            v-model="additionalContact.additional_contact_val"
+            label="Value"
+            :rules="[
+              isRequired,
+              additionalContact.additional_contact_type === 'email'
+                ? isEmail
+                : isNumber,
+            ]"
+            class="w-full"
+          />
+        </div>
 
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.addContact = false">
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="additionalContact.processing"
-              type="submit"
-            >
-              Save
-            </x-button>
-          </div>
-        </x-form>
+        <template #secondary-action>
+          <x-button ghost tabindex="-1" @click="modals.addContact = false">
+            Cancel
+          </x-button>
+        </template>
+        <template #primary-action>
+          <x-button
+            color="emerald"
+            type="submit"
+            :loading="additionalContact.processing"
+          >
+            Save
+          </x-button>
+        </template>
       </x-modal>
 
-      <x-modal v-model="modals.contactPrimaryConfirm" title="Primary Additional Contact" show-close backdrop>
+      <x-modal
+        v-model="modals.contactPrimaryConfirm"
+        title="Primary Additional Contact"
+        show-close
+        backdrop
+      >
         <p>Are you sure you want to make this information as Primary?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -3097,23 +3121,34 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             >
               Copy Link
             </x-button>
-              <x-modal v-model="modals.sendConfirm" title="Send Email" show-close backdrop>
-=                  <p>Are you sure send email to customer?</p>
-                  <template #actions>
-                      <div class="text-right space-x-4">
-                          <x-button
-                              size="sm"
-                              ghost
-                              @click.prevent="modals.sendConfirm = false"
-                          >
-                              Cancel
-                          </x-button>
-                          <x-button size="sm" color="error" @click.prevent="confirmSendEmail" :loading="loader.link">
-                              Send
-                          </x-button>
-                      </div>
-                  </template>
-              </x-modal>
+            <x-modal
+              v-model="modals.sendConfirm"
+              title="Send Email"
+              show-close
+              backdrop
+            >
+              =
+              <p>Are you sure send email to customer?</p>
+              <template #actions>
+                <div class="text-right space-x-4">
+                  <x-button
+                    size="sm"
+                    ghost
+                    @click.prevent="modals.sendConfirm = false"
+                  >
+                    Cancel
+                  </x-button>
+                  <x-button
+                    size="sm"
+                    color="error"
+                    @click.prevent="confirmSendEmail"
+                    :loading="loader.link"
+                  >
+                    Send
+                  </x-button>
+                </div>
+              </template>
+            </x-modal>
             <x-badge
               size="sm"
               color="error"
@@ -3338,7 +3373,13 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
       @markPlanAsManual="onMarkPlanAsManual"
     />
 
-    <x-modal v-model="modals.createPlan" size="xl" title="Add Plan" show-close backdrop>
+    <x-modal
+      v-model="modals.createPlan"
+      size="xl"
+      title="Add Plan"
+      show-close
+      backdrop
+    >
       <LazyCreatePlan
         :uuid="quote.uuid"
         :members="membersDetail"
@@ -3348,7 +3389,13 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
       />
     </x-modal>
 
-    <x-modal v-model="modals.planFilters" size="lg" title="Filters" show-close backdrop>
+    <x-modal
+      v-model="modals.planFilters"
+      size="lg"
+      title="Filters"
+      show-close
+      backdrop
+    >
       <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
         <ComboBox
           v-model="planFilters.insurer"
@@ -3635,9 +3682,13 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
         </template>
       </Collapsible>
     </div>
-    <x-modal v-model="modals.activity" size="lg"
+    <x-modal
+      v-model="modals.activity"
+      size="lg"
       :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
-      show-close backdrop>
+      show-close
+      backdrop
+    >
       <x-form @submit="onActivitySubmit" :auto-focus="false">
         <div class="grid gap-4">
           <x-input
@@ -3689,7 +3740,12 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
         </div>
       </x-form>
     </x-modal>
-    <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
+    <x-modal
+      v-model="modals.activityConfirm"
+      title="Delete Activity"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this activity?</p>
       <template #actions>
         <div class="text-right space-x-4">
