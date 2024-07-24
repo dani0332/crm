@@ -21,6 +21,8 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
 
 class RenewalBatchReportService extends BaseService
 {
@@ -69,6 +71,7 @@ class RenewalBatchReportService extends BaseService
      */
     public function getSuperRetentionData($request)
     {
+        $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
         $query = HealthQuote::query()
             ->select(
                 'health_quote_request.renewal_batch',
@@ -82,7 +85,10 @@ class RenewalBatchReportService extends BaseService
             )
             ->join('users', 'users.id', '=', 'health_quote_request.advisor_id')
             ->join('renewal_batches', 'renewal_batches.name', '=', 'health_quote_request.renewal_batch')
-            ->where('health_quote_request.source', LeadSourceEnum::IMCRM)
+            ->where(function ($query) use ($ecommerceSource) {
+                $query->where('health_quote_request.source', LeadSourceEnum::IMCRM)
+                    ->orWhere('health_quote_request.source', 'like', '%' . $ecommerceSource . '%');
+            })
             ->groupBy('health_quote_request.renewal_batch')
             ->orderBy('renewal_batches.end_date');
 
@@ -505,12 +511,14 @@ class RenewalBatchReportService extends BaseService
             && (! isset($filters->segment) || $filters->segment === 'all');
         if ($nonAdvisorWithNoFilter) {
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
+                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ', ' . QuoteStatusEnum::PolicyCancelled . '
+                    , ' . QuoteStatusEnum::PolicyIssued . ', ' . QuoteStatusEnum::PolicySentToCustomer . ', ' . QuoteStatusEnum::PolicyBooked . ')
                     THEN 1 ELSE 0 END) as health_converted'),
             );
         } elseif ($authUserIsAdvisor) {
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
+                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ', ' . QuoteStatusEnum::PolicyCancelled . '
+                    , ' . QuoteStatusEnum::PolicyIssued . ', ' . QuoteStatusEnum::PolicySentToCustomer . ', ' . QuoteStatusEnum::PolicyBooked . ')
                     and health_quote_request.advisor_id = '.$authUserId.'
                     THEN 1 ELSE 0 END) as health_converted'),
             );
@@ -847,7 +855,8 @@ class RenewalBatchReportService extends BaseService
             $segmentAdvisorsIdString = implode(',', $advisors);
 
             return $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
+                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ', ' . QuoteStatusEnum::PolicyCancelled . '
+                    , ' . QuoteStatusEnum::PolicyIssued . ', ' . QuoteStatusEnum::PolicySentToCustomer . ', ' . QuoteStatusEnum::PolicyBooked . ')
                     and health_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
                     THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'_for_'.$batchName.'"')
             );

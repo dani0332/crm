@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
+use App\Enums\EnvEnum;
 
 class ApplicationStorageSeeder extends Seeder
 {
@@ -180,5 +181,25 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        $ecomSourceValue = 'insurancemarket.ae';
+        if (config('constants.APP_ENV') == EnvEnum::STAGING) {
+            $ecomSourceValue = 'staging.alfred.ae';
+        } else if (config('constants.APP_ENV') == EnvEnum::UAT) {
+            $ecomSourceValue = 'ecom.alfred.ae';
+        } else if (config('constants.APP_ENV') == EnvEnum::DEVELOPMENT) {
+            $ecomSourceValue = 'dev.alfred.ae';
+        } else if (config('constants.APP_ENV') == EnvEnum::TEST) {
+            $ecomSourceValue = 'testing.alfred.ae';
+        }
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE],
+            [
+                'value' => $ecomSourceValue,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1
+            ],
+        );
     }
 }
