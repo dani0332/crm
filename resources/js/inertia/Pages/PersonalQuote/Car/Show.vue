@@ -1534,11 +1534,13 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
 
+const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   selectedProviderPlan.value.id = null;
   selectedProviderPlan.value.planName = '';
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
+  isAddUpdate.value = true; 
 }
 
 </script>
