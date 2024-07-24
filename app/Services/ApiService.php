@@ -23,7 +23,7 @@ class ApiService
         try {
             return $this->checkmyAlredLink($request->email, $request);
         } catch (Exception $e) {
-            Log::error($e->getLine() . ' ' . $e->getMessage() . ' ' . $e->getFile());
+            Log::error($e->getLine().' '.$e->getMessage().' '.$e->getFile());
 
             return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
         }
@@ -39,7 +39,7 @@ class ApiService
                     'message' => isset($data->signup_url) ? $data->signup_url : $data->code,
                 ], 200);
             } else {
-                if (!$customer->is_we_sent) {
+                if (! $customer->is_we_sent) {
                     return $this->generateSignupUrl($customer, $request);
                 } else {
                     return response()->json(['message' => 'Signup url does not exists against the Customer'], 404);
@@ -92,15 +92,15 @@ class ApiService
         $teamId = $request->input('teamId', false);
 
         // Handle different scenarios based on request parameters
-        if ($assignAdvisor && !$triggerOCB) {
+        if ($assignAdvisor && ! $triggerOCB) {
             return $this->assignAdvisorOnly($allocationType, $allocationId);
         }
 
-        if (!$assignAdvisor && $triggerOCB) {
+        if (! $assignAdvisor && $triggerOCB) {
             return $this->triggerOCBOnly($allocationId);
         }
 
-        if (!$assignAdvisor && !$triggerOCB) {
+        if (! $assignAdvisor && ! $triggerOCB) {
             return $this->performLeadAllocation($allocationType, $allocationId, $teamId);
         }
 
@@ -109,37 +109,37 @@ class ApiService
 
     private function assignAdvisorOnly($allocationType, $allocationId)
     {
-        info('------ Lead allocation request received to assign advisor only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
         $overrideAdvisorId = true;
         $assignedAdvisorId = $allocationStrategy->executeSteps($overrideAdvisorId);
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
-        info('------ Lead allocation request completed to assign advisor only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
         return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
     }
 
     private function triggerOCBOnly($allocationId)
     {
-        info('------ Lead allocation request received to send OCB only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request received to send OCB only for '.$allocationId.' ------');
         SendOCBIntroEmailJob::dispatch($allocationId, null, false);
-        info('------ Lead allocation request completed to send OCB only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request completed to send OCB only for '.$allocationId.' ------');
 
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
     private function performLeadAllocation($allocationType, $allocationId, $teamId)
     {
-        info('------ Lead allocation started for lead : ' . $allocationId . ' ------');
+        info('------ Lead allocation started for lead : '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
 
         if (is_null($allocationStrategy)) {
-            info('-- Exception against - allocationType: ' . $allocationId . ' and allocationId: ' . $allocationId . ' --');
+            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
         }
 
         $assignedAdvisorId = $allocationStrategy->executeSteps();
-        info('------ Lead allocation ended for lead : ' . $allocationId . ' ------');
+        info('------ Lead allocation ended for lead : '.$allocationId.' ------');
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
 
         return apiResponse($responseData, Response::HTTP_OK, 'Lead allocated successfully!');
@@ -147,9 +147,9 @@ class ApiService
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
-        info('------ SIC workflow trigger request received for lead : ' . $request->quoteUuid . ' ------');
+        info('------ SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
         SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
-        info('------ SIC workflow trigger request completed for lead : ' . $request->quoteUuid . ' ------');
+        info('------ SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
 
         return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
     }
@@ -159,11 +159,11 @@ class ApiService
         $allocationType = $request->input('quoteTypeId');
         $allocationId = $request->input('quoteUUID');
 
-        info('------ Lead allocation request received to evaluate tier only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
         $tierId = $allocationStrategy->executeSteps(false, false, true);
         $responseData = ['assignedTierId' => $tierId];
-        info('------ Lead allocation request completed to evaluate tier only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request completed to evaluate tier only for '.$allocationId.' ------');
 
         return apiResponse($responseData, Response::HTTP_OK, 'Tier assigned successfully!');
     }
