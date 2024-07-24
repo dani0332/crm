@@ -193,10 +193,8 @@ class ManagementReport
         }
 
         if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies'])) {
-            if ($request['includeCancelledPolicies'] == 'Yes') {
-                $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyCancelled);
-            } else {
-                $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyBooked);
+            if ($request['includeCancelledPolicies'] == 'No') {
+                $query->where('personal_quotes.quote_status_id', '!=', QuoteStatusEnum::PolicyCancelled);
             }
         }
 
