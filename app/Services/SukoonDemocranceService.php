@@ -307,7 +307,7 @@ class SukoonDemocranceService
             'provider_id' => InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id'),
             'call_type' => 'product',
         ];
-        InsurerRequestResponse::create();
+        InsurerRequestResponse::create($logData);
 
         info('SUKOON DEMOCRANCE Service Log', ['message' => $message, 'url' => $url, ...$logData]);
     }
