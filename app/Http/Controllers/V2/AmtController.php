@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
@@ -14,6 +13,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
@@ -21,14 +21,15 @@ use App\Models\BusinessQuote;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GroupMedicalType;
+use App\Models\KycLog;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
-use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
@@ -36,7 +37,10 @@ use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -46,7 +50,7 @@ use Illuminate\Support\Facades\Redirect;
 
 class AmtController extends Controller
 {
-    use RolePermissionConditions;
+    use GenericQueriesAllLobs, RolePermissionConditions;
 
     /**
      * Display a listing of the resource.
@@ -158,6 +162,8 @@ class AmtController extends Controller
             $data->where('bqr.renewal_batch', $request->renewal_batch);
         }
 
+        $this->adjustQueryByDateFilters($data, 'bqr');
+
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
@@ -237,6 +243,7 @@ class AmtController extends Controller
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ]);
 
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BUSINESS->value, $record);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
@@ -271,8 +278,46 @@ class AmtController extends Controller
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->active()->get();
+        $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)->latest()->first();
+        @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id(), $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::GroupMedical);
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = $crudService->hasAtleastOneStatusPolicyIssued($record);
+
+        if ($hasPolicyIssuedStatus) {
+            $removeOptions = [
+                // Endorsement Financial.
+                SendUpdateLogStatusEnum::AOLOPFMP,
+                SendUpdateLogStatusEnum::AC,
+                SendUpdateLogStatusEnum::AL,
+                SendUpdateLogStatusEnum::EA,
+                SendUpdateLogStatusEnum::ED,
+                SendUpdateLogStatusEnum::EFMP,
+                SendUpdateLogStatusEnum::I_CLILLR,
+                SendUpdateLogStatusEnum::IEAF_T,
+                SendUpdateLogStatusEnum::IISI,
+                SendUpdateLogStatusEnum::PPE,
+                // Endorsement non Financial.
+                SendUpdateLogStatusEnum::AAI,
+                SendUpdateLogStatusEnum::AOC,
+                SendUpdateLogStatusEnum::COA,
+            ];
+
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BUSINESS->value);
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $sortedPayments = collect($record?->payments)->sortByDesc(function ($column) {
+            return Carbon::parse($column->created_at)->timestamp;
+        })->values()->toArray();
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -295,7 +340,6 @@ class AmtController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'modelType' => QuoteTypes::BUSINESS,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::GMManager),
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'companyTypes' => $companyType,
@@ -306,11 +350,22 @@ class AmtController extends Controller
             'insuranceProviders' => $insuranceProviders,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentMethods' => $paymentMethods,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($record->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
-
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'record' => fn () => $record,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'bookPolicyDetails' => $bookPolicyDetails,
+            'payments' => $sortedPayments,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocuments,
         ]);
     }
 

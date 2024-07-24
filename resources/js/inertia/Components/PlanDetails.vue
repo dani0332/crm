@@ -1,9 +1,8 @@
 <script setup>
-import { useFormatPrice } from "../Composables/utilities";
+import { useFormatPrice } from '../Composables/utilities';
 
 const page = usePage();
 const notification = useToast();
-
 const props = defineProps({
   quote: {
     type: Object,
@@ -15,15 +14,23 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  isAddUpdate: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
-  price_vat_applicable: props.quote?.price_vat_applicable ?? null, // price vat applicable
-  price_vat_not_applicable: props.quote?.price_vat_not_applicable ?? null, //price vat not applicable
-  price_with_vat: props.quote.price_with_vat ? useFormatPrice(props.quote.price_with_vat, true) : null,
+  price_vat_applicable:
+    props.quote?.price_vat_applicable ?? null /* temperate setting null */, // price vat applicable
+  price_vat_not_applicable:
+    props.quote?.price_vat_not_applicable ?? null /* temperate setting null */, //price vat not applicable
+  price_with_vat: props.quote.price_with_vat
+    ? useFormatPrice(props.quote.price_with_vat, true)
+    : null /* temperate setting null */,
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
 });
 
@@ -33,8 +40,8 @@ const insuranceProviderOptions = computed(() => {
     label: provider?.text
       ? provider.text
       : provider?.label
-      ? provider.label
-      : null,
+        ? provider.label
+        : null,
   }));
 });
 
@@ -57,21 +64,21 @@ const rules = {
       return vatApplicable ? true : 'Price (VAT Applicable) is required';
     }
   },
-  isNegative: v => (Number(v)) < 0 ? 'Amount must be a positive number' : true,
+  isNegative: v => (Number(v) < 0 ? 'Amount must be a positive number' : true),
   lengthCheck: v => {
     const pattern = /^\d{1,7}(\.\d{1,2})?$/;
-    if(v == null || v == '') return true;
-    return pattern.test(v) || 'Invalid number. Max 7 digits and 2 decimals allowed.';
-  }
+    if (v == null || v == '') return true;
+    return (
+      pattern.test(v) || 'Invalid number. Max 7 digits and 2 decimals allowed.'
+    );
+  },
 };
 
 const submitPlanDetailsForm = isValid => {
-
   if (!planDetailsForm.insurance_provider_id) {
-    isProviderEmpty.value = true; 
+    isProviderEmpty.value = true;
     return;
-  }
-  else isProviderEmpty.value = false;
+  } else isProviderEmpty.value = false;
 
   if (!isValid) return;
 
@@ -83,11 +90,20 @@ const submitPlanDetailsForm = isValid => {
     preserveScroll: true,
     onError: errors => {
       formProcessing.value = false;
-      planDetailsForm.setError(errors);
-
-      notification.error({
-        title: errors.error || 'Something went wrong',
-        position: 'top',
+      Object.keys(errors).forEach(function (key) {
+        planDetailsForm.setError(key, errors[key]);
+      });
+      if (errors.error) {
+        notification.error({
+          title: errors.error,
+          position: 'top',
+        });
+      }
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
       });
     },
     onSuccess: () => {
@@ -101,7 +117,7 @@ const submitPlanDetailsForm = isValid => {
 };
 
 const updatePriceWithVat = () => {
-  planDetailsForm.price_with_vat = '';
+  planDetailsForm.price_with_vat = ''; /* temperate setting empty */
 
   let priceVatApp = parseFloat(
     planDetailsForm.price_vat_applicable !== null &&
@@ -120,17 +136,15 @@ const updatePriceWithVat = () => {
   if (props.quoteType == quoteTypeCodeEnum.Business) {
     //let priceVatApp = parseFloat( (planDetailsForm.price_vat_applicable ! ?? 0.00) );
     //let priceVatNotApp = parseFloat(planDetailsForm.price_vat_not_applicable ?? 0.00);
-    console.log('TOTAL', priceVatApp, priceVatNotApp);
     let totalPrice = parseFloat(
       priceVatApp + priceVatNotApp + (priceVatApp / 100) * props.vatPrice,
     );
 
     planDetailsForm.price_with_vat = useFormatPrice(totalPrice, true);
   } else {
-
     if (priceVatApp) {
       let price = parseFloat(planDetailsForm.price_vat_applicable);
-      let priceWithVAT = ((price / 100) * props.vatPrice + price);
+      let priceWithVAT = (price / 100) * props.vatPrice + price;
       planDetailsForm.price_with_vat = useFormatPrice(priceWithVAT, true);
     }
 
@@ -147,10 +161,23 @@ const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
+const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] = createReusableTemplate();
+
+watch(() => props.isAddUpdate, () => {
+  planDetailsForm.insurance_provider_id  = null;
+    planDetailsForm.price_vat_applicable = null;
+    planDetailsForm.price_vat_not_applicable = null;
+    planDetailsForm.price_with_vat = null;
+    planDetailsForm.insurer_quote_number = null;
+  });
+
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white" v-if="can(permissionEnum.PLAN_DETAILS_ADD)">
+  <div
+    class="p-4 rounded shadow mb-6 bg-white"
+    v-if="can(permissionEnum.PLAN_DETAILS_ADD)"
+  >
     <div>
       <h3 class="font-semibold text-primary-800 text-lg">Plan Details</h3>
       <x-divider class="mb-4 mt-1" />
@@ -165,7 +192,8 @@ const permissionEnum = page.props.permissionsEnum;
             placeholder="Insurance Provider"
             :options="insuranceProviderOptions"
             label="Insurance Provider"
-            class="w-full"
+            class="w-full uppercase"
+            :disabled="page.props.lockLeadSectionsDetails.plan_details"
           />
         </div>
 
@@ -175,14 +203,19 @@ const permissionEnum = page.props.permissionsEnum;
             :rules="
               props.quoteType == quoteTypeCodeEnum.Life
                 ? []
-                : [rules.conditionalRequired, rules.isNumber, rules.isNegative, rules.lengthCheck]
+                : [
+                    rules.conditionalRequired,
+                    rules.isNumber,
+                    rules.isNegative,
+                    rules.lengthCheck,
+                  ]
             "
-            :disabled="
+            :disabled="(
               props.quoteType == quoteTypeCodeEnum.Life &&
               props.quoteType != quoteTypeCodeEnum.Business
-            "
+            ) || page.props.lockLeadSectionsDetails.plan_details"
             label="Price (VAT Applicable)"
-            class="w-full"
+            class="w-full uppercase"
             type="text"
             @change="updatePriceWithVat"
           />
@@ -194,16 +227,22 @@ const permissionEnum = page.props.permissionsEnum;
             :rules="
               props.quoteType == quoteTypeCodeEnum.Life ||
               props.quoteType == quoteTypeCodeEnum.Business
-                ? [rules.conditionalRequired, rules.isNumber, rules.isNegative, rules.lengthCheck]
+                ? [
+                    rules.conditionalRequired,
+                    rules.isNumber,
+                    rules.isNegative,
+                    rules.lengthCheck,
+                  ]
                 : []
             "
-            :disabled="
+            :error="planDetailsForm.errors.price_vat_not_applicable"
+            :disabled="(
               props.quoteType != quoteTypeCodeEnum.Life &&
               props.quoteType != quoteTypeCodeEnum.Business
-            "
+            ) || page.props.lockLeadSectionsDetails.plan_details"
             type="text"
             label="Price (VAT not applicable)"
-            class="w-full"
+            class="w-full uppercase"
             @change="updatePriceWithVat"
           />
         </div>
@@ -215,7 +254,7 @@ const permissionEnum = page.props.permissionsEnum;
             :error="planDetailsForm.errors.price_with_vat"
             type="text"
             label="Total Price"
-            class="w-full"
+            class="w-full uppercase"
           />
         </div>
 
@@ -225,13 +264,33 @@ const permissionEnum = page.props.permissionsEnum;
             :error="planDetailsForm.errors.insurer_quote_number"
             type="text"
             label="Insurer Quote Number"
-            class="w-full"
+            class="w-full uppercase"
+            :disabled="page.props.lockLeadSectionsDetails.plan_details"
           />
         </div>
       </div>
 
-      <div class="text-right space-x-4 mt-12">
-        <x-button color="#26B99A" type="submit" size="sm" :loading="formProcessing">Save</x-button>
+      <SavePlanDetailsButtonTemplate v-slot="{ isDisabled }">
+        <x-button
+          class="mt-4"
+          color="#26B99A"
+          type="submit"
+          size="sm"
+          :loading="formProcessing"
+          :disabled="isDisabled"
+        >
+          Save
+        </x-button>
+      </SavePlanDetailsButtonTemplate>
+
+      <div class="flex mb-3 justify-end">
+        <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_details" position="bottom">
+          <SavePlanDetailsButtonReuseTemplate :isDisabled="true"/>
+          <template #tooltip>
+            This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
+          </template>
+        </x-tooltip>
+        <SavePlanDetailsButtonReuseTemplate v-else />
       </div>
     </x-form>
   </div>

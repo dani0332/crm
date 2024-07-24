@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\FilterCriteria;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -9,10 +10,10 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Tier extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, FilterCriteria, HasFactory;
 
     protected $table = 'tiers';
-    protected $fillable = ['name', 'min_price', 'max_price', 'is_tpl', 'is_active', 'cost_per_lead', 'is_auto_assignment_enabled'];
+    protected $guarded = [];
 
     /**
      * @return $query
@@ -21,4 +22,10 @@ class Tier extends Model implements AuditableContract
     {
         return $query->where('is_active', 1);
     }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'tier_users', 'tier_id', 'user_id');
+    }
+
 }
