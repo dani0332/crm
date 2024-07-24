@@ -3,7 +3,6 @@ import { useFormatPrice } from '../Composables/utilities';
 
 const page = usePage();
 const notification = useToast();
-
 const props = defineProps({
   quote: {
     type: Object,
@@ -14,6 +13,10 @@ const props = defineProps({
   vatPrice: {
     type: Number,
     default: 0,
+  },
+  isAddUpdate: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -159,6 +162,14 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
 const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] = createReusableTemplate();
+
+watch(() => props.isAddUpdate, () => {
+  planDetailsForm.insurance_provider_id  = null;
+    planDetailsForm.price_vat_applicable = null;
+    planDetailsForm.price_vat_not_applicable = null;
+    planDetailsForm.price_with_vat = null;
+    planDetailsForm.insurer_quote_number = null;
+  });
 
 </script>
 
