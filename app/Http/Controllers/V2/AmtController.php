@@ -162,6 +162,8 @@ class AmtController extends Controller
             $data->where('bqr.renewal_batch', $request->renewal_batch);
         }
 
+        $this->adjustQueryByDateFilters($data, 'bqr');
+
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
@@ -313,6 +315,9 @@ class AmtController extends Controller
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $sortedPayments = collect($record?->payments)->sortByDesc(function ($column) {
+            return Carbon::parse($column->created_at)->timestamp;
+        })->values()->toArray();
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -358,7 +363,7 @@ class AmtController extends Controller
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => collect($record?->payments)->sortByDesc('created_at')->values()->toArray(),
+            'payments' => $sortedPayments,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocuments,
         ]);

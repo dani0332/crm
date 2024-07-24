@@ -9,7 +9,6 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -162,7 +161,7 @@ class SendUpdateLogController extends Controller
             // always same as ```send update log details``` broker_invoice_number but invoice_description will be overwritten from ```send update log details``` page.
             $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments[0]['insurance_provider_id']);
             // it will get all invoice_descriptions for booking details
-            $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
+            $paymentInvoices = collect($payments)->whereNotNull('insurer_tax_number')->pluck('insurer_tax_number');
             $sendUpdateLogInvoices = SendUpdateLogRepository::getSendUpdateLogInvoices($quoteTypeId, $realQuote->uuid);
             if (! empty($sendUpdateLogInvoices)) {
                 $paymentInvoices = array_merge($paymentInvoices->toArray(), $sendUpdateLogInvoices->toArray());
@@ -193,12 +192,7 @@ class SendUpdateLogController extends Controller
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
-        if ($quoteTypeId == QuoteTypeId::Business) {
-            $businessQuoteType = $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical) ? QuoteTypeId::GroupMedical : QuoteTypeId::Corpline;
-            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($businessQuoteType);
-        } else {
-            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
-        }
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
 
         return inertia('SendUpdateLog/Show', [
@@ -219,7 +213,7 @@ class SendUpdateLogController extends Controller
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog),
-            'paymentInvoices' => isset($paymentInvoices) ? array_unique($paymentInvoices) : [],
+            'paymentInvoices' => isset($paymentInvoices) ? array_values(array_unique($paymentInvoices)) : [], // array_values to reset index.
             'uploadedDocuments' => $uploadedDocuments,
             'isPaymentVisible' => $this->sendUpdateLogService->isPaymentVisible($categoryCode, $optionCode),
             'payments' => $sendUpdatePayments,
@@ -437,9 +431,7 @@ class SendUpdateLogController extends Controller
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            // SendUpdateToSagae 3rd parameter: False: Without AP Patch, True: With AP Patch
-            // TODO :: This is temporary solution, need to remove third param, this after AP Split patch working fine
-            $response = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate, false);
+            $response = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($response['status'] === false) {
 
                 return response()->json(['message' => $response['message']], 500);

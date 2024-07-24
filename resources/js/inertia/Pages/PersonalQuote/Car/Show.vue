@@ -1536,6 +1536,15 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
 
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  selectedProviderPlan.value.id = null;
+  selectedProviderPlan.value.planName = '';
+  selectedProviderPlan.value.providerName = '';
+  selectedProviderPlan.value.premium = '';
+  isAddUpdate.value = true; 
+}
+
 </script>
 
 <template>
@@ -3504,6 +3513,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

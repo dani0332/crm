@@ -43,6 +43,11 @@ const modelClass = 'App\\Models\\PersonalQuote';
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true;
+};
+
 </script>
 
 <template>
@@ -313,6 +318,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <QuotePolicy
@@ -327,7 +333,8 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
-    />
+    :isAddUpdate="isAddUpdate"
+     />
 
     <EmbeddedProducts
       :data="embeddedProducts"

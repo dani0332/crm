@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -245,6 +244,10 @@ class SendUpdateLogRepository extends BaseRepository
             $result = $sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             ]);
+
+            if ($result) {
+                app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $data['action']);
+            }
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
@@ -261,7 +264,6 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             $sendUpdate = $this->find($data['id']);
             $isNegative = app(SendUpdateLogService::class)->isNegativeValue($sendUpdate);
-
             $bookingDetails = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
                 // 'booking_date' => $data['booking_date'], // commented this because it will update when Sage Invoice created through Send Update
@@ -269,44 +271,30 @@ class SendUpdateLogRepository extends BaseRepository
                 'broker_invoice_number' => $data['broker_invoice_number'],
                 'transaction_payment_status' => $data['transaction_payment_status'],
                 'invoice_date' => $data['invoice_date'],
-                'insurer_tax_invoice_number' => $data['insurer_tax_invoice_number'],
-                'insurer_commission_invoice_number' => $data['insurer_commission_invoice_number'],
+                'insurer_tax_invoice_number' => $data['insurer_tax_invoice_number'] ?? null,
+                'insurer_commission_invoice_number' => $data['insurer_commission_invoice_number'] ?? null,
                 'discount' => $data['discount'],
-                'commission_percentage' => strToFloat($data['commission_percentage']),
-                'commission_vat_not_applicable' => $data['commission_vat_not_applicable'],
-                'vat_on_commission' => $data['vat_on_commission'],
-                'total_commission' => $data['total_commission'],
-                'total_vat_amount' => $data['total_vat_amount'],
-                'price_vat_applicable' => strToFloat($data['price_vat_applicable'], $isNegative),
-                'price_vat_not_applicable' => strToFloat($data['price_vat_not_applicable'], $isNegative),
-                'commission_vat_applicable' => strToFloat($data['commission_vat_applicable'], $isNegative),
-                'price_with_vat' => $data['price_with_vat'],
+                'commission_percentage' => strToFloat($data['commission_percentage'] ?? null),
+                'commission_vat_not_applicable' => $data['commission_vat_not_applicable'] ?? null,
+                'vat_on_commission' => $data['vat_on_commission'] ?? null,
+                'total_commission' => $data['total_commission'] ?? null,
+                'total_vat_amount' => $data['total_vat_amount'] ?? null,
+                'price_vat_applicable' => strToFloat($data['price_vat_applicable'] ?? null, $isNegative),
+                'price_vat_not_applicable' => strToFloat($data['price_vat_not_applicable'] ?? null, $isNegative),
+                'commission_vat_applicable' => strToFloat($data['commission_vat_applicable'] ?? null, $isNegative),
+                'price_with_vat' => $data['price_with_vat'] ?? null,
             ];
             // it will check if send update type is CPD then it will add reversal_invoice to $data because other send update types don't have 2 kind of
             // booking details, so we don't need to add null reversal_invoice on other options details.
             if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD) {
                 $bookingDetails = array_merge($bookingDetails, ['reversal_invoice' => $data['reversal_invoice']]);
             }
+
             $result = $sendUpdate->update($bookingDetails);
 
             $payment = Payment::where('send_update_log_id', $data['id'])->firstOrFail();
             if ($payment) {
-                $bookingDetailsTotalPrice = floatval($data['price_with_vat']);
-                if ($bookingDetailsTotalPrice > $payment->total_amount) {
-                    $diff = number_format($bookingDetailsTotalPrice - $payment->total_amount, 2);
-                    if ($diff < 1) {
-                        $payment->discount_value = $diff;
-                        $payment->discount_type = LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT;
-                    } else {
-                        $payment->total_price = $bookingDetailsTotalPrice;
-                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
-                    }
-                } elseif ($bookingDetailsTotalPrice == $payment->total_amount && $payment->discount_value && $payment->discount_type == LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT->value) {
-                    $payment->discount_value = 0;
-                    $payment->discount_type = null;
-                }
-
-                $payment->save();
+                app(SendUpdateLogService::class)->sendUpdatePriceAndDiscount($sendUpdate, $payment);
             }
         } catch (\Exception $ex) {
             $result = (object) [
@@ -408,6 +396,7 @@ class SendUpdateLogRepository extends BaseRepository
             ->where('quote_uuid', $quoteUuid)
             ->where('quote_type_id', $quoteTypeId)
             ->where('status', SendUpdateLogStatusEnum::UPDATE_BOOKED)
+            ->whereNotNull('insurer_tax_invoice_number')
             ->get()
             ->pluck('insurer_tax_invoice_number');
     }

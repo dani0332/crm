@@ -288,6 +288,7 @@ const confirmOrAddUpdate = autoSubmit => {
   }
 };
 
+const emit = defineEmits(['onAddUpdate']);
 const onAddUpdate = autoSubmit => {
   if (!autoSubmit) {
     if (form.option === null) {
@@ -296,9 +297,8 @@ const onAddUpdate = autoSubmit => {
     }
   }
   addButtonLoader.value = true;
-
   optionError.value = false;
-
+  emit('onAddUpdate');
   form
     .transform(data => {
       let childCatgeory = { ...data.childCategory };

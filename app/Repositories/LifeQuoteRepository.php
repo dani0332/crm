@@ -70,15 +70,17 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetData()
     {
-        return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter()
             ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate()
-            ->withQueryString();
+            ->orderBy('life_quote_request.created_at', 'desc');
+
+        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+
+        return $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()
@@ -156,10 +158,12 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchExportData()
     {
-        return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->filter(false)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
+            ->withFakeLeadCriteria();
+        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+
+        return $query->orderBy('life_quote_request.created_at', 'desc')
             ->get();
     }
 

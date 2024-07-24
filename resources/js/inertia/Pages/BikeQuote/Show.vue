@@ -228,6 +228,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true; 
+};
+
 </script>
 
 <template>
@@ -822,6 +827,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :quoteType="quoteType"
       :expanded="sectionExpanded"
       :vatPrice="vatPercentage"
+      :isAddUpdate="isAddUpdate"
     />
 
     <MigratePayment
@@ -916,6 +922,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <AuditLogs

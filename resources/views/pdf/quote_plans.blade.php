@@ -390,7 +390,7 @@
 
     <div class="header">
         <div class="logo">
-            <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" />
+            <img class="im-logo" src="{{getIMLogo(true)}}" />
         </div>
         <h3>Your Tailor Made <br />Car Insurance Comparison Table</h3>
     </div>
