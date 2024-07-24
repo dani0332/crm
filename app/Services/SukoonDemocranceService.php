@@ -259,7 +259,8 @@ class SukoonDemocranceService
             $transactionDetail = $this->getTransactionDetails();
 
             log("Transaction Details", $transactionDetail);
-            $commissionVat = $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] * 0.05 ?? 0;
+            $commission_amount = floatval($transactionDetail['payments'][0]['amount_breakdown']['commission_amount']) ? (float)$transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] : (int)$transactionDetail['payments'][0]['amount_breakdown']['commission_amount'];
+            $commissionVat = $commission_amount * 0.05 ?? 0;
 
             $transaction->update([
                 'certificate_number' => $this->documentPolicyNumber,
