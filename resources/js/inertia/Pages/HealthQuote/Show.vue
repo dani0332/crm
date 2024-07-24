@@ -6,7 +6,6 @@ import MigratePayment from './../../Components/MigratePayment.vue';
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 const props = defineProps({
   quote: Object,
