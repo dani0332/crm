@@ -56,7 +56,8 @@ class HealthQuotesExport
                 "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
             'hp.text as health_plan_name_text',
-            'ihp.text as plan_provider_name_text'
+            'ihp.text as plan_provider_name_text',
+            'hqr.renewal_batch',
         )->get();
     }
 
@@ -91,6 +92,7 @@ class HealthQuotesExport
             'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
             'TYPE OF PLAN',
             'Provider Name',
+            'RENEWAL BATCH',
         ];
     }
 
@@ -125,6 +127,7 @@ class HealthQuotesExport
             $quote->customer_type,
             $quote->health_plan_name_text,
             $quote->plan_provider_name_text,
+            $quote->renewal_batch,
         ];
     }
 }

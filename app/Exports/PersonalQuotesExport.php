@@ -81,6 +81,7 @@ class PersonalQuotesExport
                     'SOURCE',
                     'CURRENTLY INSURED WITH',
                     'IS ECOMMERCE',
+                    'RENEWAL BATCH',
                 ];
 
             case QuoteTypes::PET->value:
@@ -108,6 +109,7 @@ class PersonalQuotesExport
                     'ACCOMMODATION TYPE',
                     'POSSESION TYPE',
                     'IS ECOMMERCE',
+                    'RENEWAL BATCH',
                 ];
 
             case QuoteTypes::CYCLE->value:
@@ -123,6 +125,7 @@ class PersonalQuotesExport
                     'POLICY NUMBER',
                     'SOURCE',
                     'IS ECOMMERCE',
+                    'RENEWAL BATCH',
                 ];
         }
     }
@@ -156,6 +159,7 @@ class PersonalQuotesExport
                     $quote->source,
                     optional($quote->currentlyInsuredWith)->text,
                     $quote->is_ecommerce ? 'Yes' : 'No',
+                    $quote->renewal_batch,
                 ];
 
             case QuoteTypes::PET->value:
@@ -183,6 +187,7 @@ class PersonalQuotesExport
                     optional($quote->petQuote)->accomodationType?->text,
                     optional($quote->petQuote)->possessionType?->text,
                     $quote->is_ecommerce ? 'Yes' : 'No',
+                    $quote->renewal_batch,
                 ];
 
             case QuoteTypes::CYCLE->value:
@@ -198,6 +203,7 @@ class PersonalQuotesExport
                     $quote->policy_number,
                     $quote->source,
                     $quote->is_ecommerce ? 'Yes' : 'No',
+                    $quote->renewal_batch,
                 ];
         }
     }
