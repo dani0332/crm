@@ -1157,19 +1157,18 @@ class CRUDController extends Controller
 
         $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
-        $isManagerOrDeputy =  auth()->user()->isManagerOrDeputy();
-        
+        $isManagerOrDeputy = auth()->user()->isManagerOrDeputy();
+
         $newBusinessTeam = in_array(TeamNameEnum::HOME, $userTeams);
         $renewalsTeam = in_array(TeamNameEnum::HOME_RENEWALS, $userTeams);
 
         $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
 
-
         if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
-        }elseif($request->is_renewal === null && $newBusinessTeam){
+        } elseif ($request->is_renewal === null && $newBusinessTeam) {
             $request->merge(['is_renewal' => quoteTypeCode::noText]);
-        }elseif($request->is_renewal === null && $renewalsTeam){
+        } elseif ($request->is_renewal === null && $renewalsTeam) {
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
         }
 
@@ -1205,32 +1204,31 @@ class CRUDController extends Controller
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-       
-        if($areBothTeamsPresent || $isManagerOrDeputy) {
+        if ($areBothTeamsPresent || $isManagerOrDeputy) {
             if ($request->is_renewal === quoteTypeCode::yesText) {
                 $renewalKeys = array_keys($renewals);
                 $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
                     return in_array($quote['id'], $renewalKeys);
                 });
-    
+
                 // Sort filtered quotes based on the renewals array order
                 usort($quotes, function ($a, $b) use ($renewals) {
                     return $renewals[$a['id']] <=> $renewals[$b['id']];
                 });
-            } 
+            }
             if ($request->is_renewal === quoteTypeCode::noText) {
                 $newBusinessKeys = array_keys($newBusiness);
                 $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
                     return in_array($quote['id'], $newBusinessKeys);
                 });
-    
+
                 // Sort filtered quotes based on the newBusiness array order
                 usort($quotes, function ($a, $b) use ($newBusiness) {
                     return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
                 });
-            } 
+            }
 
-        }elseif($newBusinessTeam) {
+        } elseif ($newBusinessTeam) {
             $newBusinessKeys = array_keys($newBusiness);
             $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
                 return in_array($quote['id'], $newBusinessKeys);
@@ -1240,16 +1238,16 @@ class CRUDController extends Controller
             usort($quotes, function ($a, $b) use ($newBusiness) {
                 return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
             });
-        }elseif($renewalsTeam){
+        } elseif ($renewalsTeam) {
             $renewalKeys = array_keys($renewals);
-                $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
-                    return in_array($quote['id'], $renewalKeys);
-                });
-    
-                // Sort filtered quotes based on the renewals array order
-                usort($quotes, function ($a, $b) use ($renewals) {
-                    return $renewals[$a['id']] <=> $renewals[$b['id']];
-                });
+            $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                return in_array($quote['id'], $renewalKeys);
+            });
+
+            // Sort filtered quotes based on the renewals array order
+            usort($quotes, function ($a, $b) use ($renewals) {
+                return $renewals[$a['id']] <=> $renewals[$b['id']];
+            });
         } elseif (array_intersect([TeamNameEnum::HOME], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
