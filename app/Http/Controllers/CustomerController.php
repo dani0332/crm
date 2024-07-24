@@ -248,15 +248,16 @@ class CustomerController extends Controller
         }
 
         if ($key == GenericRequestEnum::MOBILE_NO) {
-            $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
+            $isExistMobile = CustomerAdditionalContact::where('customer_id', $request->customer_id)
+                ->where('value', $request->additional_contact_val)->where('key', 'mobile_no')->first();
 
-            if ($isAdditionalMobileNoExist) {
+            if ($isExistMobile) {
                 if ($request->isInertia) {
-                    vAbort('Mobile Number already in use for a customer. Please try another.');
+                    vAbort('Mobile Number already Exist. Please try another.');
                 }
 
                 return response()->json(['error' => [
-                    'message' => 'Mobile Number already in use for a customer. Please try another.',
+                    'message' => 'Mobile Number already Exist. Please try another.',
                 ]]);
             }
         }

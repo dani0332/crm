@@ -345,7 +345,7 @@ class HealthQuoteService extends BaseService
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
 
@@ -492,6 +492,8 @@ class HealthQuoteService extends BaseService
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
         }
 
+        $this->adjustQueryByDateFilters($this->query, 'hqr');
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
@@ -563,6 +565,7 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
+
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
@@ -610,6 +613,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->gender = $request->gender;
         $healthQuote->dob = $request->dob;
         $healthQuote->policy_start_date = $request->policy_start_date;
+        $healthQuote->health_plan_type_id = $request->plan_type_id;
         $healthQuote->save();
 
         if (isset($request->return_to_view)) {

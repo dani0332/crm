@@ -71,14 +71,14 @@ class QuoteDocumentRequest extends FormRequest
             /**
              * documents can be attached to a member for health quote type
              */
-            if (ucfirst(request()->quoteType) == quoteTypeCode::Health && isset($quote->id) && ! empty(request()->member_detail_id)) {
+            if (in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && isset($quote->id) && ! empty(request()->member_detail_id)) {
                 //check for quote records if exists
-                if (! $quote->members()->where('id', request()->member_detail_id)->first()) {
+                if (! $quote->customerMembers()->where('id', request()->member_detail_id)->first()) {
                     $validator->errors()->add('member_detail_id', 'Invalid member detail id provided');
                 }
             }
 
-            if (ucfirst(request()->quoteType) != quoteTypeCode::Health && ! empty(request()->member_detail_id)) {
+            if (! in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && ! empty(request()->member_detail_id)) {
                 $validator->errors()->add('member_detail_id', 'Member can be attached only for Health Insurance type');
             }
 
@@ -90,8 +90,10 @@ class QuoteDocumentRequest extends FormRequest
                 }
             } else {
                 //validate if payment is authorized
-                if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
-                    $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+                if (request()->quoteType != strtolower(quoteTypeCode::Travel)) {
+                    if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+                        $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+                    }
                 }
             }
 

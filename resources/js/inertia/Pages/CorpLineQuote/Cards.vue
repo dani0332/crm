@@ -93,6 +93,8 @@ const filters = reactive({
   is_stale: false,
 });
 
+provide('filters', filters);
+
 const serverOptions = ref({
   page: 1,
   sortBy: 'created_at',

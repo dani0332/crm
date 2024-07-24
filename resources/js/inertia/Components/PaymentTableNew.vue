@@ -745,6 +745,7 @@ const handleCollectionTypeChange = () => {
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
     item => !excludedPaymentTypes.includes(item.value),
   );
+
   if (paymentMethodsForm.collection_type === 'insurer') {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
@@ -807,6 +808,7 @@ const handleApprovalReasonChange = () => {
   //customize payment method based on collection type
   if (paymentMethodsForm.credit_approval !== '') { 
     paymentTypesFiltered.value = paymentTypes.value;
+
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
         ![          
@@ -816,6 +818,7 @@ const handleApprovalReasonChange = () => {
           page.props.paymentMethodsEnum?.PartialPayment,
         ].filter(Boolean).includes(item.value),
     );
+
     if (paymentMethodsForm.collection_type === 'insurer') {
       if (paymentMethodsForm.frequency === 'upfront') {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is  UpFront*/
@@ -2022,7 +2025,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail.value.id,
+      plan_id: planDetail?.value?.id  || 0,
       customer_id: props.quoteRequest.customer_id,
       payment_code: paymentMethodsForm.paymentCode,
       collection_amount: collectionAmountModels.value,
@@ -2058,7 +2061,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail.value.id,
+      plan_id: planDetail?.value?.id  || 0,
       customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
       bank_reference_number: paymentMethodsForm.bank_reference_number,
@@ -2720,6 +2723,9 @@ watch(
       props.isPlanDetailEnabled
     ) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+      if (props.sendUpdate) {
+        initalPlanDetails = props.quoteRequest.insurance_provider_details ?? props.quoteRequest.insurance_provider;
+      }
     } else if (quoteTypesToCheck.includes(props.quoteType)) {
       initalPlanDetails = props.quoteRequest.plan;
     } else {
@@ -2760,7 +2766,7 @@ const isMasterPaymentPaid = computed(() => {
 });
 
 let is_lacking_payment = ref(
-  page.props?.bookPolicyDetails?.isLackingOfPayment || false,
+  page.props?.bookPolicyDetails?.isLackingOfPayment || page.props?.bookingDetails?.isLackingOfPayment || false,
 );
 
 watch(
@@ -2768,6 +2774,13 @@ watch(
   newVal => {
     is_lacking_payment.value = newVal || false;
   },
+);
+
+watch(
+    () => page.props?.bookingDetails?.isLackingOfPayment,
+    newVal => {
+      is_lacking_payment.value = newVal || false;
+    },
 );
 
 const discountTypeLabel = computed(() => {
@@ -2784,6 +2797,9 @@ const discountTypeLabel = computed(() => {
   );
   if (discountType) {
     if (systemAplliedDiscount !== '') {
+      if (discountType.label == systemAplliedDiscount){
+        return discountType.label;
+      }
       return discountType.label + ' + ' + systemAplliedDiscount;
     } else {
       return discountType.label;
@@ -3110,9 +3126,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   <td>
                     <div class="flex gap-2">
                       <template
-                        v-if="
-                          item.send_update_log_id == null && is_lacking_payment
-                        "
+                        v-if="is_lacking_payment"
                       >
                         <x-tooltip position="left" class="arrow-r">
                           <x-badge

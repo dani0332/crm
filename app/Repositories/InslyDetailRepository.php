@@ -195,10 +195,11 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::CAR->value:
-                            $obj->carQuoteRequestDetail()->updateOrCreate(
+                            $upsertRecord = $obj->carQuoteRequestDetail()->updateOrCreate(
                                 ['car_quote_request_id' => $obj->id],
                                 ['insly_id' => $policy->_id]
                             );
+                            info('fetchSaveToImcrm - leadId : '.$obj->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                             break;
 
                         case QuoteTypes::LIFE->value:

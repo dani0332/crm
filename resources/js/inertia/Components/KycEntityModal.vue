@@ -51,8 +51,8 @@ const kycForm = reactive({
   country_of_corporation: props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
   registered_address: props.entityDetails?.entity?.registered_address ?? null,
   communication_address: props.entityDetails?.entity?.communication_address ?? null,
-  mobile_number: props.entityDetails?.entity?.mobile_no ?? props.quote.mobile_no,
-  email: props.entityDetails?.entity?.email ?? props.quote.email,
+  mobile_number: props.quote.mobile_no,
+  email: props.quote.email,
   website: props.entityDetails?.entity?.website ?? null,
   id_document_type: props.entityDetails?.entity?.id_type ?? null,
   id_number: props.entityDetails?.entity?.id_number ?? null,
@@ -198,7 +198,6 @@ onMounted(() => {
 </script>
 
 <template>
-
   <x-form @submit="onKycSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <x-input
@@ -298,6 +297,7 @@ onMounted(() => {
         placeholder="Mobile number"
         type="number"
         :rules="[isRequired]"
+        :disabled="true"
       />
 
       <x-input
@@ -306,6 +306,7 @@ onMounted(() => {
         placeholder="Email"
         type="email"
         :rules="[isRequired]"
+        :disabled="true"
       />
 
       <div>

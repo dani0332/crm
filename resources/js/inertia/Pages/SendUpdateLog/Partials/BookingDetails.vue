@@ -67,11 +67,17 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const dateToYMD = date => {
   if (date) {
-    const [year, month, day] = date.split('-');
+    // Check if date is already in YMD format
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
+    const [day, month, year] = date.split('-');
     return `${year}-${month}-${day}`;
   }
-  return '';
-};
+
+  return null;
+}
 
 const isEF = computed(() => {
   return props.sendUpdateLog.category.code === sendUpdateStatusEnum.EF;
@@ -112,6 +118,11 @@ const checkSectionTwoEdit = () => {
     props.sendUpdateLog.category.code,
   );
 
+  const additionalInvoiceTypes = [
+    sendUpdateStatusEnum.ACB,
+    sendUpdateStatusEnum.ATIB,
+  ];
+
   if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
     notification.error({
       title: 'Please select tax invoice number for reversal. ',
@@ -120,12 +131,30 @@ const checkSectionTwoEdit = () => {
     return;
   }
 
-  if (checkTaxInvoiceDoc && !hasTaxDocuments.value) {
+  if (checkTaxInvoiceDoc && !hasTaxDocuments.value && !additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)) {
     notification.error({
       title: 'Please upload tax invoice and tax invoice raised by buyer. ',
       position: 'top',
     });
     return;
+  }
+
+  if (checkTaxInvoiceDoc && additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)) {
+    if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB && !props.uploadedDocuments.includes('SUTAXINVRB')) {
+      notification.error({
+        title: 'Please upload tax invoice raised by buyer',
+        position: 'top',
+      });
+      return;
+    }
+
+    if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB && !props.uploadedDocuments.includes('SUTAXINV')) {
+      notification.error({
+        title: 'Please upload tax invoice',
+        position: 'top',
+      });
+      return;
+    }
   }
 
   state.isEdit = !state.isEdit;
@@ -160,13 +189,15 @@ function isNotZero(value) {
 
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
-  booking_date: props.bookingDetails?.booking_date || props.sendUpdateLog?.booking_date,
+  send_update_type: props.sendUpdateLog.category.code,
+  send_update_option: props.sendUpdateLog?.option?.code ?? null,
+  booking_date: props.bookingDetails?.booking_date,
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
-  transaction_payment_status: props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value || '',
-  invoice_date: props.sendUpdateLog?.invoice_date || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
-  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || '',
-  discount: isNotZero(props.sendUpdateLog?.discount) || props?.payments[0]?.discount_value || '0.00',
+  transaction_payment_status: 'N/A',
+  invoice_date: dateToYMD(props.sendUpdateLog?.invoice_date) || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
+  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || null,
+  discount: props?.payments[0]?.discount_value || '0.00',
   insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_percentage: props.sendUpdateLog?.commission_percentage || props?.payments[0]?.commmission_percentage || '',
   commission_vat_not_applicable: props.sendUpdateLog?.commission_vat_not_applicable || props?.payments[0]?.commission_vat_not_applicable || '0.00',
@@ -182,22 +213,46 @@ const bookingDetailsForm = useForm({
 });
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
-const calculateCommission = () => {
-  if (bookingDetailsForm.commission_vat_applicable > 0 || bookingDetailsForm.price_vat_applicable > 0 || bookingDetailsForm.price_vat_not_applicable > 0) {
-    if (Number(bookingDetailsForm.price_vat_applicable > 0) || Number(bookingDetailsForm.price_vat_not_applicable > 0)) {
-      let vat_on_commission =
-        bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
-      bookingDetailsForm.vat_on_commission =
-        convertToNegative(vat_on_commission);
+const calculateCommisionDetailsForACB = () => {
+  if (bookingDetailsForm.commission_vat_applicable == 0 && bookingDetailsForm.commission_vat_not_applicable == 0) {
+    notification.error({
+      title: 'Please add Commision VAT or VAT Not Applicable',
+      position: 'top',
+    });
+    return false;
+  }
+
+  if (bookingDetailsForm.commission_vat_applicable > 0) {
+    let vat_on_commission = bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
+      bookingDetailsForm.vat_on_commission = convertToNegative(vat_on_commission);
 
       let total_commission =
         Number(bookingDetailsForm.commission_vat_not_applicable) +
         Number(bookingDetailsForm.commission_vat_applicable) +
         vat_on_commission;
       bookingDetailsForm.total_commission = convertToNegative(total_commission);
+  }
+  else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
+    bookingDetailsForm.total_commission = bookingDetailsForm.commission_vat_not_applicable;
+  }
+  else {
+    bookingDetailsForm.vat_on_commission = '';
+    bookingDetailsForm.total_commission = '';
+  }
+}
 
-      // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
-      let total_price_with_vat_and_not_vat_applicable =
+const calculatePriceDetailsForATIB = () => {
+  if (bookingDetailsForm.price_vat_applicable == 0 && bookingDetailsForm.price_vat_not_applicable == 0) {
+    notification.error({
+      title: 'Please add Policy Detail Price (VAT APPLICABLE) or Price (VAT NOT APPLICABLE)',
+      position: 'top',
+    });
+    return false;
+  }
+
+  if (bookingDetailsForm.price_vat_applicable > 0) {
+    // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
+    let total_price_with_vat_and_not_vat_applicable =
         Number(bookingDetailsForm.price_vat_applicable) +
         Number(bookingDetailsForm.price_vat_not_applicable);
       let total_vat_amount =
@@ -207,36 +262,72 @@ const calculateCommission = () => {
       let price_with_vat =
         total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
       bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
+  }
+}
 
-      bookingDetailsForm.commission_percentage = convertToNegative(
-        (total_commission / price_with_vat) * 100,
-      );
-    } else {
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT APPLICABLE)',
-        position: 'top',
-      });
-    }
-  } else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
-    if (Number(props.sendUpdateLog?.price_vat_not_applicable) > 0) {
-      bookingDetailsForm.commission_percentage = (
-        (bookingDetailsForm.commission_vat_not_applicable /
-          props.sendUpdateLog?.price_vat_not_applicable) *
-        100
-      ).toFixed(2);
-
-      bookingDetailsForm.total_commission =
-        bookingDetailsForm.commission_vat_not_applicable;
-    } else {
-      notification.error({
-        title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
-        position: 'top',
-      });
-    }
+const calculateCommission = () => {
+  if(props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
+    calculateCommisionDetailsForACB();
+  } else if(props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
+    calculatePriceDetailsForATIB();
   } else {
-    bookingDetailsForm.commission_percentage = '0.00';
-    bookingDetailsForm.vat_on_commission = '0.00';
-    bookingDetailsForm.total_commission = '0.00';
+    if (bookingDetailsForm.commission_vat_applicable > 0 || bookingDetailsForm.price_vat_applicable > 0 || bookingDetailsForm.price_vat_not_applicable > 0) {
+      if (Number(bookingDetailsForm.price_vat_applicable > 0) || Number(bookingDetailsForm.price_vat_not_applicable > 0)) {
+        let vat_on_commission =
+          bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
+        bookingDetailsForm.vat_on_commission =
+          convertToNegative(vat_on_commission);
+
+        let total_commission =
+          Number(bookingDetailsForm.commission_vat_not_applicable) +
+          Number(bookingDetailsForm.commission_vat_applicable) +
+          vat_on_commission;
+        bookingDetailsForm.total_commission = convertToNegative(total_commission);
+
+        // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
+        let total_price_with_vat_and_not_vat_applicable =
+          Number(bookingDetailsForm.price_vat_applicable) +
+          Number(bookingDetailsForm.price_vat_not_applicable);
+        let total_vat_amount =
+          Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
+        bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
+
+        let price_with_vat =
+          total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
+        bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
+
+        bookingDetailsForm.commission_percentage = convertToNegative(
+          (total_commission / price_with_vat) * 100,
+        );
+
+        checkDiscount(price_with_vat);
+      } else {
+        notification.error({
+          title: 'Please add Policy Detail Price (VAT APPLICABLE)',
+          position: 'top',
+        });
+      }
+    } else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
+      if (Number(props.sendUpdateLog?.price_vat_not_applicable) > 0) {
+        bookingDetailsForm.commission_percentage = (
+          (bookingDetailsForm.commission_vat_not_applicable /
+            props.sendUpdateLog?.price_vat_not_applicable) *
+          100
+        ).toFixed(2);
+
+        bookingDetailsForm.total_commission =
+          bookingDetailsForm.commission_vat_not_applicable;
+      } else {
+        notification.error({
+          title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
+          position: 'top',
+        });
+      }
+    } else {
+      bookingDetailsForm.commission_percentage = '0.00';
+      bookingDetailsForm.vat_on_commission = '0.00';
+      bookingDetailsForm.total_commission = '0.00';
+    }
   }
 };
 
@@ -378,7 +469,7 @@ function reverseValue(value) {
 }
 
 function updateReversalEntries(payment, sendUpdateLog) {
-  reversalEntry.transaction_payment_status = payment?.transaction_payment_status || sendUpdateLog?.transaction_payment_status || '';
+  reversalEntry.transaction_payment_status = 'N/A';
   reversalEntry.booking_date = payment?.policy_booking_date || sendUpdateLog?.booking_date || '';
   reversalEntry.invoice_date = payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = (payment?.insurer_tax_number) ? (payment.insurer_tax_number + '-REV') : (sendUpdateLog.insurer_tax_invoice_number + '-REV');
@@ -407,13 +498,13 @@ onMounted(() => {
 
 const onUpdateReversal = () => {
   state.reversalSectionEdit = !state.reversalSectionEdit;
-  bookingDetailsForm.transaction_payment_status = reversalEntry.transaction_payment_status || null;
+  bookingDetailsForm.transaction_payment_status = 'N/A';
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
   bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
   bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
-  bookingDetailsForm.price_vat_applicable = Math.abs(reversalEntry.price_vat_applicable) || null;
+  bookingDetailsForm.price_vat_applicable = Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
   bookingDetailsForm.price_vat_not_applicable = Math.abs(reversalEntry.price_vat_not_applicable) || '0.00';
   bookingDetailsForm.vat_on_commission = reversalEntry.vat_on_commission || null;
@@ -714,6 +805,32 @@ const onReversalEdit = () => {
     state.reversalSectionEdit = true;
   }
 };
+
+const isCI = computed(() => {
+  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI;
+});
+
+const checkDiscount = (newPrice) => {
+  let total_price = props.sendUpdateLog?.price_with_vat;
+  let difference =  Number(Number(newPrice).toFixed(2) - Number(total_price).toFixed(2)).toFixed(2);
+  let previousDiscount = props?.payments[0]?.discount_value || 0.00;
+  let paymentDiscount = props?.payments[0]?.discount_value || 0.00;
+  let newDiscount = Number(bookingDetailsForm.discount).toFixed(2);
+  if (newPrice > total_price && difference <= 0.99 && (isEF || isCI || isCPD)) {
+    if (previousDiscount > 0) {
+      bookingDetailsForm.discount = Number(parseFloat(newDiscount) + parseFloat(difference));
+    } else {
+      bookingDetailsForm.discount = Number(difference).toFixed(2);
+    }
+  } else {
+    let lessDifference = Number(total_price - newPrice).toFixed(2);
+    if (paymentDiscount > 0 && lessDifference <= 0.99) {
+      bookingDetailsForm.discount = Number(paymentDiscount - lessDifference).toFixed(2);
+    } else {
+      bookingDetailsForm.discount = previousDiscount;
+    }
+  }
+}
 </script>
 
 <template>
@@ -1181,7 +1298,10 @@ const onReversalEdit = () => {
                   </span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2 pb-1.5">
+              <div v-if="
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
+                class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
                   <x-tooltip position="left">
                     <label
@@ -1199,7 +1319,10 @@ const onReversalEdit = () => {
                   <span>{{ bookingDetailsForm.booking_date ?? 'N/A' }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2 pb-1.5">
+              <div v-if="
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
+                class="grid sm:grid-cols-2 pb-1.5">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1278,7 +1401,7 @@ const onReversalEdit = () => {
                 </div>
                 <div>N/A</div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1324,7 +1447,7 @@ const onReversalEdit = () => {
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1352,7 +1475,10 @@ const onReversalEdit = () => {
                   />
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
+                class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1370,7 +1496,7 @@ const onReversalEdit = () => {
                   <span>{{ bookingDetailsForm.discount !== null ? bookingDetailsForm.discount : 'N/A' }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1405,7 +1531,10 @@ const onReversalEdit = () => {
                   <span>N/A</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
+                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"  
+                class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1425,7 +1554,7 @@ const onReversalEdit = () => {
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1462,7 +1591,7 @@ const onReversalEdit = () => {
                     }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1481,7 +1610,7 @@ const onReversalEdit = () => {
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1514,7 +1643,7 @@ const onReversalEdit = () => {
                   />
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1534,7 +1663,7 @@ const onReversalEdit = () => {
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1554,7 +1683,7 @@ const onReversalEdit = () => {
                   }}</span>
                 </div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
@@ -1578,7 +1707,7 @@ const onReversalEdit = () => {
                 <div class="font-bold text-right"></div>
                 <div></div>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="left">
                     <label
