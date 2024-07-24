@@ -155,13 +155,27 @@ class PersonalQuotesExport
     {
         switch (ucfirst($quoteType)) {
             case QuoteTypes::BIKE->value:
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    date(config('constants.DATE_FORMAT'), strtotime($quote->quote->dob)),
+                    optional($quote->quoteStatus)->text,
+                    optional($quote->advisor)->name,
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+                    $quote->premium,
+                    $quote->policy_number,
+                    $quote->source,
+                    optional($quote->currentlyInsuredWith)->text,
+                    $quote->is_ecommerce ? 'Yes' : 'No',
+                ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
                 return [
                     $quote->code,
                     $quote->first_name,
                     $quote->last_name,
-                    date(config('constants.DATE_FORMAT'), strtotime($quote->quote->dob)),
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
