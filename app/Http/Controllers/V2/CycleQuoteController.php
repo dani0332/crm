@@ -210,7 +210,7 @@ class CycleQuoteController extends Controller
 
         $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
 
-        $isManagerOrDeputy = auth()->user()->isManagerOrDeputy();
+        $isManagerOrDeputy = auth()->user()->hasAnyRole([RolesEnum::CycleManager]);
 
         if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
@@ -331,6 +331,8 @@ class CycleQuoteController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             // 'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
+            'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
         ]);
     }
 }

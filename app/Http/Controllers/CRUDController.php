@@ -1157,7 +1157,7 @@ class CRUDController extends Controller
 
         $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
 
-        $isManagerOrDeputy = auth()->user()->isManagerOrDeputy();
+        $isManagerOrDeputy = auth()->user()->hasAnyRole([RolesEnum::HomeManager, RolesEnum::HomeRenewalManager]);
 
         $newBusinessTeam = in_array(TeamNameEnum::HOME, $userTeams);
         $renewalsTeam = in_array(TeamNameEnum::HOME_RENEWALS, $userTeams);
@@ -1280,6 +1280,8 @@ class CRUDController extends Controller
             'quoteTypeId' => QuoteTypes::HOME->id(),
             'quoteType' => QuoteTypes::HOME->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : HomeQuoteRepository::getData(true, true),
+            'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
+            'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
         ]);
     }
 

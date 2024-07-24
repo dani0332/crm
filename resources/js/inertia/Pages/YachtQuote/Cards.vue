@@ -10,7 +10,9 @@ const props = defineProps({
   },
   leadStatuses: Array,
   advisors: Array,
-  teams : Object
+  teams : Object,
+  areBothTeamsPresent: Boolean,
+  is_renewal: String,
 });
 
 const page = usePage();
@@ -19,8 +21,6 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-const hasTeams = teams => userHasRequiredTeams(teams, props.teams);
-const teamsEnum = page.props.teamsEnum
 
 const isAllowed = computed(() => {
   return !hasAnyRole([
@@ -78,17 +78,6 @@ const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
 
-const renewalInitialState = () => {
-  if (hasTeams([teamsEnum.YACHT_TEAM, teamsEnum.YACHT_RENEWALS])) {
-    return 'Yes';
-  } else if (hasTeams([teamsEnum.YACHT_RENEWALS])) {
-    return 'Yes';
-  } else if (hasTeams([teamsEnum.YACHT_TEAM])) {
-    return 'No';
-  } else {
-    return null;
-  }
-};
 
 const filters = reactive({
   date: null,
@@ -101,7 +90,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
-  is_renewal: renewalInitialState(),
+  is_renewal: props.is_renewal,
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
@@ -364,7 +353,7 @@ function onReset() {
         </x-field>
         <x-field label="Renewal">
           <x-select
-           :disabled="!hasTeams([teamsEnum.YACHT_TEAM, teamsEnum.YACHT_RENEWALS])"
+           :disabled="!props.areBothTeamsPresent"
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[

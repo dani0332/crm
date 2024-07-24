@@ -222,7 +222,7 @@ class PetQuoteController extends Controller
 
         $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
 
-        $isManagerOrDeputy = auth()->user()->isManagerOrDeputy();
+        $isManagerOrDeputy = auth()->user()->hasAnyRole([RolesEnum::PetManager, RolesEnum::PetNewBusinessManager, RolesEnum::PetRenewalManager]);
 
         if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
@@ -340,6 +340,8 @@ class PetQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::PET->id(),
             'quoteType' => QuoteTypes::PET->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : PetQuoteRepository::getData(true, true),
+            'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
+            'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
         ]);
     }
 }

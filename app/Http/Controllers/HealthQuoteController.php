@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Http\Requests\MemberDetailRequest;
@@ -304,7 +305,7 @@ class HealthQuoteController extends Controller
 
         $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
 
-        $isManagerOrDeputy = auth()->user()->isManagerOrDeputy();
+        $isManagerOrDeputy = auth()->user()->hasAnyRole(RolesEnum::HealthManager, RolesEnum::HealthDeputyManager, RolesEnum::HealthRenewalManager);
 
         if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
@@ -435,6 +436,8 @@ class HealthQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::HEALTH->id(),
             'quoteType' => QuoteTypes::HEALTH->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : HealthQuoteRepository::getData(true, true),
+            'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
+            'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
         ]);
     }
 }

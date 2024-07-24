@@ -377,7 +377,7 @@ class BusinessQuoteController extends Controller
 
         $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
 
-        $isManagerOrDeputy = auth()->user()->isManagerOrDeputy();
+        $isManagerOrDeputy = auth()->user()->hasAnyRole([RolesEnum::CorplineManager, RolesEnum::CorplineDeputyManager, RolesEnum::CorpLineRenewalManager]);
 
         if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
             $request->merge(['is_renewal' => quoteTypeCode::yesText]);
@@ -506,6 +506,8 @@ class BusinessQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::BUSINESS->id(),
             'quoteType' => QuoteTypes::BUSINESS->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true),
+            'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
+            'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
         ]);
     }
 }
