@@ -116,7 +116,6 @@ class ApiService
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
         return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
-
     }
 
     private function triggerOCBOnly($allocationId)
@@ -132,6 +131,13 @@ class ApiService
     {
         info('------ Lead allocation started for lead : '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
+
+        if (! $allocationStrategy) {
+            info('Allocation strategy for type '.$allocationType.' -- '.$allocationId.' not found.');
+
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Allocation strategy not found for params!');
+        }
+
         $assignedAdvisorId = $allocationStrategy->executeSteps();
         info('------ Lead allocation ended for lead : '.$allocationId.' ------');
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];

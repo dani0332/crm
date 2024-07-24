@@ -1530,7 +1530,7 @@ watch(
   },
 );
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate(); 
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
 
@@ -1942,7 +1942,7 @@ const onAddUpdate = () => {
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
-          
+
           <LeadEditBtnTemplate v-slot="{ isDisabled }">
             <Link v-if="!isDisabled" :href="route('car.edit', record.uuid)">
               <x-button size="sm" color="primary" tag="div">Edit</x-button>
@@ -2659,7 +2659,7 @@ const onAddUpdate = () => {
               Change Status
             </x-button>
           </StatusUpdateButtonTemplate>
-  
+
           <div class="flex justify-end">
             <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
               <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
@@ -2668,7 +2668,7 @@ const onAddUpdate = () => {
               </template>
             </x-tooltip>
             <StatusUpdateButtonReuseTemplate v-else />
-            
+
           </div>
         </template>
       </Collapsible>
@@ -2946,7 +2946,7 @@ const onAddUpdate = () => {
                 Add Plan
               </x-button>
             </AddPlanButtonTemplate>
-            
+
             <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
               <AddPlanButtonReuseTemplate :isDisabled="true"/>
               <template #tooltip>No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.</template>
@@ -3377,7 +3377,7 @@ const onAddUpdate = () => {
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <PaymentTable
       v-else
       :payments="payments"

@@ -1,4 +1,6 @@
 <script setup>
+import DownloadDocuments from "./DownloadDocuments.vue";
+
 defineProps({
   quote: Object,
   quoteDocuments: Object,
@@ -16,7 +18,6 @@ defineProps({
   },
   inslyId: String,
   sendPolicy: Boolean,
-  paymentStatusEnum: Object,
 });
 
 const emit = defineEmits(['copyUploadURL', 'sendPolicyToClient']);
@@ -180,6 +181,11 @@ const uploadDocumentModal = () => {
         <x-divider class="my-4" />
 
         <div class="flex gap-2 mb-4 justify-end">
+            <DownloadDocuments
+                v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
+                :quote="page.props.quote"
+                :quoteDocuments="page.props.quote.documents ?? page.props.quoteDocuments"
+            />
           <Link
             v-if="inslyId && can(permissionEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${inslyId}`"

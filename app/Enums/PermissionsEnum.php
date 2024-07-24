@@ -353,6 +353,7 @@ final class PermissionsEnum extends Enum
     public const INPL_APPROVER = 'inpl-approver';
     public const DOCUMENT_VERIFY = 'document-verify';
     public const AUDIT_DOCUMENT_UPLOAD = 'auditdocument-upload';
+    public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
 
     public static function getAdvisorConversionReportPermissions()
     {
