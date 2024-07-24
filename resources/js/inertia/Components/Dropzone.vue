@@ -26,6 +26,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isDisabled: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const emit = defineEmits(['update:modelValue', 'change', 'changeMethod']);
@@ -67,12 +71,22 @@ const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
       </x-button>
     </div>
     <div v-else class="p-4">
-      <input v-bind="getInputProps()" />
-      <span class="block text-gray-700 text-xs"> Drop file here </span>
-      <span class="block mb-2 mt-1 text-gray-700 text-xs"> or </span>
-      <x-button @click="open" size="xs" :loading="loading">
-        Click to browse
-      </x-button>
+      <div class="p-4" v-if="!isDisabled">
+        <input v-bind="getInputProps()" />
+        <span class="block text-gray-700 text-xs"> Drop file here </span>
+        <span class="block mb-2 mt-1 text-gray-700 text-xs"> or </span>
+        <x-button @click="open" size="xs" :loading="loading">
+          Click to browse
+        </x-button>
+      </div>
+      <div class="p-8" v-else>
+        <x-tooltip position="bottom">
+          <x-button :disabled="isDisabled" size="xs" :loading="loading">
+            Click to browse
+          </x-button>
+          <template #tooltip> This section is for audit purposes only. Only authorised users can upload files here </template>
+        </x-tooltip>
+      </div>
     </div>
 
   </div>

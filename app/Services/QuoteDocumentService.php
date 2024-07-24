@@ -259,7 +259,8 @@ class QuoteDocumentService extends BaseService
                 $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
 
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
-            })->sortDocumentType()->get();
+            })
+            ->sortDocumentType()->get();
 
         // Handle documents for quote types like CORPLINE and GroupMedical.
         if ($quoteTypeId == QuoteTypeId::Business) {
@@ -272,8 +273,9 @@ class QuoteDocumentService extends BaseService
             } elseif ($quoteType == quoteTypeCode::CORPLINE) {
                 $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
             }
+            $businessDocumetTypes[] = DocumentTypeCode::AUDIT_DOCUMENT;
             // Fetch additional business document types based on the specific quote type.
-            $businessDocumetTypes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->get();
+            $businessDocumetTypes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->sortDocumentType()->get();
             $documentTypes = $documentTypes->merge($businessDocumetTypes);
         }
 
