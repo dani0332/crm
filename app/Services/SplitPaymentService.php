@@ -582,6 +582,11 @@ class SplitPaymentService
             $quoteModel = $this->getQuoteObject($modelType, $quoteId);
         }
 
+        if ( $isFromJob && !$quoteModel) {
+            CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::INPROCESS, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
+            return;
+        }
+
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             //create sage reciept
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);

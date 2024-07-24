@@ -13,7 +13,7 @@ class CcPaymentProcess extends Model
     protected $table = 'cc_payment_processes';
     protected $fillable = [
         'payment_splits_id',
-        'model_type',
+        'quote_type',
         'quoteable_id',
         'amount_captured',
         'status',
@@ -29,4 +29,10 @@ class CcPaymentProcess extends Model
     {
         return $this->belongsTo(PaymentSplits::class);
     }
+
+    public function getQuoteTypeAttribute($value)
+    {
+        return ucfirst(strtolower($value));        
+    }
+
 }
