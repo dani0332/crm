@@ -62,16 +62,31 @@ class PersonalQuotesExport
     }
 
     protected function getHeadings($quoteType)
-    {
+    {   
+        
         switch (ucfirst($quoteType)) {
             case QuoteTypes::BIKE->value:
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'DOB',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'PREMIUM',
+                    'POLICY NUMBER',
+                    'SOURCE',
+                    'CURRENTLY INSURED WITH',
+                    'IS ECOMMERCE',
+                ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
                 return [
                     'REF-ID',
                     'FIRST NAME',
                     'LAST NAME',
-                    'DOB',
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
@@ -146,7 +161,7 @@ class PersonalQuotesExport
                     $quote->code,
                     $quote->first_name,
                     $quote->last_name,
-                    $quote->dob,
+                    date(config('constants.DATE_FORMAT'), strtotime($quote->quote->dob)),
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
