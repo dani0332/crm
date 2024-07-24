@@ -5,6 +5,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 import { computed } from 'vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 const page = usePage();
 defineProps({
@@ -3195,7 +3196,7 @@ const onAddUpdate = () => {
       :quoteId="quote.uuid"
       :quoteType="'TRAVEL'"
     />
-   
+
   </div>
 </template>
 <style>
