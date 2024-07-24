@@ -201,7 +201,7 @@ const additionalContact = computed(() => {
 });
 </script>
 <template>
-    <x-accordion show-icone>
+    <x-accordion show-icon>
         <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
             <h3 class="font-semibold text-primary-800 text-lg">
                 Customer Additional Contacts
