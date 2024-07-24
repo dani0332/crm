@@ -8,7 +8,9 @@ use App\Enums\quoteTypeCode;
 use App\Enums\WorkflowTypeEnum;
 use App\Http\Requests\PaymentDocumentRequest;
 use App\Http\Requests\QuotesDocumentRequest;
+use App\Models\CustomerMembers;
 use App\Models\DocumentType;
+use App\Models\MemberCategory;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Services\ActivitiesService;
@@ -23,6 +25,7 @@ use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use ZipArchive;
 
 class QuoteDocumentController extends Controller
 {
@@ -309,7 +312,6 @@ class QuoteDocumentController extends Controller
 
     public function validateDocumentsUpdate($quoteType, $quoteUuId, Request $request)
     {
-
         $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
         $quoteModel->is_documents_valid = $request->is_documents_valid;
         $quoteModel->save();
@@ -325,5 +327,64 @@ class QuoteDocumentController extends Controller
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
 
         return true;
+    }
+
+    public function downloadAllDocuments(Request $request)
+    {
+        if (! auth()->user()->can(PermissionsEnum::DOWNLOAD_ALL_DOCUMENTS)) {
+            return response()->json(['message' => 'User Has No Permission to Download Documents.'], 403);
+        }
+
+        $quoteDocuments = $request->input('quoteDocuments');
+        if (! is_array($quoteDocuments) || count($quoteDocuments) === 0) {
+            return response()->json(['message' => 'No documents provided.'], 400);
+        }
+
+        $disk = Storage::disk('azureIM');
+        $zipFileName = "{$request->quote['first_name']} {$request->quote['last_name']}_{$request->quote['code']}.zip";
+        $zipFilePath = storage_path('temp/'.$zipFileName);
+        $zip = new ZipArchive;
+
+        if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['message' => 'Could not create ZIP file.'], 500);
+        }
+
+        $processedDocuments = [];
+        foreach ($quoteDocuments as $document) {
+            $docUrl = $document['doc_url'];
+            $originalName = $document['original_name'];
+            $pathPrefix = '';
+
+            if (! empty($document['member_detail_id'])) {
+                $member = CustomerMembers::find($document['member_detail_id']);
+                if ($member && isset($member->member_category_id)) {
+                    $memberCategory = MemberCategory::find($member->member_category_id);
+                    if ($member && $memberCategory) {
+                        $pathPrefix = "{$member->first_name} {$member->last_name}_{$request->quote['code']}_{$memberCategory->text}/";
+                    }
+                }
+            }
+
+            if ($disk->exists($docUrl)) {
+                try {
+                    $contents = $disk->get($docUrl);
+                    $zip->addFromString($pathPrefix.$originalName, $contents);
+                    $processedDocuments[] = $originalName;
+                } catch (\Exception $e) {
+                    info("Error processing document: {$originalName} - ".$e->getMessage());
+                }
+            } else {
+                info("Document does not exist: {$docUrl}");
+            }
+        }
+
+        $zip->close();
+
+        // Check if any documents were added to the ZIP
+        if (count($processedDocuments) === 0) {
+            return response()->json(['message' => 'No documents were added to the ZIP file.'], 400);
+        }
+
+        return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 }
