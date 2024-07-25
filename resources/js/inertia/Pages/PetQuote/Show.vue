@@ -346,7 +346,7 @@ const linkEntity = () => {
         </Link>
       </div>
 
-    
+
     </div> -->
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
@@ -627,7 +627,7 @@ const linkEntity = () => {
               </dd>
             </div>
             <RiskRatingScoreDetails
-              :quote="quote.pet_quote"
+              :quote="quote"
               :modelType="'Pet'"
             />
           </dl>
