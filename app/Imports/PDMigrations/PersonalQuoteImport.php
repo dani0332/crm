@@ -41,10 +41,10 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 $lead = PersonalQuote::where($searchCriteria)->first();
                 if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
                     $lead->update($data);
-                    info('Personal/Cycle Quote Import - Quote found: '.$lead->uuid.' - Quote updated '.$data['quote_status_id'].'');
+                    info('Personal/Pet Quote Import - Quote found: '.$lead->uuid.' - Quote updated');
                 }
             }
-
+            info('Personal/Pet Quote Import - Quote status not defined');
         }
     }
 
@@ -55,7 +55,6 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     private function getQuoteStatusId($dealStatus, $dealStage)
     {
-
         if ($dealStatus === PDDealStatus::LOST) {
             return QuoteStatusEnum::Lost;
         }
@@ -107,6 +106,5 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             return $dealStageToQuoteStatus[$dealStage];
         }
-
     }
 }

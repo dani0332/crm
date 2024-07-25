@@ -106,14 +106,14 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('PersonalQuoteDataMigration:cron')
             ->timezone('Asia/Dubai')
-            ->dailyAt('10:35')
+            ->dailyAt('11:15')
             ->onOneServer()
             ->withoutOverlapping()
             ->onSuccess(function (Stringable $output) {
-                info('----------- Personal/Home Quote Data Migrations Completed -----------' . $output);
+                info('----------- Personal/Home Quote Data Migrations Completed -----------'.$output);
             })
             ->onFailure(function (Stringable $output) {
-                info('----------- Personal/Home Quote Data Migrations Failed -----------' . $output);
+                info('----------- Personal/Home Quote Data Migrations Failed -----------'.$output);
             });
     }
 
