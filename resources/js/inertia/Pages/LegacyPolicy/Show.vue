@@ -666,8 +666,6 @@ const dateFormat = date => {
         </Link>
       </div>
       <p v-if="!single">Do you want to use existing details?</p>
-      <template #actions> </template>
-
       <DataTable
         v-model:items-selected="quotesSelected"
         table-class-name="tablefixed"
@@ -710,7 +708,7 @@ const dateFormat = date => {
         >
       </div>
 
-      <div class="flex justify-end my-4 gap-3 mb-4">
+      <template #actions>
         <x-button
           size="sm"
           color="#ff5e00"
@@ -722,7 +720,7 @@ const dateFormat = date => {
         <x-button size="sm" color="primary" @click="moveToImcrmModal = false">
           Cancel
         </x-button>
-      </div>
+      </template>
     </x-modal>
   </div>
 </template>

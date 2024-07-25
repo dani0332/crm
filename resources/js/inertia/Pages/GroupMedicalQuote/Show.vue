@@ -434,8 +434,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         </template>
       </div>
     </div>
-    <x-modal v-model="modals.duplicate" size="lg" title="Duplicate Lead" show-close backdrop>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
+    <x-modal v-model="modals.duplicate" size="md" title="Duplicate Lead" show-close backdrop is-form @submit="onCreateDuplicate">
         <div class="grid gap-4">
           <x-select
             v-model="leadDuplicateForm.lob_team"
@@ -461,15 +460,19 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               { value: 'record_only', label: 'Record purposes only' },
             ]"
           />
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
         </div>
-      </x-form>
+        <template #secondary-action>
+            <x-button ghost tabindex="-1" @click="modals.duplicate = false">Cancel</x-button>
+        </template>
+        <template #primary-action>
+            <x-button
+              color="orange"
+              type="submit"
+              :loading="leadDuplicateForm.processing"
+            >
+              Create Duplicate
+            </x-button>
+        </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -816,9 +819,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
@@ -826,7 +828,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
 
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
@@ -870,17 +872,17 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             />
           </dd>
         </div>
-        <div class="text-left space-x-4">
-          <x-button
-            size="sm"
-            color="orange"
-            @click.prevent="linkEntity"
-            :loading="loader.tradeDetail"
-          >
-            Link
-          </x-button>
-        </div>
-      </dl>
+    </dl>
+    <template #actions>
+      <x-button
+        size="sm"
+        color="orange"
+        @click.prevent="linkEntity"
+        :loading="loader.tradeDetail"
+      >
+        Link
+      </x-button>
+    </template>
     </x-modal>
 
     <UBODetails

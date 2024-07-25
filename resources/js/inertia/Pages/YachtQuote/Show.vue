@@ -256,7 +256,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
           :quote="quote"
           :cdn="cdnPath"
         />
-        
+
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
           <Link v-if="!isDisabled" :href="route('yacht-quotes-edit', quote.uuid)">
             <x-button size="sm" tag="div">Edit</x-button>
@@ -283,7 +283,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
         </Link>
       </template>
     </StickyHeader>
-   
+
     <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -707,9 +707,8 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
@@ -717,7 +716,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
 
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
@@ -761,12 +760,12 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
             />
           </dd>
         </div>
-        <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
-            Link
-          </x-button>
-        </div>
-      </dl>
+    </dl>
+    <template #actions>
+      <x-button size="sm" color="orange" @click.prevent="linkEntity">
+        Link
+      </x-button>
+    </template>
     </x-modal>
 
     <MemberDetails

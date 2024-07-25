@@ -334,8 +334,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       </template>
     </StickyHeader>
 
-    <x-modal v-model="modals.duplicate" size="lg" title="Duplicate Lead" show-close backdrop>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
+    <x-modal v-model="modals.duplicate" size="md" title="Duplicate Lead" show-close backdrop is-form @submit="onCreateDuplicate">
         <div class="grid gap-4">
           <x-field label="LOBs" required>
             <x-select
@@ -363,15 +362,26 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
               ]"
             />
           </x-field>
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
         </div>
-      </x-form>
+        <template #secondary-action>
+            <x-button
+                ghost
+                tabindex="-1"
+                @click.prevent="modals.duplicate = false"
+                size="sm"
+            >
+                Cancel
+            </x-button>
+        </template>
+        <template #primary-action>
+        <x-button
+          color="orange"
+          type="submit"
+          :loading="leadDuplicateForm.processing"
+        >
+          Create Duplicate
+        </x-button>
+        </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
@@ -808,9 +818,8 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
@@ -818,7 +827,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
 
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
@@ -862,12 +871,12 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
             />
           </dd>
         </div>
-        <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
-            Link
-          </x-button>
-        </div>
       </dl>
+    <template #actions>
+      <x-button size="sm" color="orange" @click.prevent="linkEntity">
+        Link
+      </x-button>
+    </template>
     </x-modal>
 
     <MemberDetails

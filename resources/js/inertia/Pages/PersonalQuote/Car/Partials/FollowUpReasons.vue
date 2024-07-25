@@ -28,7 +28,7 @@ const date = ref('');
 let isloading = ref(false);
 
 const maxDate = computed(() => {
-  
+
   let days = props.source == 'Renewal_upload' ? 14 : 9;
   return new Date(new Date().setDate(new Date().getDate() + days));
 });
@@ -57,7 +57,7 @@ const getPauseReaons = () => {
       })
       .catch(error => {
         console.log(error);
-      });    
+      });
   } catch (error) {
     console.log(error);
   }
@@ -119,8 +119,7 @@ function onSubmit() {
 onMounted(() => getPauseReaons());
 </script>
 <template>
-  <x-modal v-model="value" backdrop size="lg" :show-close="true">
-    <x-form class="p-5" @submit="onSubmit" :auto-focus="false">
+  <x-modal v-model="value" backdrop size="lg" :show-close="true" is-form @submit="onSubmit">
       <!-- <div > -->
       <p class="font-bold">Select a reason:</p>
       <div class="py-1 px-5" v-for="reason in reasons" :key="reason.code">
@@ -154,10 +153,12 @@ onMounted(() => getPauseReaons());
           class="w-full"
         />
       </x-field>
-      <div class="flex justify-end gap-3 mt-5">
+      <template #primary-action>
         <x-button type="submit" size="sm" color="primary" :loading="isloading">
           Ok
         </x-button>
+      </template>
+      <template #secondary-action>
         <x-button
           size="sm"
           color="rose"
@@ -165,8 +166,7 @@ onMounted(() => getPauseReaons());
         >
           Cancel
         </x-button>
-      </div>
+      </template>
       <!-- </div> -->
-    </x-form>
   </x-modal>
 </template>

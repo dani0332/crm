@@ -1362,8 +1362,7 @@ const getGenderDisplay = (val) => {
       </div>
     </div>
 
-    <x-modal v-model="modals.duplicate" size="lg" title="Duplicate Lead" show-close backdrop>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
+    <x-modal v-model="modals.duplicate" size="md" title="Duplicate Lead" show-close backdrop is-form @submit="onCreateDuplicate">
         <div class="grid gap-4">
           <x-field label="LOBs" required>
             <x-select
@@ -1392,15 +1391,25 @@ const getGenderDisplay = (val) => {
             />
           </x-field>
 
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
         </div>
-      </x-form>
+        <template #secondary-action>
+            <x-button
+              ghost
+              tabindex="-1"
+              @click="modals.duplicate = false"
+            >
+              Cancel
+            </x-button>
+        </template>
+        <template #primary-action>
+            <x-button
+              color="orange"
+              type="submit"
+              :loading="leadDuplicateForm.processing"
+            >
+              Create Duplicate
+            </x-button>
+        </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
@@ -2001,9 +2010,8 @@ const getGenderDisplay = (val) => {
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
@@ -2011,7 +2019,7 @@ const getGenderDisplay = (val) => {
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
@@ -2054,12 +2062,12 @@ const getGenderDisplay = (val) => {
             />
           </dd>
         </div>
-        <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
-            Link
-          </x-button>
-        </div>
       </dl>
+    <template #actions>
+      <x-button size="sm" color="orange" @click.prevent="linkEntity">
+        Link
+      </x-button>
+    </template>
     </x-modal>
 
     <div
@@ -2202,8 +2210,9 @@ const getGenderDisplay = (val) => {
         :title="`${travelerForm.id ? 'Edit' : 'Add'} Member`"
         show-close
         backdrop
+        is-form
+        @submit="submitTraveler"
       >
-        <x-form @submit="submitTraveler" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4">
             <x-input
               v-model="travelerForm.first_name"
@@ -2252,11 +2261,12 @@ const getGenderDisplay = (val) => {
               />
             </x-field>
           </div>
-          <div class="text-right space-x-4 mt-8">
-            <x-button size="sm" @click.prevent="modals.addTraveler = false">
+          <template #secondary-action>
+            <x-button ghost tabindex="-1" size="sm" @click.prevent="travelerTable.addTraveler = false">
               Cancel
             </x-button>
-
+            </template>
+            <template #primary-action>
             <x-button
               size="sm"
               color="emerald"
@@ -2265,8 +2275,7 @@ const getGenderDisplay = (val) => {
             >
               {{ travelerForm.id ? 'Update' : 'Save' }}
             </x-button>
-          </div>
-        </x-form>
+          </template>
       </x-modal>
     </div>
 
@@ -2951,7 +2960,7 @@ const getGenderDisplay = (val) => {
               Add Activity
             </x-button>
           </div>
-          <x-divider class="my-4" />
+          <!-- <x-divider class="my-4" /> -->
           <DataTable
             table-class-name="compact"
             :headers="activityTable"
@@ -3022,8 +3031,7 @@ const getGenderDisplay = (val) => {
           </div>
         </template>
       </x-modal>
-      <x-modal v-model="modals.activity" size="lg" :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"  show-close backdrop>
-        <x-form @submit="onActivitySubmit" :auto-focus="false">
+      <x-modal v-model="modals.activity" size="lg" :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"  show-close backdrop is-form @submit="onActivitySubmit">
           <div class="grid gap-4">
             <x-field label="Title" required>
               <x-input
@@ -3059,11 +3067,12 @@ const getGenderDisplay = (val) => {
             />
           </div>
 
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.activity = false">
+          <template #secondary-action>
+            <x-button ghost tabindex="-1" size="sm" @click.prevent="modals.activity = false">
               Cancel
             </x-button>
-
+          </template>
+          <template #primary-action>
             <x-button
               size="sm"
               color="emerald"
@@ -3072,8 +3081,7 @@ const getGenderDisplay = (val) => {
             >
               {{ activityActionEdit ? 'Update' : 'Save' }}
             </x-button>
-          </div>
-        </x-form>
+          </template>
       </x-modal>
       <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
         <p>Are you sure you want to delete this activity?</p>

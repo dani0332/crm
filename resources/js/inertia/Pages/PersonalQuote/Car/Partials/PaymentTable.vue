@@ -337,8 +337,7 @@ const providerId = computed(() => {
         </DataTable>
       </template>
     </Collapsible>
-    <x-modal v-model="createPaymentModal" size="lg" :title="`${ paymentMethodsForm.status == 'create' ? 'New Payment' : 'Update Payment'}`" show-close backdrop>
-      <x-form @submit="addPayment" :auto-focus="false">
+    <x-modal v-model="createPaymentModal" size="lg" :title="`${ paymentMethodsForm.status == 'create' ? 'New Payment' : 'Update Payment'}`" show-close backdrop is-form @submit="addPayment">
         <div class="w-full grid md:grid-cols-2 gap-5">
           <x-field label="Price Including VAT" required>
             <x-input
@@ -402,20 +401,30 @@ const providerId = computed(() => {
             />
           </x-field>
 
-          <div
-            class="w-full md:col-span-2 flex justify-end"
-            v-if="
-              paymentMethodsForm.status == 'create' ||
-              paymentMethodsForm.status == 'edit'
-            "
-          >
-            <x-button color="primary" type="submit" :loading="isLoading">
-              {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
-              Payment
-            </x-button>
-          </div>
         </div>
-      </x-form>
+        <template #secondary-action>
+            <x-button
+              ghost
+              tabindex="-1"
+              @click="createPaymentModal = false"
+            >
+              Cancel
+            </x-button>
+        </template>
+        <template #primary-action>
+            <div
+              class="w-full md:col-span-2 flex justify-end"
+              v-if="
+                paymentMethodsForm.status == 'create' ||
+                paymentMethodsForm.status == 'edit'
+              "
+            >
+              <x-button color="primary" type="submit" :loading="isLoading">
+                {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
+                Payment
+              </x-button>
+            </div>
+        </template>
     </x-modal>
   </div>
 </template>

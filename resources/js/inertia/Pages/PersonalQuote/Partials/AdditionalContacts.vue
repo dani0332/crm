@@ -232,8 +232,7 @@ const additionalContact = computed(() => {
                     </template>
                 </DataTable>
 
-                <x-modal v-model="modals.addContact" size="lg" title="Add Additional Contacts" show-close backdrop>
-                    <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+                <x-modal v-model="modals.addContact" size="md" title="Add Additional Contacts" show-close backdrop is-form @submit="onAdditionalContactSubmit">
                         <div class="grid gap-4">
                             <x-select v-model="contactForm.key" label="Type" :options="[
                     { value: 'email', label: 'Email' },
@@ -248,16 +247,16 @@ const additionalContact = computed(() => {
                                 :error="contactForm.errors.value" class="w-full" />
                         </div>
 
-                        <div class="text-right space-x-4 mt-12">
-                            <x-button size="sm" @click.prevent="modals.addContact = false">
+                        <template #secondary-action>
+                            <x-button ghost tabindex="-1" size="sm" @click.prevent="modals.addContact = false">
                                 Cancel
                             </x-button>
-
+                        </template>
+                        <template #primary-action>
                             <x-button size="sm" color="emerald" :loading="contactForm.processing" type="submit">
                                 Save
                             </x-button>
-                        </div>
-                    </x-form>
+                        </template>
                 </x-modal>
 
                 <x-modal v-model="modals.contactDeleteConfirm" title="Delete Additional Contact" show-close backdrop>

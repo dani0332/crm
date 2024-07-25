@@ -299,8 +299,7 @@ const providerId = computed(() => {
         :title="`${ paymentMethodsForm.status == 'create'
             ? 'New Payment'
             : 'Update Payment'}`"
-        size="lg" show-close backdrop>
-      <x-form @submit="addPayment" :auto-focus="false">
+        size="lg" show-close backdrop is-form @submit="addPayment">
         <div class="w-full grid md:grid-cols-2 gap-5">
           <x-input
             class="w-full"
@@ -344,8 +343,14 @@ const providerId = computed(() => {
             v-show="paymentMethodsForm.payment_method != 'CC'"
             v-model="paymentMethodsForm.payment_reference"
           />
-
-          <div
+        </div>
+        <template #secondary-action>
+            <x-button ghost tabindex="-1" @click="createPaymentModal = false">
+              Cancel
+            </x-button>
+        </template>
+        <template #primary-action>
+            <div
             class="w-full md:col-span-2 flex justify-end"
             v-if="
               paymentMethodsForm.status == 'create' ||
@@ -357,8 +362,7 @@ const providerId = computed(() => {
               Payment
             </x-button>
           </div>
-        </div>
-      </x-form>
+        </template>
     </x-modal>
   </div>
 </template>

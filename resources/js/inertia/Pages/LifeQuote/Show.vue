@@ -563,8 +563,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       </div>
     </div>
 
-    <x-modal v-model="modalsDuplicate" size="lg" title="Duplicate Lead" show-close backdrop>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
+    <x-modal v-model="modalsDuplicate" size="md" title="Duplicate Lead" show-close backdrop is-form @submit="onCreateDuplicate">
         <div class="grid gap-4">
           <x-field label="LOBs" required>
             <x-select
@@ -592,15 +591,19 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               ]"
             />
           </x-field>
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
         </div>
-      </x-form>
+        <template #secondary-action>
+            <x-button ghost tabindex="-1" @click="modalsDuplicate = false">Cancel</x-button>
+        </template>
+        <template #primary-action>
+            <x-button
+              color="orange"
+              type="submit"
+              :loading="leadDuplicateForm.processing"
+            >
+              Create Duplicate
+            </x-button>
+        </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
@@ -1018,9 +1021,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions >
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
@@ -1028,7 +1030,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
@@ -1071,12 +1073,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             />
           </dd>
         </div>
-        <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
-            Link
-          </x-button>
-        </div>
-      </dl>
+    </dl>
+    <template #actions>
+      <x-button size="sm" color="orange" @click.prevent="linkEntity">
+        Link
+      </x-button>
+    </template>
     </x-modal>
 
     <MemberDetails
@@ -1363,8 +1365,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       </Collapsible>
       <x-modal v-model="modals.activity" size="lg"
       :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
-      show-close backdrop>
-        <x-form @submit="onActivitySubmit" :auto-focus="false">
+      show-close backdrop is-form @submit="onActivitySubmit">
           <div class="grid gap-4">
             <x-field label="Title" required>
               <x-input
@@ -1398,11 +1399,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </x-field>
           </div>
 
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.activity = false">
+          <template #secondary-action>
+            <x-button ghost size="sm" tabindex="-1" @click.prevent="modals.activity = false">
               Cancel
             </x-button>
-
+          </template>
+          <template #primary-action>
             <x-button
               size="sm"
               color="emerald"
@@ -1411,8 +1413,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             >
               {{ activityActionEdit ? 'Update' : 'Save' }}
             </x-button>
-          </div>
-        </x-form>
+          </template>
       </x-modal>
       <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
         <p>Are you sure you want to delete this activity?</p>

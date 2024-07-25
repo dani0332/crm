@@ -415,67 +415,32 @@ const resetDateFilters = filterName => {
 </script>
 
 <template>
-  <div>
-    <Head title="View Car" />
-    <div class="flex justify-between items-center flex-wrap gap-4">
-      <h2 class="text-xl font-semibold">Lead List</h2>
-      <LeadAssignedWidget
-        v-if="hasRole(rolesEnum.CarAdvisor)"
-        :todayAutoCount="todayAutoCount"
-        :todayManualCount="todayManualCount"
-        :yesterdayAutoCount="yesterdayAutoCount"
-        :yesterdayManualCount="yesterdayManualCount"
-        :userMaxCap="userMaxCap"
-      />
-      <!-- <Link :href="route('car.create')"> -->
-      <x-button
-        size="sm"
-        color="#ff5e00"
-        tag="div"
-        @click="createLead.modal = true"
-      >
-        Create Lead
-      </x-button>
-      <!-- </Link> -->
-    </div>
-    <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-input
-          v-model="filters.code"
-          type="search"
-          name="code"
-          label="REF-ID"
-          class="w-full"
-          placeholder="Search by REF-ID"
-        />
-        <ComboBox
-          v-model="filters.quote_batch_id"
-          label="Batch"
-          name="quote_batch_id"
-          placeholder="Please select batch"
-          :options="batchOptions"
-        />
-        <x-input
-          v-model="filters.first_name"
-          type="search"
-          name="first_name"
-          label="First Name"
-          class="w-full"
-          placeholder="Search by First Name"
-        />
-        <x-input
-          v-model="filters.last_name"
-          type="search"
-          name="last_name"
-          label="Last Name"
-          class="w-full"
-          placeholder="Search by Last Name"
-        />
-        <DatePicker
-          v-model="filters.created_at_start"
-          label="Created Date Start"
-          :rules="
+    <div>
+
+        <Head title="View Car" />
+        <div class="flex justify-between items-center flex-wrap gap-4">
+            <h2 class="text-xl font-semibold">Lead List</h2>
+            <LeadAssignedWidget v-if="hasRole(rolesEnum.CarAdvisor)" :todayAutoCount="todayAutoCount"
+                :todayManualCount="todayManualCount" :yesterdayAutoCount="yesterdayAutoCount"
+                :yesterdayManualCount="yesterdayManualCount" :userMaxCap="userMaxCap" />
+            <!-- <Link :href="route('car.create')"> -->
+            <x-button size="sm" color="#ff5e00" tag="div" @click="createLead.modal = true">
+                Create Lead
+            </x-button>
+            <!-- </Link> -->
+        </div>
+        <x-divider class="my-4" />
+        <x-form @submit="onSubmit" :auto-focus="false">
+            <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <x-input v-model="filters.code" type="search" name="code" label="REF-ID" class="w-full"
+                    placeholder="Search by REF-ID" />
+                <ComboBox v-model="filters.quote_batch_id" label="Batch" name="quote_batch_id"
+                    placeholder="Please select batch" :options="batchOptions" />
+                <x-input v-model="filters.first_name" type="search" name="first_name" label="First Name" class="w-full"
+                    placeholder="Search by First Name" />
+                <x-input v-model="filters.last_name" type="search" name="last_name" label="Last Name" class="w-full"
+                    placeholder="Search by Last Name" />
+                <DatePicker v-model="filters.created_at_start" label="Created Date Start" :rules="
             filters.previous_quote_policy_number ||
             filters.code ||
             filters.email ||
@@ -485,12 +450,8 @@ const resetDateFilters = filterName => {
             filters.booking_date
               ? []
               : [isRequired]
-          "
-        />
-        <DatePicker
-          v-model="filters.created_at_end"
-          label="Created Date End"
-          :rules="
+          " />
+                <DatePicker v-model="filters.created_at_end" label="Created Date End" :rules="
             filters.previous_quote_policy_number ||
             filters.code ||
             filters.email ||
@@ -500,409 +461,215 @@ const resetDateFilters = filterName => {
             filters.booking_date
               ? []
               : [isRequired]
-          "
-        />
-        <x-input
-          v-model="filters.email"
-          type="search"
-          name="email"
-          label="Email"
-          class="w-full"
-          placeholder="Search by Email"
-        />
-        <x-input
-          v-model="filters.mobile_no"
-          type="search"
-          name="mobile_no"
-          label="Mobile Number"
-          class="w-full"
-          placeholder="Search by Mobile Number"
-        />
-        <DatePicker
-          v-model="filters.advisor_assigned_date"
-          name="advisor_assigned_date"
-          label="Advisor Assigned Date Start"
-        />
-        <DatePicker
-          v-model="filters.advisor_assigned_date_end"
-          name="advisor_assigned_date_end"
-          label="Advisor Assigned Date End"
-        />
-        <ComboBox
-          v-model="filters.payment_status_id"
-          label="Payment Status"
-          name="payment_status_id"
-          :options="paymentStatusOptions"
-          placeholder="Please select payment status"
-          class="w-full"
-          :single="true"
-        />
-        <x-select
-          v-model="filters.is_ecommerce"
-          label="Ecommerce"
-          name="is_ecommerce"
-          :options="ecommerceOptions"
-          placeholder="Please select is ecommerce"
-          class="w-full"
-        />
-        <ComboBox
-          v-model="filters.quote_status_id"
-          label="Lead Status"
-          name="quote_status_id"
-          :options="leadStatuses"
-        />
-        <ComboBox
-          v-model="filters.tier_id"
-          label="Tier Name"
-          name="tier_id"
-          placeholder="Please select batch"
-          :options="leadTiers"
-        />
-        <ComboBox
-          :single="true"
-          v-model="filters.vehicle_type_id"
-          label="Vehicle Type"
-          name="vehicle_type_id"
-          :options="vehicleTypes"
-          placeholder="Please select an option"
-          class="w-full"
-        />
-        <ComboBox
-          :single="true"
-          v-model="filters.car_type_insurance_id"
-          label="Type of Car Insurance"
-          name="car_type_insurance_id"
-          :options="carTypeInsurances"
-          placeholder="Please select an option"
-          class="w-full"
-        />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
-          label="Renewal Batch"
-          class="w-full"
-          placeholder="Search by Renewal Batch"
-        />
-        <DatePicker
-          v-model="filters.renewal_expiry_date"
-          name="renewal_expiry_date"
-          label="Renewal Expiry Date Start"
-        />
-        <DatePicker
-          v-model="filters.renewal_expiry_date_end"
-          name="renewal_expiry_date_end"
-          label="Renewal Expiry Date End"
-        />
-        <ComboBox
-          :single="true"
-          v-model="filters.currently_insured_with"
-          label="Currently Insured with"
-          name="currently_insured_with"
-          :options="providers"
-          placeholder="Please select an option"
-          class="w-full"
-        />
-        <x-input
-          v-model="filters.previous_quote_policy_number"
-          type="text"
-          name="previous_quote_policy_number"
-          label="Policy Number"
-          class="w-full"
-          placeholder="Policy Number"
-        />
-        <ComboBox
-          v-if="!hasRole(rolesEnum.CarAdvisor)"
-          v-model="filters.advisor_id"
-          label="Advisors (select teams first)"
-          name="advisor_id"
-          placeholder="Please select Advisor"
-          :options="
+          " />
+                <x-input v-model="filters.email" type="search" name="email" label="Email" class="w-full"
+                    placeholder="Search by Email" />
+                <x-input v-model="filters.mobile_no" type="search" name="mobile_no" label="Mobile Number" class="w-full"
+                    placeholder="Search by Mobile Number" />
+                <DatePicker v-model="filters.advisor_assigned_date" name="advisor_assigned_date"
+                    label="Advisor Assigned Date Start" />
+                <DatePicker v-model="filters.advisor_assigned_date_end" name="advisor_assigned_date_end"
+                    label="Advisor Assigned Date End" />
+                <ComboBox v-model="filters.payment_status_id" label="Payment Status" name="payment_status_id"
+                    :options="paymentStatusOptions" placeholder="Please select payment status" class="w-full"
+                    :single="true" />
+                <x-select v-model="filters.is_ecommerce" label="Ecommerce" name="is_ecommerce"
+                    :options="ecommerceOptions" placeholder="Please select is ecommerce" class="w-full" />
+                <ComboBox v-model="filters.quote_status_id" label="Lead Status" name="quote_status_id"
+                    :options="leadStatuses" />
+                <ComboBox v-model="filters.tier_id" label="Tier Name" name="tier_id" placeholder="Please select batch"
+                    :options="leadTiers" />
+                <ComboBox :single="true" v-model="filters.vehicle_type_id" label="Vehicle Type" name="vehicle_type_id"
+                    :options="vehicleTypes" placeholder="Please select an option" class="w-full" />
+                <ComboBox :single="true" v-model="filters.car_type_insurance_id" label="Type of Car Insurance"
+                    name="car_type_insurance_id" :options="carTypeInsurances" placeholder="Please select an option"
+                    class="w-full" />
+                <x-input v-model="filters.renewal_batch" type="text" name="renewal_batch" label="Renewal Batch"
+                    class="w-full" placeholder="Search by Renewal Batch" />
+                <DatePicker v-model="filters.renewal_expiry_date" name="renewal_expiry_date"
+                    label="Renewal Expiry Date Start" />
+                <DatePicker v-model="filters.renewal_expiry_date_end" name="renewal_expiry_date_end"
+                    label="Renewal Expiry Date End" />
+                <ComboBox :single="true" v-model="filters.currently_insured_with" label="Currently Insured with"
+                    name="currently_insured_with" :options="providers" placeholder="Please select an option"
+                    class="w-full" />
+                <x-input v-model="filters.previous_quote_policy_number" type="text" name="previous_quote_policy_number"
+                    label="Policy Number" class="w-full" placeholder="Policy Number" />
+                <ComboBox v-if="!hasRole(rolesEnum.CarAdvisor)" v-model="filters.advisor_id"
+                    label="Advisors (select teams first)" name="advisor_id" placeholder="Please select Advisor"
+                    :options="
             teamUsers.map(user => ({
               value: user.id,
               label: user.name,
             }))
-          "
-          :loading="loader.advisorTeamOptions"
-        />
-        <ComboBox
-          v-if="!hasRole(rolesEnum.CarAdvisor)"
-          v-model="filters.assignment_type"
-          label="Assignment Type"
-          placeholder="Please select assignment type"
-          :options="assignmentTypeOptions"
-          :single="true"
-          class="w-full"
-        />
-        <ComboBox
-          v-if="!hasRole(rolesEnum.CarAdvisor)"
-          v-model="filters.teams"
-          label="Teams"
-          placeholder="Search by Teams"
-          :options="teamOptions"
-          @update:modelValue="fetchTeamUsers"
-        />
-        <DatePicker
-          v-if="!hasRole(rolesEnum.CarAdvisor)"
-          v-model="filters.transaction_approved_dates"
-          label="Transaction Approved Date"
-          class="w-full"
-          range
-          multi-calendars
-          multi-calendars-solo
-          max-range="30"
-        />
+          " :loading="loader.advisorTeamOptions" />
+                <ComboBox v-if="!hasRole(rolesEnum.CarAdvisor)" v-model="filters.assignment_type"
+                    label="Assignment Type" placeholder="Please select assignment type" :options="assignmentTypeOptions"
+                    :single="true" class="w-full" />
+                <ComboBox v-if="!hasRole(rolesEnum.CarAdvisor)" v-model="filters.teams" label="Teams"
+                    placeholder="Search by Teams" :options="teamOptions" @update:modelValue="fetchTeamUsers" />
+                <DatePicker v-if="!hasRole(rolesEnum.CarAdvisor)" v-model="filters.transaction_approved_dates"
+                    label="Transaction Approved Date" class="w-full" range multi-calendars multi-calendars-solo
+                    max-range="30" />
 
-        <DatePicker
-          v-if="can(permissionsEnum.EXPORT_PLAN_DETAIL)"
-          v-model="filters.paid_at_start"
-          label="Paid Date Start"
-        />
+                <DatePicker v-if="can(permissionsEnum.EXPORT_PLAN_DETAIL)" v-model="filters.paid_at_start"
+                    label="Paid Date Start" />
 
-        <DatePicker
-          v-if="can(permissionsEnum.EXPORT_PLAN_DETAIL)"
-          v-model="filters.paid_at_end"
-          label="Paid Date End"
-        />
+                <DatePicker v-if="can(permissionsEnum.EXPORT_PLAN_DETAIL)" v-model="filters.paid_at_end"
+                    label="Paid Date End" />
 
-        <ComboBox
-          v-if="can(permissionsEnum.SEGMENT_FILTER)"
-          v-model="filters.segment_filter"
-          label="Segment"
-          placeholder="Select Segment"
-          :options="quoteSegments"
-          :single="true"
-        />
-        <DatePicker
-          v-model="filters.payment_due_date"
-          label="Payment Due Date"
-          class="w-full"
-          range
-          multi-calendars
-          multi-calendars-solo
-        />
-        <DatePicker
-          v-model="filters.booking_date"
-          label="Booking Date"
-          class="w-full"
-          range
-          multi-calendars
-          multi-calendars-solo
-        />
-      </div>
-      <div class="flex justify-between gap-3 mb-4 mt-1">
-        <div>
-          <x-button
-            v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
-            size="sm"
-            color="emerald"
-            :href="`/car/leads-export?${objToUrl(filters)}`"
-            class="justify-self-start mr-3"
-          >
-            Export
-          </x-button>
-          <x-tooltip
-            v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)"
-            position="right"
-          >
-            <x-button tag="div" size="sm" color="emerald" class="mr-3">
-              Export
-            </x-button>
-            <template #tooltip>
-              <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
-              </span>
-            </template>
-          </x-tooltip>
-          <x-button
-            v-if="
+                <ComboBox v-if="can(permissionsEnum.SEGMENT_FILTER)" v-model="filters.segment_filter" label="Segment"
+                    placeholder="Select Segment" :options="quoteSegments" :single="true" />
+                <DatePicker v-model="filters.payment_due_date" label="Payment Due Date" class="w-full" range
+                    multi-calendars multi-calendars-solo />
+                <DatePicker v-model="filters.booking_date" label="Booking Date" class="w-full" range multi-calendars
+                    multi-calendars-solo />
+            </div>
+            <div class="flex justify-between gap-3 mb-4 mt-1">
+                <div>
+                    <x-button v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)" size="sm" color="emerald"
+                        :href="`/car/leads-export?${objToUrl(filters)}`" class="justify-self-start mr-3">
+                        Export
+                    </x-button>
+                    <x-tooltip v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)" position="right">
+                        <x-button tag="div" size="sm" color="emerald" class="mr-3">
+                            Export
+                        </x-button>
+                        <template #tooltip>
+                            <span class="font-medium">
+                                Created dates or payment due date or booking date are required to export data.
+                            </span>
+                        </template>
+                    </x-tooltip>
+                    <x-button v-if="
               canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)
-            "
-            size="sm"
-            color="emerald"
-            :href="`/car/leads-export-plan/${
+            " size="sm" color="emerald" :href="`/car/leads-export-plan/${
               genericRequestEnum.EXPORT_PLAN_DETAIL
-            }?${objToUrl(filters)}`"
-            class="justify-self-start mr-3"
-          >
-            Extract leads and plan detail
-          </x-button>
-          <x-tooltip
-            v-if="
+            }?${objToUrl(filters)}`" class="justify-self-start mr-3">
+                        Extract leads and plan detail
+                    </x-button>
+                    <x-tooltip v-if="
               !canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)
-            "
-            position="right"
-          >
-            <x-button class="mr-3" tag="div" size="sm" color="emerald">
-              Extract leads and plan detail</x-button
-            >
-            <template #tooltip>
-              <span class="font-medium">
-                Paid dates are required to export data.
-              </span>
-            </template>
-          </x-tooltip>
+            " position="right">
+                        <x-button class="mr-3" tag="div" size="sm" color="emerald">
+                            Extract leads and plan detail</x-button>
+                        <template #tooltip>
+                            <span class="font-medium">
+                                Paid dates are required to export data.
+                            </span>
+                        </template>
+                    </x-tooltip>
 
-          <x-button
-            v-if="
+                    <x-button v-if="
               canExport &&
               can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
-            "
-            size="sm"
-            color="emerald"
-            :href="`/car/leads-details-with-email/${
+            " size="sm" color="emerald" :href="`/car/leads-details-with-email/${
               genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
-            }?${objToUrl(filters)}`"
-            class="justify-self-start mr-3"
-          >
-            Extract leads detail with email/mobile_no
-          </x-button>
-          <x-tooltip
-            v-if="
+            }?${objToUrl(filters)}`" class="justify-self-start mr-3">
+                        Extract leads detail with email/mobile_no
+                    </x-button>
+                    <x-tooltip v-if="
               !canExport &&
               can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
-            "
-            position="right"
-          >
-            <x-button class="mr-3" tag="div" size="sm" color="emerald"
-              >Extract leads detail with email/mobile_no</x-button
-            >
-            <template #tooltip>
-              <span class="font-medium">
-                Created dates are required to export data.
-              </span>
-            </template>
-          </x-tooltip>
-          <x-button
-            v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
-            size="sm"
-            color="emerald"
-            :href="`/car/export-makes-model/${
+            " position="right">
+                        <x-button class="mr-3" tag="div" size="sm" color="emerald">Extract leads detail with
+                            email/mobile_no</x-button>
+                        <template #tooltip>
+                            <span class="font-medium">
+                                Created dates are required to export data.
+                            </span>
+                        </template>
+                    </x-tooltip>
+                    <x-button v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)" size="sm" color="emerald" :href="`/car/export-makes-model/${
               genericRequestEnum.EXPORT_MAKES_MODELS
-            }?${objToUrl(filters)}`"
-            class="justify-self-start mr-3"
-          >
-            Extract makes models trims
-          </x-button>
-        </div>
-        <div class="flex justify-self-end gap-3">
-          <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
-          <x-button size="sm" color="primary" @click.prevent="onReset">
-            Reset
-          </x-button>
-        </div>
-      </div>
-    </x-form>
+            }?${objToUrl(filters)}`" class="justify-self-start mr-3">
+                        Extract makes models trims
+                    </x-button>
+                </div>
+                <div class="flex justify-self-end gap-3">
+                    <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
+                    <x-button size="sm" color="primary" @click.prevent="onReset">
+                        Reset
+                    </x-button>
+                </div>
+            </div>
+        </x-form>
 
-    <Transition name="fade" v-if="!hasRole(rolesEnum.CarAdvisor)">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
-        <LeadAssignment
-          :selected="quotesSelected.map(e => e.id)"
-          :advisors="advisorOptions"
-          quoteType="Car"
-          @success="onLeadAssigned"
-        />
-      </div>
-    </Transition>
-    <x-divider class="my-4" />
-    <DataTable
-      v-model:items-selected="quotesSelected"
-      table-class-name="tablefixed"
-      :loading="loader.table"
-      :headers="filteredTableHeader"
-      :items="quotes.data || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-      fixed-checkbox
-    >
-      <template #item-code="{ code, uuid }">
-        <Link
-          :href="route('car.show', uuid)"
-          class="text-primary-500 hover:underline"
-        >
-          {{ code }}
-        </Link>
-      </template>
+        <Transition name="fade" v-if="!hasRole(rolesEnum.CarAdvisor)">
+            <div v-if="quotesSelected.length > 0" class="mb-4">
+                <LeadAssignment :selected="quotesSelected.map(e => e.id)" :advisors="advisorOptions" quoteType="Car"
+                    @success="onLeadAssigned" />
+            </div>
+        </Transition>
+        <x-divider class="my-4" />
+        <DataTable v-model:items-selected="quotesSelected" table-class-name="tablefixed" :loading="loader.table"
+            :headers="filteredTableHeader" :items="quotes.data || []" border-cell hide-rows-per-page hide-footer
+            fixed-checkbox>
+            <template #item-code="{ code, uuid }">
+                <Link :href="route('car.show', uuid)" class="text-primary-500 hover:underline">
+                {{ code }}
+                </Link>
+            </template>
 
-      <template #item-is_ecommerce="{ is_ecommerce }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
-      </template>
-      <template #item-is_gcc_standard="{ is_gcc_standard }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_gcc_standard ? 'success' : 'error'">
-            {{ is_gcc_standard ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
-      </template>
-      <template #item-is_modified="{ is_modified }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_modified ? 'success' : 'error'">
-            {{ is_modified ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
-      </template>
-      <template #item-price_starting_from="item">
-        <p v-if="item.price_starting_from != null">
-          {{ fixedValue(item.price_starting_from) }}
-        </p>
-      </template>
+            <template #item-is_ecommerce="{ is_ecommerce }">
+                <div class="text-center">
+                    <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
+                        {{ is_ecommerce ? 'Yes' : 'No' }}
+                    </x-tag>
+                </div>
+            </template>
+            <template #item-is_gcc_standard="{ is_gcc_standard }">
+                <div class="text-center">
+                    <x-tag size="sm" :color="is_gcc_standard ? 'success' : 'error'">
+                        {{ is_gcc_standard ? 'Yes' : 'No' }}
+                    </x-tag>
+                </div>
+            </template>
+            <template #item-is_modified="{ is_modified }">
+                <div class="text-center">
+                    <x-tag size="sm" :color="is_modified ? 'success' : 'error'">
+                        {{ is_modified ? 'Yes' : 'No' }}
+                    </x-tag>
+                </div>
+            </template>
+            <template #item-price_starting_from="item">
+                <p v-if="item.price_starting_from != null">
+                    {{ fixedValue(item.price_starting_from) }}
+                </p>
+            </template>
 
-      <template #item-premium="item">
-        <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
-      </template>
-    </DataTable>
+            <template #item-premium="item">
+                <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
+            </template>
+        </DataTable>
 
-    <Pagination
-      :links="{
+        <Pagination :links="{
         next: quotes.next_page_url,
         prev: quotes.prev_page_url,
         current: quotes.current_page,
         from: quotes.from,
         to: quotes.to,
-      }"
-    />
+      }" />
 
-    <x-modal v-model="createLead.modal" size="lg" title="Create Lead" show-close backdrop>
-      <x-form :auto-focus="false">
-        <div class="w-full grid md:grid-cols-2 gap-5">
-          <p class="text-md font-bold text-gray-500">
-            Select reason to create manual lead <span class="error">*</span>
-          </p>
-        </div>
-        <div class="flex w-full flex-col gap-5 mt-4 mb-4">
-          <x-radio
-            v-model="createLead.type"
-            value="referral"
-            label="Referral"
-          />
-          <x-radio
-            v-model="createLead.type"
-            value="early_renewal"
-            label="Early Renewal"
-          />
-          <x-radio
-            v-model="createLead.type"
-            value="payment_status"
-            label="Payment Status"
-          />
-        </div>
-        <x-divider class="my-4" />
-        <div class="flex justify-end gap-3 mb-4">
-          <x-button
-            size="md"
-            color="emerald"
-            type="button"
-            @click.prevent="onConfirmCreateLead"
-          >
-            Confirm
-          </x-button>
-        </div>
-      </x-form>
-    </x-modal>
-  </div>
+        <x-modal v-model="createLead.modal" size="md" title="Create Lead" show-close backdrop>
+            <div class="w-full grid md:grid-cols-2 gap-5">
+                <p class="text-md font-bold text-gray-500">
+                    Select reason to create manual lead <span class="error">*</span>
+                </p>
+            </div>
+            <div class="flex w-full flex-col gap-5 mt-4 mb-4">
+                <x-radio v-model="createLead.type" value="referral" label="Referral" />
+                <x-radio v-model="createLead.type" value="early_renewal" label="Early Renewal" />
+                <x-radio v-model="createLead.type" value="payment_status" label="Payment Status" />
+            </div>
+            <template #actions>
+                <x-button ghost tabindex="-1" size="md" type="button" @click.prevent="createLead.modal = false">
+                    Cancel
+                </x-button>
+                <x-button size="md" color="emerald" type="button" @click.prevent="onConfirmCreateLead">
+                    Confirm
+                </x-button>
+            </template>
+        </x-modal>
+    </div>
 </template>

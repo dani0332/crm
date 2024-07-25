@@ -315,8 +315,7 @@ const rolesEnum = page.props.rolesEnum;
 
     <x-modal v-model="paymentModal" size="lg"
     :title="`${paymentForm.status == 'create' ? 'New Payment' : 'Update Payment'}`"
-    show-close backdrop>
-      <x-form @submit="addPayment" :auto-focus="false">
+    show-close backdrop is-form @submit="addPayment">
         <div class="w-full grid md:grid-cols-2 gap-5">
           <x-input
             class="w-full"
@@ -358,23 +357,34 @@ const rolesEnum = page.props.rolesEnum;
           >
           </x-select>
 
-          <div
-            class="w-full md:col-span-2 flex justify-end"
-            v-if="
-              paymentForm.status == 'create' || paymentForm.status == 'edit'
-            "
-          >
-            <x-button
-              :loading="paymentForm.processing"
-              color="primary"
-              type="submit"
-            >
-              {{ paymentForm.status == 'create' ? 'Create' : 'Update' }}
-              Payment
-            </x-button>
-          </div>
         </div>
-      </x-form>
+        <template #secondary-action>
+            <x-button
+              ghost
+              tabindex="-1"
+              @click.prevent="paymentModal = false"
+              size="sm"
+            >
+              Cancel
+            </x-button>
+        </template>
+        <template #primary-action>
+            <div
+              class="w-full md:col-span-2 flex justify-end"
+              v-if="
+                paymentForm.status == 'create' || paymentForm.status == 'edit'
+              "
+            >
+              <x-button
+                :loading="paymentForm.processing"
+                color="primary"
+                type="submit"
+              >
+                {{ paymentForm.status == 'create' ? 'Create' : 'Update' }}
+                Payment
+              </x-button>
+            </div>
+        </template>
     </x-modal>
   </div>
 </template>

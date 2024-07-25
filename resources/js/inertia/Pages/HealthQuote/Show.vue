@@ -2238,7 +2238,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             </dl>
             <template #actions>
                 <div class="flex justify-end">
-                    <x-button class="mt-4" color="primary" size="sm" :loading="customerProfileForm.processing"
+                    <x-button color="primary" size="sm" :loading="customerProfileForm.processing"
                         @click.prevent="searchByTradeLicense('SubEntity')">
                         Search
                     </x-button>
