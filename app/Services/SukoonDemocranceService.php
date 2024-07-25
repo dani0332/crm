@@ -184,7 +184,7 @@ class SukoonDemocranceService
                 throw new Exception('Unable to determine filename from the response headers.');
             }
         } catch (Exception $e) {
-            $this->logFailure('Get COI Document', $e->getMessage(), ['quote' => $quote, 'embedded' => $embedded]);
+            $this->logFailure('Get COI Document', $e->getMessage(), ['quote' => $quote, 'embedded' => $embeddedTransaction]);
             throw $e;
         }
     }
@@ -296,9 +296,22 @@ class SukoonDemocranceService
 
     private function logRequest($status, $message, $data, $url = '', $response = '', $parentFunction = '')
     {
+        // Truncate response if it's too large
+        $maxTextLength = 65535; // The maximum length for MySQL TEXT type
+
+        // Ensure response is a JSON string
+        $response = is_array($response) ? json_encode($response) : $response;
+
+        // Check if the response exceeds the maximum length
+        if (strlen($response) > $maxTextLength) {
+            // Save the large response to a file
+            $responseFilePath = storage_path('logs/response_sukoon_democrance_' . uniqid() . '.json');
+            file_put_contents($responseFilePath, $response);
+            $response = 'Response too large, saved to: ' . $responseFilePath;
+        }
         $logData = [
             'status' => $status,
-            'request' => $data,
+            'request' => is_array($data) ? json_encode($data) : $data,
             'response' => $response,
             'execution_method' => $parentFunction,
             'quote_data' => json_encode($this->currentQuote),

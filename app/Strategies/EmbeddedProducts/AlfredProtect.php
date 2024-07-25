@@ -26,25 +26,33 @@ class AlfredProtect extends EmbeddedProduct
 
             $fileInfo = new finfo(FILEINFO_MIME_TYPE);
             $mimeType = $fileInfo->buffer($file);
+            $filePath = Storage::disk('azureIM')->url($document->doc_url);
+
 
             return [
                 'Content' => base64_encode($file),
                 'Name' => $document->doc_name,
                 'ContentType' => $mimeType,
+                'Path' => $filePath,
+                'file' => $file
             ];
         } else {
             $sukoonDemocrance = new SukoonDemocranceService();
             $sukoonDemocrance->processDemocranceSubmission($quoteObject, $ep, $transaction);
             $document = $transaction->documents()->first();
             $file = Storage::disk('azureIM')->get($document->doc_url);
+            $filePath = Storage::disk('azureIM')->url($document->doc_url);
 
             return [
                 'Content' => base64_encode($file),
                 'Name' => $document->doc_name,
                 'ContentType' => 'application/pdf',
+                'Path' => $filePath,
+                'file' => $file
             ];
         }
     }
+
 
 
     /**

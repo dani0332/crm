@@ -122,6 +122,19 @@ const sendDcoument = id => {
     });
 };
 
+const download = (data, name, type) => {
+  const url = window.URL.createObjectURL(new Blob([data], { type }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', name);
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }, 200);
+};
+
 /**
  * this function use download embedded transaction documents issue from insurance provider
  */
@@ -134,10 +147,21 @@ const downloadDocument = id => {
     }))
     .post('/embedded-products/download-document', {
       preserveScroll: true,
-      onSuccess: () => {
+      'Accept': 'application/pdf',
+      responseType: 'blob',
+
+      onSuccess: (response) => {
+        debugger;
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'image.png');
+        document.body.appendChild(link);
+        link.click();
         downloadDocumentLoader.value = false;
       },
       onError: () => {
+        debugger;
         downloadDocumentLoader.value = false;
       },
     });
