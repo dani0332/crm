@@ -106,7 +106,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('PersonalQuoteDataMigration:cron')
             ->timezone('Asia/Dubai')
-            ->dailyAt('12:05')
+            ->dailyAt('12:35')
             ->onOneServer()
             ->withoutOverlapping()
             ->onSuccess(function (Stringable $output) {
