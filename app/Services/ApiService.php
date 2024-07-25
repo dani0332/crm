@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -141,9 +142,14 @@ class ApiService
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
+        if($request->quoteType == QuoteTypes::HEALTH) {
+            info('------ SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
+        }
+        else {
         info('------ SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
         SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
         info('------ SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
+        }
 
         return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
     }
