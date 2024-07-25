@@ -835,6 +835,23 @@ const checkDiscount = (newPrice) => {
     }
   }
 }
+
+const dateToDMY = date => {
+  if (date) {
+    // Check if date is already in DMY format
+    const dmyRegex = /^\d{2}-\d{2}-\d{4}( \d{2}:\d{2}:\d{2})?$/;
+    if (dmyRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      const [year, month, day] = date.split(' ')[0].split('-');
+      return `${day}-${month}-${year}`;
+    }
+  }
+
+  return null;
+}
 </script>
 
 <template>
@@ -915,7 +932,7 @@ const checkDiscount = (newPrice) => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.booking_date ?? 'N/A' }}</span>
+                <span>{{ dateToDMY(reversalEntry.booking_date) ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -969,7 +986,7 @@ const checkDiscount = (newPrice) => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.invoice_date ?? 'N/A' }}</span>
+                <span>{{ dateToDMY(reversalEntry.invoice_date) ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
