@@ -422,7 +422,7 @@ const resetDateFilters = filterName => {
             :options="advisorOptions"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
