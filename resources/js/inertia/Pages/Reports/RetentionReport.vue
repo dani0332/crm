@@ -3,6 +3,7 @@
 defineProps({
   filterOptions: Object,
   filtersByLob: Object,
+  reportData: Object,
 });
 
 const page = usePage();
@@ -217,6 +218,53 @@ const loadAdvisors = e => {
     });
 };
 
+const tableHeader = [
+  {
+    text: 'Month',
+    value: 'month',
+  },
+  {
+    text: 'Batch',
+    value: 'batch',
+  },
+  {
+    text: 'Start Date',
+    value: 'start_date',
+  },
+  {
+    text: 'End Date',
+    value: 'end_date',
+  },
+  {
+    text: 'Advisor Name',
+    value: 'advisor_name',
+  },
+  {
+    text: 'Total',
+    value: 'total',
+  },
+  {
+    text: 'Lost',
+    value: 'lost',
+  },
+  {
+    text: 'Invalid',
+    value: 'invalid',
+  },
+  {
+    text: 'Sales',
+    value: 'sales',
+  },
+  {
+    text: 'Volume Gross Retention',
+    value: 'volume_gross_retention',
+  },
+  {
+    text: 'Volumme Net Retention',
+    value: 'volume_net_retention',
+  },
+];
+
 </script>
 
 <template>
@@ -300,5 +348,28 @@ const loadAdvisors = e => {
         </div>
       </div>
     </x-form>
+
+    <DataTable
+      table-class-name="tablefixed"
+      :loading="loaders.table"
+      :headers="tableHeader"
+      :items="reportData || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+    >
+  </DataTable>
+
+  <!-- <Pagination
+    :links="{
+      next: reportData.next_page_url,
+      prev: reportData.prev_page_url,
+      current: reportData.current_page,
+      from: reportData.from,
+      to: reportData.to,
+      total: reportData.total,
+      last: reportData.last_page,
+    }"
+  /> -->
   </div>
 </template>
