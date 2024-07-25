@@ -34,7 +34,7 @@ class AlfredProtect extends EmbeddedProduct
                 'Name' => $document->doc_name,
                 'ContentType' => $mimeType,
                 'Path' => $filePath,
-                'file' => $file
+                'File' => $file
             ];
         } else {
             $sukoonDemocrance = new SukoonDemocranceService();
