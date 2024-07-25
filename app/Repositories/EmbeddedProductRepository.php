@@ -399,6 +399,7 @@ class EmbeddedProductRepository extends BaseRepository
             $strategy = $this->createStrategy($short_code, $isAlfredProtect);
             $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
             $emailTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value');
+            info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
             $emailData = (object) [
                 'customerName' => $quoteObject->customer->first_name . ' ' . $quoteObject->customer->last_name,
                 'customerEmail' => $quoteObject->customer->email,
@@ -413,7 +414,10 @@ class EmbeddedProductRepository extends BaseRepository
                 'customerId' => $quoteObject->customer->id,
                 'documentUrl' => $attachmentsUrls,
             ];
+            info('Send Alfred Protect Email Data: ' . json_encode($emailData));
+
             $response = app(SendEmailCustomerService::class)->sendEmail($emailTemplateId, $emailData, 'policy-documents-alfred-protect');
+            info('Send Alfred Protect Email Response: ' . json_encode($response));
 
             if ($response == 201) {
                 if (request()->ajax()) {
