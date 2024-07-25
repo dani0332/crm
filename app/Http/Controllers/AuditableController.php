@@ -40,7 +40,7 @@ class AuditableController extends Controller
     {
         $code = isset($request->code) ? $request->code : '';
 
-        if ($request->auditableType == 'App\Models\SendUpdateLog') {
+        if ($request->auditableType === 'App\Models\SendUpdateLog') {
             $code = $this->getSendUpdatePaymentCode($request->auditableId);
             $documentIds = $this->getSendUpdateDocumentIds($request->auditableId);
         }
