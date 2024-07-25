@@ -7,6 +7,7 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -175,9 +176,16 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
                     'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
                     'credit_approval' => $masterPayment->credit_approval,
-                    'payment_methods_code' => $masterPayment->payment_methods, //update the parent payment method, this change is done against a enhancement for Proforma Payment where proforma payment should be downloadable even when policy is booked
                     'updated_by' => $request->user()->id,
                 ];
+
+                // Check if payment frequency is upfron and Old or new Payment method is Proforma Payment Request, only than update parent payment method
+                $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
+                $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
+                $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+                if ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod)) {
+                    $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
+                }
 
             } else {
                 $paymentInformation = [
