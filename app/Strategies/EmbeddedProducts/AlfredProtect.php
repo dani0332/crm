@@ -48,7 +48,7 @@ class AlfredProtect extends EmbeddedProduct
                 'Name' => $document->doc_name,
                 'ContentType' => 'application/pdf',
                 'Path' => $filePath,
-                'file' => $file
+                'File' => $file
             ];
         }
     }

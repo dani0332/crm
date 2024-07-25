@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -171,7 +172,7 @@ class EmbeddedProductRepository extends BaseRepository
             if ($isAlfredProtect) {
                 $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
                 $attachment = $strategy->getCertificateDocument($ep, $transaction[0], $quoteObject);
-                return response()->make($attachment['file'], 200,[
+                return response()->make($attachment['File'], 200,[
                     'Content-Type' => $attachment['ContentType'],
                     'Content-Disposition' => 'inline; filename='.$attachment['Name']
                 ]);
@@ -402,6 +403,7 @@ class EmbeddedProductRepository extends BaseRepository
                 'customerName' => $quoteObject->customer->first_name . ' ' . $quoteObject->customer->last_name,
                 'customerEmail' => $quoteObject->customer->email,
                 'advisorName' => $advisor->name,
+                'productName' => EmbeddedProductEnum::{$short_code}()->value,
                 'advisorLandlineNo' => $advisor->landline_no,
                 'advisorMobileNo' => $advisor->mobile_no,
                 'quoteCdbId' => $quoteObject->code,

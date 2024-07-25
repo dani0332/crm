@@ -147,25 +147,27 @@ const downloadDocument = id => {
     }))
     .post('/embedded-products/download-document', {
       preserveScroll: true,
-      'Accept': 'application/pdf',
-      responseType: 'blob',
-
+      responseType: 'blob',  // Ensure this is correctly set
       onSuccess: (response) => {
-        debugger;
-        const url = window.URL.createObjectURL(new Blob([response.data]));
+        // Create a URL for the blob and trigger download
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'image.png');
+        link.setAttribute('download', 'document.pdf');  // Change filename to .pdf
         document.body.appendChild(link);
         link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
         downloadDocumentLoader.value = false;
       },
       onError: () => {
-        debugger;
         downloadDocumentLoader.value = false;
       },
     });
 };
+
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
