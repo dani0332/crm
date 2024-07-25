@@ -467,6 +467,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
         $dataset = EmbeddedTransaction::with(
+            'product.embeddedProduct',
             'quoteRequest.customer',
             'quoteRequest.carMake',
             'quoteRequest.carModel',
@@ -527,9 +528,10 @@ class EmbeddedProductRepository extends BaseRepository
         } else {
             $dataset = $dataset->simplePaginate()->withQueryString();
         }
-
+        $isAlfredProtect = checkAlfredProtect($ep->short_code);
+        
         $strategy = $this->createStrategy($ep->short_code);
-        $dataset = $strategy->getTransactionData($dataset);
+        $dataset = $strategy->getTransactionData($dataset, $isAlfredProtect);
 
         return $dataset;
     }
