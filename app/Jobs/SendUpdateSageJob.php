@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\SageEnum;
 use App\Services\SageApiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,22 +18,29 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
     public $tries = 3;
     public $timeout = 5; //40
     public $backoff = 360;
+
     private $quoteDetails;
-    private $payload;
     private $payment;
     private $paymentSplit;
+    private $payload;
+    private $sageAPIsLogs;
     private $extraParams;
+    private $sageRequestType;
+    private $loginUserDetails;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteDetails, $payload, $payment, $paymentSplit, $extraParams)
+    public function __construct($quoteDetails, $payment, $paymentSplit, $payload, $sageAPIsLogs, $extraParams, $sageRequestType, $loginUserDetails)
     {
         $this->quoteDetails = $quoteDetails;
-        $this->payload = $payload;
         $this->payment = $payment;
         $this->paymentSplit = $paymentSplit;
+        $this->payload = $payload;
+        $this->sageAPIsLogs = $sageAPIsLogs;
         $this->extraParams = $extraParams;
+        $this->sageRequestType = $sageRequestType;
+        $this->loginUserDetails = $loginUserDetails;
     }
 
     /**
@@ -40,10 +48,35 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
      */
     public function handle(SageApiService $sageApiService): void
     {
-        $sageResponse = $sageApiService->handleSendUpdateCalls($this->quoteDetails, $this->payload, $this->payment, $this->paymentSplit, $this->extraParams);
+        info('------------------ Book Update - Sage Job Started - SendUpdateUUID: '.$this->extraParams['send_update_log']->uuid. '------------------');
+        $this->extraParams['authDetails'] = $this->loginUserDetails;
 
-        $this->setHaystackData('sageResponse', $sageResponse, 'array');
-
+        switch ($this->sageRequestType) {
+            case SageEnum::SUT_NORMAL:
+                $sageResponse = $sageApiService->handleSendUpdateNormalCalls(
+                    $this->quoteDetails,
+                    $this->payment,
+                    $this->paymentSplit,
+                    $this->payload,
+                    $this->sageAPIsLogs,
+                    $this->extraParams
+                );
+                break;
+            
+            case SageEnum::SUT_REVE_CORR:
+                $sageResponse = $sageApiService->handleSendUpdateRevCorrCalls(
+                    $this->quoteDetails,
+                    $this->payment,
+                    $this->paymentSplit,
+                    $this->payload,
+                    $this->sageAPIsLogs,
+                    $this->extraParams,
+                    $this->extraParams['invoicesForReverse']
+                );
+                break;
+        }
+        
+        $this->setHaystackData('response', $sageResponse, 'array');
     }
 
 }

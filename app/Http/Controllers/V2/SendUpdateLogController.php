@@ -435,21 +435,22 @@ class SendUpdateLogController extends Controller
             if ($response['status'] === false) {
 
                 return response()->json(['message' => $response['message']], 500);
-            } else {
-                // Send Update Data move to main lead page as per Send update Type
-                info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-                $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
+            } 
+            // else {
+            // //     // Send Update Data move to main lead page as per Send update Type
+            // //     info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+            // //     $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
-                if ($response['status']) {
-                    info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+            //     if ($response['status']) {
+            //         info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
 
-                    return response()->json(['message' => $response['message'], 'impactUpdated' => true]);
-                }
+            //         return response()->json(['message' => $response['message'], 'impactUpdated' => true]);
+            //     }
 
-                logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+            //     logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
 
-                return response()->json(['message' => $response['message']], 500);
-            }
+            //     return response()->json(['message' => $response['message']], 500);
+            // }
         }
 
         return response()->json(['message' => 'Something went wrong'], 500);
