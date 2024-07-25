@@ -65,8 +65,8 @@ class EndorsementReportService extends ManagementReport
                     IFNULL( send_update_logs.price_vat_applicable , 0 ) +
                     IFNULL( send_update_logs.price_vat_not_applicable , 0 )  +
                     IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( send_update_logs.discount , 0 )) as total_price'),
-                'p.commission_vat_applicable as commission_vat_applicable',
-                'p.commission_vat as commission_vat',
+                'send_update_logs.commission_vat_applicable as commission_vat_applicable',
+                'send_update_logs.vat_on_commission as commission_vat',
                 'p.commission_vat_not_applicable as commission_vat_not_applicable',
                 'p.captured_amount as collected_amount',
                 'ps.verified_at as payment_date',
