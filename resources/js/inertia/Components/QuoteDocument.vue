@@ -307,6 +307,7 @@ const uploadDocumentModal = () => {
                 :max-files="documentType.max_files"
                 :max-size="documentType.max_size"
                 :loading="uploadingStatus[documentType.id]"
+                :document-type-code=documentType.code
                 :isDisabled="documentType.code == documentTypeCodeEnum.AUDIT_DOCUMENT && !can(permissionEnum.AUDIT_DOCUMENT_UPLOAD)"
                 @change="uploadFile(documentType, $event)"
               />
