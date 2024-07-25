@@ -1053,7 +1053,8 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function isCommercialVehicles($lead) {
+    public function isCommercialVehicles($lead)
+    {
         $_return = false;
         $commercialCarModel = CarModel::where('id', $lead->car_model_id)
             ->where('is_commercial', true)
