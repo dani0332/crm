@@ -193,6 +193,20 @@ const onEdit = () => {
     state.isEdit = true;
   }
 };
+
+const rules = {
+  expiry_date: v => {
+    if (v) {
+      const date = new Date(v);
+      const startDate = new Date(policyDetailsForm.start_date);
+      if (startDate >= date) {
+        return 'Expiry date should be greater than Start Date';
+      }
+      return isNaN(date.getTime());
+    }
+    return !!v || 'This field is required';
+  },
+};
 </script>
 
 <template>
@@ -409,6 +423,7 @@ const onEdit = () => {
               <dd>
                 <DatePicker
                     v-model="policyDetailsForm.expiry_date"
+                    :rules="[rules.expiry_date]"
                     name="expiry_date"
                     :disabled="!state.isEdit"
                     placeholder="dd-mm-yyyy"
