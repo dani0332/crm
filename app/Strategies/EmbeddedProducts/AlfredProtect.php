@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 class AlfredProtect extends EmbeddedProduct
 {
     /**
-     * Retrieves the Certificate for a quote object.
+     * Retrieves the Certificate document for a quote object.
      *
      * @param  object  $quoteObject
      * @param  string  $certificateNumber
@@ -43,6 +43,35 @@ class AlfredProtect extends EmbeddedProduct
                 'Name' => $document->doc_name,
                 'ContentType' => 'application/pdf',
             ];
+        }
+    }
+
+
+    /**
+     * Retrieves the Certificate url for a quote object.
+     *
+     * @param  object  $quoteObject
+     * @param  string  $certificateNumber
+     * @param  float  $premium
+     * @return array
+     */
+    public function getCertificateDocumentUrl($ep, $transaction, $quoteObject)
+    {
+        $documents = $transaction->documents()->count();
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
+        if ($documents > 0) {
+            $document = $transaction->documents()->first();
+            $url = $azureStorageUrl . $azureStorageContainer . '/' . $document->doc_url;
+            return $url;
+
+        } else {
+            $sukoonDemocrance = new SukoonDemocranceService();
+            $sukoonDemocrance->processDemocranceSubmission($quoteObject, $ep, $transaction);
+            $document = $transaction->documents()->first();
+
+            $url = $azureStorageUrl . $azureStorageContainer . '/' . $document->doc_url;
+            return $url;
         }
     }
 }

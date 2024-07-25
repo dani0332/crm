@@ -63,6 +63,7 @@ const paymentForm = useForm({
 
 const downloadLoader = ref(false);
 const sendDocumentLoader = ref(false);
+const downloadDocumentLoader = ref(false);
 const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
@@ -120,6 +121,28 @@ const sendDcoument = id => {
       },
     });
 };
+
+/**
+ * this function use download embedded transaction documents issue from insurance provider
+ */
+const downloadDocument = id => {
+  downloadDocumentLoader.value = true;
+  sendDocumentForm
+    .transform(data => ({
+      ...data,
+      epId: id,
+    }))
+    .post('/embedded-products/download-document', {
+      preserveScroll: true,
+      onSuccess: () => {
+        downloadDocumentLoader.value = false;
+      },
+      onError: () => {
+        downloadDocumentLoader.value = false;
+      },
+    });
+};
+
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -313,6 +336,10 @@ const hasAnyRole = roles => useHasAnyRole(roles);
               <x-button size="xs" color="emerald" :disabled="!item.send_document_button" :loading="sendDocumentLoader"
                 @click.prevent="sendDcoument(item.id)">
                 Send Documents
+              </x-button>
+              <x-button size="xs" color="emerald" :disabled="!item.download_document_button" :loading="downloadDocumentLoader"
+                @click.prevent="downloadDocument(item.id)">
+                Download Documents
               </x-button>
               <x-button v-if="item.canGenerateCerticate" size="xs" color="#ff5e00"
                 :disabled="!item.send_document_button" :loading="downloadLoader"

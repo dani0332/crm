@@ -84,6 +84,7 @@ class DatabaseSeeder extends Seeder
             // MarineSeeder::class,
             // ImcrmUsersRolesCleaner::class,
             AddPermissionsForInsurerNowPayment::class,
+            AlfredProtectSeeder::class,
             // AddeTicketDocumentTypeSeeder::class,
             // DocumentVerifyPermissionSeeder::class,
         ]);
