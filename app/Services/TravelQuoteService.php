@@ -15,6 +15,7 @@ use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\QuoteBatches;
+use App\Models\TravelDestination;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
@@ -110,6 +111,7 @@ class TravelQuoteService extends BaseService
             'tqr.primary_member_id',
             'tqr.risk_score',
             'tqr.kyc_decision',
+            'tqr.is_documents_valid',
             //'tqr.prefill_plan_id',
             DB::raw('IF(EXISTS (
                 SELECT *
@@ -171,6 +173,8 @@ class TravelQuoteService extends BaseService
             'email' => $request->email,
             'mobileNo' => $request->mobile_no,
             'nationalityId' => $request->nationality_id,
+            'destinationIds' => $request->destination_ids ?? [],
+            'tripStarted' => $request->has_arrived_uae == '1' ? 1 : 0,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
         ];
@@ -182,12 +186,16 @@ class TravelQuoteService extends BaseService
                 if (isset($member['primary'])) {
                     $memberData->primary = true;
                     $travelQuote['dob'] = $memberDob;
+                } else {
+                    $memberData->primary = false;
                 }
                 if (isset($member['id'])) {
                     $memberData->id = $member['id'];
                 }
                 $memberData->dob = $memberDob;
                 $memberData->gender = $member['gender'];
+                $memberData->uaeResident = (bool) (isset($member['uae_resident']) && $member['uae_resident'] == '1') ? true : false;
+                $memberData->nationalityId = $request->nationality_id;
                 array_push($members, $memberData);
             }
             $travelQuote['members'] = $members;
@@ -331,7 +339,7 @@ class TravelQuoteService extends BaseService
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
@@ -426,6 +434,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+        $this->adjustQueryByDateFilters($this->query, 'tqr');
 
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -599,6 +608,7 @@ class TravelQuoteService extends BaseService
             'premium' => 'input|number|title',
             'policy_number' => 'input|text',
             'nationality_id' => 'select|title|required',
+            'destination_id' => 'select' | 'title',
             'previous_quote_id' => 'readonly|title',
             'renewal_expiry_date' => 'input|date|title|range',
             'is_renewal' => '|static|Yes,No',
@@ -948,7 +958,7 @@ class TravelQuoteService extends BaseService
             return ['error' => 'Quote plans not available'];
         }
 
-        $providerIds = collect($quotePlans->quotes->plans)->pluck('providerId')->toArray();
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('insuranceProviderId')->toArray();
         $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
@@ -1002,6 +1012,25 @@ class TravelQuoteService extends BaseService
         }
 
         return true;
+    }
+
+    public function getTravelDestinations($id)
+    {
+        return TravelDestination::where('quote_id', $id)->with('destination:id,code,country_name')->get();
+    }
+
+    public function getTransactionApprovedQuoteStatus($leadId)
+    {
+        $transactionApprovedAudit = DB::table('audits as a')
+            ->where(function ($query) use ($leadId) {
+                $query->where('a.auditable_type', 'App\Models\\'.QuoteTypes::TRAVEL->value.'Quote')
+                    ->where('a.auditable_id', $leadId)
+                    ->where(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))"), QuoteStatusEnum::TransactionApproved);
+            })
+            ->orderBy('a.created_at', 'DESC')
+            ->first();
+
+        return $transactionApprovedAudit;
     }
 
 }

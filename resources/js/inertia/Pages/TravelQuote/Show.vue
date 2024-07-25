@@ -5,6 +5,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 import { computed } from 'vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 const page = usePage();
 defineProps({
@@ -60,7 +61,8 @@ defineProps({
   aboveAgeMembers: Number,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
-  paymentDocument: Array
+  paymentDocument: Array,
+  travelDestinations: Object,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -285,6 +287,9 @@ const travelerForm = useForm({
   dob: '',
   nationality_id: null,
   relation_code: null,
+  passport: null,
+  uae_resident: null,
+  emirates_id_number: '',
   gender: null,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -301,8 +306,12 @@ const travelerTable = reactive({
   processing: false,
   columns: [
     {
-      text: 'Member Name',
+      text: 'First Name',
       value: 'first_name',
+    },
+    {
+      text: 'Last Name',
+      value: 'last_name',
     },
     {
       text: 'Nationality',
@@ -319,6 +328,18 @@ const travelerTable = reactive({
     {
       text: 'Relation',
       value: 'relation',
+    },
+    {
+      text: 'Emirates ID Number',
+      value: 'emirates_id_number',
+    },
+    {
+      text: 'Passport Number',
+      value: 'passport',
+    },
+    {
+      text: 'UAE Resident',
+      value: 'uae_resident',
     },
     {
       text: 'Action',
@@ -359,6 +380,9 @@ const addTravelMember = isValid => {
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
+      travelerForm.uae_resident = null;
+      travelerForm.passport = null;
+      travelerForm.emirates_id_number = '';
       travelerForm.id = null;
       travelerForm.gender = null;
       travelerForm.reset();
@@ -372,6 +396,9 @@ const onAddTraveler = () => {
   travelerForm.dob = '';
   travelerForm.nationality_id = '';
   travelerForm.relation_code = '';
+  travelerForm.uae_resident = null;
+  travelerForm.passport = null;
+  travelerForm.emirates_id_number = '';
   travelerForm.id = null;
   travelerTable.addTraveler = true;
   travelerForm.gender = null;
@@ -387,6 +414,9 @@ const onEditTraveler = traveler => {
   travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
   travelerForm.nationality_id = traveler.nationality_id;
+  travelerForm.uae_resident = traveler.uae_resident;
+  travelerForm.emirates_id_number = traveler.emirates_id_number;
+  travelerForm.passport = traveler.passport;
   travelerTable.addTraveler = true;
 };
 
@@ -764,13 +794,13 @@ const availableSeniorPlansTable = reactive({
 //activities
 
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -1192,6 +1222,82 @@ const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
   createReusableTemplate();
 const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
   createReusableTemplate();
+const getupdateDocumentValidate = event => {
+  updateDocumentValidate.show = event;
+  page.props.quote.is_documents_valid = event;
+};
+
+const updateDocumentValidate = reactive({
+  show: false,
+  title: 'Update',
+  message: 'Are all documents correct?',
+  processing: false,
+  onConfirm: () => {
+    updateDocumentValidate.show = false;
+  },
+});
+
+const documentValidate = async val => {
+  updateDocumentValidate.processing = true;
+  if (page.props.quoteDocuments?.length < 1) {
+    notification.info({
+      title: 'Please upload the documents file first',
+      position: 'top',
+    });
+    updateDocumentValidate.processing = false;
+    updateDocumentValidate.show = false;
+    return false;
+  }
+  let data = { is_documents_valid: val };
+  await axios
+    .post(
+      `/quotes/travel/${page.props.quote.uuid}/update-validate-documents`,
+      data,
+    )
+    .then(res => {
+      if (res.status == 200) {
+        notification.success({
+          title: 'Document validity status update successfully.',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Documents validity status updated failed',
+          position: 'top',
+        });
+      }
+      updateDocumentValidate.processing = false;
+      updateDocumentValidate.show = false;
+    })
+    .catch(err => {
+      notification.error({
+        title: 'Documents validity status updated failed',
+        position: 'top',
+      });
+      updateDocumentValidate.processing = false;
+      updateDocumentValidate.show = false;
+    });
+};
+const getGenderDisplay = (val) => {
+      switch (val) {
+        case 'M':
+        case 'male':
+          return 'Male';
+        case 'F':
+        case 'female':
+          return 'Female';
+        default:
+          return '';
+      }
+    }
+
+const onAddUpdate = () => {
+  selectedProviderPlan.value.id = null;
+  selectedProviderPlan.value.planName = '';
+  selectedProviderPlan.value.providerName = '';
+  selectedProviderPlan.value.premium = '';
+}
+
 </script>
 
 <template>
@@ -1380,6 +1486,36 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
                   </Link>
                 </dt>
               </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  TRAVELING WHERE
+                </label>
+                <template #tooltip> Traveling Where</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium uppercase">
+              {{
+                quote.direction_code != null
+                  ? quote.direction_code
+                  : quote?.currently_located_in_id_text ==
+                      enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                    quote?.region_cover_for_id !=
+                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                  : quote?.destination_id_text ==
+                      enums.travelQuoteEnum
+                        .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                    quote?.region_cover_for_id ==
+                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                  : ''
+              }}
+            </dt>
+          </div>
 
               <div
                 class="grid sm:grid-cols-2"
@@ -1571,8 +1707,18 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
                   {{ quote.region_cover_for_id_text }}
                 </dt>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRAVEL DESTINATION(S)</dt>
+                <dt class="font-medium">
+                  <span v-for="(item, index) in travelDestinations" :key="item.id">
+                    {{ item?.destination?.country_name
+                    }}<span v-if="index < travelDestinations?.length - 1">, </span>
+                  </span>
+                </dt>
+              </div>
             </dl>
           </div>
+
         </template>
       </Collapsible>
     </div>
@@ -1599,6 +1745,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
+
 
           <div
             class="grid sm:grid-cols-2"
@@ -1731,7 +1878,6 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
                     />
                   </dd>
                 </div>
-
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
               </dl>
               <dl
@@ -2098,6 +2244,16 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
               placeholder="Select Relation"
               class="w-full"
             />
+            <x-input
+              v-model="travelerForm.emirates_id_number"
+              label="Emirates ID Number"
+              placeholder="Emirates ID Number"
+            />
+            <x-input
+              v-model="travelerForm.passport"
+              label="Passport Number"
+              placeholder="Passport Number"
+            />
             <x-field label="Gender*">
               <x-select
                 v-model="travelerForm.gender"
@@ -2340,7 +2496,122 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
               <span class="text-primary-600 uppercase">{{ item.reason }}</span>
             </template>
           </DataTable>
+          </template>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Documents
+          <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+        </h3>
+        <div class="flex gap-2">
+          <Link
+            v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${quote.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <x-tooltip position="top">
+            <x-button
+              @click.prevent="getupdateDocumentValidate(true)"
+              v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
+              size="sm"
+              color="green"
+            >
+              Verify Documents
+            </x-button>
+            <template #tooltip>
+              Verify Documents: Clicking this button confirms that all submitted
+              documents are accurate and valid.</template
+            >
+          </x-tooltip>
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="primary"
+          >
+            Upload Documents
+          </x-button>
+          <x-button
+            size="sm"
+            color="red"
+            v-if="
+              displaySendPolicyButton &&
+              permissions.notProductionApproval &&
+              permissions.isQuoteDocumentEnabled
+            "
+            @click="sendPolicyToClient"
+          >
+            Send Policy
+          </x-button>
+        </div>
+      </div>
+      <DataTable
+        table-class-name="compact"
+        :headers="quoteDocumentsTable.columns"
+        :items="quoteDocuments || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="quoteDocuments.length < 15"
+      >
+        <template #item-original_name="item">
+          <a
+            :href="cdnPath + item.doc_url"
+            target="_blank"
+            class="text-primary-600"
+          >
+            {{ item.original_name }}
+          </a>
         </template>
+        <template #item-action="{ doc_name }">
+          <div>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="onDocDelete(doc_name)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+
+      <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+        <template #header> Upload Documents </template>
+
+        <LazyDocumentUploader
+          :members="memberDataDocs(travelers)"
+          :doc-types="documentTypes"
+          :docs="quoteDocuments || []"
+          :cdn="cdnPath"
+        />
+      </x-modal>
+      <x-modal v-model="modals.docConfirm" show-close backdrop>
+        <template #header> Delete Document </template>
+        <p>Are you sure you want to delete this document?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.docConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              @click.prevent="confirmDeleteDoc"
+              :loading="quoteDocumentsTable.isLoading"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+        </x-modal>
       </Collapsible>
     </div>
 
@@ -2741,6 +3012,34 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
           </DataTable>
         </template>
       </Collapsible>
+
+      <x-modal v-model="updateDocumentValidate.show" show-close backdrop>
+        <template #header> Are all documents correct? </template>
+        <p>
+          Note: By clicking 'Yes,' you confirm that all submitted documents are
+          accurate and valid. Failure to verify will be considered a breach of
+          the Code of Conduct (COC).
+        </p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="updateDocumentValidate.show = false"
+            >
+              No
+            </x-button>
+            <x-button
+              size="sm"
+              color="green"
+              @click.prevent="documentValidate(quote.is_documents_valid)"
+              :loading="updateDocumentValidate.processing"
+            >
+              Yes
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
       <x-modal v-model="modals.activity" size="lg" show-close backdrop>
         <template #header>
           {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
@@ -2863,6 +3162,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <AuditLogs
@@ -2891,6 +3191,12 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
         </div>
       </template>
     </x-modal>
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'TRAVEL'"
+    />
+
   </div>
 </template>
 <style>

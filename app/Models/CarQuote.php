@@ -6,7 +6,6 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -263,7 +262,7 @@ class CarQuote extends BaseModel
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
     public function batch()
@@ -329,27 +328,24 @@ class CarQuote extends BaseModel
                     $query->distinct()
                         ->select('quote_uuid')
                         ->from('quote_tags')
-                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type.code', quoteTypeCode::Car);
+                        ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
                 });
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias) {
                 $query->whereNotIn("{$alias}.uuid", function ($query) {
                     $query->distinct()
                         ->select('quote_uuid')
                         ->from('quote_tags')
-                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type.code', quoteTypeCode::Car);
+                        ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
                 });
             })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
                 $query->whereNotIn("{$alias}.uuid", function ($query) {
                     $query->distinct()
                         ->select('quote_uuid')
                         ->from('quote_tags')
-                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type.code', quoteTypeCode::Car);
+                        ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
                 })->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::REVIVAL_REPLIED,

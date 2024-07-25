@@ -63,7 +63,7 @@ class InslyDetailRepository extends BaseRepository
         }
         $policy = $query->firstOrFail();
         $data = $policy->toArray();
-        $policy->quoteType = $this->getQuoteType($data['policy']['coverage']);
+        $policy->quoteType = $this->getQuoteTypeFromCoverage($data['policy']['coverage']);
         $policy->imcrm_link = $this->replaceStoredAppURLWithCurrentAppURL($policy->imcrm_link);
 
         if (! empty($data['installments'])) {
@@ -73,7 +73,7 @@ class InslyDetailRepository extends BaseRepository
         return $policy;
     }
 
-    private function getQuoteType($coverage)
+    private function getQuoteTypeFromCoverage($coverage)
     {
         $coverage = $coverage ?? null;
         $inslyCoverageArray = $this->inslyInsurances();
@@ -106,7 +106,7 @@ class InslyDetailRepository extends BaseRepository
 
         if (! empty($policy)) {
             $coverage = $policy['policy']['coverage'];
-            $quoteType = $this->getQuoteType($coverage);
+            $quoteType = $this->getQuoteTypeFromCoverage($coverage);
             $data = [];
             $model = $this->getModelObject($quoteType);
             if ($model) {
@@ -195,10 +195,11 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::CAR->value:
-                            $obj->carQuoteRequestDetail()->updateOrCreate(
+                            $upsertRecord = $obj->carQuoteRequestDetail()->updateOrCreate(
                                 ['car_quote_request_id' => $obj->id],
                                 ['insly_id' => $policy->_id]
                             );
+                            info('fetchSaveToImcrm - leadId : '.$obj->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                             break;
 
                         case QuoteTypes::LIFE->value:
