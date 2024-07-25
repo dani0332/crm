@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
@@ -108,6 +109,7 @@ class HandleInertiaRequests extends Middleware
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
             'kycEnums' => Kyc::asArray(),
+            'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
         ];
     }
 

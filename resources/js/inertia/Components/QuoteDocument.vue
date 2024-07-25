@@ -29,6 +29,7 @@ const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
 const permissionEnum = page.props.permissionsEnum;
+const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -306,6 +307,8 @@ const uploadDocumentModal = () => {
                 :max-files="documentType.max_files"
                 :max-size="documentType.max_size"
                 :loading="uploadingStatus[documentType.id]"
+                :document-type-code="documentType.code"
+                :isDisabled="documentType.code == documentTypeCodeEnum.AUDIT && !can(permissionEnum.AUDITDOCUMENT_UPLOAD)"
                 @change="uploadFile(documentType, $event)"
               />
 

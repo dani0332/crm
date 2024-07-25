@@ -88,11 +88,14 @@ class GenericPermissionSeeder extends Seeder
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        // Add Compliance Permission to Admin
-        $role = Role::where('name', RolesEnum::Admin)->first();
-
         if (! $role->hasPermissionTo($conversionPermission)) {
             $role->givePermissionTo($conversionPermission);
+        }
+
+        // Audit document upload permission
+        $auditPermission = Permission::firstOrCreate(['name' => PermissionsEnum::AUDITDOCUMENT_UPLOAD, 'guard_name' => 'web']);
+        if (! $role->hasPermissionTo($auditPermission)) {
+            $role->givePermissionTo($auditPermission);
         }
 
         // Plans Selection & Plan Details Section Permissions

@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             updateDocTypePayment::class,
             AddSageFlagApplicationStorage::class,
             AddTempUpdateTotalPricePermission::class,
+
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
@@ -49,7 +50,7 @@ class DatabaseSeeder extends Seeder
             // BusinessTypeInsuranceSeeder::class,
             // MarineSeeder::class,
             // ImcrmUsersRolesCleaner::class,
-
+            CarMakeSeeder::class,
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
             // AddSendUpdatesCategoriesInLookups::class, Please don't run this seeder on test and stage env.
