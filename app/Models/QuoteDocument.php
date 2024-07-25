@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class QuoteDocument extends Model implements AuditableContract
 {
-    use HasFactory, SoftDeletes, Auditable;
+    use Auditable, HasFactory, SoftDeletes;
 
     protected $table = 'quote_documents';
     protected $guarded = [];
