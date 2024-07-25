@@ -269,6 +269,7 @@ class SukoonDemocranceService
                 'commission_with_vat' => $commission_amount + $commissionVat ?? null,
                 'commission_without_vat' => $commission_amount,
                 'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
+                'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
             ]);
             $this->getCOIDocument($quote, $transaction);
         } catch (Exception $e) {
