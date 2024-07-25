@@ -545,6 +545,10 @@ const sendUpdatePermissionCheck = computed(() => {
   return true;
 });
 
+const isLackingPayment = computed(() => {
+  return props.bookingDetails?.isLackingOfPayment || false;
+});
+
 const sendUpdateValidationURL = computed(() => {
   return (props.updateBtn === sendUpdateStatusEnum.SU || props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER)
     ? 'book-update'
@@ -1736,16 +1740,38 @@ const checkDiscount = (newPrice) => {
           <div class="flex justify-end gap-2">
             <template v-if="!state.isEdit">
               <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
-              <x-button
-                size="sm"
-                color="orange"
-                v-if="props.updateBtn"
-                :loading="loader.sendUpdateSectionBtn"
-                @click="sendUpdateValidation"
-                :disabled="sendUpdatePermissionCheck"
-              >
-                {{ props.updateBtn }}
-              </x-button>
+              <template v-if="isLackingPayment">
+                <x-tooltip>
+                  <x-button
+                      size="sm"
+                      color="orange"
+                      v-if="props.updateBtn"
+                      :loading="loader.sendUpdateSectionBtn"
+                      @click="sendUpdateValidation"
+                      :disabled="sendUpdatePermissionCheck || isLackingPayment"
+                  >
+                    {{ props.updateBtn }}
+                  </x-button>
+                  <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        Action Needed: Please revise payment details to reflect
+                        plan changes.
+                      </span>
+                  </template>
+                </x-tooltip>
+              </template>
+              <template v-else>
+                <x-button
+                    size="sm"
+                    color="orange"
+                    v-if="props.updateBtn"
+                    :loading="loader.sendUpdateSectionBtn"
+                    @click="sendUpdateValidation"
+                    :disabled="sendUpdatePermissionCheck"
+                >
+                  {{ props.updateBtn }}
+                </x-button>
+              </template>
             </template>
             <template v-else>
               <x-button
