@@ -45,7 +45,6 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 }
             }
             info('Personal/Pet Quote Import - Quote status not defined');
-
         }
     }
 
@@ -56,7 +55,6 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     private function getQuoteStatusId($dealStatus, $dealStage)
     {
-
         if ($dealStatus === PDDealStatus::LOST) {
             return QuoteStatusEnum::Lost;
         }
@@ -108,6 +106,5 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             return $dealStageToQuoteStatus[$dealStage];
         }
-
     }
 }
