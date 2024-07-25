@@ -770,7 +770,7 @@ class SendEmailCustomerService extends BaseService
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
                         'mobileNo' => $emailData->advisorMobileNo,
-                        'landLine' => $emailData->advisorLandlineNo
+                        'landLine' => $emailData->advisorLandlineNo,
                     ],
                 ],
                 'tags' => [

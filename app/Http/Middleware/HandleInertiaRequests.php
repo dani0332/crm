@@ -3,11 +3,11 @@
 namespace App\Http\Middleware;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
-use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -107,7 +107,7 @@ class HandleInertiaRequests extends Middleware
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
-            'documentTypeCodeEnum' => DocumentTypeCode::asArray()
+            'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
         ];
     }
 
