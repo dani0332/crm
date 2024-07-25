@@ -57,6 +57,24 @@ function onReset() {
   }
 }
 
+function matchColumns() {
+  try {
+    const columns = props.columns;
+    const storedColumns = storedState.value.headers;
+    if (columns.length !== storedColumns.length) {
+      return false;
+    }
+    for (let i = 0; i < columns.length; i++) {
+      if (columns[i].text !== storedColumns[i].text) {
+        return false;
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error('Error in matchColumns:', error);
+  }
+}
+
 watchEffect(() => {
   if (props.withoutStorage) {
     headers.value = props.columns;
@@ -65,6 +83,9 @@ watchEffect(() => {
 
 onMounted(() => {
   if (storedState.value?.headers?.length > 0) {
+    if (!matchColumns()) {
+      storedState.value.headers = props.columns;
+    }
     headers.value = storedState.value.headers;
     emit(
       'update:columns',
