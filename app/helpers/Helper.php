@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -795,11 +796,19 @@ if (! function_exists('getCardViewRequestFilters')) {
     }
 }
 
+if (! function_exists('isEmailCampaignEnabled')) {
+    function isEmailCampaignEnabled(): bool
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN_ENABLED) == '1';
+    }
+}
+
 if (! function_exists('getMyAlfredCampaign')) {
     function getMyAlfredCampaign($campaignId)
     {
-        // temporary fix to clear cache for prod - will remove later
-        Cache::forget("MA_CAMPAIGN_{$campaignId}");
+        if (! isEmailCampaignEnabled()) {
+            return null;
+        }
 
         return Cache::remember("MA_CAMPAIGN_{$campaignId}", now()->addHours(24), function () use ($campaignId) {
             try {
