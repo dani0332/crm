@@ -273,7 +273,7 @@ class QuoteDocumentService extends BaseService
             } elseif ($quoteType == quoteTypeCode::CORPLINE) {
                 $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
             }
-            $businessDocumetTypes[] = DocumentTypeCode::AUDIT_DOCUMENT;
+            $businessDocumetTypes[] = DocumentTypeCode::AUDIT;
             // Fetch additional business document types based on the specific quote type.
             $businessDocumetTypes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->sortDocumentType()->get();
             $documentTypes = $documentTypes->merge($businessDocumetTypes);

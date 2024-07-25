@@ -68,5 +68,5 @@ class DocumentTypeCode extends Enum
     const QD = 'QD';
     const AML = 'AML';
     const E_TICKETS = 'E_TICKETS';
-    const AUDIT_DOCUMENT = 'AUDIT';
+    const AUDIT = 'AUDIT';
 }

@@ -37,7 +37,7 @@ const page = usePage();
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const emit = defineEmits(['update:modelValue', 'change', 'changeMethod']);
 const onDrop = (f,rejectReasons) => {
-  if (!(props.documentTypeCode == documentTypeCodeEnum.AUDIT_DOCUMENT && props.isDisabled)) {
+  if (!(props.documentTypeCode == documentTypeCodeEnum.AUDIT && props.isDisabled)) {
     const files = f.map(file => ({ file }));
     let rejectReason = null;
     if (rejectReasons.length > 0) {

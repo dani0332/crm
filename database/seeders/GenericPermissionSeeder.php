@@ -92,8 +92,8 @@ class GenericPermissionSeeder extends Seeder
             $role->givePermissionTo($conversionPermission);
         }
 
-        // Audit document upload permissin 
-        $auditPermission = Permission::firstOrCreate(['name' => PermissionsEnum::AUDIT_DOCUMENT_UPLOAD, 'guard_name' => 'web']);
+        // Audit document upload permission
+        $auditPermission = Permission::firstOrCreate(['name' => PermissionsEnum::AUDITDOCUMENT_UPLOAD, 'guard_name' => 'web']);
         if (! $role->hasPermissionTo($auditPermission)) {
             $role->givePermissionTo($auditPermission);
         }
