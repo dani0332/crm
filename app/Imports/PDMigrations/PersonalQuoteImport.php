@@ -5,7 +5,7 @@ namespace App\Imports\PDMigrations;
 use App\Enums\PDMigrations\DealStageEnum;
 use App\Enums\PDMigrations\PDDealStatus;
 use App\Enums\QuoteStatusEnum;
-use App\Models\PersonalQuote;
+use App\Models\HomeQuote;
 use App\Traits\PersonalQuoteSyncTrait;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -20,11 +20,11 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
     {
         $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('MY');
         if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number']))) {
-            $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
-            if ($quoteStatusId) {
+            $leadStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
+            if ($leadStatusId) {
                 $data = [
                     'previous_quote_policy_number' => $row['deal_policy_number'] ?? null,
-                    'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
+                    'quote_status_id' => $leadStatusId,
                 ];
 
                 $searchCriteria = [];
@@ -38,13 +38,13 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number'];
                 }
 
-                $lead = PersonalQuote::where($searchCriteria)->first();
+                $lead = HomeQuote::where($searchCriteria)->first();
                 if ($lead && $lead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
                     $lead->update($data);
-                    info('Personal/Pet Quote Import - Quote found: '.$lead->uuid.' - Quote updated');
+                    info('Personal/Home Qoute Import - Quote found: '.$lead->uuid.' - Quote updated');
                 }
             }
-            info('Personal/Pet Quote Import - Quote status not defined');
+            info('Personal/Home Qoute Import - Quote status not defined');
         }
     }
 

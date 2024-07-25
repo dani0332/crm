@@ -30,7 +30,7 @@ class PersonalQuoteDataMigration extends Command
     public function handle()
     {
         $filePaths = [
-            'Pet.xlsx',
+            'home.xlsx',
         ];
 
         foreach ($filePaths as $filePath) {
