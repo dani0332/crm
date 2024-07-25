@@ -65,7 +65,6 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\RenewalBatchRepository;
-use App\Repositories\RuleRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
@@ -747,7 +746,7 @@ class CRUDController extends Controller
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
             $insuranceProvidersByQuoteType = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CAR->id());
-            $commercialRules = RuleRepository::getCommercialRule($record);
+            $commercialRules = $this->leadAllocationService->isCommercialVehicles($record);
             $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
 
             // book policy details
