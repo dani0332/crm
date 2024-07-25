@@ -174,6 +174,7 @@ class GenericPermissionSeeder extends Seeder
             PermissionsEnum::SAVE_QUOTE_NOTES,
             PermissionsEnum::UPDATE_QUOTE_NOTES,
             PermissionsEnum::DELETE_QUOTE_NOTES,
+            PermissionsEnum::TRAVEL_HAPEX,
         ];
 
         foreach ($permissions as $permissionName) {
@@ -184,7 +185,24 @@ class GenericPermissionSeeder extends Seeder
                     'name' => $permissionName,
                     'guard_name' => 'web',
                 ]);
+                $role = Role::where('name', RolesEnum::Admin)->first();
+
+                if (! $role->hasPermissionTo($permissionName)) {
+                    $role->givePermissionTo($permissionName);
+                }
             }
+        }
+
+        $role = Role::firstOrCreate([
+            'name' => RolesEnum::TravelHapex,
+        ], [
+            'guard_name' => 'web',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if ($role && ! $role->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX)) {
+            $role->givePermissionTo(PermissionsEnum::TRAVEL_HAPEX);
         }
 
         $rolesForManageQuote = [
@@ -219,13 +237,13 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
-        $this->generateSegmentFilterPermission();
-        $this->embeddedProductSeeds();
-        $this->advisorConversionReportSeeds();
-        $this->quoteSyncSeeds();
-        $this->advisorDistributionReportSeeds();
-        $this->addMotorHeadNewRole();
-        $this->createAndAssignManulHealthPlanPermission();
+        // $this->generateSegmentFilterPermission();
+        // $this->embeddedProductSeeds();
+        // $this->advisorConversionReportSeeds();
+        // $this->quoteSyncSeeds();
+        // $this->advisorDistributionReportSeeds();
+        // $this->addMotorHeadNewRole();
+        // $this->createAndAssignManulHealthPlanPermission();
     }
 
     /**

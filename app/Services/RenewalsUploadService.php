@@ -60,6 +60,7 @@ use App\Models\Tier;
 use App\Models\TravelQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Models\VehicleType;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -997,6 +998,12 @@ class RenewalsUploadService
                 $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
             }
 
+            if ($renewalUploadLead->skip_plans == 2 && $data['make'] == 'MOTOR BIKE') {
+                $quoteData['vehicle_type_id'] = VehicleType::where('text', 'BIKE')->first()->id ?? null;
+            }
+
+            $quoteData['vehicle_type_id'] = ! empty($data['vehicle_type_id'] ?? '') ? $data['vehicle_type_id'] : ($quoteData['vehicle_type_id'] ?? null);
+
             if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
                 $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
             } elseif ($quoteType->code == quoteTypeCode::Car && ! empty($data['year'])) {
@@ -1403,6 +1410,7 @@ class RenewalsUploadService
                             if ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
                                 $leadValidationErrors->push('Invalid Car Make');
                             }
+
                             if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
                                 $leadValidationErrors->push('Invalid Car Model');
                             }
