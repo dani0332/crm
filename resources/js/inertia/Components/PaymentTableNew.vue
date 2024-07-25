@@ -2754,6 +2754,7 @@ const paymentAllocationStatusTooltip = payment_allocation_status => {
   } else if (payment_allocation_status == paymentAllocationStatus.UNPAID) {
     return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
   }
+
   return '';
 };
 

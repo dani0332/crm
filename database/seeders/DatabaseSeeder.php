@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             updateDocTypePayment::class,
             AddSageFlagApplicationStorage::class,
             AddTempUpdateTotalPricePermission::class,
+            CarMakeSeeder::class,
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
