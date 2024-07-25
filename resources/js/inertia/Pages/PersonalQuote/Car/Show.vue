@@ -10,6 +10,7 @@ import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
+import DownloadDocuments from "../../../Components/DownloadDocuments.vue";
 
 
 
@@ -3427,6 +3428,11 @@ const handlePlanSelected = plan => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
         <div>
+            <DownloadDocuments
+                v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
+                :quote="page.props.quote"
+                :quoteDocuments="page.props.quoteDocuments"
+            />
             <Link
                 v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
                 :href="`/legacy-policy/${record.insly_id}`"

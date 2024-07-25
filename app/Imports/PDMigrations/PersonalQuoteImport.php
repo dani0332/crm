@@ -45,7 +45,6 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 }
             }
             info('Personal/Home Qoute Import - Quote status not defined');
-
         }
     }
 
