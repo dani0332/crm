@@ -9,6 +9,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Marshall;
+use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -243,6 +244,7 @@ class EmbeddedProductRepository extends BaseRepository
         $modelType = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
             $item->send_document_button = false;
+            $item->sync_document_button = false;
             $item->download_document_button = false;
             $optionsIds = $item->prices->pluck('id');
 
@@ -257,6 +259,7 @@ class EmbeddedProductRepository extends BaseRepository
             $isAlfredProtect = checkAlfredProtect($item->short_code);
             if($isAlfredProtect) {
                 $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0: false;
+                $item->sync_document_button = $isDocPresent;
                 $item->download_document_button = $isDocPresent;
             }
 
@@ -470,6 +473,17 @@ class EmbeddedProductRepository extends BaseRepository
 
             return 'Certificate sent successfully';
         }       
+    }
+
+    public function fetchSyncDocument($data)
+    {
+        $quoteId = $data['quoteId'];
+        $modelType = $data['modelType'];
+        $epId = $data['epId'];
+
+        $ep = $this->where('id', $epId)->first();
+        $quoteObject = $this->getQuoteObject($modelType, $quoteId);
+        ProcessSyncAlfredProtect::dispatch($ep, $quoteObject, $modelType);
     }
 
     /**

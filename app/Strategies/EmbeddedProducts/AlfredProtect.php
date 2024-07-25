@@ -9,6 +9,13 @@ use Illuminate\Support\Facades\Storage;
 
 class AlfredProtect extends EmbeddedProduct
 {
+
+    public function syncSukoonDemocrance($quoteObject, $embeddedProduct, $transaction)
+    {
+        $sukoonDemocrance = new SukoonDemocranceService();
+        $sukoonDemocrance->processDemocranceSubmission($quoteObject, $embeddedProduct, $transaction);
+    }
+
     /**
      * Retrieves the Certificate document for a quote object.
      *
@@ -36,21 +43,7 @@ class AlfredProtect extends EmbeddedProduct
                 'Path' => $filePath,
                 'File' => $file
             ];
-        } else {
-            $sukoonDemocrance = new SukoonDemocranceService();
-            $sukoonDemocrance->processDemocranceSubmission($quoteObject, $ep, $transaction);
-            $document = $transaction->documents()->first();
-            $file = Storage::disk('azureIM')->get($document->doc_url);
-            $filePath = Storage::disk('azureIM')->url($document->doc_url);
-
-            return [
-                'Content' => base64_encode($file),
-                'Name' => $document->doc_name,
-                'ContentType' => 'application/pdf',
-                'Path' => $filePath,
-                'File' => $file
-            ];
-        }
+        } 
     }
 
 
@@ -73,13 +66,6 @@ class AlfredProtect extends EmbeddedProduct
             $url = $azureStorageUrl . $azureStorageContainer . '/' . $document->doc_url;
             return $url;
 
-        } else {
-            $sukoonDemocrance = new SukoonDemocranceService();
-            $sukoonDemocrance->processDemocranceSubmission($quoteObject, $ep, $transaction);
-            $document = $transaction->documents()->first();
-
-            $url = $azureStorageUrl . $azureStorageContainer . '/' . $document->doc_url;
-            return $url;
         }
     }
 }

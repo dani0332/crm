@@ -123,6 +123,13 @@ class EmbeddedProductController extends Controller
         return redirect()->back()->with('success', 'Certificate send Successfully');
     }
 
+    public function syncDocument(EmbeddedProducDocumentRequest $request) 
+    {
+        EmbeddedProductRepository::syncDocument($request->validated());
+
+        return redirect()->back()->with('success', 'Document Synced in progress');
+    }
+
     public function downloadDocument(EmbeddedProducDocumentRequest $request)
     {
         return EmbeddedProductRepository::downloadCertificate($request->validated());
