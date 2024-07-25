@@ -175,12 +175,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
                     'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
                     'credit_approval' => $masterPayment->credit_approval,
+                    'payment_methods_code' => $masterPayment->payment_methods, //update the parent payment method, this change is done against a enhancement for Proforma Payment where proforma payment should be downloadable even when policy is booked
                     'updated_by' => $request->user()->id,
                 ];
-                // Check if the child payment method is Proforma Payment Request than update the parent payment method to enable download button for Proforma Request
-                if ($masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest) {
-                    $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
-                }
+
             } else {
                 $paymentInformation = [
                     'total_price' => $masterPayment->total_price,
