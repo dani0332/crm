@@ -10,7 +10,6 @@ const props = defineProps({
   allowedDuplicateLOB: Array,
   quoteDetails: Object,
   customerAdditionalContacts: Array,
-  enums: Object,
   activities: Array,
   advisors: Array,
   typeCode: String,
@@ -67,9 +66,9 @@ const rules = {
 };
 
 const disableStatusSection = computed(() => {
-  return props.quote?.quote_status_id == props.enums?.quoteStatusEnum?.Lost ||
+  return props.quote?.quote_status_id == quoteStatusEnum?.Lost ||
     props.quote?.quote_status_id ==
-      props.enums?.quoteStatusEnum?.TransactionApproved
+      quoteStatusEnum?.TransactionApproved
     ? true
     : false;
 });
@@ -1137,7 +1136,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </div>
           <div class="w-full md:w-2/3">
             <x-select
-              v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+              v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
               v-model="leadStatusForm.lostReason"
               label="LOST REASON"
               :options="
