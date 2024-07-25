@@ -110,10 +110,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping()
             ->onSuccess(function (Stringable $output) {
-                info('----------- Personal/Home Quote Data Migrations Completed -----------' . $output);
+                info('----------- Personal/Home Quote Data Migrations Completed -----------'.$output);
             })
             ->onFailure(function (Stringable $output) {
-                info('----------- Personal/Home Quote Data Migrations Failed -----------' . $output);
+                info('----------- Personal/Home Quote Data Migrations Failed -----------'.$output);
             });
     }
 
