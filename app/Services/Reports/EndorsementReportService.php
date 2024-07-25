@@ -40,7 +40,9 @@ class EndorsementReportService extends ManagementReport
             ->whereIn('code', [
                 EndorsementStatusEnum::ENDORSEMENT_FINANCIAL_CODE,
                 EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION,
-                EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION_AND_REISSUANCE])
+                EndorsementStatusEnum::CANCELLATION_FROM_INCEPTION_AND_REISSUANCE,
+                EndorsementStatusEnum::CORRECTION_OF_POLICY_DETAILS,
+                ])
             ->pluck('id')->toArray();
 
         $query = SendUpdateLog::query()
