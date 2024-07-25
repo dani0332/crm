@@ -34,7 +34,7 @@ class InstallmentReportService extends ManagementReport
                 'personal_quotes.policy_number',
                 'personal_quotes.code',
                 'ps.reference',
-                'p.tax_invoice_number',
+                'p.notes',
                 'personal_quotes.policy_start_date',
                 'ps.due_date',
                 DB::raw('IFNULL(personal_quotes.price_vat_applicable, 0) / IFNULL(p.total_payments, 1) as price_vat_applicable'),
@@ -117,7 +117,7 @@ class InstallmentReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
-            $item->transaction = $this->concatValues([$item->reference, $item->tax_invoice_number], ' ');
+            $item->transactions = $this->concatValues([$item->insurer_invoice_number, $item->notes, $item->reference], '-');
         });
     }
 
