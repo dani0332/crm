@@ -6,6 +6,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\EmbeddedTransaction;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -51,9 +52,14 @@ class ProcessSyncAlfredProtect implements ShouldQueue
         $transaction = EmbeddedTransaction::where([
             ['quote_type_id', '=', $quoteTypeId],
             ['quote_request_id',  '=', $this->quoteObject->id],
-            ['is_selected',  '=', true],
+            ['is_selected',  '=', 1],
             ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->whereIn('product_id', $optionsIds)->get();
+
+
+        if($transaction->isEmpty()) {
+            throw new Exception("No transaction found for the selected product");
+        }
         
         $strategy->syncSukoonDemocrance($this->quoteObject, $this->embeddedProduct, $transaction[0]);
     }
