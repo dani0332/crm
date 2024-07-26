@@ -48,13 +48,13 @@ class ProcessSyncAlfredProtect implements ShouldQueue
             ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->get();
         
-        $transaction = $transactions->filter(function($transact) {
+        $transaction = $transactions->where(function($transact) {
             if(isset($transact->product) && isset($transact->product->embeddedProduct)){
                 return checkAlfredProtect($transact->product->embeddedProduct->short_code);
             } else {
                 throw new Exception("No embedded product found for the selected transaction");
             }
-        });
+        })->first();
         info('CL: ' . get_class() . ' FN: handle. Transaction: ' . $transaction);
         if($transaction->isEmpty()) {
             throw new Exception("No transaction found for the selected product");
