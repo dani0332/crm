@@ -417,7 +417,7 @@ watch(
             class="w-full"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
             v-model="filters.previous_quote_policy_number"
             placeholder="Search by Renewal"

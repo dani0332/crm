@@ -609,9 +609,6 @@ class SendEmailCustomerService extends BaseService
         ];
         try {
             $response = Http::withHeaders($headers)
-                ->beforeSending(function () {
-                    info('sendDttEmail ---- Request is Sending ');
-                })
                 ->timeout(20)
                 ->retry(3, 90000)
                 ->post($this->url, $body);
@@ -979,6 +976,7 @@ class SendEmailCustomerService extends BaseService
 
         return $responseCode;
     }
+
     private function buildPlansEmailData($healthQuote, $plans, $previousAdvisor, $request, $emailTemplateId)
     {
         $advisor = User::find($healthQuote->advisor_id);
@@ -1054,6 +1052,7 @@ class SendEmailCustomerService extends BaseService
 
         return $emailData;
     }
+
     private function buildCommonEmailData($healthQuote, $advisor, $previousAdvisor, $request, $emailTemplateId)
     {
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
