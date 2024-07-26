@@ -10,7 +10,6 @@ const props = defineProps({
   allowedDuplicateLOB: Array,
   quoteDetails: Object,
   customerAdditionalContacts: Array,
-  enums: Object,
   activities: Array,
   advisors: Array,
   typeCode: String,
