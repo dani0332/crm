@@ -369,13 +369,13 @@ const confirmDeleteDoc = () => {
 
 //activities
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -1186,13 +1186,23 @@ const sendPolicyToClient = () => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.plan" size="xl"
-      :title="`${selectedPlan?.providerName} - ${selectedPlan?.name}`"
-      show-close backdrop>
+      <x-modal
+        v-model="modals.plan"
+        size="xl"
+        :title="`${selectedPlan?.providerName} - ${selectedPlan?.name}`"
+        show-close
+        backdrop
+      >
         <LazyAvailablePlan :plan="selectedPlan" :quote="quote" />
       </x-modal>
 
-      <x-modal v-model="modals.createPlan" size="lg" title="Create Car Quote" show-close backdrop>
+      <x-modal
+        v-model="modals.createPlan"
+        size="lg"
+        title="Create Car Quote"
+        show-close
+        backdrop
+      >
         <LazyCreatePlan
           :uuid="quote.uuid"
           @success="onCreatePlan"
@@ -1255,14 +1265,25 @@ const sendPolicyToClient = () => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.doc" size="xl" title="Upload Documents" show-close backdrop>
+      <x-modal
+        v-model="modals.doc"
+        size="xl"
+        title="Upload Documents"
+        show-close
+        backdrop
+      >
         <LazyDocumentUploader
           :doc-types="documentTypes"
           :docs="quoteDocuments || []"
           :cdn="cdnPath"
         />
       </x-modal>
-      <x-modal v-model="modals.docConfirm" title="Delete Document" show-close backdrop>
+      <x-modal
+        v-model="modals.docConfirm"
+        title="Delete Document"
+        show-close
+        backdrop
+      >
         <p>Are you sure you want to delete this document?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -1339,60 +1360,76 @@ const sendPolicyToClient = () => {
           </div>
         </template>
       </DataTable>
-      <x-modal v-model="modals.activity" size="lg"
-      :title="`${ activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
-       show-close backdrop is-form @submit="onActivitySubmit">
-          <div class="grid gap-4">
-            <x-input
-              v-model="activityForm.title"
-              label="Title"
-              :rules="[isRequired]"
-              class="w-full"
-            />
+      <x-modal
+        v-model="modals.activity"
+        size="lg"
+        :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
+        show-close
+        backdrop
+        is-form
+        @submit="onActivitySubmit"
+      >
+        <div class="grid gap-4">
+          <x-input
+            v-model="activityForm.title"
+            label="Title"
+            :rules="[isRequired]"
+            class="w-full"
+          />
 
-            <x-textarea
-              v-model="activityForm.description"
-              label="Description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
+          <x-textarea
+            v-model="activityForm.description"
+            label="Description"
+            :adjust-to-text="false"
+            class="w-full"
+          />
 
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee"
-              :options="advisorOptions"
-              :rules="[isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
+          <x-select
+            v-model="activityForm.assignee_id"
+            label="Assignee"
+            :options="advisorOptions"
+            :rules="[isRequired]"
+            placeholder="Select Assignee"
+            class="w-full"
+          />
 
-            <date-picker
-              v-model="activityForm.due_date"
-              label="Due Date"
-              :rules="[isRequired]"
-              class="w-full"
-              withTime
-              :timezone="'UTC'"
-            />
-          </div>
+          <date-picker
+            v-model="activityForm.due_date"
+            label="Due Date"
+            :rules="[isRequired]"
+            class="w-full"
+            withTime
+            :timezone="'UTC'"
+          />
+        </div>
 
-          <template #secondary-action>
-            <x-button ghost tabindex="-1" size="sm" @click.prevent="modals.activity = false">
-              Cancel
-            </x-button>
-          </template>
-          <template #primary-action>
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="activityForm.processing"
-              type="submit"
-            >
-              {{ activityActionEdit ? 'Update' : 'Save' }}
-            </x-button>
-          </template>
+        <template #secondary-action>
+          <x-button
+            ghost
+            tabindex="-1"
+            size="sm"
+            @click.prevent="modals.activity = false"
+          >
+            Cancel
+          </x-button>
+        </template>
+        <template #primary-action>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="activityForm.processing"
+            type="submit"
+          >
+            {{ activityActionEdit ? 'Update' : 'Save' }}
+          </x-button>
+        </template>
       </x-modal>
-      <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
+      <x-modal
+        v-model="modals.activityConfirm"
+        title="Delete Activity"
+        show-close
+        backdrop
+      >
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -1458,51 +1495,64 @@ const sendPolicyToClient = () => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.addContact" size="lg" title="Add Additional Contacts" show-close backdrop is-form @submit="onAdditionalContactSubmit">
-          <div class="grid gap-4">
-            <x-select
-              v-model="additionalContact.additional_contact_type"
-              label="Type"
-              :options="[
-                { value: 'email', label: 'Email' },
-                { value: 'mobile_no', label: 'Mobile Number' },
-              ]"
-              :rules="[isRequired]"
-              placeholder="Select Type"
-              class="w-full"
-            />
+      <x-modal
+        v-model="modals.addContact"
+        size="lg"
+        title="Add Additional Contacts"
+        show-close
+        backdrop
+        is-form
+        @submit="onAdditionalContactSubmit"
+      >
+        <div class="grid gap-4">
+          <x-select
+            v-model="additionalContact.additional_contact_type"
+            label="Type"
+            :options="[
+              { value: 'email', label: 'Email' },
+              { value: 'mobile_no', label: 'Mobile Number' },
+            ]"
+            :rules="[isRequired]"
+            placeholder="Select Type"
+            class="w-full"
+          />
 
-            <x-input
-              v-model="additionalContact.additional_contact_val"
-              label="Value"
-              :rules="[
-                isRequired,
-                additionalContact.additional_contact_type === 'email'
-                  ? isEmail
-                  : isNumber,
-              ]"
-              class="w-full"
-            />
-          </div>
+          <x-input
+            v-model="additionalContact.additional_contact_val"
+            label="Value"
+            :rules="[
+              isRequired,
+              additionalContact.additional_contact_type === 'email'
+                ? isEmail
+                : isNumber,
+            ]"
+            class="w-full"
+          />
+        </div>
 
-          <template #secondary-action>
-            <x-button ghost size="sm" @click.prevent="modals.addContact = false">
-              Cancel
-            </x-button>
-          </template>
-          <template #primary-action>
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="additionalContact.processing"
-              type="submit"
-            >
-              Save
-            </x-button>
-          </template>
+        <template #secondary-action>
+          <x-button ghost size="sm" @click.prevent="modals.addContact = false">
+            Cancel
+          </x-button>
+        </template>
+        <template #primary-action>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="additionalContact.processing"
+            type="submit"
+          >
+            Save
+          </x-button>
+        </template>
       </x-modal>
 
-      <x-modal v-model="modals.contactPrimaryConfirm" title="Primary Additional Contact" show-close backdrop>
+      <x-modal
+        v-model="modals.contactPrimaryConfirm"
+        title="Primary Additional Contact"
+        show-close
+        backdrop
+      >
         <p>Are you sure you want to make this information as Primary?</p>
         <template #actions>
           <div class="text-right space-x-4">
