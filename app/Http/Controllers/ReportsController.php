@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\MonthNameEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -22,6 +23,7 @@ use App\Services\Reports\AdvisorPerformanceReportService;
 use App\Services\Reports\LeadDistributionReportService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\Reports\ReportService;
+use App\Services\Reports\RetentionReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -490,10 +492,13 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function renderRetentionReport(Request $request,  AdvisorConversionReportService $advisorConversionReportService){
+    public function renderRetentionReport(Request $request,  AdvisorConversionReportService $advisorConversionReportService, RetentionReportService $retentionReportService){
         return inertia('Reports/RetentionReport', [
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),
             'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
+            'reportData' => $retentionReportService->getReportData($request),
+            'productName' => $retentionReportService->getUserPorductName(),
+            'monthNames' => MonthNameEnum::all()
         ]);
     }
 }

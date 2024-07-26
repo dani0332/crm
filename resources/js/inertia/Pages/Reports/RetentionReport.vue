@@ -1,25 +1,29 @@
 <script setup>
 
-defineProps({
+const props = defineProps({
   filterOptions: Object,
   filtersByLob: Object,
   reportData: Object,
+  productName: String,
+  monthNames: Array
 });
 
 const page = usePage();
 const isDirty = ref(false);
 const isMounted = ref(false);
 const advisorOptions = ref([]);
-
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const notification = useToast();
 
 const getFiltersObject = () => {
   return {
-    lob: '',
+    lob: props.productName,
     displayBy: '',
-    advisorAssignedDates: [],
+    policyExpiryDate: [],
     teams: [],
     advisors: [],
+    month: '',
+    page: 1,
   }
 };
 
@@ -27,18 +31,25 @@ const displayBy = ref([
   { label: 'Month', value: 'month' },
   { label: 'Batch', value: 'batch' },
 ]);
+
 const teamOptions = ref([]);
 
 let filters = reactive(getFiltersObject());
 
-function onSubmit(isValid, isMounted = false) {
-
-}
 const quoteTypesOptions = computed(() => {
   const quoteTypesOptions = [...Object.keys(page.props.filterOptions.lob).map(text => ({
     label: text,
-    value: page.props.filterOptions.lob[text],    
+    value: page.props.filterOptions.lob[text],
   })), { label: "Motor", value: "Motor" }];
+
+  return quoteTypesOptions
+});
+
+const monthOptions = computed(() => {
+  const quoteTypesOptions = [...Object.values(page.props.monthNames).map((text, index) =>({
+    label: text,
+    value: index+1,
+  }))];
 
   return quoteTypesOptions
 });
@@ -147,6 +158,12 @@ const onLobChange = (e, isOnMounted = false) => {
       filters.teams = [];
       filters.advisors = [];
       advisorOptions.value = [];
+      filters.displayBy= '';
+      filters.policyExpiryDate=[];
+      filters.teams=[];
+      filters.advisors= [];
+      filters.month='';
+      filters.page=1;
     }
 
   if([quoteTypeCodeEnum.Car,
@@ -158,6 +175,8 @@ const onLobChange = (e, isOnMounted = false) => {
   } else {
       loadAdvisorsByLob(e);
   }
+
+  onSubmit(false)
 };
 
 const isDisabled = (element) => {
@@ -260,11 +279,90 @@ const tableHeader = [
     value: 'volume_gross_retention',
   },
   {
-    text: 'Volumme Net Retention',
+    text: 'Volume Net Retention',
     value: 'volume_net_retention',
+  },
+  {
+    text: 'Relative Retention',
+    value: 'relative_retention',
   },
 ];
 
+watch(
+  () => filters.displayBy,
+  (newValue, oldValue) => {
+    filters.policyExpiryDate = []
+    filters.month=''
+  },
+);
+
+
+
+const cleanFilters = filters => {
+  filters = removeUnusedFilters(filters);
+  Object.keys(filters).forEach(
+    key => (filters[key] === '' ||
+    filters[key] == null ||
+    filters[key].length == 0) &&
+    delete filters[key],
+  );
+  return filters;
+};
+
+const removeUnusedFilters = filters => {
+    const filtersByLob = page.props.filtersByLob;
+    Object.keys(filtersByLob).forEach(key => {
+        if(filtersByLob[key]['lobs'] && !filtersByLob[key]['lobs'].includes(filters.lob)) {
+            delete filters[key];
+        }
+    });
+    return filters;
+};
+
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+function onSubmit(isValid=true) {
+  if(isValid){
+    if (filters.displayBy == ''){
+      notification.error({
+        title: 'Please select display by filter',
+        position: 'top',
+      });
+      return
+    }
+    if (filters.policyExpiryDate && filters.policyExpiryDate.length === 0 && filters.month === ''){
+      notification.error({
+        title: 'Enter values in any one filter [ View by Month or Policy expiry date ]',
+        position: 'top',
+      });
+      return
+    }
+  }
+  filters.page = 1;
+  const payLoad = cleanFilters(filters);
+
+  router.visit('/reports/retention-report', {
+      method: 'get',
+      data: {
+        ...payLoad,
+      },
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loaders.table = true),
+      onFinish: () => {
+        // setTableHeader();
+        loaders.table = false;
+      },
+    });
+  }
 </script>
 
 <template>
@@ -298,12 +396,22 @@ const tableHeader = [
         />
 
         <DatePicker
-          v-model="filters.advisorAssignedDates"
+          v-if="filters.displayBy == 'batch'"
+          v-model="filters.policyExpiryDate"
           label="Policy Expiry Date"
           placeholder="Select Start & End Date"
           range
           size="sm"
           model-type="yyyy-MM-dd"
+        />
+        <ComboBox
+          v-if="filters.displayBy == 'month'"
+          v-model="filters.month"
+          label="Select month"
+          placeholder="Select month"
+          :options="monthOptions"
+          class="w-full"
+          :single="true"
         />
 
         <ComboBox
@@ -353,14 +461,14 @@ const tableHeader = [
       table-class-name="tablefixed"
       :loading="loaders.table"
       :headers="tableHeader"
-      :items="reportData || []"
+      :items="reportData.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
     >
   </DataTable>
 
-  <!-- <Pagination
+  <Pagination
     :links="{
       next: reportData.next_page_url,
       prev: reportData.prev_page_url,
@@ -370,6 +478,6 @@ const tableHeader = [
       total: reportData.total,
       last: reportData.last_page,
     }"
-  /> -->
+  />
   </div>
 </template>
