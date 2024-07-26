@@ -2502,10 +2502,12 @@ const getCaptureValidation = computed(() => {
       if (paymentRecord.frequency === 'upfront') {
         let paymentSplitRec = paymentRecord.payment_splits[0];
         if (paymentSplitRec.payment_method.code === 'CC') {
-          if (
-            paymentSplitRec.payment_status_id ===
-            props.paymentStatusEnum.AUTHORISED
-          ) {
+          const validStatuses = [
+            props.paymentStatusEnum.AUTHORISED,
+            props.paymentStatusEnum.PAID,
+            props.paymentStatusEnum.PARTIALLY_PAID
+          ];
+          if (validStatuses.includes(paymentSplitRec.payment_status_id)) {
             return true;
           }
           return false;
