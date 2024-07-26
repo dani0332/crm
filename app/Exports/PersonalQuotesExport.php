@@ -159,7 +159,7 @@ class PersonalQuotesExport
                     $quote->code,
                     $quote->first_name,
                     $quote->last_name,
-                    date(config('constants.DATE_FORMAT'), strtotime($quote->quote->dob)),
+                    date(config('constants.datetime_format'), strtotime($quote->quote->dob)),
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),

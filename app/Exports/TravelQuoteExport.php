@@ -48,7 +48,7 @@ class TravelQuoteExport
             optional($quote->advisor)->name,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-            date(config('constants.DATE_FORMAT'), strtotime($quote->dob)),
+            date(config('constants.datetime_format'), strtotime($quote->dob)),
             optional($quote->travelQuoteRequestDetail)->transapp_code,
             optional($quote->travelQuoteRequestDetail)->lostReason?->text,
             $quote->source,
