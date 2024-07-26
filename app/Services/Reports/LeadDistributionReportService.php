@@ -33,7 +33,7 @@ class LeadDistributionReportService extends BaseService
         + SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
         + SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END))) AS received_leads,
 
-        SUM(CASE WHEN car_quote_request.source = "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) AS lead_created, COUNT(*) AS total_leads,
+        SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) AS lead_created, COUNT(*) AS total_leads,
 
         SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned,
 
@@ -47,7 +47,7 @@ class LeadDistributionReportService extends BaseService
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $query->where('car_quote_request.advisor_id', auth()->user()->id);
         } else {
-            if (!auth()->user()->hasRole(RolesEnum::LeadPool) && !auth()->user()->hasRole(RolesEnum::MotorHead)) {
+            if (! auth()->user()->hasRole(RolesEnum::LeadPool) && ! auth()->user()->hasRole(RolesEnum::MotorHead)) {
                 $userIds = $this->walkTree(auth()->user()->id);
                 $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
             }
@@ -97,7 +97,7 @@ class LeadDistributionReportService extends BaseService
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-        $freshLoad = !isset($filters->page);
+        $freshLoad = ! isset($filters->page);
 
         $startDate = isset($filters->createdAtDates) ?
             Carbon::parse($filters->createdAtDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
