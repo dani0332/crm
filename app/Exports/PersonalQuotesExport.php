@@ -62,8 +62,8 @@ class PersonalQuotesExport
     }
 
     protected function getHeadings($quoteType)
-    {   
-        
+    {
+
         switch (ucfirst($quoteType)) {
             case QuoteTypes::BIKE->value:
                 return [
