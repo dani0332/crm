@@ -1497,12 +1497,11 @@ class SageApiService
         }
         $postedResponse['endPoint'] = $url;
         $postedResponse['payload'] = $patchPayload;
-        $postedResponse['response'] = $postedResponse;
         if (isset($postedResponse['error'])) {
             $errorMessage = 'Error while making ar2 split payments patch to sage';
             $message = 'AR Patch Request failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $postedResponse, $postedResponse, 3, 13, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $patchPayload, $patchPayload, 3, 13, 'fail']);
         }
         if ($isLiveApiCallStep3) {
             $this->logSageApiCall($postedResponse, $postedResponse, $quote, 3, 13);
