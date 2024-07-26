@@ -226,7 +226,7 @@ const filters = reactive({
   page: 1,
   paid_at_start: '',
   paid_at_end: '',
-  sic_advisor_requested: '',
+  sic_advisor_requested: 'All',
   segment_filter: 'all',
   teams: [],
   transaction_approved_dates: page.props.transaction_approved_dates || '',
@@ -682,7 +682,7 @@ const resetDateFilters = filterName => {
           label="Advisor Requested"
           placeholder="Select any option"
           :options="[
-            { value: '', label: 'All' },
+            { value: 'All', label: 'All' },
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"

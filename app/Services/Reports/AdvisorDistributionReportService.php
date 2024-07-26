@@ -86,7 +86,7 @@ class AdvisorDistributionReportService extends BaseService
             ->orderBy('users.name');
 
         if (
-            ! auth()->user()->hasAnyRole([
+            !auth()->user()->hasAnyRole([
                 RolesEnum::LeadPool,
                 RolesEnum::SeniorManagement,
                 RolesEnum::Admin,
@@ -159,7 +159,7 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if (
-            ! auth()->user()->hasAnyRole([
+            !auth()->user()->hasAnyRole([
                 RolesEnum::LeadPool,
                 RolesEnum::SeniorManagement,
                 RolesEnum::Admin,
@@ -187,17 +187,17 @@ class AdvisorDistributionReportService extends BaseService
     public function getFiltersByLob()
     {
         $canView = [
-            quoteTypeCode::Car => ! Auth::user()->hasRole(RolesEnum::CarAdvisor),
-            quoteTypeCode::Bike => ! Auth::user()->hasRole(RolesEnum::BikeAdvisor),
-            quoteTypeCode::Health => ! Auth::user()->hasRole(RolesEnum::RMAdvisor),
-            quoteTypeCode::Travel => ! Auth::user()->hasRole(RolesEnum::TravelAdvisor),
-            quoteTypeCode::Pet => ! Auth::user()->hasRole(RolesEnum::PetAdvisor),
-            quoteTypeCode::Cycle => ! Auth::user()->hasRole(RolesEnum::CycleAdvisor),
-            quoteTypeCode::Yacht => ! Auth::user()->hasRole(RolesEnum::YachtAdvisor),
-            quoteTypeCode::Life => ! Auth::user()->hasRole(RolesEnum::LifeAdvisor),
-            quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
-            quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
-            quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
+            quoteTypeCode::Car => !Auth::user()->hasRole(RolesEnum::CarAdvisor),
+            quoteTypeCode::Bike => !Auth::user()->hasRole(RolesEnum::BikeAdvisor),
+            quoteTypeCode::Health => !Auth::user()->hasRole(RolesEnum::RMAdvisor),
+            quoteTypeCode::Travel => !Auth::user()->hasRole(RolesEnum::TravelAdvisor),
+            quoteTypeCode::Pet => !Auth::user()->hasRole(RolesEnum::PetAdvisor),
+            quoteTypeCode::Cycle => !Auth::user()->hasRole(RolesEnum::CycleAdvisor),
+            quoteTypeCode::Yacht => !Auth::user()->hasRole(RolesEnum::YachtAdvisor),
+            quoteTypeCode::Life => !Auth::user()->hasRole(RolesEnum::LifeAdvisor),
+            quoteTypeCode::Home => !Auth::user()->hasRole(RolesEnum::HomeAdvisor),
+            quoteTypeCode::CORPLINE => !Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
+            quoteTypeCode::GroupMedical => !Auth::user()->hasRole(RolesEnum::GMAdvisor),
         ];
 
         return [
@@ -397,11 +397,10 @@ class AdvisorDistributionReportService extends BaseService
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-        $freshLoad = ! isset($filters->page);
+        $freshLoad = !isset($filters->page);
 
         $startDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
-            ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
@@ -446,6 +445,9 @@ class AdvisorDistributionReportService extends BaseService
         if (isset($filters->leadSources) && count($filters->leadSources) > 0) {
             $query->whereIn('car_quote_request.source', $filters->leadSources);
         }
+        if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
+            $query->where('car_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
+        }
 
         if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
             $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
@@ -461,11 +463,10 @@ class AdvisorDistributionReportService extends BaseService
         $lob = $filters->lob ?? '';
 
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-        $freshLoad = ! isset($filters->page);
+        $freshLoad = !isset($filters->page);
 
         $startDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
-                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
@@ -524,7 +525,7 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Health) {
-            if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
+            if (!empty($filters->insurance_for) && $filters->insurance_for != '') {
                 $query->join('health_quote_request', function ($join) use ($filters) {
                     $join->on('health_quote_request.uuid', 'personal_quotes.uuid')
                         ->where('health_quote_request.cover_for_id', $filters->insurance_for);
@@ -533,7 +534,7 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Home) {
-            if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
+            if (!empty($filters->insurance_for) && $filters->insurance_for != '') {
                 $query->join('home_quote_request', function ($join) use ($filters) {
                     $join->on('home_quote_request.uuid', 'personal_quotes.uuid')
                         ->where('home_quote_request.iam_possesion_type_id', $filters->insurance_for);
@@ -542,21 +543,22 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Travel) {
-            if ((! empty($filters->insurance_type) && $filters->insurance_type != '') ||
-                (! empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
+            if ((!empty($filters->insurance_type) && $filters->insurance_type != '') ||
+                (!empty($filters->travel_coverage) && $filters->travel_coverage != '')
+            ) {
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
             }
-            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
+            if (!empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('travel_quote_request.direction_code', $filters->insurance_type);
             }
 
-            if (! empty($filters->travel_coverage) && $filters->travel_coverage != '') {
+            if (!empty($filters->travel_coverage) && $filters->travel_coverage != '') {
                 $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
             }
         }
 
         if ($lob === quoteTypeCode::Life) {
-            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
+            if (!empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->join('life_quote_request', 'life_quote_request.uuid', 'personal_quotes.uuid');
                 $query->where('life_quote_request.tenure_of_insurance_id', $filters->insurance_type);
             }
@@ -564,7 +566,7 @@ class AdvisorDistributionReportService extends BaseService
 
         if ($lob === quoteTypeCode::CORPLINE) {
             $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
-            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
+            if (!empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('business_quote_request.business_type_of_insurance_id', $filters->insurance_type);
             } else {
                 $query->where('business_quote_request.business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
