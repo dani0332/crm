@@ -57,7 +57,7 @@ class HealthQuotesExport
             as customer_type'),
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
-            'hqr.renewal_batch',
+            'hqr.renewal_batch'
         )->get();
     }
 
