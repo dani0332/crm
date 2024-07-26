@@ -5362,7 +5362,7 @@ const lookupsEnum = page.props.lookupsEnum;
             <x-form @submit="handleRetryPayment" :auto-focus="false">   
             <div class="w-full h-full mt-2 flex flex-col">
               <div
-                class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
+                class="text-lg px-6 py-4 border-b flex justify-between items-start"
               >
                 <div class="text-left">
                   <span> {{ retryPaymentErrorMessage }}</span>
