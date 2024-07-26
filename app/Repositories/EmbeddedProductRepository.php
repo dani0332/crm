@@ -420,7 +420,7 @@ class EmbeddedProductRepository extends BaseRepository
             ];
             info('Send Alfred Protect Email Data: ' . json_encode($emailData));
 
-            $response = app(SendEmailCustomerService::class)->sendOcbEmail($emailTemplateId, $emailData, 'policy-documents-alfred-protect');
+            $response = app(SendEmailCustomerService::class)->sendEmail($emailTemplateId, $emailData, 'policy-documents-alfred-protect');
             info('Send Alfred Protect Email Response: ' . json_encode($response));
 
             if ($response == 201) {

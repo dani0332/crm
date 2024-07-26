@@ -184,7 +184,7 @@ class SukoonDemocranceService
                 throw new Exception('Unable to determine filename from the response headers.');
             }
         } catch (Exception $e) {
-            $this->logFailure('Get COI Document', $e->getMessage(), ['quote' => $quote, 'embedded' => $embeddedTransaction]);
+            $this->logFailure('Get COI Document', $e->getMessage(), ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
             throw $e;
         }
     }
@@ -212,21 +212,18 @@ class SukoonDemocranceService
         }
     }
 
-    public function processDemocranceSubmission($quote, $ep, $transaction)
+    public function processDemocranceSubmission($quote, $transaction)
     {
         try {
             $this->currentQuote = $quote;
             
 
-            if (!$ep) {
-                throw new Exception('Embedded transaction not found');
-            }
-
-            if (!$this->validateCustomerDetail($quote->customer->emirates_id_number, $quote->customer->emirates_id_expiry_date)) {
+            if (! $this->validateCustomerDetail($quote->customer->emirates_id_number, $quote->customer->emirates_id_expiry_date)) {
                 throw new Exception('Invalid Emirates ID or Expiry Date. Please check and try again.');
             }
 
-            $shortCode = $ep->short_code;
+            $shortCode = $transaction->product->embeddedProduct->short_code;
+
             $userDetail = [
                 'first_name' => $quote->first_name,
                 'last_name' => $quote->last_name,
@@ -272,6 +269,7 @@ class SukoonDemocranceService
                 'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
             ]);
             $this->getCOIDocument($quote, $transaction);
+            EmbeddedProductRepository::sendDocument(['epId'=> $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
             throw $e;

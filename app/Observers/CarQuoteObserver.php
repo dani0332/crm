@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\ProcessSyncAlfredProtect;
 use App\Models\CarQuote;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -42,6 +43,9 @@ class CarQuoteObserver
                 'CUSTOMER_UPDATE',
                 'customer-update-myalfred-we'
             );
+
+            ProcessSyncAlfredProtect::dispatch($lead);
+
             CarQuote::withoutEvents(function () use ($lead) {
                 $lead->update([
                     'transaction_approved_at' => now(),

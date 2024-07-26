@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Storage;
 class AlfredProtect extends EmbeddedProduct
 {
 
-    public function syncSukoonDemocrance($quoteObject, $embeddedProduct, $transaction)
+    public function syncSukoonDemocrance($quoteObject, $transaction)
     {
         $sukoonDemocrance = new SukoonDemocranceService();
-        $sukoonDemocrance->processDemocranceSubmission($quoteObject, $embeddedProduct, $transaction);
+        $sukoonDemocrance->processDemocranceSubmission($quoteObject, $transaction);
     }
 
     /**

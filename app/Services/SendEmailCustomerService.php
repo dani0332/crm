@@ -83,6 +83,7 @@ class SendEmailCustomerService extends BaseService
                     'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'buttonUrl' => isset($emailData->buttonUrl) ? $emailData->buttonUrl : null,
                     'cdbId' => isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null,
+                    'productName' => isset($emailData->productName) ? $emailData->productName : null,
                     'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                     'advisorLandlineNo' => isset($emailData->advisorLandlineNo) ? $emailData->advisorLandlineNo : null,
                     'advisorMobileNo' => isset($emailData->advisorMobileNo) ? $emailData->advisorMobileNo : null,
