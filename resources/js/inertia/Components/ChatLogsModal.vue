@@ -136,10 +136,10 @@ const checkCaption = (request) => {
               >
             </div>
             <div class="chat-bubble text-sm relative flex items-center">
-              <div v-if="message.whatsapp_request?.type.toLowerCase() === 'image'">
+              <div v-if="message.whatsapp_request?.type &&  message.whatsapp_request?.type.toLowerCase() === 'image'">
                 <span> {{ checkCaption(message.whatsapp_request) ?? 'User has shared a Image' }}</span>
               </div>
-              <div v-else-if="['document', 'location', 'contacts', 'video', 'sticker'].includes(message.whatsapp_request?.type.toLowerCase())">
+              <div v-else-if="message.whatsapp_request?.type && ['document', 'location', 'contacts', 'video', 'sticker'].includes(message.whatsapp_request?.type.toLowerCase())">
                 <span> {{ checkCaption(message.whatsapp_request) }}</span>
               </div>
               <div v-else="message.msg" v-html="renderMarkdown(message.msg)"></div>
