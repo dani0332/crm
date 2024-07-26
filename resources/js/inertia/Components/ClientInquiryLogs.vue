@@ -17,7 +17,7 @@ const clientInquiryLogs = reactive({
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div>
-      <x-tooltip position="right">
+      <x-tooltip placement="right">
         <h3 class="font-semibold text-primary-800 text-lg">Client Enquiry Logs</h3>
         <template #tooltip>
           This log records each client query with timestamps for reliable tracking.

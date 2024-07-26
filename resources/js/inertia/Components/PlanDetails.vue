@@ -284,7 +284,7 @@ watch(() => props.isAddUpdate, () => {
       </SavePlanDetailsButtonTemplate>
 
       <div class="flex mb-3 justify-end">
-        <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_details" position="bottom">
+        <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_details" placement="bottom">
           <SavePlanDetailsButtonReuseTemplate :isDisabled="true"/>
           <template #tooltip>
             This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'

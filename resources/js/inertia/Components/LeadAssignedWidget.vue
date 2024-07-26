@@ -31,7 +31,7 @@ onMounted(() => {
   <template v-if="mounted">
     <teleport to="#headerportal">
       <div class="flex justify-between text-sm w-full gap-3">
-        <x-tooltip position="bottom" align="top" class="arrow-t">
+        <x-tooltip placement="top">
           <x-tag
             color="blue"
             class="underline decoration-dotted decoration-primary-700"
@@ -43,7 +43,7 @@ onMounted(() => {
           <template #tooltip> Auto : {{ yesterdayAutoCount }} | Manual : {{ yesterdayManualCount }} </template>
         </x-tooltip>
 
-        <x-tooltip position="bottom" align="top" class="arrow-t">
+        <x-tooltip placement="top">
           <x-tag
             color="blue"
             class="underline decoration-dotted decoration-primary-700"

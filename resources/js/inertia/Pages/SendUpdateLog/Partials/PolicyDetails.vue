@@ -225,7 +225,7 @@ const rules = {
             <!-- First name -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -250,7 +250,7 @@ const rules = {
             <!-- Last name -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -275,7 +275,7 @@ const rules = {
             <!-- Provider Name -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -302,7 +302,7 @@ const rules = {
             <!-- Plan Name -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -329,7 +329,7 @@ const rules = {
             <!-- Policy Number -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -355,7 +355,7 @@ const rules = {
             <!-- Issuance Date -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -382,7 +382,7 @@ const rules = {
             <!-- Start Date -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -409,7 +409,7 @@ const rules = {
             <!-- Expiry Date -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -435,7 +435,7 @@ const rules = {
             <!-- Insurer Quote Number -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -461,7 +461,7 @@ const rules = {
             <!-- Issuance Status -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >

@@ -153,7 +153,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </x-button>
         </StatusUpdateButtonTemplate>
         <div class="flex justify-end">
-          <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_status" position="bottom">
+          <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_status" placement="bottom">
               <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
               <template #tooltip>
                 The lead status cannot be manually updated once it has reached 'Transaction Approved'

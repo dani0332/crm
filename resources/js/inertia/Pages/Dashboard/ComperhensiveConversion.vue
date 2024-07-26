@@ -430,7 +430,7 @@ const insuranceForOptions = computed(() => {
       <x-field :label="getAdvisorLabel()">
         <ComboBox v-model="filters.advisors" placeholder="Select Advisor" :options="advisorOptions" :loading="loaders.advisorOptions" />
       </x-field>
-      <x-tooltip position="top" v-if="canShow('tiers')">
+      <x-tooltip placement="top" v-if="canShow('tiers')">
           <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike"> Development for Bike Tiers still in progress </template>
           <template #tooltip v-else> Select Tiers </template>
 

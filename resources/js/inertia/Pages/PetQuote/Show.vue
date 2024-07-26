@@ -276,7 +276,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
 
 const isAddUpdate = ref(false);
 const onAddUpdate = () => {
-  isAddUpdate.value = true; 
+  isAddUpdate.value = true;
 };
 
 </script>
@@ -322,7 +322,7 @@ const onAddUpdate = () => {
           <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
         </LeadEditBtnTemplate>
 
-        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" placement="bottom">
           <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.PetQuotesEdit)" :isDisabled="true"/>
           <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
         </x-tooltip>
@@ -408,7 +408,7 @@ const onAddUpdate = () => {
                 <dd>{{ quote.id }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <x-tooltip position="bottom">
+                <x-tooltip placement="bottom">
                   <label
                     class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                   >
@@ -520,7 +520,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -549,7 +549,7 @@ const onAddUpdate = () => {
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >

@@ -2927,7 +2927,7 @@ const lookupsEnum = page.props.lookupsEnum;
             </x-button>
           </template>
           <template v-else>
-            <x-tooltip position="right">
+            <x-tooltip placement="right">
               <x-button
                 v-if="proformaPayment"
                 size="sm"
@@ -3165,7 +3165,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   <td>{{ formatAmount(item.captured_amount) }}</td>
                   <td>{{ formatString(item.payment_status.text) }}</td>
                   <td>
-                    <x-tooltip position="left">
+                    <x-tooltip placement="left">
                       <span class="border-b border-dotted border-black">
                         {{
                           item.payment_allocation_status !== null
@@ -3187,7 +3187,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   <td>
                     <div class="flex gap-2">
                       <template v-if="is_lacking_payment">
-                        <x-tooltip position="left" class="arrow-r">
+                        <x-tooltip placement="left">
                           <x-badge
                             size="xs"
                             color="error"
@@ -3284,7 +3284,7 @@ const lookupsEnum = page.props.lookupsEnum;
                       {{ formatString(splitPayment.payment_status.text) }}
                     </td>
                     <td>
-                      <x-tooltip position="top">
+                      <x-tooltip placement="top">
                         <span class="border-b border-dotted border-black">
                           {{
                             splitPayment.payment_allocation_status !== null

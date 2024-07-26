@@ -500,7 +500,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                   </template>
                 </x-tooltip>
                 <template v-if="isShowingTransactionPaymentStatus">
-                  <x-tooltip position="center">
+                  <x-tooltip placement="center">
                     <dd class="border-b border-dotted border-black">
                       {{ bpForm.transaction_payment_status }}
                     </dd>

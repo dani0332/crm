@@ -107,7 +107,7 @@ const decisionStatus = {
           </div>
           <div class="grid sm:grid-cols-2">
             <div>
-              <x-tooltip position="bottom">
+              <x-tooltip placement="bottom">
                 <label
                   class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                 >

@@ -187,7 +187,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
             </div>
 
             <div v-if="quoteTypeId == 3 || quoteTypeId == 5" class="flex items-center gap-2">
-                <x-tooltip align="left">
+                <x-tooltip placement="left">
                     <x-icon icon="person" size="sm" class="text-primary-400" />
                     <template #tooltip>
                         <div class="max-w-[194px] text-xs">
@@ -210,7 +210,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
             </div>
 
             <div class="flex items-center gap-2">
-                <x-tooltip align="left">
+                <x-tooltip placement="left">
                     <x-icon icon="money" size="sm" class="text-primary-400" />
                     <template #tooltip>
                         <div class="max-w-[194px] text-xs">
@@ -239,7 +239,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
             </div>
 
             <div class="flex items-center gap-2">
-                <x-tooltip align="left">
+                <x-tooltip placement="left">
                     <x-icon icon="calendar" size="sm" class="text-primary-400" />
                     <template #tooltip>
                         <div class="max-w-[194px] text-xs">

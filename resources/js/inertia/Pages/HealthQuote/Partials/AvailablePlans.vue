@@ -546,7 +546,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
 
       <div class="flex justify-between items-center">
         <div class="flex gap-3 pr-8">
-          <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
+          <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" placement="bottom">
             <ToggleManualButtonReuseTemplate :isDisabled="true"/>
             <template #tooltip>
               No further action allowed on issued policy, If changes are required, such as increase in price, please proceed through the 'Send Update' feature using the 'Correction of Policy' option.
@@ -580,8 +580,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
                 props.plan.isManualPlan &&
                 props.plan.needPriceUpdate
               "
-              position="bottom"
-              class="arrow-t"
+              placement="bottom"
             >
               <x-badge
                 size="xs"
@@ -848,7 +847,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
               >
                 <template #header-premium="header">
                   <div class="customize-header">
-                    <x-tooltip position="bottom" class="arrow-t">
+                    <x-tooltip placement="bottom">
                       <span
                         class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                       >
@@ -865,7 +864,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
 
                 <template #header-loadingPrice="header">
                   <div class="customize-header large-tip">
-                    <x-tooltip position="bottom" class="arrow-t">
+                    <x-tooltip placement="bottom">
                       <span
                         class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                       >
@@ -896,7 +895,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
 
                 <template #header-finalPrice="header">
                   <div class="customize-header">
-                    <x-tooltip position="bottom" class="arrow-t">
+                    <x-tooltip placement="bottom">
                       <span
                         class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                       >

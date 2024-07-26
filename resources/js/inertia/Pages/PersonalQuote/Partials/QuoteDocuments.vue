@@ -499,7 +499,7 @@ const sendUpdatePermissionCheck = computed(() => {
             Cancel
           </x-button>
           <template v-if="!modals.isConfirmed">
-            <x-tooltip position="left">
+            <x-tooltip placement="left">
               <SendUpdateCustReuseBtnTemp />
               <template #tooltip>
                 Please select the checkbox to proceed

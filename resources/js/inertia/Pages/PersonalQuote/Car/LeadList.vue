@@ -531,7 +531,7 @@ const resetDateFilters = filterName => {
                         :href="`/car/leads-export?${objToUrl(filters)}`" class="justify-self-start mr-3">
                         Export
                     </x-button>
-                    <x-tooltip v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)" position="right">
+                    <x-tooltip v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)" placement="right">
                         <x-button tag="div" size="sm" color="emerald" class="mr-3">
                             Export
                         </x-button>
@@ -550,7 +550,7 @@ const resetDateFilters = filterName => {
                     </x-button>
                     <x-tooltip v-if="
               !canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)
-            " position="right">
+            " placement="right">
                         <x-button class="mr-3" tag="div" size="sm" color="emerald">
                             Extract leads and plan detail</x-button>
                         <template #tooltip>
@@ -571,7 +571,7 @@ const resetDateFilters = filterName => {
                     <x-tooltip v-if="
               !canExport &&
               can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
-            " position="right">
+            " placement="right">
                         <x-button class="mr-3" tag="div" size="sm" color="emerald">Extract leads detail with
                             email/mobile_no</x-button>
                         <template #tooltip>

@@ -137,7 +137,7 @@ const onEdit = () => {
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <x-tooltip v-if="!isPlanDetails" position="left">
+          <x-tooltip v-if="!isPlanDetails" placement="left">
             <label
               class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700"
             >
@@ -161,7 +161,7 @@ const onEdit = () => {
             <!-- price VAT not applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -199,7 +199,7 @@ const onEdit = () => {
                 "
               >
                 <dt>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -230,7 +230,7 @@ const onEdit = () => {
             <!-- price VAT applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -274,7 +274,7 @@ const onEdit = () => {
                 "
               >
                 <dt>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -305,7 +305,7 @@ const onEdit = () => {
             <!-- Total price -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >

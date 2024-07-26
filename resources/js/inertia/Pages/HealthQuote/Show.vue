@@ -1965,7 +1965,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -2002,7 +2002,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -2031,7 +2031,7 @@ const onAddUpdate = () => {
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -3303,7 +3303,7 @@ const onAddUpdate = () => {
                     "
                   >
                     <!-- always false temporarily -->
-                    <x-tooltip position="top" class="arrow-b">
+                    <x-tooltip placement="top">
                       <x-badge
                         size="xs"
                         color="error"
@@ -3431,7 +3431,7 @@ const onAddUpdate = () => {
           deselect-all
         />
         <div>
-          <x-tooltip position="right" class="arrow-l">
+          <x-tooltip placement="right">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
             >
@@ -3451,7 +3451,7 @@ const onAddUpdate = () => {
         </div>
 
         <div>
-          <x-tooltip position="right" class="arrow-l">
+          <x-tooltip placement="right">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
             >
@@ -3648,7 +3648,7 @@ const onAddUpdate = () => {
           >
             <template #item-due_date="{ due_date }">
               <template v-if="compareDueDate(due_date)">
-                <x-tooltip align="right" position="top">
+                <x-tooltip placement="top">
                   <p
                     :class="
                       compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''

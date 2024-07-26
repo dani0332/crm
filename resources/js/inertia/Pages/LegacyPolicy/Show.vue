@@ -329,7 +329,7 @@ const dateFormat = date => {
       <h2 class="text-xl font-semibold">Legacy Policy Detail</h2>
 
       <div class="flex gap-2">
-        <x-tooltip position="bottom" v-if="policy?.moved_to_imcrm">
+        <x-tooltip placement="bottom" v-if="policy?.moved_to_imcrm">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
           >

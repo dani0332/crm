@@ -644,7 +644,7 @@ watch(
               </x-button>
             </EditPolicyButtonTemplate>
 
-            <div v-if="isPolicyCancelledOrPending" class="flex justify-end"> 
+            <div v-if="isPolicyCancelledOrPending" class="flex justify-end">
               <x-tooltip>
                 <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
                   Edit
@@ -693,7 +693,7 @@ watch(
                   Update
                 </x-button>
 
-                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
+                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" placement="bottom">
                   <template v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()">
                     <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && can(permissionsEnum.POLICY_DETAILS_ADD)" :isDisabled="true"/>
                   </template>

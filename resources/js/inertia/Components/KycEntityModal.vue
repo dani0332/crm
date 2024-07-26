@@ -234,7 +234,7 @@ onMounted(() => {
       />
 
       <div>
-        <x-tooltip position="right">
+        <x-tooltip placement="right">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -310,7 +310,7 @@ onMounted(() => {
       />
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -329,7 +329,7 @@ onMounted(() => {
       </div>
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -357,7 +357,7 @@ onMounted(() => {
       />
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -375,7 +375,7 @@ onMounted(() => {
       </div>
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -393,7 +393,7 @@ onMounted(() => {
       </div>
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -416,7 +416,7 @@ onMounted(() => {
 
     <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >

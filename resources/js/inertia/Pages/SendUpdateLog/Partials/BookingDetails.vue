@@ -872,7 +872,7 @@ const dateToDMY = date => {
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div class="text-right"></div>
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="text-[#308BCA] text-sm font-bold underline decoration-dotted decoration-primary-700"
                   >
@@ -901,7 +901,7 @@ const dateToDMY = date => {
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -919,7 +919,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -937,7 +937,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -956,7 +956,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -973,7 +973,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -991,7 +991,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1007,7 +1007,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1026,7 +1026,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1043,7 +1043,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1063,7 +1063,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1081,7 +1081,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1100,7 +1100,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1117,7 +1117,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1135,7 +1135,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1152,7 +1152,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1172,7 +1172,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1191,7 +1191,7 @@ const dateToDMY = date => {
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1209,7 +1209,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1231,7 +1231,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1301,7 +1301,7 @@ const dateToDMY = date => {
             <div class="grid md:grid-cols-2 gap-x-4 gap-y-2 py-4 items-center">
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1324,7 +1324,7 @@ const dateToDMY = date => {
                 props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
                 class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1345,7 +1345,7 @@ const dateToDMY = date => {
                 props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
                 class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1364,7 +1364,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1381,7 +1381,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1408,7 +1408,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1424,7 +1424,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1451,7 +1451,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1470,7 +1470,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1501,7 +1501,7 @@ const dateToDMY = date => {
                 props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
                 class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1519,7 +1519,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1557,7 +1557,7 @@ const dateToDMY = date => {
                 props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
                 class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1577,7 +1577,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1614,7 +1614,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1633,7 +1633,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="pt-1 font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1666,7 +1666,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1686,7 +1686,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1706,7 +1706,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1730,7 +1730,7 @@ const dateToDMY = date => {
               </div>
               <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1852,7 +1852,7 @@ const dateToDMY = date => {
             Cancel
           </x-button>
           <template v-if="!modals.isConfirmed">
-            <x-tooltip position="left">
+            <x-tooltip placement="left">
               <SendUpdateCustReuseBtnTemp />
               <template #tooltip>
                 Please select the checkbox to proceed
@@ -1918,7 +1918,7 @@ const dateToDMY = date => {
             Cancel
           </x-button>
           <template v-if="!confirmationCheck">
-            <x-tooltip position="left">
+            <x-tooltip placement="left">
               <SendUpdateReuseBtnTemp />
               <template #tooltip>
                 Please select the checkbox to proceed

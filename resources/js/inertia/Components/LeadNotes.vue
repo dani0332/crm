@@ -442,7 +442,7 @@ watch(
           hidden
         />
 
-        <x-tooltip position="top" align="top">
+        <x-tooltip placement="top">
           <x-button
             size="sm"
             color="primary"

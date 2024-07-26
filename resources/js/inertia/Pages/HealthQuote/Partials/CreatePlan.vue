@@ -314,7 +314,7 @@ watch(
                 Gender
               </th>
               <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
-                <x-tooltip position="bottom" class="arrow-t">
+                <x-tooltip placement="bottom">
                   <span
                     class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                   >
@@ -328,7 +328,7 @@ watch(
                 </x-tooltip>
               </th>
               <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
-                <x-tooltip position="bottom" class="arrow-t">
+                <x-tooltip placement="bottom">
                   <span
                     class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                   >
@@ -350,7 +350,7 @@ watch(
                 </x-tooltip>
               </th>
               <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
-                <x-tooltip position="bottom" class="arrow-t">
+                <x-tooltip placement="bottom">
                   <span
                     class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                   >

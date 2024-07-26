@@ -1435,7 +1435,7 @@ const onAddUpdate = () => {
                 :key="field"
               >
                 <dt v-if="field.title == 'Ref-ID'">
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1445,7 +1445,7 @@ const onAddUpdate = () => {
                   </x-tooltip>
                 </dt>
                 <dt v-else-if="field.title == 'Ref-ID'">
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1470,7 +1470,7 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1496,7 +1496,7 @@ const onAddUpdate = () => {
               </div>
           <div class="grid sm:grid-cols-2">
             <dt>
-              <x-tooltip position="bottom">
+              <x-tooltip placement="bottom">
                 <label
                   class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                 >
@@ -1530,7 +1530,7 @@ const onAddUpdate = () => {
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1561,7 +1561,7 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1634,7 +1634,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1647,7 +1647,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1666,7 +1666,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1679,7 +1679,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1702,7 +1702,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1761,7 +1761,7 @@ const onAddUpdate = () => {
           >
             <template v-if="quoteRequest.child">
               <dt>
-                <x-tooltip position="bottom">
+                <x-tooltip placement="bottom">
                   <label
                     class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                   >
@@ -1785,7 +1785,7 @@ const onAddUpdate = () => {
             </template>
             <template v-if="quoteRequest.parent">
               <dt>
-                <x-tooltip position="bottom">
+                <x-tooltip placement="bottom">
                   <label
                     class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                   >
@@ -2517,7 +2517,7 @@ const onAddUpdate = () => {
               View Legacy policy
             </x-button>
           </Link>
-          <x-tooltip position="top">
+          <x-tooltip placement="top">
             <x-button
               @click.prevent="getupdateDocumentValidate(true)"
               v-if="can(permissionsEnum.DOCUMENT_VERIFY)"

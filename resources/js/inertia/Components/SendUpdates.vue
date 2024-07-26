@@ -394,7 +394,7 @@ const findOption = (item, key) => {
           :hide-footer="sendUpdatesTable.data.length <= 10"
         >
           <template #header-code="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span
@@ -407,7 +407,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-type="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -417,7 +417,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-sub_type="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -427,7 +427,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-status="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -437,7 +437,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-created_at="{ text, tooltip }">
-            <x-tooltip align="left" position="bottom">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -503,7 +503,7 @@ const findOption = (item, key) => {
           v-for="option in authenticatedSendUpdateOptions"
           :key="option.title"
         >
-          <x-tooltip align="left" position="bottom" class="arrow-t">
+          <x-tooltip placement="left">
             <x-button
               color="primary"
               class="py-8 px-6 rounded-xl min-h-[150px] w-[200px] whitespace-break-spaces underline decoration-dotted !h-100"
@@ -529,7 +529,7 @@ const findOption = (item, key) => {
           v-for="category in form.parentCategory?.childs"
           :key="category.title"
         >
-          <x-tooltip position="bottom" class="arrow-t">
+          <x-tooltip placement="bottom">
             <x-button
               color="primary"
               class="py-8 px-6 rounded-xl w-[200px] min-h-[150px] whitespace-break-spaces underline decoration-dotted"

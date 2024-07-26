@@ -557,7 +557,7 @@ const travelCoverageOptions = computed(() => {
           size="sm"
           model-type="yyyy-MM-dd"
         />
-        <x-tooltip position="top" v-if="canShow('tiers')">
+        <x-tooltip placement="top" v-if="canShow('tiers')">
           <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike"> Development for Bike Tiers still in progress </template>
           <template #tooltip v-else> Select Tiers </template>
           <ComboBox
