@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Facades\Marshall;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\CarQuote;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
@@ -17,6 +18,7 @@ use App\Models\GenericDocument;
 use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
 use App\Models\QuoteType;
+use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Traits\GenericQueriesAllLobs;
@@ -363,15 +365,24 @@ class EmbeddedProductRepository extends BaseRepository
             $premium = $transaction[0]['price_with_vat'];
             $capturedAt = $transaction[0]['payment_status_date'];
         }
-        // send certificate only for medex
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
-        if ($pdf) {
-            $attachments[] = [
-                'Content' => base64_encode($pdf->output()),
-                'Name' => 'Salama_Certificate.pdf',
-                'ContentType' => 'application/pdf',
-            ];
+        $isAlfredProtect = checkAlfredProtect($short_code);
+
+        if ($isAlfredProtect) {
+            // send certificate only for alfred protect
+            $strategy = $this->createStrategy($short_code, $isAlfredProtect);
+            $attachments[] = $strategy->getCertificateDocument($ep, $transaction[0], $quoteObject);
+        } else {
+            // send certificate only for medex
+            $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
+            if ($pdf) {
+                $attachments[] = [
+                    'Content' => base64_encode($pdf->output()),
+                    'Name' => 'Salama_Certificate.pdf',
+                    'ContentType' => 'application/pdf',
+                ];
+            }
         }
+        
 
         $body = json_encode([
             'From' => config('constants.MA_FROM_EMAIL'),
@@ -523,13 +534,23 @@ class EmbeddedProductRepository extends BaseRepository
         return $dataset;
     }
 
-    public function createStrategy($shortCode)
+    /**
+     * This function use to get embedded product strategy
+     *
+     * @param [type] $shortCode
+     * @param boolean $isAlfredProtect
+     * @return class
+     */
+    public function createStrategy($shortCode, $isAlfredProtect = false)
     {
         $strategy = null;
         $shortCode = strtoupper($shortCode);
         if ($shortCode == 'MDX') {
             $strategy = new MDX();
-        } else {
+        } else if ($isAlfredProtect) {
+            $strategy = new AlfredProtect();
+        }
+        else {
             $strategy = new EmbeddedProductStrategy();
         }
 
