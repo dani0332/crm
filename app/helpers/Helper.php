@@ -919,9 +919,9 @@ if (! function_exists('isValidDate')) {
     }
 }
 
-if (!function_exists('checkAlfredProtect')) {
+if (! function_exists('checkAlfredProtect')) {
     function checkAlfredProtect($product)
-    {   
+    {
         return in_array($product, [
             EmbeddedProductEnum::AP1()->key,
             EmbeddedProductEnum::AP2()->key,

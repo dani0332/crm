@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Models\EmbeddedTransaction;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -47,19 +46,19 @@ class ProcessSyncAlfredProtect implements ShouldQueue
             ['is_selected',  '=', 1],
             ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->get();
-        
-        $transaction = $transactions->where(function($transact) {
-            if(isset($transact->product) && isset($transact->product->embeddedProduct)){
+
+        $transaction = $transactions->where(function ($transact) {
+            if (isset($transact->product) && isset($transact->product->embeddedProduct)) {
                 return checkAlfredProtect($transact->product->embeddedProduct->short_code);
             } else {
-                throw new Exception("No embedded product found for the selected transaction");
+                throw new Exception('No embedded product found for the selected transaction');
             }
         })->first();
-        info('CL: ' . get_class() . ' FN: handle. Transaction: ' . $transaction);
-        if($transaction->isEmpty()) {
-            throw new Exception("No transaction found for the selected product");
+        info('CL: '.get_class().' FN: handle. Transaction: '.$transaction);
+        if ($transaction->isEmpty()) {
+            throw new Exception('No transaction found for the selected product');
         }
-        
+
         $strategy->syncSukoonDemocrance($this->quoteObject, $transaction);
     }
 
@@ -68,6 +67,6 @@ class ProcessSyncAlfredProtect implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        info('CL: ' . get_class() . ' FN: failed. Job Failed. Error: ' . $exception->getMessage());
+        info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
     }
 }

@@ -57,7 +57,7 @@ class EmbeddedProductReport
                 'commission_without_vat',
                 'policy_price',
                 'policy_status',
-            ] : [])
+            ] : []),
 
         ];
 
@@ -74,7 +74,7 @@ class EmbeddedProductReport
             $certificate->payment_date,
             $certificate->plan_start_date,
             $certificate->plan_end_date,
-            ...($isAlfredProtect ? [$certificate->plan_type]: []),
+            ...($isAlfredProtect ? [$certificate->plan_type] : []),
             $certificate->certificate_number,
             $certificate->name,
             $certificate->emirates_id_number,
@@ -92,7 +92,7 @@ class EmbeddedProductReport
                 $certificate->commission_without_vat,
                 $certificate->policy_price,
                 $certificate->policy_status,
-            ] : [])
+            ] : []),
         ];
     }
 }

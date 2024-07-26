@@ -3,13 +3,11 @@
 namespace App\Strategies\EmbeddedProducts;
 
 use App\Services\SukoonDemocranceService;
-use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\Storage;
 
 class AlfredProtect extends EmbeddedProduct
 {
-
     public function syncSukoonDemocrance($quoteObject, $transaction)
     {
         $sukoonDemocrance = new SukoonDemocranceService();
@@ -35,15 +33,12 @@ class AlfredProtect extends EmbeddedProduct
             $mimeType = $fileInfo->buffer($file);
             $filePath = Storage::disk('azureIM')->url($document->doc_url);
 
-
             return [
                 'Name' => $document->doc_name,
                 'Path' => $document->doc_url,
             ];
-        } 
+        }
     }
-
-
 
     /**
      * Retrieves the Certificate url for a quote object.
@@ -60,7 +55,8 @@ class AlfredProtect extends EmbeddedProduct
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
         if ($documents > 0) {
             $document = $transaction->documents()->first();
-            $url = $azureStorageUrl . $azureStorageContainer . '/' . $document->doc_url;
+            $url = $azureStorageUrl.$azureStorageContainer.'/'.$document->doc_url;
+
             return $url;
 
         }

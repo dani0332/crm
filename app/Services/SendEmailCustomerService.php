@@ -138,7 +138,7 @@ class SendEmailCustomerService extends BaseService
         try {
             $appEnv = config('constants.APP_ENV');
 
-            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv . '-' . $tag;
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
@@ -157,7 +157,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
                 ]],
-                'templateId' => (int)$emailTemplateId,
+                'templateId' => (int) $emailTemplateId,
                 'params' => [
                     'clientName' => $emailData->customerName,
                     'clientEmail' => $emailData->customerEmail,
@@ -177,9 +177,9 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
-            $responseDetail = 'SIB Send Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail . ' QuoteCdbId: ' . $quoteCdbId . ' Class: ' . get_class();
+            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
             Log::error($responseDetail);
-            $response = json_encode($ex->getCode() . ' ' . $ex->getMessage());
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }
 
@@ -192,7 +192,6 @@ class SendEmailCustomerService extends BaseService
 
         return $responseCode;
     }
-
 
     public function sendOcbEmail($emailTemplateId, $emailData, $tag)
     {

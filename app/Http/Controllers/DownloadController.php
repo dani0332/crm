@@ -10,7 +10,6 @@ class DownloadController extends Controller
     /**
      * Use to force download the file
      *
-     * @param Request $request
      * @return void
      */
     public function force(Request $request)
@@ -18,6 +17,7 @@ class DownloadController extends Controller
         $file_content = Storage::disk('azureIM')->get($request->path);
         $file = explode('/', $request->path);
         $lastIndex = count($file);
+
         return response()
             ->streamDownload(
                 function () use ($file_content) {

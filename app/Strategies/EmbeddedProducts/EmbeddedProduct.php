@@ -24,7 +24,7 @@ class EmbeddedProduct
      */
     public function getTransactionData($dataset, $isAlfredProtect = false)
     {
-        $dataset->each(function ($item) use($isAlfredProtect) {
+        $dataset->each(function ($item) use ($isAlfredProtect) {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
@@ -67,7 +67,7 @@ class EmbeddedProduct
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
             $item->emirates_id_number = $customer->emirates_id_number ?? '';
 
-            if($isAlfredProtect) {
+            if ($isAlfredProtect) {
                 $item->plan_type = EmbeddedProductEnum::{$item->product->embeddedProduct->short_code}()->value;
                 $item->tax_invoice_no = $item->tax_invoice_no ?? '';
                 $item->tax_invoice_buyer_no = $item->tax_invoice_buyer_no ?? '';
@@ -77,7 +77,6 @@ class EmbeddedProduct
                 $item->policy_price = $item->policy_price ?? '';
                 $item->policy_status = $item->policy_status ?? '';
             }
-
 
             return $item;
         });
