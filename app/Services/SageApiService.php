@@ -16,6 +16,7 @@ use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\QuoteRequestEntityMapping;
 use App\Models\SageApiLog;
 use App\Models\SendUpdateLog;
 use App\Models\User;
@@ -74,13 +75,13 @@ class SageApiService
         // $sageRequest->discount = 2;
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
-        $sageRequest->bookingDate = date('Y-m-d', strtotime($quote['policy_booking_date']));
-        $sageRequest->policyBookingDate = date('Ymd', strtotime($quote['policy_booking_date']));
-        $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
-        $sageRequest->insurerInvoiceDate = date('Y-m-d', strtotime($payment->insurer_invoice_date));
+        $sageRequest->bookingDate = $quote['policy_booking_date'] ? date(env('DATE_FORMAT_ONLY'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
+        $sageRequest->policyBookingDate = $quote['policy_booking_date'] ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['renewal_expiry_date']));
+        $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
 
         if (! empty($paymentSplits)) {
-            $sageRequest->paymentDueDate = date('Y-m-d', strtotime($paymentSplits[0]['due_date']));
+            $sageRequest->paymentDueDate = date(env('DATE_FORMAT_ONLY'), strtotime($paymentSplits[0]['due_date']));
         }
 
         $sageRequest->mainClassInsurance = $modelType;
@@ -147,23 +148,38 @@ class SageApiService
     // Code Refactor, Old function verifySageCustomer updated function sageCustomer
     public function sageCustomer($quoteTypeId, $quote, $totalSteps = 4)
     {
+        $response = '';
+        $customerPayload = [
+            'sage_request_type' => SageEnum::SRT_CREATE_CUSTOMER,
+            'entry_type' => SageEnum::SCT_STRAIGHT,
+            'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
+            'payload' => [],
+        ];
+
         $sageCustomerNumber = false;
-        $customer = Customer::where('id', $quote->customer_id)->first();
+        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
+
+        $customer = Customer::find($quote->customer_id);
+        $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
+
+        $quoteEntityMapping = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quote->id])->first();
+        $quoteEntity = $quoteEntityMapping?->entity;
+        if ($quoteEntity) {
+            $customerData['entity'] = $quoteEntity;
+            if ($quoteEntity->sage_customer_number) {
+                $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
+
+                return $quoteEntity->sage_customer_number;
+            }
+        }
 
         if ($customer) {
-            $response = '';
-            $customer->data = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
-            $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
-            $customerPayload = [
-                'sage_request_type' => SageEnum::SRT_CREATE_CUSTOMER,
-                'entry_type' => SageEnum::SCT_STRAIGHT,
-                'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
-                'payload' => [],
-            ];
+            $customer->data = $customerData;
 
-            if ($customer->sage_customer_number) {
+            if ($customer->sage_customer_number && ! $quoteEntity) {
                 $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
-                $sageCustomerNumber = $customer->sage_customer_number;
+
+                return $customer->sage_customer_number;
             } else {
                 $isLiveApiCallStep1 = true;
                 $sageSecondLog = isset($sageLogArray[1]) ? $sageLogArray[1] : false;
@@ -187,12 +203,19 @@ class SageApiService
                     if ($isLiveApiCallStep1) {
                         $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
                     }
-                    unset($customer->data);
-                    $customer->sage_customer_number = $sageCustomerNumber;
-                    $customer->save();
                 } else {
                     $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps, 'fail');
                 }
+            }
+        }
+        if ($sageCustomerNumber) {
+            unset($customer->data);
+            if ($quoteEntity) {
+                $quoteEntity->sage_customer_number = $sageCustomerNumber;
+                $quoteEntity->save();
+            } elseif ($customer) {
+                $customer->sage_customer_number = $sageCustomerNumber;
+                $customer->save();
             }
         }
 
@@ -202,15 +225,27 @@ class SageApiService
     public function verifySageCustomer($customerId, $data = null, $logModal = null, $sageLogArray = [], $totalSteps = 4)
     {
         $customer = Customer::find($customerId);
-        $customer->data = ! empty($data) ? $data : [];
         $sageCustomerNumber = false;
         $payLoadOptions['endPoint'] = 'AR/ARCustomers';
         $payLoadOptions['payload'] = [];
         $response = '';
-        if ($customer) {
-            if ($customer->sage_customer_number) {
+        $quoteEntityMapping = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $data['quoteTypeId'], 'quote_request_id' => $data['id']])->first();
+        $quoteEntity = $quoteEntityMapping?->entity;
+        if ($quoteEntity) {
+            $data['entity'] = $quoteEntity;
+            if ($quoteEntity->sage_customer_number) {
                 $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
-                $sageCustomerNumber = $customer->sage_customer_number;
+
+                return $quoteEntity->sage_customer_number;
+            }
+        }
+
+        if ($customer) {
+            $customer->data = ! empty($data) ? $data : [];
+            if ($customer->sage_customer_number && ! $quoteEntity) {
+                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
+
+                return $customer->sage_customer_number;
             } else {
                 $isLiveApiCallStep1 = true;
                 if (isset($sageLogArray[1]) && $sageLogArray[1]['status'] == config('constants.SAGE_LOG_SUCCESS_STATUS')) {
@@ -238,12 +273,19 @@ class SageApiService
                     if ($isLiveApiCallStep1) {
                         $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
                     }
-                    unset($customer->data);
-                    $customer->sage_customer_number = $sageCustomerNumber;
-                    $customer->save();
                 } else {
                     $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, 'fail');
                 }
+            }
+        }
+        if ($sageCustomerNumber) {
+            unset($customer->data);
+            if ($quoteEntity) {
+                $quoteEntity->sage_customer_number = $sageCustomerNumber;
+                $quoteEntity->save();
+            } elseif ($customer) {
+                $customer->sage_customer_number = $sageCustomerNumber;
+                $customer->save();
             }
         }
 
@@ -603,7 +645,6 @@ class SageApiService
                 'payment' => $payment,
                 'splitPayments' => $splitPayments,
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'apPatchCallEnable' => $extras['ap_patch_call_enable'],
                 'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
                 'extras' => [
                     'option_id' => $extras['option'] ?? null,
@@ -739,7 +780,6 @@ class SageApiService
                         'splitPayments' => $splitPayments,
                         'sendUpdateLog' => $extras['send_update_log'] ?? [],
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
-                        'apPatchCallEnable' => $extras['ap_patch_call_enable'], // TODO :: This is temporary solution, this after AP Split patch working fine
                         'extras' => [
                             'option_id' => $extras['option'] ?? null,
                         ],
@@ -973,7 +1013,6 @@ class SageApiService
                 'recursiveCall' => true,
                 'revCorrSplitPayment' => $extraParams['revCorrSplitPayment'] ?? false,
                 'paymentDetails' => $paymentDetails ?? [],
-                'apPatchCallEnable' => $extraParams['apPatchCallEnable'] ?? true, // TODO :: This is temporary solution, this after AP Split patch working fine
                 'extras' => $extraParams['extras'] ?? [],
             ];
 
@@ -1444,6 +1483,7 @@ class SageApiService
             $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
             $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
         }
+        $patchPayload = $postedResponse;
         //3
         $isLiveApiCallStep3 = true;
         if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == 'success') {
@@ -1456,7 +1496,8 @@ class SageApiService
             $postedResponse = json_decode($resp, true);
         }
         $postedResponse['endPoint'] = $url;
-        $postedResponse['payload'] = $postedResponse;
+        $postedResponse['payload'] = $patchPayload;
+        $postedResponse['response'] = $postedResponse;
         if (isset($postedResponse['error'])) {
             $errorMessage = 'Error while making ar2 split payments patch to sage';
             $message = 'AR Patch Request failed';

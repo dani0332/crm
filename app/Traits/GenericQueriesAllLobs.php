@@ -16,6 +16,7 @@ use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
@@ -421,11 +422,16 @@ trait GenericQueriesAllLobs
      * Invoked when update in the policy details section
      * It also checks for discrepancies between the total amount of child payments and the total price of the parent payment.
      */
-    public function updatePriceAndDiscount($quoteModel): bool
+    public function updatePriceAndDiscount($quoteModel, $sendUpdatePayment = null): bool
     {
         info('fn: updatePriceAndDiscount called for : '.$quoteModel->uuid);
 
-        $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        // it will check for send update payments.
+        if (! $sendUpdatePayment) {
+            $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        } else {
+            $payment = $sendUpdatePayment;
+        }
         $priceWithVat = $quoteModel->price_with_vat;
 
         if ($payment) {
@@ -794,4 +800,28 @@ trait GenericQueriesAllLobs
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
 
+    public function getSendUpdatePaymentCode($sendUpdateLogId): string
+    {
+        $code = Payment::where('send_update_log_id', $sendUpdateLogId)->pluck('code')->first();
+        if ($code) {
+            return $code;
+        }
+
+        return '';
+    }
+
+    public function getSendUpdateDocumentIds($sendUpdateLogId)
+    {
+        $sendUpdateLog = SendUpdateLog::with(['documents' => function ($query) {
+            $query->withTrashed();
+        }])->find($sendUpdateLogId);
+
+        $documentIds = $sendUpdateLog->documents->pluck('id')->toArray();
+
+        if (! empty($documentIds)) {
+            return $documentIds;
+        }
+
+        return null;
+    }
 }

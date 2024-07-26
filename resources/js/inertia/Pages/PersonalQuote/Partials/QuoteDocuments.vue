@@ -1,4 +1,6 @@
 <script setup>
+import { useFileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
+import DownloadDocuments from "../../../Components/DownloadDocuments.vue";
 
 import { computed } from 'vue';
 
@@ -140,7 +142,7 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    docForm.setError({ error: useFileUploadErrorMessage(doc, rejectReason) });
     return false;
   }
   isUploading.value = true;
@@ -297,6 +299,11 @@ const sendUpdatePermissionCheck = computed(() => {
       <template #body>
         <x-divider class="my-4" />
         <div class="flex gap-2 mb-4 justify-end">
+            <DownloadDocuments
+                v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
+                :quote="page.props.quote"
+                :quoteDocuments="page.props.quote.documents ?? page.props.quoteDocuments"
+            />
           <Link
             v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${inslyId}`"

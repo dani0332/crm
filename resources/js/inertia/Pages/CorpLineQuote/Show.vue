@@ -10,7 +10,6 @@ const props = defineProps({
   allowedDuplicateLOB: Array,
   quoteDetails: Object,
   customerAdditionalContacts: Array,
-  enums: Object,
   activities: Array,
   advisors: Array,
   typeCode: String,
@@ -67,9 +66,9 @@ const rules = {
 };
 
 const disableStatusSection = computed(() => {
-  return props.quote?.quote_status_id == props.enums?.quoteStatusEnum?.Lost ||
+  return props.quote?.quote_status_id == quoteStatusEnum?.Lost ||
     props.quote?.quote_status_id ==
-      props.enums?.quoteStatusEnum?.TransactionApproved
+      quoteStatusEnum?.TransactionApproved
     ? true
     : false;
 });
@@ -220,13 +219,13 @@ const advisorOptions = computed(() => {
 });
 
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -1134,6 +1133,30 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 :disabled="lockLeadSectionsDetails.lead_status"
              />
             </div>
+          </div>
+          <div class="w-full md:w-2/3">
+            <x-select
+              v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
+              v-model="leadStatusForm.lostReason"
+              label="LOST REASON"
+              :options="
+                lostReasons?.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+            <x-field label="Transaction Type">
+              <x-input
+                type="text"
+                :value="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+              />
+            </x-field>
           </div>
         </div>
         <StatusUpdateButtonTemplate v-slot="{ isDisabled }">

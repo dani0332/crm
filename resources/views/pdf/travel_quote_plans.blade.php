@@ -226,7 +226,7 @@
             font-size: 10px;
         }
         .provider-logo {
-            width: 100px;
+            width: 150px;
         }
         .no-border {border: none;}
         footer {
@@ -385,7 +385,7 @@
             }
 
             // Add Policy Price
-            $policyFee = (isset($providers[$quotePlan->providerId]['travel_policy_fee'])) ? $providers[$quotePlan->providerId]['travel_policy_fee'] : 0;
+            $policyFee = (isset($providers[$quotePlan->insuranceProviderId]['travel_policy_fee'])) ? $providers[$quotePlan->insuranceProviderId]['travel_policy_fee'] : 0;
             $quotePlan->discountPremium += $policyFee;
             // $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
             $quotePlan->total += $policyFee;
@@ -480,7 +480,7 @@
         <table class="table-fixed text-center tbl-plans" style="position: relative;top: 90px;margin-bottom: 70px;table-layout: fixed">
             <thead>
                 <tr>
-                    <th class="alfred" >
+                    <th class="alfred" rowspan="2">
                         <img src="{{public_path('images/alfred.png')}}"  />
                     </th>
                     @foreach($planIds as $planId)
@@ -498,6 +498,15 @@
                         </div>
                     </th>
                     @endforeach
+                </tr>
+                <tr>
+                @foreach($planIds as $planId)
+                    <th style="padding: 0;margin: 0;">
+                        <span class="text-center" style="font-size: 16px; font-weight: medium !important">
+                            {{ $plans[$planId]->name }}
+                        </span>
+                    </th>
+                @endforeach
                 </tr>
                 {{-- buy now row --}}
                 <tr>
@@ -566,8 +575,8 @@
                 @endif
 
                 {{-- feature rows --}}
-                   <?php $planIterate = 0; ?>
-                <tr class="<?php echo 'row_'.$featCount; ?> {{ ($feature['row_class'] ?? "")}}" >
+                   <?php $planIterate = 0;?>
+                <tr class="<?php echo 'row_' . $featCount; ?> {{ ($feature['row_class'] ?? "")}}" >
                     <td class="{{@$feature['heading_class']}}"><p class="text-left">{{@$feature['title']}}</p></td>
                     @foreach($planIds as $planId)
                         <?php $return_value = '';
@@ -618,7 +627,8 @@
                         ?>
                         <?php echo $return_value ?>
 
-                  <?php  } ?>
+                  <?php
+}?>
                   </p>
 
                         </td>
@@ -636,7 +646,7 @@
 
                     @endforeach
                 </tr>
-                    <?php $featCount++; ?>
+                    <?php $featCount++;?>
                  @endforeach
                 <tr>
                     <td >
