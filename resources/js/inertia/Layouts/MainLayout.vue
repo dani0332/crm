@@ -81,105 +81,105 @@ const onLogout = () => {
       @click.prevent="openSidebar = false"
     ></div>
 
-    <article
-      class="flex-col gap-y-6 w-screen flex-1 h-full transition-all lg:pl-[var(--sidebar-width)]"
-    >
-      <header
-        class="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center border-b bg-white"
+    <XNotifications inject-key="toast">
+      <article
+        class="flex-col gap-y-6 w-screen flex-1 h-full transition-all lg:pl-[var(--sidebar-width)]"
       >
-        <div
-          class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
+        <header
+          class="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center border-b bg-white"
         >
-          <div>
-            <button
-              type="button"
-              class="shrink-0 flex lg:hidden items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
-              aria-label="Open sidebar"
-              @click.prevent="openSidebar = !openSidebar"
-            >
-              <svg
-                class="w-6 h-6"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
+          <div
+            class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
+          >
+            <div>
+              <button
+                type="button"
+                class="shrink-0 flex lg:hidden items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
+                aria-label="Open sidebar"
+                @click.prevent="openSidebar = !openSidebar"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                ></path>
-              </svg>
-            </button>
+                <svg
+                  class="w-6 h-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                  ></path>
+                </svg>
+              </button>
 
-            <div id="headerportal"></div>
-          </div>
+              <div id="headerportal"></div>
+            </div>
 
-          <div class="flex gap-3 items-center">
-            <OnlineStatusToggle :user="user" />
-            <!-- <UserStatus /> -->
-            <x-popover align="right" block>
-              <x-button size="sm" ghost>
-                <div class="flex gap-3 items-center">
-                  <x-avatar
-                    size="sm"
-                    color="#999"
-                    :alt="user.name"
-                    :image="
-                      user.profile_photo_path != null
-                        ? user.profile_photo_path
-                        : '/image/alfred-theme.png'
-                    "
-                    outlined
-                    rounded
-                  />
-                  <span>{{ user.name }}</span>
-                  <svg
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    fill="none"
-                    role="presentation"
-                    class="stroke-2 w-3 h-3"
-                  >
-                    <path d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </x-button>
-              <template #content>
-                <x-popover-container class="p-2">
-                  <button
-                    class="flex gap-2 items-center px-2 group w-full"
-                    @click="onLogout"
-                  >
+            <div class="flex gap-3 items-center">
+              <OnlineStatusToggle :user="user" />
+              <!-- <UserStatus /> -->
+              <x-popover align="right" block>
+                <x-button size="sm" ghost>
+                  <div class="flex gap-3 items-center">
+                    <x-avatar
+                      size="sm"
+                      color="#999"
+                      :alt="user.name"
+                      :image="
+                        user.profile_photo_path != null
+                          ? user.profile_photo_path
+                          : '/image/alfred-theme.png'
+                      "
+                      outlined
+                      rounded
+                    />
+                    <span>{{ user.name }}</span>
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
                       viewBox="0 0 24 24"
-                      stroke-width="2"
                       stroke="currentColor"
-                      class="w-6 h-6 text-error-600"
+                      fill="none"
+                      role="presentation"
+                      class="stroke-2 w-3 h-3"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-                      />
+                      <path d="M19 9l-7 7-7-7" />
                     </svg>
-                    <span
-                      class="text-sm font-semibold group-hover:text-error-600"
+                  </div>
+                </x-button>
+                <template #content>
+                  <x-popover-container class="p-2">
+                    <button
+                      class="flex gap-2 items-center px-2 group w-full"
+                      @click="onLogout"
                     >
-                      Logout
-                    </span>
-                  </button>
-                </x-popover-container>
-              </template>
-            </x-popover>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="w-6 h-6 text-error-600"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                        />
+                      </svg>
+                      <span
+                        class="text-sm font-semibold group-hover:text-error-600"
+                      >
+                        Logout
+                      </span>
+                    </button>
+                  </x-popover-container>
+                </template>
+              </x-popover>
+            </div>
           </div>
-        </div>
-      </header>
-      <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
-        <XNotifications inject-key="toast">
+        </header>
+        <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
           <ToastArea />
           <div
             v-if="bannerInfo.total_count > 0"
@@ -195,9 +195,9 @@ const onLogout = () => {
             >
           </div>
           <slot />
-        </XNotifications>
-      </div>
-    </article>
+        </div>
+      </article>
+    </XNotifications>
   </main>
 </template>
 
