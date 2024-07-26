@@ -1028,7 +1028,9 @@ const sendPolicyToClient = () => {
         table-class-name="tablefixed compact"
         :headers="plansTable.columns"
         :items="
-          (Array.isArray(listQuotePlans) && listQuotePlans.length > 0) || []
+          Array.isArray(listQuotePlans) && listQuotePlans.length > 0
+            ? listQuotePlans
+            : []
         "
         border-cell
         hide-rows-per-page
@@ -1085,28 +1087,32 @@ const sendPolicyToClient = () => {
         </template>
 
         <template #item-pab_cover="{ addons }">
-          <p v-for="addon in addons"></p>
-          <p v-for="addonOptions in addon.carAddonOption">
-            <input type="hidden" :value="calculateVAT(addonOptions)" />
-            <span
-              v-if="
-                addon.code.toString().toLowerCase() ==
-                  page.props.carPlanAddonsCode.DRIVER_COVER ||
-                addon.code.toString().toLowerCase() ==
-                  page.props.carPlanAddonsCode.PASSENGER_COVER
-              "
-              >{{ addon.text + ':' + addonOptions.value }}</span
-            >
-            <span
-              v-else-if="
-                addon.text.toString().toLowerCase() ==
-                  page.props.carPlanAddonsCode.DRIVER_COVER_TEXT ||
-                addon.text.toString().toLowerCase() ==
-                  page.props.carPlanAddonsCode.PASSENGER_COVER_TEXT
-              "
-              >{{ addon.text + ':' + addonOptions.value }}</span
-            >
-          </p>
+          <template v-if="addons">
+            <template v-for="addon in addons">
+              <p v-for="addonOptions in addon?.carAddonOption">
+                <input type="hidden" :value="calculateVAT(addonOptions)" />
+                <span
+                  v-if="
+                    addon.code.toString().toLowerCase() ==
+                      page.props.carPlanAddonsCode.DRIVER_COVER ||
+                    addon.code.toString().toLowerCase() ==
+                      page.props.carPlanAddonsCode.PASSENGER_COVER
+                  "
+                >
+                  {{ addon.text + ':' + addonOptions.value }}
+                </span>
+                <span
+                  v-else-if="
+                    addon.text.toString().toLowerCase() ==
+                      page.props.carPlanAddonsCode.DRIVER_COVER_TEXT ||
+                    addon.text.toString().toLowerCase() ==
+                      page.props.carPlanAddonsCode.PASSENGER_COVER_TEXT
+                  "
+                  >{{ addon.text + ':' + addonOptions.value }}</span
+                >
+              </p>
+            </template>
+          </template>
         </template>
 
         <template #item-roadside_assistance="{ benefits }">
