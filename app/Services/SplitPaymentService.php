@@ -628,7 +628,7 @@ class SplitPaymentService
             }
         }
 
-        if (! $paymentSplit->payment->is_approved) {
+        if (! $paymentSplit->payment->is_approved && !$isFromJob) {
             DB::beginTransaction();
             try {
                 if (empty($paymentSplit->verified_at)) {
