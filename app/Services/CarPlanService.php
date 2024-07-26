@@ -216,6 +216,7 @@ class CarPlanService extends BaseService
         ])
             ->where('provider_id', $insuranceProviderId)
             ->whereNotIn('id', $quotePlanId)
+            ->where('quote_type_id', 1)
             ->get();
     }
 }
