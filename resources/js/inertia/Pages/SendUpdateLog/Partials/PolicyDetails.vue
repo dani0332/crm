@@ -126,7 +126,7 @@ const policyDetailsForm = useForm({
 const onUpdate = () => {
     policyDetailsForm.post(
         route('send-update.save-policy-details'), {
-            preserverScroll: true,
+            preserveScroll: true,
             onSuccess: ({ props }) => {
                 notification.success({
                     title: 'The request has been updated',
@@ -192,20 +192,6 @@ const onEdit = () => {
   } else {
     state.isEdit = true;
   }
-};
-
-const rules = {
-  expiry_date: v => {
-    if (v) {
-      const date = new Date(v);
-      const startDate = new Date(policyDetailsForm.start_date);
-      if (startDate >= date) {
-        return 'Expiry date should be greater than Start Date';
-      }
-      return isNaN(date.getTime());
-    }
-    return !!v || 'This field is required';
-  },
 };
 </script>
 
@@ -423,11 +409,11 @@ const rules = {
               <dd>
                 <DatePicker
                     v-model="policyDetailsForm.expiry_date"
-                    :rules="[rules.expiry_date]"
                     name="expiry_date"
                     :disabled="!state.isEdit"
                     placeholder="dd-mm-yyyy"
                     class="w-full"
+                    :custom-error="policyDetailsForm.errors.expiry_date"
                 />
               </dd>
             </div>
