@@ -705,4 +705,20 @@ class CentralService
         return false;
     }
 
+    public function latestImpactedPaymentDetails($quoteTypeId, $quote, $payments) 
+    {
+        // paid_by use temp column, need to introduce new column in payment table
+        $isAnyLatestImpactedPayment = $payments->pluck('paid_by')->contains(true);
+
+        if ( !$isAnyLatestImpactedPayment ) {
+            return $payments;
+        }
+
+        $latestImpactedPayment[] = $payments->filter(function ($payment) {
+            return $payment->paid_by;
+        })->first()->toArray();
+
+        return $latestImpactedPayment;
+    }
+
 }

@@ -427,13 +427,13 @@ class SendUpdateLogController extends Controller
             info('Book Update - Payment details updated. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
         }
 
-        if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
-            if ($sageResponse['status'] === false) {
+        // if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
+        //     $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
+        //     if ($sageResponse['status'] === false) {
 
-                return response()->json(['message' => $sageResponse['message']], 500);
-            }
-        }
+        //         return response()->json(['message' => $sageResponse['message']], 500);
+        //     }
+        // }
 
         // Send Update Data move to main lead page as per Send update Type
         info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);

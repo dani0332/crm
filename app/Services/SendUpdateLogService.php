@@ -680,8 +680,10 @@ class SendUpdateLogService
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
-        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
-
+        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->with(['payments' => function($query){
+            $query->whereNull('send_update_log_id');
+        }])->first();
+        
         try {
             DB::beginTransaction();
 
@@ -746,7 +748,9 @@ class SendUpdateLogService
                 // Cases for Cancel Inception and Cancel Inception Reissue End
 
                 // Cases for Correct Policy Details Start
-                if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
+                    $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
+                    )) {
                     info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
