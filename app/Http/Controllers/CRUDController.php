@@ -1566,7 +1566,7 @@ class CRUDController extends Controller
         $entity = $result['entity'];
         $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            if(isset($plainEntity)){
+            if (isset($plainEntity)) {
                 $this->crudService->calculateScore($plainEntity, $request->modelType);
             }
         }
