@@ -66,4 +66,9 @@ class EmbeddedProduct extends Model
 
         return false;
     }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
 }

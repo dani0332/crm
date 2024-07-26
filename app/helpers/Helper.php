@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -916,5 +916,16 @@ if (! function_exists('isValidDate')) {
         return ! empty($date)
             && $date != '0000-00-00 00:00:00'
             && $date != '0000-00-00';
+    }
+}
+
+if (!function_exists('checkAlfredProtect')) {
+    function checkAlfredProtect($product)
+    {   
+        return in_array($product, [
+            EmbeddedProductEnum::AP1()->key,
+            EmbeddedProductEnum::AP2()->key,
+            EmbeddedProductEnum::AP3()->key,
+        ]);
     }
 }
