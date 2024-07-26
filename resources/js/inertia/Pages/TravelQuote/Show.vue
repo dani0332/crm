@@ -5,6 +5,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 import { computed } from 'vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 const page = usePage();
 defineProps({
@@ -1289,6 +1290,14 @@ const getGenderDisplay = (val) => {
           return '';
       }
     }
+
+const onAddUpdate = () => {
+  selectedProviderPlan.value.id = null;
+  selectedProviderPlan.value.planName = '';
+  selectedProviderPlan.value.providerName = '';
+  selectedProviderPlan.value.premium = '';
+}
+
 </script>
 
 <template>
@@ -3147,6 +3156,7 @@ const getGenderDisplay = (val) => {
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <AuditLogs

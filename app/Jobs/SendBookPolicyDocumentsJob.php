@@ -75,16 +75,19 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->customerEmail = $quote->email;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
             $emailData->policy_number = $quote->policy_number;
-            $emailData->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
+            $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['renewal_expiry_date']));
+            $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));
             $emailData->quoteDocuments = $docs;
             $emailData->advisorName = '';
             $emailData->advisorEmail = '';
             $emailData->advisorMobileNo = '';
+            $emailData->advisorLandlineNo = '';
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
                 $advisorMobileNo = formatMobileNo($quote->advisor->mobile_no);
                 $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
+                $emailData->advisorLandlineNo = $quote->advisor->landline_no;
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
                 $emailData->currentInsurer = $quote->plan->insuranceProvider->text;

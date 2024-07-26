@@ -64,6 +64,10 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                 }
             }
 
+            if ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE && is_null($this->sendUpdate->expiry_date)) {
+                return $validator->errors()->add('error', 'The expiry date field is required.');
+            }
+
             switch ($category) {
                 case SendUpdateLogStatusEnum::CPD:
                     if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {

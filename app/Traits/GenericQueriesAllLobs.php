@@ -16,6 +16,7 @@ use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
@@ -799,4 +800,28 @@ trait GenericQueriesAllLobs
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
 
+    public function getSendUpdatePaymentCode($sendUpdateLogId): string
+    {
+        $code = Payment::where('send_update_log_id', $sendUpdateLogId)->pluck('code')->first();
+        if ($code) {
+            return $code;
+        }
+
+        return '';
+    }
+
+    public function getSendUpdateDocumentIds($sendUpdateLogId)
+    {
+        $sendUpdateLog = SendUpdateLog::with(['documents' => function ($query) {
+            $query->withTrashed();
+        }])->find($sendUpdateLogId);
+
+        $documentIds = $sendUpdateLog->documents->pluck('id')->toArray();
+
+        if (! empty($documentIds)) {
+            return $documentIds;
+        }
+
+        return null;
+    }
 }

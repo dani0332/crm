@@ -2073,7 +2073,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail.value.id,
+      plan_id: planDetail?.value?.id  || 0,
       customer_id: props.quoteRequest.customer_id,
       payment_code: paymentMethodsForm.paymentCode,
       collection_amount: collectionAmountModels.value,
@@ -2109,7 +2109,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail.value.id,
+      plan_id: planDetail?.value?.id  || 0,
       customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
       bank_reference_number: paymentMethodsForm.bank_reference_number,
@@ -2812,6 +2812,7 @@ const paymentAllocationStatusTooltip = payment_allocation_status => {
   } else if (payment_allocation_status == paymentAllocationStatus.UNPAID) {
     return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
   }
+
   return '';
 };
 

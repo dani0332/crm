@@ -79,9 +79,14 @@ const onAdditionalContactSubmit = isValid => {
     {
       preserveScroll: true,
       onSuccess: () => {
-          if(res.props.flash.success){
+          if(res.props.flash.success) {
               notification.success({
                   title: res.props.flash.success,
+                  position: 'top',
+              });
+          } else {
+              notification.success({
+                  title: 'Additional Contact Added',
                   position: 'top',
               });
           }
@@ -91,11 +96,6 @@ const onAdditionalContactSubmit = isValid => {
       },
       onFinish: () => {
           modals.addContact = false;
-          notification.success({
-              title: 'Additional Contact Added',
-              position: 'top',
-          });
-
       },
     },
   );
