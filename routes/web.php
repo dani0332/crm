@@ -17,6 +17,7 @@ use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\FailedJobsController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
@@ -201,6 +202,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export');
         });
     });
+
+    Route::get('download/force', [DownloadController::class, 'force'])->name('force-download');
 
     Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);

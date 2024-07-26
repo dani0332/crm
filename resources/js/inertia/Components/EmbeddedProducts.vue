@@ -148,35 +148,40 @@ const syncDocument = id => {
 /**
  * this function use download embedded transaction documents issue from insurance provider
  */
-const downloadDocument = id => {
+const downloadDocument = async (id) => {
   downloadDocumentLoader.value = true;
-  sendDocumentForm
-    .transform(data => ({
-      ...data,
-      epId: id,
-    }))
-    .post('/embedded-products/download-document', {
-      preserveScroll: true,
-      responseType: 'blob',  // Ensure this is correctly set
-      onSuccess: (response) => {
-        // Create a URL for the blob and trigger download
-        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'document.pdf');  // Change filename to .pdf
-        document.body.appendChild(link);
-        link.click();
-        
-        // Clean up
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        downloadDocumentLoader.value = false;
-      },
-      onError: () => {
-        downloadDocumentLoader.value = false;
-      },
-    });
+  const formData = {
+    quoteId: props.quote.id,
+    modelType: props.modelType,
+    epId: id,
+  };
+
+  axios
+  .post('/embedded-products/download-document', formData)
+  .then(response => {
+    downloadFile(response.data);
+    downloadDocumentLoader.value = false;
+
+  })
+  .catch(error => {
+    downloadDocumentLoader.value = false;
+
+  });
 };
+
+const downloadFile = (download) => {
+    const save = document.createElement('a');
+    if (typeof save.download !== 'undefined') {
+        // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
+        // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
+        save.href = window.location.protocol+'//'+window.location.host+'/download/force?path='+download.path;
+        save.target = '_blank';
+        save.download = download.name;
+        save.dispatchEvent(new MouseEvent('click'));
+    } else {
+        window.location.href = window.location.protocol+'//'+window.location.host+'/download/force?path='+download.path; // so that it opens new tab for IE11
+    }
+}
 
 
 const dateFormat = date =>

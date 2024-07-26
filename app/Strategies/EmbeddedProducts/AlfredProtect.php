@@ -37,11 +37,8 @@ class AlfredProtect extends EmbeddedProduct
 
 
             return [
-                'Content' => base64_encode($file),
                 'Name' => $document->doc_name,
-                'ContentType' => $mimeType,
-                'Path' => $filePath,
-                'File' => $file
+                'Path' => $document->doc_url,
             ];
         } 
     }

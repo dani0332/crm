@@ -173,9 +173,10 @@ class EmbeddedProductRepository extends BaseRepository
             if ($isAlfredProtect) {
                 $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
                 $attachment = $strategy->getCertificateDocument($ep, $transaction[0], $quoteObject);
-                return response()->make($attachment['File'], 200,[
-                    'Content-Type' => $attachment['ContentType'],
-                    'Content-Disposition' => 'inline; filename='.$attachment['Name']
+
+                return response()->json([
+                    'path' => $attachment['Path'],
+                    'name' => $attachment['Name']
                 ]);
             } else {
                 $certificate_number = $transaction[0]['certificate_number'];
