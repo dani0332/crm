@@ -8,7 +8,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class SavePolicyDetailsRequest extends FormRequest
 {
-    protected SendUpdateLog $sendUpdate;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,7 +23,7 @@ class SavePolicyDetailsRequest extends FormRequest
      */
     public function rules(): array
     {
-        $this->sendUpdate = SendUpdateLog::find($this->id);
+        $sendUpdate = SendUpdateLog::find($this->id);
 
         $rules = [
             'first_name' => 'required|string|max:60',
@@ -43,7 +42,7 @@ class SavePolicyDetailsRequest extends FormRequest
             'quote_type' => 'nullable|string',
         ];
 
-        if ($this->sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $this->sendUpdate->option->code == SendUpdateLogStatusEnum::PPE) {
+        if ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option->code == SendUpdateLogStatusEnum::PPE) {
             $rules['expiry_date'] = 'required|date|after:start_date';
         }
 
