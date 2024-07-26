@@ -21,18 +21,15 @@ class ProcessSyncAlfredProtect implements ShouldQueue
     public $tries = 2;
     public $timeout = 1200;
     public $backoff = 10;
-    private $embeddedProduct;
     private $quoteObject;
-    private $modelType;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($embeddedProduct, $quoteObject, $modelType)
+    public function __construct($lead)
     {
-        $this->embeddedProduct = $embeddedProduct;
-        $this->quoteObject = $quoteObject;
-        $this->modelType = $modelType;
+        $lead = $lead->load('embeddedTransactions', 'embeddedTransactions.product', 'embeddedTransactions.product.embeddedProduct', 'emirate', 'customer');
+        $this->quoteObject = $lead;
         $this->onQueue('renewals');
     }
 
@@ -42,26 +39,28 @@ class ProcessSyncAlfredProtect implements ShouldQueue
     public function handle(): void
     {
         $strategy = new AlfredProtect();
-        $optionsIds = [];
-        if ($this->embeddedProduct->prices) {
-            $optionsIds = $this->embeddedProduct->prices->pluck('id');
-        }
 
-        // certificate generation
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($this->modelType));
-        $transaction = EmbeddedTransaction::where([
+        $quoteTypeId = QuoteTypeId::Car;
+        $transactions = $this->quoteObject->embeddedTransactions()->where([
             ['quote_type_id', '=', $quoteTypeId],
             ['quote_request_id',  '=', $this->quoteObject->id],
             ['is_selected',  '=', 1],
             ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
-        ])->whereIn('product_id', $optionsIds)->get();
-
-
+        ])->get();
+        
+        $transaction = $transactions->filter(function($transact) {
+            if(isset($transact->product) && isset($transact->product->embeddedProduct)){
+                return checkAlfredProtect($transact->product->embeddedProduct->short_code);
+            } else {
+                throw new Exception("No embedded product found for the selected transaction");
+            }
+        });
+        info('CL: ' . get_class() . ' FN: handle. Transaction: ' . $transaction);
         if($transaction->isEmpty()) {
             throw new Exception("No transaction found for the selected product");
         }
         
-        $strategy->syncSukoonDemocrance($this->quoteObject, $this->embeddedProduct, $transaction[0]);
+        $strategy->syncSukoonDemocrance($this->quoteObject, $transaction);
     }
 
     /**
