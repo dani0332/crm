@@ -145,11 +145,11 @@ class ApiService
     {
         if (optional($request)->quoteType == QuoteTypes::HEALTH) {
             info('------ SIC workflow trigger request received for lead : ' . ($request->quoteUuid ?? '') . ' ------');
-            SendHealthOCBIntroEmailJob::dispatch($request->quoteUuid ?? null, null, true);
+            // SendHealthOCBIntroEmailJob::dispatch($request->quoteUuid ?? null, null, true);
         }
         else {
         info('------ SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
-        SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
+        // SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
         info('------ SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
         }
 

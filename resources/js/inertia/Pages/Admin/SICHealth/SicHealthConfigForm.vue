@@ -3,7 +3,8 @@
 const props = defineProps({
     sicHealthConfig: Object,
     nationalities: Object,
-    memberCategories: Object
+    memberCategories: Object,
+    healthTypes: Object,
 });
 
 const page = usePage();
@@ -25,16 +26,12 @@ const SICHealthConfigForm = useForm({
   is_age: props.sicHealthConfig?.is_age ?? false,
 
 });
-const subTeamOptions = [
-  { value: 'Best', label: 'Best' },
-  { value: 'Good', label: 'Good' },
-  { value: 'Entry-Level', label: 'Entry-Level'},
-];
+
 function onSubmit(isValid) {
 
   if (isValid) {
     let method = 'post';
-    let url = route('admin.sic-health-config')
+    let url = route('admin.sic-health-config.store')
     SICHealthConfigForm.submit(method, url, {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
@@ -43,6 +40,9 @@ function onSubmit(isValid) {
         return false;
       },
     });
+  }
+  else {
+    console.log("error");
   }
 
 }
@@ -62,6 +62,13 @@ const memberCategoriesOptions = computed(() => {
     label: cat.text,
   }));
 });
+const healthTypesOptions = computed(() => {
+  return page.props.healthTypes.map(type => ({
+    value: type.id,
+    label: type.text,
+  }));
+});
+
 const ageRangeValid = computed(() => {
       const minAge = parseInt(SICHealthConfigForm.min_age);
       const maxAge = parseInt(SICHealthConfigForm.max_age);
@@ -126,7 +133,7 @@ const ageRangeValid = computed(() => {
                 <x-field label="Types">
                     <ComboBox
                         v-model="SICHealthConfigForm.plan_types"
-                        :options="subTeamOptions"
+                        :options="healthTypesOptions"
                         :multiple="true"
                         :autocomplete="true"
                         :error="SICHealthConfigForm?.errors.plan_types"
