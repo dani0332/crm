@@ -476,17 +476,6 @@ class EmbeddedProductRepository extends BaseRepository
         }       
     }
 
-    public function fetchSyncDocument($data)
-    {
-        $quoteId = $data['quoteId'];
-        $modelType = $data['modelType'];
-        $epId = $data['epId'];
-
-        $ep = $this->where('id', $epId)->first();
-        $quoteObject = $this->getQuoteObject($modelType, $quoteId);
-        ProcessSyncAlfredProtect::dispatch($ep, $quoteObject, $modelType);
-    }
-
     /**
      * Retrieves the PDF certificate for a specific product.
      *
