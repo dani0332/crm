@@ -286,41 +286,45 @@ const calculateCommission = () => {
     Number(props.quote?.price_vat_applicable) +
     Number(props.quote?.price_vat_not_applicable);
 
-  if (totalPriceWithoutVat > 0) {
-    let totalCommissionWithoutVat =
-      Number(bpForm.commission_vat_not_applicable) +
-      Number(bpForm.commission_vat_applicable);
+  let totalCommissionWithoutVat =
+    Number(bpForm.commission_vat_not_applicable) +
+    Number(bpForm.commission_vat_applicable);
 
-    if (totalCommissionWithoutVat > 0) {
-      bpForm.vat_on_commission = calculateVatOnCommission(
-        bpForm.commission_vat_applicable,
-      );
+  if (totalCommissionWithoutVat > 0) {
+    bpForm.vat_on_commission = calculateVatOnCommission(
+      bpForm.commission_vat_applicable,
+    );
+    bpForm.total_commission =
+      totalCommissionWithoutVat + useRoundIt(bpForm.vat_on_commission);
 
-      bpForm.total_commission =
-        totalCommissionWithoutVat + useRoundIt(bpForm.vat_on_commission);
-
+    if (totalPriceWithoutVat > 0) {
       bpForm.commission_percentage = calculateCommissionPercentage(
         totalCommissionWithoutVat,
         totalPriceWithoutVat,
       );
     } else {
       bpForm.commission_percentage = 0;
-      bpForm.vat_on_commission = 0;
-      bpForm.total_commission = '';
+      notification.error({
+        title: 'Total Price is zero for this Policy!',
+        position: 'top',
+      });
+      /*bpForm.commission_vat_applicable = '';
+      bpForm.commission_vat_not_applicable = '';
+      notification.error({
+        title:
+          'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
+        position: 'top',
+      });*/
     }
   } else {
-    bpForm.commission_vat_applicable = '';
-    bpForm.commission_vat_not_applicable = '';
-    notification.error({
-      title:
-        'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
-      position: 'top',
-    });
+    bpForm.commission_percentage = 0;
+    bpForm.vat_on_commission = 0;
+    bpForm.total_commission = 0;
   }
 };
 
-// Disable Commission vat nor applicable for all LOBs
 const disableCommissionVatNotApplicable = computed(() => {
+  // Disable Commission vat nor applicable for all LOBs
   return true;
   /*return (
       !bp.isEditing ||
@@ -330,8 +334,8 @@ const disableCommissionVatNotApplicable = computed(() => {
     );*/
 });
 
-// Enable Commission vat nor applicable for all LOBs
 const disableCommissionVatApplicable = computed(() => {
+  // Enable Commission vat nor applicable for all LOBs
   return !bp.isEditing;
   /*return (
       !bp.isEditing ||
@@ -360,6 +364,7 @@ const disableSendAndBookPolicyButton = computed(() => {
   if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
     permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
   }
+
   let isPolicyStatusCancellationPending =
     props.quote.quote_status_id ==
     page.props.quoteStatusEnum.CancellationPending;
@@ -1004,20 +1009,19 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       </template>
                     </x-tooltip>
 
-                    <x-button
-                      v-else
-                      size="sm"
-                      class="mt-4 mr-2"
-                      color="orange"
-                      :disabled="
-                        !props.bookPolicyDetails?.bookButton ||
-                        bp.isEditing ||
-                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
-                      "
-                      @click.prevent="confirmSendPolicy"
-                    >
-                      {{ props.bookPolicyDetails?.text }}
-                    </x-button>
+                <x-button v-else
+                  size="sm"
+                  class="mt-4 mr-2"
+                  color="orange"
+                  :disabled="
+                    !props.bookPolicyDetails?.bookButton ||
+                    bp.isEditing ||
+                    !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                  "
+                  @click.prevent="confirmSendPolicy"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
                   </template>
                   <template v-else>
                     <x-tooltip>

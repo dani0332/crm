@@ -1252,6 +1252,14 @@ class SageApiService
             $missingFields[] = 'Customer Sage ID';
         }
 
+        //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
+        $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+        $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
+        $isTotalPriceZero = $payment->total_price == 0;
+        if (! $isPaymentMethodCreditApproved && $isTotalPriceZero && $isPaymentFrequencyUpfront) {
+            return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequecy to Proceed!'];
+        }
+
         if (! $sageRequest->insurerGlLiaiblityAccount) {
             $missingFields[] = 'GL Account for Insurance Provider';
         }
@@ -1573,8 +1581,9 @@ class SageApiService
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-
+        $isTotalPriceZero = $payment->total_price == 0;
         info('########## Start of Upfront createAPInvoicePrem for : '.$quote->code.'##########');
+        if (! $isTotalPriceZero) {
         $isLiveApiCallStep5 = true;
         if (isset($sageLogArray[5]) && $sageLogArray[5]['status'] == 'success') {
             info('SAGE API:  createAPInvoicePrem  Sent Already for '.$quote->uuid);
@@ -1645,7 +1654,9 @@ class SageApiService
 
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, 5, 13, 'fail']);
         }
-        info('  ########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
+        } else {
+                info('  ########## skipping of createAPInvoicePrem for : '.$quote->code.' dye to Zero Pricing ########## ');
+            }info('  ########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
 
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'AP Premium invoice created on sage';
@@ -1882,7 +1893,7 @@ class SageApiService
         /* applyPaymentInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
-        if ($isTransactionPaidAndFrequencyUpfront) {
+        if ($isTransactionPaidAndFrequencyUpfront && ! $isTotalPriceZero) {
             return $this->applyUpfrontPaymentInvoices($sageRequestDataArray);
         }
 

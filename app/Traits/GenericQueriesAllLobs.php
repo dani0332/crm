@@ -495,7 +495,7 @@ trait GenericQueriesAllLobs
                                 ! empty($quote->policy_issuance_date) &&
                                 ! empty($quote->policy_start_date) &&
                                 ! empty($quote->renewal_expiry_date) &&
-                                $quote->price_with_vat > 0;
+                                $quote->price_with_vat >= 0;
 
         if (! $hasBasicPolicyDetails) {
             return false;
@@ -569,7 +569,7 @@ trait GenericQueriesAllLobs
                 PaymentStatusEnum::PENDING,
                 PaymentStatusEnum::NEW,
                 PaymentStatusEnum::OVERDUE,
-                PaymentStatusEnum::CREDIT_APPROVED,
+                PaymentStatusEnum::CREDIT_APPROVED, // TODO: Check with Faisal and Ahsan about this to be included or not for booking of policy with zero price.
             ];
 
             $insufficientPaymentStatusesHeading = [
