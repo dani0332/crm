@@ -246,13 +246,13 @@ const advisorOptions = computed(() => {
 });
 
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -1116,6 +1116,14 @@ const linkEntity = () => {
               class="w-full"
               :error="leadStatusForm.errors.lostReason"
             />
+            <x-field label="Transaction Type">
+              <x-input
+                type="text"
+                :value="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+              />
+            </x-field>
           </div>
         </div>
         <div class="flex justify-end">
@@ -1558,7 +1566,6 @@ const linkEntity = () => {
     </div> -->
 
     <!-- Payments -->
-
 
     <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
       <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>

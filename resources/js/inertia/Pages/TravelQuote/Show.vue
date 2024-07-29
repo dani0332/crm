@@ -5,6 +5,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import { computed } from 'vue';
+import DownloadDocuments from "../../Components/DownloadDocuments.vue";
 
 const page = usePage();
 defineProps({
@@ -2095,7 +2096,7 @@ const getGenderDisplay = (val) => {
       </template>
     </x-modal>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -2342,6 +2343,10 @@ const getGenderDisplay = (val) => {
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
+            <DownloadDocuments
+                :quote="page.props.quote"
+                :quoteDocuments="page.props.quoteDocuments"
+            />
           <Link
             v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${quote.insly_id}`"

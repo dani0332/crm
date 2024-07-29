@@ -20,9 +20,9 @@ const quotes = ref(props.quotes);
 const quote = ref(props.quote);
 const page = usePage();
 const quoteType = inject('quoteType');
+const filters = inject('filters');
 
 const computedLeads = computed(() => {
-  console.log();
   return quote.value.data.leads_list.data;
 });
 
@@ -49,6 +49,7 @@ const onLoadMore = id => {
         page: quotes.value.pages[id],
         modelType: props.quoteType,
         status: id,
+        ...filters,
       }),
     )
     .then(({ data }) => {
