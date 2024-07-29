@@ -44,7 +44,6 @@ class ProcessSyncAlfredProtect implements ShouldQueue
             ['quote_type_id', '=', $quoteTypeId],
             ['quote_request_id',  '=', $this->quoteObject->id],
             ['is_selected',  '=', 1],
-            ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->get();
 
         $transaction = $transactions->where(function ($transact) {
@@ -54,9 +53,9 @@ class ProcessSyncAlfredProtect implements ShouldQueue
                 throw new Exception('No embedded product found for the selected transaction');
             }
         })->first();
-        info('CL: '.get_class().' FN: handle. Transaction: '.$transaction);
-        if ($transaction->isEmpty()) {
-            throw new Exception('No transaction found for the selected product');
+        info('CL: ' . get_class() . ' FN: handle. Transaction: ' . $transaction);
+        if(!isset($transaction) || $transaction->isEmpty()) {
+            throw new Exception("No transaction found for the selected product");
         }
 
         $strategy->syncSukoonDemocrance($this->quoteObject, $transaction);

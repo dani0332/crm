@@ -314,7 +314,7 @@ class SukoonDemocranceService
             'quote_data' => json_encode($this->currentQuote),
             'quote_uuid' => $this->currentQuote->uuid,
             'provider_id' => InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id'),
-            'call_type' => 'product',
+            'call_type' => 'embedded-product',
         ];
         InsurerRequestResponse::create($logData);
 
