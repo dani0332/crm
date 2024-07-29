@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use setasign\Fpdi\Fpdi;
 use App\Enums\RolesEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
@@ -245,16 +246,42 @@ class QuoteDocumentService extends BaseService
     public function watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
         if (!file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0777, true);
+            mkdir(storage_path('/app/temp'), 0775, true);
         }
 
-        ImageWatermarker::input($file)
-            ->watermark(public_path('images/watermark1.png'))
-            ->output(storage_path('app/temp/' . $docName))
-            ->position(Position::MIDDLE_CENTER, 0, 0)
-            ->asBackground()
-            ->resolution(96)
-            ->save();
+        /**
+         * Please don't remove it for now, thanks
+         */
+
+        // ImageWatermarker::input($file)
+        //     ->watermark(public_path('images/watermark1.png'))
+        //     ->output(storage_path('app/temp/' . $docName))
+        //     ->position(Position::MIDDLE_LEFT, 0, 0)
+        //     ->asBackground()
+        //     ->resolution(96)
+        //     ->save();
+
+        $filePath = $file->storeAs('temp', $docName);
+        $outputPath = storage_path('app/temp/' . $docName);
+
+        $pdf = new Fpdi();
+        $pageCount = $pdf->setSourceFile(storage_path('app/' .$filePath));
+
+        $watermarkImagePath = public_path('images/watermark1.png');
+
+        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+            $templateId = $pdf->importPage($pageNo);
+            $size = $pdf->getTemplateSize($templateId);
+
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            // Add watermark
+            $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+
+            $pdf->useTemplate($templateId);
+        }
+
+        $pdf->Output($outputPath, 'F');
+
 
         return $this->storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType);
 
@@ -275,7 +302,7 @@ class QuoteDocumentService extends BaseService
     public function watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
         if (!file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0777, true);
+            mkdir(storage_path('/app/temp'), 0775, true);
         }
 
         $manager = new ImageManager(new Driver());
@@ -334,7 +361,7 @@ class QuoteDocumentService extends BaseService
     public function watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
         if (!file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0777, true);
+            mkdir(storage_path('/app/temp'), 0775, true);
         }
 
         $tempFile = $fileOrBase64->move(storage_path('/app/temp'), $docName)->getRealPath();
