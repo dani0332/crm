@@ -370,5 +370,15 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::EMAIL_CAMPAIGN_ENABLED)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::EMAIL_CAMPAIGN_ENABLED,
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

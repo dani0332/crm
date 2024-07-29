@@ -354,6 +354,10 @@ final class PermissionsEnum extends Enum
     public const DOCUMENT_VERIFY = 'document-verify';
     public const MANAGER_RETENTION_REPORT_VIEW= 'manager-retention-report-view';
     public const ADVISOR_RETENTION_REPORT_VIEW= 'advisor-retention-report-view ';
+    public const AUDITDOCUMENT_UPLOAD = 'auditdocument-upload';
+    public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
+    public const TRAVEL_HAPEX = 'travel-hapex';
+
     public static function getAdvisorConversionReportPermissions()
     {
         return [

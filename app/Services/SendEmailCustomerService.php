@@ -735,7 +735,7 @@ class SendEmailCustomerService extends BaseService
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
-                        'name' => basename($documentURL),
+                        'name' => 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }
@@ -763,12 +763,14 @@ class SendEmailCustomerService extends BaseService
                     'carQuoteId' => $emailData->code,
                     'currentInsurer' => $emailData->currentInsurer,
                     'renewalDueDate' => $emailData->renewalDueDate,
+                    'policyStartDate' => $emailData->policyStartDate,
                     'policyNumber' => $emailData->policy_number,
                     'roadsideAssistance' => $emailData->roadsideAssistance,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
                         'mobileNo' => $emailData->advisorMobileNo,
+                        'landLine' => $emailData->advisorLandlineNo,
                     ],
                 ],
                 'tags' => [

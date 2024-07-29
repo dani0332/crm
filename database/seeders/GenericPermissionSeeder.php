@@ -88,11 +88,14 @@ class GenericPermissionSeeder extends Seeder
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        // Add Compliance Permission to Admin
-        $role = Role::where('name', RolesEnum::Admin)->first();
-
         if (! $role->hasPermissionTo($conversionPermission)) {
             $role->givePermissionTo($conversionPermission);
+        }
+
+        // Audit document upload permission
+        $auditPermission = Permission::firstOrCreate(['name' => PermissionsEnum::AUDITDOCUMENT_UPLOAD, 'guard_name' => 'web']);
+        if (! $role->hasPermissionTo($auditPermission)) {
+            $role->givePermissionTo($auditPermission);
         }
 
         // Plans Selection & Plan Details Section Permissions
@@ -171,6 +174,7 @@ class GenericPermissionSeeder extends Seeder
             PermissionsEnum::SAVE_QUOTE_NOTES,
             PermissionsEnum::UPDATE_QUOTE_NOTES,
             PermissionsEnum::DELETE_QUOTE_NOTES,
+            PermissionsEnum::TRAVEL_HAPEX,
         ];
 
         foreach ($permissions as $permissionName) {
@@ -181,7 +185,24 @@ class GenericPermissionSeeder extends Seeder
                     'name' => $permissionName,
                     'guard_name' => 'web',
                 ]);
+                $role = Role::where('name', RolesEnum::Admin)->first();
+
+                if (! $role->hasPermissionTo($permissionName)) {
+                    $role->givePermissionTo($permissionName);
+                }
             }
+        }
+
+        $role = Role::firstOrCreate([
+            'name' => RolesEnum::TravelHapex,
+        ], [
+            'guard_name' => 'web',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if ($role && ! $role->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX)) {
+            $role->givePermissionTo(PermissionsEnum::TRAVEL_HAPEX);
         }
 
         $rolesForManageQuote = [
@@ -215,17 +236,16 @@ class GenericPermissionSeeder extends Seeder
                 'guard_name' => 'web',
             ]);
         }
-
         Permission::firstOrCreate(['name' => PermissionsEnum::MANAGER_RETENTION_REPORT_VIEW, 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => PermissionsEnum::ADVISOR_RETENTION_REPORT_VIEW, 'guard_name' => 'web']);
 
-        $this->generateSegmentFilterPermission();
-        $this->embeddedProductSeeds();
-        $this->advisorConversionReportSeeds();
-        $this->quoteSyncSeeds();
-        $this->advisorDistributionReportSeeds();
-        $this->addMotorHeadNewRole();
-        $this->createAndAssignManulHealthPlanPermission();
+        // $this->generateSegmentFilterPermission();
+        // $this->embeddedProductSeeds();
+        // $this->advisorConversionReportSeeds();
+        // $this->quoteSyncSeeds();
+        // $this->advisorDistributionReportSeeds();
+        // $this->addMotorHeadNewRole();
+        // $this->createAndAssignManulHealthPlanPermission();
     }
 
     /**
