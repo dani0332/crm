@@ -313,6 +313,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('quotes/{quoteType}/{quote}/proforma-payment-request', [QuoteDocumentController::class, 'createProformaPaymentRequest'])->name('create.proforma.payment.request');
     Route::get('proforma-payment-request/{quote_document}/download', [QuoteDocumentController::class, 'downloadProformaPaymentRequest'])->name('download.proforma.payment.request');
 
+    Route::post('documents/download', [QuoteDocumentController::class, 'downloadAllDocuments']);
+
     Route::group(['prefix' => 'renewals'], function () {
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
         Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update');

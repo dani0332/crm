@@ -220,7 +220,7 @@ const bookingDetailsForm = useForm({
   transaction_payment_status: 'N/A',
   invoice_date: dateToYMD(props.sendUpdateLog?.invoice_date) || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
   insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || null,
-  discount: props?.payments[0]?.discount_value || '0.00',
+  discount: props?.payments[0]?.discount_value || props.sendUpdateLog?.discount || '0.00',
   insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_percentage: props.sendUpdateLog?.commission_percentage || props?.payments[0]?.commmission_percentage || '',
   commission_vat_not_applicable: props.sendUpdateLog?.commission_vat_not_applicable || props?.payments[0]?.commission_vat_not_applicable || '0.00',
@@ -617,6 +617,10 @@ const sendUpdatePermissionCheck = computed(() => {
   return true;
 });
 
+const isLackingPayment = computed(() => {
+  return props.bookingDetails?.isLackingOfPayment || false;
+});
+
 const sendUpdateValidationURL = computed(() => {
   return props.updateBtn === sendUpdateStatusEnum.SU ||
     props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER
@@ -900,12 +904,12 @@ const isCI = computed(() => {
 });
 
 const checkDiscount = (newPrice) => {
-  let total_price = props.sendUpdateLog?.price_with_vat;
-  let difference =  Number(Number(newPrice).toFixed(2) - Number(total_price).toFixed(2)).toFixed(2);
+  let total_price = Number(props.sendUpdateLog?.price_with_vat);
+  let difference =  Number(Number(newPrice) - Number(total_price)).toFixed(2);
   let previousDiscount = props?.payments[0]?.discount_value || 0.00;
   let paymentDiscount = props?.payments[0]?.discount_value || 0.00;
   let newDiscount = Number(bookingDetailsForm.discount).toFixed(2);
-  if (newPrice > total_price && difference <= 0.99 && (isEF || isCI || isCPD)) {
+  if (newPrice > total_price && (isEF || isCI || isCPD)) {
     if (previousDiscount > 0) {
       bookingDetailsForm.discount = Number(parseFloat(newDiscount) + parseFloat(difference));
     } else {
@@ -919,6 +923,23 @@ const checkDiscount = (newPrice) => {
       bookingDetailsForm.discount = previousDiscount;
     }
   }
+}
+
+const dateToDMY = date => {
+  if (date) {
+    // Check if date is already in DMY format
+    const dmyRegex = /^\d{2}-\d{2}-\d{4}( \d{2}:\d{2}:\d{2})?$/;
+    if (dmyRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      const [year, month, day] = date.split(' ')[0].split('-');
+      return `${day}-${month}-${year}`;
+    }
+  }
+
+  return null;
 }
 </script>
 
@@ -1004,7 +1025,7 @@ const checkDiscount = (newPrice) => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.booking_date ?? 'N/A' }}</span>
+                <span>{{ dateToDMY(reversalEntry.booking_date) ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -1064,7 +1085,7 @@ const checkDiscount = (newPrice) => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.invoice_date ?? 'N/A' }}</span>
+                <span>{{ dateToDMY(reversalEntry.invoice_date) ?? 'N/A' }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
@@ -1913,16 +1934,38 @@ const checkDiscount = (newPrice) => {
             />
             <template v-if="!state.isEdit">
               <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
-              <x-button
-                size="sm"
-                color="orange"
-                v-if="props.updateBtn"
-                :loading="loader.sendUpdateSectionBtn"
-                @click="sendUpdateValidation"
-                :disabled="sendUpdatePermissionCheck"
-              >
-                {{ props.updateBtn }}
-              </x-button>
+              <template v-if="isLackingPayment">
+                <x-tooltip>
+                  <x-button
+                      size="sm"
+                      color="orange"
+                      v-if="props.updateBtn"
+                      :loading="loader.sendUpdateSectionBtn"
+                      @click="sendUpdateValidation"
+                      :disabled="sendUpdatePermissionCheck || isLackingPayment"
+                  >
+                    {{ props.updateBtn }}
+                  </x-button>
+                  <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        Action Needed: Please revise payment details to reflect
+                        plan changes.
+                      </span>
+                  </template>
+                </x-tooltip>
+              </template>
+              <template v-else>
+                <x-button
+                    size="sm"
+                    color="orange"
+                    v-if="props.updateBtn"
+                    :loading="loader.sendUpdateSectionBtn"
+                    @click="sendUpdateValidation"
+                    :disabled="sendUpdatePermissionCheck"
+                >
+                  {{ props.updateBtn }}
+                </x-button>
+              </template>
             </template>
             <template v-else>
               <x-button

@@ -16,6 +16,7 @@ use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
@@ -494,7 +495,7 @@ trait GenericQueriesAllLobs
                                 ! empty($quote->policy_issuance_date) &&
                                 ! empty($quote->policy_start_date) &&
                                 ! empty($quote->renewal_expiry_date) &&
-                                $quote->price_with_vat > 0;
+                                $quote->price_with_vat >= 0;
 
         if (! $hasBasicPolicyDetails) {
             return false;
@@ -568,7 +569,7 @@ trait GenericQueriesAllLobs
                 PaymentStatusEnum::PENDING,
                 PaymentStatusEnum::NEW,
                 PaymentStatusEnum::OVERDUE,
-                PaymentStatusEnum::CREDIT_APPROVED,
+                PaymentStatusEnum::CREDIT_APPROVED, // TODO: Check with Faisal and Ahsan about this to be included or not for booking of policy with zero price.
             ];
 
             $insufficientPaymentStatusesHeading = [
@@ -799,4 +800,28 @@ trait GenericQueriesAllLobs
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
 
+    public function getSendUpdatePaymentCode($sendUpdateLogId): string
+    {
+        $code = Payment::where('send_update_log_id', $sendUpdateLogId)->pluck('code')->first();
+        if ($code) {
+            return $code;
+        }
+
+        return '';
+    }
+
+    public function getSendUpdateDocumentIds($sendUpdateLogId)
+    {
+        $sendUpdateLog = SendUpdateLog::with(['documents' => function ($query) {
+            $query->withTrashed();
+        }])->find($sendUpdateLogId);
+
+        $documentIds = $sendUpdateLog->documents->pluck('id')->toArray();
+
+        if (! empty($documentIds)) {
+            return $documentIds;
+        }
+
+        return null;
+    }
 }

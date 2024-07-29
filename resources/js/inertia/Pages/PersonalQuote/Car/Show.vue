@@ -61,6 +61,7 @@ defineProps({
   planURL: String,
   storageUrl: String,
   insuranceProviders: Array,
+  insuranceProvidersByQuoteType: Object,
   advisor: Object,
   carMakeText: String,
   carModelText: String,
@@ -88,6 +89,8 @@ defineProps({
   carInsuranceProviders: Array,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  vatPercentage: Number,
+  commercialRules: Boolean,
   isAmlClearedForPayment: Boolean,
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
@@ -1510,6 +1513,23 @@ const handlePlanSelected = plan => {
   });
 };
 
+const isPlanDetailEnabled = computed(() => {  
+  if(page.props.commercialRules) { // Check rules for commercial
+    return true;
+  }
+
+  if(page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD) {
+      return (page.props.record.vehicle_type_id_text == 'BIKE');
+  }
+
+  return false;
+});
+
+if(isPlanDetailEnabled.value && page.props.record.insurer_name !== '' ) {
+  selectedProviderPlan.value.premium = page.props.record.price_with_vat;
+  selectedProviderPlan.value.providerName = page.props.record.insurer_name;
+}
+
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
 const copyUploadURL = () => {
@@ -2865,7 +2885,15 @@ const onAddUpdate = () => {
       </Collapsible>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <PlanDetails
+      v-if="isPlanDetailEnabled"
+      :insuranceProviders="insuranceProvidersByQuoteType"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
+
+    <div v-else class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -3378,6 +3406,7 @@ const onAddUpdate = () => {
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :isPlanDetailEnabled="isPlanDetailEnabled"
 		/>
 
     <PaymentTable

@@ -1,4 +1,6 @@
 <script setup>
+import DownloadDocuments from "./DownloadDocuments.vue";
+
 defineProps({
   quote: Object,
   quoteDocuments: Object,
@@ -16,7 +18,6 @@ defineProps({
   },
   inslyId: String,
   sendPolicy: Boolean,
-  paymentStatusEnum: Object,
 });
 
 const emit = defineEmits(['copyUploadURL', 'sendPolicyToClient']);
@@ -28,6 +29,7 @@ const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
 const permissionEnum = page.props.permissionsEnum;
+const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -179,6 +181,11 @@ const uploadDocumentModal = () => {
         <x-divider class="my-4" />
 
         <div class="flex gap-2 mb-4 justify-end">
+            <DownloadDocuments
+                v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
+                :quote="page.props.quote"
+                :quoteDocuments="page.props.quote.documents ?? page.props.quoteDocuments"
+            />
           <Link
             v-if="inslyId && can(permissionEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${inslyId}`"
@@ -300,6 +307,8 @@ const uploadDocumentModal = () => {
                 :max-files="documentType.max_files"
                 :max-size="documentType.max_size"
                 :loading="uploadingStatus[documentType.id]"
+                :document-type-code="documentType.code"
+                :isDisabled="documentType.code == documentTypeCodeEnum.AUDIT && !can(permissionEnum.AUDITDOCUMENT_UPLOAD)"
                 @change="uploadFile(documentType, $event)"
               />
 

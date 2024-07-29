@@ -540,7 +540,7 @@ const resetDateFilters = filterName => {
         />
         <x-select
           v-model="filters.is_renewal"
-          label="Is Renewal"
+          label="Renewal"
           placeholder="Search by Renewal"
           :options="[
             { value: '', label: 'All' },
