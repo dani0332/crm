@@ -48,7 +48,7 @@ class BikeQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
-            'advisorId' => (!auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
             'makeId' => $data['make_id'],
             'modelId' => $data['model_id'],
             'seatCapacity' => $data['seat_capacity'],
@@ -64,7 +64,7 @@ class BikeQuoteRepository extends BaseRepository
             'cubicCapacity' => $data['cubic_capacity'],
         ];
 
-        info('bikeQuote:' . json_encode($quoteData));
+        info('bikeQuote:'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-bike-quote', 'post', $quoteData);
     }
@@ -164,22 +164,22 @@ class BikeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable() . '.*',
+                $this->getTable().'.*',
                 'policy_start_date',
                 'policy_issuance_date',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = ' . QuoteTypeId::Bike . ' AND quote_request_id = ' . $this->getTable() . '.id),
-                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                    WHERE quote_type_id = '.QuoteTypeId::Bike.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
                 as customer_type'),
-                DB::raw('YEAR(CURDATE()) - YEAR(' . $this->getTable() . '.dob) AS customer_age'),
+                DB::raw('YEAR(CURDATE()) - YEAR('.$this->getTable().'.dob) AS customer_age'),
             ])
             ->firstOrFail();
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
-        $data = !empty($quote) ? $quote->toArray() : [];
+        $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
@@ -203,7 +203,7 @@ class BikeQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(!$forExport)
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 
@@ -250,7 +250,7 @@ class BikeQuoteRepository extends BaseRepository
     {
         $updateQuote = BikeQuote::where('personal_quote_id', $request->bike_id)->first();
 
-        if (!$updateQuote) {
+        if (! $updateQuote) {
             return null;
         }
 
@@ -297,7 +297,7 @@ class BikeQuoteRepository extends BaseRepository
             'userId' => strval(auth()->id()),
         ];
 
-        info('fn: changeInsurer sending change insurer request for quote UUID: ' . $data['uuid'] . ' providerCode: ' . $data['provider_code'] . ' planId: ' . $data['plan_id']);
+        info('fn: changeInsurer sending change insurer request for quote UUID: '.$data['uuid'].' providerCode: '.$data['provider_code'].' planId: '.$data['plan_id']);
 
         return Ken::request('/update-bike-ecom-insurer', 'post', $requestData);
     }
