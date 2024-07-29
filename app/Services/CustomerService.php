@@ -162,6 +162,8 @@ class CustomerService extends BaseService
     public function makeAdditionalContactPrimary($lead, $key, $value)
     {
         if ($key == GenericRequestEnum::EMAIL) {
+            $customer = null;
+            $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
                 info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
                 $customerArray = [
@@ -249,6 +251,26 @@ class CustomerService extends BaseService
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
             }
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
+            // REMOVE Mobile Number TO MAKE PRIMARY IN ADDITIONAL CONTACT
+            $removeMobileNumber = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                ->where('value', $value)
+                ->where('key', 'mobile_no')
+                ->first();
+            if (isset($removeMobileNumber->id)) {
+                $removeMobileNumber->delete();
+            }
+            $isExist = CustomerAdditionalContact::where('key', 'mobile_no')
+                ->where('customer_id', $lead->customer_id)
+                ->where('value', $lead->mobile_no)
+                ->exists();
+
+            if (! $isExist) {
+                CustomerAdditionalContact::create([
+                    'customer_id' => $lead->customer_id,
+                    'key' => 'mobile_no',
+                    'value' => $lead->mobile_no,
+                ]);
+            }
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
                 info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);

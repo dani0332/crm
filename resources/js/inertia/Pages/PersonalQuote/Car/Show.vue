@@ -61,6 +61,7 @@ defineProps({
   planURL: String,
   storageUrl: String,
   insuranceProviders: Array,
+  insuranceProvidersByQuoteType: Object,
   advisor: Object,
   carMakeText: String,
   carModelText: String,
@@ -88,6 +89,8 @@ defineProps({
   carInsuranceProviders: Array,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  vatPercentage: Number,
+  commercialRules: Boolean,
   isAmlClearedForPayment: Boolean,
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
@@ -1508,6 +1511,23 @@ const handlePlanSelected = plan => {
   });
 };
 
+const isPlanDetailEnabled = computed(() => {  
+  if(page.props.commercialRules) { // Check rules for commercial
+    return true;
+  }
+
+  if(page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD) {
+      return (page.props.record.vehicle_type_id_text == 'BIKE');
+  }
+
+  return false;
+});
+
+if(isPlanDetailEnabled.value && page.props.record.insurer_name !== '' ) {
+  selectedProviderPlan.value.premium = page.props.record.price_with_vat;
+  selectedProviderPlan.value.providerName = page.props.record.insurer_name;
+}
+
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
 const copyUploadURL = () => {
@@ -1530,9 +1550,18 @@ watch(
   },
 );
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate(); 
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] = createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  selectedProviderPlan.value.id = null;
+  selectedProviderPlan.value.planName = '';
+  selectedProviderPlan.value.providerName = '';
+  selectedProviderPlan.value.premium = '';
+  isAddUpdate.value = true; 
+}
 
 </script>
 
@@ -1933,11 +1962,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
-          
+
           <LeadEditBtnTemplate v-slot="{ isDisabled }">
-            <Link :href="route('car.edit', record.uuid)">
-              <x-button :disabled="isDisabled" size="sm" color="primary" tag="div">Edit</x-button>
+            <Link v-if="!isDisabled" :href="route('car.edit', record.uuid)">
+              <x-button size="sm" color="primary" tag="div">Edit</x-button>
             </Link>
+            <x-button v-else :disabled="isDisabled" size="sm" color="primary" tag="div">Edit</x-button>
           </LeadEditBtnTemplate>
 
           <div v-if="quote.quote_status_id !=
@@ -2649,7 +2679,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               Change Status
             </x-button>
           </StatusUpdateButtonTemplate>
-  
+
           <div class="flex justify-end">
             <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
               <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
@@ -2658,7 +2688,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               </template>
             </x-tooltip>
             <StatusUpdateButtonReuseTemplate v-else />
-            
+
           </div>
         </template>
       </Collapsible>
@@ -2853,7 +2883,15 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       </Collapsible>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <PlanDetails
+      v-if="isPlanDetailEnabled"
+      :insuranceProviders="insuranceProvidersByQuoteType"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
+
+    <div v-else class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -2936,7 +2974,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 Add Plan
               </x-button>
             </AddPlanButtonTemplate>
-            
+
             <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
               <AddPlanButtonReuseTemplate :isDisabled="true"/>
               <template #tooltip>No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.</template>
@@ -3366,6 +3404,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :isPlanDetailEnabled="isPlanDetailEnabled"
 		/>
     
     <PaymentTable
@@ -3500,6 +3539,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

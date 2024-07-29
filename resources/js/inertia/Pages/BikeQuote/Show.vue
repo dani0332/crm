@@ -227,6 +227,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true; 
+};
+
 </script>
 
 <template>
@@ -263,9 +268,10 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
           </x-button>
         </Link>
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link :href="route('bike-quotes-edit', quote.uuid)">
-            <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <Link v-if="!isDisabled" :href="route('bike-quotes-edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
           </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
         </LeadEditBtnTemplate>
 
         <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
@@ -821,6 +827,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :quoteType="quoteType"
       :expanded="sectionExpanded"
       :vatPrice="vatPercentage"
+      :isAddUpdate="isAddUpdate"
     />
 
     <MigratePayment
@@ -910,6 +917,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <AuditLogs

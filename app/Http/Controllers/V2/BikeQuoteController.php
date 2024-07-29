@@ -36,6 +36,7 @@ use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 
 class BikeQuoteController extends Controller
 {
@@ -152,6 +153,9 @@ class BikeQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BIKE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::BIKE->value, $quote->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $sortedPayments = collect($quote?->payments)->sortByDesc(function ($column) {
+            return Carbon::parse($column->created_at)->timestamp;
+        })->values()->toArray();
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
@@ -185,7 +189,7 @@ class BikeQuoteController extends Controller
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $quote->payments->toArray() ?? [],
+            'payments' => $sortedPayments,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,

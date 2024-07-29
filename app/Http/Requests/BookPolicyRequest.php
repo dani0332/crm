@@ -26,7 +26,6 @@ class BookPolicyRequest extends FormRequest
     {
         return [
             'invoice_date' => 'required',
-            'booking_date' => 'required',
             'insurer_tax_invoice_number' => 'required|max:22',
             'insurer_commmission_invoice_number' => 'required|max:22|different:insurer_tax_invoice_number',
             'discount' => 'nullable',

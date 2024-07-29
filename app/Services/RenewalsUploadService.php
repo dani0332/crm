@@ -35,7 +35,6 @@ use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
-use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -61,6 +60,7 @@ use App\Models\Tier;
 use App\Models\TravelQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Models\VehicleType;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -109,9 +109,9 @@ class RenewalsUploadService
     }
 
     /*
-    * @name generateUUID()
-    * @returns a 16 character UUIDv4 string
-    */
+     * @name generateUUID()
+     * @returns a 16 character UUIDv4 string
+     */
     public function generateUUID($quoteType, $quoteTypeId)
     {
         info('UAT FN: generateUUID QuoteTypeId: '.$quoteTypeId);
@@ -728,7 +728,7 @@ class RenewalsUploadService
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
-            $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
+            $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
 
             //advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
@@ -998,6 +998,12 @@ class RenewalsUploadService
                 $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
             }
 
+            if ($renewalUploadLead->skip_plans == 2 && $data['make'] == 'MOTOR BIKE') {
+                $quoteData['vehicle_type_id'] = VehicleType::where('text', 'BIKE')->first()->id ?? null;
+            }
+
+            $quoteData['vehicle_type_id'] = ! empty($data['vehicle_type_id'] ?? '') ? $data['vehicle_type_id'] : ($quoteData['vehicle_type_id'] ?? null);
+
             if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
                 $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
             } elseif ($quoteType->code == quoteTypeCode::Car && ! empty($data['year'])) {
@@ -1259,7 +1265,7 @@ class RenewalsUploadService
                 if ($responseCode == 201) {
                     //update quote status to quoted
                     $notes = 'Change quote status to Quoted as OCB sent';
-                    app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id, $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
+                    app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id(), $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
 
                     //record ocb sent datetime
                     $carQuote->carQuoteRequestDetail->updateOrCreate(
@@ -1404,6 +1410,7 @@ class RenewalsUploadService
                             if ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
                                 $leadValidationErrors->push('Invalid Car Make');
                             }
+
                             if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
                                 $leadValidationErrors->push('Invalid Car Model');
                             }

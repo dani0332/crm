@@ -42,6 +42,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
 
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true; 
+};
+
 </script>
 
 <template>
@@ -66,9 +71,10 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
             </Link>
 
             <LeadEditBtnTemplate v-slot="{ isDisabled }">
-              <Link :href="route('jetski-quotes-edit', quote.uuid)">
-                <x-button :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+              <Link v-if="!isDisabled" :href="route('jetski-quotes-edit', quote.uuid)">
+                <x-button size="sm" tag="div">Edit</x-button>
               </Link>
+              <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
             </LeadEditBtnTemplate>
 
             <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
@@ -305,6 +311,7 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <QuotePolicy
@@ -314,11 +321,12 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate()
     />
 
     <PlanDetails
-    :insuranceProviders="insuranceProviders"
-    :quote="quote"
-    :quoteType="quoteType"
-    :vatPrice="vatPercentage"
-    :expanded="sectionExpanded"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+      :expanded="sectionExpanded"
+      :isAddUpdate="isAddUpdate"
      />
 
     <EmbeddedProducts

@@ -11,6 +11,7 @@ use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Config;
@@ -24,6 +25,7 @@ class HomeQuoteService extends BaseService
     protected $query;
 
     use AddPremiumAllLobs;
+    use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
     protected $leadAllocationService;
@@ -227,7 +229,7 @@ class HomeQuoteService extends BaseService
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
@@ -256,7 +258,10 @@ class HomeQuoteService extends BaseService
             $this->query->where('hqr.policy_number', $request->policy_number);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where(function ($query) use ($request) {
+                $query->where('hqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $this->query->where('hqr.renewal_batch', $request->renewal_batch);
@@ -271,7 +276,7 @@ class HomeQuoteService extends BaseService
         }
         if (Auth::user()->isSpecificTeamAdvisor('Home')) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
 
         // quote_status filter
@@ -329,6 +334,8 @@ class HomeQuoteService extends BaseService
                 }
             }
         }
+
+        $this->adjustQueryByDateFilters($this->query, 'hqr');
 
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {

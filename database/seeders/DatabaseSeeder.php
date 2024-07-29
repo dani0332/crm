@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             updateDocTypePayment::class,
             AddSageFlagApplicationStorage::class,
             AddTempUpdateTotalPricePermission::class,
+
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
@@ -45,10 +46,11 @@ class DatabaseSeeder extends Seeder
             // RevivalConversionReportPermissionSeeder::class,
             // end
             // AddCrossLOBSeeder::class,
-            MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
+            // MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
             // BusinessTypeInsuranceSeeder::class,
             // MarineSeeder::class,
-
+            // ImcrmUsersRolesCleaner::class,
+            CarMakeSeeder::class,
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
             // AddSendUpdatesCategoriesInLookups::class, Please don't run this seeder on test and stage env.
@@ -59,7 +61,9 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             addInsuranceProvidersConfiguration::class,
             RevokeTempPaymentUpdatePermissionsSeeder::class,
-            ImcrmUsersRolesCleaner::class,
+            addPermissionsForInsurerNowPayment::class,
+            AddeTicketDocumentTypeSeeder::class,
+            DocumentVerifyPermissionSeeder::class,
         ]);
     }
 }

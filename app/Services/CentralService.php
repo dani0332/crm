@@ -223,7 +223,6 @@ class CentralService
                             foreach ($plans as $plan) {
                                 if (isset($plan->planTypeId)) {
                                     $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
-
                                 } else {
                                     $plan->plan_type = 'N/A';
                                 }
@@ -307,7 +306,7 @@ class CentralService
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
                 $data = [
-                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteTypeId' => QuoteTypeId::Travel,
                     'quoteUID' => $uuid,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                     'plans' => [
@@ -444,6 +443,12 @@ class CentralService
         }
     }
 
+    /**
+     * After booking policy Processes payments by updating their allocation status based on the payment frequency and splits.
+     * This method handles different payment frequencies (e.g., upfront, semi-annual, quarterly, monthly, custom, split payments)
+     *
+     * @param void
+     */
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
         if ($payment) {
@@ -459,12 +464,22 @@ class CentralService
         }
     }
 
+    /**
+     * This method handles just update payment allocation status
+     *
+     * @param void
+     */
     private function updatePaymentAllocationStatus($payment, $quote)
     {
         $payment->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote);
         $payment->save();
     }
 
+    /**
+     * This method return payment allocation status based on quote status
+     *
+     * @param string
+     */
     private function calculateAllocationStatus($payment, $quote, $paymentSplit = null)
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
@@ -486,12 +501,20 @@ class CentralService
         }
     }
 
+    /**
+     * Updates the allocation status of the first payment split based on the payment and quote details.
+     * This method is specifically used for payments with frequencies like upfront, semi-annual, quarterly, monthly and custom.
+     */
     private function firstSplitAllocationStatus($payment, $paymentSplit, $quote)
     {
         $paymentSplit->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote, $paymentSplit);
         $paymentSplit->save();
     }
 
+    /**
+     * Updates the allocation status of the all payment  based on the payment and quote details.
+     * This method is specifically used for payments with frequency split payment
+     */
     private function updatePaymentSplitAllocationStatus($paymentSplits, $quote)
     {
         $collectedAmount = 0;
@@ -502,6 +525,9 @@ class CentralService
         }
     }
 
+    /**
+     * This method is used to final payment allocation status based in payment status and collected amount and price
+     */
     private function calculateSplitAllocationStatusWithCollectedAmount($paymentSplit, $quote, $collectedAmount)
     {
         if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {

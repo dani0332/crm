@@ -131,6 +131,7 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
+
     /**
      * get data by personal quote type.
      *
@@ -161,6 +162,7 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
+
     public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
@@ -181,5 +183,10 @@ class TravelQuote extends Model implements AuditableContract
     public function policyWording()
     {
         return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
+    }
+
+    public function TravelDestinations()
+    {
+        return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
     }
 }

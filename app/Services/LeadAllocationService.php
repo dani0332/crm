@@ -661,14 +661,14 @@ class LeadAllocationService extends BaseService
     public function updateCarLeadDetailRecord($leadId)
     {
         info('---- Inside updateCarLeadDetailRecord - leadId : '.$leadId);
-        CarQuoteRequestDetail::updateOrCreate(
+        $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
             ['car_quote_request_id' => $leadId],
             [
                 'advisor_assigned_date' => now(),
                 'advisor_assigned_by_id' => auth()->id(),
             ]
         );
-        info('---- updateCarLeadDetailRecord - updateOrCreate done for advisor data and by id - leadId : '.$leadId);
+        info('---- updateCarLeadDetailRecord - updateOrCreate done for advisor data and by id - leadId : '.$leadId.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
     }
 
     public function getCarUnallocatedLeads()
@@ -1051,6 +1051,26 @@ class LeadAllocationService extends BaseService
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
+    }
+
+    public function isCommercialVehicles($lead)
+    {
+        $_return = false;
+        $commercialCarModel = CarModel::where('id', $lead->car_model_id)
+            ->where('is_commercial', true)
+            ->count();
+
+        if ($commercialCarModel) {
+            $_return = true;
+        }
+
+        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+        $commercialKeywordsCheck = in_array(strtolower(trim($lead->full_name)), array_column($commercialKeywords->toArray(), strtolower(trim('name'))));
+        if ($commercialKeywordsCheck) {
+            $_return = true;
+        }
+
+        return $_return;
     }
 
 }
