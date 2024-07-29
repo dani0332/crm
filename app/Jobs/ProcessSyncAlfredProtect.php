@@ -53,7 +53,7 @@ class ProcessSyncAlfredProtect implements ShouldQueue
             }
         })->first();
         info('CL: '.get_class().' FN: handle. Transaction: '.$transaction);
-        if (! isset($transaction) || $transaction->isEmpty()) {
+        if (! isset($transaction) || empty($transaction)) {
             throw new Exception('No transaction found for the selected product');
         }
 
