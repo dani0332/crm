@@ -287,7 +287,7 @@ class AlfredChatController extends Controller
                     'plan_name' =>   ['$arrayElemAt' => ['$ken_response.quotes.plan_name', 0]],
                     'price' =>   ['$arrayElemAt' => ['$ken_response.quotes.price', 0]],
                     'payment_date' =>   ['$arrayElemAt' => ['$ken_response.quotes.payment_date', 0]],
-                    'ep_ep_purchased' =>   ['$arrayElemAt' => ['$ken_response.quotes.ep_purchased', 0]],
+                    'ep_purchased' =>   ['$arrayElemAt' => ['$ken_response.quotes.ep_purchased', 0]],
                 ],
             ];
         }
