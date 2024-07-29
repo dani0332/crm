@@ -18,7 +18,6 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
     public $tries = 3;
     public $timeout = 5; //40
     public $backoff = 360;
-
     private $quoteDetails;
     private $payment;
     private $paymentSplit;
@@ -48,7 +47,7 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
      */
     public function handle(SageApiService $sageApiService): void
     {
-        info('------------------ Book Update - Sage Job Started - SendUpdateUUID: '.$this->extraParams['send_update_log']->uuid. '------------------');
+        info('------------------ Book Update - Sage Job Started - SendUpdateUUID: '.$this->extraParams['send_update_log']->uuid.'------------------');
         $this->extraParams['authDetails'] = $this->loginUserDetails;
 
         switch ($this->sageRequestType) {
@@ -62,7 +61,7 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
                     $this->extraParams
                 );
                 break;
-            
+
             case SageEnum::SUT_REVE_CORR:
                 $sageResponse = $sageApiService->handleSendUpdateRevCorrCalls(
                     $this->quoteDetails,
@@ -75,7 +74,7 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
                 );
                 break;
         }
-        
+
         $this->setHaystackData('response', $sageResponse, 'array');
     }
 

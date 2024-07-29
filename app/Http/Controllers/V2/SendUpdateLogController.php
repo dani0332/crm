@@ -435,7 +435,7 @@ class SendUpdateLogController extends Controller
             if ($response['status'] === false) {
 
                 return response()->json(['message' => $response['message']], 500);
-            } 
+            }
             // else {
             // //     // Send Update Data move to main lead page as per Send update Type
             // //     info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);

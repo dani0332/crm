@@ -449,7 +449,7 @@ class SageApiService
                             SageEnum::SCT_CORRECTION,
                         ])->keyBy('step')->toArray();
                         break;
-                    
+
                     case SageEnum::SUT_REVE_CORR:
                         $extras['reverse_invoice'] = $request->reversalInvoice;
                         $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quote, $extras['reverse_invoice']);
@@ -503,7 +503,7 @@ class SageApiService
 
                 Haystack::build()
                     ->addJob(new SendUpdateSageJob(
-                        $quote, 
+                        $quote,
                         $getingPaymentDetails['payment'],
                         $getingPaymentDetails['splitPayments'],
                         $sageRequestPayload,
@@ -513,9 +513,9 @@ class SageApiService
                         auth()->user()
                     ))
                     ->catch(function ($sageResponse) use ($extras) {
-                        logger()->error('------------------ Book Update Sage Job Failed - SendUpdateUUID: '.$extras['send_update_log']->uuid. '------------------');
+                        logger()->error('------------------ Book Update Sage Job Failed - SendUpdateUUID: '.$extras['send_update_log']->uuid.'------------------');
                     })
-                    ->finally(function ($sageResponse) use ($request, $extras) {
+                    ->finally(function ($sageResponse) use ($extras) {
                         if ($sageResponse['response']['status']) {
                             // Send Update Data move to main lead page as per Send update Type
                             // Need to handle this, if we have any issue in this process
@@ -526,7 +526,7 @@ class SageApiService
                             //     info('Book Update - Process Completed Successfully. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']);
                             // }
                         }
-                        info('------------------ Book Update Sage Job Executed - SendUpdateUUID: '.$extras['send_update_log']->uuid. '------------------');
+                        info('------------------ Book Update Sage Job Executed - SendUpdateUUID: '.$extras['send_update_log']->uuid.'------------------');
                     })
                     ->onQueue('sageQueue')
                     ->dispatch();
@@ -743,7 +743,7 @@ class SageApiService
                         'extras' => [
                             'option_id' => $extras['option'] ?? null,
                             'authDetails' => $extras['authDetails'] ?? [],
-                            
+
                         ],
                     ]);
                 }
@@ -2229,16 +2229,15 @@ class SageApiService
                 Log::error('SAGE API: '.$errorMessage);
                 $returnMessage['error'] = $errorMessage;
 
-                    return $returnMessage;
-                }
-                if ($isLiveApiCallStep18) {
-                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps);
-                }
-                info('SAGE API: '.$quote->uuid.' : aRPostReceipts - BatchNumber '.$batchNumber.' completed successfully');
-                info('  ########## End arSplitPrepaymentPayload for : '.$quote->code.' ########## ');
+                return $returnMessage;
             }
-            info('################################## Sage Policy Booked for : '.$quote->code.'##################################');
-
+            if ($isLiveApiCallStep18) {
+                $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps);
+            }
+            info('SAGE API: '.$quote->uuid.' : aRPostReceipts - BatchNumber '.$batchNumber.' completed successfully');
+            info('  ########## End arSplitPrepaymentPayload for : '.$quote->code.' ########## ');
+        }
+        info('################################## Sage Policy Booked for : '.$quote->code.'##################################');
 
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.'##################################');
