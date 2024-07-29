@@ -3332,9 +3332,8 @@ const lookupsEnum = page.props.lookupsEnum;
                           outlined
                           >Copy Payment Link</x-button
                         >
-
                         <x-button
-                          v-if="splitPayment.process_job?.status === 'failed'"
+                          v-if="can(permissionEnum.ApprovePayments) && splitPayment.process_job?.status === 'failed'"
                           size="xs"
                           color="red"
                           class="ml-2"
