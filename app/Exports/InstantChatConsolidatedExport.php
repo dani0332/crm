@@ -2,15 +2,25 @@
 
 namespace App\Exports;
 
-use App\Traits\ExcelExportable;
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class InstantChatConsolidatedExport
+class InstantChatConsolidatedExport implements  WithMapping, WithHeadings, FromCollection
 {
-    use ExcelExportable;
+    use Exportable;
+
+    protected $chat;
+    public function __construct($chat)
+    {
+        $this->chat = $chat;
+    }
 
     public function collection()
     {
-
+        return $this->chat;
     }
 
     public function headings(): array
@@ -18,44 +28,36 @@ class InstantChatConsolidatedExport
         return [
             'QUOTE TYPE',
             'REF ID',
-            'DATE OF FIRST INTERACTION',
+            'CREATED AT',
+            'MESSAGE',
+            'ROLE',
+            'EMPLOYEE FLAG',
+            'EMAIL ID',
+            'USER SYSTEM',
+            'USER IP ADDRESS',
             'COMMUNICATION CHANNEL',
-            'BATCH',
-            'TRANSACTION TYPE',
-            'SEGMENT',
-            'NO. OF INTERACTIONS WITH IA',
-            'COUNT OF FALLBACKS',
-            'PAYMENT STATUS',
-            'SALE LEADS',
-            'PROVIDER NAME',
-            'PLAN TYPE',
-            'PLAN NAME',
-            'PRICE',
-            'PAYMENT DATE',
-            'EP PURCHASED',
+            'INPUT TOKENS USAGE',
+            'OUTPUT TOKENS USAGE',
+            'TOTAL TOKENS USED',
         ];
     }
 
-    public function map($data): array
+    public function map($chat): array
     {
         return [
-            $data->quote_type,
-            $data->ref_id,
-            $data->date_of_first_interaction,
-            $data->communication_cahnnel,
-            $data->batch,
-            $data->transaction_type,
-            $data->segment,
-            $data->no_of_intractions,
-            $data->fallback,
-            $data->payment_status,
-            $data->sale_leads,
-            $data->provider_name,
-            $data->plan_type,
-            $data->plan_name,
-            $data->price,
-            $data->payment_date,
-            $data->ep_purchased,
+            $chat->quote_type,
+            $chat->quote_id,
+            $chat->created_at,
+            $chat->msg,
+            $chat->role,
+            $chat->employee_flag,
+            $chat->email,
+            $chat->user_system,
+            $chat->user_ip_address,
+            $chat->communication_channel,
+            $chat->input_tokens_usage,
+            $chat->completion_tokens,
+            $chat->total_tokens,
         ];
     }
 }

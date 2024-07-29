@@ -2,15 +2,25 @@
 
 namespace App\Exports;
 
-use App\Traits\ExcelExportable;
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class InstantChatDetailedExport
+class InstantChatDetailedExport implements  WithMapping, WithHeadings, FromCollection
 {
-    use ExcelExportable;
+    use Exportable;
+
+    protected $chat;
+    public function __construct($chat)
+    {
+        $this->chat = $chat;
+    }
 
     public function collection()
     {
-
+        return $this->chat;
     }
 
     public function headings(): array
@@ -18,17 +28,21 @@ class InstantChatDetailedExport
         return [
             'QUOTE TYPE',
             'REF ID',
-            'CREATED AT',
-            'MESSAGE',
-            'ROLE',
-            'EMPLOYEE FLAG',
-            'EMAIL ID',
-            'USER SYSTEM',
-            'USER IP ADDRESS',
+            'DATE OF FIRST INTERACTION',
             'COMMUNICATION CHANNEL',
-            'INPUT TOKENS USAGE',
-            'OUTPUT TOKENS USAGE',
-            'TOTAL TOKENS USED',
+            'BATCH',
+            'TRANSACTION TYPE',
+            'SEGMENT',
+            'NO. OF INTERACTIONS WITH IA',
+            'COUNT OF FALLBACKS',
+            'PAYMENT STATUS',
+            'SALE LEADS',
+            'PROVIDER NAME',
+            'PLAN TYPE',
+            'PLAN NAME',
+            'PRICE',
+            'PAYMENT DATE',
+            'EP PURCHASED',
         ];
     }
 
@@ -36,18 +50,22 @@ class InstantChatDetailedExport
     {
         return [
             $data->quote_type,
-            $data->ref_id,
-            $data->date_of_first_interaction,
-            $data->message,
-            $data->role,
-            $data->employee_flag,
-            $data->email,
-            $data->user_system,
-            $data->user_ip_address,
+            $data->quote_id,
+            $data->created_at,
             $data->communication_channel,
-            $data->input_tokens_usage,
-            $data->output_tokens_usage,
-            $data->total_tokens_used,
+            $data->batch,
+            $data->transaction_type,
+            $data->segment,
+            $data->no_of_intractions,
+            $data->fallback,
+            $data->payment_status,
+            $data->sale_leads,
+            $data->provider_name,
+            $data->plan_type,
+            $data->plan_name,
+            $data->price,
+            $data->payment_date,
+            $data->ep_purchased,
         ];
     }
 }

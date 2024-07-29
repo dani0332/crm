@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\InstantChatReportsEnum;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
@@ -10,6 +11,9 @@ use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Exports\InstantChatConsolidatedExport;
+use App\Exports\InstantChatDetailedExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AlfredChatController extends Controller
 {
@@ -135,13 +139,32 @@ class AlfredChatController extends Controller
         return inertia('AlfredChat/Index', ['logs' => $pagination, 'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
     }
 
+    public function exportChat(Request $request)
+    {
+        $chatPipeline = $this->createPipeline($request, null);
+
+        $chatPipeline[] = ['$sort' => ['created_at' => -1]];
+        
+        $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline));
+
+        $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
+
+        dd($chat->toArray());
+        if($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
+            return Excel::download(new InstantChatConsolidatedExport($chat), $fileName.'.xlsx');
+        }
+        if($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
+            return Excel::download(new InstantChatDetailedExport($chat), $fileName.'.xlsx');
+        }
+    }
+
     public function createPipeline(Request $request, $type)
     {
         $quoteId = null;
         $quoteType = null;
         $pipeline = [];
 
-        if ($request->has('quoteId')) {
+        if ($request->has('quoteId') && $request->quoteId != null) {
             if (strpos($request->quoteId, '-') !== false) {
                 $quote = explode('-', $request->quoteId);
                 $quoteId = $quote[1];
@@ -154,52 +177,49 @@ class AlfredChatController extends Controller
             $quoteType = strtoupper($request->quoteType);
         }
 
-        if (isset($quoteType)) {
+        if (isset($quoteType) && $quoteType != null) {
             $pipeline[] = ['$match' => ['quote_type' => $quoteType]];
         }
 
-        if (isset($quoteId)) {
+        if (isset($quoteId) && $quoteId != null) {
             $pipeline[] = ['$match' => ['quote_id' => $quoteId]];
         }
 
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toIso8601String();
-            $end_date = Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()->toIso8601String();
+        if ($request->has('start_date') && $request->start_date != null && $request->has('end_date')  && $request->end_date != null) {
+            $start_date = Carbon::createFromFormat('Y-m-d', Carbon::parse($request->start_date)->format('Y-m-d'))->startOfDay()->toIso8601String();
+            $end_date = Carbon::createFromFormat('Y-m-d', Carbon::parse($request->end_date)->format('Y-m-d'))->endOfDay()->toIso8601String();
             $pipeline[] = ['$match' => ['created_at' => ['$gte' => $start_date, '$lte' => $end_date]]];
         }
 
-        if (isset($request->transaction_type) && $request->transaction_type != '') {
+        if (isset($request->transaction_type) && $request->transaction_type != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]];
         }
-        if (isset($request->batch) && $request->batch != '') {
+        if (isset($request->batch) && $request->batch != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.batch' => ['$in' => $request->batch]]];
         }
-        if (isset($request->lead_status) && $request->lead_status != '') {
+        if (isset($request->lead_status) && $request->lead_status != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.lead_status' => ['$in' => $request->lead_status]]];
         }
-        if (isset($request->payment_status) && $request->payment_status != '') {
+        if (isset($request->payment_status) && $request->payment_status != null) {
             $pipeline[] = ['$match' => ['payment_status' => ['$in' => $request->payment_status]]];
         }
-        if (isset($request->sale_leads) && $request->sale_leads != '') {
+        if (isset($request->sale_leads) && $request->sale_leads != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.sale_leads' => $request->sale_leads]];
         }
-        if (isset($request->fallback) && $request->fallback != '') {
+        if (isset($request->fallback) && $request->fallback != null) {
             $pipeline[] = ['$match' => ['fallback' => $request->fallback == 'yes' ? true : false]];
         }
-        if (isset($request->message_channel) && $request->message_channel != '') {
+        if (isset($request->message_channel) && $request->message_channel != null) {
             $pipeline[] = ['$match' => ['channel' => $request->message_channel]];
         }
-        if (isset($request->segment) && $request->segment != '') {
+        if (isset($request->segment) && $request->segment != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.isSIC' => $request->segment]];
         }
-        if (isset($request->mobile_number) && $request->mobile_number != '') {
+        if (isset($request->mobile_number) && $request->mobile_number != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.mobile' => $request->mobile_number]];
         }
-        if (isset($request->email) && $request->email != '') {
+        if (isset($request->email) && $request->email != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.email' => $request->email]];
-        }
-        if (isset($request->report) && $request->report != '') {
-            $pipeline[] = ['$match' => ['report' => $request->report]];
         }
 
         if ($type === 'chat') {
@@ -211,6 +231,14 @@ class AlfredChatController extends Controller
                     'msg' => ['$first' => '$msg'],
                     'quote_id' => ['$first' => '$quote_id'],
                     'quote_type' => ['$first' => '$quote_type'],
+                    'employee_flag' => ['$first' => '$who_chatted.is_employee'],
+                    'email' => ['$first' => '$who_chatted.email'],
+                    'user_system' => ['$first' => '$who_chatted.user_agent'],
+                    'user_ip_address' => ['$first' => '$who_chatted.ip'],
+                    'communication_channel' => ['$first' => '$channel'],
+                    'input_tokens_usage' => ['$first' => '$response.usage.prompt_tokens'],
+                    'completion_tokens' => ['$first' => '$response.usage.completion_tokens'],
+                    'total_tokens' => ['$first' => '$response.usage.total_tokens'],
                     'count' => ['$sum' => 1],
                 ],
             ];
@@ -223,6 +251,46 @@ class AlfredChatController extends Controller
                 ],
             ];
             $pipeline[] = ['$count' => 'total'];
+        }elseif($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
+            $pipeline[] = [
+                '$project' => [
+                    'created_at' => 1,
+                    'role' => 1,
+                    'msg' => 1,
+                    'quote_id' => 1,
+                    'quote_type' => 1,
+                    'employee_flag' => '$who_chatted.is_employee',
+                    'email' => '$who_chatted.email',
+                    'user_system' => '$who_chatted.user_agent',
+                    'user_ip_address' => '$who_chatted.ip',
+                    'communication_channel' => '$channel',
+                    'input_tokens_usage' => '$response.usage.prompt_tokens',
+                    'completion_tokens' => '$response.usage.completion_tokens',
+                    'total_tokens' => '$response.usage.total_tokens',
+                ],
+            ];
+        }elseif($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
+            $pipeline[] = [
+                '$project' => [
+                    'quote_type' => 1,
+                    'quote_id' => 1,
+                    'created_at' => 1,
+                    'communication_channel' => '$channel',
+                    'batch' =>   ['$arrayElemAt' => ['$ken_response.quotes.currentInsurance', 0]],
+                    'transaction' =>   ['$arrayElemAt' => ['$ken_response.quotes.transaction', 0]],
+                    'segment' =>   ['$arrayElemAt' => ['$ken_response.quotes.segment', 0]],
+                    'ai_interactions' =>   ['$arrayElemAt' => ['$ken_response.quotes.ai_interactions', 0]],
+                    'fallbacks' =>   ['$arrayElemAt' => ['$ken_response.quotes.fallback_counts', 0]],
+                    'payment_status' =>   ['$arrayElemAt' => ['$ken_response.quotes.paymentStatus', 0]],
+                    'sale_leads' =>   ['$arrayElemAt' => ['$ken_response.quotes.sale_leads', 0]],
+                    'provider_name' =>   ['$arrayElemAt' => ['$ken_response.quotes.currentlyInsuredWith', 0]],
+                    'plan_type' =>   ['$arrayElemAt' => ['$ken_response.quotes.plan_type', 0]],
+                    'plan_name' =>   ['$arrayElemAt' => ['$ken_response.quotes.plan_name', 0]],
+                    'price' =>   ['$arrayElemAt' => ['$ken_response.quotes.price', 0]],
+                    'payment_date' =>   ['$arrayElemAt' => ['$ken_response.quotes.payment_date', 0]],
+                    'ep_ep_purchased' =>   ['$arrayElemAt' => ['$ken_response.quotes.ep_purchased', 0]],
+                ],
+            ];
         }
 
         return $pipeline;

@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   logs: Object,
   leadStatuses : Array,
@@ -7,6 +9,9 @@ const props = defineProps({
 
 
 const page = usePage();
+
+const objToUrl = obj => useObjToUrl(obj);
+const cleanObj = obj => useCleanObj(obj);
 
 const filters = reactive({
   quoteId: null,
@@ -26,6 +31,25 @@ const filters = reactive({
 });
 
 const params = useUrlSearchParams('history');
+
+const reportButtonCon = computed(()=>{
+    let data = {
+      disable : false,
+      msg : null,
+    }
+    if(filters.report == null){
+      data.disable = true;
+      data.msg = 'Please select the report type';
+    }else if(filters.report == 'Consolidated Report' && filters.quoteId == null){
+      data.disable = true;
+      data.msg = 'Please select the Quote ID / Ref-ID';
+    }else if((filters.start_date == null || filters.end_date == null) && filters.report == 'Detailed Report'){
+      data.disable = true;
+      data.msg = 'Please select the Start Date and End Date ';
+    }
+
+    return data;
+})
 
 const leadStatus = computed(() => {
   return props.leadStatuses.map((status) => ({
@@ -81,6 +105,8 @@ const quoteTypes = computed(() =>
     label,
   }));
 });
+
+
 
 const isQuoteTypeSelected = computed(() =>
 {
@@ -165,6 +191,17 @@ onMounted(() =>
 {
   setQueryStringFilters();
 });
+
+const downloadReport = () => {
+  router.visit(route('exportChatData'), {
+    method: 'get',
+    data: cleanObj(filters),
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  })
+}
+
 </script>
 
 <template>
@@ -313,8 +350,26 @@ onMounted(() =>
       </x-field>
     </div>
 
-    <div class="flex justify-end gap-3">
-      <x-button size="sm"
+    <div class="flex justify-between gap-3">
+      <x-tooltip v-if="reportButtonCon.disable"  position="right">
+        <x-button :disabled="reportButtonCon.disable" size="sm"
+                color="emerald"
+                :href="`export-chat-data?${objToUrl(filters)}`"
+                >Export Excel</x-button>
+            <template #tooltip v-if="reportButtonCon.msg">
+              <span class="font-medium">
+                {{ reportButtonCon.msg }}
+              </span>
+            </template>
+          </x-tooltip>
+
+          <!-- @click.prevent="downloadReport" -->
+          <x-button v-else :disabled="reportButtonCon.disable" size="sm"
+                color="emerald"
+                :href="`export-chat-data?${objToUrl(cleanObj(filters))}`"
+                >Export Excel</x-button>
+                <div class="flex justify-end gap-3">
+                  <x-button size="sm"
                 color="#ff5e00"
                 type="submit">Search</x-button>
       <x-button size="sm"
@@ -322,6 +377,7 @@ onMounted(() =>
                 @click.prevent="onReset">
         Reset
       </x-button>
+                </div>
     </div>
   </x-form>
 
