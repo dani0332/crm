@@ -13,7 +13,7 @@ class BikeQuote extends Model implements AuditableContract
 
     protected $table = 'bike_quote_request';
     protected $guarded = [];
-    public $allowedColumns = ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id'];
+    public $allowedColumns = ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id', 'bike_value_tier', 'make_id', 'model_id', 'currently_insured_with', 'cubic_capacity', 'emirate_of_registration_id', 'claim_history_id', 'bike_value'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -82,5 +82,52 @@ class BikeQuote extends Model implements AuditableContract
     public function allowedColumns()
     {
         return $this->allowedColumns;
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function backHomeLicenseHeldFor()
+    {
+        return $this->belongsTo(UAELicenseHeldFor::class, 'back_home_license_held_for_id');
+    }
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function bikeMake()
+    {
+        return $this->belongsTo(CarMake::class, 'make_id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function bikeModel()
+    {
+        return $this->belongsTo(CarModel::class, 'model_id');
+    }
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function carTypeInsurance()
+    {
+        return $this->belongsTo(CarTypeInsurance::class, 'insurance_type_id');
+    }
+    public function batch()
+    {
+        return $this->hasOne(QuoteBatches::class, 'id', 'quote_batch_id')->select(['id', 'name', 'start_date', 'end_date']);
+    }
+    public function emirates()
+    {
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
+    }
+
+    public function claimHistory()
+    {
+        return $this->belongsTo(ClaimHistory::class, 'claim_history_id');
     }
 }

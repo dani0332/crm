@@ -8,13 +8,13 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\TiersEnum;
 use App\Facades\PostMark;
 use App\Models\ApplicationStorage;
-use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use App\Models\Tier;
 use App\Models\User;
-use App\Services\CarEmailService;
-use App\Services\CarQuoteService;
+use App\Services\BikeEmailService;
+use App\Services\BikeQuoteService;
 use App\Services\HttpRequestService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -23,64 +23,57 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
-class SendOCBIntroEmailJob implements ShouldQueue
+class SendOCBIntroEmailForBikeJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3;
-    public $timeout = 40;
+    public $timeout = 15;
     public $backoff = 300;
     private $quoteUuid;
     private $previousAdvisor;
-    private $triggerSICWorkflow;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteUuid, $previousAdvisor, $triggerSICWorkflow = false)
+    public function __construct($quoteUuid, $previousAdvisor)
     {
         $this->quoteUuid = $quoteUuid;
         $this->previousAdvisor = $previousAdvisor;
-        $this->triggerSICWorkflow = $triggerSICWorkflow;
     }
 
     /**
      * Execute the job.
      */
-    public function handle(HttpRequestService $httpService, CarEmailService $carEmailService, CarQuoteService $carQuoteService): void
+    public function handle(HttpRequestService $httpService, BikeEmailService $bikeEmailService, BikeQuoteService $bikeQuoteService): void
     {
         try {
-            $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
+            $lead = PersonalQuote::where('uuid', $this->quoteUuid)->with('bikeQuote')->first();
 
             if (! $lead) {
-                info('SendOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
-
-                return;
-            }
-            if ($lead->sic_flow_enabled) {
-                info('SendOCBIntroEmailJob - SIC work flow is enabled on this lead already : '.$this->quoteUuid);
+                info('SendOCBIntroEmailJobForBike - Lead not found for uuid: '.$this->quoteUuid);
 
                 return;
             } else {
-                info('SendOCBIntroEmailJob - Lead found for uuid: '.$this->quoteUuid);
+                info('SendOCBIntroEmailJobForBike - Lead found for uuid: '.$this->quoteUuid);
 
-                if (($lead->assignment_type == AssignmentTypeEnum::MANUAL_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) && $lead->source == LeadSourceEnum::DUBAI_NOW) {
+                if (($lead->assignment_type = AssignmentTypeEnum::MANUAL_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) && $lead->source == LeadSourceEnum::DUBAI_NOW) {
                     $this->sendDubaiNowEmail($lead);
                 } else {
+
                     $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                     // Retrieve plans with available ratings for the given lead
-                    $plans = $httpService->getPlans($lead->uuid, false, false, false, 'Car');
-
-                    $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService, $this->triggerSICWorkflow);
+                    $plans = $httpService->getPlans($lead->uuid, false, false, false, 'Bike');
+                    $responseCode = $bikeEmailService->sendBikeOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $bikeQuoteService);
                     if (in_array($responseCode, [200, 201])) {
-                        info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
+                        info('SendOCBIntroEmailJobForBike - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                     } else {
-                        Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
+                        Log::error('SendOCBIntroEmailJobForBike - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
                     }
                 }
             }
         } catch (Exception $e) {
-            info('SendOCBIntroEmailJob - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
+            info('SendOCBIntroEmailJobForBike - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
         }
     }
 

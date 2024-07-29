@@ -86,6 +86,9 @@ class DatabaseSeeder extends Seeder
             AddPermissionsForInsurerNowPayment::class,
             // AddeTicketDocumentTypeSeeder::class,
             // DocumentVerifyPermissionSeeder::class,
+            CopyTeamNameToTeamCodeSeeder::class,
+            AddLOBsClaimHistoryOptionsSeeder::class,
+            AddRenewalTemplateStorageSeeder::class,
         ]);
     }
 }
