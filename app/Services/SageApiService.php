@@ -1228,6 +1228,14 @@ class SageApiService
 
             return $returnMessage;
         }
+        //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
+        $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+        $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
+        $isTotalPriceZero = $payment->total_price == 0;
+        if (! $isPaymentMethodCreditApproved && $isTotalPriceZero && $isPaymentFrequencyUpfront) {
+            return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequecy to Proceed!'];
+        }
+
         // payload
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
 
@@ -1250,14 +1258,6 @@ class SageApiService
         $missingFields = [];
         if (empty($sageRequest->customerId)) {
             $missingFields[] = 'Customer Sage ID';
-        }
-
-        //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
-        $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
-        $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
-        $isTotalPriceZero = $payment->total_price == 0;
-        if (! $isPaymentMethodCreditApproved && $isTotalPriceZero && $isPaymentFrequencyUpfront) {
-            return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequecy to Proceed!'];
         }
 
         if (! $sageRequest->insurerGlLiaiblityAccount) {
