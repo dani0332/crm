@@ -63,15 +63,30 @@ class PersonalQuotesExport
 
     protected function getHeadings($quoteType)
     {
+
         switch (ucfirst($quoteType)) {
             case QuoteTypes::BIKE->value:
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'DOB',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'PREMIUM',
+                    'POLICY NUMBER',
+                    'SOURCE',
+                    'CURRENTLY INSURED WITH',
+                    'IS ECOMMERCE',
+                ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
                 return [
                     'REF-ID',
                     'FIRST NAME',
                     'LAST NAME',
-                    'DOB',
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
@@ -143,13 +158,27 @@ class PersonalQuotesExport
     {
         switch (ucfirst($quoteType)) {
             case QuoteTypes::BIKE->value:
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    date(config('constants.datetime_format'), strtotime($quote->quote->dob)),
+                    optional($quote->quoteStatus)->text,
+                    optional($quote->advisor)->name,
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+                    $quote->premium,
+                    $quote->policy_number,
+                    $quote->source,
+                    optional($quote->currentlyInsuredWith)->text,
+                    $quote->is_ecommerce ? 'Yes' : 'No',
+                ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
                 return [
                     $quote->code,
                     $quote->first_name,
                     $quote->last_name,
-                    $quote->dob,
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
