@@ -79,6 +79,8 @@ const rules = {
         const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
         if(kycForm.id_type === 'emiratesId'){
           return  pattern.test(v) || 'Enter the correct EID number format';
+        }else{
+            return true;
         }
     },
 };
