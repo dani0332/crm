@@ -401,15 +401,11 @@ class EmbeddedProductRepository extends BaseRepository
             $emailData = (object) [
                 'customerName' => $quoteObject->customer->first_name.' '.$quoteObject->customer->last_name,
                 'customerEmail' => $quoteObject->customer->email,
-                'advisorName' => $advisor->name,
-                'productName' => EmbeddedProductEnum::{$short_code}()->value,
-                'advisorLandlineNo' => $advisor->landline_no,
-                'advisorMobileNo' => $advisor->mobile_no,
-                'quoteCdbId' => $quoteObject->code,
-                'quoteTypeId' => $quoteTypeId,
-                'quoteId' => $quoteObject->id,
-                'templateId' => $emailTemplateId,
-                'customerId' => $quoteObject->customer->id,
+                'advisorName' => isset($advisor) ? $advisor->name : null,
+                'advisorEmailAddress' => isset($advisor) ? $advisor->email : null,
+                'productName' => $ep->product_name,
+                'advisorLandlineNo' => isset($advisor) ? $advisor->landline_no : null,
+                'advisorMobileNo' => isset($advisor) ? $advisor->mobile_no : null,
                 'documentUrl' => $attachmentsUrls,
             ];
             info('Send Alfred Protect Email Data: '.json_encode($emailData));
