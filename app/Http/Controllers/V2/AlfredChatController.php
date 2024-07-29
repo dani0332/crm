@@ -72,7 +72,6 @@ class AlfredChatController extends Controller
         $chat = AlfredChat::where('quote_id', $request->quoteId)
             ->where('quote_type', $request->quoteType)
             ->whereBetween('created_at', [$dateFrom, $dateTo])
-        // ->select('role', 'msg', 'created_at')
             ->get();
 
         if ($chat->isEmpty()) {
