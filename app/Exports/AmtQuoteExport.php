@@ -30,6 +30,7 @@ class AmtQuoteExport
             'SOURCE',
             'CREATED DATE',
             'LAST MODIFIED DATE',
+            'RENEWAL BATCH',
         ];
     }
 
@@ -48,6 +49,7 @@ class AmtQuoteExport
             $quote->source,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+            $quote->renewal_batch,
         ];
     }
 }
