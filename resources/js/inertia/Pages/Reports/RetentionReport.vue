@@ -14,6 +14,7 @@ const isMounted = ref(false);
 const advisorOptions = ref([]);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const notification = useToast();
+const subteamOptions = ref([]);
 
 const getFiltersObject = () => {
   return {
@@ -24,6 +25,8 @@ const getFiltersObject = () => {
     advisors: [],
     month: '',
     page: 1,
+    sub_teams: [],
+    insurance_type: ""
   }
 };
 
@@ -148,7 +151,7 @@ const onTeamChange = (e, isOnMounted = false) => {
       filters.advisors = [];
       advisorOptions.value = [];
   }
-
+  loadSubTeams(e);
   loadAdvisors(e);
 };
 
@@ -164,6 +167,8 @@ const onLobChange = (e, isOnMounted = false) => {
       filters.advisors= [];
       filters.month='';
       filters.page=1;
+      filters.sub_teams=[];
+      filters.insurance_type="";
     }
 
   if([quoteTypeCodeEnum.Car,
@@ -176,7 +181,7 @@ const onLobChange = (e, isOnMounted = false) => {
       loadAdvisorsByLob(e);
   }
 
-  onSubmit(false)
+  // onSubmit(false)
 };
 
 const isDisabled = (element) => {
@@ -207,6 +212,35 @@ const getAdvisorLabel = () => {
 
     return label;
 }
+
+const loadSubTeams = e => {
+  if (e.length == 0) {
+    return;
+  }
+
+  if (isMounted.value) {
+    isDirty.value = true;
+  }
+
+  loaders.subteamOptions = true;
+
+  axios
+    .post(`/reports/fetch-subteams-by-team`, {
+      teamIds: Array.isArray(e) ? e : [e],
+      lob: filters.lob,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        subteamOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.subteamOptions = false;
+    });
+};
 
 const loadAdvisors = e => {
   if (e.length == 0) {
@@ -282,10 +316,10 @@ const tableHeader = [
     text: 'Volume Net Retention',
     value: 'volume_net_retention',
   },
-  {
-    text: 'Relative Retention',
-    value: 'relative_retention',
-  },
+  // {
+  //   text: 'Relative Retention',
+  //   value: 'relative_retention',
+  // },
 ];
 
 watch(
@@ -296,7 +330,11 @@ watch(
   },
 );
 
-
+onMounted(() => {
+  if (filters.lob !== ''){
+    onLobChange(filters.lob, true);
+  }
+});
 
 const cleanFilters = filters => {
   filters = removeUnusedFilters(filters);
@@ -358,11 +396,79 @@ function onSubmit(isValid=true) {
       preserveScroll: true,
       onBefore: () => (loaders.table = true),
       onFinish: () => {
-        // setTableHeader();
         loaders.table = false;
       },
     });
   }
+  
+const onSubTeamChange = (e, isOnMounted = false) => {
+
+if(!isOnMounted) {
+    filters.advisors = [];
+}
+
+advisorOptions.value = [];
+
+if (e.length == 0 &&
+    [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(filters.lob) &&
+    filters.teams.length > 0) {
+
+    loadAdvisors(filters.teams);
+} else {
+    loadAdvisorsBySubteams(e);
+}
+};
+
+const loadAdvisorsBySubteams = e => {
+  if (e.length == 0) {
+    return;
+  }
+
+  if (isMounted.value) {
+    isDirty.value = true;
+  }
+
+  loaders.advisorOptions = true;
+
+  axios
+    .post(`/reports/fetch-advisor-by-sub-team`, {
+      teamIds: Array.isArray(e) ? e : [e],
+      lob: filters.lob,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
+};
+const insuranceTypeOptions = computed(() => {
+    const types = page.props.filterOptions.insurance_type;
+    if(types[filters.lob]) {
+        return types[filters.lob].map(option => ({
+            value: option.value.toString(),
+            label: option.label,
+        }));
+    }
+
+  return [];
+});
+const setTableHeader = () => {
+  const headers =  [];
+  headers.push(
+      {
+          text: 'TIER 0',
+          value: 'tier_0_lead_count',
+      },
+  );
+  tableHeader.value = headers;
+};
+
 </script>
 
 <template>
@@ -427,6 +533,20 @@ function onSubmit(isValid=true) {
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
         />
+        
+        <ComboBox
+          v-if="canShow('sub_teams')"
+          :disabled="!isDisabled('sub_teams')"
+          :class="{
+              'opacity-50': !isDisabled('sub_teams'),
+          }"
+          v-model="filters.sub_teams"
+          label="SubTeams"
+          placeholder="Search by SubTeams"
+          :options="subteamOptions"
+          @update:model-value="onSubTeamChange"
+          :loading="loaders.subteamOptions"
+        />
 
         <ComboBox
           v-if="canShow('advisors')"
@@ -439,7 +559,14 @@ function onSubmit(isValid=true) {
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
         />
-
+        <x-select
+          v-if="canShow('insurance_type')"
+          v-model="filters.insurance_type"
+          label="Insurance Type"
+          placeholder="Select insurance type"
+          :options="[ { value: '', label: 'Select insurance type' }, ...insuranceTypeOptions ]"
+          class="w-full"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">

@@ -2,8 +2,11 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\quoteBusinessTypeCode;
+use App\Enums\quoteTypeCode;
 use Carbon\Carbon;
 use App\Models\HealthQuote;
+use App\Repositories\QuoteTypeRepository;
 use App\Services\BaseService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
@@ -20,25 +23,30 @@ class RetentionReportService extends BaseService
         if (isset($request->lob)) {
             $quoteType = $request->lob;
         } else {
-            $quoteType = $this->getUserPorductName(); // Corrected method name
-        }
-
-        if ($quoteType == '') {
-            return [];
+            $quoteType = $this->getUserPorductName();
         }
 
         $quoteModel = $this->getModelObject($quoteType);
-        if (!$quoteModel) {
+        if ($quoteType == '' || !$quoteModel) {
             return [];
         }
+
+        // $query = $quoteModel::query()
+        //     ->selectRaw("MONTHNAME(policy_expiry_date) as `month`,
+        //         users.name as `advisor_name`,
+        //         SUM(CASE WHEN source = 'Renewal_upload' THEN 1 ELSE 0 END) as total,
+        //         SUM(CASE WHEN quote_status_id = 17 and source = 'Renewal_upload' THEN 1 ELSE 0 END) as lost,
+        //         SUM(CASE WHEN quote_status_id IN (9, 35) and source = 'Renewal_upload' THEN 1 ELSE 0 END) as invalid,
+        //         SUM(CASE WHEN quote_status_id = 56 and source = 'Renewal_upload' THEN 1 ELSE 0 END) as sales")
+        //         ->join('users', 'advisor_id', '=', 'users.id');
 
         $query = $quoteModel::query()
             ->selectRaw("MONTHNAME(policy_expiry_date) as `month`,
                 users.name as `advisor_name`,
-                SUM(CASE WHEN source = 'Renewal_upload' THEN 1 ELSE 0 END) as total,
-                SUM(CASE WHEN quote_status_id = 17 and source = 'Renewal_upload' THEN 1 ELSE 0 END) as lost,
-                SUM(CASE WHEN quote_status_id IN (9, 35) and source = 'Renewal_upload' THEN 1 ELSE 0 END) as invalid,
-                SUM(CASE WHEN quote_status_id = 56 and source = 'Renewal_upload' THEN 1 ELSE 0 END) as sales")
+                count(*) as total,
+                SUM(CASE WHEN quote_status_id = 17  THEN 1 ELSE 0 END) as lost,
+                SUM(CASE WHEN quote_status_id IN (9, 35)  THEN 1 ELSE 0 END) as invalid,
+                SUM(CASE WHEN quote_status_id = 56  THEN 1 ELSE 0 END) as sales")
                 ->join('users', 'advisor_id', '=', 'users.id');
 
         $this->applyFilters($query, $request->all());
@@ -48,6 +56,7 @@ class RetentionReportService extends BaseService
         } else if ($request->displayBy == 'month'){
             $this->applyFilterByMonth($query, $request);
         }
+        $query->groupBy('users.name');
 
         $reportData = $query->paginate(12)->withQueryString();
 
@@ -71,7 +80,7 @@ class RetentionReportService extends BaseService
     public function applyFilters($query, $filters)
     {
         $filters = (object) $filters;
-
+        $lob = isset($filters->lob) ? ucfirst($filters->lob) : '';
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
         if (!isset($filters->policyExpiryDate) && !isset($filters->month)) {
@@ -82,6 +91,61 @@ class RetentionReportService extends BaseService
             $nextMonthEndDateFormatted = $nextMonthEndDate->format($dateFormat);
             $query->whereBetween('policy_expiry_date', [$previousMonthStartDateFormatted, $nextMonthEndDateFormatted]);
             $this->applyFilterForBatch($query, $filters);
+        }
+
+        if(checkPersonalQuotes($lob)){
+            $lobId = QuoteTypeRepository::where('code', $lob)->first();
+            $query->where('quote_type_id', $lobId->id);
+        }
+
+        if (isset($filters->teams) && count($filters->teams) > 0) {
+            $value = $filters->teams;
+            $query->whereIn('users.id', function ($query) use ($value) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $value);
+            });
+        }
+
+        if ((isset($filters->sub_teams) && count($filters->sub_teams) > 0)) {
+            $value = $filters->sub_teams;
+            $query->whereIn('users.id', function ($query) use ($value) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->whereIn('sub_team_id', $value);
+            });
+        }
+
+        if (isset($filters->advisors) && count($filters->advisors) > 0) {
+            $query->whereIn('advisor_id', $filters->advisors);
+        }
+        
+        if ($lob === quoteTypeCode::CORPLINE) {
+            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
+                $query->where('business_type_of_insurance_id', $filters->insurance_type);
+            } else {
+                $query->where('business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+            }
+        }
+
+        if ($lob === quoteTypeCode::GroupMedical) {
+            $query->where('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+        }
+
+        if ($lob === quoteTypeCode::Travel) {
+            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
+                $query->where('direction_code', $filters->insurance_type);
+            }
+        }
+
+        if ($lob === quoteTypeCode::Life) {
+            if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
+                $query->where('tenure_of_insurance_id', $filters->insurance_type);
+            }
         }
     }
 
@@ -98,12 +162,14 @@ class RetentionReportService extends BaseService
             $endDate = Carbon::parse($filter->policyExpiryDate[1])->endOfDay();
             $query->whereBetween('policy_expiry_date', [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
         }
-        $query->groupBy('batch');
+        // $query->groupBy('batch');
     }
 
     public function applyFilterByMonth($query, $filters){
         $monthDates = $this->getMonthDatesByNumber(Carbon::now()->format('y'), $filters->month);
         $query->whereBetween('policy_expiry_date', [$monthDates['start_date'], $monthDates['end_date']]);
+        // $query->groupBy('users.name');
+
     }
 
     public function getUserPorductName()
