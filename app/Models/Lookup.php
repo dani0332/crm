@@ -14,7 +14,7 @@ class Lookup extends Model
         return $query->with(['childs' => function ($query) use ($quoteTypeId, $removeOptions) {
             $query->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id')
                 // remove child records that are in the removeOptions array
-                ->when(count($removeOptions), function ($query) use ($removeOptions) {
+                ->when(! empty($removeOptions), function ($query) use ($removeOptions) {
                     $query->whereNotIn('code', $removeOptions);
                 })
                 // Include grandchild records and filter them by quoteTypeId
@@ -25,7 +25,7 @@ class Lookup extends Model
         }])
             // only parents visible those children are included.
             ->whereHas('childs', function ($query) use ($removeOptions) {
-                $query->when(count($removeOptions), function ($query) use ($removeOptions) {
+                $query->when(! empty($removeOptions), function ($query) use ($removeOptions) {
                     $query->whereNotIn('code', $removeOptions);
                 });
             })
