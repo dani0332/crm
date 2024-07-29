@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use Exception;
@@ -53,9 +52,9 @@ class ProcessSyncAlfredProtect implements ShouldQueue
                 throw new Exception('No embedded product found for the selected transaction');
             }
         })->first();
-        info('CL: ' . get_class() . ' FN: handle. Transaction: ' . $transaction);
-        if(!isset($transaction) || $transaction->isEmpty()) {
-            throw new Exception("No transaction found for the selected product");
+        info('CL: '.get_class().' FN: handle. Transaction: '.$transaction);
+        if (! isset($transaction) || $transaction->isEmpty()) {
+            throw new Exception('No transaction found for the selected product');
         }
 
         $strategy->syncSukoonDemocrance($this->quoteObject, $transaction);
