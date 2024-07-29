@@ -50,7 +50,8 @@ class CarQuoteExport
             'cqr.is_modified',
             'cqr.premium',
             'ls.text as lost_reason',
-            'cqr.quote_link')->get();
+            'cqr.quote_link',
+            'cqr.renewal_batch')->get();
     }
 
     public function headings(): array
@@ -94,6 +95,7 @@ class CarQuoteExport
             'PREMIUM',
             'LOST REASON',
             'QUOTE LINK',
+            'RENEWAL BATCH',
         ];
     }
 
@@ -138,6 +140,7 @@ class CarQuoteExport
             $quote->premium,
             $quote->lost_reason,
             $quote->quote_link,
+            $quote->renewal_batch,
         ];
     }
 

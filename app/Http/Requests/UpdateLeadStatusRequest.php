@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -141,7 +142,7 @@ class UpdateLeadStatusRequest extends FormRequest
             })->whereNull('screenshot')->latest()->first();
 
             $isTravelLeadTransactionApproved = false;
-            if ((auth()->user()->hasRole(RolesEnum::TravelHapex) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
+            if ((auth()->user()->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
                 $transactionApprovedQuoteStatus = app(TravelQuoteService::class)->getTransactionApprovedQuoteStatus(request()->leadId);
                 if (isset($transactionApprovedQuoteStatus->id)) {
                     $isTravelLeadTransactionApproved = true;
