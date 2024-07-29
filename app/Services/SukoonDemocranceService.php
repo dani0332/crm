@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypeId;
+use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
@@ -13,6 +15,7 @@ use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Console\Application;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,17 +29,29 @@ class SukoonDemocranceService
     private $paymentToken;
     private $documentPolicyNumber;
     private $currentQuote;
+    private $invoiceBuyer;
+    private $documentTemplateIds;
+    private $mappedDocumentTemplates;
 
     public function __construct()
     {
-        $this->baseUrl = config('constants.SUKOON_DEMO_API_URL');
-        $this->productSlug = config('constants.SUKOON_DEMO_PRODUCT_SLUG');
-        $this->paymentGateway = config('constants.SUKOON_DEMO_PAYMENT_GATEWAY');
+        $this->baseUrl = config('constants.SUKOON_API_URL');
+        $this->productSlug = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PRODUCT_SLUG)->value('value');
+        $this->invoiceBuyer = config('constants.SUKOON_INVOICE_BUYER');
+        $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
+        $this->documentTemplateIds = ApplicationStorage::select('value')->whereIn('key_name', [
+            ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE, 
+            ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
+            ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER,
+            ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE,
+            ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE_BUYER,
+        ])->get();
+        $this->mapDocumentsType();
     }
 
     private function request($path, $method = 'post', $data = [], $headers = [])
     {
-        $url = "{$this->baseUrl}/api/v".config('constants.SUKOON_DEMO_API_VERSION').$path;
+        $url = "{$this->baseUrl}/api/v".config('constants.SUKOON_API_VERSION').$path;
         $client = Http::withHeaders($headers);
 
         // Get the call stack
@@ -57,8 +72,8 @@ class SukoonDemocranceService
     public function login()
     {
         $data = [
-            'username' => config('constants.SUKOON_DEMO_USERNAME'),
-            'password' => config('constants.SUKOON_DEMO_PASSWORD'),
+            'username' => config('constants.SUKOON_USERNAME'),
+            'password' => config('constants.SUKOON_PASSWORD'),
         ];
         $headers = ['Content-Type' => 'application/json', 'Accept' => 'application/json'];
 
@@ -141,10 +156,11 @@ class SukoonDemocranceService
         }
     }
 
-    public function getCOIDocument($quote, $embeddedTransaction)
+    public function getDocument($quote, $embeddedTransaction, $templateId, $docCode)
     {
         try {
-            $result = $this->request('/policy/'.$this->documentPolicyNumber.'/coi/', 'get', [], ['x-session-id' => $this->sessionId]);
+            $data = ['template' => $templateId];
+            $result = $this->request('/policy/'.$this->documentPolicyNumber.'/coi/', 'post', $data, ['x-session-id' => $this->sessionId]);
             $content = $result->body();
             $headers = $result->toPsrResponse()->getHeader('Content-Disposition');
             $filename = '';
@@ -159,7 +175,7 @@ class SukoonDemocranceService
             if ($filename) {
                 $originalName = $filename;
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-                $documentType = DocumentType::where('code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->where('quote_type_id', QuoteTypeId::Car)->first();
+                $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', QuoteTypeId::Car)->first();
                 $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
                 $docUrl = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
@@ -189,9 +205,15 @@ class SukoonDemocranceService
         }
     }
 
+    public function getDocuments($quote, $embeddedTransaction) {
+        foreach($this->mappedDocumentTemplates as $index => $doc) {
+            $this->getDocument($quote, $embeddedTransaction, $doc, $index);   
+        }
+    }
+
     public function getTransactionDetails()
     {
-        $data = ['template' => $this->invoiceBuyer];
+        $data = ['template' => $this->mappedDocumentTemplates[ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE]];
 
         try {
             $result = $this->request('/policy/'.$this->documentPolicyNumber, 'post', $data, [
@@ -267,8 +289,8 @@ class SukoonDemocranceService
                 'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
                 'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
             ]);
-            $this->getCOIDocument($quote, $transaction);
-            EmbeddedProductRepository::sendDocument(['epId' => $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
+            $this->getDocuments($quote, $transaction);
+            EmbeddedProductRepository::sendDocument(['epId'=> $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
             throw $e;
@@ -289,6 +311,28 @@ class SukoonDemocranceService
             'message' => $message,
             'data' => $data,
         ]);
+    }
+
+    private function mapDocumentsType() {
+        foreach ($this->documentTemplateIds as $template) {
+            switch ($template->key_name) {
+                case ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE:
+                    $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE] = $template->value;
+                    break;
+                case ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT:
+                    $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_TAX_CREDIT] = $template->value;
+                    break;
+                case ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER:
+                    $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_TAX_CREDIT_RAISE_BY_BUYER] = $template->value;
+                    break;
+                case ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE:
+                    $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_TAX_INVOICE] = $template->value;
+                    break;
+                case ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE_BUYER:
+                    $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER] = $template->value;
+                    break;
+            }
+        }
     }
 
     private function logRequest($status, $message, $data, $url = '', $response = '', $parentFunction = '')
@@ -314,7 +358,7 @@ class SukoonDemocranceService
             'quote_data' => json_encode($this->currentQuote),
             'quote_uuid' => $this->currentQuote->uuid,
             'provider_id' => InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id'),
-            'call_type' => 'embedded-product',
+            'call_type' => 'EmbeddedProduct',
         ];
         InsurerRequestResponse::create($logData);
 

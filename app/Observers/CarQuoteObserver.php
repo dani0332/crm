@@ -44,8 +44,6 @@ class CarQuoteObserver
                 'customer-update-myalfred-we'
             );
 
-            ProcessSyncAlfredProtect::dispatch($lead);
-
             CarQuote::withoutEvents(function () use ($lead) {
                 $lead->update([
                     'transaction_approved_at' => now(),

@@ -180,5 +180,50 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        $sukoonConstants = [
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY,
+                'value' => 'invoice',
+                'is_active' => 1
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_PRODUCT_SLUG,
+                'value' => 'accident_health_afia',
+                'is_active' => 1
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE,
+                'value' => '9024065094027325487',
+                'is_active' => 1
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
+                'value' => '9099784511062815329',
+                'is_active' => 1
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER,
+                'value' => '9099784511515800162',
+                'is_active' => 1
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE,
+                'value' => '9068692883229388975',
+                'is_active' => 1
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE_BUYER,
+                'value' => '9083336468679635183',
+                'is_active' => 1
+            ],
+        ];
+        foreach($sukoonConstants as $sukoon) {
+            $conditions = [
+                'key_name' => $sukoon['key_name'],
+            ];
+            ApplicationStorage::firstOrCreate($conditions, $sukoon);
+        }
+        
     }
 }

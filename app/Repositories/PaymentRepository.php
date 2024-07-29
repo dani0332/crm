@@ -12,6 +12,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\ProcessSyncAlfredProtect;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\Payment;
@@ -454,6 +455,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             if ($canCaptureEp) {
                 // capture EP and send documents
+                if ($quoteTypeId == QuoteTypeId::Car) {
+                    ProcessSyncAlfredProtect::dispatch($quoteModel);
+                }
+
                 EmbeddedProductRepository::capturePayment($request->quote_id, $request->modelType);
             }
         }
