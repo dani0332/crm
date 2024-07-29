@@ -244,7 +244,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
               />
             </div>
             <div class="grid sm:grid-cols-2 mb-3">
-              <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
+              <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" placement="bottom">
                 <ToggleManualButtonReuseTemplate :isDisabled="true"/>
                 <template #tooltip>
                   No further action allowed on issued policy, If changes are required, such as increase in price, please proceed through the 'Send Update' feature using the 'Correction of Policy' option.

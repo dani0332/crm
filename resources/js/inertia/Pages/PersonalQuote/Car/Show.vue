@@ -1511,7 +1511,7 @@ const handlePlanSelected = plan => {
   });
 };
 
-const isPlanDetailEnabled = computed(() => {  
+const isPlanDetailEnabled = computed(() => {
   if(page.props.commercialRules) { // Check rules for commercial
     return true;
   }
@@ -1560,7 +1560,7 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.planName = '';
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
-  isAddUpdate.value = true; 
+  isAddUpdate.value = true;
 }
 
 </script>
@@ -1750,7 +1750,7 @@ const onAddUpdate = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1891,7 +1891,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1920,7 +1920,7 @@ const onAddUpdate = () => {
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1972,7 +1972,7 @@ const onAddUpdate = () => {
 
           <div v-if="quote.quote_status_id !=
                 page.props.quoteStatusEnum.PolicyCancelled || linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end mb-4" >
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" placement="bottom">
               <LeadEditBtnReuseTemplate :isDisabled="true"/>
               <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
             </x-tooltip>
@@ -2688,7 +2688,7 @@ const onAddUpdate = () => {
           </StatusUpdateButtonTemplate>
 
           <div class="flex justify-end">
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" placement="bottom">
               <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
               <template #tooltip>
                 The lead status cannot be manually updated once it has reached 'Transaction Approved'
@@ -2982,7 +2982,7 @@ const onAddUpdate = () => {
               </x-button>
             </AddPlanButtonTemplate>
 
-            <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom" >
+            <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" placement="bottom" >
               <AddPlanButtonReuseTemplate :isDisabled="true"/>
               <template #tooltip>No further actions can be taken on an issued policy. For changes, such as a change in insurer, go to 'Send Update', select 'Add Update', and choose 'Cancellation from inception and reissuance.</template>
             </x-tooltip>
@@ -3054,7 +3054,7 @@ const onAddUpdate = () => {
                   class="mt-0.5 text-[10px] text-white"
                   style="background-color: #e00000"
                 >
-                  <x-tooltip position="right">
+                  <x-tooltip placement="right">
                     <template #tooltip>
                       <span class="font-medium" v-if="puaType == puaTypeEnum.PPUA">
                         {{ puaTypeEnum.PPUA_TOOLTIP }}
