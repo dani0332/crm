@@ -355,25 +355,6 @@ const handlePlanSelected = plan => {
         <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
       </h3>
       <div>
-        <x-tooltip
-          v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
-        >
-          <x-button
-            class="ml-2 mr-2"
-            :disabled="disableFollowUp"
-            size="sm"
-            color="rose"
-            @click="showfollowup = !showfollowup"
-          >
-            Pause Follow-up to customer
-          </x-button>
-          <template #tooltip>
-            <span
-              >When Activated, The button temporarily suspends the automatic
-              sending of follow-up emails to clients</span
-            >
-          </template>
-        </x-tooltip>
         <x-button-group v-if="selectedPlans.length > 0" size="sm">
           <x-button
             @click.prevent="onTogglePlans(false)"
