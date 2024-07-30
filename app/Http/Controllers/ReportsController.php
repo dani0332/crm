@@ -500,7 +500,7 @@ class ReportsController extends Controller
             'reportData' => $retentionReportService->getReportData($request),
             'productName' => $retentionReportService->getUserPorductName(),
             'monthNames' => MonthNameEnum::all(),
-            'retentionReportTooltipEnum' => RetentionReportTooltipEnum::all()
+            'retentionReportTooltipEnum' => RetentionReportTooltipEnum::asArray()
         ]);
     }
 }

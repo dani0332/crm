@@ -5,7 +5,8 @@ const props = defineProps({
   filtersByLob: Object,
   reportData: Object,
   productName: String,
-  monthNames: Array
+  monthNames: Array,
+  retentionReportTooltipEnum: Array
 });
 
 const page = usePage();
@@ -271,57 +272,6 @@ const loadAdvisors = e => {
     });
 };
 
-const tableHeader = [
-  {
-    text: 'Month',
-    value: 'month',
-  },
-  {
-    text: 'Batch',
-    value: 'batch',
-  },
-  {
-    text: 'Start Date',
-    value: 'start_date',
-  },
-  {
-    text: 'End Date',
-    value: 'end_date',
-  },
-  {
-    text: 'Advisor Name',
-    value: 'advisor_name',
-  },
-  {
-    text: 'Total',
-    value: 'total',
-  },
-  {
-    text: 'Lost',
-    value: 'lost',
-  },
-  {
-    text: 'Invalid',
-    value: 'invalid',
-  },
-  {
-    text: 'Sales',
-    value: 'sales',
-  },
-  {
-    text: 'Volume Gross Retention',
-    value: 'volume_gross_retention',
-  },
-  {
-    text: 'Volume Net Retention',
-    value: 'volume_net_retention',
-  },
-  // {
-  //   text: 'Relative Retention',
-  //   value: 'relative_retention',
-  // },
-];
-
 watch(
   () => filters.displayBy,
   (newValue, oldValue) => {
@@ -400,7 +350,7 @@ function onSubmit(isValid=true) {
       },
     });
   }
-  
+
 const onSubTeamChange = (e, isOnMounted = false) => {
 
 if(!isOnMounted) {
@@ -458,16 +408,6 @@ const insuranceTypeOptions = computed(() => {
 
   return [];
 });
-const setTableHeader = () => {
-  const headers =  [];
-  headers.push(
-      {
-          text: 'TIER 0',
-          value: 'tier_0_lead_count',
-      },
-  );
-  tableHeader.value = headers;
-};
 
 </script>
 
@@ -533,7 +473,7 @@ const setTableHeader = () => {
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
         />
-        
+
         <ComboBox
           v-if="canShow('sub_teams')"
           :disabled="!isDisabled('sub_teams')"
@@ -584,27 +524,285 @@ const setTableHeader = () => {
       </div>
     </x-form>
 
-    <DataTable
-      table-class-name="tablefixed"
-      :loading="loaders.table"
-      :headers="tableHeader"
-      :items="reportData.data || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-  </DataTable>
+    <div class="vue3-easy-data-table tablefixed custom-height">
+      <div
+        class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div"
+      >
+        <table>
+          <thead class="vue3-easy-data-table__header">
+            <tr>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Month</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.MONTH_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Batch</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.BATCH_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Start Date</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.START_DATE_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">End Date</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.END_DATE_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Advisor Name</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.ADVISOR_NAME_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Total</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.TOTAL_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Lost</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.LOST_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Invalid</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.INVALID_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Sales</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.POLICIES_BOOKED_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Volume Gross Retention</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.VOLUME_GROSS_RETENTION_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Volume Net Retention</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.VOLUME_NET_RETENTION_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">RELATIVE RETENTION</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      retentionReportTooltipEnum.RELATIVE_RETENTION_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+            </tr>
+          </thead>
 
-  <Pagination
-    :links="{
-      next: reportData.next_page_url,
-      prev: reportData.prev_page_url,
-      current: reportData.current_page,
-      from: reportData.from,
-      to: reportData.to,
-      total: reportData.total,
-      last: reportData.last_page,
-    }"
-  />
+          <tbody class="vue3-easy-data-table__body">
+            <template v-for="(item, index) in reportData.data" :key="item.code">
+              <tr>
+                <td>{{ item.month }}</td>
+                <td>{{ item.batch }}</td>
+                <td>{{ item.start_date }}</td>
+                <td>{{ item.end_date }}</td>
+                <td>{{ item.advisor_name }}</td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    <p v-if="item.total == 0">{{ item.total }}</p>
+                    <button
+                      v-else
+                      class="text-primary underline"
+                    >
+                      {{ item.total }}
+                    </button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ retentionReportTooltipEnum.TOTAL_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+
+                <td>
+                  <x-tooltip position="right bootom">
+                    <p v-if="item.lost == 0">{{ item.lost }}</p>
+                    <button
+                      v-else
+                      class="text-primary underline"
+                    >
+                      {{ item.lost }}
+                    </button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ retentionReportTooltipEnum.LOST_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    <p v-if="item.invalid == 0">{{ item.invalid }}</p>
+                    <button
+                      v-else
+                      class="text-primary underline"
+                    >
+                      {{ item.invalid }}
+                    </button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ retentionReportTooltipEnum.INVALID_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    <p v-if="item.sales == 0">{{ item.sales }}</p>
+                    <button
+                      v-else
+                      class="text-primary underline"
+                    >
+                      {{ item.sales }}
+                    </button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ retentionReportTooltipEnum.SALES_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    {{ item.volume_gross_retention }}
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ retentionReportTooltipEnum.VOLUME_GROSS_RETENTION_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    {{ item.volume_net_retention }}
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ retentionReportTooltipEnum.VOLUME_GROSS_RETENTION_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="left bootom">
+                    -------
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ retentionReportTooltipEnum.RELATIVE_RETENTION_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <div
+          v-if="!reportData.data.length > 0"
+          data-v-32683533=""
+          class="vue3-easy-data-table__message"
+        >
+          No Available Data
+        </div>
+      </div>
+    </div>
+    <Pagination
+      :links="{
+        next: reportData.next_page_url,
+        prev: reportData.prev_page_url,
+        current: reportData.current_page,
+        from: reportData.from,
+        to: reportData.to,
+        total: reportData.total,
+        last: reportData.last_page,
+      }"
+    />
   </div>
 </template>
+
+<style scoped>
+
+.custom-tooltip-content {
+  max-width: 200px;
+  white-space: normal;
+  z-index: 999;
+  position: relative;
+  font-size: 12px;
+  text-transform: none;
+}
+.custom-height {
+  min-height: 185px;
+}
+
+.tooltip-display {
+  display: inherit;
+}
+
+.inner-th-class {
+  min-width: 160px;
+}
+</style>
