@@ -191,7 +191,7 @@ class LookupService extends BaseService
             'code' => LookupsEnum::SEND_UPDATE_CODE,
             'parent_id' => null,
         ])
-            ->withChildTree($quoteTypeId, checkSendUpdatePermissions())
+            ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
             ->get();
     }
 

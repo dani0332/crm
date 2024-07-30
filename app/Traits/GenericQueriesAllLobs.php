@@ -226,7 +226,7 @@ trait GenericQueriesAllLobs
     {
         info('fn: bookPolicyPayload called for '.$record->uuid);
         $infoMessage = 'QC '.$record->code.' ';
-        $insuranceProviderLeadCount = $insuranceProviderCode = $sendUpdateInvoiceDescription = $sendUpdateBrokerInvoice = '';
+        $insuranceProviderLeadCount = $insuranceProviderCode = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
@@ -234,16 +234,11 @@ trait GenericQueriesAllLobs
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
-        if ($payments->first()?->send_update_log_id) {
-            $sendUpdateInvoiceDescription = $payments->first()->invoice_description;
-            $sendUpdateBrokerInvoice = $payments->first()->broker_invoice_number;
-        }
 
-        $invoiceDescription = empty($sendUpdateInvoiceDescription) ? $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number : $sendUpdateInvoiceDescription;
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
-        $bookPolicyDetails['brokerInvoiceNo'] = empty($sendUpdateBrokerInvoice) ? $insuranceProviderCode.$insuranceProviderLeadCount : $sendUpdateBrokerInvoice;
-        $bookPolicyDetails['invoiceDescription'] = substr($invoiceDescription, 0, 60);
+        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
+        $bookPolicyDetails['invoiceDescription'] = substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
         $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
