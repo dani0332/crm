@@ -157,7 +157,6 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_type_id', '=', $quoteTypeId],
             ['quote_request_id',  '=', $quoteId],
             ['is_selected',  '=', true],
-            ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->whereIn('product_id', $optionsIds)->get();
 
         $certificate_number = '';
@@ -167,12 +166,11 @@ class EmbeddedProductRepository extends BaseRepository
             $isAlfredProtect = checkAlfredProtect($ep->short_code);
             if ($isAlfredProtect) {
                 $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
-                $attachment = $strategy->getCertificateDocument($ep, $transaction[0], $quoteObject);
+                $attachments = $strategy->getCertificateDocument($ep, $transaction[0], $quoteObject);
 
-                return response()->json([
-                    'path' => $attachment['Path'],
-                    'name' => $attachment['Name'],
-                ]);
+                return response()->json(
+                    ['attachments' => $attachments]
+                );
             } else {
                 $certificate_number = $transaction[0]['certificate_number'];
                 $premium = $transaction[0]['price_with_vat'];
@@ -240,7 +238,6 @@ class EmbeddedProductRepository extends BaseRepository
         $modelType = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
             $item->send_document_button = false;
-            $item->sync_document_button = false;
             $item->download_document_button = false;
             $optionsIds = $item->prices->pluck('id');
 
@@ -248,13 +245,11 @@ class EmbeddedProductRepository extends BaseRepository
                 ['quote_type_id', '=', $quoteTypeId],
                 ['quote_request_id',  '=', $quoteRequestId],
                 ['is_selected',  '=', true],
-                ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
             ])->whereIn('product_id', $optionsIds)->get();
 
             $isAlfredProtect = checkAlfredProtect($item->short_code);
-            if ($isAlfredProtect) {
-                $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0 : false;
-                $item->sync_document_button = ! $isDocPresent;
+            if($isAlfredProtect) {
+                $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0: false;
                 $item->download_document_button = $isDocPresent;
             }
 
@@ -373,7 +368,6 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_type_id', '=', $quoteTypeId],
             ['quote_request_id',  '=', $quoteId],
             ['is_selected',  '=', true],
-            ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->whereIn('product_id', $optionsIds)->get();
 
         $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);

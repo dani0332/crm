@@ -138,7 +138,12 @@ const downloadDocument = async (id) => {
   axios
   .post('/embedded-products/download-document', formData)
   .then(response => {
-    downloadFile(response.data);
+    if(response.data.attachments.length > 0) {
+      response.data.attachments.forEach(attachment => {
+        downloadFile(attachment);
+      });
+    }
+
     downloadDocumentLoader.value = false;
 
   })
