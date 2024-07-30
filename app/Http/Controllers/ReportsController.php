@@ -8,6 +8,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RetentionReportTooltipEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Factories\ManagementReportServiceFactory;
@@ -498,7 +499,8 @@ class ReportsController extends Controller
             'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
             'reportData' => $retentionReportService->getReportData($request),
             'productName' => $retentionReportService->getUserPorductName(),
-            'monthNames' => MonthNameEnum::all()
+            'monthNames' => MonthNameEnum::all(),
+            'retentionReportTooltipEnum' => RetentionReportTooltipEnum::all()
         ]);
     }
 }
