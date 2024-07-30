@@ -102,6 +102,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->emailTemplateId = $templateId;
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
+            $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             info('Send Book Policy Documents Job Email Data '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('Send Book Policy Documents Job Response '.json_encode($response));
