@@ -143,14 +143,18 @@ class ApiService
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
-        if (optional($request)->quoteType == QuoteTypes::HEALTH) {
-            info('------ SIC workflow trigger request received for lead : ' . ($request->quoteUuid ?? '') . ' ------');
-            // SendHealthOCBIntroEmailJob::dispatch($request->quoteUuid ?? null, null, true);
+
+        if ( isset($request->quoteType)  && $request->quoteTypeId == QuoteTypes::HEALTH->id()) {
+
+            info('------ Health SIC workflow trigger request received for  lead : ' . ($request->quoteUuid ?? '') . ' ------');
+            SendHealthOCBIntroEmailJob::dispatch($request->quoteUuid, null, true)->onQueue("low");
+
+            info('------ Health SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
         }
         else {
-        info('------ SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
-        // SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
-        info('------ SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
+        info('------ Motor SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
+        SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
+        info('------ Motor SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
         }
 
         return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');

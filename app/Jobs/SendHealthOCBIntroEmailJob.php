@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\HealthQuote;
 use Exception;
 use App\Services\CRUDService;
 use App\Services\UserService;
@@ -22,7 +23,6 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
 
     protected $quoteUuid;
     protected $healthQuoteService;
-    protected $sendEmailCustomerService;
     private $previousAdvisor;
     private $triggerSICWorkflow;
     public $tries = 3;
@@ -44,7 +44,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
      public function handle( HealthEmailService $healthEmailService, HealthQuoteService $healthQuoteService): void
      {
          try {
-             $lead =$this->healthQuoteService->getEntity($this->quoteUuid);
+             $lead = HealthQuote::where('uuid',$this->quoteUuid)->first();
              if (! $lead) {
                  info('SendHealthOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
                  return;
@@ -55,9 +55,9 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
              } else {
                      info('SendHealthOCBIntroEmailJob - SIC work flow is not enabled on this lead : '.$this->quoteUuid);
                      // Retrieve plans with available ratings for the given lead
-                     $plans = $this->healthQuoteService->getQuotePlans($lead->uuid);
+                     $plans = $healthQuoteService->getQuotePlans($lead->uuid);
 
-                     $responseCode = $healthEmailService->sendHealthOCBIntroEmail($plans, $lead,$this->previousAdvisor,$this->healthQuoteService, $this->triggerSICWorkflow);
+                     $responseCode = $healthEmailService->sendHealthOCBIntroEmail($plans, $lead,$this->previousAdvisor,$healthQuoteService, $this->triggerSICWorkflow);
                      if (in_array($responseCode, [200, 201])) {
                          info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                      } else {

@@ -61,6 +61,7 @@ class DatabaseSeeder extends Seeder
             RevokeTempPaymentUpdatePermissionsSeeder::class,
             ImcrmUsersRolesCleaner::class,
             ConfigSICHealthPermissionSeeder::class,
+            SICHealthSeeder::class,
         ]);
     }
 }

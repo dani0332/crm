@@ -24,7 +24,7 @@ class HealthEmailService extends BaseService
 
     public function sendHealthOCBIntroEmail($plans, $lead, $previousAdvisorId, $healthQuoteService, $triggerSICWorkFlow = false)
     {
-        $plans = $this->executePlansSelectionLogic($plans);
+        $plans = $this->executePlansSelectionLogic((array)$plans);
 
         // Determine the email template ID
         $emailTemplateId = $this->getEmailTemplateId($lead, $plans,$triggerSICWorkFlow);
@@ -66,16 +66,10 @@ class HealthEmailService extends BaseService
         }
 
         if ($lead->advisor_id) {
-            $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+            $responseCode = $this->sendEmailCustomerService->sendHealthLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
         } else {
-            info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
-            $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
-            if ($responseCode) {
-                $this->sendEmailCustomerService->sendSICFollowupEmail($lead);
-                // Dispatch the job with a 24 hours delay
-
-                info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.' Time: '.now());
-            }
+            info('sendCarOCBIntroEmail - sendHealthNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
+            $responseCode = $this->sendEmailCustomerService->sendHealthNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
         }
 
         return $responseCode;
@@ -83,11 +77,6 @@ class HealthEmailService extends BaseService
 
     private function executePlansSelectionLogic(array $plans): array
     {
-        // Sort plans from lowest to highest by discount premium
-        usort($plans, function ($a, $b) {
-            return $a->discountPremium <=> $b->discountPremium;
-        });
-
         $top6Plans = array_slice($plans, 0, 6);
         // return $top6Plans if $top6Plans is not empty otherwise return $plans
         return ! empty($top6Plans) ? $top6Plans : [];
@@ -96,7 +85,12 @@ class HealthEmailService extends BaseService
     public function buildEmailData($lead, $plans, $previousAdvisor)
     {
         return (object)[
-            'lead' => $lead,
+            'healthQuoteId' => $lead->uuid,
+            'customerEmail' => $lead->email,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'advisorId' => $lead->advisor_id,
+            'advisorName' => $lead->advisor_name,
+            'advisorEmail' => $lead->advisor_email,
             'plans' => $plans,
             'previousAdvisor' => $previousAdvisor,
         ];
@@ -106,11 +100,13 @@ class HealthEmailService extends BaseService
     {
         if ($triggerSICWorkFlow) {
             info('Inside sic flow enabled: '.$lead->uuid);
-            $noAdvisorTemplateId = ApplicationStorage::where('key_name', 'SIC_HEALTH_NO_ADVISOR_TEMPLATE_ID')->first();
+            $noAdvisorTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_HEALTH_NO_ADVISOR_TEMPLATE)->first();
             if ($noAdvisorTemplateId) {
                 return (int) $noAdvisorTemplateId->value;
             } else {
-                return 0; // keeping it as a fallback
+                info('SIC Health email template');
+                $TemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_HEALTH_FOLLOWUP_TEMPLATE)->first();
+                return (int) $TemplateId->value; // keeping it as a fallback
             }
         }
         if (count($plans) == 0) {
