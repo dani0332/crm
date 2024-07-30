@@ -38,6 +38,10 @@ const selectedRoles = computed(() => {
   else return [];
 });
 
+const  isAllowed = computed(() => {
+  return hasRole(rolesEnum.Admin)
+});
+
 const userForm = useForm({
   id: props.user?.id ?? null,
   name: props.user?.name ?? null,
@@ -263,9 +267,8 @@ watch(
           class="w-full"
         />
       </x-field>
-      <x-field label="PASSWORD" required v-if="!isEdit">
+      <x-field label="PASSWORD" required v-if="isAllowed && isEdit">
         <x-input
-          :rules="!isEdit ? [isRequired] : []"
           v-model="userForm.password"
           class="w-full"
           type="password"
