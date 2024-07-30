@@ -100,7 +100,6 @@ defineProps({
   paymentDocument: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
-  latestImpactedPayment: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -3532,7 +3531,6 @@ const onAddUpdate = () => {
       :quoteType="quoteType"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
-      :latestImpactedPayment="latestImpactedPayment"
     />
 
     <SendUpdates

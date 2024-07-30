@@ -190,9 +190,6 @@ class CycleQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-        $sortedPayments = collect($quote?->payments)->sortByDesc(function ($column) {
-            return Carbon::parse($column->created_at)->timestamp;
-        })->values()->toArray();
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
@@ -227,7 +224,7 @@ class CycleQuoteController extends Controller
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $sortedPayments,
+            'payments' => $quote?->payments,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,

@@ -749,7 +749,6 @@ class CRUDController extends Controller
             $commercialRules = $this->leadAllocationService->isCommercialVehicles($record);
             $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
-            $latestImpactedPayment = app(CentralService::class)->latestImpactedPaymentDetails($quoteType, $record, $payments);
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
@@ -762,7 +761,7 @@ class CRUDController extends Controller
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'insuranceProvidersByQuoteType',
                 'vatPercentage', 'commercialRules', 'isAmlClearedForPayment', 'clientInquiryLogs', 'policyIssuanceStatus', 'bookPolicyDetails', 'linkedQuoteDetails', 'puaTypeEnum',
-                'lockLeadSectionsDetails', 'paymentDocument', 'latestImpactedPayment'
+                'lockLeadSectionsDetails', 'paymentDocument'
             ]));
         }
 

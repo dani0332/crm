@@ -25,10 +25,6 @@ const props = defineProps({
     type: Array,
     default: [],
   },
-  latestImpactedPayment: {
-    type: Array,
-    default: {},
-  },
   expanded: {
     required: false,
     type: Boolean,
@@ -103,7 +99,7 @@ const currentDateTime = computed(() => {
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 });
 const transactionPaymentStatus = computed(() => {
-  let firstPayment = page.props?.latestImpactedPayment[0];
+  let firstPayment = page.props?.payments[0];
 
   let totalPrice = Number(firstPayment?.total_price);
   let capturedAmount = Number(firstPayment?.captured_amount);
@@ -148,22 +144,22 @@ const bpForm = useForm({
     '',
   transaction_payment_status:
     page.props.bookPolicyDetails.transactionPaymentStatus,
-  invoice_date: dateToYMD(page.props.latestImpactedPayment[0]?.insurer_invoice_date) || '',
+  invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
   invoice_description: page.props.bookPolicyDetails.invoiceDescription || '',
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
-  insurer_tax_invoice_number: page.props?.latestImpactedPayment[0]?.insurer_tax_number || '',
+  insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
   insurer_commmission_invoice_number:
-    page.props?.latestImpactedPayment[0]?.insurer_commmission_invoice_number ||
+    page.props?.payments[0]?.insurer_commmission_invoice_number ||
     binAsInsurerCommissionTaxInvoiceNumber(),
   commission_vat_not_applicable:
-    page.props?.latestImpactedPayment[0]?.commission_vat_not_applicable || '',
+    page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
-    page.props?.latestImpactedPayment[0]?.commission_vat_applicable || '',
-  commission_percentage: page.props?.latestImpactedPayment[0]?.commmission_percentage || 0,
-  vat_on_commission: page.props?.latestImpactedPayment[0]?.commission_vat || '',
-  total_commission: page.props?.latestImpactedPayment[0]?.commission || '',
-  payment_code: page.props?.latestImpactedPayment[0]?.code,
-  discount: page.props?.latestImpactedPayment[0]?.discount_value || '',
+    page.props?.payments[0]?.commission_vat_applicable || '',
+  commission_percentage: page.props?.payments[0]?.commmission_percentage || 0,
+  vat_on_commission: page.props?.payments[0]?.commission_vat || '',
+  total_commission: page.props?.payments[0]?.commission || '',
+  payment_code: page.props?.payments[0]?.code,
+  discount: page.props?.payments[0]?.discount_value || '',
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
   modelType: props.modelType,
@@ -408,7 +404,7 @@ const sendPolicyConfirmation = () => {
 };
 
 const getPayment = () => {
-  return page.props?.latestImpactedPayment[0] ?? null;
+  return page.props?.payments[0] ?? null;
 };
 
 const showInsufficientPaymentAlert = () => {
@@ -499,7 +495,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>
-                  <label class="border-b-2 border-dotted border-black uppercase"
+                  <label class="font-medium border-b-2 border-dotted border-black uppercase"
                     >Transaction Payment Status</label
                   >
                   <template #tooltip>
