@@ -324,7 +324,7 @@ const linkEntity = () => {
     .finally(() => (entityDetailsFound.value = false));
 };
 
-const is_insured = ref(false);
+const is_insured = ref(0);
 
 watch(
   props.membersDetails,
@@ -393,8 +393,10 @@ watch(
           </x-field>
           <div class="flex gap-5 mb-5 align-center">
             <p>Is the insured the payer?</p>
-            <x-radio v-model="is_insured" :value="true" label="Yes" />
-            <x-radio v-model="is_insured" :value="false" label="No" />
+            <x-form-group v-model="is_insured">
+                <x-radio :value="1" label="Yes" />
+                <x-radio :value="0" label="No" />
+            </x-form-group>
           </div>
         </dl>
 
