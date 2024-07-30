@@ -221,6 +221,7 @@ class CentralController extends Controller
             ]);
 
             info('Policy send to customer for '.$quote->uuid);
+
             //TODO : Status message need to be appropriate
             //TODO : Flags should be introduced regarding Document send email
             return response()->json(['message' => 'Sending Documents to customer, Status will be updated once document sent'], 200);
