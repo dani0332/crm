@@ -232,7 +232,7 @@ class SukoonDemocranceService
 
     public function getTransactionDetails()
     {
-        $data = ['template' => $this->mappedDocumentTemplates[ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE]];
+        $data = ['template' => $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE]];
 
         try {
             $result = $this->request('/policy/'.$this->documentPolicyNumber, 'post', $data, [
