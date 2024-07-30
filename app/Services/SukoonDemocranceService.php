@@ -31,7 +31,7 @@ class SukoonDemocranceService
     private $currentQuote;
     private $invoiceBuyer;
     private $documentTemplateIds;
-    private $mappedDocumentTemplates;
+    private $mappedDocumentTemplates = [];
 
     public function __construct()
     {
@@ -39,8 +39,8 @@ class SukoonDemocranceService
         $this->productSlug = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PRODUCT_SLUG)->value('value');
         $this->invoiceBuyer = config('constants.SUKOON_INVOICE_BUYER');
         $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
-        $this->documentTemplateIds = ApplicationStorage::select('value')->whereIn('key_name', [
-            ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE,
+        $this->documentTemplateIds = ApplicationStorage::select('key_name', 'value')->whereIn('key_name', [
+            ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE, 
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER,
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE,
@@ -201,15 +201,20 @@ class SukoonDemocranceService
                 throw new Exception('Unable to determine filename from the response headers.');
             }
         } catch (Exception $e) {
-            $this->logFailure('Get COI Document', $e->getMessage(), ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
+            $this->logFailure('Get Document template_id : '.$templateId .' doc_code : '. $docCode, $e->getMessage(), ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
             throw $e;
         }
     }
 
-    public function getDocuments($quote, $embeddedTransaction)
-    {
-        foreach ($this->mappedDocumentTemplates as $index => $doc) {
-            $this->getDocument($quote, $embeddedTransaction, $doc, $index);
+    public function getDocuments($quote, $embeddedTransaction) {
+        try {
+            info("Sukoon DemocranceDocuments mapped correctly documents :". json_encode($this->mappedDocumentTemplates));
+            foreach ($this->mappedDocumentTemplates as $index => $doc) {
+                $this->getDocument($quote, $embeddedTransaction, $doc, $index);
+            }
+        } catch (Exception $e) {
+            $this->logFailure('Get Documents', $e->getMessage(), ['quote' => $quote]);
+            throw $e;
         }
     }
 
@@ -277,6 +282,7 @@ class SukoonDemocranceService
             $this->request('/policy/' . $this->policyNumber . '/confirm/', 'post', ['confirm' => 'true'], ['x-session-id' => $this->sessionId]);
             $this->paymentInitiate();
             $this->paymentComplete();
+            $this->getDocuments($quote, $transaction);
             $transactionDetail = $this->getTransactionDetails();
             $commission_amount = floatval($transactionDetail['payments'][0]['amount_breakdown']['commission_amount']) ? (float) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] : (int) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'];
             $commissionVat = $commission_amount * 0.05 ?? 0;
@@ -292,8 +298,7 @@ class SukoonDemocranceService
                 'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
                 'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
             ]);
-            $this->getDocuments($quote, $transaction);
-            EmbeddedProductRepository::sendDocument(['epId' => $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
+            EmbeddedProductRepository::sendDocument(['epId'=> $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
             throw $e;
