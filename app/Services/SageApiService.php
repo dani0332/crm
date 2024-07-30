@@ -78,7 +78,6 @@ class SageApiService
         $sageRequest = new \stdClass();
 
         $sageRequest->userId = auth()->id();
-        // $sageRequest->discount = 2;
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
         $sageRequest->bookingDate = $quote['policy_booking_date'] ? date(env('DATE_FORMAT_ONLY'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
@@ -1290,12 +1289,12 @@ class SageApiService
             return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
         }
 
-        BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)->onQueue('sage-book-policy');
+        BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request)->onQueue('sage-book-policy');
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a whilet to check the status!'];
     }
 
-    public function bookPolicyOnSage($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)
+    public function bookPolicyOnSage($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request)
     {
         $quote->userId = $sageRequest->userId;
         info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
@@ -1577,9 +1576,9 @@ class SageApiService
         }
 
         /* createAPInvoicePrem */
-
+        $isTotalPriceZero = $payment->total_price == 0;
         // total_payments = 1 means upfront payment
-        if ($isPaymentFrequencyUpfront) {
+        if ($payment->frequency == PaymentFrequency::UPFRONT) {
             info('########## Start of Upfront createAPInvoicePrem for : '.$quote->code.'##########');
             if (! $isTotalPriceZero) {
                 $isLiveApiCallStep5 = true;
@@ -1927,6 +1926,7 @@ class SageApiService
         }
 
         /* applyPaymentInvoices */
+        $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $isPaymentFrequencyUpfront;
 
         if ($isTransactionPaidAndFrequencyUpfront && ! $isTotalPriceZero) {

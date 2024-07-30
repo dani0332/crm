@@ -22,13 +22,11 @@ class BookPolicyOnSageJob implements ShouldQueue
     private $sageLogArray;
     private $request;
     private $paymentSplits;
-    private $skipAPInvoicePatchAndPosting;
-    private $aPInvoicePatchAndPostingOnly;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request, $skipAPInvoicePatchAndPosting, $aPInvoicePatchAndPostingOnly)
+    public function __construct($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request)
     {
         $this->sageRequest = $sageRequest;
         $this->quote = $quote;
@@ -36,8 +34,6 @@ class BookPolicyOnSageJob implements ShouldQueue
         $this->sageLogArray = $sageLogArray;
         $this->request = $request;
         $this->paymentSplits = $paymentSplits;
-        $this->skipAPInvoicePatchAndPosting = $skipAPInvoicePatchAndPosting;
-        $this->aPInvoicePatchAndPostingOnly = $aPInvoicePatchAndPostingOnly;
     }
 
     /**
@@ -46,7 +42,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     public function handle()
     {
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Started');
-        $response = (new SageApiService())->bookPolicyOnSage($this->sageRequest, $this->quote, $this->payment, $this->paymentSplits, $this->sageLogArray, $this->request, $this->skipAPInvoicePatchAndPosting, $this->aPInvoicePatchAndPostingOnly);
+        $response = (new SageApiService())->bookPolicyOnSage($this->sageRequest, $this->quote, $this->payment, $this->paymentSplits, $this->sageLogArray, $this->request);
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Response: '.json_encode($response));
     }
 
