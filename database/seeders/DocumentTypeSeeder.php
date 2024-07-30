@@ -47,6 +47,22 @@ class DocumentTypeSeeder extends Seeder
         ]);
 
         DocumentType::firstOrCreate(([
+            'code' => QuoteDocumentsEnum::CAR_TAX_INVOICE,
+            'category' => 'ISSUING_DOCUMENTS',
+        ]), [
+            'text' => 'Car Tax Invoice',
+            'is_active' => 1,
+            'quote_type_id' => 1,
+            'folder_path' => 'car',
+            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+            'max_files' => 5,
+            'max_size' => 25,
+            'is_required' => 0,
+            'category' => 'ISSUING_DOCUMENTS',
+            'sort_order' => 13,
+        ]);
+
+        DocumentType::firstOrCreate(([
             'code' => QuoteDocumentsEnum::CAR_TAX_CREDIT_RAISE_BY_BUYER,
             'category' => 'ISSUING_DOCUMENTS',
         ]), [
