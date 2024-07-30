@@ -323,8 +323,6 @@ class SendUpdateLogRepository extends BaseRepository
             'issuance_date' => ($sendUpdate->issuance_date ?? $quote->policy_issuance_date) ?? null,
             'start_date' => ($sendUpdate->start_date ?? $quote->policy_start_date) ?? null,
             'expiry_date' => ($sendUpdate->expiry_date ?? $quote->renewal_expiry_date) ?? null,
-            'insurer_quote_number' => ($sendUpdate->insurer_quote_number ?? $quote->insurer_quote_number) ?? null,
-            'issuance_status_id' => ($sendUpdate->issuance_status_id ?? $quote->policy_issuance_status_id) ?? null,
         ];
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
