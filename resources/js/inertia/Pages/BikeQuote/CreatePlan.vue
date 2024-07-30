@@ -87,7 +87,7 @@ const creatQuotePlan = isValid => {
   }
 
   if (!isValid) return;
-  addPlanForm.post(`/bike/${page.props.quote.uuid}/bike-plan-manual-process`, {
+  addPlanForm.post(`/quotes/bike/${page.props.quote.uuid}/bike-plan-manual-process`, {
     preserveScroll: true,
     onSuccess: response => {
       if (response?.props?.flash?.error != 'Plan Modification is not allowed') {
