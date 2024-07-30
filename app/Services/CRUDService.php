@@ -28,6 +28,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
 
 class CRUDService extends BaseService
 {
@@ -366,9 +368,10 @@ class CRUDService extends BaseService
 
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
+            $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
             if (
                 strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
-                && $entity->source == LeadSourceEnum::IMCRM
+                && ($entity->source == LeadSourceEnum::IMCRM || strpos($entity->source, $ecommerceSource) !== false)
             ) {
                 $this->healthQuoteService->assignRenewalBatch($entity->id);
                 $this->updatePaymentStatus($entity);

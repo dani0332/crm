@@ -9,6 +9,7 @@ use App\Jobs\MAWelcomeJob;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use App\Traits\PersonalQuoteSyncTrait;
+use App\Models\ApplicationStorage;
 
 class HealthQuoteObserver
 {
@@ -37,7 +38,8 @@ class HealthQuoteObserver
                 $healthQuote->update(['transaction_approved_at' => now()]);
             });
 
-            if ($healthQuote->source === LeadSourceEnum::IMCRM) {
+            $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
+            if ($healthQuote->source === LeadSourceEnum::IMCRM || strpos($healthQuote->source, $ecommerceSource) !== false) {
                 app(HealthQuoteService::class)->assignRenewalBatch($healthQuote->id);
             }
             $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
