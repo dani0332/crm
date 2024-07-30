@@ -87,6 +87,8 @@ class DatabaseSeeder extends Seeder
             AlfredProtectSeeder::class,
             // AddeTicketDocumentTypeSeeder::class,
             // DocumentVerifyPermissionSeeder::class,
+            AddLOBsClaimHistoryOptionsSeeder::class,
+            AddRenewalTemplateStorageSeeder::class,
         ]);
     }
 }
