@@ -45,8 +45,6 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\EmailStatusService;
 use App\Services\LookupService;
-use App\Services\LookupService;
-use App\Services\QuoteDocumentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
