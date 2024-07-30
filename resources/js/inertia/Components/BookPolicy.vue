@@ -1,0 +1,1119 @@
+<script setup>
+import { useRoundIt } from '../Composables/utilities';
+const page = usePage();
+const notification = useNotifications('toast');
+const { isRequired } = useRules();
+
+const props = defineProps({
+  quote: {
+    type: Object,
+    default: {},
+  },
+  quoteType: {
+    type: String,
+    default: '',
+  },
+  modelType: {
+    type: String,
+    default: '',
+  },
+  bookPolicyDetails: {
+    type: Array,
+    default: [],
+  },
+  payments: {
+    type: Array,
+    default: [],
+  },
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true,
+  },
+});
+
+const isLoading = ref(false);
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
+const canAny = permissions => useCanAny(permissions);
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const dateToYMD = date => {
+  if (date) {
+    // Check if date is already in YMD format
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
+    const [year, month, day] = date.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
+const dateToDMY = date => {
+  if (date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const day = `0${d.getDate()}`.slice(-2);
+    return `${day}-${month}-${year}`;
+  }
+  return '';
+};
+const dateToDMYWithTime = date => {
+  if (date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const day = `0${d.getDate()}`.slice(-2);
+    const hours = `0${d.getHours()}`.slice(-2);
+    const minutes = `0${d.getMinutes()}`.slice(-2);
+    const seconds = `0${d.getSeconds()}`.slice(-2);
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+  }
+  return '';
+};
+
+const bp = reactive({
+  isEditing: false,
+});
+
+const currentDate = computed(() => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = `0${d.getMonth() + 1}`.slice(-2);
+  const day = `0${d.getDate()}`.slice(-2);
+  return `${day}-${month}-${year}`;
+});
+
+const currentDateTime = computed(() => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = `0${d.getMonth() + 1}`.slice(-2);
+  const day = `0${d.getDate()}`.slice(-2);
+  const hours = `0${d.getHours()}`.slice(-2);
+  const minutes = `0${d.getMinutes()}`.slice(-2);
+  const seconds = `0${d.getSeconds()}`.slice(-2);
+  return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+});
+const transactionPaymentStatus = computed(() => {
+  let firstPayment = page.props?.payments[0];
+
+  let totalPrice = Number(firstPayment?.total_price);
+  let capturedAmount = Number(firstPayment?.captured_amount);
+  let discountValue = Number(firstPayment?.discount_value);
+
+  let capturedAmountWithDiscount = capturedAmount + discountValue;
+
+  if (capturedAmount === 0) {
+    return 'Not Paid';
+  }
+  if (totalPrice > capturedAmountWithDiscount) {
+    return 'Partially Paid';
+  }
+  if (capturedAmountWithDiscount >= totalPrice) {
+    return 'Paid';
+  }
+});
+
+// use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
+const binAsInsurerCommissionTaxInvoiceNumber = () => {
+  let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
+  const insuranceProviderCode = page.props.quote?.insurance_provider?.code;
+  let allowedInsuranceProvider = [
+    insuranceProviderCodeEnum.AAIC,
+    insuranceProviderCodeEnum.ALNC,
+    insuranceProviderCodeEnum.OALLIANZ,
+    insuranceProviderCodeEnum.CIG,
+    insuranceProviderCodeEnum.FPIL,
+    insuranceProviderCodeEnum.MTL,
+    insuranceProviderCodeEnum.NHICD,
+    insuranceProviderCodeEnum.ZILL,
+  ];
+  if (allowedInsuranceProvider.includes(insuranceProviderCode)) {
+    return brokerInvoiceNo;
+  }
+  return '';
+};
+const bpForm = useForm({
+  parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
+  booking_date:
+    dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
+    '',
+  transaction_payment_status:
+    page.props.bookPolicyDetails.transactionPaymentStatus,
+  invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
+  invoice_description: page.props.bookPolicyDetails.invoiceDescription || '',
+  broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
+  insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
+  insurer_commmission_invoice_number:
+    page.props?.payments[0]?.insurer_commmission_invoice_number ||
+    binAsInsurerCommissionTaxInvoiceNumber(),
+  commission_vat_not_applicable:
+    page.props?.payments[0]?.commission_vat_not_applicable || '',
+  commission_vat_applicable:
+    page.props?.payments[0]?.commission_vat_applicable || '',
+  commission_percentage: page.props?.payments[0]?.commmission_percentage || 0,
+  vat_on_commission: page.props?.payments[0]?.commission_vat || '',
+  total_commission: page.props?.payments[0]?.commission || '',
+  payment_code: page.props?.payments[0]?.code,
+  discount: page.props?.payments[0]?.discount_value || '',
+  model_type: props.quoteType,
+  quote_id: page.props.quote.id,
+  modelType: props.modelType,
+  transaction_payment_status_tool_tip:
+    page.props.bookPolicyDetails.paymentStatusTooltip,
+  line_of_business: page.props?.bookPolicyDetails?.lineOfBusiness,
+  isPolicyCancelledOrPending:
+    page.props?.bookPolicyDetails?.isPolicyCancelledOrPending,
+  isPolicyCancelledOrPendingToolTtip:
+    page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
+});
+
+let is_lacking_payment = ref(
+  page.props.bookPolicyDetails.isLackingOfPayment || false,
+);
+
+watch(
+  () => page.props.bookPolicyDetails.isLackingOfPayment,
+  newVal => {
+    is_lacking_payment.value = newVal || false;
+  },
+);
+
+const onUpdatebookPolicyDetails = isValid => {
+  showInsufficientPaymentAlert();
+  if (isValid) {
+    bpForm.post('/quotes/update-booking-policy', {
+      preserveScroll: true,
+      onSuccess: () => {
+        bp.isEditing = false;
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
+    });
+  } else {
+    console.log('Invalid');
+  }
+};
+
+const isAllowedToSendPolicy = ref(false);
+
+const modals = reactive({
+  sendPolicyConfirm: false,
+  isConfirmed: false,
+  sendPolicyPopup: false,
+});
+
+const confirmSendPolicy = () => {
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
+    modals.sendPolicyPopup = true;
+  } else {
+    modals.sendPolicyConfirm = true;
+  }
+};
+
+const submitPolicy = () => {
+  isLoading.value = true;
+  let url = '/quotes/send-booking-policy';
+  let data = {
+    send_policy_type: props.bookPolicyDetails.sendPolicyType,
+    model_type: props?.quoteType,
+    quote_id: props?.quote?.id,
+    is_send_policy: isAllowedToSendPolicy.value,
+    transaction_payment_status: bpForm.transaction_payment_status,
+    modelType: props.modelType,
+  };
+  axios
+    .post(url, data)
+    .then(response => {
+      console.log(response);
+      if (response.status == 200) {
+        notification.success({
+          title: response.data.message,
+          position: 'top',
+        });
+        location.reload();
+        modals.sendPolicyConfirm = false;
+      }
+    })
+    .catch(err => {
+      const flash_messages = err.response.data.errors;
+
+      Object.keys(flash_messages).forEach(function (key) {
+        if (flash_messages[key]) {
+          notification.error({
+            title: flash_messages[key],
+            position: 'top',
+          });
+        }
+      });
+    })
+    .finally(() => {
+      modals.sendPolicyConfirm = false;
+      isLoading.value = false;
+    });
+};
+
+const calculateVatOnCommission = commissionVatApplicable => {
+  if (Number(commissionVatApplicable) > 0) {
+    return useRoundIt(commissionVatApplicable * page.props.vat);
+  } else {
+    return 0;
+  }
+};
+const calculateCommissionPercentage = (
+  totalCommissionWithoutVat,
+  totalPriceWithoutVat,
+) => {
+  if (totalCommissionWithoutVat > 0) {
+    return useRoundIt((totalCommissionWithoutVat / totalPriceWithoutVat) * 100);
+  } else {
+    return 0;
+  }
+};
+
+const calculateCommission = () => {
+  let totalPriceWithoutVat =
+    Number(props.quote?.price_vat_applicable) +
+    Number(props.quote?.price_vat_not_applicable);
+
+  let totalCommissionWithoutVat =
+    Number(bpForm.commission_vat_not_applicable) +
+    Number(bpForm.commission_vat_applicable);
+
+  if (totalCommissionWithoutVat > 0) {
+    bpForm.vat_on_commission = calculateVatOnCommission(
+      bpForm.commission_vat_applicable,
+    );
+    bpForm.total_commission =
+      totalCommissionWithoutVat + useRoundIt(bpForm.vat_on_commission);
+
+    if (totalPriceWithoutVat > 0) {
+      bpForm.commission_percentage = calculateCommissionPercentage(
+        totalCommissionWithoutVat,
+        totalPriceWithoutVat,
+      );
+    } else {
+      bpForm.commission_percentage = 0;
+      notification.error({
+        title: 'Total Price is zero for this Policy!',
+        position: 'top',
+      });
+      /*bpForm.commission_vat_applicable = '';
+      bpForm.commission_vat_not_applicable = '';
+      notification.error({
+        title:
+          'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
+        position: 'top',
+      });*/
+    }
+  } else {
+    bpForm.commission_percentage = 0;
+    bpForm.vat_on_commission = 0;
+    bpForm.total_commission = 0;
+  }
+};
+
+const disableCommissionVatNotApplicable = computed(() => {
+  // Disable Commission vat nor applicable for all LOBs
+  return true;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType != quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
+});
+
+const disableCommissionVatApplicable = computed(() => {
+  // Enable Commission vat nor applicable for all LOBs
+  return !bp.isEditing;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType == quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
+});
+const showSendAndBookPolicyButtonBlock = computed(() => {
+  const { quote_status_id } = props.quote;
+  const { TransactionApproved, PolicyIssued } = page.props.quoteStatusEnum;
+
+  return [TransactionApproved, PolicyIssued].includes(quote_status_id);
+});
+const showSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  return props.bookPolicyDetails?.sendButton && can(permission);
+});
+const disableSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+
+  let isPolicyStatusCancellationPending =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.CancellationPending;
+  return (
+    !props.bookPolicyDetails?.sendButton &&
+    !isPolicyStatusCancellationPending &&
+    !can(permission)
+  );
+});
+const showActionButtons = computed(() => {
+  // Hide buttons only when policy is cancelled and have a chilrd lead
+  return (
+    props.quote.quote_status_id != page.props.quoteStatusEnum.PolicyCancelled ||
+    page.props.linkedQuoteDetails.childLeadsCount == 0
+  );
+});
+
+// Watch for changes in paymentMethodsForm.collection_date
+watch(
+  () => page.props.bookPolicyDetails.transactionPaymentStatus,
+  (newValue, oldValue) => {
+    if (newValue && oldValue) {
+      bpForm.transaction_payment_status_tool_tip =
+        props.bookPolicyDetails.paymentStatusTooltip;
+      bpForm.transaction_payment_status =
+        props.bookPolicyDetails.transactionPaymentStatus;
+    }
+  },
+);
+
+const sendPolicyConfirmation = () => {
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
+    isAllowedToSendPolicy.value = true;
+  }
+  modals.sendPolicyPopup = false;
+  modals.sendPolicyConfirm = true;
+};
+
+const getPayment = () => {
+  return page.props?.payments[0] ?? null;
+};
+
+const showInsufficientPaymentAlert = () => {
+  if (page.props.bookPolicyDetails.isInsufficientPayment) {
+    notification.error({
+      title: 'Insufficient payment',
+      position: 'top',
+      timeout: 30000,
+    });
+  }
+};
+const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] =
+  createReusableTemplate();
+
+const isShowingTransactionPaymentStatus = computed(() => {
+  const policyStatuses = [
+    page.props.quoteStatusEnum.PolicyBooked,
+    page.props.quoteStatusEnum.CancellationPending,
+    page.props.quoteStatusEnum.PolicyCancelled,
+    page.props.quoteStatusEnum.PolicyCancelledReissued,
+  ];
+  return policyStatuses.includes(props.quote.quote_status_id);
+});
+</script>
+
+<template>
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex flex-wrap gap-4 justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Booking Details
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <x-form @submit.prevent :auto-focus="false">
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Booking Date</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.BOOKING_DATE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ bpForm.booking_date.split(' ')[0] }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Invoice Description</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.INVOICE_DESCRIPTION
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ bpForm.invoice_description }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Line of Business</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.LINE_OF_BUSINESS
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ bpForm.line_of_business }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <x-tooltip>
+                  <label class="font-medium border-b-2 border-dotted border-black uppercase"
+                    >Transaction Payment Status</label
+                  >
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
+                    }}</span>
+                  </template>
+                </x-tooltip>
+                <template v-if="isShowingTransactionPaymentStatus">
+                  <x-tooltip position="center">
+                    <dd class="border-b border-dotted border-black">
+                      {{ bpForm.transaction_payment_status }}
+                    </dd>
+                    <template #tooltip>
+                      {{ bpForm.transaction_payment_status_tool_tip }}</template
+                    >
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <dd>N/A</dd>
+                </template>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Sub Type</label
+                    >
+
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.SUB_TYPE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd></dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Insurer Invoice Date</label
+                    >
+
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.INSURER_INVOICE_DATE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <DatePicker
+                    v-model="bpForm.invoice_date"
+                    type="date"
+                    placeholder="Insurer Invoice Date"
+                    class="w-full"
+                    :disabled="!bp.isEditing"
+                    :rules="[isRequired]"
+                  />
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Broker Invoice No</label
+                    >
+
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.BROKER_INVOICE_NUMBER
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ bpForm.broker_invoice_number }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Insurer Tax Invoice No</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.INSURER_TAX_INVOICE_NUMBER
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <x-input
+                    v-model="bpForm.insurer_tax_invoice_number"
+                    placeholder="Insurer Tax Invoice Number"
+                    class="w-full"
+                    :disabled="!bp.isEditing"
+                    :rules="[isRequired]"
+                  />
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Discount Value</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.DISCOUNT_VALUE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ bpForm.discount }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Insurer Commission Tax Invoice No</label
+                    >
+
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{
+                          productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                        }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <x-input
+                    v-model="bpForm.insurer_commmission_invoice_number"
+                    placeholder="Insurer Tax Invoice Number"
+                    class="w-full"
+                    :disabled="!bp.isEditing"
+                    :rules="[isRequired]"
+                  />
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                    >
+                      Commission(%)</label
+                    >
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.COMMISSION_PERCENTAGE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ bpForm.commission_percentage }}%</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Commission (VAT NOT APPLICABLE)</label
+                    >
+
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <x-input
+                    v-model="bpForm.commission_vat_not_applicable"
+                    @change="calculateCommission"
+                    placeholder="Commission VAT NOT APPLICABLE"
+                    class="w-full"
+                    :disabled="disableCommissionVatNotApplicable"
+                  />
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >VAT on Commission</label
+                    >
+
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.VAT_ON_COMMISSION
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ bpForm.vat_on_commission }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Commission (VAT APPLICABLE)</label
+                    >
+
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <x-input
+                    v-model="bpForm.commission_vat_applicable"
+                    @change="calculateCommission"
+                    placeholder="Commission VAT APPLICABLE"
+                    class="w-full"
+                    :disabled="disableCommissionVatApplicable"
+                  />
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">
+                  <x-tooltip>
+                    <label
+                      class="border-b-2 border-dotted border-black uppercase"
+                      >Total Commission</label
+                    >
+
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">{{
+                        productionProcessTooltipEnum.TOTAL_COMMISSION
+                      }}</span>
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>{{ bpForm.total_commission }}</dd>
+              </div>
+            </dl>
+            <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+              <div class="w-full md:w-1/2"></div>
+              <div class="w-full md:w-1/2" />
+            </div>
+
+            <EditBookPolicyBtnTemplate v-slot="{ isDisabled }">
+              <x-button
+                class="mt-4 mr-2"
+                color="emerald"
+                size="sm"
+                @click.prevent="bp.isEditing = true"
+                :disabled="isDisabled"
+              >
+                Edit
+              </x-button>
+            </EditBookPolicyBtnTemplate>
+
+            <div
+              v-if="bpForm.isPolicyCancelledOrPending"
+              class="flex justify-end"
+            >
+              <x-tooltip>
+                <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
+                  Edit
+                </x-button>
+                <x-button size="sm" color="orange" class="mt-4" disabled>
+                  Send and Book Policy
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">{{
+                    bpForm.isPolicyCancelledOrPendingToolTtip
+                  }}</span>
+                </template>
+              </x-tooltip>
+            </div>
+
+            <div v-if="showActionButtons" class="flex justify-end">
+              <template v-if="showSendAndBookPolicyButtonBlock">
+                <x-button
+                  v-if="bp.isEditing"
+                  class="mt-4 mr-2"
+                  color="emerald"
+                  size="sm"
+                  :loading="bpForm.processing"
+                  @click.prevent="
+                    () => {
+                      bp.isEditing = false;
+                      bpForm.reset();
+                    }
+                  "
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  v-if="bp.isEditing"
+                  class="mt-4 mr-2"
+                  color="emerald"
+                  size="sm"
+                  :loading="bpForm.processing"
+                  @click.prevent="onUpdatebookPolicyDetails"
+                >
+                  Update
+                </x-button>
+                <x-tooltip
+                  v-if="page.props.lockLeadSectionsDetails.lead_details"
+                  position="bottom"
+                >
+                  <EditBookPolicyBtnResuseTemplate
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
+                    :isDisabled="true"
+                  />
+                  <template #tooltip>
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed, go to 'Send Update', select 'Add
+                    Update', and choose 'Correction of Policy'
+                  </template>
+                </x-tooltip>
+
+                <template v-else>
+                  <EditBookPolicyBtnResuseTemplate
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
+                  />
+                </template>
+                <x-tooltip>
+                  <x-button
+                    size="sm"
+                    color="orange"
+                    class="mt-4"
+                    disabled
+                    v-if="disableSendAndBookPolicyButton"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+                  <template #tooltip>
+                    <span>{{ 'Please update the booking details.' }}</span>
+                  </template>
+                </x-tooltip>
+                <template v-if="is_lacking_payment">
+                  <x-tooltip>
+                    <x-button
+                      size="sm"
+                      color="orange"
+                      class="mt-4"
+                      @click.prevent="confirmSendPolicy"
+                      :disabled="bp.isEditing || is_lacking_payment"
+                      v-if="showSendAndBookPolicyButton"
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        Action Needed: Please revise payment details to reflect
+                        plan changes.
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <x-button
+                    size="sm"
+                    color="orange"
+                    class="mt-4"
+                    @click.prevent="confirmSendPolicy"
+                    :disabled="bp.isEditing || is_lacking_payment"
+                    v-if="showSendAndBookPolicyButton"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+                </template>
+              </template>
+
+              <template
+                v-else-if="
+                  props.quote.quote_status_id ==
+                  page.props.quoteStatusEnum.PolicyBooked
+                "
+              >
+                <x-tooltip>
+                  <x-button
+                    class="mt-4 mr-2"
+                    size="sm"
+                    color="emerald"
+                    :disabled="true"
+                    >Edit
+                  </x-button>
+                  <template #tooltip>
+                    <span>{{
+                      "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
+                    }}</span>
+                  </template>
+                </x-tooltip>
+                <x-tooltip>
+                  <x-button
+                    size="sm"
+                    class="mt-4 mr-2"
+                    color="orange"
+                    :disabled="true"
+                  >
+                    Book Policy
+                  </x-button>
+                  <template #tooltip>
+                    <span>{{
+                      'The button is not accessible because policy has been booked'
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </template>
+
+              <template v-else>
+                <template
+                  v-if="
+                    props.quote.quote_status_id ==
+                    page.props.quoteStatusEnum.PolicySentToCustomer
+                  "
+                >
+                  <x-button
+                    v-if="bp.isEditing"
+                    class="mt-4 mr-2"
+                    color="emerald"
+                    size="sm"
+                    :loading="bpForm.processing"
+                    @click.prevent="bp.isEditing = false"
+                  >
+                    Cancel
+                  </x-button>
+                  <x-button
+                    v-if="bp.isEditing"
+                    class="mt-4 mr-2"
+                    color="emerald"
+                    size="sm"
+                    :loading="bpForm.processing"
+                    @click.prevent="onUpdatebookPolicyDetails"
+                  >
+                    Update
+                  </x-button>
+
+                  <x-tooltip
+                    v-if="page.props.lockLeadSectionsDetails.lead_details"
+                    position="bottom"
+                  >
+                    <EditBookPolicyBtnResuseTemplate
+                      v-if="
+                        !bp.isEditing &&
+                        props.bookPolicyDetails?.editButton &&
+                        can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                      "
+                      :isDisabled="true"
+                    />
+                    <template #tooltip>
+                      This lead is now locked as the policy has been booked. If
+                      changes are needed, go to 'Send Update', select 'Add
+                      Update', and choose 'Correction of Policy'
+                    </template>
+                  </x-tooltip>
+
+                  <template v-else>
+                    <EditBookPolicyBtnResuseTemplate
+                      v-if="
+                        !bp.isEditing &&
+                        props.bookPolicyDetails?.editButton &&
+                        can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                      "
+                      :isDisabled="!props.bookPolicyDetails?.editButton"
+                    />
+                  </template>
+
+                  <template
+                    v-if="
+                      (props.bookPolicyDetails?.bookButton ||
+                        props.bookPolicyDetails?.policyCancelled) &&
+                      can(permissionsEnum.BOOK_POLICY_BUTTON)
+                    "
+                  >
+                    <x-tooltip v-if="props.bookPolicyDetails.policyCancelled">
+                      <x-button
+                        size="sm"
+                        class="mt-4 mr-2"
+                        color="orange"
+                        :disabled="
+                          !props.bookPolicyDetails?.bookButton ||
+                          bp.isEditing ||
+                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                        "
+                        @click.prevent="confirmSendPolicy"
+                      >
+                        {{ props.bookPolicyDetails?.text }}
+                      </x-button>
+                      <template #tooltip>
+                        <span>{{
+                          `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+
+                <x-button v-else
+                  size="sm"
+                  class="mt-4 mr-2"
+                  color="orange"
+                  :disabled="
+                    !props.bookPolicyDetails?.bookButton ||
+                    bp.isEditing ||
+                    !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                  "
+                  @click.prevent="confirmSendPolicy"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+                  </template>
+                  <template v-else>
+                    <x-tooltip>
+                      <x-button
+                        v-if="can(permissionsEnum.BOOK_POLICY_BUTTON)"
+                        size="sm"
+                        class="mt-4 mr-2"
+                        color="orange"
+                        :disabled="true"
+                      >
+                        Book Policy
+                      </x-button>
+                      <template #tooltip>
+                        <span>{{ 'Please update the booking details.' }}</span>
+                      </template>
+                    </x-tooltip>
+                  </template>
+                </template>
+              </template>
+            </div>
+          </div>
+        </x-form>
+      </template>
+    </Collapsible>
+    <x-modal v-model="modals.sendPolicyConfirm" size="lg" show-close backdrop>
+      <template #header> Send Policy </template>
+      <x-alert
+        color="orange"
+        light
+        type="error"
+        class="text-sm mb-4"
+        v-if="bookPolicyDetails.sendPolicyType == 'customer'"
+      >
+        Please be aware that your current action involves sending the policy to
+        the customer only.
+      </x-alert>
+      <div class="flex items-center">
+        <x-checkbox v-model="modals.isConfirmed" />
+        <div class="ml-2">
+          <p>I confirm and attest that all the information is correct.</p>
+          <p>I confirm I am in compliance with the COC.</p>
+        </div>
+      </div>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            :disabled="isLoading"
+            @click.prevent="modals.sendPolicyConfirm = false"
+          >
+            Cancel
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="error"
+            :disabled="!modals.isConfirmed"
+            @click.prevent="submitPolicy"
+            :loading="isLoading"
+          >
+            Confirm
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+    <x-modal v-model="modals.sendPolicyPopup" show-close backdrop>
+      <template #header> Are you sure you want to continue? </template>
+      <div class="text-center">
+        <p class="font-semibold pt-3">
+          {{ props.bookPolicyDetails.paymentStatusHeading }}
+        </p>
+        <p>{{ props.bookPolicyDetails.paymentStatusDescription }}</p>
+      </div>
+      <template #actions>
+        <div class="text-center space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.sendPolicyPopup = false"
+          >
+            Go Back
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="sendPolicyConfirmation"
+          >
+            Continue
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+  </div>
+</template>

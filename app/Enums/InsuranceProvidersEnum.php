@@ -56,4 +56,7 @@ final class InsuranceProvidersEnum extends Enum
     public const STF = 'STF';
     public const AIAW = 'AIAW';
     public const ARAB = 'ARAB';
+    public const AAIC = 'AAIC';
+    public const OALLIANZ = 'OALLIANZ';
+    public const NHICD = 'NHICD';
 }
