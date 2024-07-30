@@ -109,13 +109,6 @@ class HealthEmailService extends BaseService
                 return (int) $TemplateId->value; // keeping it as a fallback
             }
         }
-        if (count($plans) == 0) {
-            // No plans with available ratings, send a specific email template
-            return 0;
-        } else {
-            // Plans with available ratings exist, send a different email template
-            return 0;
-        }
     }
 
 }
