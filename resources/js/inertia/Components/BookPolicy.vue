@@ -123,7 +123,12 @@ const transactionPaymentStatus = computed(() => {
 // use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
 const binAsInsurerCommissionTaxInvoiceNumber = () => {
   let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
-  const insuranceProviderCode = page.props.quote?.insurance_provider?.code;
+  let insuranceProvider = page.props.quote?.insurance_provider;
+  if (!insuranceProvider) {
+    // If insurance_provider is not available, use insurance_provider_details
+    insuranceProvider = page.props.quote?.insurance_provider_details;
+  }
+  let insuranceProviderCode = insuranceProvider?.code;
   let allowedInsuranceProvider = [
     insuranceProviderCodeEnum.AAIC,
     insuranceProviderCodeEnum.ALNC,
@@ -530,7 +535,8 @@ onBeforeMount(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>
-                  <label class="border-b-2 border-dotted border-black uppercase"
+                  <label
+                    class="font-medium border-b-2 border-dotted border-black uppercase"
                     >Transaction Payment Status</label
                   >
                   <template #tooltip>
@@ -1047,17 +1053,18 @@ onBeforeMount(() => {
                       </template>
                     </x-tooltip>
 
-                <x-button v-else
-                  size="sm"
-                  class="mt-4 mr-2"
-                  color="orange"
-                  :disabled="
-                    disableBookPolicyButton || isAMLNotClearedForTravelQuote
-                  "
-                  @click.prevent="confirmSendPolicy"
-                  >
-                    {{ props.bookPolicyDetails?.text }}
-                  </x-button>
+                    <x-button
+                      v-else
+                      size="sm"
+                      class="mt-4 mr-2"
+                      color="orange"
+                      :disabled="
+                        disableBookPolicyButton || isAMLNotClearedForTravelQuote
+                      "
+                      @click.prevent="confirmSendPolicy"
+                    >
+                      {{ props.bookPolicyDetails?.text }}
+                    </x-button>
                   </template>
                   <template v-else>
                     <x-tooltip>

@@ -11,15 +11,25 @@ class Lookup extends Model
 
     public function scopeWithChildTree($query, $quoteTypeId, $removeOptions = [])
     {
-        return $query->with('childs', function ($query) use ($quoteTypeId, $removeOptions) {
+        return $query->with(['childs' => function ($query) use ($quoteTypeId, $removeOptions) {
             $query->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id')
-                ->with('childs', function ($query) use ($quoteTypeId, $removeOptions) {
-                    $query->where('quote_type_id', $quoteTypeId)->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id');
-                    $query->when(count($removeOptions), function ($query) use ($removeOptions) {
-                        $query->whereNotIn('code', $removeOptions);
-                    });
+                // remove child records that are in the removeOptions array
+                ->when(! empty($removeOptions), function ($query) use ($removeOptions) {
+                    $query->whereNotIn('code', $removeOptions);
+                })
+                // Include grandchild records and filter them by quoteTypeId
+                ->with(['childs' => function ($query) use ($quoteTypeId) {
+                    $query->where('quote_type_id', $quoteTypeId)
+                        ->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id');
+                }]);
+        }])
+            // only parents visible those children are included.
+            ->whereHas('childs', function ($query) use ($removeOptions) {
+                $query->when(! empty($removeOptions), function ($query) use ($removeOptions) {
+                    $query->whereNotIn('code', $removeOptions);
                 });
-        })->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id');
+            })
+            ->select('id', 'text as title', 'description', 'code as slug', 'parent_id', 'quote_type_id');
     }
 
     public function scopeSendUpdateOptions($query, $quoteTypeId, $parentId, $businessInsuranceTypeId = null)
