@@ -499,7 +499,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>
-                  <label class="border-b-2 border-dotted border-black uppercase"
+                  <label class="font-medium border-b-2 border-dotted border-black uppercase"
                     >Transaction Payment Status</label
                   >
                   <template #tooltip>
