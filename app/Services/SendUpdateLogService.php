@@ -680,7 +680,7 @@ class SendUpdateLogService
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
-        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->with(['payments' => function($query){
+        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->with(['payments' => function ($query) {
             $query->whereNull('send_update_log_id');
         }])->first();
 
@@ -750,7 +750,7 @@ class SendUpdateLogService
                 // Cases for Correct Policy Details Start
                 if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
                     $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
-                    )) {
+                )) {
                     info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $this->updatePaymentDetails($quote->payments->first(), $sendUpdateLog);
                     $quote->update([

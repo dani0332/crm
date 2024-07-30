@@ -237,8 +237,8 @@ trait GenericQueriesAllLobs
 
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
-        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount; 
-        $bookPolicyDetails['invoiceDescription'] = substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number , 0, 60); 
+        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
+        $bookPolicyDetails['invoiceDescription'] = substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
         $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
