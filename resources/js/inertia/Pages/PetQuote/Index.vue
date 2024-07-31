@@ -40,21 +40,23 @@ let availableFilters = {
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  payment_due_date:"",
+  booking_date: ""
 };
 
 const canExport = ref(false);
 const filters = reactive(availableFilters);
 
 watch(
-    () => filters,
-    () => {
-        if (filters.created_at_start && filters.created_at_end) {
-            canExport.value = true;
-        } else {
-            canExport.value = false;
-        }
-    },
-    { deep: true, immediate: true },
+  () => filters,
+  () => {
+    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 let params = useUrlSearchParams('history');
@@ -240,6 +242,37 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
 </script>
 
 <template>
@@ -394,10 +427,7 @@ watch(
         <x-field
           label="Advisor"
           v-if="
-            !hasAnyRole([
-              rolesEnum.PetAdvisor,
-              rolesEnum.PetRenewalAdvisor,
-            ])
+            !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor])
           "
         >
           <ComboBox
@@ -406,7 +436,7 @@ watch(
             :options="advisorOptions"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
@@ -434,9 +464,9 @@ watch(
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -445,6 +475,23 @@ watch(
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+        
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -462,7 +509,7 @@ watch(
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required to export data.
               </span>
             </template>
           </x-tooltip>
@@ -542,8 +589,8 @@ watch(
         {{ currently_insured_with?.text }}
       </template>
 
-      <template #item-policy_number="{ pet_quote }">
-        {{ pet_quote?.policy_number }}
+      <template #item-policy_number="{ policy_number }">
+        {{ policy_number }}
       </template>
       <template #item-type_of_pet="{ pet_quote }">
         {{ pet_quote?.pet_type?.text }}
@@ -581,6 +628,11 @@ watch(
         <div class="text-center">
           {{ is_ecommerce ? 'Yes' : 'No' }}
         </div>
+      </template>
+      <template
+        #item-previous_quote_policy_number="{ previous_quote_policy_number }"
+      >
+        {{ previous_quote_policy_number ?? 'N/A' }}
       </template>
     </DataTable>
 

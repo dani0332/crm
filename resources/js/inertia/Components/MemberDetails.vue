@@ -49,7 +49,7 @@ const memberRelationOptions = computed(() => {
 
 const members = ref(props.membersDetails);
 const computedMembers = computed(() => {
-  return members.value.filter(x => !x.is_third_party_payer);
+  return members?.value?.filter(x => !x.is_third_party_payer);
 });
 
 const memberActionEdit = ref(false);
@@ -166,6 +166,13 @@ const memberDeleteConfirmed = () => {
     },
   );
 };
+
+const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] =
+  createReusableTemplate();
+const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
@@ -181,6 +188,16 @@ const memberDeleteConfirmed = () => {
       </template>
       <template #body>
         <x-divider class="my-4" />
+        <AddMemberButtonTemplate v-slot="{ isDisabled }">
+          <x-button
+            @click.prevent="addMemberModal"
+            size="sm"
+            color="orange"
+            :disabled="isDisabled"
+          >
+            Add Member
+          </x-button>
+        </AddMemberButtonTemplate>
         <div
           class="flex mb-3 justify-end"
           v-if="
@@ -189,10 +206,43 @@ const memberDeleteConfirmed = () => {
             page.props.linkedQuoteDetails.childLeadsCount == 0
           "
         >
-          <x-button @click.prevent="addMemberModal" size="sm" color="orange">
-            Add Member
-          </x-button>
+          <x-tooltip
+            v-if="page.props.lockLeadSectionsDetails.member_details"
+            position="bottom"
+          >
+            <AddMemButtonReuseTemplate :isDisabled="true" />
+            <template #tooltip>
+              This lead is now locked as the policy has been booked. If changes
+              are needed such midterm addition of member, go to 'Send Update',
+              select 'Add Update', and choose 'Endorsement Financial'
+            </template>
+          </x-tooltip>
+          <AddMemButtonReuseTemplate v-else />
         </div>
+
+        <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="primary"
+            outlined
+            @click.prevent="onEditMember(item)"
+            :disabled="isDisabled"
+          >
+            Edit
+          </x-button>
+        </EditMemberButtonTemplate>
+
+        <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="error"
+            outlined
+            @click.prevent="memberDelete(item.id)"
+            :disabled="isDisabled"
+          >
+            Delete
+          </x-button>
+        </DeleteMemberButtonTemplate>
 
         <DataTable
           table-class-name="tablefixed compact"
@@ -224,22 +274,46 @@ const memberDeleteConfirmed = () => {
               "
               class="flex gap-2"
             >
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="onEditMember(item)"
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.member_details"
+                position="left"
+                align="top"
               >
-                Edit
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="memberDelete(item.id)"
+                <EditMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
+                <template #tooltip>
+                  <div class="!whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
+                </template>
+              </x-tooltip>
+
+              <EditMemberButtonReuseTemplate v-else :item="item" />
+
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.member_details"
+                position="left"
               >
-                Delete
-              </x-button>
+                <DeleteMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
+                <template #tooltip>
+                  <div class="whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
+                </template>
+              </x-tooltip>
+
+              <DeleteMemberButtonReuseTemplate v-else :item="item" />
             </div>
           </template>
         </DataTable>

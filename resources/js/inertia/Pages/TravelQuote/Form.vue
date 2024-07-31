@@ -10,6 +10,7 @@ const props = defineProps({
 });
 const page = usePage();
 const travelQuoteEnum = page.props.travelQuoteEnum;
+const hasZeroValueForUAEResident = ref(false);
 const editMode = computed(() =>
   props.quote && props.quote.uuid ? true : false,
 );
@@ -61,6 +62,7 @@ const quoteForm = useForm({
   uuid: editMode.value ? props.quote?.uuid : null,
   mobile_no: props.quote?.mobile_no || null,
   nationality_id: props.quote?.nationality_id || null,
+  destination_ids: props.quote?.destination_ids ?? [],
   start_date: props.quote?.start_date || null,
   end_date: props.quote?.end_date || null,
   region_cover_for_id: props.quote?.region_cover_for_id?.toString() || null,
@@ -99,7 +101,7 @@ const subTeamOptions = [
   { value: travelQuoteEnum.TRAVEL_UAE_INBOUND, label: 'To the UAE (Inbound)' },
   {
     value: travelQuoteEnum.TRAVEL_UAE_OUTBOUND,
-    label: 'Outside UAE (OutBound)',
+    label: 'Outside UAE (Outbound)',
   },
 ];
 const alreadylived = [
@@ -124,6 +126,11 @@ const outboundRegions = [
   { value: '4', label: 'Schengen Countries' },
 ];
 
+const isUAEResident = [
+  { value: '1', label: 'Yes' },
+  { value: '0', label: 'No' },
+];
+
 function addTravler() {
   if (quoteForm.members.length == 0) {
     quoteForm.members.push({ dob: '', gender: '', primary: true });
@@ -138,6 +145,10 @@ function removeMember(index) {
 function onSubmit(isValid) {
   if (!isValid) return;
 
+  if(quoteForm.destination_ids?.length < 1){
+    quoteForm.errors.destination_ids = 'Please select at least one destination.';
+    return
+  }
   quoteForm.clearErrors();
 
   const method = 'post';
@@ -171,6 +182,7 @@ function addUpdatedTraveller() {
 
 onMounted(() => {
   addUpdatedTraveller();
+  updateRegionCover();
 });
 
 watch(
@@ -207,6 +219,78 @@ function resetTravelInfo(value) {
     quoteForm.coverage_code = null;
   }
 }
+
+const determineGridLayout  =  computed(() => {
+    if(quoteForm.coverage_code == travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP)
+        return "grid sm:grid-cols-3 gap-4";
+    if(quoteForm.has_arrived_destination == '0' && quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND)
+      return "grid sm:grid-cols-2 gap-4";
+    return "grid sm:grid-cols-2 gap-4";
+});
+
+const isArrivedUAE=()=>{
+    if(!(quoteForm.has_arrived_uae == 1 || quoteForm.has_arrived_destination == 1 ))
+      return true;
+    return false;
+}
+const disablePastDates = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const inputDate = new Date(date);
+    return inputDate < today;
+    };
+watch(() => quoteForm?.destination_ids, async (destination_ids) => {
+   if (destination_ids) {
+     await regionName(destination_ids); // Call the function to fetch advisors
+   }
+});
+function updateRegionCover(id){
+    quoteForm.region_cover_for_id =String(id) ?? '';
+}
+const regionName = (ids) => {
+    let countries = page.props.fields.destination_id?.options;
+    const matchedValues = ids.map(id => {
+        const matchingOption = Array.from( countries ).find(option => option.id === id);
+        return matchingOption ? matchingOption.text : null;
+    });
+    for (let i = 0; i < matchedValues.length; i++) {
+        if (matchedValues[i] === 'United States of America' || matchedValues[i] === 'Canada' || matchedValues[i] === 'United States') {
+            updateRegionCover(2);
+            return 'Worldwide (incl. US/Canada)';
+        } else if (schengenCountries.includes(matchedValues[i]) ) {
+            let hasOtherCountry = matchedValues.some(value => schengenCountries.includes(value));
+            if(hasOtherCountry === true && matchedValues.some(value => !schengenCountries.includes(value))) {
+                updateRegionCover(1);
+                return 'Worldwide (excl. US/Canada)';
+            }
+            else {
+
+                updateRegionCover(4);
+            return 'Schengen Countries';
+            }
+
+        }
+
+        else {
+            updateRegionCover(1);
+        }
+    }
+    };
+const schengenCountries = [
+      'Austria', 'Belgium', 'Czech Republic', 'Denmark', 'Estonia', 'Finland',
+      'France', 'Germany', 'Greece', 'Hungary', 'Iceland', 'Italy', 'Latvia',
+      'Liechtenstein', 'Lithuania', 'Luxembourg', 'Malta', 'Netherlands',
+      'Norway', 'Poland', 'Portugal', 'Slovakia', 'Slovenia', 'Spain', 'Sweden',
+      'Switzerland'
+    ];
+const checkUAEResident = computed(() => {
+    if (quoteForm.members.some(member => member.uae_resident === '0')) {
+        hasZeroValueForUAEResident.value = true;
+        return true;
+    }
+    hasZeroValueForUAEResident.value = false;
+    return false;
+});
 </script>
 
 <template>
@@ -230,7 +314,7 @@ function resetTravelInfo(value) {
     </x-alert>
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="Traveling Where?" required>
+        <x-field label="Where will your journey take you?" required>
           <x-select
             v-model="quoteForm.direction_code"
             :options="subTeamOptions"
@@ -240,7 +324,7 @@ function resetTravelInfo(value) {
         </x-field>
         <x-field
           v-if="quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND"
-          :label="'Have you already arrived in UAE?'"
+          :label="'Has your trip started?'"
           required
         >
           <x-select
@@ -252,7 +336,7 @@ function resetTravelInfo(value) {
         </x-field>
         <x-field
           v-else
-          :label="'Have you already arrived at your destination?'"
+          :label="'Has your trip started?'"
           required
         >
           <x-select
@@ -264,15 +348,9 @@ function resetTravelInfo(value) {
         </x-field>
       </div>
       <div
-        class="grid sm:grid-cols-2 gap-4"
-        v-if="
-          !(
-            quoteForm.has_arrived_uae == 1 ||
-            quoteForm.has_arrived_destination == 1
-          )
-        "
+       class="grid sm:grid-cols-2 gap-4"
       >
-        <x-field label="Travel Coverage" required>
+        <x-field v-if="isArrivedUAE()" label="Travel Coverage" required>
           <x-select
             v-model="quoteForm.coverage_code"
             :options="
@@ -284,27 +362,44 @@ function resetTravelInfo(value) {
             :rules="[isRequired]"
           />
         </x-field>
+        <x-field v-if="(( quoteForm.direction_code != travelQuoteEnum.TRAVEL_UAE_INBOUND ) && isArrivedUAE())" label="Travel Destinations" required>
+            <ComboBox
+              v-model="quoteForm.destination_ids"
+              :options="
+                fields.destination_id.options.map(option => ({
+                  value: option.id,
+                  label: option.text,
+                }))
+              "
+              :single="false"
+              class="w-full"
+              :rules="[rules.isRequired]"
+              :hasError="quoteForm.errors.destination_ids"
+            />
+          </x-field>
         <x-field
           label="Which regions do you need cover for?*"
-          v-if="
-            quoteForm.has_arrived_destination == '0' &&
-            quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+          v-if="(quoteForm.has_arrived_destination == '0' && quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND)
+          && isArrivedUAE()
           "
           required
         >
           <x-select
             v-model="quoteForm.region_cover_for_id"
             :options="outboundRegions"
+            :disabled="true"
             :rules="[isRequired]"
             class="w-full"
           />
         </x-field>
-        <x-field label="Travel Start Date" required>
-          <DatePicker v-model="quoteForm.start_date" name="created_at_start" />
+        <x-field  v-if="isArrivedUAE()"  label="Travel Start Date" required>
+            <DatePicker v-model="quoteForm.start_date" name="created_at_start"
+            :disabled-dates="disablePastDates"
+            />
         </x-field>
         <x-field
           v-if="
-            quoteForm.coverage_code == travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+            quoteForm.coverage_code == travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP && isArrivedUAE()
           "
           label="Travel End Date"
           required
@@ -312,11 +407,11 @@ function resetTravelInfo(value) {
           <DatePicker
             v-model="quoteForm.end_date"
             name="end_date"
+            :disabled-dates="disablePastDates"
             :rules="[isRequired]"
           />
         </x-field>
-      </div>
-      <div class="grid sm:grid-cols-2 gap-4">
+
         <x-field label="First Name" required>
           <x-input
             v-model="quoteForm.first_name"
@@ -386,11 +481,19 @@ function resetTravelInfo(value) {
             quoteForm.has_arrived_destination == '0')
         "
       >
-        <div
+      <div class="grid mb-2" v-if="hasZeroValueForUAEResident">
+        <div class="alert flex items-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span class="text-sm text-red-500 dark:text-red-400 mt-1">
+            This coverage is valid for UAE residents only. Please remove all non UAE residents from the traveller(s) below to proceed.
+          </span>
+        </div>
+      </div>
+       <div
           class="grid sm:grid-cols-4 gap-4"
           v-for="(travel, index) in quoteForm.members"
           :key="index"
         >
+        <div class="row-span-4 md:row-span-3">
           <h2>
             {{
               travel.primary == true
@@ -398,6 +501,17 @@ function resetTravelInfo(value) {
                 : 'Additional Traveler ' + index
             }}
           </h2>
+          <div class="flex items-center justify-end">
+            <x-button
+              v-if="travel.primary != true"
+              size="sm"
+              outlined
+              color="error"
+              icon="xc"
+              @click="removeMember(index)"
+            />
+          </div>
+        </div>
           <x-field label="Date of Birth" required>
             <DatePicker
               v-model="travel.dob"
@@ -415,16 +529,16 @@ function resetTravelInfo(value) {
               class="w-full"
             />
           </x-field>
-          <div class="flex items-center justify-end">
-            <x-button
-              v-if="travel.primary != true"
-              size="sm"
-              outlined
-              color="error"
-              icon="xc"
-              @click="removeMember(index)"
+          <x-field  v-if="quoteForm.direction_code != travelQuoteEnum.TRAVEL_UAE_INBOUND" label="Are you a UAE resident" required>
+            <x-select
+              v-model="travel.uae_resident"
+              placeholder="Are you a UAE resident"
+              :options="isUAEResident"
+              :rules="[rules.isRequired]"
+              @change="checkUAEResident"
+              class="w-full"
             />
-          </div>
+          </x-field>
         </div>
       </template>
 
@@ -447,6 +561,7 @@ function resetTravelInfo(value) {
           size="md"
           color="emerald"
           type="submit"
+          v-if="!hasZeroValueForUAEResident"
           :loading="quoteForm.processing"
         >
           {{ editMode ? 'Update' : 'Create' }}

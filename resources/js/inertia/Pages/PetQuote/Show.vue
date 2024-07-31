@@ -52,8 +52,9 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -270,6 +271,14 @@ const linkEntity = () => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true; 
+};
+
 </script>
 
 <template>
@@ -305,12 +314,21 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
-        <Link
-          v-if="can(permissionsEnum.PetQuotesEdit)"
-          :href="route('pet-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link v-if="!isDisabled" :href="route('pet-quotes-edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
+          </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.PetQuotesEdit)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.PetQuotesEdit)"/>
+        </template>
 
         <Link
           v-if="can(permissionsEnum.PetQuotesList)"
@@ -919,6 +937,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
+      :isAddUpdate="isAddUpdate"
     />
 
     <MigratePayment
@@ -931,7 +950,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['PPD', 'PPDR', 'PDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -1008,6 +1027,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />

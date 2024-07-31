@@ -40,8 +40,9 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -491,6 +492,15 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true; 
+};
+
 </script>
 
 <template>
@@ -541,12 +551,20 @@ watch(
         >
           <x-button size="sm" color="primary" tag="div"> Life Quotes </x-button>
         </Link>
-        <Link
-          v-if="can(permissionsEnum.LifeQuotesEdit)"
-          :href="route('life-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link v-if="!isDisabled" :href="route('life-quotes-edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
+          </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)"/>
+        </template>
       </div>
     </div>
 
@@ -1125,7 +1143,7 @@ watch(
                   <x-select
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
-                    :disabled="allowStatusUpdate"
+                    :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
                     placeholder="Lead Status"
                     class="w-full"
                   />
@@ -1136,7 +1154,7 @@ watch(
                     type="text"
                     placeholder="Lead Notes"
                     class="w-full"
-                    :disabled="allowStatusUpdate"
+                    :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
                   />
                 </x-field>
               </div>
@@ -1160,6 +1178,7 @@ watch(
                     placeholder="Lost Reason is required"
                     class="w-full"
                     :error="leadStatusForm.errors.lostReason"
+                    :disabled="lockLeadSectionsDetails.lead_status"
                   />
                 </x-field>
                 <x-field label="Transaction Type">
@@ -1173,17 +1192,26 @@ watch(
               </div>
             </div>
           </div>
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="allowStatusUpdate"
+              :disabled="allowStatusUpdate || isDisabled"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
+              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>
@@ -1195,6 +1223,7 @@ watch(
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
+      :isAddUpdate="isAddUpdate"
     />
 
     <MigratePayment
@@ -1209,7 +1238,7 @@ watch(
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['LPD', 'LPDR', 'LDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>
@@ -1274,6 +1303,7 @@ watch(
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

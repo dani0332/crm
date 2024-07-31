@@ -27,6 +27,7 @@ let availableFilters = {
   created_at_end: '',
   renewal_batch: '',
   previous_quote_policy_number: '',
+  previous_quote_policy_number_text: '',
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
@@ -121,6 +122,7 @@ const tableHeader = [
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
+  { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'PREMIUM', value: 'premium' },
@@ -128,9 +130,13 @@ const tableHeader = [
   { text: 'SOURCE', value: 'source' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+  },
+    { text: 'Renewal Batch', value: 'renewal_batch' },
+
 ];
-
-
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
@@ -259,13 +265,23 @@ watch(
             "
           />
         </x-field>
+        <x-field label="Policy Number">
+          <x-input
+            v-model="filters.previous_quote_policy_number_text"
+            type="text"
+            name="previous_quote_policy_number"
+            class="w-full"
+            placeholder="Policy Number"
+          />
+        </x-field>
+
         <x-field label="Advisor">
-            <ComboBox
-              v-model="filters.advisor_id"
-              placeholder="Search by Advisor"
-              :options="advisorOptionsFilter"
-            />
-          </x-field>
+          <ComboBox
+            v-model="filters.advisor_id"
+            placeholder="Search by Advisor"
+            :options="advisorOptionsFilter"
+          />
+        </x-field>
         <x-field label="Is Ecommerce">
           <x-select
             v-model="filters.is_ecommerce"
@@ -321,21 +337,20 @@ watch(
       </div>
     </x-form>
     <Transition name="fade">
-        <div
-          v-if="quotesSelected.length > 0 && permissionAssignLeads"
-          class="mb-4"
-        >
-          <LeadAssignment
-            :selected="quotesSelected.map(e => e.id)"
-            :advisors="advisorOptions"
-            :quoteType="quoteType"
-            @success="onLeadAssigned"
-          />
-        </div>
-      </Transition>
+      <div
+        v-if="quotesSelected.length > 0 && permissionAssignLeads"
+        class="mb-4"
+      >
+        <LeadAssignment
+          :selected="quotesSelected.map(e => e.id)"
+          :advisors="advisorOptions"
+          :quoteType="quoteType"
+          @success="onLeadAssigned"
+        />
+      </div>
+    </Transition>
     <DataTable
-
-    v-model:items-selected="quotesSelected"
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

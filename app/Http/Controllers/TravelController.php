@@ -28,6 +28,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -182,7 +183,7 @@ class TravelController extends Controller
         $documentTypes = $documentType = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
 
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
 
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
@@ -190,6 +191,7 @@ class TravelController extends Controller
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
+        $travelDestinations = $this->travelQuoteService->getTravelDestinations($record->id);
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
@@ -214,6 +216,7 @@ class TravelController extends Controller
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -226,6 +229,7 @@ class TravelController extends Controller
             'renewalAdvisors' => $renewalAdvisors,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'assignmentTypes' => $assignmentTypes,
+            'travelDestinations' => $travelDestinations,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
             'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
@@ -285,8 +289,9 @@ class TravelController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'documentTypeCodes' => $documentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

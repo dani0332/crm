@@ -26,7 +26,7 @@ class LookupService extends BaseService
 {
     public function getYearsOfManufacture()
     {
-        return YearOfManufacture::select('text as id', 'text')->get();
+        return YearOfManufacture::select('text as id', 'text')->orderBy('sort_order')->get();
     }
 
     public function getVehicleTypes()
@@ -185,13 +185,13 @@ class LookupService extends BaseService
         return Lookup::where('key', LookupsEnum::ISSUING_AUTHORITY)->get();
     }
 
-    public function getSendUpdateOptions($quoteTypeId, $removeOptions = [])
+    public function getSendUpdateOptions($quoteTypeId)
     {
         return Lookup::where([
             'code' => LookupsEnum::SEND_UPDATE_CODE,
             'parent_id' => null,
         ])
-            ->withChildTree($quoteTypeId, $removeOptions)
+            ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
             ->get();
     }
 

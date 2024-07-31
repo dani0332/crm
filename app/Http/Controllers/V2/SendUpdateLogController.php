@@ -9,10 +9,10 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReversalEntriesRequest;
 use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SaveProviderDetailsRequest;
@@ -149,7 +149,8 @@ class SendUpdateLogController extends Controller
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
 
-        $sendUpdateOptions = SendUpdateLogRepository::sendUpdateOptions($quoteTypeId, $sendUpdateLog->category_id, $sendUpdateLog->category->code);
+        // the business_type_of_insurance_id is only on business quotes.
+        $sendUpdateOptions = SendUpdateLogRepository::sendUpdateOptions($quoteTypeId, $sendUpdateLog->category_id, $sendUpdateLog->category->code, $realQuote->business_type_of_insurance_id ?? null);
 
         // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
@@ -160,15 +161,11 @@ class SendUpdateLogController extends Controller
             // always same as ```send update log details``` broker_invoice_number but invoice_description will be overwritten from ```send update log details``` page.
             $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments[0]['insurance_provider_id']);
             // it will get all invoice_descriptions for booking details
-            $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
+            $paymentInvoices = collect($payments)->whereNotNull('insurer_tax_number')->pluck('insurer_tax_number');
             $sendUpdateLogInvoices = SendUpdateLogRepository::getSendUpdateLogInvoices($quoteTypeId, $realQuote->uuid);
             if (! empty($sendUpdateLogInvoices)) {
                 $paymentInvoices = array_merge($paymentInvoices->toArray(), $sendUpdateLogInvoices->toArray());
             }
-        }
-
-        if ($sendUpdateLog->is_booking_filled) {
-            $bookingDetails = $this->sendUpdateLogService->mergeBookingDetails($bookingDetails, $sendUpdateLog);
         }
 
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
@@ -190,14 +187,12 @@ class SendUpdateLogController extends Controller
 
         if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
             $paymentEntityModel->load(['plan']);
+        } else {
+            checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
-        if ($quoteTypeId == QuoteTypeId::Business) {
-            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
-        } else {
-            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
-        }
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
 
         return inertia('SendUpdateLog/Show', [
@@ -218,7 +213,7 @@ class SendUpdateLogController extends Controller
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog),
-            'paymentInvoices' => $paymentInvoices ?? [],
+            'paymentInvoices' => isset($paymentInvoices) ? array_values(array_unique($paymentInvoices)) : [], // array_values to reset index.
             'uploadedDocuments' => $uploadedDocuments,
             'isPaymentVisible' => $this->sendUpdateLogService->isPaymentVisible($categoryCode, $optionCode),
             'payments' => $sendUpdatePayments,
@@ -328,23 +323,23 @@ class SendUpdateLogController extends Controller
         return redirect()->back();
     }
 
-    public function savePolicyDetails(SavePolicyDetailsRequest $savePolicyDetailsRequest)
+    public function savePolicyDetails(SavePolicyDetailsRequest $request)
     {
-        SendUpdateLogRepository::savePolicyDetails($savePolicyDetailsRequest->validated());
+        SendUpdateLogRepository::savePolicyDetails($request->validated());
 
         return redirect()->back();
     }
 
-    public function saveBookingDetails(SaveBookingDetailsRequest $saveBookingDetailsRequest)
+    public function saveBookingDetails(SaveBookingDetailsRequest $request)
     {
-        SendUpdateLogRepository::saveBookingDetails($saveBookingDetailsRequest);
+        SendUpdateLogRepository::saveBookingDetails($request->validated());
 
         return redirect()->back();
     }
 
-    public function getReversalEntries(Request $request)
+    public function getReversalEntries(ReversalEntriesRequest $request)
     {
-        $reversalEntries = app(SendUpdateLogService::class)->getReversalEntries($request->input());
+        $reversalEntries = app(SendUpdateLogService::class)->getReversalEntries($request->validated());
 
         return response()->json($reversalEntries);
     }
@@ -434,9 +429,7 @@ class SendUpdateLogController extends Controller
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            // SendUpdateToSagae 3rd parameter: False: Without AP Patch, True: With AP Patch
-            // TODO :: This is temporary solution, need to remove third param, this after AP Split patch working fine
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate, false);
+            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] === false) {
 
                 return response()->json(['message' => $sageResponse['message']], 500);

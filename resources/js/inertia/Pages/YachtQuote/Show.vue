@@ -46,12 +46,13 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
   payments: Array,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const page = usePage();
@@ -229,6 +230,14 @@ const linkEntity = () => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true; 
+};
+
 </script>
 
 <template>
@@ -252,12 +261,21 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           :quote="quote"
           :cdn="cdnPath"
         />
-        <Link
-          v-if="can(permissionsEnum.YachtQuotesEdit)"
-          :href="route('yacht-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link v-if="!isDisabled" :href="route('yacht-quotes-edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
+          </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.YachtQuotesEdit)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.YachtQuotesEdit)"/>
+        </template>
 
         <Link
           v-if="can(permissionsEnum.YachtQuotesList)"
@@ -805,6 +823,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
+      :isAddUpdate="isAddUpdate"
     />
 
     <MigratePayment
@@ -818,7 +837,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['YPD', 'YPDR', 'YDPDR'].includes(item.code))"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -892,6 +911,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote_type_id="page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <AuditLogs

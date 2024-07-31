@@ -13,6 +13,7 @@ use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\DB;
 
 class PetQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return (in_array(quoteTypeCode::Pet, newUi())) ? PersonalQuote::class : PetQuote::class;
@@ -109,9 +112,12 @@ class PetQuoteRepository extends BaseRepository
                 }
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
+            ->withFakeLeadCriteria($forTotalLeadsCount);
 
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        if (request()->sortBy) {
+            $query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
+        }
         if ($forTotalLeadsCount) {
             //PD Revert
             return 0;

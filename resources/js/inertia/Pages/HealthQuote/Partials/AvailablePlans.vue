@@ -8,6 +8,8 @@ const props = defineProps({
   memebersDetailsChanged: Boolean,
 });
 
+const page = usePage();
+
 const emit = defineEmits([
   'copayUpdate',
   'update:modelValue',
@@ -95,6 +97,7 @@ const tabs = ref([
   { index: 4, label: 'Region coverage & Network list' },
   { index: 5, label: 'Co-pay/Co-insurance' },
   { index: 6, label: 'Maternity cover' },
+  { index: 7, label: 'key Hospitals & Clinics' },
   // { index: 8, label: 'Exclusions' },
   // { index: 9, label: 'Policy Detail' },
 ]);
@@ -525,20 +528,32 @@ onUpdated(() => {
       Number(totalLoadingPrice.value) + Number(data.price);
   });
 });
+const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReusableTemplate();
 </script>
 
 <template>
   <x-modal v-model="showModal" size="xl" show-close backdrop>
     <template #header>
+      <ToggleManualButtonTemplate v-slot="{ isDisabled }">
+        <x-toggle
+          v-model="isManual"
+          color="success"
+          label="Manual"
+          :loading="toggleLoader"
+          :disabled="isDisabled"
+        />
+      </ToggleManualButtonTemplate>
+
       <div class="flex justify-between items-center">
         <h3>{{ plan.providerName }} - {{ plan.name }}</h3>
         <div class="flex gap-3 pr-8">
-          <x-toggle
-            v-model="isManual"
-            color="success"
-            label="Manual"
-            :loading="toggleLoader"
-          />
+          <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
+            <ToggleManualButtonReuseTemplate :isDisabled="true"/>
+            <template #tooltip>
+              No further action allowed on issued policy, If changes are required, such as increase in price, please proceed through the 'Send Update' feature using the 'Correction of Policy' option.
+            </template>
+          </x-tooltip>
+          <ToggleManualButtonReuseTemplate v-else/>
           <x-toggle
             v-model="hidePlan"
             color="error"
@@ -1375,7 +1390,10 @@ onUpdated(() => {
                 color="primary"
                 size="sm"
                 @click="
-                  onLoadingPricesUpdate(props.plan.memberPremiumBreakdown)
+                  onLoadingPricesUpdate(
+                    props.plan.memberPremiumBreakdown,
+                    false,
+                  )
                 "
               >
                 Update & Save
@@ -1392,6 +1410,33 @@ onUpdated(() => {
                 <dt class="font-medium mb-1">{{ data.text }}</dt>
                 <dd>{{ data.value }}</dd>
               </div>
+            </dl>
+          </TabPanel>
+
+          <TabPanel>
+            <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4 p-4">
+                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []).length > 0">
+                    <dt class="font-medium">Key Hospitals:</dt>
+                    <dd>
+                        <div
+                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []"
+                          :key="data.id"
+                        >
+                          {{ data.text }}
+                        </div>
+                    </dd>
+                </div>
+                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []).length > 0">
+                    <dt class="font-medium">Key Clinics:</dt>
+                    <dd>
+                        <div
+                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []"
+                          :key="data.id"
+                        >
+                          {{ data.text }}
+                        </div>
+                    </dd>
+                </div>
             </dl>
           </TabPanel>
 

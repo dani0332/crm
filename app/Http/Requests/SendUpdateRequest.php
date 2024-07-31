@@ -92,7 +92,7 @@ class SendUpdateRequest extends FormRequest
                             SendUpdateLogStatusEnum::IISI,
                             SendUpdateLogStatusEnum::PPE,
                         ])) {
-                            if (count(array_intersect($uploadedDocuments, $requiredDocuments)) == count($requiredDocuments)) {
+                            if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
                                 return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer and receipt');
                             }
                         }
@@ -100,7 +100,7 @@ class SendUpdateRequest extends FormRequest
                         if (in_array($categorySubType, [
                             SendUpdateLogStatusEnum::MPC,
                         ])) {
-                            if (count(array_intersect($uploadedDocuments, $requiredDocumentsForMPC)) == count($requiredDocumentsForMPC)) {
+                            if (count(array_intersect($uploadedDocuments, $requiredDocumentsForMPC)) < count($requiredDocumentsForMPC)) {
                                 return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
                             }
                         }
