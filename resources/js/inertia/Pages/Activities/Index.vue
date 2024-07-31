@@ -1,5 +1,4 @@
 <script setup>
-import { buildCdbidLink } from '../../Composables/utilities';
 // Component Props and State Initialization
 const props = defineProps({
   activities: Object,

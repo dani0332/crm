@@ -1,5 +1,4 @@
 <script setup>
-import { useFormatPrice } from '../Composables/utilities';
 
 const page = usePage();
 const notification = useToast();

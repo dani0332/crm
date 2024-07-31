@@ -1,8 +1,5 @@
 <script setup>
 const notification = useNotifications('toast');
-import { XButton } from '@indielayer/ui';
-import { useCan, useCanAny } from '../Composables/can';
-import { ref } from 'vue';
 
 const page = usePage();
 const props = defineProps({

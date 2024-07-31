@@ -4,7 +4,6 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import QuotePolicy from '@/inertia/Pages/PersonalQuote/Partials/QuotePolicy.vue';
-import { useCan } from '@/inertia/Composables/can';
 
 defineProps({
   quote: Object,

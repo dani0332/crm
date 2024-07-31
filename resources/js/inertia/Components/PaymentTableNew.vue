@@ -1,9 +1,6 @@
 <script setup>
 import moment from 'moment';
-import ToolTip from './../Components/ToolTip.vue';
 import NProgress from 'nprogress';
-import { computed } from 'vue';
-import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 const notification = useNotifications('toast');
 const page = usePage();
 

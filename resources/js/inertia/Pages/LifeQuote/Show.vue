@@ -1,9 +1,4 @@
 <script setup>
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MemberDetails from "../../Components/MemberDetails.vue";
-import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import MigratePayment from '../../Components/MigratePayment.vue';
 
 const page = usePage();
 defineProps({

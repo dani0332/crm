@@ -1,7 +1,4 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
-import MemberDetails from '../../Components/MemberDetails.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 const props = defineProps({
   quote: Object,

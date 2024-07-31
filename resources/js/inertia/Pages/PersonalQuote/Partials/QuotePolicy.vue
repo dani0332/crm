@@ -1,5 +1,4 @@
 <script setup>
-import { useCan } from '../../../Composables/can';
 
 defineProps({
     quote: Object,

@@ -1,7 +1,5 @@
 <script setup>
-import { router } from '@inertiajs/vue3';
 import { useSortable } from '@vueuse/integrations/useSortable';
-import axios from 'axios';
 
 const page = usePage();
 

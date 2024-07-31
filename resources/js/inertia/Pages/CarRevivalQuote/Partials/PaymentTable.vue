@@ -1,5 +1,4 @@
 <script setup>
-import {useCan} from "@/inertia/Composables/can";
 
 const notification = useNotifications('toast');
 const page = usePage();

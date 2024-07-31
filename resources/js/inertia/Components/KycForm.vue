@@ -1,8 +1,5 @@
 <script setup>
 
-import KycIndividualModal from "@/inertia/Components/KycIndividualModal.vue";
-import KycEntityModal from "@/inertia/Components/KycEntityModal.vue";
-
 const props = defineProps({
   kycType: String,
   roles: Array,

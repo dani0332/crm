@@ -1,6 +1,4 @@
 <script setup>
-import { usePage } from '@inertiajs/vue3';
-import { watchEffect } from 'vue';
 import AppModal from './AppModal.vue';
 
 const props = defineProps({

@@ -1,7 +1,5 @@
 <script setup>
 
-import {useGetShowPageRoute} from "../../Composables/utilities";
-
 const props = defineProps({
     customers : Object,
     userId: Number,

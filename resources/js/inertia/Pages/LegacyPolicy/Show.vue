@@ -1,11 +1,6 @@
 <script setup>
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
 import DocumentListing from './Partials/DocumentListing.vue';
-import {
-  formatDate,
-  maskEmail,
-  maskPhone,
-} from '../../Composables/utilities.js';
 
 const props = defineProps({
   policy: Object,

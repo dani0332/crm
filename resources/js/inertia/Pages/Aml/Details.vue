@@ -1,7 +1,6 @@
 <script setup>
 import IndividualModel from './Partials/IndividualModel.vue';
 import EntityModel from './Partials/EntityModel.vue';
-import { onMounted, ref } from 'vue';
 
 const props = defineProps({
   quoteType: Object,

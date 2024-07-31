@@ -1,5 +1,4 @@
 <script setup>
-import { formatDate } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   policies: Array,

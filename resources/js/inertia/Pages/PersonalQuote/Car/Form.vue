@@ -1,5 +1,4 @@
 <script setup>
-import { ref } from 'vue';
 const notification = useNotifications('toast');
 
 const props = defineProps({

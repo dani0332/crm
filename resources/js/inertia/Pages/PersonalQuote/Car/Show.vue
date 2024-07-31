@@ -1,15 +1,9 @@
 <script setup>
-import PaymentTableNew from './../../../Components/PaymentTableNew.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
-import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
-import { onMounted, watch } from 'vue';
-import { reactive } from 'vue';
-import MigratePayment from './../../../Components/MigratePayment.vue';
-import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 
 defineProps({
   quote: Object,
