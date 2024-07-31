@@ -28,6 +28,8 @@ use finfo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use App\Jobs\ProcessSyncAlfredProtect;
+use App\Enums\RolesEnum;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -240,6 +242,7 @@ class EmbeddedProductRepository extends BaseRepository
             $item->send_document_button = false;
             $item->download_document_button = false;
             $optionsIds = $item->prices->pluck('id');
+            $item->sync_document_button = false;
 
             $transaction = EmbeddedTransaction::with('documents')->where([
                 ['quote_type_id', '=', $quoteTypeId],
@@ -251,6 +254,11 @@ class EmbeddedProductRepository extends BaseRepository
             if ($isAlfredProtect) {
                 $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0 : false;
                 $item->download_document_button = $isDocPresent;
+
+                if (auth()->user()->hasRole(RolesEnum::Engineering)) {
+                    $item->sync_document_button = !$isDocPresent;
+                }
+                
             }
 
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
@@ -303,6 +311,18 @@ class EmbeddedProductRepository extends BaseRepository
                 $this->fetchSendDocument($data);
             }
         }
+    }
+
+    public function fetchSyncDocument($data)
+    {
+        $quoteId = $data['quoteId'];
+        $modelType = $data['modelType'];
+        $quoteObject = $this->getQuoteObject($modelType, $quoteId);
+        if (empty($quoteObject)) {
+            return 'Quote not found';
+        }
+
+        ProcessSyncAlfredProtect::dispatch($quoteObject);
     }
 
     public function fetchSendDocument($data)

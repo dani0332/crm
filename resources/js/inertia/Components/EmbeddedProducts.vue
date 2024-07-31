@@ -61,6 +61,7 @@ const paymentForm = useForm({
   processing: false,
 });
 
+const syncDocumentLoader = ref(false);
 const downloadLoader = ref(false);
 const sendDocumentLoader = ref(false);
 const downloadDocumentLoader = ref(false);
@@ -69,6 +70,25 @@ const sendDocumentForm = useForm({
   modelType: props.modelType,
   isInertia: true,
 });
+
+const syncDocument = id => {
+  syncDocumentLoader.value = true;
+  sendDocumentForm
+    .transform(data => ({
+      ...data,
+      epId: id,
+    }))
+    .post('/embedded-products/sync-document', {
+      preserveScroll: true,
+      responseType: 'blob',  // Ensure this is correctly set
+      onSuccess: (response) => {
+        syncDocumentLoader.value = false;
+      },
+      onError: () => {
+        syncDocumentLoader.value = false;
+      },
+    });
+};
 
 const downloadDcoument = id => {
   downloadLoader.value = true;
@@ -358,6 +378,10 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
           <template #item-actions="item">
             <div class="flex flex-col gap-1">
+              <x-button size="xs" color="emerald" v-if="item.sync_document_button" :disabled="!item.sync_document_button" :loading="syncDocumentLoader"
+                @click.prevent="syncDocument(item.id)">
+                Sync Documents from Provider
+              </x-button>
               <x-button size="xs" color="emerald" :disabled="!item.send_document_button" :loading="sendDocumentLoader"
                 @click.prevent="sendDcoument(item.id)">
                 Send Documents

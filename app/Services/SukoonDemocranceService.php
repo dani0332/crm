@@ -86,7 +86,6 @@ class SukoonDemocranceService
             throw new Exception('Login failed');
         } catch (Exception $e) {
             $this->logFailure('Login', $e->getMessage(), $data);
-            throw $e;
         }
     }
 
@@ -107,7 +106,6 @@ class SukoonDemocranceService
             throw new Exception('Form submit API failed or error in fields');
         } catch (Exception $e) {
             $this->logFailure('Form Submit', $e->getMessage(), $data);
-            throw $e;
         }
     }
 
@@ -129,7 +127,6 @@ class SukoonDemocranceService
             throw new Exception('Payment initiate API failed');
         } catch (Exception $e) {
             $this->logFailure('Payment Initiate', $e->getMessage(), $data);
-            throw $e;
         }
     }
 
@@ -152,7 +149,6 @@ class SukoonDemocranceService
             throw new Exception('Payment complete API failed');
         } catch (Exception $e) {
             $this->logFailure('Payment Complete', $e->getMessage(), $data);
-            throw $e;
         }
     }
 
@@ -211,7 +207,6 @@ class SukoonDemocranceService
             }
         } catch (Exception $e) {
             $this->logFailure('Get Document template_id : '.$templateId.' doc_code : '.$docCode, $e->getMessage(), ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
-            throw $e;
         }
     }
 
@@ -224,7 +219,6 @@ class SukoonDemocranceService
             }
         } catch (Exception $e) {
             $this->logFailure('Get Documents', $e->getMessage(), ['quote' => $quote]);
-            throw $e;
         }
     }
 
@@ -247,7 +241,6 @@ class SukoonDemocranceService
             throw new Exception('Transaction Detail Api failed');
         } catch (Exception $e) {
             $this->logFailure('Transaction Detail Api Complete', $e->getMessage(), $data);
-            throw $e;
         }
     }
 
@@ -308,7 +301,6 @@ class SukoonDemocranceService
             EmbeddedProductRepository::sendDocument(['epId' => $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
-            throw $e;
         }
     }
 

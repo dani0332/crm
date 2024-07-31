@@ -10,6 +10,7 @@ use App\Http\Requests\EmbeddedProductRequest;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
 use Illuminate\Http\Request;
+use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 
 class EmbeddedProductController extends Controller
 {
@@ -121,6 +122,13 @@ class EmbeddedProductController extends Controller
         EmbeddedProductRepository::sendDocument($request->validated());
 
         return redirect()->back()->with('success', 'Certificate send Successfully');
+    }
+
+    public function syncDocument(AlfredProtectDocumentSyncRequest $request)
+    {
+        EmbeddedProductRepository::syncDocument($request->validated());
+
+        return redirect()->back()->with('success', 'Re-gerating resquest processing');
     }
 
     public function downloadDocument(EmbeddedProducDocumentRequest $request)
