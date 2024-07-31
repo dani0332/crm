@@ -184,7 +184,7 @@ class SukoonDemocranceService
 
                 // TODO: check if document exist need to update that document file
                 $document = $embeddedTransaction->documents()->where('document_type_code', $documentType->code)->first();
-                if(isset($document)) {
+                if (isset($document)) {
                     $document->update([
                         'doc_name' => $docName,
                         'original_name' => $originalName,
