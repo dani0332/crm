@@ -2,21 +2,15 @@
 
 namespace App\Jobs;
 
-use App\Enums\quoteTypeCode;
-use App\Models\ApplicationStorage;
-use App\Repositories\DocumentTypeRepository;
-use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class SendUpdateToCustomerJob implements ShouldQueue
