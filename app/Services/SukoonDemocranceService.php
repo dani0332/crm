@@ -15,7 +15,6 @@ use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Console\Application;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -40,7 +39,7 @@ class SukoonDemocranceService
         $this->invoiceBuyer = config('constants.SUKOON_INVOICE_BUYER');
         $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
         $this->documentTemplateIds = ApplicationStorage::select('key_name', 'value')->whereIn('key_name', [
-            ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE, 
+            ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE,
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER,
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE,
@@ -51,7 +50,7 @@ class SukoonDemocranceService
 
     private function request($path, $method = 'post', $data = [], $headers = [])
     {
-        $url = "{$this->baseUrl}/api/v" . config('constants.SUKOON_API_VERSION') . $path;
+        $url = "{$this->baseUrl}/api/v".config('constants.SUKOON_API_VERSION').$path;
         $client = Http::withHeaders($headers);
 
         // Get the call stack
@@ -94,14 +93,14 @@ class SukoonDemocranceService
     public function formSubmit($data)
     {
         try {
-            $result = $this->request('/policy/submit/' . $this->productSlug . '/', 'post', $data, [
+            $result = $this->request('/policy/submit/'.$this->productSlug.'/', 'post', $data, [
                 'x-session-id' => $this->sessionId,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->json();
 
             // TODO: has_error need to be checked for failure
-            if (isset($result['policy_number']) && $result['policy_number'] && !$result['has_errors']) {
+            if (isset($result['policy_number']) && $result['policy_number'] && ! $result['has_errors']) {
                 return $this->policyNumber = $result['policy_number'];
             }
 
@@ -139,7 +138,7 @@ class SukoonDemocranceService
         $data = ['payment_reference' => 'Payment reference here', 'payment_token' => $this->paymentToken];
 
         try {
-            $result = $this->request('/payment/complete/' . $this->paymentGateway . '/?token=' . $this->paymentToken, 'post', $data, [
+            $result = $this->request('/payment/complete/'.$this->paymentGateway.'/?token='.$this->paymentToken, 'post', $data, [
                 'x-session-id' => $this->sessionId,
                 'X-Requested-With' => 'XMLHttpRequest',
                 'Content-Type' => 'application/json',
@@ -161,12 +160,12 @@ class SukoonDemocranceService
     {
         try {
             $data = ['template' => $templateId];
-            $result = $this->request('/policy/' . $this->documentPolicyNumber . '/coi/', 'post', $data, ['x-session-id' => $this->sessionId]);
+            $result = $this->request('/policy/'.$this->documentPolicyNumber.'/coi/', 'post', $data, ['x-session-id' => $this->sessionId]);
             $content = $result->body();
             $headers = $result->toPsrResponse()->getHeader('Content-Disposition');
             $filename = '';
 
-            if (!empty($headers)) {
+            if (! empty($headers)) {
                 preg_match('/filename="([^"]+)"/', $headers[0], $matches);
                 if (isset($matches[1])) {
                     $filename = $matches[1];
@@ -175,10 +174,10 @@ class SukoonDemocranceService
 
             if ($filename) {
                 $originalName = $filename;
-                $docName = preg_replace('/\s+/', '', uniqid() . '_' . $originalName);
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
                 $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', QuoteTypeId::Car)->first();
-                $fileNameAzure = uniqid() . '_' . $quote->uuid . '_' . $docName;
-                $docUrl = 'documents/' . $documentType->folder_path . '/' . $fileNameAzure;
+                $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
+                $docUrl = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
 
                 $docUuid = $this->generateUniqueUuid();
@@ -201,14 +200,15 @@ class SukoonDemocranceService
                 throw new Exception('Unable to determine filename from the response headers.');
             }
         } catch (Exception $e) {
-            $this->logFailure('Get Document template_id : '.$templateId .' doc_code : '. $docCode, $e->getMessage(), ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
+            $this->logFailure('Get Document template_id : '.$templateId.' doc_code : '.$docCode, $e->getMessage(), ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
             throw $e;
         }
     }
 
-    public function getDocuments($quote, $embeddedTransaction) {
+    public function getDocuments($quote, $embeddedTransaction)
+    {
         try {
-            info("Sukoon DemocranceDocuments mapped correctly documents :". json_encode($this->mappedDocumentTemplates));
+            info('Sukoon DemocranceDocuments mapped correctly documents :'.json_encode($this->mappedDocumentTemplates));
             foreach ($this->mappedDocumentTemplates as $index => $doc) {
                 $this->getDocument($quote, $embeddedTransaction, $doc, $index);
             }
@@ -223,7 +223,7 @@ class SukoonDemocranceService
         $data = ['template' => $this->mappedDocumentTemplates[ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE]];
 
         try {
-            $result = $this->request('/policy/' . $this->documentPolicyNumber, 'post', $data, [
+            $result = $this->request('/policy/'.$this->documentPolicyNumber, 'post', $data, [
                 'x-session-id' => $this->sessionId,
                 'X-Requested-With' => 'XMLHttpRequest',
                 'Content-Type' => 'application/json',
@@ -246,7 +246,7 @@ class SukoonDemocranceService
         try {
             $this->currentQuote = $quote;
 
-            if (!$this->validateCustomerDetail($quote->customer->emirates_id_number, $quote->customer->emirates_id_expiry_date)) {
+            if (! $this->validateCustomerDetail($quote->customer->emirates_id_number, $quote->customer->emirates_id_expiry_date)) {
                 throw new Exception('Invalid Emirates ID or Expiry Date. Please check and try again.');
             }
 
@@ -262,7 +262,7 @@ class SukoonDemocranceService
                 'address' => 'Something, somewhere',
                 'email' => 'hitesh.motwani@insurancemarket.ae',
                 'mobile' => '+971505027325',
-                'plan_option' => $this->productSlug . '_' . strtolower(EmbeddedProductEnum::$shortCode()->value),
+                'plan_option' => $this->productSlug.'_'.strtolower(EmbeddedProductEnum::$shortCode()->value),
             ];
 
             $this->login();
@@ -279,7 +279,7 @@ class SukoonDemocranceService
             ];
 
             $this->formSubmit($additionalData);
-            $this->request('/policy/' . $this->policyNumber . '/confirm/', 'post', ['confirm' => 'true'], ['x-session-id' => $this->sessionId]);
+            $this->request('/policy/'.$this->policyNumber.'/confirm/', 'post', ['confirm' => 'true'], ['x-session-id' => $this->sessionId]);
             $this->paymentInitiate();
             $this->paymentComplete();
             $this->getDocuments($quote, $transaction);
@@ -298,7 +298,7 @@ class SukoonDemocranceService
                 'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
                 'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
             ]);
-            EmbeddedProductRepository::sendDocument(['epId'=> $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
+            EmbeddedProductRepository::sendDocument(['epId' => $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
             throw $e;
@@ -355,9 +355,9 @@ class SukoonDemocranceService
         // Check if the response exceeds the maximum length
         if (strlen($response) > $maxTextLength) {
             // Save the large response to a file
-            $responseFilePath = storage_path('logs/response_sukoon_democrance_' . uniqid() . '.json');
+            $responseFilePath = storage_path('logs/response_sukoon_democrance_'.uniqid().'.json');
             file_put_contents($responseFilePath, $response);
-            $response = 'Response too large, saved to: ' . $responseFilePath;
+            $response = 'Response too large, saved to: '.$responseFilePath;
         }
         $logData = [
             'status' => $status,
