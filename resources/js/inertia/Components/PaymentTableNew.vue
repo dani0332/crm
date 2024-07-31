@@ -34,6 +34,10 @@ const props = defineProps({
     type: [String, Number],
     default: '0',
   },
+  isPlanDetailEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const createPaymentModal = ref(false);
@@ -110,6 +114,8 @@ if (props.quoteType === 'Health') {
   initialAmount.value = props.eCommercePrice;
 } else if (props.quoteType === 'Bike') {
   initialAmount.value = props.quoteRequest.premium;
+} else if (props. isPlanDetailEnabled) {
+  initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
     ? props.quoteRequest.premium
@@ -131,13 +137,14 @@ const approveProofDocument = props.paymentDocument.find(
 let initalPlanDetails = [];
 if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
-} else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
+} else if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest?.insurance_provider_details ?? props.quoteRequest?.insurance_provider;
 } else if ( props.quoteType=='Bike' ) {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
 } else {
     initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
+
 let planDetail = ref(initalPlanDetails);
 const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
@@ -2052,7 +2059,9 @@ watch(
         isTotalPriceUpdated.value === true
       )
     ) {
-      if (props.quoteType === 'Health') {
+      if (props.isPlanDetailEnabled) {
+        initialAmount.value = props.quoteRequest.price_with_vat;
+      } else if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
       } else if (props.quoteType === 'Bike') {
         initialAmount.value = props.quoteRequest.premium;
@@ -2066,7 +2075,7 @@ watch(
     //refresh plan
     if (quoteTypesToCheck.includes(props.quoteType)) {
       initalPlanDetails = props.quoteRequest.plan;
-    } else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
+    } else if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
     } else if ( props.quoteType=='Bike' ) {
       initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
