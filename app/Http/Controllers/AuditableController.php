@@ -41,6 +41,7 @@ class AuditableController extends Controller
     {
         $code = isset($request->code) ? $request->code : '';
 
+        $documentIds = [];
         if ($request->auditableType === 'App\Models\SendUpdateLog') {
             $code = $this->getSendUpdatePaymentCode($request->auditableId);
             $documentIds = $this->getSendUpdateDocumentIds($request->auditableId);
@@ -60,7 +61,7 @@ class AuditableController extends Controller
             });
         }
 
-        if ($documentIds) {
+        if (!empty($documentIds)) {
             $query->orWhere(function ($query) use ($documentIds) {
                 $query->where('auditable_type', 'App\Models\QuoteDocument')
                     ->whereIn('auditable_id', $documentIds);
