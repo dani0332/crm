@@ -133,66 +133,6 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendAlfredDocumentEmail($emailTemplateId, $emailData, $tag)
-    {
-        try {
-            $appEnv = config('constants.APP_ENV');
-
-            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
-
-            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
-
-            if ($emailAttachments) {
-                $attachments = [];
-                foreach ($emailAttachments as $emailAttachment) {
-                    $attachments[] = [
-                        'url' => $emailAttachment,
-                        'name' => basename($emailAttachment),
-                    ];
-                }
-            }
-
-            $body = [
-                'to' => [[
-                    'email' => $emailData->customerEmail,
-                    'name' => $emailData->customerName,
-                ]],
-                'templateId' => (int) $emailTemplateId,
-                'params' => [
-                    'clientName' => $emailData->customerName,
-                    'clientEmail' => $emailData->customerEmail,
-                    'productName' => isset($emailData->productName) ? $emailData->productName : null,
-                    'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
-                    'advisorEmail' => isset($emailData->advisorEmailAddress) ? $emailData->advisorEmailAddress : null,
-                    'landlineNo' => isset($emailData->advisorLandlineNo) ? $emailData->advisorLandlineNo : null,
-                    'mobilePhone' => isset($emailData->advisorMobileNo) ? $emailData->advisorMobileNo : null,
-                ],
-                'tags' => [
-                    $tag,
-                ],
-                'attachment' => isset($attachments) ? $attachments : null,
-            ];
-
-            ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
-        } catch (Exception $ex) {
-            $responseCode = $ex->getCode();
-            $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
-            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
-            Log::error($responseDetail);
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
-            $isEmailSent = 0;
-        }
-
-        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
-
-        // addEmailStatus is for quote modules only
-        if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
-            // UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
-        }
-
-        return $responseCode;
-    }
-
     public function sendOcbEmail($emailTemplateId, $emailData, $tag)
     {
         try {
