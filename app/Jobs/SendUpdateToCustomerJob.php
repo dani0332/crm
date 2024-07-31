@@ -56,11 +56,11 @@ class SendUpdateToCustomerJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        info('SendBookPolicyDocumentsJob -: '.$this->data->quote_id.' Error: '.$exception->getMessage());
+        info('SendUpdateToCustomerJob -: '.$this->data->id.' Error: '.$exception->getMessage());
     }
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->data->quote_id))->dontRelease()];
+        return [(new WithoutOverlapping($this->data->id))->dontRelease()];
     }
 }
