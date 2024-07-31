@@ -15,7 +15,6 @@ use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Console\Application;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -40,7 +39,7 @@ class SukoonDemocranceService
         $this->invoiceBuyer = config('constants.SUKOON_INVOICE_BUYER');
         $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
         $this->documentTemplateIds = ApplicationStorage::select('value')->whereIn('key_name', [
-            ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE, 
+            ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE,
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER,
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE,
@@ -205,9 +204,10 @@ class SukoonDemocranceService
         }
     }
 
-    public function getDocuments($quote, $embeddedTransaction) {
-        foreach($this->mappedDocumentTemplates as $index => $doc) {
-            $this->getDocument($quote, $embeddedTransaction, $doc, $index);   
+    public function getDocuments($quote, $embeddedTransaction)
+    {
+        foreach ($this->mappedDocumentTemplates as $index => $doc) {
+            $this->getDocument($quote, $embeddedTransaction, $doc, $index);
         }
     }
 
@@ -290,7 +290,7 @@ class SukoonDemocranceService
                 'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
             ]);
             $this->getDocuments($quote, $transaction);
-            EmbeddedProductRepository::sendDocument(['epId'=> $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
+            EmbeddedProductRepository::sendDocument(['epId' => $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
             throw $e;
@@ -313,7 +313,8 @@ class SukoonDemocranceService
         ]);
     }
 
-    private function mapDocumentsType() {
+    private function mapDocumentsType()
+    {
         foreach ($this->documentTemplateIds as $template) {
             switch ($template->key_name) {
                 case ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE:

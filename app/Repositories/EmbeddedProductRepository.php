@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;

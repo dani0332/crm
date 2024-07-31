@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\MAWelcomeJob;
-use App\Jobs\ProcessSyncAlfredProtect;
 use App\Models\CarQuote;
 use App\Traits\PersonalQuoteSyncTrait;
 

@@ -52,9 +52,9 @@ class ProcessSyncAlfredProtect implements ShouldQueue
                 throw new Exception('No embedded product found for the selected transaction');
             }
         })->first();
-        info('CL: ' . get_class() . ' FN: handle. Transaction: ' . $transaction);
-        if (!isset($transaction) || empty($transaction)) {
-            throw new Exception("No transaction found for the selected product");
+        info('CL: '.get_class().' FN: handle. Transaction: '.$transaction);
+        if (! isset($transaction) || empty($transaction)) {
+            throw new Exception('No transaction found for the selected product');
         }
 
         $strategy->syncSukoonDemocrance($this->quoteObject, $transaction);
