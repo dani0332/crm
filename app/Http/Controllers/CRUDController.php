@@ -2,107 +2,108 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CarPlanAddonsCode;
-use App\Enums\CarPlanExclusionsCode;
-use App\Enums\CarPlanFeaturesCode;
-use App\Enums\CarPlanType;
-use App\Enums\CarTeamType;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\DocumentTypeCode;
-use App\Enums\GenericRequestEnum;
-use App\Enums\HealthPlanTypeEnum;
-use App\Enums\HealthTeamType;
-use App\Enums\HomePossessionType;
-use App\Enums\LeadSourceEnum;
-use App\Enums\LookupsEnum;
-use App\Enums\PaymentMethodsEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\PaymentTooltip;
-use App\Enums\PermissionsEnum;
-use App\Enums\PuaEnum;
-use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Enums\TeamNameEnum;
-use App\Enums\TiersEnum;
-use App\Enums\TravelQuoteEnum;
-use App\Events\LeadsCount;
-use App\Facades\Capi;
-use App\Http\Requests\ExportPlansPdfRequest;
-use App\Http\Requests\StorePaymentRequest;
-use App\Http\Requests\UpdateLeadStatusRequest;
-use App\Http\Requests\UpdatePolicyDetailRequest;
-use App\Jobs\CarRenewalEmailJob;
-use App\Jobs\SendOCBIntroEmailJob;
-use App\Jobs\SyncSIBContactJob;
-use App\Models\ApplicationStorage;
-use App\Models\CarMake;
-use App\Models\CarQuote;
-use App\Models\DocumentType;
-use App\Models\Emirate;
-use App\Models\GenericModel;
-use App\Models\HealthPlanType;
-use App\Models\Nationality;
-use App\Models\Payment;
-use App\Models\PaymentStatusLog;
-use App\Models\PolicyIssuanceStatus;
-use App\Models\QuoteDocument;
+use DataTables;
+use Carbon\Carbon;
 use App\Models\Tier;
 use App\Models\User;
-use App\Repositories\AuditRepository;
-use App\Repositories\CustomerMembersRepository;
-use App\Repositories\EmbeddedProductRepository;
-use App\Repositories\HealthQuoteRepository;
-use App\Repositories\HomeQuoteRepository;
-use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
-use App\Repositories\LostReasonRepository;
-use App\Repositories\NationalityRepository;
-use App\Repositories\QuoteNoteRepository;
-use App\Repositories\RenewalBatchRepository;
-use App\Repositories\SendUpdateLogRepository;
-use App\Repositories\UserRepository;
-use App\Services\ActivitiesService;
-use App\Services\AllocationService;
+use App\Facades\Capi;
+use App\Enums\PuaEnum;
+use App\Models\CarMake;
+use App\Models\Emirate;
+use App\Models\Payment;
+use App\Enums\RolesEnum;
+use App\Enums\TiersEnum;
+use App\Models\CarQuote;
+use App\Enums\QuoteTypes;
+use App\Enums\CarPlanType;
+use App\Enums\CarTeamType;
+use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
+use App\Events\LeadsCount;
+use App\Enums\TeamNameEnum;
+use App\Models\Nationality;
+use App\Enums\quoteTypeCode;
+use App\Models\DocumentType;
+use App\Models\GenericModel;
 use App\Services\AMLService;
-use App\Services\ApplicationStorageService;
-use App\Services\BusinessQuoteService;
-use App\Services\CarEmailService;
-use App\Services\CarQuoteService;
-use App\Services\CentralService;
+use Illuminate\Http\Request;
+use App\Enums\HealthTeamType;
+use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentTooltip;
+use App\Models\QuoteDocument;
 use App\Services\CRUDService;
-use App\Services\CustomerService;
-use App\Services\DropdownSourceService;
-use App\Services\EmailDataService;
-use App\Services\EmailStatusService;
-use App\Services\HealthQuoteService;
-use App\Services\HomeQuoteService;
-use App\Services\LeadAllocationService;
-use App\Services\LifeQuoteService;
-use App\Services\LookupService;
-use App\Services\NotesForCustomerService;
-use App\Services\PetQuoteService;
-use App\Services\QuoteDocumentService;
-use App\Services\SendEmailCustomerService;
-use App\Services\SendUpdateLogService;
-use App\Services\SplitPaymentService;
 use App\Services\TeamService;
 use App\Services\TierService;
-use App\Services\TravelQuoteService;
 use App\Services\UserService;
-use App\Traits\GenericQueriesAllLobs;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Models\HealthPlanType;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
+use App\Jobs\SyncSIBContactJob;
+use App\Services\LookupService;
+use App\Enums\CarPlanAddonsCode;
+use App\Enums\PaymentStatusEnum;
+use App\Jobs\CarRenewalEmailJob;
+use App\Models\PaymentStatusLog;
+use App\Services\CentralService;
+use App\Enums\GenericRequestEnum;
+use App\Enums\HealthPlanTypeEnum;
+use App\Enums\HomePossessionType;
+use App\Enums\PaymentMethodsEnum;
+use App\Services\CarEmailService;
+use App\Services\CarQuoteService;
+use App\Services\CustomerService;
+use App\Services\PetQuoteService;
+use App\Enums\CarPlanFeaturesCode;
+use App\Jobs\SendOCBIntroEmailJob;
+use App\Models\ApplicationStorage;
+use App\Services\EmailDataService;
+use App\Services\HomeQuoteService;
+use App\Services\LifeQuoteService;
 use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
-use DataTables;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Services\ActivitiesService;
+use App\Services\AllocationService;
 use Illuminate\Support\Facades\Log;
+use App\Enums\CarPlanExclusionsCode;
+use App\Models\PolicyIssuanceStatus;
+use App\Repositories\UserRepository;
+use App\Services\EmailStatusService;
+use App\Services\HealthEmailService;
+use App\Services\HealthQuoteService;
+use App\Services\TravelQuoteService;
+use Illuminate\Support\Facades\Auth;
+use App\Repositories\AuditRepository;
+use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Repositories\LookupRepository;
+use App\Services\BusinessQuoteService;
+use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
+use App\Services\DropdownSourceService;
+use App\Services\LeadAllocationService;
 use Illuminate\Support\Facades\Redirect;
+use App\Repositories\HomeQuoteRepository;
+use App\Repositories\QuoteNoteRepository;
+use App\Services\NotesForCustomerService;
+use App\Http\Requests\StorePaymentRequest;
+use App\Repositories\LostReasonRepository;
+use App\Services\SendEmailCustomerService;
+use App\Repositories\HealthQuoteRepository;
+use App\Repositories\NationalityRepository;
+use App\Services\ApplicationStorageService;
+use App\Http\Requests\ExportPlansPdfRequest;
+use App\Repositories\RenewalBatchRepository;
+use App\Repositories\SendUpdateLogRepository;
+use App\Http\Requests\UpdateLeadStatusRequest;
+use App\Repositories\CustomerMembersRepository;
+use App\Repositories\EmbeddedProductRepository;
+use App\Http\Requests\UpdatePolicyDetailRequest;
+use App\Repositories\InsuranceProviderRepository;
 
 class CRUDController extends Controller
 {
@@ -1577,9 +1578,22 @@ class CRUDController extends Controller
             }
         }
 
+
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
+
+            // Check if the lead status is "Quoted"
+            if ($request->leadStatus == QuoteStatusEnum::Quoted) {
+
+                // Create a new instance of HealthEmailService
+                $healthEmailService  = new HealthEmailService();
+
+                // Send the Health OCA email using the HealthEmailService
+                $healthEmailService->sendHealthOCAEmail($entity);
+            }
+        }
         $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $this->crudService->calculateScore($plainEntity);

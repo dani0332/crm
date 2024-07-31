@@ -11,7 +11,7 @@ class BirdService extends BaseService
     protected $birdEndpoint = 'https://api.bird.com';
     protected $birdUserName;
     protected $birdPassword;
-    public function __construct(CustomerService $customerService)
+    public function __construct()
     {
         $this->birdEndpoint = config('constants.BIRD_API_ENDPOINT') ?? 'https://api.bird.com';
         $this->birdUserName = config('constants.BIRD_BASIC_AUTH_USER_NAME');
@@ -69,10 +69,10 @@ class BirdService extends BaseService
         return  $this->birdRequest('post', $webhook, $data);
     }
 
-    public function createAutomationWorkflow($webhook,$data){
+    public function sendAutomationWorkflow($webhook,$data){
         $payload = [
             'client_email' => $data['clientEmail'],
-            'workspace_id' => $data['workspaceId'],
+            'workspace_id' => $data['workspaceId'] ?? null,
             'customerEmail' => $data['customerEmail'],
             'customerName' => $data['customerName'],
             'AdvisorEmail' => $data['advisorEmail'],
