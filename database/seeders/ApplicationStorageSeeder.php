@@ -253,7 +253,7 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
             [
-                'key_name' => ApplicationStorageEnums::OALLIANZ_HEALTH_DOC,
+                'key_name' => ApplicationStorageEnums::ALLIANZ_HEALTH_DOC,
                 'value' => 'policy-wordings/health/Allianz-MyHealth-Digital-Services-EN-2021.pdf',
                 'is_active' => 1,
             ],

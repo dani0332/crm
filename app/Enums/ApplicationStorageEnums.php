@@ -111,7 +111,7 @@ final class ApplicationStorageEnums extends Enum
     public const AXA_HEALTH_DOC = 'AXA_HEALTH_DOC';
     public const DIC_HEALTH_DOC = 'DIC_HEALTH_DOC';
     public const CIG_HEALTH_DOC = 'CIG_HEALTH_DOC';
-    public const OALLIANZ_HEALTH_DOC = 'OALLIANZ_HEALTH_DOC';
+    public const ALLIANZ_HEALTH_DOC = 'ALLIANZ_HEALTH_DOC';
     // Health Network For Send & Book Policy
     public const MEDNET_HEALTH_DOC = 'MEDNET_HEALTH_DOC';
     public const NEXTCARE_HEALTH_DOC = 'NEXTCARE_HEALTH_DOC';
