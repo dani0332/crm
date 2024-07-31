@@ -367,6 +367,7 @@ class SendUpdateLogController extends Controller
         if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
             $sendUpdateRequest = new SendUpdateRequest();
 
+            // TODO: Thiss need to be updated, it should be move in Service.
             $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($data));
             if ($isSendUpdateSuccess->status() == 200) {
                 $_response[] = ['message' => isset($isSendUpdateSuccess->original['impactUpdated']) ? SendUpdateLogStatusEnum::UPDATE_BOOKED : SageEnum::SAGE_REQUEST_BEING_PROCESS, 'status' => 200];

@@ -15,9 +15,10 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
 {
     use Dispatchable, InteractsWithQueue, Queueable, Stackable;
 
-    public $tries = 3;
+    public $tries = 3; // TODO: Disccuss later
     public $timeout = 5; //40
     public $backoff = 360;
+
     private $quoteDetails;
     private $payment;
     private $paymentSplit;
@@ -30,6 +31,7 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
     /**
      * Create a new job instance.
      */
+    // TODO: NNeed to refactor this constructor
     public function __construct($quoteDetails, $payment, $paymentSplit, $payload, $sageAPIsLogs, $extraParams, $sageRequestType, $loginUserDetails)
     {
         $this->quoteDetails = $quoteDetails;
@@ -45,11 +47,14 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
     /**
      * Execute the job.
      */
+
+    //  TODO: Need to add middleware, also failed functionality
     public function handle(SageApiService $sageApiService): void
     {
         info('------------------ Book Update - Sage Job Started - SendUpdateUUID: '.$this->extraParams['send_update_log']->uuid.'------------------');
         $this->extraParams['authDetails'] = $this->loginUserDetails;
 
+        // TODO: Need to get only payment, payment split already there
         switch ($this->sageRequestType) {
             case SageEnum::SUT_NORMAL:
                 $sageResponse = $sageApiService->handleSendUpdateNormalCalls(

@@ -241,11 +241,14 @@ class SendUpdateLogRepository extends BaseRepository
                 }
             }
 
+            // TODO: This shoulld be updated after email successfuly dipatched
             $result = $sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             ]);
 
             if ($result) {
+                // TODO: Move this to a job
+                // TODO: Add a check if the email is successfully dispatched
                 app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $data['action']);
             }
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
