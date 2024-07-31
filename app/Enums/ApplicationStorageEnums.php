@@ -105,4 +105,6 @@ final class ApplicationStorageEnums extends Enum
     public const HEALTH_OCB_EMAIL_TEMPLATE = 'HEALTH_OCB_EMAIL_TEMPLATE';
     public const EMAIL_CAMPAIGN_ENABLED = 'EMAIL_CAMPAIGN_ENABLED';
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
+    public const HEALTH_OCA_EMAIL_BCC = 'HEALTH_OCA_EMAIL_BCC';
+
 }
