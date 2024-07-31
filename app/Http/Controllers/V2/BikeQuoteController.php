@@ -137,10 +137,7 @@ class BikeQuoteController extends Controller
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BIKE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Bike);
-
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
-        $documentTypeCodes = $documentTypes->pluck('code')->toArray();
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Bike);
 
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
@@ -195,7 +192,8 @@ class BikeQuoteController extends Controller
         $ecomBikeInsuranceQuoteUrl = config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL');
         $planURL = $ecomBikeInsuranceQuoteUrl.$quote->uuid;
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
-
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
@@ -234,9 +232,7 @@ class BikeQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'documentTypeCodes' => $documentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
-            'record' => $quote,
             'yearsOfManufacture' => $yearsOfManufacture,
             'emailStatuses' => $emailStatuses,
             'bikeQuotePlanAddons' => $bikeQuotePlanAddons,
@@ -247,6 +243,8 @@ class BikeQuoteController extends Controller
             'carPlanTypeEnum' => $carPlanTypeEnum,
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'websiteURL' => $websiteURL,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

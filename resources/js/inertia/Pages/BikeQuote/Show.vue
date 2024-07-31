@@ -9,9 +9,8 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
 defineProps({
@@ -53,6 +52,17 @@ defineProps({
   paymentTooltipEnum: Object,
   websiteURL: String,
   linkedQuoteDetails: Object,
+  vatPercentage: Number,
+  isAmlClearedForPayment: Boolean,
+  permissions: Object,
+  enums: Object,
+  payments: Array,
+  bookPolicyDetails: Array,
+  sendUpdateOptions: Array,
+  sendUpdateLogs: Array,
+  hasPolicyIssuedStatus: Boolean,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array
 });
 
 const assumptionState = reactive({
@@ -68,6 +78,10 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
+const notification = useToast();
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const bike_current_insurance_status = computed(() => {
   if (
@@ -133,8 +147,6 @@ const currentInsuranceOptions = computed(() => {
 const bikeBodyType = computed(() => {
   return [{ value: 1, label: 'Bike' }];
 });
-
-const notification = useToast();
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType?.map(indType => ({
@@ -293,12 +305,79 @@ const linkEntity = () => {
     });
 };
 const paymentStatusEnum = page.props.paymentStatusEnum;
+
+const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true; 
+};
+
 </script>
 
 <template>
   <div>
     <Head title="Bike Quotes" />
 
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Bike Detail</h2>
+      <div class="flex gap-2">
+        <Link
+          v-if="quote.quote_detail?.insly_id"
+          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link v-if="!isDisabled" :href="route('bike-quotes-edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
+          </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+        </LeadEditBtnTemplate>
+
+        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.BikeQuotesEdit)" :isDisabled="true"/>
+          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.BikeQuotesEdit)"/>
+        </template>
+
+        <Link
+          v-if="can(permissionsEnum.BikeQuotesList)"
+          :href="route('bike-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div"> Bike Quotes </x-button>
+        </Link>
+      </div>
+    </div>
+
+    
     <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="flex justify-between items-center flex-wrap gap-2">
           <h2 class="text-lg font-semibold text-primary-800">E-COM Detail</h2>
@@ -356,28 +435,12 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
         <Collapsible :expanded="sectionExpanded">
           <template #header>
           <div class="flex justify-between items-center">
-            <h3 class="font-semibold  text-lg">Bike Details</h3>
           </div>
         </template>
         <template #body>
           <x-divider class="my-4"></x-divider>
           <div class="flex justify-end items-center mb-4">
-        <div class="flex gap-2">
-            <Link
-          v-if="quote.quote_detail?.insly_id"
-          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-        <Link v-if="can(permissionsEnum.BikeQuotesEdit)" :href="route('bike-quotes-edit', quote.uuid)">
-                <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-            <Link :href="route('bike-quotes-list')" preserve-scroll v-if="can(permissionsEnum.BikeQuotesList)">
-                <x-button size="sm" tag="div">Bike Quotes</x-button>
-            </Link>
+          <div class="flex gap-2">
         </div>
     </div>
     <div class="text-sm">
@@ -547,31 +610,6 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
         </template>
         </Collapsible>
       </div>
-    <!-- <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-xl">Bike Details</h3>
-        <div class="flex gap-2">
-            <Link
-          v-if="quote.quote_detail?.insly_id"
-          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-        <Link v-if="can(permissionsEnum.BikeQuotesEdit)" :href="route('bike-quotes-edit', quote.uuid)">
-                <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-            <Link :href="route('bike-quotes-list')" preserve-scroll v-if="can(permissionsEnum.BikeQuotesList)">
-                <x-button size="sm" tag="div">Bike Quotes</x-button>
-            </Link>
-        </div>
-    </div> -->
-
-      <!-- <div class="p-4 rounded shadow mb-6 bg-white">
-
-    </div> -->
-
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
@@ -1091,30 +1129,27 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
     :websiteURL="websiteURL"
     :linkedQuoteDetails="linkedQuoteDetails"/>
 
-
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-            :paymentDocument="
-            page.props.documentTypeCodes.filter(item =>
-            ['BPD', 'BPDR', 'BDPDR'].includes(item.code),
-                )
-            "
-            :proformaPayment="
-                quote.payments.find(
-                item =>
-                    item.payment_methods_code ===
-                    page.props?.paymentMethodsEnum?.ProformaPaymentRequest,
-                )
-            "
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
+      :paymentDocument="paymentDocument"
+      :proformaPayment="
+        quote.payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quote"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+      :bookPolicyDetails="bookPolicyDetails"
+    />
+
     <QuotePayments
       v-else
       :can="can"
@@ -1125,30 +1160,42 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
     />
+    
+
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :quote="quote"
+      modelType="Bike"
+      :expanded="sectionExpanded"
+    />
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :modelType="quoteType"
       :insly-id="quote?.quote_detail?.insly_id"
+      :expanded="sectionExpanded"
+      quote-type="Bike"
     />
 
-    <QuotePolicy
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
       :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
+      quoteType="Bike"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
-
-
-   <!-- <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
-    /> -->
 
     <AuditLogs :id="$page.props.quote.id" :quote-type="quoteType" :quoteCode="$page.props.quote.code"/>
 
