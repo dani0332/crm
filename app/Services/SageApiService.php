@@ -1250,6 +1250,7 @@ class SageApiService
         }
     }
 
+    // TODO: access relational data using relation instead of passing as a seperate variable
     public function postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data)
     {
         // payload
@@ -2248,6 +2249,8 @@ class SageApiService
 
         info('################################## mark status as policy booked for : '.$quote->code.'##################################');
         unset($quote->userId);
+
+        // TODO: Save quote status log for historic record
         $quote->update([
             'quote_status_id' => QuoteStatusEnum::PolicyBooked,
             'policy_booking_date' => Carbon::now(),

@@ -39,6 +39,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        //TODO : Add Quote UUID in logs for better debugging
         info('job: SendBookPolicyDocumentsJob started');
 
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
@@ -68,7 +69,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
         // Prepare the data to be sent to Brevo for email template dispatch
         if (! empty($templateId)) {
-
+            // TODO:  Hard coded format and variable values should be form env file
             $roadsideAssistance = '';
             $emailData = new \stdClass();
             $emailData->code = $quote->code;

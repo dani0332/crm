@@ -213,6 +213,7 @@ class CentralController extends Controller
         info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
+            // TODO : job should update the status when job is executed successfully
             dispatch(new SendBookPolicyDocumentsJob($request));
 
             $quote->update([
@@ -221,7 +222,9 @@ class CentralController extends Controller
 
             info('Policy send to customer for '.$quote->uuid);
 
-            return response()->json(['message' => 'Policy sent to customer'], 200);
+            //TODO : Status message need to be appropriate
+            //TODO : Flags should be introduced regarding Document send email
+            return response()->json(['message' => 'Sending Documents to customer, Status will be updated once document sent'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
@@ -229,6 +232,7 @@ class CentralController extends Controller
                     'message' => 'You are not authorized to perform this action',
                 ]], 403);
             }
+            // TODO: Fetching of Data should be moved to Service
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
             $paymentSplits = $payment->paymentSplits;
