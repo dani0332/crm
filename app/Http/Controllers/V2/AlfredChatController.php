@@ -4,6 +4,8 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\InstantChatReportsEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
@@ -13,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Exports\InstantChatConsolidatedExport;
 use App\Exports\InstantChatDetailedExport;
+use League\CommonMark\Extension\SmartPunct\Quote;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AlfredChatController extends Controller
@@ -148,6 +151,7 @@ class AlfredChatController extends Controller
 
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
+        dd($chat->toArray());
         if($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             return Excel::download(new InstantChatConsolidatedExport($chat), $fileName.'.xlsx');
         }
@@ -189,27 +193,45 @@ class AlfredChatController extends Controller
             $pipeline[] = ['$match' => ['created_at' => ['$gte' => $start_date, '$lte' => $end_date]]];
         }
 
+        //missing in mongodb
         if (isset($request->transaction_type) && $request->transaction_type != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]];
         }
+
+        // missing in mongodb 
         if (isset($request->batch) && $request->batch != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.batch' => ['$in' => $request->batch]]];
         }
         if (isset($request->lead_status) && $request->lead_status != null) {
-            $pipeline[] = ['$match' => ['ken_response.quotes.lead_status' => ['$in' => $request->lead_status]]];
+            $pipeline[] = ['$match' => ['ken_response.quotes.quoteStatusId' => ['$in' => $request->lead_status]]];
         }
         if (isset($request->payment_status) && $request->payment_status != null) {
             $pipeline[] = ['$match' => ['payment_status' => ['$in' => $request->payment_status]]];
         }
-        if (isset($request->sale_leads) && $request->sale_leads != null) {
-            $pipeline[] = ['$match' => ['ken_response.quotes.sale_leads' => $request->sale_leads]];
+        if (isset($request->sale_leads) && $request->sale_leads === quoteTypeCode::yesText) {
+            $approvedStatuses = [
+                QuoteStatusEnum::TransactionApproved,
+                QuoteStatusEnum::PolicyIssued,
+                QuoteStatusEnum::PolicySentToCustomer,
+                QuoteStatusEnum::PolicyBooked
+            ];
+
+            $pipeline[] = ['$match' => ['ken_response.quotes.quoteStatusId' => ['$in' => $approvedStatuses]]];
         }
-        if (isset($request->fallback) && $request->fallback != null) {
-            $pipeline[] = ['$match' => ['fallback' => $request->fallback == 'yes' ? true : false]];
+        if (isset($request->fallback) && $request->fallback === quoteTypeCode::yesText) {
+            $pipeline[] = [
+                '$match' => [
+                    '$or' => [
+                        ['ken_response.quotes.advisor' => ['$exists' => true, '$ne' => null]], // Check if advisor contact is shared
+                        ['fallback' => ['$exists' => true, '$eq' => true]]    // Check if HAPEX contact is shared
+                    ]
+                ]
+            ];
         }
         if (isset($request->message_channel) && $request->message_channel != null) {
             $pipeline[] = ['$match' => ['channel' => $request->message_channel]];
         }
+        // missing in mongodb
         if (isset($request->segment) && $request->segment != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.isSIC' => $request->segment]];
         }
@@ -269,26 +291,158 @@ class AlfredChatController extends Controller
             ];
         }elseif($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
             $pipeline[] = [
-                '$project' => [
-                    'quote_type' => 1,
-                    'quote_id' => 1,
-                    'created_at' => 1,
-                    'communication_channel' => '$channel',
-                    'batch' =>   ['$arrayElemAt' => ['$ken_response.quotes.currentInsurance', 0]],
-                    'transaction' =>   ['$arrayElemAt' => ['$ken_response.quotes.transaction', 0]],
-                    'segment' =>   ['$arrayElemAt' => ['$ken_response.quotes.segment', 0]],
-                    'ai_interactions' =>   ['$arrayElemAt' => ['$ken_response.quotes.ai_interactions', 0]],
-                    'fallbacks' =>   ['$arrayElemAt' => ['$ken_response.quotes.fallback_counts', 0]],
-                    'payment_status' =>   ['$arrayElemAt' => ['$ken_response.quotes.paymentStatus', 0]],
-                    'sale_leads' =>   ['$arrayElemAt' => ['$ken_response.quotes.sale_leads', 0]],
-                    'provider_name' =>   ['$arrayElemAt' => ['$ken_response.quotes.currentlyInsuredWith', 0]],
-                    'plan_type' =>   ['$arrayElemAt' => ['$ken_response.quotes.plan_type', 0]],
-                    'plan_name' =>   ['$arrayElemAt' => ['$ken_response.quotes.plan_name', 0]],
-                    'price' =>   ['$arrayElemAt' => ['$ken_response.quotes.price', 0]],
-                    'payment_date' =>   ['$arrayElemAt' => ['$ken_response.quotes.payment_date', 0]],
-                    'ep_purchased' =>   ['$arrayElemAt' => ['$ken_response.quotes.ep_purchased', 0]],
+                '$group' => [
+                    '_id' => '$quote_id',
+                    'quote_type' => ['$last' => '$quote_type'],
+                    'date_of_first_interaction' => ['$min' => '$created_at'],
+                    'communication_channels' => ['$addToSet' => '$channel'],
+                    'batch' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$last' => '$ken_reponse.quotes.batch'],
+                                null
+                            ]
+                        ]
+                    ],
+                    'transaction' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$last' => '$ken_reponse.quotes.transaction_type'],
+                                null
+                            ]
+                        ]
+                    ],
+                    'segment' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$last' => '$ken_reponse.quotes.segment'],
+                                null
+                            ]
+                        ]
+                    ],
+                    'payment_status' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$first' => '$ken_reponse.quotes.paymentStatus'],
+                                null
+                            ]
+                        ]
+                    ],
+                    'provider_name' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$last' => '$ken_reponse.quotes.providerName'],
+                                null
+                            ]
+                        ]
+                    ],
+                    'ai_interactions' => [
+                        '$sum' => [
+                            '$cond' => [
+                                ['$eq' => ['$role', 'AI']],
+                                1,
+                                0
+                            ]
+                        ]
+                    ],
+                    'fallbacks' => ['$sum' => ['$cond' => [['fallback', true], 1, 0]]],
+                    'payment_status' => ['$last' => '$ken_reponse.quotes.paymentStatus'],
+                    'sale_leads' => [
+                        '$max' => [
+                            '$cond' => [
+                                [
+                                    '$and' => [
+                                        ['$eq' => ['$role', 'USER']],
+                                        ['$in' => [
+                                            '$ken_reponse.quotes.quoteStatusId',
+                                            [
+                                                QuoteStatusEnum::TransactionApproved,
+                                                QuoteStatusEnum::PolicyIssued,
+                                                QuoteStatusEnum::PolicySentToCustomer,
+                                                QuoteStatusEnum::PolicyBooked
+                                            ]
+                                        ]]
+                                    ]
+                                ],
+                                'Yes',
+                                'No'
+                            ]
+                        ]
+                    ],
+                    'plan_type' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$last' => '$ken_reponse.quotes.plan_type'],
+                                null
+                            ]
+                        ]
+                    ],
+                    'plan_name' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$last' => '$ken_reponse.quotes.plan_name'],
+                                null
+                            ]
+                        ]
+                    ],
+                    'price' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$last' => '$ken_reponse.quotes.price'],
+                                null
+                            ]
+                        ]
+                    ],
+                    'payment_date' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$last' => '$ken_reponse.quotes.payment_date'],
+                                null
+                            ]
+                        ]
+                    ],
+                    'ep_purchased' => [
+                        '$last' => [
+                            '$cond' => [
+                                ['$$ROOT.role', 'USER'],
+                                ['$last' => '$ken_reponse.quotes.ep_purchased'],
+                                null
+                            ]
+                        ]
+                    ],
                 ],
             ];
+            
+            // $pipeline[] = [
+            //     '$project' => [
+            //         'quote_type' => 1,
+            //         'quote_id' => 1,
+            //         'created_at' => 1,
+            //         'communication_channel' => '$channel',
+            //         'batch' =>   ['$arrayElemAt' => ['$ken_response.quotes.batch', 0]],// missing
+            //         'transaction' =>   ['$arrayElemAt' => ['$ken_response.quotes.transaction', 0]],
+            //         'segment' =>   ['$arrayElemAt' => ['$ken_response.quotes.segment', 0]],
+            //         'ai_interactions' =>   ['$arrayElemAt' => ['$ken_response.quotes.ai_interactions', 0]],
+            //         'fallbacks' =>   ['$arrayElemAt' => ['$ken_response.quotes.fallback_counts', 0]],
+            //         'payment_status' =>   ['$arrayElemAt' => ['$ken_response.quotes.paymentStatus', 0]],
+            //         'sale_leads' =>   ['$arrayElemAt' => ['$ken_response.quotes.sale_leads', 0]],
+            //         'provider_name' =>   ['$arrayElemAt' => ['$ken_response.quotes.currentlyInsuredWith', 0]],
+            //         'plan_type' =>   ['$arrayElemAt' => ['$ken_response.quotes.plan_type', 0]],
+            //         'plan_name' =>   ['$arrayElemAt' => ['$ken_response.quotes.plan_name', 0]],
+            //         'price' =>   ['$arrayElemAt' => ['$ken_response.quotes.price', 0]],
+            //         'payment_date' =>   ['$arrayElemAt' => ['$ken_response.quotes.payment_date', 0]], // missing
+            //         'ep_purchased' =>   ['$arrayElemAt' => ['$ken_response.quotes.ep_purchased', 0]], // missing
+            //     ],
+            // ];
         }
 
         return $pipeline;
