@@ -61,7 +61,7 @@ class AuditableController extends Controller
             });
         }
 
-        if (!empty($documentIds)) {
+        if (! empty($documentIds)) {
             $query->orWhere(function ($query) use ($documentIds) {
                 $query->where('auditable_type', 'App\Models\QuoteDocument')
                     ->whereIn('auditable_id', $documentIds);
