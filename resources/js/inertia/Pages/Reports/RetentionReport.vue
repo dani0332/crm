@@ -6,7 +6,8 @@ const props = defineProps({
   reportData: Object,
   productName: String,
   monthNames: Array,
-  retentionReportTooltipEnum: Array
+  retentionReportTooltipEnum: Array,
+  isShowBatchColumn: Boolean
 });
 
 const page = usePage();
@@ -27,7 +28,8 @@ const getFiltersObject = () => {
     month: '',
     page: 1,
     sub_teams: [],
-    insurance_type: ""
+    insurance_type: "",
+    type: ''
   }
 };
 
@@ -409,6 +411,64 @@ const insuranceTypeOptions = computed(() => {
   return [];
 });
 
+
+const totalLeads = reactive({
+  modal: false,
+  loader: false,
+  filters: {
+    leadType: '',
+    quote_batch_id: null,
+    advisorId: null,
+  },
+  data: {},
+  current: '',
+  tableHeader: [
+    {
+      text: 'Ref-ID',
+      value: 'code',
+    },
+    {
+      text: 'Customer Name',
+      value: 'fullName',
+    },
+    {
+      text: 'Lead Status',
+      value: 'quoteStatusName',
+    },
+    {
+      text: 'Expiry Date',
+      value: 'policy_expiry_date',
+    },
+    {
+      text: 'Price',
+      value: 'price',
+    },
+  ],
+});
+
+function onFetchLeadsInfo(item, type){
+  totalLeads.data = [];
+  totalLeads.modal = true;
+  totalLeads.loader = true;
+  filters.type = type;
+  const payLoad = cleanFilters(filters);
+  axios
+    .get(`/reports/fetch-retention-leads-data`, {
+      data: {
+        ...payLoad,
+      },
+    })
+    .then(response => {
+      totalLeads.data = response.data;
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      loaders.advisorLeadTable = false;
+      totalLeads.loader = false;
+    });
+}
 </script>
 
 <template>
@@ -531,7 +591,7 @@ const insuranceTypeOptions = computed(() => {
         <table>
           <thead class="vue3-easy-data-table__header">
             <tr>
-              <th class="inner-th-class">
+              <th class="inner-th-class" >
                 <x-tooltip position="right bootom">
                   <span class="border-b border-dotted">Month</span>
                   <template #tooltip>
@@ -541,7 +601,7 @@ const insuranceTypeOptions = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th class="inner-th-class">
+              <th class="inner-th-class" v-if="isShowBatchColumn" >
                 <x-tooltip position="right bootom">
                   <span class="border-b border-dotted">Batch</span>
                   <template #tooltip>
@@ -551,7 +611,7 @@ const insuranceTypeOptions = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th class="inner-th-class">
+              <th class="inner-th-class" v-if="isShowBatchColumn" >
                 <x-tooltip position="right bootom">
                   <span class="border-b border-dotted">Start Date</span>
                   <template #tooltip>
@@ -561,7 +621,7 @@ const insuranceTypeOptions = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th class="inner-th-class">
+              <th class="inner-th-class" v-if="isShowBatchColumn" >
                 <x-tooltip position="right bootom">
                   <span class="border-b border-dotted">End Date</span>
                   <template #tooltip>
@@ -658,15 +718,16 @@ const insuranceTypeOptions = computed(() => {
             <template v-for="(item, index) in reportData.data" :key="item.code">
               <tr>
                 <td>{{ item.month }}</td>
-                <td>{{ item.batch }}</td>
-                <td>{{ item.start_date }}</td>
-                <td>{{ item.end_date }}</td>
+                <td v-if="isShowBatchColumn" >{{ item.batch }}</td>
+                <td v-if="isShowBatchColumn" >{{ item.start_date }}</td>
+                <td v-if="isShowBatchColumn" >{{ item.end_date }}</td>
                 <td>{{ item.advisor_name }}</td>
                 <td>
                   <x-tooltip position="right bootom">
                     <p v-if="item.total == 0">{{ item.total }}</p>
                     <button
                       v-else
+                      @click="onFetchLeadsInfo(item, 'total')"
                       class="text-primary underline"
                     >
                       {{ item.total }}
@@ -678,12 +739,12 @@ const insuranceTypeOptions = computed(() => {
                     </template>
                   </x-tooltip>
                 </td>
-
                 <td>
                   <x-tooltip position="right bootom">
                     <p v-if="item.lost == 0">{{ item.lost }}</p>
                     <button
                       v-else
+                      @click="onFetchLeadsInfo(item, 'lost')"
                       class="text-primary underline"
                     >
                       {{ item.lost }}
@@ -700,6 +761,7 @@ const insuranceTypeOptions = computed(() => {
                     <p v-if="item.invalid == 0">{{ item.invalid }}</p>
                     <button
                       v-else
+                      @click="onFetchLeadsInfo(item, 'invalid')"
                       class="text-primary underline"
                     >
                       {{ item.invalid }}
@@ -716,6 +778,7 @@ const insuranceTypeOptions = computed(() => {
                     <p v-if="item.sales == 0">{{ item.sales }}</p>
                     <button
                       v-else
+                      @click="onFetchLeadsInfo(item, 'sales')"
                       class="text-primary underline"
                     >
                       {{ item.sales }}
@@ -781,6 +844,43 @@ const insuranceTypeOptions = computed(() => {
         last: reportData.last_page,
       }"
     />
+
+    <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
+      <template #header>
+        <div class="text-center">Advisor Assigned : Total Leads</div>
+      </template>
+      <section class="min-h-[70vh]">
+        <div v-if="!loaders.advisorLeadTable">
+          <PaginateClient
+            :links="{
+              next: totalLeads.data.next_page_url,
+              prev: totalLeads.data.prev_page_url,
+              current: totalLeads.data.current_page,
+              from: totalLeads.data.from,
+              to: totalLeads.data.to,
+              total: totalLeads.data.total,
+              last: totalLeads.data.last_page,
+            }"
+            :loading="totalLeads.loader"
+            @update="setPageTable"
+          />
+          <DataTable
+            table-class-name="tablefixed compact"
+            :loading="totalLeads.loader"
+            :headers="totalLeads.tableHeader"
+            :items="totalLeads.data.data || []"
+            border-cell
+            hide-rows-per-page
+            hide-footer
+          ></DataTable>
+        </div>
+        <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
+          <x-spinner size="lg" color="#1d83bc" />
+          <p class="text-sm">Fetching records...</p>
+        </div>
+      </section>
+    </x-modal>
+
   </div>
 </template>
 
@@ -795,7 +895,7 @@ const insuranceTypeOptions = computed(() => {
   text-transform: none;
 }
 .custom-height {
-  min-height: 185px;
+  min-height: 200px;
 }
 
 .tooltip-display {

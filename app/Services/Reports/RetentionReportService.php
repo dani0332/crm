@@ -198,4 +198,34 @@ class RetentionReportService extends BaseService
         ];
     }
     
+    public function getRetentionLeadsData($request){
+        $quoteType = '';
+        if (isset($request->lob)) {
+            $quoteType = $request->lob;
+        } else {
+            $quoteType = $this->getUserPorductName();
+        }
+
+        $quoteModel = $this->getModelObject($quoteType);
+        if ($quoteType == '' || !$quoteModel) {
+            return [];
+        }
+
+        $query = $quoteModel::query()
+            ->selectRaw("car_quote_request.code, CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName , quote_status.text as quoteStatusName, price_with_vat as price, policy_expiry_date")
+                ->join('users', 'advisor_id', '=', 'users.id')
+                ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id');
+
+        $this->applyFilters($query, $request->all());
+
+        if ($request->displayBy == 'batch') {
+            $this->applyFilterForBatch($query, $request);
+        } else if ($request->displayBy == 'month'){
+            $this->applyFilterByMonth($query, $request);
+        }
+
+        $reportData = $query->paginate(12)->withQueryString();
+
+        return $reportData;
+    }
 }

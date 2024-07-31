@@ -494,13 +494,24 @@ class ReportsController extends Controller
     }
 
     public function renderRetentionReport(Request $request,  AdvisorConversionReportService $advisorConversionReportService, RetentionReportService $retentionReportService){
+        $retentionReportData =  $retentionReportService->getReportData($request);
+        $firstRetentionReporData = $retentionReportData->first();
+        $isShowBatchColumn = false;
+        if ($firstRetentionReporData && $firstRetentionReporData->getAttribute('batch') !== null) {
+            $isShowBatchColumn = true;
+        }
         return inertia('Reports/RetentionReport', [
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),
             'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
-            'reportData' => $retentionReportService->getReportData($request),
+            'reportData' => $retentionReportData,
             'productName' => $retentionReportService->getUserPorductName(),
             'monthNames' => MonthNameEnum::all(),
-            'retentionReportTooltipEnum' => RetentionReportTooltipEnum::asArray()
+            'retentionReportTooltipEnum' => RetentionReportTooltipEnum::asArray(),
+            'isShowBatchColumn' => $isShowBatchColumn
         ]);
+    }
+
+    public function fetchRetentionLeadsData(Request $request,  RetentionReportService $retentionReportService){
+        return $retentionReportService->getRetentionLeadsData($request);
     }
 }
