@@ -83,8 +83,6 @@ class DatabaseSeeder extends Seeder
             // BusinessTypeInsuranceSeeder::class,
             // MarineSeeder::class,
             // ImcrmUsersRolesCleaner::class,
-            AddPermissionsForInsurerNowPayment::class,
-            AlfredProtectSeeder::class,
             // AddeTicketDocumentTypeSeeder::class,
             // DocumentVerifyPermissionSeeder::class,
             AddLOBsClaimHistoryOptionsSeeder::class,
