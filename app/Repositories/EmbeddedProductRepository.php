@@ -163,7 +163,7 @@ class EmbeddedProductRepository extends BaseRepository
         $capturedAt = null;
 
         if ($transaction->isNotEmpty()) {
-            $isAlfredProtect = checkAlfredProtect($ep->short_code);
+            $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
             if ($isAlfredProtect) {
                 $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
                 $attachments = $strategy->getCertificateDocument($ep, $transaction[0], $quoteObject);
@@ -247,7 +247,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ['is_selected',  '=', true],
             ])->whereIn('product_id', $optionsIds)->get();
 
-            $isAlfredProtect = checkAlfredProtect($item->short_code);
+            $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($item->short_code);
             if ($isAlfredProtect) {
                 $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0 : false;
                 $item->download_document_button = $isDocPresent;
@@ -317,7 +317,7 @@ class EmbeddedProductRepository extends BaseRepository
             $product_name = $ep->product_name;
             $product_description = $ep->description;
             $short_code = $ep->short_code;
-            $isAlfredProtect = checkAlfredProtect($short_code);
+            $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $attachmentsUrls = [];
             $documents = json_decode($ep->company_documents);
@@ -389,7 +389,7 @@ class EmbeddedProductRepository extends BaseRepository
             // send certificate only for alfred protect
             $strategy = $this->createStrategy($short_code, $isAlfredProtect);
             $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
-            $emailTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value');
+            $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
             info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
             $emailData = (object) [
                 'customerName' => $quoteObject->customer->first_name.' '.$quoteObject->customer->last_name,
@@ -576,7 +576,7 @@ class EmbeddedProductRepository extends BaseRepository
         } else {
             $dataset = $dataset->simplePaginate()->withQueryString();
         }
-        $isAlfredProtect = checkAlfredProtect($ep->short_code);
+        $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
 
         $strategy = $this->createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset, $isAlfredProtect);

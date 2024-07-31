@@ -179,10 +179,8 @@ class SukoonDemocranceService
                 $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
                 $docUrl = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
-
                 $docUuid = $this->generateUniqueUuid();
 
-                // TODO: check if document exist need to update that document file
                 $document = $embeddedTransaction->documents()->where('document_type_code', $documentType->code)->first();
                 if (isset($document)) {
                     $document->update([
@@ -267,11 +265,11 @@ class SukoonDemocranceService
             $userDetail = [
                 'first_name' => $quote->first_name,
                 'last_name' => $quote->last_name,
-                'dob' => Carbon::parse($quote->dob)->format('Y-m-d'),
+                'dob' => !empty($quote->customer->dob) ? Carbon::parse($quote->customer->dob)->format('Y-m-d') : '',
                 'nationality' => 'AE',
                 'is_resident' => $quote->emirate ? 'Yes' : 'No',
                 'emirate' => $quote->emirate->text,
-                'address' => 'Something, somewhere',
+                'address' => $quote->customer->detail->residential_address ?? '',
                 'email' => 'hitesh.motwani@insurancemarket.ae',
                 'mobile' => '+971505027325',
                 'plan_option' => $this->productSlug.'_'.strtolower(EmbeddedProductEnum::$shortCode()->value),
@@ -282,11 +280,8 @@ class SukoonDemocranceService
 
             $additionalData = [
                 'form_name' => 'additional_details',
-                'emirates_id_number' => '784-1000-0000000-0',
-                'emirates_expiry_date' => '2024-09-30',
-                // TODO: customer details coming from aml/kyc
-                // 'emirates_id_number' => $quote->customer->emirates_id_number,
-                // 'emirates_expiry_date' => $quote->customer->emirates_id_expiry_date,
+                'emirates_id_number' => $quote->customer->emirates_id_number,
+                'emirates_expiry_date' => $quote->customer->emirates_id_expiry_date,
                 'policy_number' => $this->policyNumber,
             ];
 

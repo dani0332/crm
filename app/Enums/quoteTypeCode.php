@@ -2,6 +2,17 @@
 
 namespace App\Enums;
 
+use App\Models\BikeQuote;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
+use App\Models\CycleQuote;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\JetskiQuote;
+use App\Models\LifeQuote;
+use App\Models\PetQuote;
+use App\Models\TravelQuote;
+use App\Models\YachtQuote;
 use BenSampo\Enum\Enum;
 
 class quoteTypeCode extends Enum
@@ -43,4 +54,21 @@ class quoteTypeCode extends Enum
     const Jetski = 'Jetski';
     const Aml = 'Aml';
     const TRA = 'TRA';
+
+    public static function getName($value)
+    {
+        return match ($value) {
+            CarQuote::class => Self::Car,
+            HomeQuote::class => Self::Home,
+            HealthQuote::class => Self::Health,
+            LifeQuote::class => Self::Life,
+            BusinessQuote::class => Self::Business,
+            BikeQuote::class => Self::Bike,
+            YachtQuote::class => Self::Yacht,
+            TravelQuote::class => Self::Travel,
+            PetQuote::class => Self::Pet,
+            CycleQuote::class => Self::Cycle,
+            JetskiQuote::class => Self::Jetski,
+        };
+    }
 }

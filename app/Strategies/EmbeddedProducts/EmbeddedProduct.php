@@ -3,6 +3,7 @@
 namespace App\Strategies\EmbeddedProducts;
 
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\quoteTypeCode;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -15,6 +16,44 @@ class EmbeddedProduct
     public function getPDFData($quoteObject, $certificate_number, $premium)
     {
         throw new Exception('Method not implemented');
+    }
+
+    public function getExcelColumns()
+    {
+        return [
+            'EP REF-ID',
+            'ADVISOR NAME',
+            'PAYMENT DATE',
+            'PLAN COMMENCEMENT DATE',
+            'PLAN END DATE',
+            'CERTIFICATE NUMBER',
+            'FULL NAME',
+            'EMIRATES ID NUMBER',
+            'DOB',
+            'AGE',
+            'VEHICLE',
+            'CONTRIBUTION AMOUNT',
+            'POLICY ISSUE STATUS',
+        ];
+    }
+
+    public function getExcelData($certificate)
+    {
+        return [
+            $certificate->ref_id,
+            $certificate->advisor_name,
+            $certificate->payment_date,
+            $certificate->plan_start_date,
+            $certificate->plan_end_date,
+            $certificate->certificate_number,
+            $certificate->name,
+            $certificate->emirates_id_number,
+            $certificate->dob,
+            $certificate->age,
+            $certificate->vehicle,
+            $certificate->contribution_amount,
+            $certificate->status,
+        ];
     }
 
     /**
@@ -66,6 +105,7 @@ class EmbeddedProduct
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
             $item->emirates_id_number = $customer->emirates_id_number ?? '';
+            $item->lob = quoteTypeCode::getName($quoteObject::class) ?? '';
 
             if ($isAlfredProtect) {
                 $item->plan_type = EmbeddedProductEnum::{$item->product->embeddedProduct->short_code}()->value;
@@ -73,14 +113,22 @@ class EmbeddedProduct
                 $item->tax_invoice_buyer_no = $item->tax_invoice_buyer_no ?? '';
                 $item->credit_note_no = $item->credit_note_no ?? '';
                 $item->credit_note_buyer_no = $item->credit_note_buyer_no ?? '';
-                $item->commission_with_vat = $item->commission_without_vat ?? '';
-                $item->policy_price = $item->policy_price ?? '';
-                $item->policy_status = $item->policy_status ?? '';
+                $item->commission_with_vat = $item->commission_with_vat ?? '';
+                $item->premium_with_vat = $item->contribution_amount;
             }
 
             return $item;
         });
 
         return $dataset;
+    }
+
+    public static function checkAlfredProtect($product)
+    {
+        return in_array($product, [
+            EmbeddedProductEnum::AP1()->key,
+            EmbeddedProductEnum::AP2()->key,
+            EmbeddedProductEnum::AP3()->key,
+        ]);
     }
 }

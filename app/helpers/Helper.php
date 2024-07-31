@@ -921,17 +921,6 @@ if (! function_exists('isValidDate')) {
     }
 }
 
-if (! function_exists('checkAlfredProtect')) {
-    function checkAlfredProtect($product)
-    {
-        return in_array($product, [
-            EmbeddedProductEnum::AP1()->key,
-            EmbeddedProductEnum::AP2()->key,
-            EmbeddedProductEnum::AP3()->key,
-        ]);
-    }
-}
-
 if (! function_exists('isValidTeamForLOBAdvisor')) {
     function isValidTeamForLOBAdvisor($teams, $allowed_teams)
     {

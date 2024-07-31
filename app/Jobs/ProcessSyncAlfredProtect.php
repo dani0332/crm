@@ -17,8 +17,8 @@ class ProcessSyncAlfredProtect implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 2;
-    public $timeout = 1200;
-    public $backoff = 10;
+    public $timeout = 300;
+    public $backoff = 300;
     private $quoteObject;
 
     /**
@@ -47,7 +47,7 @@ class ProcessSyncAlfredProtect implements ShouldQueue
 
         $transaction = $transactions->where(function ($transact) {
             if (isset($transact->product) && isset($transact->product->embeddedProduct)) {
-                return checkAlfredProtect($transact->product->embeddedProduct->short_code);
+                return AlfredProtect::checkAlfredProtect($transact->product->embeddedProduct->short_code);
             } else {
                 throw new Exception('No embedded product found for the selected transaction');
             }
