@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
@@ -17,6 +18,7 @@ use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarLostQuoteLog;
 use App\Models\GenericModel;
 use App\Models\PaymentAction;
@@ -366,9 +368,10 @@ class CRUDService extends BaseService
 
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
+            $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
             if (
                 strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
-                && $entity->source == LeadSourceEnum::IMCRM
+                && ($entity->source == LeadSourceEnum::IMCRM || strpos($entity->source, $ecommerceSource) !== false)
             ) {
                 $this->healthQuoteService->assignRenewalBatch($entity->id);
                 $this->updatePaymentStatus($entity);
