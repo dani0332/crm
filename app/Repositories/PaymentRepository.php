@@ -240,6 +240,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
+                
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
@@ -249,6 +250,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'due_date' => $splitPayment['due_date'],
                     'payment_status_id' => PaymentStatusEnum::NEW,
                     'discount_value' => $discount,
+                    'price_vat_applicable' => app(SplitPaymentService::class)->calculateSplitVat($splitPayment['payment_amount']),
                 ];
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 if ($paymentSplitRecord) {
@@ -274,8 +276,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     public function updatePaymentSplits($request)
-    {
-        $masterPayment = (object) $request->payment;
+    { 
+        $masterPayment = (object) $request->payment;        
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
@@ -338,6 +340,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         'payment_status_id' => PaymentStatusEnum::NEW, //reset status to 'NEW
                         'due_date' => $splitPayment['due_date'],
                         'discount_value' => $discount,
+                        'price_vat_applicable' => app(SplitPaymentService::class)->calculateSplitVat($splitPayment['payment_amount'], $request->modelType),
+                        'price_vat' => app(SplitPaymentService::class)->calculatePriceVat($masterPayment->frequency, $masterPayment->total_price, $serialNo, $splitPayment['payment_amount'], $request->modelType),
                     ];
                 }
 

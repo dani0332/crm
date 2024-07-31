@@ -20,7 +20,7 @@ class PaymentSplits extends Model implements Auditable
     protected $fillable = [
         'code', 'sr_no', 'payment_method', 'check_detail', 'payment_amount', 'due_date', 'payment_status_id', 'collection_amount', 'bank_reference_number', 'decline_reason_id',
         'decline_custom_reason', 'sage_reciept_id', 'digital_wallet', 'payment_link', 'payment_link_created_at', 'payment_allocation_status',
-        'captured_at', 'authorized_at', 'is_approved', 'reference',  'discount_value', 'verified_by', 'verified_at',
+        'captured_at', 'authorized_at', 'is_approved', 'reference',  'discount_value', 'verified_by', 'verified_at','price_vat_applicable', 'price_vat', 'commission_vat_applicable', 'commission_vat'        
     ];
 
     public function payment()

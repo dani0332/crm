@@ -11,6 +11,7 @@ use App\Enums\PaymentStatusTextEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\PaymentFrequency;
 use App\Factories\SagePayloadFactory;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -557,5 +558,45 @@ class SplitPaymentService
 
         return $paymentStatusText;
     }
+
+    // function to calculate the split vat
+    public function calculateSplitVat($splitPaymentAmount, $modelType)
+    {
+        $priceVatApplicable = 0;
+        if(!isVatApplied($modelType)) {
+            return $priceVatApplicable;
+        }
+        $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+        if ($vatValue) {
+            $priceVatApplicable = $splitPaymentAmount / (1 + ($vatValue / 100));
+            //$priceVatApplicable = $splitPaymentAmount - (($splitPaymentAmount*$vatValue) / 100);
+        }        
+        return $priceVatApplicable;
+    }
+
+     // function to calculate the price vat
+     public function calculatePriceVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType)
+     {
+        $priceVat = 0;
+        if(!isVatApplied($modelType)) {
+            return $priceVat;
+        }
+        $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+        if(!$vatValue) {
+            return $priceVat;
+        }
+        if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+            
+            $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
+            $priceVat = ($priceWithoutVat*$vatValue) / 100;
+            
+            //$priceVat = $splitPaymentAmount / (1 + ($vatValue / 100));   
+            //$priceVat = ($splitPaymentAmount*$vatValue) / 100;
+        } elseif ($splitPaymentNumber===1) {
+            $priceWithoutVat = $masterTotalPrice / (1 + ($vatValue / 100));
+            $priceVat = ($priceWithoutVat*$vatValue) / 100;            
+        }        
+        return $priceVat;
+     }
 
 }
