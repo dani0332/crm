@@ -363,27 +363,28 @@ class QuoteDocumentService extends BaseService
      *
      * @return array
      */
-
-    public function getAppDownloadLink($modelType, $quote) {
+    public function getAppDownloadLink($modelType, $quote)
+    {
         $appDownloadLink = '';
-        if (ucfirst($modelType) == quoteTypeCode::Health){
-            $plan =  $quote->plan;
-            $code= $plan->insuranceProvider->code . '_HEALTH_DOC';
+        if (ucfirst($modelType) == quoteTypeCode::Health) {
+            $plan = $quote->plan;
+            $code = $plan->insuranceProvider->code.'_HEALTH_DOC';
             $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
             // If no document found against provider  will check health network document
-            if ($providerHealthDoc == null){
+            if ($providerHealthDoc == null) {
                 $healthNetwork = $plan->healthNetwork;
-                $code = str_replace(' ', '_', $healthNetwork->text) . '_HEALTH_DOC';
+                $code = str_replace(' ', '_', $healthNetwork->text).'_HEALTH_DOC';
                 $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
             }
-            // If these two documents then we send complete url 
-            if(in_array($code, [ApplicationStorageEnums::BUP_HEALTH_DOC, ApplicationStorageEnums::CIG_HEALTH_DOC])){
+            // If these two documents then we send complete url
+            if (in_array($code, [ApplicationStorageEnums::BUP_HEALTH_DOC, ApplicationStorageEnums::CIG_HEALTH_DOC])) {
                 $appDownloadLink = $providerHealthDoc;
-            } else{
+            } else {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
-                $appDownloadLink = $baseUrl . $providerHealthDoc;
+                $appDownloadLink = $baseUrl.$providerHealthDoc;
             }
         }
+
         return $appDownloadLink;
     }
 }

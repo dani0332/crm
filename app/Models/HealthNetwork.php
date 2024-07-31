@@ -8,6 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class HealthNetwork extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'health_networks';
 }

@@ -105,6 +105,7 @@ final class ApplicationStorageEnums extends Enum
     public const HEALTH_OCB_EMAIL_TEMPLATE = 'HEALTH_OCB_EMAIL_TEMPLATE';
     public const EMAIL_CAMPAIGN_ENABLED = 'EMAIL_CAMPAIGN_ENABLED';
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
+
     // Health Plan Insurer Provider For Send & Book Policy
     public const BUP_HEALTH_DOC = 'BUP_HEALTH_DOC';
     public const OIC_HEALTH_DOC = 'OIC_HEALTH_DOC';
@@ -112,6 +113,7 @@ final class ApplicationStorageEnums extends Enum
     public const DIC_HEALTH_DOC = 'DIC_HEALTH_DOC';
     public const CIG_HEALTH_DOC = 'CIG_HEALTH_DOC';
     public const ALLIANZ_HEALTH_DOC = 'ALLIANZ_HEALTH_DOC';
+
     // Health Network For Send & Book Policy
     public const MEDNET_HEALTH_DOC = 'MEDNET_HEALTH_DOC';
     public const NEXTCARE_HEALTH_DOC = 'NEXTCARE_HEALTH_DOC';
