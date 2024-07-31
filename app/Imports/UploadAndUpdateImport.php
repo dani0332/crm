@@ -115,7 +115,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                 'rules' => [
                     'max:255',
                     function ($attribute, $value, $onFailure) {
-                        if ($value == 0) {
+                        if ($value == 0 || $value == '0') {
                             $onFailure('The '.$attribute.' cannot be 0.');
                         }
                     },
@@ -127,7 +127,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                 'rules' => [
                     'max:100',
                     function ($attribute, $value, $onFailure) {
-                        if ($value == 0) {
+                        if ($value == 0 || $value == '0') {
                             $onFailure('The '.$attribute.' cannot be 0.');
                         }
                     },
