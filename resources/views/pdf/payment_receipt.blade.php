@@ -81,7 +81,7 @@
         <tbody>
             <tr style="border: none;">
                 <td style="width: 70%; border: none; vertical-align:top;">
-                    <img src="{{getIMLogo(true)}}" alt="Insurance Market Logo" width="300">
+                    <img src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" alt="Insurance Market Logo" width="300">
                 </td>
                 <td style="vertical-align:middle; text-align:right; border: none; font-size:20px;">
                 <strong>Payment Receipt</strong>
@@ -156,33 +156,32 @@
             </h6>
         </h5>
         <table style="width: 100%; font-size: 8px; padding:2px;">
-            <tr>
-                <td style="width: 62%; vertical-align: top;">
-                    
-                    UAE Central Bank Registration number 85<br>
-                    Registered member of the Emirates Insurance Association<br>
-                    Department of Economy & Tourism in Dubai Trade License number 238534<br>
-                    Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority <br>
-                    Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry
+        <tr>
+            <td style="width: 62%; vertical-align: top;">
+                
+                UAE Central Bank Registration number 85<br>
+                Registered member of the Emirates Insurance Association<br>
+                Department of Economy & Tourism in Dubai Trade License number 238534<br>
+                Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority <br>
+                Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry
+            </td>
+            @if (!empty($data['advisor_name']))
+                <td style="width: 30%; vertical-align:top; text-align:right;">
+                    Insurance Advisor: {{ $data['advisor_name'] }}<br>
+                    Email: {{ $data['advisor_email'] }}<br>
+                    Mobile Number: {{ $data['advisor_mobile_no'] }}<br>
+                    Direct Line: {{ $data['advisor_landline_no'] }}<br>
+                    <br>                
                 </td>
-                @if (!empty($data['advisor_name']))
-                    <td style="width: 30%; vertical-align:top; text-align:right;">
-                        Insurance Advisor: {{ $data['advisor_name'] }}<br>
-                        Email: {{ $data['advisor_email'] }}<br>
-                        Mobile Number: {{ $data['advisor_mobile_no'] }}<br>
-                        Direct Line: {{ $data['advisor_landline_no'] }}<br>
-                        <br>                
-                    </td>
 
-                    <td style="width: 8%; vertical-align:top">            
-                        @if (!empty($data['profile_photo_path']))
-                            <img style="border-radius: 50%; width: 60px; height: 60px;" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($data['profile_photo_path']))}}" alt="Insurance Market Logo">
-                        @endif
-                    </td>
-                @endif
-            </tr>
-        </table>
-    </di
-    </div>
+                <td style="width: 8%; vertical-align:top">            
+                    @if (!empty($data['profile_photo_path']))
+                        <img style="border-radius: 50%; width: 60px; height: 60px;" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($data['profile_photo_path']))}}" alt="Insurance Market Logo">
+                    @endif
+                </td>
+            @endif
+        </tr>
+      </table>
+    </div>  
 </body>
 </html>

@@ -126,7 +126,7 @@ const policyDetailsForm = useForm({
 const onUpdate = () => {
     policyDetailsForm.post(
         route('send-update.save-policy-details'), {
-            preserverScroll: true,
+            preserveScroll: true,
             onSuccess: ({ props }) => {
                 notification.success({
                     title: 'The request has been updated',
@@ -193,44 +193,60 @@ const onEdit = () => {
     state.isEdit = true;
   }
 };
+
+const onCancel = () => {
+  state.isEdit = false;
+  policyDetailsForm.first_name = props.sendUpdateLog?.first_name || props.quote?.first_name || null;
+  policyDetailsForm.last_name = props.sendUpdateLog?.last_name || props.quote?.last_name || null;
+  policyDetailsForm.provider_name = props.sendUpdateLog?.provider_name || providerName.value || null;
+  policyDetailsForm.insurance_provider_id = props.sendUpdateLog?.insurance_provider_id || props.quote?.insurance_provider_id || props.quote?.car_plan_provider_id || null;
+  policyDetailsForm.plan_id = props.sendUpdateLog?.plan_id || props.quote?.plan_id || null;
+  policyDetailsForm.plan_name = props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null;
+  policyDetailsForm.policy_number = props.sendUpdateLog?.policy_number || props.quote?.policy_number || null;
+  policyDetailsForm.issuance_date = props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null;
+  policyDetailsForm.start_date = props.sendUpdateLog?.start_date || dateToYMD(props.quote?.policy_start_date) || null;
+  policyDetailsForm.expiry_date = dateToYMD(filledExpiryDate.value);
+  policyDetailsForm.insurer_quote_number = props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null;
+  policyDetailsForm.issuance_status_id = props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null;
+};
 </script>
 
 <template>
-    <div class="p-4 rounded shadow mb-6 bg-white">
-        <Collapsible expanded>
-            <template #header>
-                <div class="flex justify-between gap-4 items-center">
-                  <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-                </div>
-</template>
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <Collapsible expanded>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+        </div>
+      </template>
 
-<template #body>
-    <x-divider class="my-4" />
-    <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+      <template #body>
+        <x-divider class="my-4"/>
+        <div class="text-sm">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
             <!-- First name -->
             <div class="grid sm:grid-cols-2">
-                <dt>
-                        <x-tooltip position="left">
-                          <label
-                              class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                          >
-                            FIRST NAME
-                          </label>
-                          <template #tooltip>
-                            This field captures the policyholder's first name, representing the primary contact person associated with the policy.
-</template>
+              <dt>
+                <x-tooltip position="left">
+                  <label
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    FIRST NAME
+                  </label>
+                  <template #tooltip>
+                    This field captures the policyholder's first name, representing the primary contact person associated with the policy.
+                  </template>
                 </x-tooltip>
               </dt>
               <dd>
-								<x-input
-									v-if="isCPD"
-                  v-model="policyDetailsForm.first_name"
-									:disabled="!state.isEdit"
-                  class="w-full"
-								/>
-								<span v-else>{{ policyDetailsForm.first_name }}</span>
-							</dd>
+                <x-input
+                    v-if="isCPD"
+                    v-model="policyDetailsForm.first_name"
+                    :disabled="!state.isEdit"
+                    class="w-full"
+                />
+                <span v-else>{{ policyDetailsForm.first_name }}</span>
+              </dd>
             </div>
 
             <!-- Last name -->
@@ -242,20 +258,20 @@ const onEdit = () => {
                   >
                     LAST NAME
                   </label>
-<template #tooltip>
-     Records the policyholder's surname or family name.
-</template>
+                  <template #tooltip>
+                    Records the policyholder's surname or family name.
+                  </template>
                 </x-tooltip>
               </dt>
-							<dd>
-								<x-input
-									v-if="isCPD"
-                  v-model="policyDetailsForm.last_name"
-									:disabled="!state.isEdit"
-                  class="w-full"
-								/>
-								<span v-else>{{ policyDetailsForm.last_name }}</span>
-							</dd>
+              <dd>
+                <x-input
+                    v-if="isCPD"
+                    v-model="policyDetailsForm.last_name"
+                    :disabled="!state.isEdit"
+                    class="w-full"
+                />
+                <span v-else>{{ policyDetailsForm.last_name }}</span>
+              </dd>
             </div>
 
             <!-- Provider Name -->
@@ -267,9 +283,9 @@ const onEdit = () => {
                   >
                     PROVIDER NAME
                   </label>
-<template #tooltip>
-     Name of the insurance company responsible for the coverage.
-</template>
+                  <template #tooltip>
+                    Name of the insurance company responsible for the coverage.
+                  </template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -281,8 +297,8 @@ const onEdit = () => {
                     :single="true"
                     :disabled="!state.isEdit"
                 />
-								<span v-else>{{ policyDetailsForm.provider_name }}</span>
-							</dd>
+                <span v-else>{{ policyDetailsForm.provider_name }}</span>
+              </dd>
             </div>
 
             <!-- Plan Name -->
@@ -294,12 +310,12 @@ const onEdit = () => {
                   >
                     PLAN NAME
                   </label>
-<template #tooltip>
-     Identifies the specific coverage or insurance plan offered by the provider.
-</template>
+                  <template #tooltip>
+                    Identifies the specific coverage or insurance plan offered by the provider.
+                  </template>
                 </x-tooltip>
               </dt>
-							<dd>
+              <dd>
                 <ComboBox
                     v-if="isCPD && isEcom"
                     v-model="policyDetailsForm.plan_id"
@@ -308,8 +324,8 @@ const onEdit = () => {
                     :single="true"
                     :disabled="!state.isEdit"
                 />
-								<span v-else>{{ policyDetailsForm.plan_name ?? 'N/A' }}</span>
-							</dd>
+                <span v-else>{{ policyDetailsForm.plan_name ?? 'N/A' }}</span>
+              </dd>
             </div>
 
             <!-- Policy Number -->
@@ -321,24 +337,24 @@ const onEdit = () => {
                   >
                     POLICY NUMBER
                   </label>
-<template #tooltip>
-     The unique Insurance policy number for the chosen insurance plan offered by the provider.
-</template>
+                  <template #tooltip>
+                    The unique Insurance policy number for the chosen insurance plan offered by the provider.
+                  </template>
                 </x-tooltip>
               </dt>
               <dd>
-								<x-input
-									v-if="isCPD || isCIR"
-									:disabled="!state.isEdit"
-									v-model="policyDetailsForm.policy_number"
-                  placeholder="Enter policy number"
-                  class="w-full"
-								/>
-								<span v-else>{{ policyDetailsForm.policy_number }}</span>
-							</dd>
+                <x-input
+                    v-if="isCPD || isCIR"
+                    :disabled="!state.isEdit"
+                    v-model="policyDetailsForm.policy_number"
+                    placeholder="Enter policy number"
+                    class="w-full"
+                />
+                <span v-else>{{ policyDetailsForm.policy_number }}</span>
+              </dd>
             </div>
 
-						<!-- Issuance Date -->
+            <!-- Issuance Date -->
             <div class="grid sm:grid-cols-2">
               <dt>
                 <x-tooltip position="left">
@@ -347,25 +363,25 @@ const onEdit = () => {
                   >
                     ISSUANCE DATE
                   </label>
-<template #tooltip>
-     Signifies the date when the insurance policy was officially issued.
-</template>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially issued.
+                  </template>
                 </x-tooltip>
               </dt>
               <dd>
                 <DatePicker
-                  v-if="isCPD"
-                  v-model="policyDetailsForm.issuance_date"
-                  name="issuance_date"
-                  :disabled="!state.isEdit"
-                  placeholder="dd-mm-yyyy"
-                  class="w-full"
+                    v-if="isCPD"
+                    v-model="policyDetailsForm.issuance_date"
+                    name="issuance_date"
+                    :disabled="!state.isEdit"
+                    placeholder="dd-mm-yyyy"
+                    class="w-full"
                 />
-								<span v-else>{{ dateFormat(policyDetailsForm.issuance_date) }}</span>
-							</dd>
+                <span v-else>{{ dateFormat(policyDetailsForm.issuance_date) }}</span>
+              </dd>
             </div>
 
-						<!-- Start Date -->
+            <!-- Start Date -->
             <div class="grid sm:grid-cols-2">
               <dt>
                 <x-tooltip position="left">
@@ -374,25 +390,25 @@ const onEdit = () => {
                   >
                     START DATE
                   </label>
-<template #tooltip>
-     Indicates the commencement date of the insurance coverage, marking when the policy becomes effective.
-</template>
+                  <template #tooltip>
+                    Indicates the commencement date of the insurance coverage, marking when the policy becomes effective.
+                  </template>
                 </x-tooltip>
               </dt>
               <dd>
                 <DatePicker
-                  v-if="isCPD || isCIR"
-                  v-model="policyDetailsForm.start_date"
-                  name="start_date"
-                  :disabled="!state.isEdit"
-                  placeholder="dd-mm-yyyy"
-                  class="w-full"
+                    v-if="isCPD || isCIR"
+                    v-model="policyDetailsForm.start_date"
+                    name="start_date"
+                    :disabled="!state.isEdit"
+                    placeholder="dd-mm-yyyy"
+                    class="w-full"
                 />
-								<span v-else>{{ dateFormat(policyDetailsForm.start_date) }}</span>
-							</dd>
+                <span v-else>{{ dateFormat(policyDetailsForm.start_date) }}</span>
+              </dd>
             </div>
 
-						<!-- Expiry Date -->
+            <!-- Expiry Date -->
             <div class="grid sm:grid-cols-2">
               <dt>
                 <x-tooltip position="left">
@@ -401,23 +417,24 @@ const onEdit = () => {
                   >
                     EXPIRY DATE
                   </label>
-<template #tooltip>
-     This field records the date when the insurance coverage is set to expire, marking the end of the policy's validity.
-</template>
+                  <template #tooltip>
+                    This field records the date when the insurance coverage is set to expire, marking the end of the policy's validity.
+                  </template>
                 </x-tooltip>
               </dt>
               <dd>
                 <DatePicker
-                  v-model="policyDetailsForm.expiry_date"
-                  name="expiry_date"
-                  :disabled="!state.isEdit"
-                  placeholder="dd-mm-yyyy"
-                  class="w-full"
+                    v-model="policyDetailsForm.expiry_date"
+                    name="expiry_date"
+                    :disabled="!state.isEdit"
+                    placeholder="dd-mm-yyyy"
+                    class="w-full"
+                    :custom-error="policyDetailsForm.errors.expiry_date"
                 />
-							</dd>
+              </dd>
             </div>
 
-						<!-- Insurer Quote Number -->
+            <!-- Insurer Quote Number -->
             <div class="grid sm:grid-cols-2">
               <dt>
                 <x-tooltip position="left">
@@ -426,9 +443,9 @@ const onEdit = () => {
                   >
                     INSURER QUOTE NUMBER
                   </label>
-<template #tooltip>
-     Refers to the unique identifier associated with the initial quote provided by the insurer.
-</template>
+                  <template #tooltip>
+                    Refers to the unique identifier associated with the initial quote provided by the insurer.
+                  </template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -443,7 +460,7 @@ const onEdit = () => {
               </dd>
             </div>
 
-						<!-- Issuance Status -->
+            <!-- Issuance Status -->
             <div class="grid sm:grid-cols-2">
               <dt>
                 <x-tooltip position="left">
@@ -452,9 +469,9 @@ const onEdit = () => {
                   >
                     ISSUANCE STATUS
                   </label>
-<template #tooltip>
-     Indicates the current state or progress of policy issuance, tracking whether it's pending, approved, or completed.
-</template>
+                  <template #tooltip>
+                    Indicates the current state or progress of policy issuance, tracking whether it's pending, approved, or completed.
+                  </template>
                 </x-tooltip>
               </dt>
               <dd>
@@ -468,20 +485,21 @@ const onEdit = () => {
                     class="w-fit"
                 />
                 <span v-else>{{ issuanceStatusText(policyDetailsForm.issuance_status_id) ?? 'N/A' }}</span>
-							</dd>
+              </dd>
             </div>
           </dl>
         </div>
-				<x-divider class="my-4 mt-10" />
+        <x-divider class="my-4 mt-10"/>
         <div class="flex justify-end gap-2">
           <x-button size="sm" @click="onEdit" v-if="!state.isEdit">
             Edit
           </x-button>
-<template v-else>
-    <x-button size="sm" color="orange" @click="state.isEdit = false" :loading="policyDetailsForm.processing" :disabled="policyDetailsForm.processing">
-        Cancel</x-button>
-    <x-button size="sm" color="primary" @click="onUpdate" :loading="policyDetailsForm.processing" :disabled="policyDetailsForm.processing">Update</x-button>
-</template>
+          <template v-else>
+            <x-button size="sm" color="orange" @click="onCancel" :loading="policyDetailsForm.processing" :disabled="policyDetailsForm.processing">
+              Cancel
+            </x-button>
+            <x-button size="sm" color="primary" @click="onUpdate" :loading="policyDetailsForm.processing" :disabled="policyDetailsForm.processing">Update</x-button>
+          </template>
         </div>
       </template>
     </Collapsible>

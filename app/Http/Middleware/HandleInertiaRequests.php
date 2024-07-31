@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
@@ -106,6 +107,7 @@ class HandleInertiaRequests extends Middleware
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
+            'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
         ];
     }
 

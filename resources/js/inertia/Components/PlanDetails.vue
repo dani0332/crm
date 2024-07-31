@@ -3,7 +3,6 @@ import { useFormatPrice } from '../Composables/utilities';
 
 const page = usePage();
 const notification = useToast();
-
 const props = defineProps({
   quote: {
     type: Object,
@@ -15,19 +14,21 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  isAddUpdate: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
-  price_vat_applicable:
-    props.quote?.price_vat_applicable ?? null /* temperate setting null */, // price vat applicable
-  price_vat_not_applicable:
-    props.quote?.price_vat_not_applicable ?? null /* temperate setting null */, //price vat not applicable
+  price_vat_applicable: props.quote?.price_vat_applicable ?? 0, // price vat applicable
+  price_vat_not_applicable: props.quote?.price_vat_not_applicable ?? 0, //price vat not applicable
   price_with_vat: props.quote.price_with_vat
     ? useFormatPrice(props.quote.price_with_vat, true)
-    : null /* temperate setting null */,
+    : 0,
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
 });
 
@@ -114,7 +115,7 @@ const submitPlanDetailsForm = isValid => {
 };
 
 const updatePriceWithVat = () => {
-  planDetailsForm.price_with_vat = ''; /* temperate setting empty */
+  planDetailsForm.price_with_vat = 0;
 
   let priceVatApp = parseFloat(
     planDetailsForm.price_vat_applicable !== null &&
@@ -159,6 +160,14 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
 const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] = createReusableTemplate();
+
+watch(() => props.isAddUpdate, () => {
+  planDetailsForm.insurance_provider_id  = null;
+    planDetailsForm.price_vat_applicable = null;
+    planDetailsForm.price_vat_not_applicable = null;
+    planDetailsForm.price_with_vat = null;
+    planDetailsForm.insurer_quote_number = null;
+  });
 
 </script>
 
