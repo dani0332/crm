@@ -248,8 +248,8 @@ class EmbeddedProductRepository extends BaseRepository
             ])->whereIn('product_id', $optionsIds)->get();
 
             $isAlfredProtect = checkAlfredProtect($item->short_code);
-            if($isAlfredProtect) {
-                $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0: false;
+            if ($isAlfredProtect) {
+                $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0 : false;
                 $item->download_document_button = $isDocPresent;
             }
 

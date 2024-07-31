@@ -31,6 +31,7 @@ class AlfredProtect extends EmbeddedProduct
                 $fileInfo = new finfo(FILEINFO_MIME_TYPE);
                 $mimeType = $fileInfo->buffer($file);
                 $filePath = Storage::disk('azureIM')->url($document->doc_url);
+
                 return [
                     'name' => $document->doc_name,
                     'path' => $document->doc_url,
