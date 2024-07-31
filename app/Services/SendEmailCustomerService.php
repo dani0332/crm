@@ -992,6 +992,8 @@ class SendEmailCustomerService extends BaseService
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
+
+        return $responseCode;
     }
 
     public function sendingAlfredFollowupEmail($customer)

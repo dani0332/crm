@@ -854,7 +854,7 @@ class SendUpdateLogService
         return $carQuote->plan->carAddons->toArray();
     }
 
-    public function sendUpdateToCustomerEmail($sendUpdateLog, $action): void
+    public function sendUpdateToCustomerEmail($sendUpdateLog, $action): array
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
@@ -938,7 +938,7 @@ class SendUpdateLogService
             }
         }
 
-        app(SendEmailCustomerService::class)->sendUpdateToCustomerEmail($templateId, $emailData, 'send-update', $quoteTypeId);
+        return [$templateId, $emailData, 'send-update', $quoteTypeId];
     }
 
     /**
