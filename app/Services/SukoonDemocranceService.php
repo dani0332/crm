@@ -183,19 +183,31 @@ class SukoonDemocranceService
                 $docUuid = $this->generateUniqueUuid();
 
                 // TODO: check if document exist need to update that document file
-
-                $documentData = [
-                    'doc_name' => $docName,
-                    'original_name' => $originalName,
-                    'doc_url' => $docUrl,
-                    'doc_mime_type' => 'application/pdf',
-                    'document_type_code' => $documentType->code,
-                    'document_type_text' => $documentType->text,
-                    'doc_uuid' => $docUuid,
-                    'created_by_id' => null,
-                ];
-
-                $embeddedTransaction->documents()->create($documentData);
+                $document = $embeddedTransaction->documents()->where('document_type_code', $documentType->code)->first();
+                if(isset($document)) {
+                    $document->update([
+                        'doc_name' => $docName,
+                        'original_name' => $originalName,
+                        'doc_url' => $docUrl,
+                        'doc_mime_type' => 'application/pdf',
+                        'document_type_code' => $documentType->code,
+                        'document_type_text' => $documentType->text,
+                        'doc_uuid' => $docUuid,
+                        'created_by_id' => null,
+                    ]);
+                } else {
+                    $documentData = [
+                        'doc_name' => $docName,
+                        'original_name' => $originalName,
+                        'doc_url' => $docUrl,
+                        'doc_mime_type' => 'application/pdf',
+                        'document_type_code' => $documentType->code,
+                        'document_type_text' => $documentType->text,
+                        'doc_uuid' => $docUuid,
+                        'created_by_id' => null,
+                    ];
+                    $embeddedTransaction->documents()->create($documentData);
+                }
             } else {
                 throw new Exception('Unable to determine filename from the response headers.');
             }
