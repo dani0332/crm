@@ -26,6 +26,7 @@ function formatQuadTiers(tiers) {
 
 const tableHeader = [
   { text: 'ID', value: 'id' },
+  { text: 'Line Of Business', value: 'line_of_business' },
   { text: 'Name', value: 'name' },
   { text: 'Updated At', value: 'updated_at' },
   { text: 'Tire Name', value: 'tiers' },

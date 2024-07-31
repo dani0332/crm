@@ -3,6 +3,8 @@ import moment from 'moment';
 
 const page = usePage();
 
+const { price_vat_notapplicable, price_vat_applicable, isNumber } = useRules();
+
 const props = defineProps({
   quote: {
     type: Object,
@@ -85,9 +87,9 @@ const policyDetailsForm = useForm({
   quote_policy_issuance_date:
     dateToYMD(page.props.quote.policy_issuance_date) ||
     new Date().toJSON().slice(0, 10),
-  price_vat_notapplicable: page.props.quote.price_vat_not_applicable || '', // temperate setting empty
-  price_vat_applicable: page.props.quote.price_vat_applicable || '', // temperate setting empty
-  vat: page.props.quote.vat || '', // temperate setting empty
+  price_vat_notapplicable: page.props.quote.price_vat_not_applicable || 0,
+  price_vat_applicable: page.props.quote.price_vat_applicable || 0,
+  vat: page.props.quote.vat || 0,
   quote_policy_start_date: dateToYMD(page.props.quote.policy_start_date) || '',
   quote_policy_expiry_date:
     dateToYMD(page.props.quote.renewal_expiry_date) || '',
@@ -114,16 +116,16 @@ watch(
   () => page.props.quote?.price_with_vat,
   (newValue, oldValue) => {
     policyDetailsForm.price_vat_notapplicable =
-      page.props.quote.price_vat_not_applicable || '';
+      page.props.quote.price_vat_not_applicable || 0;
     policyDetailsForm.price_vat_applicable =
-      page.props.quote.price_vat_applicable || '';
-    policyDetailsForm.vat = page.props.quote.vat || '';
+      page.props.quote.price_vat_applicable || 0;
+    policyDetailsForm.vat = page.props.quote.vat || 0;
 
-    caculateVatAmount();
+    calculateVatAmount();
   },
 );
 
-const caculateVatAmount = () => {
+const calculateVatAmount = () => {
   let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
   // if price vat applicable and not applicable both are there
@@ -146,8 +148,8 @@ const caculateVatAmount = () => {
       2,
     );
   } else {
-    policyDetailsForm.vat = ''; // temperate setting empty
-    policyDetailsForm.amount_with_vat = ''; // temperate setting empty
+    policyDetailsForm.vat = 0;
+    policyDetailsForm.amount_with_vat = 0;
   }
 };
 const quoteType = page.props.quoteType.toLowerCase();
@@ -286,7 +288,7 @@ const onUpdatePolicyDetails = isValid => {
   });
 };
 onBeforeMount(() => {
-  caculateVatAmount();
+  calculateVatAmount();
 });
 
 watch(
@@ -422,7 +424,7 @@ watch(
                 </x-tooltip>
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_notapplicable"
-                  @change="caculateVatAmount"
+                  @change="calculateVatAmount"
                   :custom-error="
                     rules.price_vat_not_applicable(
                       policyDetailsForm.price_vat_notapplicable,
@@ -479,7 +481,7 @@ watch(
                 </x-tooltip>
                 <x-textarea
                   v-model="policyDetailsForm.price_vat_applicable"
-                  @change="caculateVatAmount"
+                  @change="calculateVatAmount"
                   :custom-error="
                     rules.price_vat_applicable(
                       policyDetailsForm.price_vat_applicable,
@@ -674,7 +676,7 @@ watch(
                     () => {
                       policyDetailsState.isEditing = false;
                       policyDetailsForm.reset();
-                      caculateVatAmount();
+                      calculateVatAmount();
                       setQuotePlanInsurerNumber();
                     }
                   "

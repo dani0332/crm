@@ -28,6 +28,7 @@ class HomeQuoteExport
             'LOST REASON',
             'PREMIUM',
             'POLICY NUMBER',
+            'RENEWAL BATCH',
         ];
     }
 
@@ -46,6 +47,7 @@ class HomeQuoteExport
             optional($quote->homeQuoteRequestDetail)->lostReason?->text,
             $quote->premium,
             $quote->policy_number,
+            $quote->renewal_batch,
         ];
     }
 }

@@ -134,6 +134,8 @@ const tableHeader = [
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
   },
+    { text: 'Renewal Batch', value: 'renewal_batch' },
+
 ];
 
 const onDataExport = () => {

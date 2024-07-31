@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Jobs\ReAssignBikeLeadsJob;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
 use App\Services\ApplicationStorageService;
+use App\Services\BikeAllocationService;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use Carbon\Carbon;
@@ -62,6 +64,9 @@ class LeadsReassignment extends Command
 
             dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), 0));
             info('Health lead reassignment job  for '.$currentIteration.' is dispatched');
+
+            dispatch(new ReAssignBikeLeadsJob(app(BikeAllocationService::class), 0));
+            info('Bike lead reassignment job  for '.$currentIteration.' is dispatched');
 
             info('------------------- Lead reassignment Command Finished for '.$currentIteration.' -------------------');
         } else {

@@ -148,6 +148,8 @@ if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
 } else if (props.quoteType === 'Health') {
   initialAmount.value = props.eCommercePrice;
+} else if (props.quoteType === 'Bike') {
+  initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
@@ -180,8 +182,14 @@ if (
     props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
+} else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
+  initalPlanDetails =
+    props.quoteRequest?.insurance_provider_details ??
+    props.quoteRequest?.insurance_provider;
+} else if (props.quoteType == 'Bike') {
+  initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
 } else {
-  initalPlanDetails = props.quoteRequest.insurance_provider;
+  initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
 
 let planDetail = ref(initalPlanDetails);
@@ -1819,6 +1827,16 @@ const editPaymentModal = (
       payment.travel_plan.insurance_provider;
   }
 
+  //Assign plan for Travel
+  if (
+    props.quoteType === 'Travel' &&
+    (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
+  ) {
+    planDetail.value = payment.travel_plan;
+    planDetail.value['insurance_provider'] =
+      payment.travel_plan.insurance_provider;
+  }
+
   if (capture_approval > 0) {
     isApproveClicked.value = true;
     if (capture_approval == 1) {
@@ -2070,7 +2088,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail?.value?.id  || 0,
+      plan_id: planDetail?.value?.id || 0,
       customer_id: props.quoteRequest.customer_id,
       payment_code: paymentMethodsForm.paymentCode,
       collection_amount: collectionAmountModels.value,
@@ -2106,7 +2124,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail?.value?.id  || 0,
+      plan_id: planDetail?.value?.id || 0,
       customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
       bank_reference_number: paymentMethodsForm.bank_reference_number,
@@ -2600,7 +2618,9 @@ const getCaptureValidation = computed(() => {
           paymentRecord.payment_splits[0].payment_status_id ===
             props.paymentStatusEnum.PAID ||
           paymentRecord.payment_splits[0].payment_status_id ===
-            props.paymentStatusEnum.AUTHORISED
+            props.paymentStatusEnum.AUTHORISED ||
+          paymentRecord.payment_splits[0].payment_status_id ===
+            props.paymentStatusEnum.PARTIALLY_PAID
         ) {
           return true;
         }
@@ -2685,6 +2705,9 @@ onMounted(() => {
 
 const getPlanName = computed(() => {
   const plan = planDetail.value;
+  if (props.quoteType === 'Bike') {
+    return plan ? props.quoteRequest.car_plan.text : 'Not Available';
+  }
   if (props.sendUpdate) {
     return planText.value || 'Not Available';
   }
@@ -2762,6 +2785,8 @@ watch(
         initialAmount.value = props.sendUpdate?.price_with_vat;
       } else if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
+      } else if (props.quoteType === 'Bike') {
+        initialAmount.value = props.quoteRequest.premium;
       } else {
         initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
           ? props.quoteRequest.premium
@@ -2776,6 +2801,8 @@ watch(
       props.isPlanDetailEnabled
     ) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+    } else if (props.quoteType == 'Bike') {
+      initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
       if (props.sendUpdate) {
         initalPlanDetails =
           props.quoteRequest.insurance_provider_details ??
