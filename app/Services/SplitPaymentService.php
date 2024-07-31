@@ -558,4 +558,34 @@ class SplitPaymentService
         return $paymentStatusText;
     }
 
+    public function updateCommissionSchedule($payment)
+    {
+        $paymentSplits = $payment->paymentSplits;
+        $commissionSplitSumWithoutLastSplit = 0;
+        $commissionVatApplicable = $payment->commission_vat_applicable;
+        foreach ($paymentSplits as $paymentSplit) {
+            $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
+            /*
+             to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
+             and then subtract that amount from the total commission without vat and use the result as commission for last commission split
+            */
+            if ($paymentSplit->sr_no == count($paymentSplits)) {
+                $commissionSplitAmount = floatval(sprintf('%.2f', $commissionVatApplicable - $commissionSplitSumWithoutLastSplit));
+            } else {
+                $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+            }
+            $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
+            $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $paymentSplit->commission_vat : 0;
+            $paymentSplit->save();
+        }
+    }
+
+    private function calculateCommissionSplit($payment, $paymentSplit)
+    {
+        $commissionVatApplicable = $payment->commission_vat_applicable;
+        $totalPriceVatApplicable = $payment->paymentSplits()->sum('price_vat_applicable');
+
+        return roundNumber(($paymentSplit->price_vat_applicable / $totalPriceVatApplicable) * $commissionVatApplicable);
+    }
+
 }
