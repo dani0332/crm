@@ -8,13 +8,12 @@ use App\Enums\ApplicationStorageEnums;
 
 class BirdService extends BaseService
 {
-    private $birdEndpoint = 'https://docs.bird.com';
-    private $birdUserName;
-    private $birdPassword;
-
+    protected $birdEndpoint = 'https://api.bird.com';
+    protected $birdUserName;
+    protected $birdPassword;
     public function __construct(CustomerService $customerService)
     {
-        $this->birdEndpoint = config('constants.BIRD_API_ENDPOINT') ?? 'https://docs.bird.com';
+        $this->birdEndpoint = config('constants.BIRD_API_ENDPOINT') ?? 'https://api.bird.com';
         $this->birdUserName = config('constants.BIRD_BASIC_AUTH_USER_NAME');
         $this->birdPassword = config('constants.BIRD_BASIC_AUTH_PASSWORD');
     }
@@ -57,8 +56,29 @@ class BirdService extends BaseService
 
 
     public function createContactIdentifier($data){
+     return   $this->birdRequest('post', "/workspaces/{$data['workspaceId']}/contacts/{$data['uuid']}/identifiers", $data);
+    }
 
-        $this->birdRequest('post', "/workspaces/123/contacts/$data['uuid']/identifiers", $data);
+    public function updateContactIdentifier($data){
+        return   $this->birdRequest('put', "/workspaces/{$data['workspaceId']}/contacts/{$data['uuid']}/identifiers/{$data['identifierId']}", $data);
+    }
+
+
+    public function triggerWorkflow($webhook,$data){
+
+        return  $this->birdRequest('post', $webhook, $data);
+    }
+
+    public function createAutomationWorkflow($webhook,$data){
+        $payload = [
+            'client_email' => $data['clientEmail'],
+            'workspace_id' => $data['workspaceId'],
+            'customerEmail' => $data['customerEmail'],
+            'customerName' => $data['customerName'],
+            'AdvisorEmail' => $data['advisorEmail'],
+            'AdvisorName' => $data['advisorName'],
+        ];
+        return  $this->triggerWorkflow($webhook, $payload);
     }
 
 
