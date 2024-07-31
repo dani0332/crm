@@ -32,7 +32,7 @@ class CcPaymentProcess extends Model
 
     public function getQuoteTypeAttribute($value)
     {
-        return ucfirst(strtolower($value));        
+        return ucfirst(strtolower($value));
     }
 
 }

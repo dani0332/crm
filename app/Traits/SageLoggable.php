@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
-use App\Models\SageApiLog;
 use App\Models\ModelHasRole;
+use App\Models\SageApiLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -13,7 +13,7 @@ trait SageLoggable
     {
         try {
             $userId = Auth::id();
-            if (!$userId) {
+            if (! $userId) {
                 $userId = optional(ModelHasRole::where('role_id', 1)->first())->model_id; // Admin for backend jobs
             }
             // Ensure mandatory fields are populated

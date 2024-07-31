@@ -582,8 +582,9 @@ class SplitPaymentService
             $quoteModel = $this->getQuoteObject($modelType, $quoteId);
         }
 
-        if ( $isFromJob && !$quoteModel) {
+        if ($isFromJob && ! $quoteModel) {
             CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::INPROCESS, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
+
             return;
         }
 
@@ -628,7 +629,7 @@ class SplitPaymentService
             }
         }
 
-        if (! $paymentSplit->payment->is_approved && !$isFromJob) {
+        if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
             DB::beginTransaction();
             try {
                 if (empty($paymentSplit->verified_at)) {
