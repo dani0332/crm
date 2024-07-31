@@ -6,10 +6,10 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\MAWelcomeJob;
+use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use App\Traits\PersonalQuoteSyncTrait;
-use App\Models\ApplicationStorage;
 
 class HealthQuoteObserver
 {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
@@ -17,6 +18,7 @@ use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarLostQuoteLog;
 use App\Models\GenericModel;
 use App\Models\PaymentAction;
@@ -28,8 +30,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;
 
 class CRUDService extends BaseService
 {
