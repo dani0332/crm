@@ -145,6 +145,10 @@ function removeMember(index) {
 function onSubmit(isValid) {
   if (!isValid) return;
 
+  if(quoteForm.destination_ids?.length < 1){
+    quoteForm.errors.destination_ids = 'Please select at least one destination.';
+    return
+  }
   quoteForm.clearErrors();
 
   const method = 'post';
@@ -370,7 +374,7 @@ const checkUAEResident = computed(() => {
               :single="false"
               class="w-full"
               :rules="[rules.isRequired]"
-              :hasError="quoteForm.errors[index]"
+              :hasError="quoteForm.errors.destination_ids"
             />
           </x-field>
         <x-field

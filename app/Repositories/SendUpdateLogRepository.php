@@ -316,10 +316,15 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function checkPolicyDetailsFilled($sendUpdate, $quoteTypeId, $quote)
     {
+        $insuranceProviderId = ($sendUpdate->insurance_provider_id ?? $quote->insurance_provider_id) ?? null;
+        if ($quoteTypeId == QuoteTypeId::Car && is_null($insuranceProviderId)) {
+            $insuranceProviderId = $quote->car_plan_provider_id ?? null;
+        }
+
         $sendUpdatePolicyDetails = [
             'first_name' => ($sendUpdate->first_name ?? $quote->first_name) ?? null,
             'last_name' => ($sendUpdate->last_name ?? $quote->last_name) ?? null,
-            'insurance_provider_id' => ($sendUpdate->insurance_provider_id ?? ($quote->insurance_provider_id ?? $quote->car_plan_provider_id)) ?? null,
+            'insurance_provider_id' => $insuranceProviderId,
             'policy_number' => ($sendUpdate->policy_number ?? $quote->policy_number) ?? null,
             'issuance_date' => ($sendUpdate->issuance_date ?? $quote->policy_issuance_date) ?? null,
             'start_date' => ($sendUpdate->start_date ?? $quote->policy_start_date) ?? null,
