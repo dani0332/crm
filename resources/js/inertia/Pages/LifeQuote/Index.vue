@@ -83,6 +83,11 @@ const tableHeader = reactive([
     value: 'previous_quote_policy_number',
     is_active: true,
   },
+    {
+        text: 'Renewal Batch',
+        value: 'renewal_batch',
+        is_active: true,
+    },
 ]);
 
 const advisorOptions = computed(() => {

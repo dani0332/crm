@@ -17,6 +17,7 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
@@ -96,10 +98,10 @@ function get_guid()
         $charid = strtoupper(md5(uniqid(rand(), true)));
         $hyphen = chr(45);
         $uuid = substr($charid, 0, 8).$hyphen
-        .substr($charid, 8, 4).$hyphen
-        .substr($charid, 12, 4).$hyphen
-        .substr($charid, 16, 4).$hyphen
-        .substr($charid, 20, 12);
+            .substr($charid, 8, 4).$hyphen
+            .substr($charid, 12, 4).$hyphen
+            .substr($charid, 16, 4).$hyphen
+            .substr($charid, 20, 12);
 
         return $uuid;
     }
@@ -638,7 +640,7 @@ if (! function_exists('checkModifiedRecord')) {
     function checkModifiedRecord($firstDate, $secondDate): bool
     {
         return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
-        Carbon::parse($secondDate)->format(config('constants.datetime_format'));
+            Carbon::parse($secondDate)->format(config('constants.datetime_format'));
     }
 }
 
@@ -976,6 +978,141 @@ if (! function_exists('isValidDate')) {
     }
 }
 
+if (! function_exists('isValidTeamForLOBAdvisor')) {
+    function isValidTeamForLOBAdvisor($teams, $allowed_teams)
+    {
+        $teams = collect($teams)->pluck('name');
+        $matching_teams = collect($teams)->intersect($allowed_teams);
+        if ($matching_teams->isNotEmpty()) {
+            return true;
+        }
+
+        return false;
+    }
+}
+if (! function_exists('isAllowedInDuplicateLOBList')) {
+    function isAllowedInDuplicateLOBList($quoteType, $code)
+    {
+        return app(CentralService::class)->duplicateAllowedLobsList($quoteType, $code);
+    }
+}
+
+if (! function_exists('removeSpaces')) {
+    function removeSpaces($number)
+    {
+        return str_replace(' ', '', $number);
+    }
+}
+
+if (! function_exists('hasAnyPermission')) {
+    function hasAnyPermission($_permissions)
+    {
+        $permissions = is_array($_permissions) ? $_permissions : func_get_args();
+        $permissions = implode('|', $permissions);
+
+        return "permission:{$permissions}";
+    }
+}
+
+if (! function_exists('hasAnyRole')) {
+    function hasAnyRole($_roles)
+    {
+        $roles = is_array($_roles) ? $_roles : func_get_args();
+        $roles = implode('|', $roles);
+
+        return "role:{$roles}";
+    }
+}
+
+if (! function_exists('checkForRoleOrTeam')) {
+    function checkForRoleOrTeam($user_id, $type)
+    {
+        $with = [];
+        switch ($type) {
+            case 'role':
+                $with[] = 'usersroles:id,name';
+                break;
+            case 'team':
+                $with[] = 'teams:id,name';
+                break;
+            case 'both':
+                $with[] = 'usersroles:id,name';
+                $with[] = 'teams:id,name';
+                break;
+        }
+
+        // Fetch user with conditional eager loading
+        $user = User::where('id', $user_id)->with($with)->first();
+
+        if ($type === 'role') {
+            return $user->usersroles;
+        } elseif ($type === 'team') {
+            return $user->teams;
+        } else {
+            return [
+                'roles' => $user->usersroles,
+                'teams' => $user->teams,
+            ];
+        }
+    }
+}
+
+if (! function_exists('arrayKeysToCamelCase')) {
+    /**
+     * Recursively transform array keys to camelCase.
+     *
+     * @return array
+     */
+    function arrayKeysToCamelCase(array $array)
+    {
+        $result = [];
+
+        foreach ($array as $key => $value) {
+            $newKey = Str::camel($key);
+
+            if (is_array($value)) {
+                $value = arrayKeysToCamelCase($value);
+            }
+
+            $result[$newKey] = $value;
+        }
+
+        return $result;
+    }
+}
+
+if (! function_exists('transformKeys')) {
+    /**
+     * Transform array keys based on given mappings.
+     *
+     * @return array
+     */
+    function transformKeys(array $array, array $keyMappings = [])
+    {
+        $result = [];
+
+        foreach ($array as $key => $value) {
+            if (array_key_exists($key, $keyMappings)) {
+                $newKey = $keyMappings[$key];
+            } else {
+                $newKey = $key;
+            }
+
+            $result[$newKey] = $value;
+        }
+
+        return $result;
+    }
+}
+
+if (! function_exists('isValidDate')) {
+    function isValidDate($date): bool
+    {
+        return ! empty($date)
+            && $date != '0000-00-00 00:00:00'
+            && $date != '0000-00-00';
+    }
+}
 if (! function_exists('getManagersByUser')) {
     function getManagersByUser($userId)
     {

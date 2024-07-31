@@ -352,4 +352,28 @@ class AjaxController extends Controller
 
         return response()->json(['message' => 'Something went wrong, contact to administrator.']);
     }
+
+    public function bikeModelBasedOnCarMakeId(Request $request)
+    {
+        $carMakeCode = CarMake::activeWithId($request->id)->value('code');
+        if (! $carMakeCode) {
+            $carMakeCode = $request->id;
+        }
+        $carmodel = CarModel::activeWithCode($carMakeCode)
+            ->select('id', 'text', 'code', 'car_make_code')
+            ->where('quote_type_id', QuoteTypeId::Bike)
+            ->orderBy('text')
+            ->get();
+
+        return response()->json($carmodel);
+    }
+    public function getBikeModelDetails(Request $request)
+    {
+        $bikeModelDetail = CarModelDetail::active()
+            ->select('cubic_capacity', 'seating_capacity as seat_capacity')
+            ->where('car_model_id', $request->bike_model_id)
+            ->get();
+
+        return response()->json($bikeModelDetail);
+    }
 }

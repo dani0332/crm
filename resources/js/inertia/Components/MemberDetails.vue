@@ -49,7 +49,7 @@ const memberRelationOptions = computed(() => {
 
 const members = ref(props.membersDetails);
 const computedMembers = computed(() => {
-  return members.value.filter(x => !x.is_third_party_payer);
+  return members?.value?.filter(x => !x.is_third_party_payer);
 });
 
 const memberActionEdit = ref(false);

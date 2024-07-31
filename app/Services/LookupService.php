@@ -26,7 +26,7 @@ class LookupService extends BaseService
 {
     public function getYearsOfManufacture()
     {
-        return YearOfManufacture::select('text as id', 'text')->get();
+        return YearOfManufacture::select('text as id', 'text')->orderBy('sort_order')->get();
     }
 
     public function getVehicleTypes()
