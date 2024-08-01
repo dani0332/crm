@@ -643,8 +643,8 @@ class AdvisorConversionReportService extends BaseService
             }
 
             // TODO: confirm BA he wants include or only show report for embedded products
-            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false' ) {
-                $query->where('source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'true' ) {
+                $query->where('source', '=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             }
         }
 
