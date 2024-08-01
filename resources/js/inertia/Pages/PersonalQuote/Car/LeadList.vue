@@ -228,6 +228,8 @@ const filters = reactive({
   segment_filter: 'all',
   teams: [],
   transaction_approved_dates: page.props.transaction_approved_dates || '',
+  payment_due_date:"",
+  booking_date: ""
 });
 
 const teamUsers =
@@ -253,7 +255,7 @@ const canExportLeadsAndPlan = ref(false);
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -338,7 +340,9 @@ function setQueryStringFilters() {
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];
     } else {
-      filters[key] = params[key];
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
     }
   }
 }
@@ -374,6 +378,40 @@ const onConfirmCreateLead = () => {
 onMounted(() => {
   setQueryStringFilters();
 });
+
+
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
+
 </script>
 
 <template>
@@ -442,7 +480,9 @@ onMounted(() => {
             filters.code ||
             filters.email ||
             filters.renewal_batch ||
-            filters.quote_batch_id
+            filters.quote_batch_id ||
+            filters.payment_due_date ||
+            filters.booking_date
               ? []
               : [isRequired]
           "
@@ -455,7 +495,9 @@ onMounted(() => {
             filters.code ||
             filters.email ||
             filters.renewal_batch ||
-            filters.quote_batch_id
+            filters.quote_batch_id ||
+            filters.payment_due_date ||
+            filters.booking_date
               ? []
               : [isRequired]
           "
@@ -631,6 +673,22 @@ onMounted(() => {
           :options="quoteSegments"
           :single="true"
         />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>
@@ -652,7 +710,7 @@ onMounted(() => {
             </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

@@ -51,6 +51,8 @@ const filters = reactive({
   payment_status_id: '',
   previous_quote_policy_number_text: '',
   page: 1,
+  payment_due_date:"",
+  booking_date: ""
 });
 
 const loader = reactive({
@@ -189,11 +191,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const onExport = () => {
-  const data = { ...filters };
-  delete data.page;
-  Object.keys(data).forEach(
-    key => (data[key] === '' || data[key].length === 0) && delete data[key],
-  );
+  const data = useObjToUrl(filters);
   const url = route('data-extraction', 'life');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
@@ -202,9 +200,7 @@ watch(
   () => filters,
   () => {
     if (
-      filters.created_at_start &&
-      filters.created_at_end &&
-      can(permissionsEnum.DATA_EXTRACTION)
+      can(permissionsEnum.DATA_EXTRACTION) && ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date))
     ) {
       canExport.value = true;
     } else {
@@ -216,6 +212,38 @@ watch(
 
 onMounted(() => {
   setQueryFilters();
+});
+
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
 });
 </script>
 
@@ -338,6 +366,22 @@ onMounted(() => {
             { value: '', label: 'All' },
           ]"
         />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
       </div>
 
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -355,7 +399,7 @@ onMounted(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required to export data.
               </span>
             </template>
           </x-tooltip>
