@@ -145,7 +145,7 @@ function removeMember(index) {
 function onSubmit(isValid) {
   if (!isValid) return;
 
-  if(quoteForm.destination_ids?.length < 1){
+  if( (( quoteForm.direction_code != travelQuoteEnum.TRAVEL_UAE_INBOUND ) && isArrivedUAE()) && quoteForm?.destination_ids?.length < 1){
     quoteForm.errors.destination_ids = 'Please select at least one destination.';
     return
   }
