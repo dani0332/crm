@@ -575,7 +575,8 @@ class SplitPaymentService
                 $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
             }
             $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
-            $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $paymentSplit->commission_vat : 0;
+            $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
+
             $paymentSplit->save();
         }
     }
