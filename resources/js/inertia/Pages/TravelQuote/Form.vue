@@ -7,6 +7,7 @@ const props = defineProps({
   travelers: Array,
   quotePlans: Array,
   errors: Array,
+  travelDestinations: Object,
 });
 const page = usePage();
 const travelQuoteEnum = page.props.travelQuoteEnum;
@@ -183,6 +184,7 @@ function addUpdatedTraveller() {
 onMounted(() => {
   addUpdatedTraveller();
   updateRegionCover();
+  quoteForm.destination_ids = mappedDestinationIds.value;
 });
 
 watch(
@@ -291,6 +293,21 @@ const checkUAEResident = computed(() => {
     hasZeroValueForUAEResident.value = false;
     return false;
 });
+
+
+
+
+    const mappedDestinationIds = computed(() => {
+      return props.travelDestinations?.map(destination => destination.destination_id);
+    });
+
+    watch(mappedDestinationIds, (newVal) => {
+      if (newVal.length < 1) return;
+      quoteForm.destination_ids = newVal;
+    });
+
+
+
 </script>
 
 <template>
