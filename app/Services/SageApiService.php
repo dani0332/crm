@@ -1137,10 +1137,7 @@ class SageApiService
                         $commissionSplit = floatval($extras['splitPayments'][$key]['commission_vat_applicable']);
                         $vatOnCommission = floatval($extras['splitPayments'][$key]['commission_vat']);
 
-                        $dueCommissionSplitAmount = roundNumber($commissionSplit);
-                        if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
-                            $dueCommissionSplitAmount = roundNumber($commissionSplit) + roundNumber($vatOnCommission);
-                        }
+                        $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
 
                         $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date'])), $sageRequestPayload->insurerInvoiceDate);
                         if ($extras['payment']->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
