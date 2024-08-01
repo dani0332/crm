@@ -11,6 +11,7 @@ use App\Http\Requests\EmbeddedProductRequest;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class EmbeddedProductController extends Controller
 {
@@ -183,5 +184,20 @@ class EmbeddedProductController extends Controller
         $response = EmbeddedProductRepository::cancelPayment($request->all());
 
         return response($response['data'], $response['code']);
+    }
+
+    public function force(Request $request)
+    {
+        $file_content = Storage::disk('azureIM')->get($request->path);
+        $file = explode('/', $request->path);
+        $lastIndex = count($file);
+
+        return response()
+            ->streamDownload(
+                function () use ($file_content) {
+                    echo $file_content;
+                },
+                $file[$lastIndex - 1]
+            );
     }
 }

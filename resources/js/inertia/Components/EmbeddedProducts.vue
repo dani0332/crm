@@ -178,12 +178,12 @@ const downloadFile = (download) => {
     if (typeof save.download !== 'undefined') {
         // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
         // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
-        save.href = window.location.protocol+'//'+window.location.host+'/download/force?path='+download.path;
+        save.href = window.location.protocol+'//'+window.location.host+'/embedded-products/download/force?path='+download.path;
         save.target = '_blank';
         save.download = download.name;
         save.dispatchEvent(new MouseEvent('click'));
     } else {
-        window.location.href = window.location.protocol+'//'+window.location.host+'/download/force?path='+download.path; // so that it opens new tab for IE11
+        window.location.href = window.location.protocol+'//'+window.location.host+'/embedded-products/download/force?path='+download.path; // so that it opens new tab for IE11
     }
 }
 
