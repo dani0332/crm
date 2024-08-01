@@ -91,6 +91,7 @@ class HealthEmailService extends BaseService
             'advisorId' => $lead->advisor_id,
             'advisorName' => $lead->advisor_name,
             'advisorEmail' => $lead->advisor_email,
+            'advisorDetails' => $lead->advisor,
             'plans' => $plans,
             'previousAdvisor' => $previousAdvisor,
         ];
