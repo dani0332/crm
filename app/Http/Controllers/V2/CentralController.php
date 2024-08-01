@@ -213,18 +213,12 @@ class CentralController extends Controller
         info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
-            // TODO : job should update the status when job is executed successfully
             dispatch(new SendBookPolicyDocumentsJob($request));
-
-            $quote->update([
-                'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
-            ]);
 
             info('Policy send to customer for '.$quote->uuid);
 
-            //TODO : Status message need to be appropriate
             //TODO : Flags should be introduced regarding Document send email
-            return response()->json(['message' => 'Sending Documents to customer, Status will be updated once document sent'], 200);
+            return response()->json(['message' => 'Documents are being sent to the customer. The status will be updated once the documents are sent.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
