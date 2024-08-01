@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\SendUpdateLog;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -45,6 +47,15 @@ class SendUpdateToCustomerJob implements ShouldQueue
             info('Send Update to Customer Job Email Data '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
             info('Send Update to Customer Job Response '.json_encode($response));
+
+            if ($response == 201) {
+                SendUpdateLog::find($this->data->id)->update([
+                    'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                ]);
+                info('Send Update to Customer Job success, send update id -> '.$this->data->id);
+            } else {
+                info('Send Update to Customer Job failed, send update id -> '.$this->data->id);
+            }
         }
     }
 
