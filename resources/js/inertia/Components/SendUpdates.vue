@@ -109,79 +109,6 @@ onMounted(() => {
   // fetchLogs();
 });
 
-const authenticatedSendUpdateOptions = computed(() => {
-  let filteredOptions = props.options;
-
-  if (
-    !(
-      can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD) ||
-      can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)
-    )
-  ) {
-    // it will remove the main Button.
-    filteredOptions = filteredOptions.filter((option, index) => index !== 0);
-  } else {
-    if (!can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD)) {
-      // it will remove only sub button.
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
-        (option, index) => index !== 0,
-      );
-    }
-    if (!can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)) {
-      // it will remove only sub button.
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
-        (option, index) => index !== 1,
-      );
-    }
-  }
-
-  if (
-    !(
-      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD) ||
-      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
-    )
-  ) {
-    filteredOptions = filteredOptions.filter((option, index) => index !== 1);
-  } else {
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
-        (option, index) => index !== 0,
-      );
-    }
-    if (
-      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
-    ) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
-        (option, index) => index !== 1,
-      );
-    }
-  }
-
-  if (
-    !(
-      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD) ||
-      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD)
-    )
-  ) {
-    filteredOptions = filteredOptions.filter((option, index) => index !== 2);
-  } else {
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
-        (option, index) => index !== 0,
-      );
-    }
-    if (
-      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
-    ) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
-        (option, index) => index !== 1,
-      );
-    }
-  }
-
-  return filteredOptions;
-});
-
 // const fetchLogs = () => {
 //   axios.get(route('send-update.get-by-id', { id: props.reportableId }))
 //     .then(res => sendUpdatesTable.data = res.data.logs)
@@ -500,7 +427,7 @@ const findOption = (item, key) => {
         v-if="modals.step === 'step1'"
       >
         <template
-          v-for="option in authenticatedSendUpdateOptions"
+          v-for="option in props.options"
           :key="option.title"
         >
           <x-tooltip align="left" position="bottom" class="arrow-t">

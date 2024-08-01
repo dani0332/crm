@@ -151,6 +151,8 @@ if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
 } else if (props.quoteType === 'Health') {
   initialAmount.value = props.eCommercePrice;
+} else if (props.quoteType === 'Bike') {
+  initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
@@ -177,8 +179,12 @@ if (props.quoteType=='Business' || props.quoteType=='Home' || props.isPlanDetail
   initalPlanDetails = props.quoteRequest.insurance_provider_details ?? props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
+} else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
+    initalPlanDetails = props.quoteRequest?.insurance_provider_details ?? props.quoteRequest?.insurance_provider;
+} else if ( props.quoteType=='Bike' ) {
+    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
 } else {
-  initalPlanDetails = props.quoteRequest.insurance_provider;
+    initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
 
 let planDetail = ref(initalPlanDetails);
@@ -213,9 +219,9 @@ const isInsureNowPayLaterAllowed = computed(() => {
         }
     }
   }
-  if ( paymentMethodsForm.collection_type === 'broker' && 
-       can(permissionEnum.INPL_USER) 
-  ) { 
+  if ( paymentMethodsForm.collection_type === 'broker' &&
+       can(permissionEnum.INPL_USER)
+  ) {
     return true;
   }
   return false;
@@ -311,7 +317,7 @@ const currentFile = computed(() => {
 const initialTotalPriceWithoutVat = computed(() => {
   if ( props.quoteType === 'Health' ) {
     return props.eCommercePriceWithLP; // premium with loading price,excluding vat
-  }  
+  }
   const vatRate = vatValue ? vatValue / 100 : 0;
   return (totalPrice.value / (1 + vatRate));
 });
@@ -1774,7 +1780,13 @@ const editPaymentModal = (
       payment.travel_plan.insurance_provider;
   }
 
-  if (capture_approval > 0) {
+   //Assign plan for Travel
+   if (props.quoteType === 'Travel' && (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')) {
+      planDetail.value =  payment.travel_plan;
+      planDetail.value['insurance_provider'] =  payment.travel_plan.insurance_provider;
+    }
+
+  if(capture_approval>0) {
     isApproveClicked.value = true;
     if (capture_approval == 1) {
       isCreditCardView.value = true;
@@ -2548,11 +2560,10 @@ const getCaptureValidation = computed(() => {
         ) {
           return true;
         } else if (
-          paymentRecord.payment_splits[0].payment_status_id ===
-            props.paymentStatusEnum.PAID ||
-          paymentRecord.payment_splits[0].payment_status_id ===
-            props.paymentStatusEnum.AUTHORISED
-        ) {
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED ||
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PARTIALLY_PAID
+          ){
           return true;
         }
       }
@@ -2632,6 +2643,9 @@ onMounted(() => {
 
 const getPlanName = computed(() => {
   const plan = planDetail.value;
+  if(props.quoteType === 'Bike' ) {
+    return plan ? props.quoteRequest.car_plan.text : 'Not Available';
+  }
   if (props.sendUpdate) {
     return planText.value || 'Not Available';
   }
@@ -2709,6 +2723,8 @@ watch(
         initialAmount.value = props.sendUpdate?.price_with_vat;
       } else if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
+      } else if (props.quoteType === 'Bike') {
+        initialAmount.value = props.quoteRequest.premium;
       } else {
         initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
           ? props.quoteRequest.premium
@@ -2723,6 +2739,8 @@ watch(
       props.isPlanDetailEnabled
     ) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+    } else if ( props.quoteType=='Bike' ) {
+      initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
       if (props.sendUpdate) {
         initalPlanDetails = props.quoteRequest.insurance_provider_details ?? props.quoteRequest.insurance_provider;
       }

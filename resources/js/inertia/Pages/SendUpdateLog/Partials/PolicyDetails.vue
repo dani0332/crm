@@ -126,7 +126,7 @@ const policyDetailsForm = useForm({
 const onUpdate = () => {
     policyDetailsForm.post(
         route('send-update.save-policy-details'), {
-            preserverScroll: true,
+            preserveScroll: true,
             onSuccess: ({ props }) => {
                 notification.success({
                     title: 'The request has been updated',
@@ -194,18 +194,20 @@ const onEdit = () => {
   }
 };
 
-const rules = {
-  expiry_date: v => {
-    if (v) {
-      const date = new Date(v);
-      const startDate = new Date(policyDetailsForm.start_date);
-      if (startDate >= date) {
-        return 'Expiry date should be greater than Start Date';
-      }
-      return isNaN(date.getTime());
-    }
-    return !!v || 'This field is required';
-  },
+const onCancel = () => {
+  state.isEdit = false;
+  policyDetailsForm.first_name = props.sendUpdateLog?.first_name || props.quote?.first_name || null;
+  policyDetailsForm.last_name = props.sendUpdateLog?.last_name || props.quote?.last_name || null;
+  policyDetailsForm.provider_name = props.sendUpdateLog?.provider_name || providerName.value || null;
+  policyDetailsForm.insurance_provider_id = props.sendUpdateLog?.insurance_provider_id || props.quote?.insurance_provider_id || props.quote?.car_plan_provider_id || null;
+  policyDetailsForm.plan_id = props.sendUpdateLog?.plan_id || props.quote?.plan_id || null;
+  policyDetailsForm.plan_name = props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null;
+  policyDetailsForm.policy_number = props.sendUpdateLog?.policy_number || props.quote?.policy_number || null;
+  policyDetailsForm.issuance_date = props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null;
+  policyDetailsForm.start_date = props.sendUpdateLog?.start_date || dateToYMD(props.quote?.policy_start_date) || null;
+  policyDetailsForm.expiry_date = dateToYMD(filledExpiryDate.value);
+  policyDetailsForm.insurer_quote_number = props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null;
+  policyDetailsForm.issuance_status_id = props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null;
 };
 </script>
 
@@ -423,11 +425,11 @@ const rules = {
               <dd>
                 <DatePicker
                     v-model="policyDetailsForm.expiry_date"
-                    :rules="[rules.expiry_date]"
                     name="expiry_date"
                     :disabled="!state.isEdit"
                     placeholder="dd-mm-yyyy"
                     class="w-full"
+                    :custom-error="policyDetailsForm.errors.expiry_date"
                 />
               </dd>
             </div>
@@ -493,7 +495,7 @@ const rules = {
             Edit
           </x-button>
           <template v-else>
-            <x-button size="sm" color="orange" @click="state.isEdit = false" :loading="policyDetailsForm.processing" :disabled="policyDetailsForm.processing">
+            <x-button size="sm" color="orange" @click="onCancel" :loading="policyDetailsForm.processing" :disabled="policyDetailsForm.processing">
               Cancel
             </x-button>
             <x-button size="sm" color="primary" @click="onUpdate" :loading="policyDetailsForm.processing" :disabled="policyDetailsForm.processing">Update</x-button>

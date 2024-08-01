@@ -470,7 +470,7 @@ function reverseValue(value) {
 
 function updateReversalEntries(payment, sendUpdateLog) {
   reversalEntry.transaction_payment_status = 'N/A';
-  reversalEntry.booking_date = payment?.policy_booking_date || sendUpdateLog?.booking_date || '';
+  reversalEntry.booking_date = sendUpdateLog?.booking_date || props.realQuote?.policy_booking_date || props.quote?.policy_booking_date || '';
   reversalEntry.invoice_date = payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = (payment?.insurer_tax_number) ? (payment.insurer_tax_number + '-REV') : (sendUpdateLog.insurer_tax_invoice_number + '-REV');
   reversalEntry.broker_invoice_number = (payment?.broker_invoice_number) ? (payment.broker_invoice_number + '-REV') : (sendUpdateLog.broker_invoice_number + '-REV');

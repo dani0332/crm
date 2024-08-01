@@ -454,7 +454,11 @@ class SendUpdateLogService
 
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
 
-        $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+        if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+            $invoiceDescription = $insuranceProviderCode.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
+        } else {
+            $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+        }
 
         if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
             $invoiceDescription = 'E.'.$invoiceDescription;
@@ -680,7 +684,10 @@ class SendUpdateLogService
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
-        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
+        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->with(['payments' => function ($query) {
+            $query->whereNull('send_update_log_id');
+        }])->first();
+        $currentDate = now();
 
         try {
             DB::beginTransaction();
@@ -746,8 +753,11 @@ class SendUpdateLogService
                 // Cases for Cancel Inception and Cancel Inception Reissue End
 
                 // Cases for Correct Policy Details Start
-                if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-                    info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
+                    $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
+                )) {
+                    info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    $this->updatePaymentDetails($quote->payments->first(), $sendUpdateLog);
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
@@ -755,7 +765,7 @@ class SendUpdateLogService
                         'renewal_expiry_date' => $sendUpdateLog->expiry_date,
                         'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
                         'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
-                        'policy_booking_date' => $sendUpdateLog->booking_date,
+                        'policy_booking_date' => $currentDate,
                         'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
                         'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
                         'price_with_vat' => $sendUpdateLog->price_with_vat,
@@ -775,7 +785,7 @@ class SendUpdateLogService
             }
 
             $sendUpdateLog->update([
-                'booking_date' => now(),
+                'booking_date' => $currentDate,
                 'transaction_payment_status' => $status ?? '',
                 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
             ]);
@@ -977,5 +987,26 @@ class SendUpdateLogService
     public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
     {
         $this->updatePriceAndDiscount($sendUpdateLog, $payment);
+    }
+
+    public function checkSendUpdatePermissions(): array
+    {
+        $permissionArray = [
+            SendUpdateLogStatusEnum::EF => PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD,
+            SendUpdateLogStatusEnum::EN => PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD,
+            SendUpdateLogStatusEnum::CI => PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD,
+            SendUpdateLogStatusEnum::CIR => PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD,
+            SendUpdateLogStatusEnum::CPU => PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD,
+            SendUpdateLogStatusEnum::CPD => PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD,
+        ];
+
+        $array = [];
+        foreach ($permissionArray as $key => $permission) {
+            if (! auth()->user()->can($permission)) {
+                $array[] = $key;
+            }
+        }
+
+        return $array;
     }
 }
