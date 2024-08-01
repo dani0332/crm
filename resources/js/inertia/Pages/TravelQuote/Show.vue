@@ -1073,6 +1073,7 @@ const customerProfileForm = useForm({
   company_address: page.props.quote.company_address ?? null,
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
   industry_type_code: page.props.quote.industry_type_code ?? null,
+  passport_number: page.props.quote.passport_number ?? null,
   emirate_of_registration_id:
     page.props.quote.emirate_of_registration_id ?? null,
 });
@@ -1191,7 +1192,7 @@ onMounted(() => {
 });
 
 const isEmbeddedProduct = (code) => {
-  return code.includes('TAP-CAR');
+  return code.includes('TRA-CAR');
 };
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1739,6 +1740,11 @@ const getGenderDisplay = (val) => {
             </div>
 
             <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
+
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Passport Number</dt>
+              <dd>{{ customerProfileForm.passport_number ?? 'N/A' }}</dd>
+            </div>
 
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">UAE resident</dt>
