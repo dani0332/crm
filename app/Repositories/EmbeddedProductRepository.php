@@ -303,12 +303,21 @@ class EmbeddedProductRepository extends BaseRepository
             foreach ($epTransaction as $item) {
                 $product_id = $item->product_id;
                 $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
-                // EP Send documents
-                $data = [];
-                $data['quoteId'] = $leadId;
-                $data['modelType'] = $modelType;
-                $data['epId'] = $embedded_product_id;
-                $this->fetchSendDocument($data);
+
+                $isDocPresent = $item->documents->count() > 0;
+                if(EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && !$isDocPresent) {
+                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                    ProcessSyncAlfredProtect::dispatch($quoteObject);
+
+                } else {
+
+                    // EP Send documents
+                    $data = [];
+                    $data['quoteId'] = $leadId;
+                    $data['modelType'] = $modelType;
+                    $data['epId'] = $embedded_product_id;
+                    $this->fetchSendDocument($data);
+                }
             }
         }
     }

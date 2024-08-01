@@ -454,11 +454,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
 
             if ($canCaptureEp) {
-                // capture EP and send documents
-                if ($quoteTypeId == QuoteTypeId::Car) {
-                    ProcessSyncAlfredProtect::dispatch($quoteModel);
-                }
-
                 EmbeddedProductRepository::capturePayment($request->quote_id, $request->modelType);
             }
         }
