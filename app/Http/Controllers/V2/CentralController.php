@@ -50,7 +50,6 @@ use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
-use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\QuoteDocumentService;
@@ -226,15 +225,8 @@ class CentralController extends Controller
                     'message' => 'You are not authorized to perform this action',
                 ]], 403);
             }
-            // TODO: Fetching of Data should be moved to Service
-            $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
-            $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
-            $paymentSplits = $payment->paymentSplits;
-            $data['quoteTypeId'] = $quoteTypeId;
-            $data['id'] = $quote->id;
 
-            $sageService = new SageApiService();
-            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
+            $response = (new SageApiService())->postBookPolicyToSage($request, $quote);
 
             return response()->json(['message' => $response['message']], 200);
         }

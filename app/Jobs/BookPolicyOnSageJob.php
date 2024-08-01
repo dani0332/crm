@@ -22,19 +22,17 @@ class BookPolicyOnSageJob implements ShouldQueue
     private $payment;
     private $sageLogArray;
     private $request;
-    private $paymentSplits;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request)
+    public function __construct($sageRequest, $quote, $payment, $sageLogArray, $request)
     {
         $this->sageRequest = $sageRequest;
         $this->quote = $quote;
         $this->payment = $payment;
         $this->sageLogArray = $sageLogArray;
         $this->request = $request;
-        $this->paymentSplits = $paymentSplits;
     }
 
     /**

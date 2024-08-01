@@ -1249,9 +1249,15 @@ class SageApiService
         }
     }
 
-    // TODO: access relational data using relation instead of passing as a seperate variable
-    public function postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data)
+    public function postBookPolicyToSage($request, $quote)
     {
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
+
+        $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
+        $paymentSplits = $payment->paymentSplits;
+
+        $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
+
         // payload
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
 
@@ -1261,6 +1267,8 @@ class SageApiService
         if (! $isSageEnabled) {
             $returnMessage['status'] = false;
             $returnMessage['message'] = 'Sage is not enabled';
+
+            return $returnMessage;
         }
 
         $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
@@ -1290,13 +1298,14 @@ class SageApiService
             return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
         }
 
-        BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request)->onQueue('sage-book-policy');
+        BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $sageLogArray, $request)->onQueue('sage-book-policy');
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a whilet to check the status!'];
     }
 
-    public function bookPolicyOnSage($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request)
+    public function bookPolicyOnSage($sageRequest, $quote, $payment, $sageLogArray, $request)
     {
+        $paymentSplits = $payment->paymentSplits;
         $quote->userId = $sageRequest->userId;
         info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
         info('Sage API - Payment frequency : '.$payment->frequency.' for '.$quote->uuid);
