@@ -494,7 +494,7 @@ class SageApiService
                     'discount_value' => $extras['send_update_log']->discount,
                     'invoice_description' => $extras['send_update_log']->invoice_description,
                     'insurer_invoice_date' => $extras['send_update_log']->invoice_date,
-                    'commission_vat' => abs($extras['send_update_log']->vat_on_commission), 
+                    'commission_vat' => abs($extras['send_update_log']->vat_on_commission),
                     'total_price' => abs($extras['send_update_log']->price_without_vat),
                     'total_amount' => abs($extras['send_update_log']->price_vat_applicable),
                     'commission' => abs($extras['send_update_log']->total_commission),
