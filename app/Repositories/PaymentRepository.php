@@ -92,6 +92,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
                 $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
             }
+            list($priceWithoutVat,$vat) = app(SplitPaymentService::class)->calculateMasterPriceAndVat($masterPayment->frequency, $masterPayment->total_price, $request->modelType);
             $paymentInformation = [
                 'total_price' => $masterPayment->total_price,
                 'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
@@ -113,6 +114,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'created_by' => $request->user()->id,
                 'updated_by' => $request->user()->id,
+                'price_vat_applicable' => $priceWithoutVat,
+                'price_vat' => $vat,
             ];
 
             // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
@@ -188,6 +191,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
 
             } else {
+                list($priceWithoutVat,$vat) = app(SplitPaymentService::class)->calculateMasterPriceAndVat($masterPayment->frequency, $masterPayment->total_price, $request->modelType);
                 $paymentInformation = [
                     'total_price' => $masterPayment->total_price,
                     'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
@@ -205,6 +209,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'payment_methods_code' => $masterPayment->payment_methods,
                     'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                     'updated_by' => $request->user()->id,
+                    'price_vat_applicable' => $priceWithoutVat,
+                    'price_vat' => $vat,
                 ];
 
                 if ($masterPayment->reference) {

@@ -3140,9 +3140,8 @@ const lookupsEnum = page.props.lookupsEnum;
                   <td>{{ formatDate(item.collection_date) }}</td>
                   <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
                   <td>{{ item.payment_method.name }}</td>
-                  <td>0</td>
-                  <td>0</td>
-                  
+                  <td>{{ formatAmount(item.price_vat_applicable) }}</td>
+                  <td>{{ formatAmount(item.price_vat) }}</td>                  
                   <td>{{ formatAmount(item.total_price) }}</td>
                   <td>{{ formatAmount(item.discount_value) }}</td>
                   <td>{{ formatAmount(item.total_amount) }}</td>

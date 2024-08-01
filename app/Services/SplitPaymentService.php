@@ -581,4 +581,22 @@ class SplitPaymentService
        }        
        return [$priceWithoutVat, $vat];
     }
+
+    // function to calculate the price vat for master payment
+    public function calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType)
+    {
+       $priceWithoutVat = $masterTotalPrice;
+       $vat = 0;
+       if(!isVatApplied($modelType)) {
+           return [$priceWithoutVat, $vat];
+       }
+       $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+       if(!$vatValue) {
+        return [$priceWithoutVat, $vat];
+       }
+
+       $priceWithoutVat = $masterTotalPrice / (1 + ($vatValue / 100));
+       $vat = ($priceWithoutVat*$vatValue) / 100;  
+       return [$priceWithoutVat, $vat];
+    }
 }
