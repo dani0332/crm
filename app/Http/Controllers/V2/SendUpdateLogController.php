@@ -423,7 +423,7 @@ class SendUpdateLogController extends Controller
 
         if ($payment) {
             $isPaymentFetchedFromMainLead = false;
-            $paymentDetailsUpdate = true; 
+            $paymentDetailsUpdate = true;
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
