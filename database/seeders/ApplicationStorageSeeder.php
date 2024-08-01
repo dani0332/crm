@@ -228,6 +228,56 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'sendpolicyupdate@insurancemarket.ae',
                 'is_active' => 1,
             ],
+            [
+                'key_name' => ApplicationStorageEnums::BUP_HEALTH_DOC,
+                'value' => 'https://membersworld.bupaglobal.com',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::OIC_HEALTH_DOC,
+                'value' => 'policy-wordings/health/My-Sukoon-App-Manual.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::AXA_HEALTH_DOC,
+                'value' => 'policy-wordings/health/MyAXA-Mobile-App.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::DIC_HEALTH_DOC,
+                'value' => 'policy-wordings/health/DUBAICARE-MOBILE-APP.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::CIG_HEALTH_DOC,
+                'value' => 'https://my.cigna.com/web/public/guest',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::ALLIANZ_HEALTH_DOC,
+                'value' => 'policy-wordings/health/Allianz-MyHealth-Digital-Services-EN-2021.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::MEDNET_HEALTH_DOC,
+                'value' => 'policy-wordings/health/HealthPass-by-Mednet---User-Guide.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::NEXTCARE_HEALTH_DOC,
+                'value' => 'policy-wordings/health/LUMI-APP-BY-NEXTCARE.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::NAS_HEALTH_DOC,
+                'value' => 'policy-wordings/health/myNAS-App---New-User-Guide.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::E_CARE_HEALTH_DOC,
+                'value' => 'policy-wordings/health/Ecare-member-login-vcard.pdf',
+                'is_active' => 1,
+            ],
         ];
 
         foreach ($applicationStorageSeeder as $applicationStorage) {

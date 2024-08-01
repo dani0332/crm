@@ -766,6 +766,8 @@ class SendEmailCustomerService extends BaseService
                     'policyStartDate' => $emailData->policyStartDate,
                     'policyNumber' => $emailData->policy_number,
                     'roadsideAssistance' => $emailData->roadsideAssistance,
+                    'googleMeet' => $emailData->googleMeet,
+                    'appDownloadLink' => $emailData->appDownloadLink,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
