@@ -322,55 +322,57 @@ final class PermissionsEnum extends Enum
     public const INPL_USER = 'inpl-user';
     public const INPL_APPROVER = 'inpl-approver';
     public const DOCUMENT_VERIFY = 'document-verify';
+    public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
+    public const TRAVEL_HAPEX = 'travel-hapex';
 
     public static function getAdvisorConverionReportPermissions()
     {
         return [
-            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
-            PermissionsEnum::BIKE_CONVERSION_REPORT,
-            PermissionsEnum::HEALTH_CONVERSION_REPORT,
-            PermissionsEnum::TRAVEL_CONVERSION_REPORT,
-            PermissionsEnum::LIFE_CONVERSION_REPORT,
-            PermissionsEnum::HOME_CONVERSION_REPORT,
-            PermissionsEnum::PET_CONVERSION_REPORT,
-            PermissionsEnum::CYCLE_CONVERSION_REPORT,
-            PermissionsEnum::YACHT_CONVERSION_REPORT,
-            PermissionsEnum::CORPLINE_CONVERSION_REPORT,
-            PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT,
+            self::ADVISOR_CONVERSION_REPORT_VIEW,
+            self::BIKE_CONVERSION_REPORT,
+            self::HEALTH_CONVERSION_REPORT,
+            self::TRAVEL_CONVERSION_REPORT,
+            self::LIFE_CONVERSION_REPORT,
+            self::HOME_CONVERSION_REPORT,
+            self::PET_CONVERSION_REPORT,
+            self::CYCLE_CONVERSION_REPORT,
+            self::YACHT_CONVERSION_REPORT,
+            self::CORPLINE_CONVERSION_REPORT,
+            self::GROUPMEDICAL_CONVERSION_REPORT,
         ];
     }
 
     public static function getComprehensiveDashboardPermissions()
     {
         return [
-            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
-            PermissionsEnum::BIKE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::HEALTH_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::TRAVEL_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+            self::COMPREHENSIVE_DASHBOARD_VIEW,
+            self::BIKE_COMPREHENSIVE_DASHBOARD,
+            self::HEALTH_COMPREHENSIVE_DASHBOARD,
+            self::TRAVEL_COMPREHENSIVE_DASHBOARD,
+            self::LIFE_COMPREHENSIVE_DASHBOARD,
+            self::HOME_COMPREHENSIVE_DASHBOARD,
+            self::PET_COMPREHENSIVE_DASHBOARD,
+            self::CYCLE_COMPREHENSIVE_DASHBOARD,
+            self::YACHT_COMPREHENSIVE_DASHBOARD,
+            self::CORPLINE_COMPREHENSIVE_DASHBOARD,
+            self::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
         ];
     }
 
     public static function getAdvisorDistributionReportPermissions()
     {
         return [
-            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
-            PermissionsEnum::BIKE_DISTRIBUTION_REPORT,
-            PermissionsEnum::HEALTH_DISTRIBUTION_REPORT,
-            PermissionsEnum::TRAVEL_DISTRIBUTION_REPORT,
-            PermissionsEnum::LIFE_DISTRIBUTION_REPORT,
-            PermissionsEnum::HOME_DISTRIBUTION_REPORT,
-            PermissionsEnum::PET_DISTRIBUTION_REPORT,
-            PermissionsEnum::CYCLE_DISTRIBUTION_REPORT,
-            PermissionsEnum::YACHT_DISTRIBUTION_REPORT,
-            PermissionsEnum::CORPLINE_DISTRIBUTION_REPORT,
-            PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT,
+            self::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+            self::BIKE_DISTRIBUTION_REPORT,
+            self::HEALTH_DISTRIBUTION_REPORT,
+            self::TRAVEL_DISTRIBUTION_REPORT,
+            self::LIFE_DISTRIBUTION_REPORT,
+            self::HOME_DISTRIBUTION_REPORT,
+            self::PET_DISTRIBUTION_REPORT,
+            self::CYCLE_DISTRIBUTION_REPORT,
+            self::YACHT_DISTRIBUTION_REPORT,
+            self::CORPLINE_DISTRIBUTION_REPORT,
+            self::GROUPMEDICAL_DISTRIBUTION_REPORT,
         ];
     }
 }

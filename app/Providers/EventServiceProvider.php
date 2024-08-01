@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\QuoteEmailUpdated;
+use App\Listeners\HandleBikeAdvisorUpdated;
 use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
@@ -38,6 +40,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         QuoteEmailUpdated::class => [
             UpdateCustomerEmail::class,
+        ],
+        BikeQuoteAdvisorUpdated::class => [
+            HandleBikeAdvisorUpdated::class,
         ],
     ];
 

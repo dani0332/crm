@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             // SICFollowupEmailTemplateIDSeeder::class,
-            QuoteStatusTableSeeder::class,
+            // QuoteStatusTableSeeder::class,
             // RenewalsPermissionSeeder::class,
             // addCarQuoteSearchPermission::class,
             // QuoteStatusTableSeeder::class,
@@ -41,13 +41,13 @@ class DatabaseSeeder extends Seeder
             // addReassignmentTime::class,
             // GenericPermissionSeeder::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
-            LookupSeeder::class,
-            LostReasonsTableSeeder::class,
-            AddGenericRolePermissionSeeder::class,
-            addDubaiNowEmailGroup::class,
-            DubaiLeadSource::class,
-            ActivitySchedulesSeeder::class,
-            DocumentTypeSeeder::class,
+            // LookupSeeder::class,
+            // LostReasonsTableSeeder::class,
+            // AddGenericRolePermissionSeeder::class,
+            // addDubaiNowEmailGroup::class,
+            // DubaiLeadSource::class,
+            // ActivitySchedulesSeeder::class,
+            // DocumentTypeSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             GenericPermissionSeeder::class,
@@ -84,8 +84,10 @@ class DatabaseSeeder extends Seeder
             // MarineSeeder::class,
             // ImcrmUsersRolesCleaner::class,
             AddPermissionsForInsurerNowPayment::class,
-            AddeTicketDocumentTypeSeeder::class,
-            DocumentVerifyPermissionSeeder::class,
+            // AddeTicketDocumentTypeSeeder::class,
+            // DocumentVerifyPermissionSeeder::class,
+            AddLOBsClaimHistoryOptionsSeeder::class,
+            AddRenewalTemplateStorageSeeder::class,
         ]);
     }
 }

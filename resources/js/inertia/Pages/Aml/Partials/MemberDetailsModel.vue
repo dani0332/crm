@@ -299,7 +299,7 @@ function onMemberSubmit(isValid) {
       <div>{{ code }}</div>
     </template>
     <template #item-first_name="{ first_name , last_name }">
-        <div>{{ first_name }} {{quoteType.code == 'Health' ? last_name : ''}}</div>
+        <div>{{ first_name }} {{quoteType.code == 'Health' || quoteType.code == 'Travel'  ? last_name : ''}}</div>
     </template>
     <template #item-dob="{ dob }">
       {{ dateFormat(dob) }}

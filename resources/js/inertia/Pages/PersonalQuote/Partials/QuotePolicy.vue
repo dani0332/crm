@@ -32,7 +32,7 @@ const policyForm = useForm({
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
     page.props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved && !hasRole(rolesEnum.PA),
+      page.props.quoteStatusEnum?.TransactionApproved && !hasRole(rolesEnum.PA),
   editMode: false,
   quote_id: page.props.quote.id,
 });

@@ -2,7 +2,7 @@
 const toast = useToast();
 const page = usePage();
 
-const flash = computed(() => page.props.flash || '');
+const flash = computed(() => page?.props?.flash || '');
 
 watch(
   flash,
