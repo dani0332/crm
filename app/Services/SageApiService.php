@@ -1405,10 +1405,10 @@ class SageApiService
             }
 
             info('SAGE API:  Prepare Patch payload for Commission Spits  for '.$quote->uuid);
-            /* Add Vat on commission to the first Installment of commission */
-            $vatOnCommission = floatval($payment->commission_vat);
 
+            /* Add Vat on commission to the first Installment of commission */
             /*
+            $vatOnCommission = floatval($payment->commission_vat);
             $commission = floatval($payment->commission);
             $commissionWithoutVat = ($commission - $vatOnCommission);
             $commissionSplit = $commissionWithoutVat > 0 ? $commissionWithoutVat / count($paymentSplits) : 0;
@@ -1418,11 +1418,13 @@ class SageApiService
             foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
                 $paymentSplit = $paymentSplits[$key];
                 $commissionSplit = $paymentSplit['commission_vat_applicable'];
-                // Add Vat on commission to the first installment of commission in sage for balancing the amount
-                $dueCommissionSplitAmount = roundNumber($commissionSplit);
-                if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
+                $vatOnCommission = $paymentSplit['commission_vat'];
+
+                $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
+
+                /*if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
                     $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
-                }
+                }*/
                 /*
                  to prevent difference in amount due to rounding number, sum all the dueCommissionSplitAmount except the last one,
                  and then subtract that amount from the total commission with vat and use the result as dueAmount for last installment
