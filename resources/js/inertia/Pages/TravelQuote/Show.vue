@@ -2598,6 +2598,7 @@ const getGenderDisplay = (val) => {
                     <SelectPlan
                       class="ml-1"
                       v-if="!selectedPlanIds.includes(item.id)"
+                      :disabled="isEmbeddedProduct"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="modelType"
