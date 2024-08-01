@@ -11,6 +11,7 @@ use App\Enums\PaymentStatusTextEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\PaymentFrequency;
 use App\Factories\SagePayloadFactory;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -587,6 +588,47 @@ class SplitPaymentService
         $totalPriceVatApplicable = $payment->paymentSplits()->sum('price_vat_applicable');
 
         return roundNumber(($paymentSplit->price_vat_applicable / $totalPriceVatApplicable) * $commissionVatApplicable);
+    }
+
+// function to calculate the price vat
+    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType)
+    {
+       $priceWithoutVat = $splitPaymentAmount;
+       $vat = 0;
+       if(!isVatApplied($modelType)) {
+           return [$priceWithoutVat, $vat];
+       }
+       $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+       if(!$vatValue) {
+        return [$priceWithoutVat, $vat];
+       }
+       if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {           
+           $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
+           $vat = ($priceWithoutVat*$vatValue) / 100;           
+       } elseif ($splitPaymentNumber===1) {
+           $priceWithoutVat = $masterTotalPrice / (1 + ($vatValue / 100));
+           $vat = ($priceWithoutVat*$vatValue) / 100;  
+           $priceWithoutVat =   $splitPaymentAmount - $vat;
+       }        
+       return [$priceWithoutVat, $vat];
+    }
+
+    // function to calculate the price vat for master payment
+    public function calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType)
+    {
+       $priceWithoutVat = $masterTotalPrice;
+       $vat = 0;
+       if(!isVatApplied($modelType)) {
+           return [$priceWithoutVat, $vat];
+       }
+       $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+       if(!$vatValue) {
+        return [$priceWithoutVat, $vat];
+       }
+
+       $priceWithoutVat = $masterTotalPrice / (1 + ($vatValue / 100));
+       $vat = ($priceWithoutVat*$vatValue) / 100;  
+       return [$priceWithoutVat, $vat];
     }
 
 }
