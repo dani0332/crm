@@ -591,45 +591,57 @@ class SplitPaymentService
     }
 
     // function to calculate the price vat
-    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType)
+    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType, $quoteId, $totalSplitPayments )
     {
         $priceWithoutVat = $splitPaymentAmount;
         $vat = 0;
-        if (! isVatApplied($modelType)) {
-            return [$priceWithoutVat, $vat];
-        }
         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         if (! $vatValue) {
             return [$priceWithoutVat, $vat];
         }
-        if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-            $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
-            $vat = ($priceWithoutVat * $vatValue) / 100;
-        } elseif ($splitPaymentNumber === 1) {
-            $priceWithoutVat = $masterTotalPrice / (1 + ($vatValue / 100));
-            $vat = ($priceWithoutVat * $vatValue) / 100;
-            $priceWithoutVat = $splitPaymentAmount - $vat;
+        [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId);
+        if ($vat>0 ) {
+            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {                
+                $vat = $vat / $totalSplitPayments;            
+                $priceWithoutVat = $splitPaymentAmount - $vat;
+             } elseif ($splitPaymentNumber === 1) {
+                if ($frequency != PaymentFrequency::UPFRONT) {
+                    $priceWithoutVat = $splitPaymentAmount - $vat;
+                }                
+            } else {
+                $priceWithoutVat = $splitPaymentAmount;
+                $vat = 0;
+            }
+        } else {
+            $priceWithoutVat = $splitPaymentAmount;
         }
-
         return [$priceWithoutVat, $vat];
     }
 
     // function to calculate the price vat for master payment
-    public function calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType)
+    public function calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId)
     {
-        $priceWithoutVat = $masterTotalPrice;
         $vat = 0;
-        if (! isVatApplied($modelType)) {
-            return [$priceWithoutVat, $vat];
-        }
+        $priceWithoutVat = $masterTotalPrice;
         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         if (! $vatValue) {
             return [$priceWithoutVat, $vat];
         }
-
-        $priceWithoutVat = $masterTotalPrice / (1 + ($vatValue / 100));
-        $vat = ($priceWithoutVat * $vatValue) / 100;
-
+        $computedPrice = 0;
+        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike];
+        if (in_array($modelType, $ecommLobs)) {
+            $computedPrice = $masterTotalPrice;
+        } else {
+            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            if( $quoteModel && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable>0){
+                $computedPrice = $quoteModel->price_vat_applicable;                
+            }
+        }
+        if( $computedPrice>0 ) {
+            $priceWithoutVat = $computedPrice;
+            $vat = ($priceWithoutVat * $vatValue) / 100;
+            return [$priceWithoutVat, $vat];
+        }
         return [$priceWithoutVat, $vat];
     }
 
