@@ -1144,7 +1144,7 @@ if (! function_exists('isVatApplied')) {
     {
         $vatEnabledQuotes = [
             quoteTypeCode::Health,
-            quoteTypeCode::Life,
+            quoteTypeCode::Business,
             quoteTypeCode::Pet,
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
