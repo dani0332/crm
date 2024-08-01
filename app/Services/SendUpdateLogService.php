@@ -687,6 +687,7 @@ class SendUpdateLogService
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->with(['payments' => function ($query) {
             $query->whereNull('send_update_log_id');
         }])->first();
+        $currentDate = now();
 
         try {
             DB::beginTransaction();
@@ -764,7 +765,7 @@ class SendUpdateLogService
                         'renewal_expiry_date' => $sendUpdateLog->expiry_date,
                         'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
                         'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
-                        'policy_booking_date' => $sendUpdateLog->booking_date,
+                        'policy_booking_date' => $currentDate,
                         'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
                         'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
                         'price_with_vat' => $sendUpdateLog->price_with_vat,
@@ -784,7 +785,7 @@ class SendUpdateLogService
             }
 
             $sendUpdateLog->update([
-                'booking_date' => now(),
+                'booking_date' => $currentDate,
                 'transaction_payment_status' => $status ?? '',
                 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
             ]);
