@@ -62,6 +62,7 @@ class DatabaseSeeder extends Seeder
             ImcrmUsersRolesCleaner::class,
             ConfigSICHealthPermissionSeeder::class,
             SICHealthSeeder::class,
+            AddSICHealthWorkFlowSeeder::class,
         ]);
     }
 }

@@ -59,9 +59,9 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
 
                      $responseCode = $healthEmailService->sendHealthOCBIntroEmail($plans, $lead,$this->previousAdvisor,$healthQuoteService, $this->triggerSICWorkflow);
                      if (in_array($responseCode, [200, 201])) {
-                         info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
+                         info('SendHealthOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                      } else {
-                         Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
+                         Log::error('SendHealthOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
                      }
                 }
 

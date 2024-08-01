@@ -90,4 +90,5 @@ final class ApplicationStorageEnums extends Enum
 
     public const  SIC_HEALTH_FOLLOWUP_TEMPLATE = 'SIC_HEALTH_FOLLOWUP_TEMPLATE';
     public const SIC_HEALTH_NO_ADVISOR_TEMPLATE = 'SIC_HEALTH_NO_ADVISOR_TEMPLATE';
+    public const SIC_HEALTH_WORKFLOW_NAME = 'SIC_HEALTH_WORKFLOW_NAME';
 }

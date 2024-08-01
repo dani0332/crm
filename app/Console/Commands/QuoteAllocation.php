@@ -113,6 +113,7 @@ class QuoteAllocation extends Command
             ->where('health_quote_request.price_starting_from', '!=', null)
             ->where('health_quote_request.is_error_email_sent', 0)
             ->where('health_quote_request.advisor_id', null)
+            ->where('sic_flow_enabled', 0)
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
