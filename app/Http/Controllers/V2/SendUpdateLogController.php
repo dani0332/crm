@@ -423,8 +423,7 @@ class SendUpdateLogController extends Controller
 
         if ($payment) {
             $isPaymentFetchedFromMainLead = false;
-            $paymentDetailsUpdate = true; //$this->sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate);
-            // info('Book Update - Payment details updated. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+            $paymentDetailsUpdate = true; 
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
