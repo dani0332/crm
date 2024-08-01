@@ -525,7 +525,7 @@ class SageApiService
 
         if ($extras['send_update_type'] == SageEnum::SUT_REVE_CORR) {
             $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quote, $extras['reverse_invoice']);
-            if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
+            if ($getPaymentByInsurerInvoiceNumber?->send_update_log_id !== null) {
                 $getReverseInvoiceRelation = [
                     'section_type' => $quoteModelObject->getMorphClass(),
                     'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
@@ -1117,8 +1117,8 @@ class SageApiService
                     }
 
                     if ($isARInvoicesCalls) {
-                        $invoicePaymentSchedule['AmountDue'] = $amountDue;
-                        $invoicePaymentSchedule['DueDate'] = $dueDate;
+                        $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $amountDue;
+                        $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
                     } else {
                         $invoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
                         $invoicePaymentSchedule->amtdue = $amountDue;
