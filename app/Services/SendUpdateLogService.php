@@ -764,7 +764,7 @@ class SendUpdateLogService
                         'renewal_expiry_date' => $sendUpdateLog->expiry_date,
                         'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
                         'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
-                        'policy_booking_date' => $sendUpdateLog->booking_date,
+                        'policy_booking_date' => now(),
                         'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
                         'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
                         'price_with_vat' => $sendUpdateLog->price_with_vat,
