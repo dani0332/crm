@@ -559,44 +559,26 @@ class SplitPaymentService
         return $paymentStatusText;
     }
 
-    // function to calculate the split vat
-    public function calculateSplitVat($splitPaymentAmount, $modelType)
+    // function to calculate the price vat
+    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType)
     {
-        $priceVatApplicable = 0;
-        if(!isVatApplied($modelType)) {
-            return $priceVatApplicable;
-        }
-        $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
-        if ($vatValue) {
-            $priceVatApplicable = $splitPaymentAmount / (1 + ($vatValue / 100));
-            //$priceVatApplicable = $splitPaymentAmount - (($splitPaymentAmount*$vatValue) / 100);
-        }        
-        return $priceVatApplicable;
+       $priceWithoutVat = $splitPaymentAmount;
+       $vat = 0;
+       if(!isVatApplied($modelType)) {
+           return [$priceWithoutVat, $vat];
+       }
+       $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+       if(!$vatValue) {
+        return [$priceWithoutVat, $vat];
+       }
+       if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {           
+           $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
+           $vat = ($priceWithoutVat*$vatValue) / 100;           
+       } elseif ($splitPaymentNumber===1) {
+           $priceWithoutVat = $masterTotalPrice / (1 + ($vatValue / 100));
+           $vat = ($priceWithoutVat*$vatValue) / 100;  
+           $priceWithoutVat =   $splitPaymentAmount - $vat;
+       }        
+       return [$priceWithoutVat, $vat];
     }
-
-     // function to calculate the price vat
-     public function calculatePriceVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType)
-     {
-        $priceVat = 0;
-        if(!isVatApplied($modelType)) {
-            return $priceVat;
-        }
-        $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
-        if(!$vatValue) {
-            return $priceVat;
-        }
-        if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-            
-            $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
-            $priceVat = ($priceWithoutVat*$vatValue) / 100;
-            
-            //$priceVat = $splitPaymentAmount / (1 + ($vatValue / 100));   
-            //$priceVat = ($splitPaymentAmount*$vatValue) / 100;
-        } elseif ($splitPaymentNumber===1) {
-            $priceWithoutVat = $masterTotalPrice / (1 + ($vatValue / 100));
-            $priceVat = ($priceWithoutVat*$vatValue) / 100;            
-        }        
-        return $priceVat;
-     }
-
 }

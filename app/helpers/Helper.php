@@ -1144,18 +1144,10 @@ if (! function_exists('isVatApplied')) {
     {
         $vatEnabledQuotes = [
             quoteTypeCode::Health,
-            quoteTypeCode::Car,
-            quoteTypeCode::Travel,
-            quoteTypeCode::Home,
             quoteTypeCode::Life,
             quoteTypeCode::Pet,
-            quoteTypeCode::CORPLINE,
-            quoteTypeCode::Business,
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
-            quoteTypeCode::Yacht,
-            quoteTypeCode::Jetski,
-            quoteTypeCode::Aml,
         ];
         if (in_array($modelType, $vatEnabledQuotes)) {
             return true;
