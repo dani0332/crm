@@ -104,5 +104,6 @@ final class ApplicationStorageEnums extends Enum
     public const BRIDGER_PASSWORD = 'BRIDGER_PASSWORD';
     public const HEALTH_OCB_EMAIL_TEMPLATE = 'HEALTH_OCB_EMAIL_TEMPLATE';
     public const EMAIL_CAMPAIGN_ENABLED = 'EMAIL_CAMPAIGN_ENABLED';
+    public const LEAD_SOURCE_ECOMMERCE = 'LEAD_SOURCE_ECOMMERCE';
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
 }

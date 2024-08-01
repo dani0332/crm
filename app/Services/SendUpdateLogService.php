@@ -454,7 +454,11 @@ class SendUpdateLogService
 
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
 
-        $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+        if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+            $invoiceDescription = $insuranceProviderCode.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
+        } else {
+            $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+        }
 
         if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
             $invoiceDescription = 'E.'.$invoiceDescription;

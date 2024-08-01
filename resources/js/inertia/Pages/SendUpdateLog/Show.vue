@@ -243,7 +243,7 @@ function handleErrorStatusUpdate(newStatus) {
           <div class="grid md:grid-cols-2 gap-y-4">
             <dt>Notes</dt>
             <dd>
-              <x-input
+              <x-textarea
                 v-model="sendUpdateForm.notes"
                 size="xs"
                 :disabled="!state.edit"
