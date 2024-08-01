@@ -12,7 +12,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\MAWelcomeJob;
-use App\Jobs\ProcessSyncAlfredProtect;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\Payment;

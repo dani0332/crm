@@ -305,7 +305,7 @@ class EmbeddedProductRepository extends BaseRepository
                 $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
 
                 $isDocPresent = $item->documents->count() > 0;
-                if(EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && !$isDocPresent) {
+                if (EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && ! $isDocPresent) {
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
                     ProcessSyncAlfredProtect::dispatch($quoteObject);
 
