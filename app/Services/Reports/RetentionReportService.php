@@ -2,20 +2,24 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use Carbon\Carbon;
 use App\Models\HealthQuote;
+use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\BaseService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\GetUserTreeTrait;
 use DateTime;
+use Illuminate\Support\Facades\Auth;
 
 class RetentionReportService extends BaseService
 {
-    use TeamHierarchyTrait, GenericQueriesAllLobs;
+    use TeamHierarchyTrait, GenericQueriesAllLobs, GetUserTreeTrait;
 
     public function getReportData($request)
     {
@@ -31,13 +35,19 @@ class RetentionReportService extends BaseService
             return [];
         }
 
+        if (
+            (auth()->user()->isManagerOrDeputy() && !Auth::user()->can(PermissionsEnum::MANAGER_RETENTION_REPORT_VIEW)) ||
+            (auth()->user()->isAdvisor() && !Auth::user()->can(PermissionsEnum::ADVISOR_RETENTION_REPORT_VIEW))
+        ) {
+            return [];
+        }
         // $query = $quoteModel::query()
         //     ->selectRaw("MONTHNAME(policy_expiry_date) as `month`,
         //         users.name as `advisor_name`,
         //         SUM(CASE WHEN source = 'Renewal_upload' THEN 1 ELSE 0 END) as total,
         //         SUM(CASE WHEN quote_status_id = 17 and source = 'Renewal_upload' THEN 1 ELSE 0 END) as lost,
         //         SUM(CASE WHEN quote_status_id IN (9, 35) and source = 'Renewal_upload' THEN 1 ELSE 0 END) as invalid,
-        //         SUM(CASE WHEN quote_status_id = 56 and source = 'Renewal_upload' THEN 1 ELSE 0 END) as sales")
+        //         SUM(CASE WHEN quote_status_id = 56 and source = 'Renewal_upload' THEN 1 ELSE 0 END) as sales, advisor_id")
         //         ->join('users', 'advisor_id', '=', 'users.id');
 
         $query = $quoteModel::query()
@@ -46,7 +56,7 @@ class RetentionReportService extends BaseService
                 count(*) as total,
                 SUM(CASE WHEN quote_status_id = 17  THEN 1 ELSE 0 END) as lost,
                 SUM(CASE WHEN quote_status_id IN (9, 35)  THEN 1 ELSE 0 END) as invalid,
-                SUM(CASE WHEN quote_status_id = 56  THEN 1 ELSE 0 END) as sales")
+                SUM(CASE WHEN quote_status_id = 56  THEN 1 ELSE 0 END) as sales, advisor_id")
                 ->join('users', 'advisor_id', '=', 'users.id');
 
         $this->applyFilters($query, $request->all());
@@ -77,7 +87,7 @@ class RetentionReportService extends BaseService
         return $reportData;
     }
 
-    public function applyFilters($query, $filters)
+    public function applyFilters($query, $filters, $info=false)
     {
         $filters = (object) $filters;
         $lob = isset($filters->lob) ? ucfirst($filters->lob) : '';
@@ -123,7 +133,7 @@ class RetentionReportService extends BaseService
         if (isset($filters->advisors) && count($filters->advisors) > 0) {
             $query->whereIn('advisor_id', $filters->advisors);
         }
-        
+       
         if ($lob === quoteTypeCode::CORPLINE) {
             if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('business_type_of_insurance_id', $filters->insurance_type);
@@ -145,6 +155,29 @@ class RetentionReportService extends BaseService
         if ($lob === quoteTypeCode::Life) {
             if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('tenure_of_insurance_id', $filters->insurance_type);
+            }
+        }
+
+        if (auth()->user()->isManagerOrDeputy() && Auth::user()->can(PermissionsEnum::MANAGER_RETENTION_REPORT_VIEW)){
+           
+        } else if (auth()->user()->isAdvisor() && Auth::user()->can(PermissionsEnum::ADVISOR_RETENTION_REPORT_VIEW)){
+            $query->where('users.id', auth()->user()->id);
+        }
+
+        if ($info){
+            if(isset($filters->advisor_id)){
+                $query->where('advisor_id', $filters->advisor_id);
+            }
+
+            if (isset($filters->type)){
+                $filterType  = $filters->type;
+                if ($filterType == 'lost'){
+                    $query->where('quote_status_id', 17);
+                } else if ($filterType == 'invalid'){
+                    $query->whereIn('quote_status_id', [9, 35]);
+                } else if ($filterType ==  'sales'){
+                    $query->where('quote_status_id', 56);
+                }
             }
         }
     }
@@ -206,17 +239,19 @@ class RetentionReportService extends BaseService
             $quoteType = $this->getUserPorductName();
         }
 
-        $quoteModel = $this->getModelObject($quoteType);
-        if ($quoteType == '' || !$quoteModel) {
+        $quoteModelClass = $this->getModelObject($quoteType);
+        if ($quoteType == '' || !$quoteModelClass) {
             return [];
         }
-
+        $quoteModel = new $quoteModelClass();
+        $tableName = $quoteModel->getTable();
         $query = $quoteModel::query()
-            ->selectRaw("car_quote_request.code, CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName , quote_status.text as quoteStatusName, price_with_vat as price, policy_expiry_date")
+            ->selectRaw("$tableName.code, CONCAT($tableName.first_name, ' ', $tableName.last_name) as fullName , quote_status.text as quoteStatusName, price_with_vat as price, policy_expiry_date")
                 ->join('users', 'advisor_id', '=', 'users.id')
-                ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id');
+                ->join('quote_status', 'quote_status.id', $tableName.'.quote_status_id');
 
-        $this->applyFilters($query, $request->all());
+
+        $this->applyFilters($query, $request->all(), true);
 
         if ($request->displayBy == 'batch') {
             $this->applyFilterForBatch($query, $request);

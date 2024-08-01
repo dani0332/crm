@@ -25,11 +25,12 @@ const getFiltersObject = () => {
     policyExpiryDate: [],
     teams: [],
     advisors: [],
-    month: '',
+    month: 1,
     page: 1,
     sub_teams: [],
     insurance_type: "",
-    type: ''
+    type: '',
+    advisor_id: ''
   }
 };
 
@@ -46,7 +47,7 @@ const quoteTypesOptions = computed(() => {
   const quoteTypesOptions = [...Object.keys(page.props.filterOptions.lob).map(text => ({
     label: text,
     value: page.props.filterOptions.lob[text],
-  })), { label: "Motor", value: "Motor" }];
+  })), ];
 
   return quoteTypesOptions
 });
@@ -283,9 +284,15 @@ watch(
 );
 
 onMounted(() => {
+  const queryParams = new URLSearchParams(window.location.search)
+  filters.lob = queryParams.get('lob') || '';
+  if (filters.lob == ''){
+    filters.lob = props.productName
+  }
   if (filters.lob !== ''){
     onLobChange(filters.lob, true);
   }
+
 });
 
 const cleanFilters = filters => {
@@ -321,6 +328,13 @@ function setQueryStringFilters() {
 
 function onSubmit(isValid=true) {
   if(isValid){
+    if (filters.lob == ''){
+      notification.error({
+        title: 'Please select Line of Business',
+        position: 'top',
+      });
+      return
+    }
     if (filters.displayBy == ''){
       notification.error({
         title: 'Please select display by filter',
@@ -446,17 +460,19 @@ const totalLeads = reactive({
   ],
 });
 
-function onFetchLeadsInfo(item, type){
+function onFetchLeadsInfo(advisor_id, type, page=1){
   totalLeads.data = [];
   totalLeads.modal = true;
   totalLeads.loader = true;
   filters.type = type;
+  filters.page = page
+  filters.advisor_id = advisor_id;
   const payLoad = cleanFilters(filters);
   axios
     .get(`/reports/fetch-retention-leads-data`, {
-      data: {
+      params: {
         ...payLoad,
-      },
+      }
     })
     .then(response => {
       totalLeads.data = response.data;
@@ -469,6 +485,10 @@ function onFetchLeadsInfo(item, type){
       totalLeads.loader = false;
     });
 }
+const setPageTable = page => {
+  onFetchLeadsInfo(filters.advisor_id, filters.type ,page);
+};
+
 </script>
 
 <template>
@@ -727,7 +747,7 @@ function onFetchLeadsInfo(item, type){
                     <p v-if="item.total == 0">{{ item.total }}</p>
                     <button
                       v-else
-                      @click="onFetchLeadsInfo(item, 'total')"
+                      @click="onFetchLeadsInfo(item.advisor_id, 'total')"
                       class="text-primary underline"
                     >
                       {{ item.total }}
@@ -744,7 +764,7 @@ function onFetchLeadsInfo(item, type){
                     <p v-if="item.lost == 0">{{ item.lost }}</p>
                     <button
                       v-else
-                      @click="onFetchLeadsInfo(item, 'lost')"
+                      @click="onFetchLeadsInfo(item.advisor_id, 'lost')"
                       class="text-primary underline"
                     >
                       {{ item.lost }}
@@ -761,7 +781,7 @@ function onFetchLeadsInfo(item, type){
                     <p v-if="item.invalid == 0">{{ item.invalid }}</p>
                     <button
                       v-else
-                      @click="onFetchLeadsInfo(item, 'invalid')"
+                      @click="onFetchLeadsInfo(item.advisor_id, 'invalid')"
                       class="text-primary underline"
                     >
                       {{ item.invalid }}
@@ -778,7 +798,7 @@ function onFetchLeadsInfo(item, type){
                     <p v-if="item.sales == 0">{{ item.sales }}</p>
                     <button
                       v-else
-                      @click="onFetchLeadsInfo(item, 'sales')"
+                      @click="onFetchLeadsInfo(item.advisor_id, 'sales')"
                       class="text-primary underline"
                     >
                       {{ item.sales }}
@@ -825,7 +845,7 @@ function onFetchLeadsInfo(item, type){
           </tbody>
         </table>
         <div
-          v-if="!reportData.data.length > 0"
+          v-if="((reportData.length == 0 ) || (reportData && reportData.data.length ==  0))"
           data-v-32683533=""
           class="vue3-easy-data-table__message"
         >
@@ -847,7 +867,7 @@ function onFetchLeadsInfo(item, type){
 
     <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
       <template #header>
-        <div class="text-center">Advisor Assigned : Total Leads</div>
+        <div class="text-center">Advisor Assigned : {{ filters.type.charAt(0).toUpperCase() + filters.type.slice(1) }} Leads</div>
       </template>
       <section class="min-h-[70vh]">
         <div v-if="!loaders.advisorLeadTable">
