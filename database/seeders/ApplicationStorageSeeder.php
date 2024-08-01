@@ -230,7 +230,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
             [
                 'key_name' => ApplicationStorageEnums::BUP_HEALTH_DOC,
-                'value' => 'http://membersworld.bupaglobal.com',
+                'value' => 'https://membersworld.bupaglobal.com',
                 'is_active' => 1,
             ],
             [
