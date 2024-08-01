@@ -421,7 +421,7 @@ class EmbeddedProductRepository extends BaseRepository
             $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
             info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
             $emailData = (object) [
-                'quoteCdbId' => $short_code . '-' . $quoteObject->code,
+                'quoteCdbId' => $short_code.'-'.$quoteObject->code,
                 'customerName' => $quoteObject->customer->first_name.' '.$quoteObject->customer->last_name,
                 'customerEmail' => $quoteObject->customer->email,
                 'advisorName' => isset($advisor) ? $advisor->name : null,
