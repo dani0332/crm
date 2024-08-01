@@ -135,8 +135,9 @@ class DashboardController extends Controller
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         if (isset($request->range) && $request->range != null) {
-            $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
-            $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
+            $date = explode(',', $request->range);
+            $startDate = Carbon::parse($date[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse($date[1])->endOfDay()->format($dateFormat);
         } else {
             $startDate = now()->startOfDay()->format($dateFormat);
             $endDate = now()->endOfDay()->format($dateFormat);
