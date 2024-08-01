@@ -5,12 +5,12 @@ namespace App\Http\Controllers\V2;
 use App\Enums\PermissionsEnum;
 use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
 use Illuminate\Http\Request;
-use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 
 class EmbeddedProductController extends Controller
 {

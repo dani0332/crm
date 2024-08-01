@@ -7,7 +7,9 @@ use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Facades\Marshall;
+use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\EmbeddedProduct;
@@ -28,8 +30,6 @@ use finfo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
-use App\Jobs\ProcessSyncAlfredProtect;
-use App\Enums\RolesEnum;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -256,9 +256,9 @@ class EmbeddedProductRepository extends BaseRepository
                 $item->download_document_button = $isDocPresent;
 
                 if (auth()->user()->hasRole(RolesEnum::Engineering)) {
-                    $item->sync_document_button = !$isDocPresent;
+                    $item->sync_document_button = ! $isDocPresent;
                 }
-                
+
             }
 
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);

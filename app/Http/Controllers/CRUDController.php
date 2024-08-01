@@ -1566,7 +1566,7 @@ class CRUDController extends Controller
             $this->crudService->calculateScore($plainEntity);
         }
 
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car) 
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
         && ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued)) {
             // Ep send documents
             EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);

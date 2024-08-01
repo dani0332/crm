@@ -58,17 +58,17 @@ class quoteTypeCode extends Enum
     public static function getName($value)
     {
         return match ($value) {
-            CarQuote::class => Self::Car,
-            HomeQuote::class => Self::Home,
-            HealthQuote::class => Self::Health,
-            LifeQuote::class => Self::Life,
-            BusinessQuote::class => Self::Business,
-            BikeQuote::class => Self::Bike,
-            YachtQuote::class => Self::Yacht,
-            TravelQuote::class => Self::Travel,
-            PetQuote::class => Self::Pet,
-            CycleQuote::class => Self::Cycle,
-            JetskiQuote::class => Self::Jetski,
+            CarQuote::class => self::Car,
+            HomeQuote::class => self::Home,
+            HealthQuote::class => self::Health,
+            LifeQuote::class => self::Life,
+            BusinessQuote::class => self::Business,
+            BikeQuote::class => self::Bike,
+            YachtQuote::class => self::Yacht,
+            TravelQuote::class => self::Travel,
+            PetQuote::class => self::Pet,
+            CycleQuote::class => self::Cycle,
+            JetskiQuote::class => self::Jetski,
         };
     }
 }

@@ -258,7 +258,7 @@ class SukoonDemocranceService
             $userDetail = [
                 'first_name' => $quote->first_name,
                 'last_name' => $quote->last_name,
-                'dob' => !empty($quote->customer->dob) ? Carbon::parse($quote->customer->dob)->format('Y-m-d') : '',
+                'dob' => ! empty($quote->customer->dob) ? Carbon::parse($quote->customer->dob)->format('Y-m-d') : '',
                 'nationality' => 'AE',
                 'is_resident' => $quote->emirate ? 'Yes' : 'No',
                 'emirate' => $quote->emirate->text,

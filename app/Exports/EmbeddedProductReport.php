@@ -35,7 +35,7 @@ class EmbeddedProductReport
     {
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($this->embeddedProduct->short_code);
         $epStrategy = null;
-        if($isAlfredProtect) {
+        if ($isAlfredProtect) {
             $epStrategy = new AlfredProtect();
         } else {
             $epStrategy = new EmbeddedProductStrategy();

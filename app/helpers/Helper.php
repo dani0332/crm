@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\EmbeddedProductEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
