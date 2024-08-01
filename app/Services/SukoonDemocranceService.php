@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use App\Enums\quoteTypeCode;
 
 class SukoonDemocranceService
 {
@@ -298,7 +299,7 @@ class SukoonDemocranceService
                 'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
                 'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
             ]);
-            EmbeddedProductRepository::sendDocument(['epId' => $transaction->product->embeddedProduct->id, 'modelType' => QuoteTypeId::Car, 'quoteId' => $quote->id]);
+            EmbeddedProductRepository::sendDocument(['epId' => $transaction->product->embeddedProduct->id, 'modelType' => quoteTypeCode::Car, 'quoteId' => $quote->id]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
         }
