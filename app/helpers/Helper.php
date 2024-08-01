@@ -1152,6 +1152,7 @@ if (! function_exists('isVatApplied')) {
         if (in_array($modelType, $vatEnabledQuotes)) {
             return true;
         }
+
         return false;
     }
 }
