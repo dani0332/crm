@@ -18,7 +18,6 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
-use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
@@ -226,19 +225,22 @@ trait GenericQueriesAllLobs
     {
         info('fn: bookPolicyPayload called for '.$record->uuid);
         $infoMessage = 'QC '.$record->code.' ';
-        $insuranceProviderLeadCount = $insuranceProviderCode = '';
+        $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
-            $insurance_provider_id = $payment->insurance_provider_id;
-            $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+            $invoiceDescription = generateInvoiceDescription($payment, $quoteType, $record);
+            $brokerInvoiceNo = generateBrokerInvoiceNumber($payment);
+        }
+
+        if ($record->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
-        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
-        $bookPolicyDetails['invoiceDescription'] = substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
+        $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
+        $bookPolicyDetails['invoiceDescription'] = $invoiceDescription;
         $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;

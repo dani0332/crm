@@ -14,9 +14,11 @@ use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
@@ -1136,5 +1138,25 @@ if (! function_exists('getLookupsEnum')) {
             array_map(fn ($case) => $case->name, LookupsEnum::cases()),
             array_map(fn ($case) => $case->value, LookupsEnum::cases())
         );
+    }
+}
+
+if (! function_exists('generateBrokerInvoiceNumber')) {
+    function generateBrokerInvoiceNumber($payment): string
+    {
+        $insurance_provider_id = $payment->insurance_provider_id;
+        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+        $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+
+        return $insuranceProviderCode.(intval($insuranceProviderLeadCount) + 1);
+    }
+}
+if (! function_exists('generateInvoiceDescription')) {
+    function generateInvoiceDescription($payment, $quoteType, $record): string
+    {
+        $insurance_provider_id = $payment->insurance_provider_id;
+        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+
+        return substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
     }
 }
