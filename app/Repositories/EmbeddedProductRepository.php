@@ -460,6 +460,7 @@ class EmbeddedProductRepository extends BaseRepository
         });
         $dataset = $productTransaction->with(
             'quoteRequest.customer',
+            'quoteRequest.customer.nationality',
             'quoteRequest.carMake',
             'quoteRequest.carModel',
             'quoteRequest.quoteStatus',

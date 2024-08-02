@@ -31,6 +31,9 @@ class EmbeddedProduct
             $carMake = $quoteObject->carMake->text ?? '';
             $carModel = $quoteObject->carModel->text ?? '';
             $advisorName = $quoteObject->advisor->name ?? '';
+            $nationality = $quoteObject->customer->nationality->text ?? '';
+            
+
             $age = isset($quoteObject->dob) ?
                 Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now()).' Years'
                 : '';
@@ -60,6 +63,7 @@ class EmbeddedProduct
             $item->age = $age;
             $item->vehicle = $carMake.' '.$carModel;
             $item->contact_number = $quoteObject->mobile_no ?? '';
+            $item->nationality = $nationality ?? '';
             $item->email = $quoteObject->email ?? '';
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
