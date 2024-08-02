@@ -2,6 +2,7 @@
 import IndividualModel from './Partials/IndividualModel.vue';
 import EntityModel from './Partials/EntityModel.vue';
 import { onMounted, ref } from 'vue';
+import {formatDate} from "../../Composables/utilities.js";
 
 const props = defineProps({
   quoteType: Object,
@@ -62,27 +63,8 @@ function dateAndTimeFormat(inputDate) {
     if (!inputDate) {
         return 'N/A';
     }
-    const parts = inputDate.split(' ');
-    const day = parts[0].split('-')[0];
-    const monthAbbreviation = parts[0].split('-')[1];
-    const year = parts[0].split('-')[2];
-    const time = parts[1].substring(0, parts[1].length - 2);
-    const period = parts[1].substring(parts[1].length - 2);
-    const months = {
-        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
-        'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
-    };
-    const month = months[monthAbbreviation];
-    // Convert time to 24-hour format
-    let hour = parseInt(time.split(':')[0]);
-    const minute = time.split(':')[1];
-    if (period.toLowerCase() === 'pm') {
-        hour += 12;
-    }
-    hour = String(hour).padStart(2, '0');
-    const seconds = '00';
-    const newDateFormat = `${day}-${month}-${year} ${hour}:${minute}:${seconds}`;
-    return newDateFormat;
+  return formatDate(inputDate)
+
 }
 
 const dateFormat = date =>
