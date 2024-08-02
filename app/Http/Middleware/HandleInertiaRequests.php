@@ -31,6 +31,7 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
+use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -76,6 +77,9 @@ class HandleInertiaRequests extends Middleware
             'auth.permissions' => fn () => $permissions,
             'auth.roles' => fn () => $roles,
             'sidebar' => fn () => $this->buildNavigation()->tree(),
+            'ziggy' => fn () => array_merge((new Ziggy())->toArray(), [
+                'location' => $request->url(),
+            ]),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
             'insuranceProviderCodeEnum' => InsuranceProvidersEnum::asArray(),

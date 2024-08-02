@@ -3,7 +3,7 @@ const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps({
   modelValue: {
-    type: [String, Array, Date, Object],
+    type: [String, Array, Date, Object, Number],
     default: '',
   },
   label: {
@@ -27,7 +27,7 @@ const selectedData = computed({
 });
 
 const iconPosition = computed(() => {
-  return props.label ? '70%' : '54%';
+  return props.label ? '2.75rem' : '54%';
 });
 
 const currentTz = computed(() => {

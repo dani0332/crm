@@ -1,4 +1,6 @@
 <script setup>
+const page = usePage();
+
 const createLink = link => {
   if (link.children.length > 0) {
     return {
@@ -6,17 +8,21 @@ const createLink = link => {
       items: link.children.map(createLink),
     };
   } else {
+    const linkUrl = removeDomain(link.url);
     return {
       label: link.title,
       icon: link.attributes.icon,
       value: link.url,
-      active: link.active,
+      active: page.url.startsWith(linkUrl),
       onClick: () => router.visit(link.url),
     };
   }
 };
 
-const page = usePage();
+function removeDomain(url) {
+  return '/' + url.replace(/^(?:\/\/|[^/]+)*\//, '');
+}
+
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
@@ -194,7 +200,11 @@ const onLogout = () => {
               accordingly</span
             >
           </div>
-          <slot />
+          <Transition name="fade" mode="out-in">
+            <div :key="$page.props.ziggy.location">
+              <slot />
+            </div>
+          </Transition>
         </div>
       </article>
     </XNotifications>
