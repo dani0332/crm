@@ -51,8 +51,11 @@ class HealthEmailService extends BaseService
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                 $sicEventName = ApplicationStorage::where('key_name', 'SIC_HEALTH_WORKFLOW_NAME')->first();
+                info('SIC Health workflow key: '.$sicEventName->value);
                 if ($sicEventName) {
-                    $apiResponse = SIBService::createWorkflowEvent($sicEventName->value, $lead, [], $emailData);
+                    $eventData = $emailData;
+                    $eventData->plans = [];
+                    $apiResponse = SIBService::createWorkflowEvent($sicEventName->value, $lead, [], $eventData);
                     $lead->sic_flow_enabled = true;
                     $lead->save();
                     info('SIC Health workflow event triggered for lead: '.$lead->uuid.' and sic_flow_enabled: '.$lead->sic_flow_enabled);
@@ -71,7 +74,6 @@ class HealthEmailService extends BaseService
             info('sendCarOCBIntroEmail - sendHealthNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
             $responseCode = $this->sendEmailCustomerService->sendHealthNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
         }
-
         return $responseCode;
     }
 
