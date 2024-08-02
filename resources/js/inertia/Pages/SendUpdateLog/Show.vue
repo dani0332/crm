@@ -214,12 +214,50 @@ function handleErrorStatusUpdate(newStatus) {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <x-form @submit="onUpdateLog">
         <div class="flex gap-2 w-100 flex-grow justify-between">
-          <h3 class="text-lg font-semibold text-primary-800 capitalize">
-            {{ sendUpdateLog.category.text }}
-          </h3>
-          <Link :href="state.redirectURL">
-            <x-button color="primary" size="sm" class="mr-5"
-              >Go back to lead</x-button
+        <h3 class="text-lg font-semibold text-primary-800 capitalize">
+          {{ sendUpdateLog.category.text }}
+        </h3>
+        <Link :href="state.redirectURL">
+          <x-button color="primary" size="sm" class="mr-5"
+            >Go back to lead</x-button
+          >
+        </Link>
+      </div>
+      <x-divider class="my-4" />
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="left">
+                <label
+                  class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                >
+                  SU ref ID
+                </label>
+                <template #tooltip>
+                  A unique reference identifier assigned to each "Send Update"
+                  request, allowing for easy tracking and reference.
+                </template>
+              </x-tooltip>
+            </dt>
+            <dd>{{ sendUpdateLog.code }}</dd>
+          </div>
+          <div class="grid md:grid-cols-2 gap-y-4">
+            <dt>Notes</dt>
+            <dd>
+              <x-textarea
+                v-model="sendUpdateForm.notes"
+                size="xs"
+                :disabled="!state.edit"
+              />
+            </dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <template
+              v-if="
+                props.sendUpdateLog.category.code !== props.sendUpdateStatusEnum.EN &&
+                props.sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPU
+              "
             >
           </Link>
         </div>

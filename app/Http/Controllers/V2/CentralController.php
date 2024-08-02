@@ -288,6 +288,9 @@ class CentralController extends Controller
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+        if (! $successMessage) {
+            return back()->with('error', 'Error in approving payment');
+        }
 
         return back()->with('success', $successMessage);
     }
