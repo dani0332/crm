@@ -35,7 +35,7 @@ const filters = reactive({
   sub_teams: [],
   tiers: [],
   isCommercial: 'All',
-  isEmbeddedProducts: false,
+  isEmbeddedProducts: '',
   insurance_type: '',
   insurance_for: '',
   segment_filter: 'all',
