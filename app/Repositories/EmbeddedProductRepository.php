@@ -286,7 +286,7 @@ class EmbeddedProductRepository extends BaseRepository
         return $canSend;
     }
 
-    public function fetchSendDocumentsByLead($leadId, $modelType)
+    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if ($quoteTypeId !== QuoteTypeId::Car) {
@@ -297,7 +297,20 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_type_id', $quoteTypeId],
             ['quote_request_id', $leadId],
             ['is_selected', 1],
-        ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
+        ]);
+
+        if(!empty($epId)) {
+            $ep = $this->where('id', $epId)->first();
+            $optionsIds = [];
+            if ($ep->prices) {
+                $optionsIds = $ep->prices->pluck('id');
+            }
+            $epTransaction = $epTransaction->whereIn('product_id', $optionsIds);
+        } else {
+            $epTransaction = $epTransaction->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
+        }
+
+        $epTransaction = $epTransaction->get();
 
         if ($epTransaction->isNotEmpty()) {
             foreach ($epTransaction as $item) {

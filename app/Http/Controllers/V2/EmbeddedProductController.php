@@ -120,7 +120,11 @@ class EmbeddedProductController extends Controller
 
     public function sendDocument(EmbeddedProducDocumentRequest $request)
     {
-        EmbeddedProductRepository::sendDocument($request->validated());
+        $data = $request->validated();
+        $quoteId = $data['quoteId'];
+        $modelType = $data['modelType'];
+        $epId = $data['epId'];
+        EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
 
         return redirect()->back()->with('success', 'Certificate send Successfully');
     }
