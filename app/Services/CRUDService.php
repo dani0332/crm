@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
@@ -22,6 +23,7 @@ use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\AML;
+use App\Models\ApplicationStorage;
 use App\Models\CarLostQuoteLog;
 use App\Models\Entity;
 use App\Models\GenericModel;
@@ -376,16 +378,21 @@ class CRUDService extends BaseService
 
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
-                && $entity->source == LeadSourceEnum::IMCRM) {
+            $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
+            if (
+                strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+                && ($entity->source == LeadSourceEnum::IMCRM || strpos($entity->source, $ecommerceSource) !== false)
+            ) {
                 $this->healthQuoteService->assignRenewalBatch($entity->id);
                 $this->updatePaymentStatus($entity);
             }
 
             // ========= END =========
 
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
-            && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            if (
+                strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+                && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+            ) {
                 $this->updatePaymentStatus($entity);
             }
 
@@ -570,14 +577,19 @@ class CRUDService extends BaseService
         return $model;
     }
 
-    public function getOcbCustomerEmailTemplate($quotePlansCount)
+    public function getOcbCustomerEmailTemplate($quotePlansCount, $type = quoteTypeCode::Car)
     {
-        if ($quotePlansCount == 1) {
-            $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
-        } elseif ($quotePlansCount > 1) {
-            $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
-        } else {
-            $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE';
+        $key = '';
+        if ($type == quoteTypeCode::Car) {
+            if ($quotePlansCount == 1) {
+                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
+            } elseif ($quotePlansCount > 1) {
+                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
+            } else {
+                $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE';
+            }
+        } elseif ($type == quoteTypeCode::Bike) {
+            $key = 'SIB_BIKE_QUOTE_PLAN_TEMPLATE';
         }
 
         return $this->applicationstorageService->getValueByKey($key);

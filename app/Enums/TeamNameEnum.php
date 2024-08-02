@@ -39,4 +39,6 @@ final class TeamNameEnum extends Enum
     public const AMT = 'AMT';
     public const MICRO_SME = 'Micro SME';
     public const CORPLINE_NEW = 'Corpline - Team';
+    public const BIKE = 'Bike';
+    public const Bike_Team = 'Bike - Team';
 }

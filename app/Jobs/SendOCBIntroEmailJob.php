@@ -28,7 +28,7 @@ class SendOCBIntroEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3;
-    public $timeout = 15;
+    public $timeout = 40;
     public $backoff = 300;
     private $quoteUuid;
     private $previousAdvisor;
@@ -67,10 +67,9 @@ class SendOCBIntroEmailJob implements ShouldQueue
                 if (($lead->assignment_type == AssignmentTypeEnum::MANUAL_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) && $lead->source == LeadSourceEnum::DUBAI_NOW) {
                     $this->sendDubaiNowEmail($lead);
                 } else {
-
                     $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                     // Retrieve plans with available ratings for the given lead
-                    $plans = $httpService->getPlans($lead->uuid, false, false, false);
+                    $plans = $httpService->getPlans($lead->uuid, false, false, false, 'Car');
 
                     $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService, $this->triggerSICWorkflow);
                     if (in_array($responseCode, [200, 201])) {
@@ -79,7 +78,6 @@ class SendOCBIntroEmailJob implements ShouldQueue
                         Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
                     }
                 }
-
             }
         } catch (Exception $e) {
             info('SendOCBIntroEmailJob - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
@@ -130,5 +128,4 @@ class SendOCBIntroEmailJob implements ShouldQueue
             Log::error('SendDubaiNowInternalEmail - ERROR:'.$e->getMessage());
         }
     }
-
 }
