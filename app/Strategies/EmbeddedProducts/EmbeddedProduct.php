@@ -125,10 +125,6 @@ class EmbeddedProduct
 
     public static function checkAlfredProtect($product)
     {
-        return in_array($product, [
-            EmbeddedProductEnum::AP1()->key,
-            EmbeddedProductEnum::AP2()->key,
-            EmbeddedProductEnum::AP3()->key,
-        ]);
+        return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
     }
 }

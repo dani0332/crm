@@ -11,4 +11,13 @@ final class EmbeddedProductEnum extends Enum
     const AP1 = 'Silver';
     const AP2 = 'Gold';
     const AP3 = 'Platinum';
+
+    public static function getAlfredProtectCodes(): array
+    {
+        return [
+            'AP1',
+            'AP2',
+            'AP3',
+        ];
+    }
 }
