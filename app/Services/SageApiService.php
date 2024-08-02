@@ -541,14 +541,15 @@ class SageApiService
                 }
             } else {
                 $reverseSendUpdate = SendUpdateLog::where('insurer_tax_invoice_number', $extras['reverse_invoice'])->first();
-                $getReverseInvoiceRelation = (!empty($reverseSendUpdate)) ? [
+                $getReverseInvoiceRelation = (! empty($reverseSendUpdate)) ? [
                     'section_type' => $quoteModelObject->getMorphClass(),
                     'section_id' => $reverseSendUpdate->id,
                 ] : [];
             }
 
             if (empty($getReverseInvoiceRelation)) {
-                logger()->error('Book Update - Reverse Invoice not Found. SendUpdateUUID: '.$extras['send_update_log']->uuid . ' - ReverseInvoice: '.$extras['reverse_invoice']);
+                logger()->error('Book Update - Reverse Invoice not Found. SendUpdateUUID: '.$extras['send_update_log']->uuid.' - ReverseInvoice: '.$extras['reverse_invoice']);
+
                 return ['status' => false, 'message' => 'Reverse Invoice not found'];
             }
 
@@ -948,7 +949,7 @@ class SageApiService
             $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], $sageAPIsParams['extraDetails'][$methodName]['verb'] ?? 'POST');
             $sageResponse = json_decode($resp, true);
             info('Book Update - Sage API Call - Method Name ('.$methodName.') - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
-        
+
         }
 
         if (in_array($methodName, ['createARInvoicePremAndComm', 'createAPInvoicePrem', 'createARInvoiceDis', 'createPaymontRecieptOneInvoice', 'arSplitPrepaymentPayload']) && isset($sageResponse['BatchNumber'])) {
@@ -989,7 +990,7 @@ class SageApiService
             if (isset($sageResponse['BatchNumber'])) {
                 $isFollowUpCondition = $sageResponse['BatchNumber'] == $extraParams['batchNumber'];
             } else {
-                logger()->error('Book Update - Sage API Failed - Batch Number not found in response' . json_encode($sageResponse));
+                logger()->error('Book Update - Sage API Failed - Batch Number not found in response'.json_encode($sageResponse));
             }
         } else {
             $isFollowUpCondition = isset($sageAPIsParams['extraDetails'][$methodName]['nextCondition']) ?
