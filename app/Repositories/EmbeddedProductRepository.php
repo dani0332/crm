@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -19,6 +20,7 @@ use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
+use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -530,7 +532,10 @@ class EmbeddedProductRepository extends BaseRepository
         $shortCode = strtoupper($shortCode);
         if ($shortCode == 'MDX') {
             $strategy = new MDX();
-        } else {
+        } else if ($shortCode == EmbeddedProductEnum::TRAVEL) {
+            $strategy = new TravelAnnual();
+        } 
+        else {
             $strategy = new EmbeddedProductStrategy();
         }
 

@@ -16,6 +16,44 @@ class EmbeddedProduct
         throw new Exception('Method not implemented');
     }
 
+    public function getExcelColumns()
+    {
+        return [
+            'EP REF-ID',
+            'ADVISOR NAME',
+            'PAYMENT DATE',
+            'PLAN COMMENCEMENT DATE',
+            'PLAN END DATE',
+            'CERTIFICATE NUMBER',
+            'FULL NAME',
+            'EMIRATES ID NUMBER',
+            'DOB',
+            'AGE',
+            'VEHICLE',
+            'CONTRIBUTION AMOUNT',
+            'POLICY ISSUE STATUS',
+        ];
+    }
+
+    public function getExcelData($certificate)
+    {
+        return [
+            $certificate->ref_id,
+            $certificate->advisor_name,
+            $certificate->payment_date,
+            $certificate->plan_start_date,
+            $certificate->plan_end_date,
+            $certificate->certificate_number,
+            $certificate->name,
+            $certificate->emirates_id_number,
+            $certificate->dob,
+            $certificate->age,
+            $certificate->vehicle,
+            $certificate->contribution_amount,
+            $certificate->status,
+        ];
+    }
+
     /**
      * Retrieves sold transaction data from a dataset.
      *
