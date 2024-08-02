@@ -455,19 +455,19 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
-        $dataset = EmbeddedTransaction::with(
+        $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
+            $query->where('id', $ep->id);
+        });
+        $dataset = $productTransaction->with(
             'quoteRequest.customer',
             'quoteRequest.carMake',
             'quoteRequest.carModel',
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
-        )
-            ->join('embedded_product_options', function ($join) use ($ep) {
-                $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
-                    ->where('embedded_product_options.embedded_product_id', $ep->id);
-            })
-            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+        )->whereHas('product.embeddedProduct', function ($query) use ($ep) {
+            $query->where('id', $ep->id);
+        })
             ->where('embedded_transactions.is_selected', true)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
@@ -519,7 +519,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $strategy = $this->createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset);
-
+        
         return $dataset;
     }
 
