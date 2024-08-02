@@ -933,7 +933,7 @@ const getAdvisorLabel = () => {
         <x-select
           v-if="canShow('isEmbeddedProducts')"
           v-model="filters.isEmbeddedProducts"
-          label="Include Embedded Products"
+          label="Only Embedded Products"
           placeholder="Select any option"
           :options="[
             { value: 'true', label: 'Yes' },

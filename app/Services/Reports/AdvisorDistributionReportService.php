@@ -2,6 +2,7 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
@@ -119,6 +120,7 @@ class AdvisorDistributionReportService extends BaseService
         $selectColumns = [
             DB::raw('count(DISTINCT personal_quotes.id) as total_leads'),
             'users.name as advisor_name',
+            'source',
         ];
         $query = PersonalQuote::query()
             ->select($selectColumns)
@@ -235,6 +237,11 @@ class AdvisorDistributionReportService extends BaseService
             'isCommercial' => [
                 'lobs' => [
                     quoteTypeCode::Car,
+                ],
+            ],
+            'isEmbeddedProducts' => [
+                'lobs' => [
+                    quoteTypeCode::Travel,
                 ],
             ],
             'insurance_type' => [
@@ -384,11 +391,13 @@ class AdvisorDistributionReportService extends BaseService
         ];
         $lobs = $this->getLobByPermissions();
 
+        $isEmbeddedProducts = false;
+
         return [
             'lob' => count($lobs) == 1 ? reset($lobs) : '',
             'advisorAssignedDates' => $advisorAssignedDates,
             'isCommercial' => 'All',
-            'isEmbeddedProducts' => false,
+            'isEmbeddedProducts' => $isEmbeddedProducts,
         ];
     }
 
@@ -553,6 +562,10 @@ class AdvisorDistributionReportService extends BaseService
 
             if (! empty($filters->travel_coverage) && $filters->travel_coverage != '') {
                 $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
+            }
+
+            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'true') {
+                $query->where('personal_quotes.source', '=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             }
         }
 
