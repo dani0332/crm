@@ -21,6 +21,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\QuoteStatusLog;
 use App\Models\SageApiLog;
 use App\Models\SendUpdateLog;
 use App\Models\User;
@@ -1260,6 +1261,7 @@ class SageApiService
 
         // payload
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
+        $sageRequest->quoteTypeId = $quoteTypeId;
 
         // check sage is enabled or not
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
@@ -1279,6 +1281,7 @@ class SageApiService
             return ['status' => false, 'message' => 'Customer not found in sage'];
         }
         $sageRequest->customerId = $sageCustomerNumber;
+
 
         //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
@@ -1307,6 +1310,7 @@ class SageApiService
     {
         $paymentSplits = $payment->paymentSplits;
         $quote->userId = $sageRequest->userId;
+        $quote->quoteTypeId = $sageRequest->quoteTypeId;
         info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
         info('Sage API - Payment frequency : '.$payment->frequency.' for '.$quote->uuid);
         // frequency  is 'upfront'
@@ -2257,11 +2261,22 @@ class SageApiService
 
         info('################################## mark status as policy booked for : '.$quote->code.'##################################');
         unset($quote->userId);
+        unset($quote->quoteTypeId);
 
         // TODO: Save quote status log for historic record
+        $previousQuoteStatusId = $quote->quote_status_id;
         $quote->update([
             'quote_status_id' => QuoteStatusEnum::PolicyBooked,
             'policy_booking_date' => Carbon::now(),
+        ]);
+
+        QuoteStatusLog::create([
+            'quote_type_id' => $quote->quoteTypeId,
+            'quote_request_id' => $quote->id,
+            'current_quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            'previous_quote_status_id' => $previousQuoteStatusId,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
         ]);
 
         info('################################## straightforwardPayments for : '.$quote->code.'##################################');
