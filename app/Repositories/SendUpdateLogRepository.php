@@ -252,6 +252,7 @@ class SendUpdateLogRepository extends BaseRepository
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
+
             return (object) [
                 'message' => $ex->getMessage(),
             ];
