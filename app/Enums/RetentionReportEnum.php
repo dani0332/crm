@@ -4,8 +4,16 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-final class RetentionReportTooltipEnum extends Enum
+final class RetentionReportEnum extends Enum
 {
+
+    const MONTHLY = 'MONTHLY';
+    const BATCH = 'BATCH';
+    const LOST =  'LOST';
+    const INVALID = 'INVALID'; 
+    const SALES = 'SALES';
+    const TOTAL = 'TOTAL';
+
     const MONTH_HEADING = 'The policies expiring in the selected month.';
     const BATCH_HEADING = 'This will show all the policies that are expiring in the selected batch.';
     const START_DATE_HEADING = 'This date will display the start date of the Batch. If you\'re using a "Monthly" filter, this date will represent the start of the selected month for data display.';
@@ -18,7 +26,6 @@ final class RetentionReportTooltipEnum extends Enum
     const VOLUME_NET_RETENTION_HEADING = 'The ratio of won leads to the total leads, excluding invalid leads. VOLUME NET RETENTION= (SALES)/(TOTAL-INVALID)';
     const VOLUME_GROSS_RETENTION_HEADING = 'The ratio of won leads to the total leads, including all leads. VOLUME GROSS RETENTION= (SALES)/(TOTAL)';
     const RELATIVE_RETENTION_HEADING = 'The difference between the average Net Retention of the renewals and the Net Retention of an advisor.';
-
 
     const TOTAL_COLUMN = 'Sum of selected leads.';
     const LOST_COLUMN = 'Sum of selected leads classified as "Lost".';

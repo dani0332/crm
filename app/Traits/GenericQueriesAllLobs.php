@@ -57,7 +57,6 @@ trait GenericQueriesAllLobs
             }
             return false;
         }
-
         return $model;
     }
 

@@ -17,7 +17,6 @@ const advisorOptions = ref([]);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const notification = useToast();
 const subteamOptions = ref([]);
-const RetentionReportEnum = props.RetentionReportEnum 
 
 const getFiltersObject = () => {
   return {
@@ -36,8 +35,8 @@ const getFiltersObject = () => {
 };
 
 const displayBy = ref([
-  { label: 'Month', value: RetentionReportEnum.MONTHLY},
-  { label: 'Batch', value: RetentionReportEnum.BATCH },
+  { label: 'Month', value: page.props.RetentionReportEnum.MONTHLY},
+  { label: 'Batch', value: page.props.RetentionReportEnum.BATCH },
 ]);
 
 const teamOptions = ref([]);
@@ -48,18 +47,18 @@ const quoteTypesOptions = computed(() => {
   const quoteTypesOptions = [...Object.keys(page.props.filterOptions.lob).map(text => ({
     label: text,
     value: page.props.filterOptions.lob[text],
-  }))];
+  })), ];
 
   return quoteTypesOptions
 });
 
 const monthOptions = computed(() => {
-  const monthOptions = [...Object.values(page.props.monthNames).map((text, index) =>({
+  const quoteTypesOptions = [...Object.values(page.props.monthNames).map((text, index) =>({
     label: text,
     value: index+1,
   }))];
 
-  return monthOptions
+  return quoteTypesOptions
 });
 
 function onReset() {
@@ -78,6 +77,7 @@ const canShow = (element) => {
       (lobs.length != 0 && Object.values(lobs).includes(filters.lob)))) {
           return true;
       }
+
       return false;
   }
 
@@ -189,7 +189,7 @@ const onLobChange = (e, isOnMounted = false) => {
       loadAdvisorsByLob(e);
   }
 
-  onSubmit(false)
+  // onSubmit(false)
 };
 
 const isDisabled = (element) => {
@@ -290,7 +290,6 @@ watch(
 onMounted(() => {
   const queryParams = new URLSearchParams(window.location.search)
   filters.lob = queryParams.get('lob') || '';
-  filters.displayBy = queryParams.get('displayBy') || '';
   if (filters.lob == ''){
     filters.lob = props.productName
   }
@@ -358,6 +357,7 @@ function onSubmit(isValid=true) {
   filters.page = 1;
   const payLoad = cleanFilters(filters);
   loaders.table = true
+  
   router.visit('/reports/retention-report', {
       method: 'get',
       data: {
@@ -494,27 +494,6 @@ const setPageTable = page => {
   onFetchLeadsInfo(filters.advisor_id, filters.type ,page);
 };
 
-const getRetentionReportHeaders = () => {
-const headers = [
-  { text: 'Month', value: 'month', tooltip: RetentionReportEnum.MONTH_HEADING },
-  { text: 'Advisor Name', value: 'advisor_name', tooltip: RetentionReportEnum.ADVISOR_NAME_HEADING},
-  { text: 'Total', value: 'total', tooltip: RetentionReportEnum.TOTAL_HEADING},
-  { text: 'Lost', value: 'lost', tooltip: RetentionReportEnum.LOST_HEADING},
-  { text: 'Invalid', value: 'invalid', tooltip: RetentionReportEnum.INVALID_HEADING},
-  { text: 'Sales', value: 'sales', tooltip: RetentionReportEnum.POLICIES_BOOKED_HEADING},
-  { text: 'Volume Gross Retention', value: 'volume_gross_retention', tooltip: RetentionReportEnum.VOLUME_GROSS_RETENTION_HEADING},
-  { text: 'Volume Net Retention', value: 'volume_net_retention', tooltip: RetentionReportEnum.VOLUME_NET_RETENTION_HEADING},
-  { text: 'Relative Retention', value: 'relative_retention', tooltip: RetentionReportEnum.RELATIVE_RETENTION_HEADING},
-];
-
-if (props.isShowBatchColumn) {
-  headers.splice(1, 0, { text: 'Batch', value: 'batch', tooltip: RetentionReportEnum.BATCH_HEADING});
-  headers.splice(2, 0, { text: 'Start Date', value: 'start_date', tooltip: RetentionReportEnum.START_DATE_HEADING});
-  headers.splice(3, 0, { text: 'End Date', value: 'end_date', tooltip: RetentionReportEnum.END_DATE_HEADING});
-}
-return headers;
-
-};
 </script>
 
 <template>
@@ -629,134 +608,255 @@ return headers;
       </div>
     </x-form>
 
-    <DataTable
-      table-class-name="compact text-wrap"
-      :loading="loaders.table"
-      :headers="getRetentionReportHeaders()"
-      :items="reportData.data || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #header="header">
-        <HeaderCell :header="header" />
-      </template>
-      
-      <template #item-month="item">
-        {{ item.month }}
-      </template>
-      <template #item-batch="item">
-        {{ item.batch }}
-      </template>
-      <template #item-start-date="item">
-        {{ item.start_date }}
-      </template>
-      <template #item-end-date="item">
-        {{ item.end_date }}
-      </template>
-      <template #item-advisor-name="item">
-        {{ item.advisor_name }}
-      </template>
-      <template #item-total="item">
-        <x-tooltip position="right bootom">
-          <p v-if="item.total == 0">{{ item.total }}</p>
-          <button
-            v-else
-            @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.TOTAL)"
-            class="text-primary underline"
-          >
-            {{ item.total }}
-          </button>
-          <template #tooltip>
-            <span class="custom-tooltip-content">
-              {{ RetentionReportEnum.TOTAL_COLUMN }}
-            </span>
-          </template>
-        </x-tooltip>
-      </template>
-      <template #item-lost="item">
-        <x-tooltip position="right bootom">
-          <p v-if="item.lost == 0">{{ item.lost }}</p>
-          <button
-            v-else
-            @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.LOST)"
-            class="text-primary underline"
-          >
-            {{ item.lost }}
-          </button>
-          <template #tooltip>
-            <span class="custom-tooltip-content">
-              {{ RetentionReportEnum.LOST_COLUMN }}
-            </span>
-          </template>
-        </x-tooltip>
-      </template>
-      <template #item-invalid="item">
-        <x-tooltip position="right bootom">
-          <p v-if="item.invalid == 0">{{ item.invalid }}</p>
-          <button
-            v-else
-            @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.INVALID)"
-            class="text-primary underline"
-          >
-            {{ item.invalid }}
-          </button>
-          <template #tooltip>
-            <span class="custom-tooltip-content">
-              {{ RetentionReportEnum.INVALID_COLUMN }}
-            </span>
-          </template>
-        </x-tooltip>
-      </template>
-      <template #item-sales="item">
-        <x-tooltip position="right bootom">
-          <p v-if="item.sales == 0">{{ item.sales }}</p>
-          <button
-            v-else
-            @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.SALES)"
-            class="text-primary underline"
-          >
-            {{ item.sales }}
-          </button>
-          <template #tooltip>
-            <span class="custom-tooltip-content">
-              {{ RetentionReportEnum.SALES_COLUMN }}
-            </span>
-          </template>
-        </x-tooltip>
-      </template>
-      <template #item-volume-gross-retention="item">
-        <x-tooltip position="right bootom">
-          {{ item.volume_gross_retention }}
-          <template #tooltip>
-            <span class="custom-tooltip-content">
-              {{ RetentionReportEnum.VOLUME_GROSS_RETENTION_COLUMN }}
-            </span>
-          </template>
-        </x-tooltip>
-      </template>
-      <template #item-volume-net-retention="item">
-        <x-tooltip position="right bootom">
-          {{ item.volume_net_retention }}
-          <template #tooltip>
-            <span class="custom-tooltip-content">
-              {{ RetentionReportEnum.VOLUME_NET_RETENTION_COLUMN }}
-            </span>
-          </template>
-        </x-tooltip>
-      </template>
-      <template #item-relative-retention="item">
-        <x-tooltip position="left bootom">
-          -------
-          <template #tooltip>
-            <span class="custom-tooltip-content">
-              {{ RetentionReportEnum.RELATIVE_RETENTION_COLUMN }}
-            </span>
-          </template>
-        </x-tooltip>
-      </template>
-    </DataTable>
+    <div class="vue3-easy-data-table tablefixed custom-height">
+      <div
+        class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div"
+      >
+        <table>
+          <thead class="vue3-easy-data-table__header">
+            <tr>
+              <th class="inner-th-class" >
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Month</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.MONTH_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class" v-if="isShowBatchColumn" >
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Batch</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.BATCH_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class" v-if="isShowBatchColumn" >
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Start Date</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.START_DATE_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class" v-if="isShowBatchColumn" >
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">End Date</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.END_DATE_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Advisor Name</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.ADVISOR_NAME_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Total</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.TOTAL_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Lost</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.LOST_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Invalid</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.INVALID_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Sales</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.POLICIES_BOOKED_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Volume Gross Retention</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.VOLUME_GROSS_RETENTION_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">Volume Net Retention</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.VOLUME_NET_RETENTION_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip position="right bootom">
+                  <span class="border-b border-dotted">RELATIVE RETENTION</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      RetentionReportEnum.RELATIVE_RETENTION_HEADING
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+            </tr>
+          </thead>
 
+          <tbody class="vue3-easy-data-table__body">
+            <template v-for="(item, index) in reportData.data" :key="item.code">
+              <tr>
+                <td>{{ item.month }}</td>
+                <td v-if="isShowBatchColumn" >{{ item.batch }}</td>
+                <td v-if="isShowBatchColumn" >{{ item.start_date }}</td>
+                <td v-if="isShowBatchColumn" >{{ item.end_date }}</td>
+                <td>{{ item.advisor_name }}</td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    <p v-if="item.total == 0">{{ item.total }}</p>
+                    <button
+                      v-else
+                      @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.TOTAL)"
+                      class="text-primary underline"
+                    >
+                      {{ item.total }}
+                    </button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ RetentionReportEnum.TOTAL_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    <p v-if="item.lost == 0">{{ item.lost }}</p>
+                    <button
+                      v-else
+                      @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.LOST)"
+                      class="text-primary underline"
+                    >
+                      {{ item.lost }}
+                    </button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ RetentionReportEnum.LOST_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    <p v-if="item.invalid == 0">{{ item.invalid }}</p>
+                    <button
+                      v-else
+                      @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.INVALID)"
+                      class="text-primary underline"
+                    >
+                      {{ item.invalid }}
+                    </button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ RetentionReportEnum.INVALID_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    <p v-if="item.sales == 0">{{ item.sales }}</p>
+                    <button
+                      v-else
+                      @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.SALES)"
+                      class="text-primary underline"
+                    >
+                      {{ item.sales }}
+                    </button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ RetentionReportEnum.SALES_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    {{ item.volume_gross_retention }}
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ RetentionReportEnum.VOLUME_GROSS_RETENTION_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="right bootom">
+                    {{ item.volume_net_retention }}
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ RetentionReportEnum.VOLUME_GROSS_RETENTION_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+                <td>
+                  <x-tooltip position="left bootom">
+                    -------
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ RetentionReportEnum.RELATIVE_RETENTION_COLUMN }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+        <div
+          v-if="((reportData.length == 0 ) || (reportData && reportData.data.length ==  0))"
+          data-v-32683533=""
+          class="vue3-easy-data-table__message"
+        >
+          No Available Data
+        </div>
+      </div>
+    </div>
     <Pagination
       :links="{
         next: reportData.next_page_url,
@@ -809,6 +909,7 @@ return headers;
 </template>
 
 <style scoped>
+
 .custom-tooltip-content {
   max-width: 200px;
   white-space: normal;
@@ -816,5 +917,16 @@ return headers;
   position: relative;
   font-size: 12px;
   text-transform: none;
+}
+.custom-height {
+  min-height: 200px;
+}
+
+.tooltip-display {
+  display: inherit;
+}
+
+.inner-th-class {
+  min-width: 160px;
 }
 </style>
