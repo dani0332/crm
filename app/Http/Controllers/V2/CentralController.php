@@ -311,6 +311,7 @@ class CentralController extends Controller
         if (! $successMessage) {
             return back()->with('error', 'Error in approving payment');
         }
+
         return back()->with('success', $successMessage);
     }
 

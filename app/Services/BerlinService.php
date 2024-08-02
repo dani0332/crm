@@ -148,7 +148,7 @@ class BerlinService extends BaseService
             $statusCode = $e->getResponse()->getStatusCode();
             info('extendCustomerSubscription berlin error response: '.$e->getResponse()->getBody()->getContents());
             $errorData = json_decode($e->getResponse()->getBody()->getContents(), true);
-            
+
             if (isset($errorData['code']) && $errorData['code'] == 'CUSTOMER_NOT_FOUND') {
                 $customer = $this->customerService->getCustomerByEmail($customerEmail);
                 Log::warning('extendCustomerSubscription Customer Id: '.$customerId.' Customer Email: '.$customerEmail.' Error Code: '.$errorData['code'].' Customer not exist so cannot proceed to extend subscription, sending signup email to customer. API Message: '.$errorData['message']);
