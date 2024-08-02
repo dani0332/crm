@@ -48,6 +48,7 @@ class PersonalQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
+
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
@@ -247,6 +248,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
     }
+
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
@@ -278,6 +280,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
+
     public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeCode)
     {
         self::applySegmentFilter($query, $segmentFilter, $quoteTypeCode);
@@ -307,6 +310,21 @@ class PersonalQuote extends Model implements AuditableContract
                 });
             });
         }
+    }
+
+    public function carPlan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
+    public function emirates()
+    {
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
+    }
+
+    public function claimHistory()
+    {
+        return $this->belongsTo(ClaimHistory::class, 'claim_history_id');
     }
 
     public function customerMembers()

@@ -36,6 +36,7 @@ use App\Traits\HandlesDeadlockRetries;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -511,6 +512,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 DB::commit();
             } catch (Exception $exception) {
                 $canCaptureEp = false;
+                Log::error('Error in processMasterPaymentApprove: '.$exception->getMessage());
                 DB::rollBack();
             }
 

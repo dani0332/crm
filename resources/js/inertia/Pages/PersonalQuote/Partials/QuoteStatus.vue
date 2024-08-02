@@ -114,7 +114,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
               <x-field
                 label="Lost Reason"
                class="uppercase" required
-                v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost"
+                v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum?.Lost"
               >
                 <x-select
                   v-model="quoteStatusForm.lost_reason_id"
