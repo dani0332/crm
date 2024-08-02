@@ -18,7 +18,6 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
     public $tries = 3; // TODO: Disccuss later
     public $timeout = 5; //40
     public $backoff = 360;
-
     private $quoteDetails;
     private $payment;
     private $paymentSplit;

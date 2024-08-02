@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\CarQuote;
 use App\Models\InsurerRequestResponse;
-use App\Models\SageApiLog;
 use App\Models\PersonalQuote;
+use App\Models\SageApiLog;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
