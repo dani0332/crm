@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Http\Controllers\V2\SendUpdateLogController;
+use App\Http\Requests\SendUpdateRequest;
 use App\Models\SendUpdateLog;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
@@ -25,13 +27,13 @@ class SendUpdateToCustomerJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    private $data = null;
+    private $sendUpdate;
 
-    private string $action = '';
-    public function __construct($payload, $action)
+    private $payload;
+    public function __construct($sendUpdateLog, $payload)
     {
-        $this->data = $payload;
-        $this->action = $action;
+        $this->sendUpdate = $sendUpdateLog;
+        $this->payload = $payload;
     }
 
     /**
@@ -41,7 +43,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
     {
         info('job: SendUpdateToCustomerJob started');
 
-        @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmail($this->data, $this->action);
+        @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmail($this->sendUpdate, $this->payload['action']);
 
         if (! empty($templateId)) {
             info('Send Update to Customer Job Email Data '.json_encode($emailData));
@@ -49,24 +51,29 @@ class SendUpdateToCustomerJob implements ShouldQueue
             info('Send Update to Customer Job Response '.json_encode($response));
 
             if ($response == 201) {
-                SendUpdateLog::find($this->data->id)->update([
+                SendUpdateLog::find($this->sendUpdate->id)->update([
                     'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
                     'is_email_sent' => true,
                 ]);
-                info('Send Update to Customer Job success, send update id -> '.$this->data->id);
+
+                if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+                    $sendUpdateRequest = new SendUpdateRequest();
+                    app(SendUpdateLogController::class)->sendUpdate($sendUpdateRequest->merge($this->payload));
+                }
+                info('Send Update to Customer Job success, send update id -> '.$this->sendUpdate->id);
             } else {
-                info('Send Update to Customer Job failed, send update id -> '.$this->data->id);
+                info('Send Update to Customer Job failed, send update id -> '.$this->sendUpdate->id);
             }
         }
     }
 
     public function failed(Throwable $exception)
     {
-        info('SendUpdateToCustomerJob -: '.$this->data->id.' Error: '.$exception->getMessage());
+        info('SendUpdateToCustomerJob -: '.$this->sendUpdate->id.' Error: '.$exception->getMessage());
     }
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->data->id))->dontRelease()];
+        return [(new WithoutOverlapping($this->sendUpdate->id))->dontRelease()];
     }
 }

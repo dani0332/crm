@@ -243,7 +243,7 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             if (! $sendUpdateLog->is_email_sent) {
-                dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data['action']));
+                dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
             } else {
                 $sendUpdateLog->update([
                     'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
@@ -252,12 +252,12 @@ class SendUpdateLogRepository extends BaseRepository
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
-            $result = (object) [
+            return (object) [
                 'message' => $ex->getMessage(),
             ];
         }
 
-        return $result;
+        return true;
     }
 
     public function fetchSaveBookingDetails($data)

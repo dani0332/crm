@@ -352,14 +352,14 @@ class SendUpdateLogController extends Controller
         ]);
     }
 
-    public function sendUpdateToCustomer(UpdateToCustomerRequest $request)
+    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest)
     {
-        $data = $request->validated();
+        $data = $updateToCustomerRequest->validated();
 
         $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
 
-        if (! empty($log->message)) {
-            vAbort($log->message);
+        if (! empty($log?->message)) {
+            vAbort($log?->message);
         }
         if ($data['isEmailSent']) {
             $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
@@ -367,13 +367,8 @@ class SendUpdateLogController extends Controller
             $message[] = 'Send Update to customer email scheduled.';
         }
 
-        if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-            $sendUpdateRequest = new SendUpdateRequest();
-
-            $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($data));
-            if ($isSendUpdateSuccess->status() == 200) {
-                $message[] = SendUpdateLogStatusEnum::UPDATE_BOOKED;
-            }
+        if (isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+            $message[] = 'Book Update scheduled.';
         }
 
         return response()->json($message);
