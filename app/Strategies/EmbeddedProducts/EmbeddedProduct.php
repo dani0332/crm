@@ -125,6 +125,7 @@ class EmbeddedProduct
 
     public static function checkAlfredProtect($product)
     {
+        $product = strToUpper(trim($product));
         return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
     }
 }
