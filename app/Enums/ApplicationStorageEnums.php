@@ -107,4 +107,6 @@ final class ApplicationStorageEnums extends Enum
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
     public const HEALTH_OCA_EMAIL_BCC = 'HEALTH_OCA_EMAIL_BCC';
     public const HEALTH_OCA_EMAIL_ATTACHMENT_URL = 'HEALTH_OCA_EMAIL_ATTACHMENT_URL';
+
+    public const HEALTH_OCA_WORKFLOW_ID = 'HEALTH_OCA_WORKFLOW_ID';
 }
