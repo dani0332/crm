@@ -591,7 +591,7 @@ class SplitPaymentService
     }
 
     // function to calculate the price vat
-    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType, $quoteId, $totalSplitPayments )
+    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType, $quoteId, $totalSplitPayments)
     {
         $priceWithoutVat = $splitPaymentAmount;
         $vat = 0;
@@ -600,14 +600,14 @@ class SplitPaymentService
             return [$priceWithoutVat, $vat];
         }
         [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId);
-        if ($vat>0 ) {
-            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {                
-                $vat = $vat / $totalSplitPayments;            
+        if ($vat > 0) {
+            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                $vat = $vat / $totalSplitPayments;
                 $priceWithoutVat = $splitPaymentAmount - $vat;
-             } elseif ($splitPaymentNumber === 1) {
+            } elseif ($splitPaymentNumber === 1) {
                 if ($frequency != PaymentFrequency::UPFRONT) {
                     $priceWithoutVat = $splitPaymentAmount - $vat;
-                }                
+                }
             } else {
                 $priceWithoutVat = $splitPaymentAmount;
                 $vat = 0;
@@ -615,6 +615,7 @@ class SplitPaymentService
         } else {
             $priceWithoutVat = $splitPaymentAmount;
         }
+
         return [$priceWithoutVat, $vat];
     }
 
@@ -633,15 +634,17 @@ class SplitPaymentService
             $computedPrice = $masterTotalPrice;
         } else {
             $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-            if( $quoteModel && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable>0){
-                $computedPrice = $quoteModel->price_vat_applicable;                
+            if ($quoteModel && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
+                $computedPrice = $quoteModel->price_vat_applicable;
             }
         }
-        if( $computedPrice>0 ) {
+        if ($computedPrice > 0) {
             $priceWithoutVat = $computedPrice;
             $vat = ($priceWithoutVat * $vatValue) / 100;
+
             return [$priceWithoutVat, $vat];
         }
+
         return [$priceWithoutVat, $vat];
     }
 
