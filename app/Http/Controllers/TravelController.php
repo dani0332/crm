@@ -375,6 +375,7 @@ class TravelController extends Controller
         $quotePlans = $this->travelQuoteService->listTravelQuotePlans($record->id);
         $travelDestinations = $this->travelQuoteService->getTravelDestinations($record->id);
 
+
         return inertia('TravelQuote/Form', [
             'quote' => $record,
             'quotePlans' => $quotePlans,
