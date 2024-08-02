@@ -92,7 +92,6 @@ class AlfredProtect extends EmbeddedProduct
             'Premium with VAT / GPW (AED)',
             'Credit Note Buyer no.',
             'Commission with VAT(AED)',
-
         ];
     }
 
@@ -116,7 +115,7 @@ class AlfredProtect extends EmbeddedProduct
             $certificate->tax_invoice_no,
             $certificate->premium_with_vat,
             $certificate->tax_invoice_buyer_no,
-            $certificate->commission_with_vat,
+            '',
             $certificate->credit_note_no,
             '',
             $certificate->credit_note_buyer_no,
