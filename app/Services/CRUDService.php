@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\CustomerTypeEnum;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
