@@ -755,4 +755,47 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
+
+    //update total price
+    public function fetchCreateSageReceiptsTemp($request)
+    {   //echo request()->model_type; exit; dd($request);
+        $modelType = $request->model_type;
+        $quoteId = $request->quote_id;
+        $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+        $payment = $quoteModel->payments()->where('code', $request->payment_code)->first();
+
+        echo ($payment->paymentSplits->count()); exit;
+        if ($payment) {
+            
+            $payment->paymentSplits()
+                ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+                ->where(function ($query) {
+                    $query->whereNull('sage_receipt_id')
+                        ->orWhere('sage_receipt_id', '');
+                })
+                ->each(function ($splitPayment) use ($modelType, $quoteId, $quoteModel) {
+
+                    // Create an empty Request object
+                    $amountCollected = $splitPayment->collection_amount;
+                    $sageRequest = Request::createFromGlobals();
+                    $sageRequest->merge([
+                        'modelType' => $modelType,
+                        'quote_id' => $quoteId,
+                        'customer_id' => $quoteModel->customer_id,
+                    ]);
+
+                    $sageResponse = app(SplitPaymentService::class)->createSageRecipt($sageRequest, $splitPayment, $amountCollected);
+                    if ($sageResponse['status'] == 'success') {
+                        $splitPayment->sage_receipt_id = $sageResponse['response'];
+                        $splitPayment->save();
+                    } else {
+                        $failMessage = $sageResponse['response'];
+                        vAbort($failMessage);
+                    }
+                });
+            return response()->json(['message' => 'All Receipt Generated Successfully']);
+        }
+
+        return response()->json(['error' => 'Receipts Creation Failed']);
+    }
 }

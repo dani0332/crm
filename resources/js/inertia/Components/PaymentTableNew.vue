@@ -4,6 +4,7 @@ import ToolTip from './../Components/ToolTip.vue';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+import SageRecieptCreation from './../Components/SageRecieptCreation.vue';
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -2918,6 +2919,12 @@ const lookupsEnum = page.props.lookupsEnum;
               class="flex justify-between items-center gap-2"
               style="margin-left: auto"
             >
+              <SageRecieptCreation                
+                :quoteId="quoteRequest.id"
+                :paymentCode="payments[0].code"
+                :quoteType="quoteType"                
+                "
+              />
               <UpdateTotalPrice
                 v-if="
                   can(permissionEnum.TEMP_UPDATE_TOTALPRICE) &&
