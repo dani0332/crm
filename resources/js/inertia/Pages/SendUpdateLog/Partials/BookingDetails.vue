@@ -730,6 +730,7 @@ const submitToCustomer = () => {
     quoteRefId: props.realQuote.id,
     paymentValidated: true,
     reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
+    isEmailSent: props.sendUpdateLog.is_email_sent,
   };
   axios
     .post(url, data)

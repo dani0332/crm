@@ -361,7 +361,11 @@ class SendUpdateLogController extends Controller
         if (! empty($log->message)) {
             vAbort($log->message);
         }
-        $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
+        if ($data['isEmailSent']) {
+            $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
+        } else {
+            $message[] = 'Send Update to customer email scheduled.';
+        }
 
         if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
             $sendUpdateRequest = new SendUpdateRequest();

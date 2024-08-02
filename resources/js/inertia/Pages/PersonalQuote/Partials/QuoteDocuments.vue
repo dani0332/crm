@@ -236,6 +236,7 @@ const submitToCustomer = () => {
     sendUpdateId: props.sendUpdateLog.id,
     quoteType: props.quoteType,
     action: sendUpdateStatusEnum?.ACTION_SUC,
+    isEmailSent: props.sendUpdateLog.is_email_sent,
   };
   axios
       .post(url, data)

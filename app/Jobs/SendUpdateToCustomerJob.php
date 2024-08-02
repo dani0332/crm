@@ -51,6 +51,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
             if ($response == 201) {
                 SendUpdateLog::find($this->data->id)->update([
                     'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                    'is_email_sent' => true,
                 ]);
                 info('Send Update to Customer Job success, send update id -> '.$this->data->id);
             } else {

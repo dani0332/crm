@@ -242,7 +242,13 @@ class SendUpdateLogRepository extends BaseRepository
                 }
             }
 
-            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data['action']));
+            if (! $sendUpdateLog->is_email_sent) {
+                dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data['action']));
+            } else {
+                $sendUpdateLog->update([
+                    'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                ]);
+            }
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
