@@ -402,11 +402,19 @@ const isTravelQuoteAndAMLNotCleared = () => {
   const isPolicyAMLScreeningCleared =
     props.quote.kyc_decision == kycEnums.COMPLETE;
   if (isQuoteTypeTravel && !isPolicyAMLScreeningCleared) {
-    notification.error({
-      title: 'Kindly clear the AML.',
-      position: 'top',
-      timeout: 30000,
-    });
+    let allowedQuoteStatuesForAMLAlert = [
+      page.props.quoteStatusEnum.TransactionApproved,
+      page.props.quoteStatusEnum.PolicyIssued,
+      page.props.quoteStatusEnum.PolicySentToCustomer,
+    ];
+    if (allowedQuoteStatuesForAMLAlert.includes(props.quote.quote_status_id)) {
+      notification.error({
+        title: 'Kindly clear the AML.',
+        position: 'top',
+        timeout: 30000,
+      });
+    }
+
     isAMLNotClearedForTravelQuote.value = true;
   }
 };
