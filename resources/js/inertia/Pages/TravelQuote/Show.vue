@@ -1742,7 +1742,7 @@ const getGenderDisplay = (val) => {
             <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Passport Number</dt>
+              <dt class="font-medium">PASSPORT NUMBER</dt>
               <dd>{{ customerProfileForm.passport_number ?? 'N/A' }}</dd>
             </div>
 
