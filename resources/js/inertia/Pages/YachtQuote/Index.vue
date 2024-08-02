@@ -41,6 +41,8 @@ let availableFilters = {
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  payment_due_date:"",
+  booking_date: ""
 };
 
 const filters = reactive(availableFilters);
@@ -49,7 +51,7 @@ const hasRole = role => useHasRole(role);
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -235,6 +237,37 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
 </script>
 
 <template>
@@ -454,6 +487,22 @@ watch(
           class="w-full"
           placeholder="Policy Number"
         />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+      />
+      <DatePicker
+        v-model="filters.booking_date"
+        label="Booking Date"
+        class="w-full"
+        range
+        multi-calendars
+        multi-calendars-solo
+      />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -470,7 +519,7 @@ watch(
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required to export data.
               </span>
             </template>
           </x-tooltip>
