@@ -525,16 +525,31 @@ class SageApiService
 
         if ($extras['send_update_type'] == SageEnum::SUT_REVE_CORR) {
             $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quote, $extras['reverse_invoice']);
-            if ($getPaymentByInsurerInvoiceNumber?->send_update_log_id !== null) {
-                $getReverseInvoiceRelation = [
-                    'section_type' => $quoteModelObject->getMorphClass(),
-                    'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
-                ];
+            $getReverseInvoiceRelation = [];
+
+            if ($getPaymentByInsurerInvoiceNumber) {
+                if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
+                    $getReverseInvoiceRelation = [
+                        'section_type' => $quoteModelObject->getMorphClass(),
+                        'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
+                    ];
+                } else {
+                    $getReverseInvoiceRelation = [
+                        'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
+                        'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
+                    ];
+                }
             } else {
-                $getReverseInvoiceRelation = [
-                    'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
-                    'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
-                ];
+                $reverseSendUpdate = SendUpdateLog::where('insurer_tax_invoice_number', $extras['reverse_invoice'])->first();
+                $getReverseInvoiceRelation = (!empty($reverseSendUpdate)) ? [
+                    'section_type' => $quoteModelObject->getMorphClass(),
+                    'section_id' => $reverseSendUpdate->id,
+                ] : [];
+            }
+
+            if (empty($getReverseInvoiceRelation)) {
+                logger()->error('Book Update - Reverse Invoice not Found. SendUpdateUUID: '.$extras['send_update_log']->uuid . ' - ReverseInvoice: '.$extras['reverse_invoice']);
+                return ['status' => false, 'message' => 'Reverse Invoice not found'];
             }
 
             $sageLogArray = SageApiLog::where($getReverseInvoiceRelation)
@@ -544,6 +559,7 @@ class SageApiService
                     SageEnum::SCT_REVERSAL,
                     SageEnum::SCT_CORRECTION,
                 ])->orderBy('step')->get()->toArray();
+
         } else {
             $sageLogArray = $quoteModelObject->sageApiLogs?->whereNotIn('entry_type', [
                 SageEnum::SRT_GET_AR_INVOICE,
@@ -932,6 +948,7 @@ class SageApiService
             $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], $sageAPIsParams['extraDetails'][$methodName]['verb'] ?? 'POST');
             $sageResponse = json_decode($resp, true);
             info('Book Update - Sage API Call - Method Name ('.$methodName.') - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
+        
         }
 
         if (in_array($methodName, ['createARInvoicePremAndComm', 'createAPInvoicePrem', 'createARInvoiceDis', 'createPaymontRecieptOneInvoice', 'arSplitPrepaymentPayload']) && isset($sageResponse['BatchNumber'])) {
@@ -969,7 +986,11 @@ class SageApiService
         $arrayKey = $arrayKey + 1;
 
         if ($methodName == 'getInvoiceDetails') {
-            $isFollowUpCondition = $sageResponse['BatchNumber'] == $extraParams['batchNumber'];
+            if (isset($sageResponse['BatchNumber'])) {
+                $isFollowUpCondition = $sageResponse['BatchNumber'] == $extraParams['batchNumber'];
+            } else {
+                logger()->error('Book Update - Sage API Failed - Batch Number not found in response' . json_encode($sageResponse));
+            }
         } else {
             $isFollowUpCondition = isset($sageAPIsParams['extraDetails'][$methodName]['nextCondition']) ?
                 ! empty($sageResponse[$sageAPIsParams['extraDetails'][$methodName]['nextCondition']]) : true;
