@@ -469,9 +469,13 @@ class SendUpdateLogService
             $invoiceDescription = 'C.'.$invoiceDescription;
         }
 
-        $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
-        if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
+        if (empty($sendUpdateLog->broker_invoice_number)) {
             $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
+                $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            }
+        } else {
+            $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
         }
 
         $response = [

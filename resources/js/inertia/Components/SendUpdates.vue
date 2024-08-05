@@ -38,13 +38,13 @@ const sendUpdatesTable = reactive({
     },
     {
       text: 'Type',
-      value: 'type',
+      value: 'category.text',
       tooltip:
         'The type of "Send Update" request, categorizing the nature of the action being taken.',
     },
     {
       text: 'Sub Type',
-      value: 'sub_type',
+      value: 'option.text',
       tooltip:
         'A further classification of the "Send Update" request, providing additional context or details.',
     },
