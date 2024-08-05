@@ -817,4 +817,7 @@ return headers;
   font-size: 12px;
   text-transform: none;
 }
+.overflow-hidden{
+  z-index: 9999999;
+}
 </style>

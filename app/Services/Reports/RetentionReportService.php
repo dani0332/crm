@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RetentionReportEnum;
@@ -144,6 +145,9 @@ class RetentionReportService extends BaseService
         // Apply personal quote filter
         $this->applyPersonalQuoteFilter($query, $request);
 
+        // Apply Business quote filter
+        $this->applyBusinessQuoteFilter($query, $request);
+
         // Apply additional filters based on the 'displayBy' parameter in the request
         if (isset($request['displayBy'])){
             if ($request['displayBy'] === RetentionReportEnum::BATCH) {
@@ -154,12 +158,32 @@ class RetentionReportService extends BaseService
         }
     }
 
+    /**
+    * Applies a filter to the query to include only personal quotes.
+    * @return void
+    */
     private function applyPersonalQuoteFilter($query, $filters){
         $quoteType = $this->getQuoteType($filters);
         $isPersonalQuote = checkPersonalQuotes($quoteType);
         if ( $isPersonalQuote){
             $quoteTypeData = QuoteType::where('code', $quoteType)->first();
             $query->where('quote_type_id', $quoteTypeData->id);
+        }
+    }
+
+    /**
+    * Applies a filter to the query to include only business quotes.
+    *
+    * @return void
+    */
+    private function applyBusinessQuoteFilter($query, $filters){
+        $quoteType = $this->getQuoteType($filters);
+        if ($quoteType === quoteTypeCode::GroupMedical){
+            $query->leftJoin('business_type_of_insurance as bit', 'business_type_of_insurance_id', '=', 'bit.id')
+		        ->where('bit.text', '=', quoteTypeCode::GroupMedical);
+        } elseif  ( $quoteType === quoteTypeCode::CORPLINE){
+            $query->leftJoin('business_type_of_insurance as bit', 'business_type_of_insurance_id', '=', 'bit.id')
+                ->where('bit.text', '!=', quoteTypeCode::GroupMedical);
         }
     }
 
