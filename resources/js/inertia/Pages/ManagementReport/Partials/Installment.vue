@@ -20,6 +20,10 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Department',
+    value: 'department',
+  },
+  {
     text: 'Policy Number',
     value: 'policy_number',
   },
