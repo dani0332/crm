@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -62,6 +63,7 @@ class RenewalBatch extends Model implements AuditableContract
         'start_date',
         'end_date',
         'month',
+        'year',
     ];
 
     /**
@@ -136,5 +138,21 @@ class RenewalBatch extends Model implements AuditableContract
             'id',
             'deadlines'
         )->withTimestamps()->withPivot('deadline_date');
+    }
+
+    public function scopeDateFilter($q, $reportDateEnd = null, $includePreviousMonth = true)
+    {
+        $baseDate = $reportDateEnd ? Carbon::parse($reportDateEnd) : now();
+
+        $startMonth = $includePreviousMonth ? $baseDate->copy()->subMonth(1)->startOfMonth() : $baseDate->copy()->startOfMonth();
+        $endMonth = $baseDate->copy()->addMonth(1)->endOfMonth();
+
+        $startMonthFormatted = $startMonth->format('n');
+        $endMonthFormatted = $endMonth->format('n');
+        $startYearFormatted = $startMonth->format('Y');
+        $endYearFormatted = $endMonth->format('Y');
+
+        $q->whereBetween('month', [$startMonthFormatted, $endMonthFormatted])
+            ->whereBetween('year', [$startYearFormatted, $endYearFormatted]);
     }
 }
