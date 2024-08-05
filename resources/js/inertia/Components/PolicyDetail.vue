@@ -411,7 +411,8 @@ watch(
                 <x-tooltip>
                   <label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Price (VAT NOT APPLICABLE)
+                  >
+                    Price (VAT NOT APPLICABLE)
                     <span
                       v-if="isPriceVatApplicableRequired"
                       class="text-red-500"
@@ -424,7 +425,7 @@ watch(
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-textarea
+                <x-input
                   v-model="policyDetailsForm.price_vat_notapplicable"
                   @change="calculateVatAmount"
                   :custom-error="
@@ -481,7 +482,7 @@ watch(
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-textarea
+                <x-input
                   v-model="policyDetailsForm.price_vat_applicable"
                   @change="calculateVatAmount"
                   :custom-error="
