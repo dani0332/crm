@@ -377,10 +377,12 @@ class RetentionReportService extends BaseService
      */
     private function applyFilterByMonth($query, $request)
     {
-        // Get the start and end dates for the specified month
-        $monthDates = $this->getMonthDatesByNumber(Carbon::now()->format('y'), $request['month']);
-        // Apply the date range filter to the query
-        $query->whereBetween($this->policyExpiryColumnName, [$monthDates['start_date'], $monthDates['end_date']]);
+        if (isset($request['month'])){
+            // Get the start and end dates for the specified month
+            $monthDates = $this->getMonthDatesByNumber(Carbon::now()->format('y'), $request['month']);
+            // Apply the date range filter to the query
+            $query->whereBetween($this->policyExpiryColumnName, [$monthDates['start_date'], $monthDates['end_date']]);
+        }
     }
 
     /**

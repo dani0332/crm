@@ -188,8 +188,6 @@ const onLobChange = (e, isOnMounted = false) => {
   } else {
       loadAdvisorsByLob(e);
   }
-
-  onSubmit(false)
 };
 
 const isDisabled = (element) => {
