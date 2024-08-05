@@ -57,6 +57,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
                      // Retrieve plans with available ratings for the given lead
                      $plans = $healthQuoteService->getQuotePlans($lead->uuid);
 
+
                      $responseCode = $healthEmailService->sendHealthOCBIntroEmail($plans, $lead,$this->previousAdvisor,$healthQuoteService, $this->triggerSICWorkflow);
                      if (in_array($responseCode, [200, 201])) {
                          info('SendHealthOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);

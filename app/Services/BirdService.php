@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApplicationStorage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use App\Enums\ApplicationStorageEnums;
@@ -23,7 +24,7 @@ class BirdService extends BaseService
 
         try { // Configure the HTTP request with headers
                 $request = Http::withHeaders([
-                    'Authorization' => 'AccessKey ' . $this->accessKey,
+                    'Authorization' => 'AccessKey ' . $this->birdaccessKey ?? null,
                     'Content-Type' => 'application/json',
                 ]);
                 // Dynamically call the HTTP method with the appropriate data
@@ -50,6 +51,40 @@ class BirdService extends BaseService
             throw $e;
         }
     }
+    public function birdWebHookRequest($method ='get',$url, $data){
+
+        try {
+             info('Bird Webhook URL : '.$url);
+             info("Bird Webhook Data : ".json_encode($data));
+             info("Starting Bird Webhook Request Ref-ID:" . $data->uuid ?? '');
+            // Configure the HTTP request with headers
+                $request = Http::withHeaders([
+                    'Authorization' => 'AccessKey ' . $this->birdaccessKey ?? null,
+                    'Content-Type' => 'application/json',
+                ]);
+                // Dynamically call the HTTP method with the appropriate data
+                if (in_array(strtolower($method), ['post', 'put', 'patch'])) {
+                    $response = $request->$method($url, $data);
+                } else {
+                    $response = $request->$method($url, ['query' => $data]);
+                }
+              // Return status code and response body
+                info('response code : '.$response->status());
+                info('response body : '.$response->body() . '\n Ref-ID: ' . $data->uuid ?? '' . '\n');
+            return $response->status();
+        } catch (\Exception $e) {
+            // Log the error with details
+            Log::error('Bird API request failed', [
+                'method' => $method,
+                'url' => $url,
+                'data' => $data,
+                'error' => $e->getMessage(),
+            ]);
+
+            // return response()->json(['error' => 'API request failed'], 500);
+            throw $e;
+        }
+    }
 
 
     public function createContactIdentifier($data){
@@ -63,20 +98,44 @@ class BirdService extends BaseService
 
     public function triggerWorkflow($webhook,$data){
 
-        return  $this->birdRequest('post', $webhook, $data);
+        return  $this->birdWebHookRequest('post', $webhook, $data);
     }
 
-    public function sendAutomationWorkflow($data){
-        $payload = [
-            'client_email' => $data['clientEmail'],
-            'workspace_id' => $data['workspaceId'] ?? null,
-            'customerEmail' => $data['customerEmail'],
-            'customerName' => $data['customerName'],
-            'AdvisorEmail' => $data['advisorEmail'],
-            'AdvisorName' => $data['advisorName'],
-        ];
+    public function sendHealthOCBEmail($data){
 
-        return  $this->triggerWorkflow('', $payload);
+        $webhook = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_OCB_FOLLOWUP_TEMPLATE)->first();
+        if(!empty($webhook)){
+            info('SIC Health OCB email template found REF:ID| '. $data->healthQuoteId.' Time: '.now());
+            return $this->triggerWorkflow($webhook->value, $data);
+        }
+        else {
+            info ('SIC Health OCB email template not found REF:ID| '. $data->healthQuoteId.' Time: '.now());
+            return false;
+        }
+    }
+
+    public function sendHealthNonAdvisorIntroEmail($data){
+        $webhook = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_OCB_NON_ADVISOR_FOLLOWUP_TEMPLATE)->first();
+        if(!empty($webhook)){
+            info('SIC Health Non Advisor Intro Email email template found REF:ID | '. $data->healthQuoteId.' Time: '.now());
+            return $this->triggerWorkflow($webhook->value, $data);
+        }
+        else {
+            info ('SIC Health Non Advisor Intro Email email template not found REF:ID | '. $data->healthQuoteId.' Time: '.now());
+            return false;
+        }
+    }
+
+    public function sendSICHealthWorkFlow($data){
+        $webhook = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
+        if(!empty($webhook)){
+            info('SIC Health OCB email template found REF:ID | '. $data->healthQuoteId.' Time: '.now());
+            return $this->triggerWorkflow($webhook->value, $data);
+        }
+        else {
+            info ('SIC Health OCB email template not found REF:ID | '. $data->healthQuoteId.' Time: '.now());
+            return false;
+        }
     }
 
 
@@ -107,7 +166,7 @@ class BirdService extends BaseService
     }
     public function sendEmail($data)
     {
-     
+
 
         try {
             $response = $this->birdRequest('post', "/workspaces/{$data['workspaceId']}/channels/{$data['channelId']}/messages", $this->mapPayloadForEmail($data));
