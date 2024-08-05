@@ -2922,8 +2922,9 @@ const lookupsEnum = page.props.lookupsEnum;
               <SageRecieptCreation                
                 :quoteId="quoteRequest.id"
                 :paymentCode="payments[0].code"
-                :quoteType="quoteType"                
-                "
+                :quoteType="quoteType" 
+                :quoteStatusId="quoteRequest.quote_status_id"
+                :payments = "payments"                        
               />
               <UpdateTotalPrice
                 v-if="

@@ -355,6 +355,7 @@ final class PermissionsEnum extends Enum
     public const AUDITDOCUMENT_UPLOAD = 'auditdocument-upload';
     public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
     public const TRAVEL_HAPEX = 'travel-hapex';
+    public const TEMP_UPDATE_PAYMENT = 'temp-update-payment';    
 
     public static function getAdvisorConversionReportPermissions()
     {

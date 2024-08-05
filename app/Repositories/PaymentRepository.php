@@ -37,6 +37,7 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -764,14 +765,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $quoteModel = $this->getQuoteObject($modelType, $quoteId);
         $payment = $quoteModel->payments()->where('code', $request->payment_code)->first();
 
-        echo ($payment->paymentSplits->count()); exit;
         if ($payment) {
-            
+           
             $payment->paymentSplits()
                 ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+                ->whereNot('payment_method', PaymentMethodsEnum::CreditApproval)
                 ->where(function ($query) {
-                    $query->whereNull('sage_receipt_id')
-                        ->orWhere('sage_receipt_id', '');
+                    $query->whereNull('sage_reciept_id')
+                        ->orWhere('sage_reciept_id', '');
                 })
                 ->each(function ($splitPayment) use ($modelType, $quoteId, $quoteModel) {
 
@@ -786,16 +787,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
                     $sageResponse = app(SplitPaymentService::class)->createSageRecipt($sageRequest, $splitPayment, $amountCollected);
                     if ($sageResponse['status'] == 'success') {
-                        $splitPayment->sage_receipt_id = $sageResponse['response'];
+                        $splitPayment->sage_reciept_id = $sageResponse['response'];
                         $splitPayment->save();
                     } else {
                         $failMessage = $sageResponse['response'];
                         vAbort($failMessage);
                     }
                 });
-            return response()->json(['message' => 'All Receipt Generated Successfully']);
+            return response()->json(['message' => 'Payment updated successfully']);
         }
-
         return response()->json(['error' => 'Receipts Creation Failed']);
     }
 }
