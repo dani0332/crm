@@ -29,7 +29,9 @@ class PersonalQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
                 $searchCriteria = [];
 
-                $searchCriteria = ['renewal_batch' => strtoupper($dealBatch)];
+                if(isset($dealBatch) && $dealBatch != null) {
+                    $searchCriteria['renewal_batch'] = strtoupper($dealBatch);
+                }
 
                 if (isset($row['deal_cdb_id'])) {
                     [, $value] = explode('-', $row['deal_cdb_id']);
