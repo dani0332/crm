@@ -101,8 +101,6 @@ const totalPriceVAT = computed(() => {
   return vat;
 });
 
-
-
 const availablePlansTable = reactive({
   data: [],
   columns: [
@@ -606,13 +604,7 @@ const handlePlanSelected = plan => {
               :uuid="quote.uuid"
             />
 
-            <x-button
-              v-else
-              size="xs"
-              color="orange"
-              outlined
-              :disabled="true"
-            >
+            <x-button v-else size="xs" color="orange" outlined :disabled="true">
               Selected
             </x-button>
           </span>
