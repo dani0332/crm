@@ -62,7 +62,7 @@ const currentTz = computed(() => {
 
 .dp__clear_icon {
   top: v-bind(iconPosition) !important;
-  @apply text-orange-500;
+  @apply !text-orange-500;
 }
 
 .dp__cell_disabled {
