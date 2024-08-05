@@ -2,8 +2,8 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "dev": "yarn && doppler run -- vite",
-        "prod": "yarn && doppler run -- vite build",
+        "dev": "yarn && vite",
+        "prod": "yarn && vite build",
         "lint": "prettier . --write"
     },
     "devDependencies": {
