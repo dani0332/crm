@@ -234,7 +234,11 @@ const onStatusSubmit = async () => {
 const onToggleResetCap = async (active, userId, leadId) => {
   loaders.table = true;
   await axios
-    .post('/lead-allocation/toggle-reset-cap', { leadId, userId, resetCap: active })
+    .post('/lead-allocation/toggle-reset-cap', {
+      leadId,
+      userId,
+      resetCap: active,
+    })
     .finally(() => {
       loaders.table = false;
     });

@@ -528,11 +528,19 @@ onUpdated(() => {
       Number(totalLoadingPrice.value) + Number(data.price);
   });
 });
-const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReusableTemplate();
+const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
-  <x-modal v-model="showModal" size="xl" :title="`${plan?.providerName} - ${plan?.name}`" show-close backdrop :has-actions="false">
+  <x-modal
+    v-model="showModal"
+    size="xl"
+    :title="`${plan?.providerName} - ${plan?.name}`"
+    show-close
+    backdrop
+    :has-actions="false"
+  >
     <div class="flex justify-end">
       <ToggleManualButtonTemplate v-slot="{ isDisabled }">
         <x-toggle
@@ -546,13 +554,18 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
 
       <div class="flex justify-between items-center">
         <div class="flex gap-3 pr-8">
-          <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" placement="bottom">
-            <ToggleManualButtonReuseTemplate :isDisabled="true"/>
+          <x-tooltip
+            v-if="page.props.lockLeadSectionsDetails.plan_selection"
+            placement="bottom"
+          >
+            <ToggleManualButtonReuseTemplate :isDisabled="true" />
             <template #tooltip>
-              No further action allowed on issued policy, If changes are required, such as increase in price, please proceed through the 'Send Update' feature using the 'Correction of Policy' option.
+              No further action allowed on issued policy, If changes are
+              required, such as increase in price, please proceed through the
+              'Send Update' feature using the 'Correction of Policy' option.
             </template>
           </x-tooltip>
-          <ToggleManualButtonReuseTemplate v-else/>
+          <ToggleManualButtonReuseTemplate v-else />
           <x-toggle
             v-model="hidePlan"
             color="error"
@@ -1413,28 +1426,50 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
 
           <TabPanel>
             <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4 p-4">
-                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []).length > 0">
-                    <dt class="font-medium">Key Hospitals:</dt>
-                    <dd>
-                        <div
-                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []"
-                          :key="data.id"
-                        >
-                          {{ data.text }}
-                        </div>
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []).length > 0">
-                    <dt class="font-medium">Key Clinics:</dt>
-                    <dd>
-                        <div
-                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []"
-                          :key="data.id"
-                        >
-                          {{ data.text }}
-                        </div>
-                    </dd>
-                </div>
+              <div
+                class="grid sm:grid-cols-4"
+                v-if="
+                  (
+                    props.plan?.healthNetwork?.featuredFacilities?.filter(
+                      e => e.type === 'HOSPITAL',
+                    ) || []
+                  ).length > 0
+                "
+              >
+                <dt class="font-medium">Key Hospitals:</dt>
+                <dd>
+                  <div
+                    v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(
+                      e => e.type === 'HOSPITAL',
+                    ) || []"
+                    :key="data.id"
+                  >
+                    {{ data.text }}
+                  </div>
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-4"
+                v-if="
+                  (
+                    props.plan?.healthNetwork?.featuredFacilities?.filter(
+                      e => e.type === 'CLINIC',
+                    ) || []
+                  ).length > 0
+                "
+              >
+                <dt class="font-medium">Key Clinics:</dt>
+                <dd>
+                  <div
+                    v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(
+                      e => e.type === 'CLINIC',
+                    ) || []"
+                    :key="data.id"
+                  >
+                    {{ data.text }}
+                  </div>
+                </dd>
+              </div>
             </dl>
           </TabPanel>
 

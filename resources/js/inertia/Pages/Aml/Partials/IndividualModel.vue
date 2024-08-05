@@ -393,8 +393,8 @@ watch(
           <div class="flex gap-5 mb-5 align-center">
             <p>Is the insured the payer?</p>
             <x-form-group v-model="is_insured">
-                <x-radio :value="1" label="Yes" />
-                <x-radio :value="0" label="No" />
+              <x-radio :value="1" label="Yes" />
+              <x-radio :value="0" label="No" />
             </x-form-group>
           </div>
         </dl>

@@ -7,7 +7,6 @@ import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 
-
 defineProps({
   quote: Object,
   documentTypes: Object,
@@ -38,13 +37,13 @@ const permissionsEnum = page.props.permissionsEnum;
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
 
 const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
-
 </script>
 
 <template>
@@ -69,18 +68,35 @@ const onAddUpdate = () => {
             </Link>
 
             <LeadEditBtnTemplate v-slot="{ isDisabled }">
-              <Link v-if="!isDisabled" :href="route('jetski-quotes-edit', quote.uuid)">
+              <Link
+                v-if="!isDisabled"
+                :href="route('jetski-quotes-edit', quote.uuid)"
+              >
                 <x-button size="sm" tag="div">Edit</x-button>
               </Link>
-              <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+              <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+                >Edit</x-button
+              >
             </LeadEditBtnTemplate>
 
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" placement="bottom">
-              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.JetskiQuotesEdit)" :isDisabled="true"/>
-              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_details"
+              placement="bottom"
+            >
+              <LeadEditBtnReuseTemplate
+                v-if="can(permissionsEnum.JetskiQuotesEdit)"
+                :isDisabled="true"
+              />
+              <template #tooltip
+                >This lead is now locked as the policy has been booked. If
+                changes are needed, go to 'Send Update', select 'Add Update',
+                and choose 'Correction of Policy'</template
+              >
             </x-tooltip>
             <template v-else>
-              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.JetskiQuotesEdit)"/>
+              <LeadEditBtnReuseTemplate
+                v-if="can(permissionsEnum.JetskiQuotesEdit)"
+              />
             </template>
 
             <Link
@@ -95,7 +111,7 @@ const onAddUpdate = () => {
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
@@ -112,7 +128,7 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
-            <dd class="break-words">{{ quote.advisor?.email }}</dd>
+                <dd class="break-words">{{ quote.advisor?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -127,12 +143,12 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
-            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.created_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
-            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
+                <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -158,7 +174,7 @@ const onAddUpdate = () => {
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">JetSki Make</dt>
                 <dd>{{ quote?.jetski_quote?.jetski_make }}</dd>
@@ -206,16 +222,18 @@ const onAddUpdate = () => {
             </dl>
           </div>
 
-      <div class="flex justify-between items-center mt-6 mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-            Customer Profile
-        </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
-      </div>
-      <x-divider class="mb-4 mt-1" />
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+          <div class="flex justify-between items-center mt-6 mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Customer Profile
+            </h3>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
+          </div>
+          <x-divider class="mb-4 mt-1" />
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">FIRST NAME</dt>
                 <dd>{{ quote.first_name }}</dd>
@@ -244,10 +262,10 @@ const onAddUpdate = () => {
                 <dt class="font-medium">DATE OF BIRTH</dt>
                 <dd>{{ quote.dob }}</dd>
               </div>
-          <RiskRatingScoreDetails
-              :quote="quote.jetski_quote"
-              :modelType="quoteType"
-            />
+              <RiskRatingScoreDetails
+                :quote="quote.jetski_quote"
+                :modelType="quoteType"
+              />
             </dl>
           </div>
         </template>
@@ -284,7 +302,11 @@ const onAddUpdate = () => {
       :personal-plans="personalPlans"
     />
 
-    <AdditionalContacts :quote="quote" :quote-type="quoteType" :expanded="sectionExpanded" />
+    <AdditionalContacts
+      :quote="quote"
+      :quote-type="quoteType"
+      :expanded="sectionExpanded"
+    />
 
     <QuoteStatus
       :quote="quote"
@@ -325,7 +347,7 @@ const onAddUpdate = () => {
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
       :isAddUpdate="isAddUpdate"
-     />
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -336,8 +358,12 @@ const onAddUpdate = () => {
       :expanded="sectionExpanded"
     />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :expanded="sectionExpanded"/>
+    <AuditLogs
+      :quote-type="quoteType"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
 
-    <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded"/>
+    <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
   </div>
 </template>

@@ -127,21 +127,42 @@ onMounted(() => {
   setQueryFilters();
 });
 
-watch(serverOptions, (value) => { filterTransactions(true); }, { deep: true });
-
+watch(
+  serverOptions,
+  value => {
+    filterTransactions(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
   <div>
     <Head title="Reports" />
     <nav class="mb-4">
-        <ol class="flex gap-1">
-            <li> <Link :href="route('embedded-products.index')" class="text-sm border-b text-gray-500"><span> Embedded Products </span></Link> </li>
-            <li> <span class="text-gray-400">/</span> </li>
-            <li> <Link :href="route('embedded-products.reports')" class="text-sm border-b text-gray-500"><span> Reports </span></Link> </li>
-            <li> <span class="text-gray-400">/</span> </li>
-            <li> <span class="text-sm font-semibold"> {{ embeddedProduct.detail.product_name }} </span> </li>
-        </ol>
+      <ol class="flex gap-1">
+        <li>
+          <Link
+            :href="route('embedded-products.index')"
+            class="text-sm border-b text-gray-500"
+            ><span> Embedded Products </span></Link
+          >
+        </li>
+        <li><span class="text-gray-400">/</span></li>
+        <li>
+          <Link
+            :href="route('embedded-products.reports')"
+            class="text-sm border-b text-gray-500"
+            ><span> Reports </span></Link
+          >
+        </li>
+        <li><span class="text-gray-400">/</span></li>
+        <li>
+          <span class="text-sm font-semibold">
+            {{ embeddedProduct.detail.product_name }}
+          </span>
+        </li>
+      </ol>
     </nav>
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
@@ -277,6 +298,5 @@ watch(serverOptions, (value) => { filterTransactions(true); }, { deep: true });
         to: embeddedProduct.transactions.to,
       }"
     />
-
   </div>
 </template>

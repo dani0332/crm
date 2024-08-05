@@ -74,7 +74,6 @@ const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
 
-
 const filters = reactive({
   date: null,
   status_filters: null,
@@ -321,7 +320,7 @@ onUnmounted(() => {
         </x-field>
         <x-field label="Renewal">
           <x-select
-          :disabled="!props.areBothTeamsPresent"
+            :disabled="!props.areBothTeamsPresent"
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[

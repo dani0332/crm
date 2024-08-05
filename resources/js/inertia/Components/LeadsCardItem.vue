@@ -156,8 +156,14 @@ const handleConfirmation = result => {
 const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
 </script>
 <template>
-    <div :id="title" :quote_status_id="id" class="shared" :class="{ 'h-full': leads.length == 0 }">
-        <a v-for="{
+  <div
+    :id="title"
+    :quote_status_id="id"
+    class="shared"
+    :class="{ 'h-full': leads.length == 0 }"
+  >
+    <a
+      v-for="{
         id,
         uuid,
         first_name,
@@ -170,101 +176,127 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         health_cover_for,
         business_type_of_insurance,
         stale_at,
-      } in leads" :key="id" :href="getUrl(uuid, quoteTypeId)" target="_blank" :id="id"
-            class="block p-3 mt-2 border space-y-2 hover:transition hover:border-primary-500 rounded" :class="[
+      } in leads"
+      :key="id"
+      :href="getUrl(uuid, quoteTypeId)"
+      target="_blank"
+      :id="id"
+      class="block p-3 mt-2 border space-y-2 hover:transition hover:border-primary-500 rounded"
+      :class="[
         daysSinceStale(stale_at) === false
           ? 'bg-white border-gray-300'
           : 'bg-error-50 border-error-500',
         { 'cursor-not-allowed': !canDrag },
-      ]">
-            <div class="flex flex-col">
-                <stale-leads-badge :date="stale_at" :position="'bottom'" />
-                <span class="font-semibold text-sm">
-                    {{ first_name }} {{ last_name }}
-                </span>
-            </div>
+      ]"
+    >
+      <div class="flex flex-col">
+        <stale-leads-badge :date="stale_at" :position="'bottom'" />
+        <span class="font-semibold text-sm">
+          {{ first_name }} {{ last_name }}
+        </span>
+      </div>
 
-            <div v-if="quoteTypeId == 3 || quoteTypeId == 5" class="flex items-center gap-2">
-                <x-tooltip placement="left">
-                    <x-icon icon="person" size="sm" class="text-primary-400" />
-                    <template #tooltip>
-                        <div class="max-w-[194px] text-xs">
-                            This indicates the specific type of insurance coverage.
-                        </div>
-                    </template>
-                </x-tooltip>
-                <p class="text-xs">
-                    {{
-                    quoteTypeId == 3
-                    ? health_cover_for?.text
-                    : business_type_of_insurance?.text
-                    }}
-                </p>
+      <div
+        v-if="quoteTypeId == 3 || quoteTypeId == 5"
+        class="flex items-center gap-2"
+      >
+        <x-tooltip placement="left">
+          <x-icon icon="person" size="sm" class="text-primary-400" />
+          <template #tooltip>
+            <div class="max-w-[194px] text-xs">
+              This indicates the specific type of insurance coverage.
             </div>
+          </template>
+        </x-tooltip>
+        <p class="text-xs">
+          {{
+            quoteTypeId == 3
+              ? health_cover_for?.text
+              : business_type_of_insurance?.text
+          }}
+        </p>
+      </div>
 
-            <div v-if="company_name" class="flex items-center gap-2">
-                <x-icon icon="company" size="sm" class="text-primary-400" />
-                <p class="text-xs">{{ company_name }}</p>
-            </div>
+      <div v-if="company_name" class="flex items-center gap-2">
+        <x-icon icon="company" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ company_name }}</p>
+      </div>
 
-            <div class="flex items-center gap-2">
-                <x-tooltip placement="left">
-                    <x-icon icon="money" size="sm" class="text-primary-400" />
-                    <template #tooltip>
-                        <div class="max-w-[194px] text-xs">
-                            <span v-if="
+      <div class="flex items-center gap-2">
+        <x-tooltip placement="left">
+          <x-icon icon="money" size="sm" class="text-primary-400" />
+          <template #tooltip>
+            <div class="max-w-[194px] text-xs">
+              <span
+                v-if="
                   (quoteType == 'Health' && title === 'Quoted') ||
                   (quoteType == 'Health' && title === 'FollowedUp')
-                ">
-                                'Price Starting from' represents the lowest premium amount that
-                                a client can pay to initiate insurance coverage, giving you an
-                                overview of the potential business to close.
-                            </span>
-                            <span v-else>
-                                The complete amount due including VAT and before any potential
-                                discounts. Remember, VAT is exempt for Life Insurance policies.
-                            </span>
-                        </div>
-                    </template>
-                </x-tooltip>
-                <p class="text-xs">
-                    {{
-                    quoteType == 'Health' || quoteType == 'Travel'
-                    ? Number(premium).toLocaleString()
-            : Number(price_with_vat).toLocaleString()
-    }}
-                </p>
+                "
+              >
+                'Price Starting from' represents the lowest premium amount that
+                a client can pay to initiate insurance coverage, giving you an
+                overview of the potential business to close.
+              </span>
+              <span v-else>
+                The complete amount due including VAT and before any potential
+                discounts. Remember, VAT is exempt for Life Insurance policies.
+              </span>
             </div>
+          </template>
+        </x-tooltip>
+        <p class="text-xs">
+          {{
+            quoteType == 'Health' || quoteType == 'Travel'
+              ? Number(premium).toLocaleString()
+              : Number(price_with_vat).toLocaleString()
+          }}
+        </p>
+      </div>
 
-            <div class="flex items-center gap-2">
-                <x-tooltip placement="left">
-                    <x-icon icon="calendar" size="sm" class="text-primary-400" />
-                    <template #tooltip>
-                        <div class="max-w-[194px] text-xs">
-                            The 'Last Modified Date' displays the most recent date and time
-                            when the lead was last worked on.
-                        </div>
-                    </template>
-                </x-tooltip>
-                <p class="text-xs">{{ updated_at }}</p>
+      <div class="flex items-center gap-2">
+        <x-tooltip placement="left">
+          <x-icon icon="calendar" size="sm" class="text-primary-400" />
+          <template #tooltip>
+            <div class="max-w-[194px] text-xs">
+              The 'Last Modified Date' displays the most recent date and time
+              when the lead was last worked on.
             </div>
-        </a>
-    </div>
+          </template>
+        </x-tooltip>
+        <p class="text-xs">{{ updated_at }}</p>
+      </div>
+    </a>
+  </div>
 
-    <x-modal v-model="showModal" title="Kinldy choose a reason for marking as 'Lost' " showClose backdrop
-        @update:modelValue="handleConfirmation(false)" is-form @submit="onSubmit">
-
-        <x-field label="Lost Reason" required>
-            <x-select v-model="leadForm.lostreason" :options="lostReasonsOptions" placeholder="Lost Reason is required"
-                class="w-full" :rules="[isRequired]" />
-        </x-field>
-        <template #secondary-action>
-            <x-button tabindex="-1" color="orange" @click.prevent="handleConfirmation(false)">
-                Go Back
-            </x-button>
-        </template>
-        <template #primary-action>
-            <x-button type="submit" :loading="loader">Continue</x-button>
-        </template>
-    </x-modal>
+  <x-modal
+    v-model="showModal"
+    title="Kinldy choose a reason for marking as 'Lost' "
+    showClose
+    backdrop
+    @update:modelValue="handleConfirmation(false)"
+    is-form
+    @submit="onSubmit"
+  >
+    <x-field label="Lost Reason" required>
+      <x-select
+        v-model="leadForm.lostreason"
+        :options="lostReasonsOptions"
+        placeholder="Lost Reason is required"
+        class="w-full"
+        :rules="[isRequired]"
+      />
+    </x-field>
+    <template #secondary-action>
+      <x-button
+        tabindex="-1"
+        color="orange"
+        @click.prevent="handleConfirmation(false)"
+      >
+        Go Back
+      </x-button>
+    </template>
+    <template #primary-action>
+      <x-button type="submit" :loading="loader">Continue</x-button>
+    </template>
+  </x-modal>
 </template>

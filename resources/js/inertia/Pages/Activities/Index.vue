@@ -115,7 +115,6 @@ function setQueryFilters() {
 }
 
 function resetDates(option) {
-
   const today = new Date();
   let startDate, endDate;
   if (isOverDue.value) {
@@ -124,17 +123,12 @@ function resetDates(option) {
   isOverDue.value = false;
   selectedOption.value = option;
   if (option == 'today') {
-
     startDate = endDate = useDateFormat(today, 'DD-MM-YYYY');
-
   } else if (option == 'tomorrow') {
-
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
     startDate = endDate = useDateFormat(tomorrow, 'DD-MM-YYYY');
-
   } else if (option == 'tweek') {
-
     const firstDayOfWeek = new Date(
       today.setDate(today.getDate() - today.getDay() + 1),
     );
@@ -143,9 +137,7 @@ function resetDates(option) {
     );
     startDate = useDateFormat(firstDayOfWeek, 'DD-MM-YYYY');
     endDate = useDateFormat(lastDayOfWeek, 'DD-MM-YYYY');
-
   } else if (option == 'tmonth') {
-
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayOfMonth = new Date(
       today.getFullYear(),
@@ -154,7 +146,6 @@ function resetDates(option) {
     );
     startDate = useDateFormat(firstDayOfMonth, 'DD-MM-YYYY');
     endDate = useDateFormat(lastDayOfMonth, 'DD-MM-YYYY');
-
   } else if (option == 'overdue') {
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
@@ -163,7 +154,6 @@ function resetDates(option) {
 
     startDate = useDateFormat('01/01/1970', 'DD-MM-YYYY');
     endDate = useDateFormat(yesterday, 'DD-MM-YYYY');
-
   } else if (option === 'custom') {
     // Handle the custom option by setting the custom start and end dates
     selectedOption.value = option;
@@ -491,67 +481,83 @@ onMounted(() => {
       }"
     />
 
-    <x-modal v-model="modals.activity" size="lg"
-    :title="`${activityActionEdit ? 'Edit' : 'Add'} Activity`"
-     show-close backdrop is-form @submit="onSubmit">
-        <div class="grid gap-4">
-          <x-input
-            v-model="activityForm.title"
-            label="Title*"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
+    <x-modal
+      v-model="modals.activity"
+      size="lg"
+      :title="`${activityActionEdit ? 'Edit' : 'Add'} Activity`"
+      show-close
+      backdrop
+      is-form
+      @submit="onSubmit"
+    >
+      <div class="grid gap-4">
+        <x-input
+          v-model="activityForm.title"
+          label="Title*"
+          :rules="[rules.isRequired]"
+          class="w-full"
+        />
 
-          <x-textarea
-            v-model="activityForm.description"
-            label="Description*"
+        <x-textarea
+          v-model="activityForm.description"
+          label="Description*"
+          :rules="[rules.isRequired]"
+          :adjust-to-text="false"
+          class="w-full"
+        />
+        <div v-if="activityActionEdit">
+          <x-select
+            v-model="activityForm.assignee_id"
+            label="Assignee*"
+            :options="[
+              ...advisors.map(advisor => ({
+                value: advisor.id,
+                label: advisor.name,
+              })),
+            ]"
             :rules="[rules.isRequired]"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-          <div v-if="activityActionEdit">
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee*"
-              :options="[
-                ...advisors.map(advisor => ({
-                  value: advisor.id,
-                  label: advisor.name,
-                })),
-              ]"
-              :rules="[rules.isRequired]"
-              :disabled="cannotUseAssignee"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
-          </div>
-          <x-input
-            v-model="activityForm.due_date"
-            label="Due Date*"
-            type="datetime-local"
-            :rules="[rules.isRequired]"
+            :disabled="cannotUseAssignee"
+            placeholder="Select Assignee"
             class="w-full"
           />
         </div>
+        <x-input
+          v-model="activityForm.due_date"
+          label="Due Date*"
+          type="datetime-local"
+          :rules="[rules.isRequired]"
+          class="w-full"
+        />
+      </div>
 
-        <template #secondary-action>
-          <x-button ghost tabindex="-1" size="sm" @click.prevent="modals.activity = false">
-            Cancel
-          </x-button>
-        </template>
-        <template #primary-action>
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="activityForm.processing"
-            type="submit"
-          >
-            {{ activityActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </template>
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="sm"
+          @click.prevent="modals.activity = false"
+        >
+          Cancel
+        </x-button>
+      </template>
+      <template #primary-action>
+        <x-button
+          size="sm"
+          color="emerald"
+          :loading="activityForm.processing"
+          type="submit"
+        >
+          {{ activityActionEdit ? 'Update' : 'Save' }}
+        </x-button>
+      </template>
     </x-modal>
 
-    <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
+    <x-modal
+      v-model="modals.activityConfirm"
+      title="Delete Activity"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this activity?</p>
       <template #actions>
         <div class="text-right space-x-4">

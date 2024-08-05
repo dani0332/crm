@@ -58,7 +58,7 @@ const followUpForm = ref({
       </div>
     </div>
     <template #actions>
-        <div class="flex gap-2 justify-end">
+      <div class="flex gap-2 justify-end">
         <x-button
           size="sm"
           color="#ff5e00"

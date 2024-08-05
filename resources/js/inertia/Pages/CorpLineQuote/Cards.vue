@@ -20,7 +20,6 @@ const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
-
 const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.CorpLineRenewalAdvisor,

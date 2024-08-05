@@ -41,8 +41,8 @@ let availableFilters = {
   payment_status: [],
   is_cold: '',
   stale_at: '',
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
 };
 
 const filters = reactive(availableFilters);
@@ -51,7 +51,11 @@ const hasRole = role => useHasRole(role);
 watch(
   () => filters,
   () => {
-    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -102,8 +106,7 @@ const tableHeader = ref([
     value: 'previous_quote_policy_number',
     is_active: true,
   },
-    { text: 'Renewal Batch', value: 'renewal_batch' , is_active: true },
-
+  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
 ]);
 
 const quotesSelected = ref([]);
@@ -494,15 +497,15 @@ const resetDateFilters = filterName => {
           range
           multi-calendars
           multi-calendars-solo
-      />
-      <DatePicker
-        v-model="filters.booking_date"
-        label="Booking Date"
-        class="w-full"
-        range
-        multi-calendars
-        multi-calendars-solo
-      />
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -519,7 +522,8 @@ const resetDateFilters = filterName => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>

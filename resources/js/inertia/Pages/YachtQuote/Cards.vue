@@ -10,7 +10,7 @@ const props = defineProps({
   },
   leadStatuses: Array,
   advisors: Array,
-  teams : Object,
+  teams: Object,
   areBothTeamsPresent: Boolean,
   is_renewal: String,
 });
@@ -20,7 +20,6 @@ const page = usePage();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
-
 
 const isAllowed = computed(() => {
   return !hasAnyRole([
@@ -77,7 +76,6 @@ const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
-
 
 const filters = reactive({
   date: null,
@@ -353,7 +351,7 @@ function onReset() {
         </x-field>
         <x-field label="Renewal">
           <x-select
-           :disabled="!props.areBothTeamsPresent"
+            :disabled="!props.areBothTeamsPresent"
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[

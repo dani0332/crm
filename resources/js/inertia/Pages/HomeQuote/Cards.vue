@@ -26,7 +26,6 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-
 const isAllowed = computed(() => {
   return !hasAnyRole([rolesEnum.HomeAdvisor, rolesEnum.HomeRenewalAdvisor]);
 });
@@ -73,8 +72,6 @@ const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
 
-
-
 const filters = reactive({
   code: '',
   first_name: '',
@@ -87,7 +84,7 @@ const filters = reactive({
   quote_status: [],
   advisors: [],
   is_ecommerce: '',
-  is_renewal:  props.is_renewal,
+  is_renewal: props.is_renewal,
   previous_quote_policy_number: '',
   renewal_batch: '',
   date: null,

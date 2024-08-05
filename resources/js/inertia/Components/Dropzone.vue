@@ -28,16 +28,18 @@ const props = defineProps({
   },
   isDisabled: {
     type: Boolean,
-    default: false
+    default: false,
   },
-  documentTypeCode: String
+  documentTypeCode: String,
 });
 
 const page = usePage();
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const emit = defineEmits(['update:modelValue', 'change', 'changeMethod']);
-const onDrop = (f,rejectReasons) => {
-  if (!(props.documentTypeCode == documentTypeCodeEnum.AUDIT && props.isDisabled)) {
+const onDrop = (f, rejectReasons) => {
+  if (
+    !(props.documentTypeCode == documentTypeCodeEnum.AUDIT && props.isDisabled)
+  ) {
     const files = f.map(file => ({ file }));
     let rejectReason = null;
     if (rejectReasons.length > 0) {
@@ -45,7 +47,7 @@ const onDrop = (f,rejectReasons) => {
     }
     const filesWithInfo = {
       files,
-      rejectReason
+      rejectReason,
     };
     emit('update:modelValue', files);
     emit('changeMethod', files);
@@ -86,13 +88,15 @@ const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
       </div>
       <div class="p-8" v-else>
         <x-tooltip placement="bottom">
-          <x-button :disabled="isDisabled" size="xs" >
+          <x-button :disabled="isDisabled" size="xs">
             Click to browse
           </x-button>
-          <template #tooltip> This section is for audit purposes only. Only authorised users can upload files here </template>
+          <template #tooltip>
+            This section is for audit purposes only. Only authorised users can
+            upload files here
+          </template>
         </x-tooltip>
       </div>
     </div>
-
   </div>
 </template>

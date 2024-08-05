@@ -3,7 +3,8 @@
     "private": true,
     "scripts": {
         "dev": "yarn && doppler run -- vite",
-        "prod": "yarn && doppler run -- vite build"
+        "prod": "yarn && doppler run -- vite build",
+        "lint": "prettier . --write"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.0.5",

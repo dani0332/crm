@@ -152,9 +152,7 @@ const removeSelected = item => {
               ? props.options.find(option => option.value === props.modelValue)
                   ?.label
               : `${selectedValue.length} Selected ${
-                  props.maxLimit
-                    ? '| max: ' + props.maxLimit
-                    : ''
+                  props.maxLimit ? '| max: ' + props.maxLimit : ''
                 }`
           "
           readonly

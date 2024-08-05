@@ -1,5 +1,4 @@
 <script setup>
-
 defineProps({
   policies: Array,
   legacyPolicyMapping: Array,

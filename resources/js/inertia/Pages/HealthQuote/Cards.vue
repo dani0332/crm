@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
@@ -46,7 +45,6 @@ const filtersCount = ref(0);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
-
 const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.RMAdvisor,
@@ -55,7 +53,6 @@ const isAllowed = computed(() => {
     rolesEnum.HealthAdvisor,
   ]);
 });
-
 
 const filters = reactive({
   code: '',
@@ -183,7 +180,6 @@ function onSubmit(isValid) {
     });
   }
 }
-
 
 onMounted(() => {
   setQueryStringFilters(params, filters);

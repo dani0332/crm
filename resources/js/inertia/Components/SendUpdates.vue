@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   reportable: {
     type: Object,
@@ -126,7 +125,8 @@ const getSendUpdateOptions = () => {
     .post(route('send-update.get-options'), {
       quoteTypeId: props.quote_type_id,
       parentId: parentId.value,
-      businessInsuranceTypeId: props.reportable?.business_type_of_insurance_id || null,
+      businessInsuranceTypeId:
+        props.reportable?.business_type_of_insurance_id || null,
       status: form.childCategory?.slug || null,
     })
     .then(response => {
@@ -228,7 +228,9 @@ const onAddUpdate = autoSubmit => {
   form
     .transform(data => {
       let childCatgeory = { ...data.childCategory };
-      let option = sendUpdateOptions.value.find(item => item.id === data.option);
+      let option = sendUpdateOptions.value.find(
+        item => item.id === data.option,
+      );
       childCatgeory.option = option || null;
       delete sendUpdateOptions.value;
 
@@ -425,10 +427,7 @@ const findOption = (item, key) => {
         class="w-full flex flex-wrap gap-5 justify-center text-center my-10 mb-20 items-stretch !h-100"
         v-if="modals.step === 'step1'"
       >
-        <template
-          v-for="option in props.options"
-          :key="option.title"
-        >
+        <template v-for="option in props.options" :key="option.title">
           <x-tooltip placement="left">
             <x-button
               color="primary"
@@ -474,9 +473,7 @@ const findOption = (item, key) => {
       <!-- modal 3 -->
       <div
         class="w-full flex gap-5 mb-10"
-        v-else-if="
-          modals.step === 'step3' && sendUpdateOptions
-        "
+        v-else-if="modals.step === 'step3' && sendUpdateOptions"
       >
         <div class="flex flex-col gap-2 flex-grow w-75">
           <x-field :label="form.childCategory.title" required>

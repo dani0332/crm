@@ -354,18 +354,16 @@ watch(
             {{ note }}
           </template>
           <x-accordion v-else show-icon icon="chevronDown">
-              <x-accordion-item
-                :expanded="expandNotes"
-              >
-                <div class="bg-gray-10 w-80">
-                  {{ note.slice(0, 40) }}
+            <x-accordion-item :expanded="expandNotes">
+              <div class="bg-gray-10 w-80">
+                {{ note.slice(0, 40) }}
+              </div>
+              <template #content>
+                <div>
+                  {{ note.slice(40, note.length) }}
                 </div>
-                <template #content>
-                  <div>
-                    {{ note.slice(40, note.length) }}
-                  </div>
-                </template>
-              </x-accordion-item>
+              </template>
+            </x-accordion-item>
           </x-accordion>
         </template>
         <template #item-action="item">

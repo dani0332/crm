@@ -175,8 +175,8 @@ const openFollowUpModal = () => {
     !filters.renewal_batch && !filters.quote_batch_id
       ? 'Please select quote batch or renewl batch'
       : filters.renewal_batch && filters.quote_batch_id
-      ? 'Please select either quote batch or renewl batch'
-      : '';
+        ? 'Please select either quote batch or renewl batch'
+        : '';
   if (title) notification.error({ title: title, position: 'top' });
   else showFollowUpModal.value = true;
 };

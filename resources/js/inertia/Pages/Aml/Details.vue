@@ -19,7 +19,7 @@ const props = defineProps({
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
-    cardHolderName:Object,
+  cardHolderName: Object,
 });
 
 const page = usePage();
@@ -74,15 +74,14 @@ const dateToYear = date => {
 };
 
 const decisionStatus = {
-    [props.amlDecisionStatusEnum.PASS] : "Pass",
-    [props.amlDecisionStatusEnum.FALSE_POSITIVE] : "Pass",
-    [props.amlDecisionStatusEnum.TRUE_MATCH_ACCEPT_RISK] : "Pass",
-    [props.amlDecisionStatusEnum.ESCALATED] : "Escalated",
-    [props.amlDecisionStatusEnum.SENT_FOR_REVIEW] : "Sent For Review",
-    [props.amlDecisionStatusEnum.REJECTED] : "Rejected",
-    [props.amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK] : "Rejected",
+  [props.amlDecisionStatusEnum.PASS]: 'Pass',
+  [props.amlDecisionStatusEnum.FALSE_POSITIVE]: 'Pass',
+  [props.amlDecisionStatusEnum.TRUE_MATCH_ACCEPT_RISK]: 'Pass',
+  [props.amlDecisionStatusEnum.ESCALATED]: 'Escalated',
+  [props.amlDecisionStatusEnum.SENT_FOR_REVIEW]: 'Sent For Review',
+  [props.amlDecisionStatusEnum.REJECTED]: 'Rejected',
+  [props.amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK]: 'Rejected',
 };
-
 </script>
 
 <template>
@@ -580,17 +579,17 @@ const decisionStatus = {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-        v-if="props.kycStatus === customerTypeEnum.EntityShort"
-        v-model="modals.insuranceForm"
-        :quoteType="quoteType"
-        :quoteDetails="quoteRequest"
-        :entityDetails="entityDetails"
-        :nationalities="nationalities"
-        :membersDetails="membersDetails"
-        :uboDetails="uboDetails"
-        :customerTypeEnum="customerTypeEnum"
-        :lookups="lookups"
-        :quote-aml-status="page.props.quoteAmlStatus"
+      v-if="props.kycStatus === customerTypeEnum.EntityShort"
+      v-model="modals.insuranceForm"
+      :quoteType="quoteType"
+      :quoteDetails="quoteRequest"
+      :entityDetails="entityDetails"
+      :nationalities="nationalities"
+      :membersDetails="membersDetails"
+      :uboDetails="uboDetails"
+      :customerTypeEnum="customerTypeEnum"
+      :lookups="lookups"
+      :quote-aml-status="page.props.quoteAmlStatus"
     />
 
     <IndividualModel
@@ -633,10 +632,19 @@ const decisionStatus = {
         </template>
 
         <template #item-status="{ match_found, decision }">
-         {{ match_found > 0 ? (decision !== null ? decisionStatus[decision] : amlDecisionStatusEnum.ESCALATED) : amlDecisionStatusEnum.PASS}}
+          {{
+            match_found > 0
+              ? decision !== null
+                ? decisionStatus[decision]
+                : amlDecisionStatusEnum.ESCALATED
+              : amlDecisionStatusEnum.PASS
+          }}
         </template>
 
-        <template v-if="can(permissionsEnum.AMLDecisionUpdate)" #item-action="{ id }">
+        <template
+          v-if="can(permissionsEnum.AMLDecisionUpdate)"
+          #item-action="{ id }"
+        >
           <div class="space-x-4">
             <x-button
               size="xs"

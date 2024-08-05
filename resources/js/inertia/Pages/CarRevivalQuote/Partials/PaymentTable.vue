@@ -1,5 +1,4 @@
 <script setup>
-
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -234,7 +233,9 @@ const providerId = computed(() => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="can.create_payments && !hasPermission(permissionsEnum.ApprovePayments)"
+        v-if="
+          can.create_payments && !hasPermission(permissionsEnum.ApprovePayments)
+        "
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -285,7 +286,9 @@ const providerId = computed(() => {
             <x-button
               size="xs"
               color="emerald"
-              v-if="hasPermission(permissionsEnum.PaymentsEdit) && item.edit_button"
+              v-if="
+                hasPermission(permissionsEnum.PaymentsEdit) && item.edit_button
+              "
               @click="editPaymentModal(item)"
             >
               Edit
@@ -294,74 +297,80 @@ const providerId = computed(() => {
         </div>
       </template>
     </DataTable>
-    <x-modal v-model="createPaymentModal"
-        :title="`${ paymentMethodsForm.status == 'create'
-            ? 'New Payment'
-            : 'Update Payment'}`"
-        size="lg" show-close backdrop is-form @submit="addPayment">
-        <div class="w-full grid md:grid-cols-2 gap-5">
-          <x-input
-            class="w-full"
-            :rules="[rules.isRequired, rules.amount]"
-            label="Capture Amount*"
-            v-model="paymentMethodsForm.amount"
-          />
+    <x-modal
+      v-model="createPaymentModal"
+      :title="`${
+        paymentMethodsForm.status == 'create' ? 'New Payment' : 'Update Payment'
+      }`"
+      size="lg"
+      show-close
+      backdrop
+      is-form
+      @submit="addPayment"
+    >
+      <div class="w-full grid md:grid-cols-2 gap-5">
+        <x-input
+          class="w-full"
+          :rules="[rules.isRequired, rules.amount]"
+          label="Capture Amount*"
+          v-model="paymentMethodsForm.amount"
+        />
 
-          <x-select
-            class="w-full"
-            v-model="paymentMethodsForm.collection_type"
-            :options="collectionTypes"
-            label="Collection Type*"
-            :rules="[rules.isRequired]"
-          >
-          </x-select>
+        <x-select
+          class="w-full"
+          v-model="paymentMethodsForm.collection_type"
+          :options="collectionTypes"
+          label="Collection Type*"
+          :rules="[rules.isRequired]"
+        >
+        </x-select>
 
-          <x-select
-            class="w-full md:col-span-2"
-            v-model="paymentMethodsForm.payment_method"
-            :options="paymentMethods"
-            label="Payment Method*"
-            :rules="[rules.isRequired]"
-          >
-          </x-select>
+        <x-select
+          class="w-full md:col-span-2"
+          v-model="paymentMethodsForm.payment_method"
+          :options="paymentMethods"
+          label="Payment Method*"
+          :rules="[rules.isRequired]"
+        >
+        </x-select>
 
-          <p class="text-sm text-gray-500">
-            Provider Name:
-            <span class="text-primary-800">{{ providerName }}</span>
-          </p>
+        <p class="text-sm text-gray-500">
+          Provider Name:
+          <span class="text-primary-800">{{ providerName }}</span>
+        </p>
 
-          <p class="text-sm text-gray-500">
-            Plan Name :
-            <span class="text-primary-800">{{ getPlanName }}</span>
-          </p>
+        <p class="text-sm text-gray-500">
+          Plan Name :
+          <span class="text-primary-800">{{ getPlanName }}</span>
+        </p>
 
-          <x-input
-            class="w-full md:col-span-2"
-            label="Payment Reference*"
-            :rules="[rules.isRequired, rules.reference]"
-            v-show="paymentMethodsForm.payment_method != 'CC'"
-            v-model="paymentMethodsForm.payment_reference"
-          />
+        <x-input
+          class="w-full md:col-span-2"
+          label="Payment Reference*"
+          :rules="[rules.isRequired, rules.reference]"
+          v-show="paymentMethodsForm.payment_method != 'CC'"
+          v-model="paymentMethodsForm.payment_reference"
+        />
+      </div>
+      <template #secondary-action>
+        <x-button ghost tabindex="-1" @click="createPaymentModal = false">
+          Cancel
+        </x-button>
+      </template>
+      <template #primary-action>
+        <div
+          class="w-full md:col-span-2 flex justify-end"
+          v-if="
+            paymentMethodsForm.status == 'create' ||
+            paymentMethodsForm.status == 'edit'
+          "
+        >
+          <x-button color="primary" type="submit">
+            {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
+            Payment
+          </x-button>
         </div>
-        <template #secondary-action>
-            <x-button ghost tabindex="-1" @click="createPaymentModal = false">
-              Cancel
-            </x-button>
-        </template>
-        <template #primary-action>
-            <div
-            class="w-full md:col-span-2 flex justify-end"
-            v-if="
-              paymentMethodsForm.status == 'create' ||
-              paymentMethodsForm.status == 'edit'
-            "
-          >
-            <x-button color="primary" type="submit">
-              {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
-              Payment
-            </x-button>
-          </div>
-        </template>
+      </template>
     </x-modal>
   </div>
 </template>

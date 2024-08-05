@@ -47,7 +47,7 @@ const props = defineProps({
   bookPolicyDetails: Array,
   payments: Array,
   lockLeadSectionsDetails: Object,
-  paymentDocument: Array
+  paymentDocument: Array,
 });
 
 const page = usePage();
@@ -226,13 +226,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
 
 const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
-
 </script>
 
 <template>
@@ -258,18 +258,35 @@ const onAddUpdate = () => {
         />
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('yacht-quotes-edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled"
+            :href="route('yacht-quotes-edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
         </LeadEditBtnTemplate>
 
-        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" placement="bottom">
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.YachtQuotesEdit)" :isDisabled="true"/>
-          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          placement="bottom"
+        >
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.YachtQuotesEdit)"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
         </x-tooltip>
         <template v-else>
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.YachtQuotesEdit)"/>
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.YachtQuotesEdit)"
+          />
         </template>
 
         <Link
@@ -287,13 +304,15 @@ const onAddUpdate = () => {
     <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-             <div class="grid sm:grid-cols-2" v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
@@ -760,12 +779,12 @@ const onAddUpdate = () => {
             />
           </dd>
         </div>
-    </dl>
-    <template #actions>
-      <x-button size="sm" color="orange" @click.prevent="linkEntity">
-        Link
-      </x-button>
-    </template>
+      </dl>
+      <template #actions>
+        <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          Link
+        </x-button>
+      </template>
     </x-modal>
 
     <MemberDetails
@@ -828,9 +847,9 @@ const onAddUpdate = () => {
       :payments="quote.payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
@@ -840,10 +859,14 @@ const onAddUpdate = () => {
         )
       "
       :quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />

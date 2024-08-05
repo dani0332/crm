@@ -142,7 +142,7 @@ const addPayment = isValid => {
   if (props.quoteRequest.plan && props.quoteRequest.plan.id) {
     plan_id = props.quoteRequest.plan.id;
   }
-    isLoading.value = true;
+  isLoading.value = true;
   let data = {
     captured_amount: paymentMethodsForm.amount,
     code: paymentMethodsForm.payment_method,
@@ -274,9 +274,14 @@ const providerId = computed(() => {
         <x-divider class="my-4" />
         <div class="mb-4 flex justify-end">
           <x-button
-            v-if="(can(permissionEnum.PaymentsCreate) &&
-            !can(permissionEnum.ApprovePayments) &&
-            !hasRole(rolesEnum.PA) && quoteRequest.plan && enableManageOptions) || (isCommercialVehicles && enableManageOptions)"
+            v-if="
+              (can(permissionEnum.PaymentsCreate) &&
+                !can(permissionEnum.ApprovePayments) &&
+                !hasRole(rolesEnum.PA) &&
+                quoteRequest.plan &&
+                enableManageOptions) ||
+              (isCommercialVehicles && enableManageOptions)
+            "
             size="sm"
             color="orange"
             @click="addPaymentModal"
@@ -299,132 +304,174 @@ const providerId = computed(() => {
             {{ quoteRequest.plan ? quoteRequest.plan.text : '' }}
           </template>
           <template #item-status_changed_at="item">
-            {{ item.payment_status_logs.length > 0 ? item.payment_status_logs.at(-1).created_at : '' }}
+            {{
+              item.payment_status_logs.length > 0
+                ? item.payment_status_logs.at(-1).created_at
+                : ''
+            }}
           </template>
 
           <template #item-actions="item">
             <div class="flex gap-2">
-                <template v-if="!can(permissionEnum.ApprovePayments) && enableManageOptions">
-                    <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)"
-                        size="xs"
-                        color="primary"
-                        outlined
-                        @click.prevent="generateCCLink(item.code)"
-                    >
-                        Copy Link
-                    </x-button>
-                    <x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="error" @click="editPaymentModal(item)">
-                        Edit
-                    </x-button>
-                </template>
-                <template v-if="can(permissionEnum.ApprovePayments) && enableManageOptions">
-                    <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)"
-                        size="xs"
-                        color="primary"
-                        outlined
-                        @click="approvePayment(item)"
-                    >
-                        Approve
-                    </x-button>
-                </template>
-                <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
-                    <x-button size="xs" color="primary" outlined disabled>
-                        Approve
-                    </x-button>
-                </template>
+              <template
+                v-if="
+                  !can(permissionEnum.ApprovePayments) && enableManageOptions
+                "
+              >
+                <x-button
+                  v-if="
+                    (item.payment_methods_code == 'CC' ||
+                      item.payment_methods_code == 'IN_PL') &&
+                    item.payment_status_id != paymentStatusEnum.PAID &&
+                    item.payment_status_id != paymentStatusEnum.CAPTURED &&
+                    item.payment_status_id != paymentStatusEnum.AUTHORISED &&
+                    !hasRole(rolesEnum.PA)
+                  "
+                  size="xs"
+                  color="primary"
+                  outlined
+                  @click.prevent="generateCCLink(item.code)"
+                >
+                  Copy Link
+                </x-button>
+                <x-button
+                  v-if="
+                    item.payment_status_id != paymentStatusEnum.PAID &&
+                    item.payment_status_id != paymentStatusEnum.CAPTURED &&
+                    item.payment_status_id != paymentStatusEnum.AUTHORISED &&
+                    !hasRole(rolesEnum.PA) &&
+                    can(permissionEnum.PaymentsEdit)
+                  "
+                  size="xs"
+                  color="error"
+                  @click="editPaymentModal(item)"
+                >
+                  Edit
+                </x-button>
+              </template>
+              <template
+                v-if="
+                  can(permissionEnum.ApprovePayments) && enableManageOptions
+                "
+              >
+                <x-button
+                  v-if="
+                    item.payment_methods_code != 'CC' &&
+                    ![
+                      paymentStatusEnum.PAID,
+                      paymentStatusEnum.CAPTURED,
+                    ].includes(item.payment_status_id) &&
+                    !hasRole(rolesEnum.PA)
+                  "
+                  size="xs"
+                  color="primary"
+                  outlined
+                  @click="approvePayment(item)"
+                >
+                  Approve
+                </x-button>
+              </template>
+              <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
+                <x-button size="xs" color="primary" outlined disabled>
+                  Approve
+                </x-button>
+              </template>
             </div>
-        </template>
+          </template>
         </DataTable>
       </template>
     </Collapsible>
-    <x-modal v-model="createPaymentModal" size="lg" :title="`${ paymentMethodsForm.status == 'create' ? 'New Payment' : 'Update Payment'}`" show-close backdrop is-form @submit="addPayment">
-        <div class="w-full grid md:grid-cols-2 gap-5">
-          <x-field label="Price Including VAT" required>
-            <x-input
-              class="w-full"
-              :rules="[rules.isRequired, rules.amount]"
-              v-model="paymentMethodsForm.amount"
-            />
-          </x-field>
-          <x-field label="Collection Type" required>
-            <x-select
-              class="w-full"
-              v-model="paymentMethodsForm.collection_type"
-              :disabled="true"
-              :options="collectionTypes"
-              :rules="[rules.isRequired]"
-            >
-            </x-select>
-          </x-field>
-          <x-field label="Payment Method" required>
-            <x-select
-              class="w-full md:col-span-2"
-              v-model="paymentMethodsForm.payment_method"
-              :options="paymentMethods"
-              :disabled="true"
-              :rules="[rules.isRequired]"
-            >
-            </x-select>
-          </x-field>
-          <x-field
-            v-if="isCommercialVehicles"
-            label="Insurance Provider"
-            required
+    <x-modal
+      v-model="createPaymentModal"
+      size="lg"
+      :title="`${paymentMethodsForm.status == 'create' ? 'New Payment' : 'Update Payment'}`"
+      show-close
+      backdrop
+      is-form
+      @submit="addPayment"
+    >
+      <div class="w-full grid md:grid-cols-2 gap-5">
+        <x-field label="Price Including VAT" required>
+          <x-input
+            class="w-full"
+            :rules="[rules.isRequired, rules.amount]"
+            v-model="paymentMethodsForm.amount"
+          />
+        </x-field>
+        <x-field label="Collection Type" required>
+          <x-select
+            class="w-full"
+            v-model="paymentMethodsForm.collection_type"
+            :disabled="true"
+            :options="collectionTypes"
+            :rules="[rules.isRequired]"
           >
-            <x-select
-              class="w-full md:col-span-2"
-              v-model="insurance_provider_id"
-              :options="insuranceProviderOptions"
-              placeholder="Select Insurance provider"
-              :rules="[rules.isRequired]"
-            >
-            </x-select>
-          </x-field>
-          <p class="text-sm text-gray-500" v-else>
-            Provider Name:
-            <span class="text-primary-800">{{ providerName }}</span>
-          </p>
-
-          <p class="text-sm text-gray-500">
-            Plan Name :
-            <span class="text-primary-800">{{ getPlanName }}</span>
-          </p>
-          <x-field
-            label="Payment Reference"
-            required
-            v-if="paymentMethodsForm.payment_method != 'CC'"
+          </x-select>
+        </x-field>
+        <x-field label="Payment Method" required>
+          <x-select
+            class="w-full md:col-span-2"
+            v-model="paymentMethodsForm.payment_method"
+            :options="paymentMethods"
+            :disabled="true"
+            :rules="[rules.isRequired]"
           >
-            <x-input
-              class="w-full md:col-span-2"
-              :rules="[rules.isRequired, rules.reference]"
-              v-model="paymentMethodsForm.payment_reference"
-            />
-          </x-field>
+          </x-select>
+        </x-field>
+        <x-field
+          v-if="isCommercialVehicles"
+          label="Insurance Provider"
+          required
+        >
+          <x-select
+            class="w-full md:col-span-2"
+            v-model="insurance_provider_id"
+            :options="insuranceProviderOptions"
+            placeholder="Select Insurance provider"
+            :rules="[rules.isRequired]"
+          >
+          </x-select>
+        </x-field>
+        <p class="text-sm text-gray-500" v-else>
+          Provider Name:
+          <span class="text-primary-800">{{ providerName }}</span>
+        </p>
 
+        <p class="text-sm text-gray-500">
+          Plan Name :
+          <span class="text-primary-800">{{ getPlanName }}</span>
+        </p>
+        <x-field
+          label="Payment Reference"
+          required
+          v-if="paymentMethodsForm.payment_method != 'CC'"
+        >
+          <x-input
+            class="w-full md:col-span-2"
+            :rules="[rules.isRequired, rules.reference]"
+            v-model="paymentMethodsForm.payment_reference"
+          />
+        </x-field>
+      </div>
+      <template #secondary-action>
+        <x-button ghost tabindex="-1" @click="createPaymentModal = false">
+          Cancel
+        </x-button>
+      </template>
+      <template #primary-action>
+        <div
+          class="w-full md:col-span-2 flex justify-end"
+          v-if="
+            paymentMethodsForm.status == 'create' ||
+            paymentMethodsForm.status == 'edit'
+          "
+        >
+          <x-button color="primary" type="submit" :loading="isLoading">
+            {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
+            Payment
+          </x-button>
         </div>
-        <template #secondary-action>
-            <x-button
-              ghost
-              tabindex="-1"
-              @click="createPaymentModal = false"
-            >
-              Cancel
-            </x-button>
-        </template>
-        <template #primary-action>
-            <div
-              class="w-full md:col-span-2 flex justify-end"
-              v-if="
-                paymentMethodsForm.status == 'create' ||
-                paymentMethodsForm.status == 'edit'
-              "
-            >
-              <x-button color="primary" type="submit" :loading="isLoading">
-                {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
-                Payment
-              </x-button>
-            </div>
-        </template>
+      </template>
     </x-modal>
   </div>
 </template>

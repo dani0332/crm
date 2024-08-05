@@ -1,5 +1,4 @@
 <script setup>
-
 const page = usePage();
 defineProps({
   quote: Object,
@@ -37,7 +36,7 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
-  paymentDocument: Array
+  paymentDocument: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -119,13 +118,13 @@ const leadDuplicateForm = useForm({
 //activities
 const activityActionEdit = ref(false);
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -488,14 +487,15 @@ watch(
   },
 );
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
-const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
 
 const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
-
 </script>
 
 <template>
@@ -547,70 +547,96 @@ const onAddUpdate = () => {
           <x-button size="sm" color="primary" tag="div"> Life Quotes </x-button>
         </Link>
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('life-quotes-edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled"
+            :href="route('life-quotes-edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
         </LeadEditBtnTemplate>
 
-        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" placement="bottom">
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)" :isDisabled="true"/>
-          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          placement="bottom"
+        >
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
         </x-tooltip>
         <template v-else>
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)"/>
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.LifeQuotesEdit)"
+          />
         </template>
       </div>
     </div>
 
-    <x-modal v-model="modalsDuplicate" size="md" title="Duplicate Lead" show-close backdrop is-form @submit="onCreateDuplicate">
-        <div class="grid gap-4">
-          <x-field label="LOBs" required>
-            <x-select
-              v-model="leadDuplicateForm.lob_team"
-              :options="
-                allowedDuplicateLOB.map((lob, index) => ({
-                  value: lob,
-                  label: lob,
-                }))
-              "
-              :rules="[isRequired]"
-              placeholder="Select LOB For Duplication"
-              class="w-full"
-              multiple
-            />
-          </x-field>
-          <x-field label="Reason" required>
-            <x-select
-              v-model="leadDuplicateForm.lob_team_sub_selection"
-              :rules="[isRequired]"
-              class="w-full"
-              :options="[
-                { value: 'new_enquiry', label: 'New enquiry' },
-                { value: 'record_only', label: 'Record purposes only' },
-              ]"
-            />
-          </x-field>
-        </div>
-        <template #secondary-action>
-            <x-button ghost tabindex="-1" @click="modalsDuplicate = false">Cancel</x-button>
-        </template>
-        <template #primary-action>
-            <x-button
-              color="orange"
-              type="submit"
-              :loading="leadDuplicateForm.processing"
-            >
-              Create Duplicate
-            </x-button>
-        </template>
+    <x-modal
+      v-model="modalsDuplicate"
+      size="md"
+      title="Duplicate Lead"
+      show-close
+      backdrop
+      is-form
+      @submit="onCreateDuplicate"
+    >
+      <div class="grid gap-4">
+        <x-field label="LOBs" required>
+          <x-select
+            v-model="leadDuplicateForm.lob_team"
+            :options="
+              allowedDuplicateLOB.map((lob, index) => ({
+                value: lob,
+                label: lob,
+              }))
+            "
+            :rules="[isRequired]"
+            placeholder="Select LOB For Duplication"
+            class="w-full"
+            multiple
+          />
+        </x-field>
+        <x-field label="Reason" required>
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            :rules="[isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
+          />
+        </x-field>
+      </div>
+      <template #secondary-action>
+        <x-button ghost tabindex="-1" @click="modalsDuplicate = false"
+          >Cancel</x-button
+        >
+      </template>
+      <template #primary-action>
+        <x-button
+          color="orange"
+          type="submit"
+          :loading="leadDuplicateForm.processing"
+        >
+          Create Duplicate
+        </x-button>
+      </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
@@ -1021,7 +1047,7 @@ const onAddUpdate = () => {
           </dd>
         </div>
       </dl>
-      <template #actions >
+      <template #actions>
         <x-button
           color="primary"
           size="sm"
@@ -1073,12 +1099,12 @@ const onAddUpdate = () => {
             />
           </dd>
         </div>
-    </dl>
-    <template #actions>
-      <x-button size="sm" color="orange" @click.prevent="linkEntity">
-        Link
-      </x-button>
-    </template>
+      </dl>
+      <template #actions>
+        <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          Link
+        </x-button>
+      </template>
     </x-modal>
 
     <MemberDetails
@@ -1139,7 +1165,9 @@ const onAddUpdate = () => {
                   <x-select
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
-                    :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
+                    :disabled="
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                    "
                     placeholder="Lead Status"
                     class="w-full"
                   />
@@ -1150,7 +1178,9 @@ const onAddUpdate = () => {
                     type="text"
                     placeholder="Lead Notes"
                     class="w-full"
-                    :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
+                    :disabled="
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                    "
                   />
                 </x-field>
               </div>
@@ -1201,10 +1231,14 @@ const onAddUpdate = () => {
             </x-button>
           </StatusUpdateButtonTemplate>
           <div class="flex justify-end">
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" placement="bottom">
-              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              placement="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
               <template #tooltip>
-                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
               </template>
             </x-tooltip>
             <StatusUpdateButtonReuseTemplate v-else />
@@ -1231,9 +1265,9 @@ const onAddUpdate = () => {
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
@@ -1242,11 +1276,15 @@ const onAddUpdate = () => {
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-			:quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :quoteRequest="quote"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
@@ -1365,59 +1403,75 @@ const onAddUpdate = () => {
           </DataTable>
         </template>
       </Collapsible>
-      <x-modal v-model="modals.activity" size="lg"
-      :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
-      show-close backdrop is-form @submit="onActivitySubmit">
-          <div class="grid gap-4">
-            <x-field label="Title" required>
-              <x-input
-                v-model="activityForm.title"
-                :rules="[rules.isRequired]"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="Description">
-              <x-textarea
-                v-model="activityForm.description"
-                :adjust-to-text="false"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="Assignee" required>
-              <x-select
-                v-model="activityForm.assignee_id"
-                :options="advisorOptions"
-                :rules="[rules.isRequired]"
-                placeholder="Select Assignee"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="Due Date" required>
-              <DatePicker
-                v-model="activityForm.due_date"
-                withTime
-                :rules="[rules.isRequired]"
-              />
-            </x-field>
-          </div>
+      <x-modal
+        v-model="modals.activity"
+        size="lg"
+        :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
+        show-close
+        backdrop
+        is-form
+        @submit="onActivitySubmit"
+      >
+        <div class="grid gap-4">
+          <x-field label="Title" required>
+            <x-input
+              v-model="activityForm.title"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Description">
+            <x-textarea
+              v-model="activityForm.description"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Assignee" required>
+            <x-select
+              v-model="activityForm.assignee_id"
+              :options="advisorOptions"
+              :rules="[rules.isRequired]"
+              placeholder="Select Assignee"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Due Date" required>
+            <DatePicker
+              v-model="activityForm.due_date"
+              withTime
+              :rules="[rules.isRequired]"
+            />
+          </x-field>
+        </div>
 
-          <template #secondary-action>
-            <x-button ghost size="sm" tabindex="-1" @click.prevent="modals.activity = false">
-              Cancel
-            </x-button>
-          </template>
-          <template #primary-action>
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="activityForm.processing"
-              type="submit"
-            >
-              {{ activityActionEdit ? 'Update' : 'Save' }}
-            </x-button>
-          </template>
+        <template #secondary-action>
+          <x-button
+            ghost
+            size="sm"
+            tabindex="-1"
+            @click.prevent="modals.activity = false"
+          >
+            Cancel
+          </x-button>
+        </template>
+        <template #primary-action>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="activityForm.processing"
+            type="submit"
+          >
+            {{ activityActionEdit ? 'Update' : 'Save' }}
+          </x-button>
+        </template>
       </x-modal>
-      <x-modal v-model="modals.activityConfirm" title="Delete Activity" show-close backdrop>
+      <x-modal
+        v-model="modals.activityConfirm"
+        title="Delete Activity"
+        show-close
+        backdrop
+      >
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
           <div class="text-right space-x-4">

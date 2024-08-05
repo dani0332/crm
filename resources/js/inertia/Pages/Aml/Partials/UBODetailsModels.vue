@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   quoteDetails: Object,
   quoteType: Object,
@@ -15,9 +14,8 @@ const isEmptyField = ref(false);
 
 const uboMembers = ref(props.uboDetails);
 const computedUboMembers = computed(() => {
-    return uboMembers.value.filter(x => !x.is_third_party_payer);
+  return uboMembers.value.filter(x => !x.is_third_party_payer);
 });
-
 
 const notification = useToast();
 const loader = ref({
@@ -41,14 +39,12 @@ const uboRelationOptions = computed(() => {
 });
 
 const rules = {
-    nameCheck: v => {
-        const pattern = /^[a-zA-Z0-9\s]+$/;
-        if(v == null || v == '') return true;
-        return pattern.test(v) || 'Special characters are not allowed in Name';
-    }
+  nameCheck: v => {
+    const pattern = /^[a-zA-Z0-9\s]+$/;
+    if (v == null || v == '') return true;
+    return pattern.test(v) || 'Special characters are not allowed in Name';
+  },
 };
-
-
 
 const addUBODetails = ref(false);
 const editUBODetails = ref(false);
@@ -99,7 +95,7 @@ const uboForm = useForm({
   relation_code: null,
   nationality_id: null,
   is_payer: props.is_payer ?? false,
-  from_aml_model: true
+  from_aml_model: true,
 });
 
 function onEditUBO(data) {
@@ -129,18 +125,18 @@ const onUBOSubmit = isValid => {
           title: 'UBO Updated Successfully',
           position: 'top',
         });
-          if (res.status) {
-              let { data } = res.data;
+        if (res.status) {
+          let { data } = res.data;
 
-              let index = uboMembers.value.findIndex(x => x.id == data.id);
-              if (index != -1) {
-                  uboMembers.value[index] = {
-                      ...data,
-                      nationality: data.nationality,
-                      relation: data.relation,
-                  };
-              }
+          let index = uboMembers.value.findIndex(x => x.id == data.id);
+          if (index != -1) {
+            uboMembers.value[index] = {
+              ...data,
+              nationality: data.nationality,
+              relation: data.relation,
+            };
           }
+        }
       })
       .catch(err => {
         notification.error({
@@ -159,15 +155,15 @@ const onUBOSubmit = isValid => {
         });
         uboForm.reset();
         addUBODetails.value = false;
-          if (res.status) {
-              let { data } = res.data;
+        if (res.status) {
+          let { data } = res.data;
 
-              uboMembers.value.push({
-                  ...data,
-                  nationality: data.nationality,
-                  relation: data.relation,
-              });
-          }
+          uboMembers.value.push({
+            ...data,
+            nationality: data.nationality,
+            relation: data.relation,
+          });
+        }
       })
       .catch(err => {
         notification.error({
@@ -184,7 +180,10 @@ const onUBOSubmit = isValid => {
   <x-form @submit="onUBOSubmit" :auto-focus="false">
     <div v-show="addUBODetails" class="mb-4">
       <div class="flex justify-between">
-        <h3 v-if="uboForm.entity_id !== null" class="font-semibold text-primary-800 text-lg mb-3">
+        <h3
+          v-if="uboForm.entity_id !== null"
+          class="font-semibold text-primary-800 text-lg mb-3"
+        >
           Add UBO Details
         </h3>
         <x-button @click.prevent="addUBOToggle" size="sm" color="red">
@@ -198,7 +197,7 @@ const onUBOSubmit = isValid => {
             v-model="uboForm.first_name"
             placeholder="Full Name"
             class="w-full"
-            :rules="[isRequired , rules.nameCheck]"
+            :rules="[isRequired, rules.nameCheck]"
           />
         </x-field>
         <x-field label="Nationality" required>

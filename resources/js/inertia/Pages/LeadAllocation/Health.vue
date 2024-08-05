@@ -82,7 +82,7 @@ const statusText = statusId =>
     3: 'Unavailable',
     4: 'Sick',
     5: 'On leave',
-  }[parseInt(statusId)] || 'Unavailable');
+  })[parseInt(statusId)] || 'Unavailable';
 
 const currentRow = id => {
   const row = leadData?.value.find(item => item.id === id);
@@ -223,7 +223,10 @@ const onSubmitChanges = async () => {
     });
 
   await axios
-    .post(`/lead-allocation/${page.props.quoteType}/update-availability`, max_cap)
+    .post(
+      `/lead-allocation/${page.props.quoteType}/update-availability`,
+      max_cap,
+    )
     .then(() => {
       router.get('/lead-allocation', {
         replace: true,
@@ -239,7 +242,11 @@ const onSubmitChanges = async () => {
 const onToggleResetCap = async (active, userId, leadId) => {
   loader.submit = true;
   await axios
-    .post('/lead-allocation/toggle-reset-cap', {leadId, userId, resetCap: active })
+    .post('/lead-allocation/toggle-reset-cap', {
+      leadId,
+      userId,
+      resetCap: active,
+    })
     .finally(() => {
       loader.submit = false;
     });
