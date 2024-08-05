@@ -2,6 +2,7 @@
 import IndividualModel from './Partials/IndividualModel.vue';
 import EntityModel from './Partials/EntityModel.vue';
 import { onMounted, ref } from 'vue';
+import {formatDate} from "../../Composables/utilities.js";
 
 const props = defineProps({
   quoteType: Object,
@@ -58,9 +59,13 @@ if (can(permissionsEnum.AMLDecisionUpdate)) {
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
 
-const dateAndTimeFormat = date => {
-  return date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
-};
+function dateAndTimeFormat(inputDate) {
+    if (!inputDate) {
+        return 'N/A';
+    }
+  return formatDate(inputDate)
+
+}
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
