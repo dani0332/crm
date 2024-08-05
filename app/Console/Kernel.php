@@ -104,7 +104,7 @@ class Kernel extends ConsoleKernel
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
 
-          $schedule->command('PersonalQuoteDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:35')
+        $schedule->command('PersonalQuoteDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:35')
             ->onOneServer()
             ->withoutOverlapping()
             ->onSuccess(function (Stringable $output) {
