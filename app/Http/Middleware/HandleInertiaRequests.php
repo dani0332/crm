@@ -77,7 +77,6 @@ class HandleInertiaRequests extends Middleware
             'auth.roles' => fn () => $roles,
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'location' => fn () => $request->url(),
-            'currentRoute' => fn () => $request->route()->getName(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
             'insuranceProviderCodeEnum' => InsuranceProvidersEnum::asArray(),

@@ -8,11 +8,12 @@ const createLink = link => {
       items: link.children.map(createLink),
     };
   } else {
+    const menuUrl = removeDomain(link.url);
     return {
       label: link.title,
       icon: link.attributes.icon,
       value: link.url,
-      active: page.props.location.includes(link.url),
+      active: page.url.startsWith(menuUrl),
       ...(link.attributes.external
         ? { target: '_blank', href: link.url }
         : {
@@ -21,6 +22,10 @@ const createLink = link => {
     };
   }
 };
+
+function removeDomain(url) {
+  return '/' + url.replace(/^(?:\/\/|[^/]+)*\//, '');
+}
 
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
