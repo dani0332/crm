@@ -113,9 +113,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     'callSource' => 'imcrm',
                 ];
 
-                $response = Ken::request('/send-ocb-whatsapp', 'post', $payload);
+                $response = Ken::request('/send-ocb-whatsapp-revival', 'post', $payload);
 
-                info('CarRevivalLeadsCreationJob - send-ocb-whatsapp-response -' . json_encode($response));
+                info('CarRevivalLeadsCreationJob-send-ocb-whatsapp-revival -' . json_encode($response));
 
                 $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
 
