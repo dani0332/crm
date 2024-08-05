@@ -71,12 +71,11 @@ class BirdService extends BaseService
 
     public function sendAutomationWorkflow($data){
         $payload = [
-            'client_email' => $data['clientEmail'],
-            'workspace_id' => $data['workspaceId'] ?? null,
             'customerEmail' => $data['customerEmail'],
             'customerName' => $data['customerName'],
-            'AdvisorEmail' => $data['advisorEmail'],
-            'AdvisorName' => $data['advisorName'],
+            'advisorEmail' => $data['advisorEmail'],
+            'advisorName' => $data['advisorName'],
+            'plans' => [],
         ];
         $webhook = ApplicationStorageEnums::HEALTH_OCA_WORKFLOW_ID;
         return  $this->triggerWorkflow($webhook, $payload);
