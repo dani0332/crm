@@ -297,6 +297,7 @@ class SendUpdateLogRepository extends BaseRepository
 
             $payment = Payment::where('send_update_log_id', $data['id'])->firstOrFail();
             if ($payment) {
+                // Need to update Booking details in payment here
                 app(SendUpdateLogService::class)->sendUpdatePriceAndDiscount($sendUpdate, $payment);
             }
         } catch (\Exception $ex) {

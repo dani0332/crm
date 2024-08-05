@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentFrequency;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
@@ -27,11 +28,13 @@ use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\SageApiLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -638,45 +641,147 @@ class SendUpdateLogService
         return $payment->update($sendUpdatePaymentDetails);
     }
 
-    public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
+    public function getPaymentDetailsForERP($sendUpdateRequest)
     {
+        $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
+        $payment = Payment::with('paymentSplits')->where(['send_update_log_id' => $sendUpdateRequest->sendUpdateId])->first();
+        
+        if ($payment) {
+            info('Book Update - Fetching Payment details from Send Update. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            
+            return ['payment' => $payment, 'splitPayments' => $payment->paymentSplits];
+        } else {
+            // If we don't have payment details then we fetched it from the Main Lead
+            info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            $getQuoteDetails = $this->getQuoteObjectBy($sendUpdateRequest->quoteType, $sendUpdateRequest->quoteUuid, 'uuid');
+            $getQuoteDetails->load(['payments' => function ($query) {
+                $query->whereNull('send_update_log_id');
+            }, 'payments.paymentSplits']);
+
+            $payment = $getQuoteDetails->payments->first();
+            $splitPayments = $payment->paymentSplits;
+
+            // Most CPD cases have no vaalue then should it set as Credit Note
+            $mainLeadDetails = [
+                'payment' => [
+                    'insurer_tax_number' => $payment->insurer_tax_number,
+                    'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
+                ],
+            ];
+
+            $payment->fill([
+                'discount_value' => $sendUpdateLog->discount,
+                'invoice_description' => $sendUpdateLog->invoice_description,
+                'insurer_invoice_date' => $sendUpdateLog->invoice_date,
+                'commission_vat' => '', // Need to verify this field
+                'total_price' => abs($sendUpdateLog->price_without_vat), // Need to verify this field
+                'total_amount' => abs($sendUpdateLog->price_vat_applicable),
+                'commission' => abs($sendUpdateLog->total_commission),
+                'commission_vat_applicable' => abs($sendUpdateLog->commission_vat_applicable),
+                'commission_vat_not_applicable' => abs($sendUpdateLog->commission_vat_not_applicable),
+                'commmission_percentage' => abs($sendUpdateLog->commission_percentage),
+                'insurer_tax_number' => $sendUpdateLog->insurer_tax_invoice_number,
+                'insurer_commmission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
+                'policy_expiry_date' => $sendUpdateLog->expiry_date,
+                'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
+                'frequency' => PaymentFrequency::UPFRONT,
+            ]);
+
+            $splitPayments->first()->fill([
+                'due_date' => $sendUpdateLog->invoice_date,
+                'payment_amount' => abs($sendUpdateLog->price_vat_applicable),
+                'collection_amount' => abs($sendUpdateLog->price_vat_applicable),
+            ]);
+
+            return ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
+        }
+    }
+
+    private function getPreparedDataForERP($sendUpdateRequest, $quote, $sendUpdateLog)
+    {
+        $responseData = [];
+        $getPaymentDetails = $this->getPaymentDetailsForERP($sendUpdateRequest);
+        $quotePolicyDetails = [
+            'policy_booking_date' => $sendUpdateLog->booking_date,
+            'renewal_expiry_date' => $sendUpdateLog->expiry_date,
+            'policy_number' => $sendUpdateLog->policy_number,
+            'transaction_type_id' => $quote->transaction_type_id,
+            'advisor_id' => $sendUpdateLog->advisor_id,
+            'price_vat_applicable' => abs($getPaymentDetails['payment']->total_price),
+            'price_with_vat' => abs($sendUpdateLog->price_with_vat),
+        ];
+
+        if (isset($getingPaymentDetails['mainLeadDetails'])) {
+            $responseData['mainLeadDetails'] = $getingPaymentDetails['mainLeadDetails'];
+        }
+
+        return $responseData = [
+            'quoteType' => $sendUpdateRequest->quoteType,
+            'sendUpdateLog' => $sendUpdateLog,
+            'quotePolicyDetails' => $quotePolicyDetails,
+            'mainLeadDetails' => $getPaymentDetails['mainLeadDetails'] ?? [],
+            'payment' => $getPaymentDetails['payment'],
+            'splitPayments' => $getPaymentDetails['splitPayments'],
+        ];
+    }
+
+    public function sendUpdateProcess($sendUpdateRequest)
+    {
+        $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
         $categoryCode = $sendUpdateLog->category?->code;
+        $allowedCategoriesForSage = [
+            SendUpdateLogStatusEnum::EF,
+            SendUpdateLogStatusEnum::CI,
+            SendUpdateLogStatusEnum::CIR,
+            SendUpdateLogStatusEnum::CPD,
+        ];
+
+        if (! in_array($categoryCode, $allowedCategoriesForSage)) {
+            info('Book Update - Skipping Sage APIs for Send Update - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            
+            return ['status' => true];
+        }
+
+        info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
-        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
-
+        $quoteDetails = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
+        $prepareDataForERP = $this->getPreparedDataForERP($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
+        $prepareDataForERP['quoteDetails'] = $quoteDetails;
+        
         if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
-            info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-            $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
-                $sendUpdateRequest, $quote, [
-                    'type' => SageEnum::PT_SEND_UPDATE,
-                    'send_update_type' => SageEnum::SUT_NORMAL,
-                    'category' => $categoryCode,
-                    'option' => $sendUpdateLog->option->code,
-                    'send_update_log' => $sendUpdateLog,
-                ]
-            );
+            info('Book Update - Sending Update to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            $prepareDataForERP['sendUpdateType'] = SageEnum::SUT_NORMAL;
+            $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);
+            
+        //     $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
+        //         $sendUpdateRequest, $quote, [
+        //             'type' => SageEnum::PT_SEND_UPDATE,
+        //             'send_update_type' => SageEnum::SUT_NORMAL,
+        //             'category' => $categoryCode,
+        //             'option' => $sendUpdateLog->option->code,
+        //             'send_update_log' => $sendUpdateLog,
+        //         ]
+        //     );
 
             return $sageResponse;
         }
 
-        if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-            info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
-            $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
-                $sendUpdateRequest, $quote, [
-                    'type' => SageEnum::PT_SEND_UPDATE,
-                    'send_update_type' => SageEnum::SUT_REVE_CORR,
-                    'category' => $categoryCode,
-                    'send_update_log' => $sendUpdateLog,
-                    'reverse_invoice' => $sendUpdateRequest->reversalInvoice,
-                ]
-            );
+        // if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+        //     info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
+        //     $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
+        //         $sendUpdateRequest, $quote, [
+        //             'type' => SageEnum::PT_SEND_UPDATE,
+        //             'send_update_type' => SageEnum::SUT_REVE_CORR,
+        //             'category' => $categoryCode,
+        //             'send_update_log' => $sendUpdateLog,
+        //             'reverse_invoice' => $sendUpdateRequest->reversalInvoice,
+        //         ]
+        //     );
 
-            return $sageResponse;
-        }
+        //     return $sageResponse;
+        // }
 
-        info('Book Update - Skipping Sage APIs for Send Update - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-
-        return ['status' => true];
     }
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
