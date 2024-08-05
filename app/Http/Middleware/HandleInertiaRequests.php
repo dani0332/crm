@@ -31,7 +31,6 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
-use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -77,9 +76,8 @@ class HandleInertiaRequests extends Middleware
             'auth.permissions' => fn () => $permissions,
             'auth.roles' => fn () => $roles,
             'sidebar' => fn () => $this->buildNavigation()->tree(),
-            'ziggy' => fn () => array_merge((new Ziggy())->toArray(), [
-                'location' => $request->url(),
-            ]),
+            'location' => fn () => $request->url(),
+            'currentRoute' => fn () => $request->route()->getName(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
             'insuranceProviderCodeEnum' => InsuranceProvidersEnum::asArray(),
@@ -344,31 +342,31 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::TransAppCreate),
                         'Search Transaction',
                         route('home'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TransAppCreate),
                         'Create Transaction',
                         route('transaction.create'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TransAppEdit),
                         'Cancel & Re-Issue Transaction',
                         route('reissue_view'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TransAppEdit),
                         'Cancel Transaction (without Re-Issue)',
                         route('cancel_view'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TransAppList),
                         'Transaction List',
                         route('transaction.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true])
                     );
             });
         }

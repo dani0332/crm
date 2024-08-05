@@ -8,20 +8,19 @@ const createLink = link => {
       items: link.children.map(createLink),
     };
   } else {
-    const linkUrl = removeDomain(link.url);
     return {
       label: link.title,
       icon: link.attributes.icon,
       value: link.url,
-      active: page.url.startsWith(linkUrl),
-      onClick: () => router.visit(link.url),
+      active: page.props.location.includes(link.url),
+      ...(link.attributes.external
+        ? { target: '_blank', href: link.url }
+        : {
+            onClick: () => router.visit(link.url),
+          }),
     };
   }
 };
-
-function removeDomain(url) {
-  return '/' + url.replace(/^(?:\/\/|[^/]+)*\//, '');
-}
 
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
@@ -201,7 +200,7 @@ const onLogout = () => {
             >
           </div>
           <Transition name="fade" mode="out-in">
-            <div :key="$page.props.ziggy.location">
+            <div :key="$page.props.location">
               <slot />
             </div>
           </Transition>
