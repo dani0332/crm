@@ -405,7 +405,7 @@ class SendUpdateLogController extends Controller
         $isPaymentFetchedFromMainLead = true;
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
-            // Add insuficient Payment Validations here
+            // Add insufficient Payment Validations here
             $insufficientPaymentCheck = false;
             if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
                 $insufficientPaymentCheck = true;
