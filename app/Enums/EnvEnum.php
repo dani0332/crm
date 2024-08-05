@@ -16,4 +16,5 @@ final class EnvEnum extends Enum
     public const STAGING = 'staging';
     public const UAT = 'uat';
     public const PRODUCTION = 'production';
+    public const TEST = 'test';
 }

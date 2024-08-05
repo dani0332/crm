@@ -304,4 +304,19 @@ class PersonalQuote extends Model implements AuditableContract
             });
         }
     }
+
+    public function carPlan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
+    public function emirates()
+    {
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
+    }
+
+    public function claimHistory()
+    {
+        return $this->belongsTo(ClaimHistory::class, 'claim_history_id');
+    }
 }
