@@ -14,6 +14,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const selectedData = computed({
@@ -43,10 +47,11 @@ const currentTz = computed(() => {
     :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
     :is-24="false"
+    :disabled="props.disabled"
     position="left"
     class="w-full"
     auto-apply
-    clearable
+    :clearable="!props.disabled"
     text-input
   >
     <template v-if="props.withTime" #action-extra>
