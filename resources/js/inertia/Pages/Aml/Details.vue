@@ -1,7 +1,6 @@
 <script setup>
 import IndividualModel from './Partials/IndividualModel.vue';
 import EntityModel from './Partials/EntityModel.vue';
-import { onMounted, ref } from 'vue';
 import { formatDate } from '../../Composables/utilities.js';
 
 const props = defineProps({
