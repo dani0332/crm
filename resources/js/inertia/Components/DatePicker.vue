@@ -43,7 +43,7 @@ const currentTz = computed(() => {
     v-model="selectedData"
     :label="props.label"
     :format="props.withTime ? `dd/MM/yyyy HH:mm` : `dd/MM/yyyy`"
-    :teleport="true"
+    :teleport="!props.disabled"
     :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
     :is-24="false"
