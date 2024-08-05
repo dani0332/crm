@@ -7,7 +7,8 @@ const props = defineProps({
   productName: String,
   monthNames: Array,
   RetentionReportEnum: Array,
-  isShowBatchColumn: Boolean
+  isShowBatchColumn: Boolean,
+  footerData: Array
 });
 
 const page = usePage();
@@ -609,7 +610,6 @@ return headers;
           label="Insurance Type"
           placeholder="Select insurance type"
           :options="[ { value: '', label: 'Select insurance type' }, ...insuranceTypeOptions ]"
-          class="w-full"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
@@ -628,7 +628,7 @@ return headers;
     </x-form>
 
     <DataTable
-      table-class-name="compact text-wrap"
+      table-class-name="tablefixed"
       :loading="loaders.table"
       :headers="getRetentionReportHeaders()"
       :items="reportData.data || []"
@@ -753,6 +753,23 @@ return headers;
           </template>
         </x-tooltip>
       </template>
+
+      <template #body-append>
+        <tr v-if="reportData.length > 0 || reportData.data && reportData.data.length > 0" class="total-row">
+          <td class="direction-left">Total</td>
+          <td v-if="isShowBatchColumn"></td>
+          <td v-if="isShowBatchColumn"></td>
+          <td v-if="isShowBatchColumn"></td>
+          <td></td>
+          <td>{{ footerData.total }}</td>
+          <td>{{ footerData.lost }}</td>
+          <td>{{ footerData.invalid }}</td>
+          <td>{{ footerData.sales }}</td>
+          <td>{{ footerData.volume_net_retention }}</td>
+          <td>{{ footerData.volume_gross_retention }}</td>
+          <td></td>
+        </tr>
+      </template>
     </DataTable>
 
     <Pagination
@@ -814,8 +831,5 @@ return headers;
   position: relative;
   font-size: 12px;
   text-transform: none;
-}
-.overflow-hidden{
-  z-index: 9999999;
 }
 </style>

@@ -510,7 +510,8 @@ class ReportsController extends Controller
             'productName' => $retentionReportService->getUserPorductName(),
             'monthNames' => MonthNameEnum::all(),
             'RetentionReportEnum' => RetentionReportEnum::asArray(),
-            'isShowBatchColumn' => $isShowBatchColumn
+            'isShowBatchColumn' => $isShowBatchColumn,
+            'footerData' => $retentionReportService->getFooterData($retentionReportData)
         ]);
     }
 

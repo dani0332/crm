@@ -415,21 +415,17 @@ class RetentionReportService extends BaseService
     {
         // Iterate through each report in the report data
         foreach ($reportData as $report) {
-            $sales = $report->sales;
-            $invalid = $report->invalid;
-            $total = $report->total;
-
-            // Calculate the total valid entries
-            $totalInvalid = $total - $invalid;
-
-            // Calculate volume net retention percentage
-            $volumeNetRetention = ($totalInvalid != 0) ? ($sales / $totalInvalid) : 0;
-            // Calculate volume gross retention percentage
-            $volumeGrossRetention = ($total != 0) ? ($sales / $total) : 0;
-
-            // Format and add the retention percentages to the report
-            $report->volume_net_retention = number_format($volumeNetRetention * 100, 2) . '%';
-            $report->volume_gross_retention = number_format($volumeGrossRetention * 100, 2) . '%';
+            $totalInvalid = $report->total - $report->invalid;
+    
+            // Calculate and format retention percentages
+            $report->volume_net_retention = $this->calculateRetentionPercentage(
+                $report->sales, 
+                $totalInvalid
+            );
+            $report->volume_gross_retention = $this->calculateRetentionPercentage(
+                $report->sales, 
+                $report->total
+            );
         }
 
         // Return the formatted report data
@@ -458,8 +454,7 @@ class RetentionReportService extends BaseService
      * Retrieves retention leads data based on the request parameters.
      * Determines the quote type, constructs the query, applies filters, and returns paginated results.
      *
-     * @param \Illuminate\Http\Request $request The request object containing the filter parameters.
-     * @return \Illuminate\Pagination\LengthAwarePaginator The paginated retention leads data.
+     * @return array
      */
     public function getRetentionLeadsData($request)
     {
@@ -489,5 +484,64 @@ class RetentionReportService extends BaseService
 
         // Return the paginated results with query string
         return $query->paginate($this->paginateData)->withQueryString();
+    }
+
+    /**
+     * Calculates and returns the footer data for the report.
+     * This method aggregates the report data, calculates the total valid entries,
+     * and computes the volume net retention and volume gross retention percentages.
+     * 
+     * @return array 
+     */
+    public function getFooterData($reportData){
+        $aggregatedData = $this->aggregateReportData($reportData);
+
+        // Calculate the total valid entries
+        $totalInvalid = $aggregatedData['total'] - $aggregatedData['invalid'];
+
+        // Calculate and format retention percentages
+        $volumeNetRetention = $this->calculateRetentionPercentage(
+            $aggregatedData['sales'], 
+            $totalInvalid
+        );
+
+        $volumeGrossRetention = $this->calculateRetentionPercentage(
+            $aggregatedData['sales'], 
+            $aggregatedData['total']
+        );
+
+        return [
+           'total' => $aggregatedData['total'],
+            'sales' => $aggregatedData['sales'],
+            'lost' => $aggregatedData['lost'],
+            'invalid' => $aggregatedData['invalid'],
+            'volume_net_retention' => $volumeNetRetention,
+            'volume_gross_retention' => $volumeGrossRetention
+        ];
+    }
+
+    /**
+     * Aggregates the report data by summing up the total, sales, invalid, and lost values.
+     *
+     * @return array 
+     */
+    private function aggregateReportData($reportData)
+    {
+        return [
+            'total' => $reportData->sum('total'),
+            'sales' => $reportData->sum('sales'),
+            'invalid' => $reportData->sum('invalid'),
+            'lost' => $reportData->sum('lost')
+        ];
+    }
+
+    /**
+     * Calculates the retention percentage based on sales and total values.
+     *
+     * @return string 
+     */
+    private function calculateRetentionPercentage($sales, $total)
+    {
+        return ($total != 0) ? number_format(($sales / $total) * 100, 2) . '%' : '0.00%';
     }
 }
