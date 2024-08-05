@@ -1,4 +1,4 @@
-const { defineConfig } = require("cypress");
+const { defineConfig } = require('cypress');
 
 module.exports = defineConfig({
   e2e: {
@@ -12,5 +12,4 @@ module.exports = defineConfig({
     pageLoadTimeout: 100000,
     defaultCommandTimeout: 100000,
   },
-
 });

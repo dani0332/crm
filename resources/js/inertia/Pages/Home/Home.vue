@@ -1,6 +1,6 @@
 <script setup>
 const props = defineProps({
-    im_logo: String
+  im_logo: String,
 });
 </script>
 <template>
