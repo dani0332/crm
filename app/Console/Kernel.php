@@ -103,16 +103,6 @@ class Kernel extends ConsoleKernel
         //     ->onFailure(function (Stringable $output) {
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
-
-        $schedule->command('PersonalQuoteDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:30')
-            ->onOneServer()
-            ->withoutOverlapping()
-            ->onSuccess(function (Stringable $output) {
-                info('----------- Home Data Migrations Completed -----------'.$output);
-            })
-            ->onFailure(function (Stringable $output) {
-                info('----------- Home Data Migrations Failed -----------'.$output);
-            });
     }
 
     /**
