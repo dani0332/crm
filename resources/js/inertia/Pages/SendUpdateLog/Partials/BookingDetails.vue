@@ -632,7 +632,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.price_vat_not_applicable =
     Math.abs(reversalEntry.price_vat_not_applicable) || '0.00';
   bookingDetailsForm.vat_on_commission =
-    reversalEntry.vat_on_commission || null;
+    reversalEntry.vat_on_commission || '0.00';
   bookingDetailsForm.commission_vat_applicable =
     Math.abs(reversalEntry.commission_vat_applicable) || null;
   bookingDetailsForm.total_commission = reversalEntry.total_commission || null;
