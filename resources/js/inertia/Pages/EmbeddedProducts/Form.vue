@@ -477,6 +477,7 @@ function onSubmit(isValid) {
               <x-input
                 v-model="form.pricings[index].price"
                 type="number"
+                step="0.01"
                 :rules="[isRequired]"
                 class="w-full"
               />
