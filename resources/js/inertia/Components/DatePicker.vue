@@ -60,7 +60,7 @@ const currentTz = computed(() => {
   --dp-font-family: 'Inter', sans-serif;
 }
 
-.dp__clear_icon {
+.dp__icon.dp__clear_icon {
   top: v-bind(iconPosition) !important;
   @apply !text-orange-500;
 }
