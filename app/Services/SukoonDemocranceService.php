@@ -255,11 +255,18 @@ class SukoonDemocranceService
             }
 
             $shortCode = $transaction->product->embeddedProduct->short_code;
+            if (!empty($quote->quoteRequestEntityMapping)) {
+                $firstName = $quote->first_name ?? '';
+                $lastName = $quote->last_name ?? '';
+            } else {
+                $firstName = $quote->customer->insured_first_name ?? '';
+                $lastName = $quote->customer->insured_last_name ?? '';
+            }
 
             $userDetail = [
-                'first_name' => $quote->first_name,
-                'last_name' => $quote->last_name,
-                'dob' => ! empty($quote->customer->dob) ? Carbon::parse($quote->customer->dob)->format('Y-m-d') : '',
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
                 'nationality' => 'AE',
                 'is_resident' => $quote->emirate ? 'Yes' : 'No',
                 'emirate' => $quote->emirate->text,

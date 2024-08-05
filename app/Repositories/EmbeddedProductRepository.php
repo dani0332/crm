@@ -430,10 +430,19 @@ class EmbeddedProductRepository extends BaseRepository
             $strategy = $this->createStrategy($short_code, $isAlfredProtect);
             $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
             $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
+            
+            if (!empty($quoteObject->quoteRequestEntityMapping)) {
+                $firstName = $quoteObject->first_name ?? '';
+                $lastName = $quoteObject->last_name ?? '';
+            } else {
+                $firstName = $quoteObject->customer->insured_first_name ?? '';
+                $lastName = $quoteObject->customer->insured_last_name ?? '';
+            }
+
             info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
             $emailData = (object) [
                 'quoteCdbId' => $short_code.'-'.$quoteObject->code,
-                'customerName' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
+                'customerName' => $firstName . ' ' . $lastName,
                 'customerEmail' => $quoteObject->email,
                 'advisorName' => isset($advisor) ? $advisor->name : null,
                 'advisorEmailAddress' => isset($advisor) ? $advisor->email : null,
