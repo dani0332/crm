@@ -51,15 +51,15 @@ class SendUpdateToCustomerJob implements ShouldQueue
             info('Send Update to Customer Job Response '.json_encode($response));
 
             if ($response == 201) {
-                SendUpdateLog::find($this->sendUpdate->id)->update([
+                /*SendUpdateLog::find($this->sendUpdate->id)->update([
                     'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
                     'is_email_sent' => true,
-                ]);
+                ]);*/
 
-                if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+                /*if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
                     $sendUpdateRequest = new SendUpdateRequest();
                     app(SendUpdateLogController::class)->sendUpdate($sendUpdateRequest->merge($this->payload));
-                }
+                }*/
                 info('Send Update to Customer Job success, send update id -> '.$this->sendUpdate->id);
             } else {
                 info('Send Update to Customer Job failed, send update id -> '.$this->sendUpdate->id);

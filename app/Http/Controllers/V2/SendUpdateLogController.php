@@ -361,7 +361,20 @@ class SendUpdateLogController extends Controller
         if (! empty($log?->message)) {
             vAbort($log?->message);
         }
-        if ($data['isEmailSent']) {
+
+        $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
+
+        if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+            $sendUpdateRequest = new SendUpdateRequest();
+
+            $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($data));
+            if ($isSendUpdateSuccess->status() == 200) {
+                $message[] = SendUpdateLogStatusEnum::UPDATE_BOOKED;
+            }
+        }
+
+        // temporary comments.
+        /*if ($data['isEmailSent']) {
             $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
         } else {
             $message[] = 'Send Update to customer email scheduled.';
@@ -369,7 +382,7 @@ class SendUpdateLogController extends Controller
 
         if (isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
             $message[] = 'Book Update scheduled.';
-        }
+        }*/
 
         return response()->json($message);
     }
