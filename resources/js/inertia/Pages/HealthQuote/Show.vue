@@ -1809,9 +1809,9 @@ const onAddUpdate = () => {
           <Link v-if="!isDisabled" :href="route('health.edit', quote.uuid)">
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
-            >Edit</x-button
-          >
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div">
+            Edit
+          </x-button>
         </LeadEditBtnTemplate>
 
         <x-tooltip

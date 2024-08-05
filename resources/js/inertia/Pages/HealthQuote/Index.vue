@@ -139,15 +139,19 @@ const filters = reactive({
   is_cold: false,
   is_stale: false,
   status_filters: null,
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
 });
 
 const canExport = ref(false);
 watch(
   () => filters,
   () => {
-    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -388,7 +392,6 @@ const resetDateFilters = filterName => {
     },
   );
 });
-
 </script>
 
 <template>
@@ -627,7 +630,8 @@ const resetDateFilters = filterName => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
