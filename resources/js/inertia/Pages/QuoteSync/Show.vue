@@ -11,24 +11,24 @@ defineProps({
 
 <template>
   <div>
-
     <Head title="Quote Sync Details" />
 
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">
         Quote Sync Details - {{ quote_type }}
-        <x-icon :icon="quote_sync?.is_synced ? 'roundchecked' : 'roundcross'"
-          :color="quote_sync?.is_synced ? 'green' : 'red'" size="lg" />
+        <x-icon
+          :icon="quote_sync?.is_synced ? 'roundchecked' : 'roundcross'"
+          :color="quote_sync?.is_synced ? 'green' : 'red'"
+          size="lg"
+        />
       </h2>
       <div class="flex gap-2">
         <Link :href="`/admin/quote-sync/edit/${quote_sync?.id}`">
-        <x-button size="sm" tag="div">Edit</x-button>
+          <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
         <Link href="/admin/quote-sync" preserve-scroll>
-        <x-button size="sm" color="primary" tag="div">
-          Logs
-        </x-button>
+          <x-button size="sm" color="primary" tag="div"> Logs </x-button>
         </Link>
       </div>
     </div>
@@ -41,7 +41,10 @@ defineProps({
         </dd>
       </div>
     </div>
-    <div v-if="quote_sync?.error && quote_sync?.is_synced == false" class="p-4 rounded shadow mb-6 bg-white">
+    <div
+      v-if="quote_sync?.error && quote_sync?.is_synced == false"
+      class="p-4 rounded shadow mb-6 bg-white"
+    >
       <div class="text-sm">
         <dt class="font-medium font-black mb-4">Error</dt>
         <dd>{{ quote_sync?.error }}</dd>
@@ -52,9 +55,7 @@ defineProps({
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <div>
-              <div class="font-medium font-black mb-4">
-                Source Quote
-              </div>
+              <div class="font-medium font-black mb-4">Source Quote</div>
               <pre>{{ source_quote }}</pre>
             </div>
           </div>
@@ -74,9 +75,7 @@ defineProps({
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <div>
-              <div class="font-medium font-black mb-4">
-                Peronsal Quote
-              </div>
+              <div class="font-medium font-black mb-4">Peronsal Quote</div>
               <pre>{{ personal_quote }}</pre>
             </div>
           </div>

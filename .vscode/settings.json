@@ -1,14 +1,14 @@
 {
-    "cSpell.words": [
-        "afia",
-        "backoff",
-        "Corpline",
-        "Dispatchable",
-        "ecommerce",
-        "endregion",
-        "IMCRM",
-        "leftjoin",
-        "Queueable"
-    ],
-    "editor.inlineSuggest.showToolbar": "always"
+  "cSpell.words": [
+    "afia",
+    "backoff",
+    "Corpline",
+    "Dispatchable",
+    "ecommerce",
+    "endregion",
+    "IMCRM",
+    "leftjoin",
+    "Queueable"
+  ],
+  "editor.inlineSuggest.showToolbar": "always"
 }

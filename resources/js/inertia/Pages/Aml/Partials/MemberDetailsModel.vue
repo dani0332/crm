@@ -1,6 +1,4 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3';
-
 const props = defineProps({
   quoteType: Object,
   quoteDetails: Object,
@@ -81,7 +79,8 @@ function onEditMember(data) {
   memberForm.quote_request_id = props.quoteDetails.id;
   memberForm.id = data.id;
   memberForm.first_name = data.first_name;
-  memberForm.last_name = props.quoteType.code == 'Health' ? data.last_name : null;
+  memberForm.last_name =
+    props.quoteType.code == 'Health' ? data.last_name : null;
   memberForm.dob = data.dob;
   memberForm.relation_code = data.relation_code;
   memberForm.nationality_id = data.nationality_id;
@@ -95,21 +94,22 @@ const memberForm = useForm({
   customer_id: props.quoteDetails.customer_id,
   id: null,
   first_name: null,
-  last_name : null,
+  last_name: null,
   dob: null,
   relation_code: null,
   nationality_id: null,
   is_payer: props.is_payer ?? false,
-  from_aml_model: true
+  from_aml_model: true,
 });
 
-
 const rules = {
-    nameCheck: v => {
-        const pattern = /^[a-zA-Z0-9\s]+$/;
-        if(v == null || v == '') return true;
-        return pattern.test(v) || 'Special characters are not allowed in Member Name';
-    }
+  nameCheck: v => {
+    const pattern = /^[a-zA-Z0-9\s]+$/;
+    if (v == null || v == '') return true;
+    return (
+      pattern.test(v) || 'Special characters are not allowed in Member Name'
+    );
+  },
 };
 
 function onMemberSubmit(isValid) {
@@ -199,30 +199,38 @@ function onMemberSubmit(isValid) {
         class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center"
         v-if="addMember"
       >
-          <x-field label="Member First Name" required v-if="quoteType.code == 'Health'">
-              <x-input
-                  v-model="memberForm.first_name"
-                  placeholder="Member First Name"
-                  class="w-full"
-                  :rules="[isRequired , rules.nameCheck]"
-              />
-          </x-field>
-          <x-field label="Member Name" required v-else>
+        <x-field
+          label="Member First Name"
+          required
+          v-if="quoteType.code == 'Health'"
+        >
+          <x-input
+            v-model="memberForm.first_name"
+            placeholder="Member First Name"
+            class="w-full"
+            :rules="[isRequired, rules.nameCheck]"
+          />
+        </x-field>
+        <x-field label="Member Name" required v-else>
           <x-input
             v-model="memberForm.first_name"
             placeholder="Member Name"
             class="w-full"
-            :rules="[isRequired , rules.nameCheck]"
+            :rules="[isRequired, rules.nameCheck]"
           />
         </x-field>
-          <x-field label="Member Last Name" required v-if="quoteType.code == 'Health'">
-              <x-input
-                  v-model="memberForm.last_name"
-                  placeholder="Member Last Name"
-                  class="w-full"
-                  :rules="[isRequired , rules.nameCheck]"
-              />
-          </x-field>
+        <x-field
+          label="Member Last Name"
+          required
+          v-if="quoteType.code == 'Health'"
+        >
+          <x-input
+            v-model="memberForm.last_name"
+            placeholder="Member Last Name"
+            class="w-full"
+            :rules="[isRequired, rules.nameCheck]"
+          />
+        </x-field>
         <x-field label="Nationality" required>
           <ComboBox
             :single="true"
@@ -298,8 +306,15 @@ function onMemberSubmit(isValid) {
     <template #item-index="{ code }">
       <div>{{ code }}</div>
     </template>
-    <template #item-first_name="{ first_name , last_name }">
-        <div>{{ first_name }} {{quoteType.code == 'Health' || quoteType.code == 'Travel'  ? last_name : ''}}</div>
+    <template #item-first_name="{ first_name, last_name }">
+      <div>
+        {{ first_name }}
+        {{
+          quoteType.code == 'Health' || quoteType.code == 'Travel'
+            ? last_name
+            : ''
+        }}
+      </div>
     </template>
     <template #item-dob="{ dob }">
       {{ dateFormat(dob) }}
@@ -324,10 +339,7 @@ function onMemberSubmit(isValid) {
     </template>
     <template #item-is_payer="{ is_payer }">
       <div class="flex gap-2">
-        <x-checkbox
-          :modelValue="is_payer!==0"
-          color="primary"
-        />
+        <x-checkbox :modelValue="is_payer !== 0" color="primary" />
       </div>
     </template>
   </DataTable>

@@ -6,3 +6,11 @@
 # **/.eslintrc.js
 **/tsconfig.json
 /out
+/vendor
+/public
+/cypress
+/docker
+/Postman Collections
+/storage
+/test
+

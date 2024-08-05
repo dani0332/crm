@@ -3,7 +3,6 @@ const props = defineProps({
   logs: Array,
 });
 
-
 const clientInquiryLogs = reactive({
   data: props.logs,
   table: [
@@ -11,17 +10,20 @@ const clientInquiryLogs = reactive({
     { text: 'LOGGED AT', value: 'created_at' },
   ],
 });
-
 </script>
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div>
-      <x-tooltip position="right">
-        <h3 class="font-semibold text-primary-800 text-lg">Client Enquiry Logs</h3>
+      <x-tooltip placement="right">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Client Enquiry Logs
+        </h3>
         <template #tooltip>
-          This log records each client query with timestamps for reliable tracking.
-          Note: Manually input plans don't carry over to ensure updated information. Refer here for recent interactions and add manually quoted plans to the newest inquiry as needed.
+          This log records each client query with timestamps for reliable
+          tracking. Note: Manually input plans don't carry over to ensure
+          updated information. Refer here for recent interactions and add
+          manually quoted plans to the newest inquiry as needed.
         </template>
       </x-tooltip>
 

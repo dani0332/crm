@@ -12,7 +12,7 @@ const props = defineProps({
 
 const formattedReportData = computed(() => {
   return props.reportData.data.filter(item => {
-    return (item.total_transaction > 0);
+    return item.total_transaction > 0;
   });
 });
 
@@ -124,24 +124,22 @@ const isIntegerColumn = key => {
       {{ total_transaction ?? 0 }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ price_vat_applicable ? price_vat_applicable : 0.00 }}
+      {{ price_vat_applicable ? price_vat_applicable : 0.0 }}
     </template>
     <template #item-total_vat="{ total_vat }">
-      {{ total_vat ? total_vat : 0.00 }}
+      {{ total_vat ? total_vat : 0.0 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ? price_vat_not_applicable : 0.00 }}
+      {{ price_vat_not_applicable ? price_vat_not_applicable : 0.0 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ? discount : 0.00 }}
+      {{ discount ? discount : 0.0 }}
     </template>
     <template #item-commission_vat_applicable="{ commission_vat_applicable }">
-      {{
-        commission_vat_applicable ? commission_vat_applicable : 0.00
-      }}
+      {{ commission_vat_applicable ? commission_vat_applicable : 0.0 }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ? total_price : 0.00 }}
+      {{ total_price ? total_price : 0.0 }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">
@@ -153,7 +151,10 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
+              ? priceFormat(
+                  calculateTotalSum(reportData.data, header.value),
+                  true,
+                )
               : 'N/A'
           }}
         </td>

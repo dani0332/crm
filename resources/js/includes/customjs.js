@@ -416,15 +416,15 @@ $(document).ready(function () {
         d.team_id = $('#team').val();
       },
     },
-      drawCallback: function () {
-         let tableData = this.api().data();
-        if(tableData[0]){
-          let totalPremium = tableData[0].premium_total.toFixed(2);
-          $('#total_premium_value').html(totalPremium);
-        }else{
-          $('#total_premium_value').html('0');
-        }
-      },
+    drawCallback: function () {
+      let tableData = this.api().data();
+      if (tableData[0]) {
+        let totalPremium = tableData[0].premium_total.toFixed(2);
+        $('#total_premium_value').html(totalPremium);
+      } else {
+        $('#total_premium_value').html('0');
+      }
+    },
     columns: [
       { data: 'approval_code', name: 'approval_code' },
       { data: 'created_at', name: 'created_at' },
@@ -1057,14 +1057,16 @@ $(document).ready(function () {
     processing: true,
     ajax: {
       url: config.routes.aml_datatable_route,
-        error: function (json){
-            if(json.status === 422) {
-                var errors = json.responseJSON;
-                $.each(errors.errors, function (key, value) {
-                    $('.'+key+'-error').html(value).css('color', 'red');
-                });
-            }
-        },
+      error: function (json) {
+        if (json.status === 422) {
+          var errors = json.responseJSON;
+          $.each(errors.errors, function (key, value) {
+            $('.' + key + '-error')
+              .html(value)
+              .css('color', 'red');
+          });
+        }
+      },
       data: function (d) {
         d.searchType = $('#searchType').val();
         d.searchField = $('input[name=searchField]').val();
@@ -1073,7 +1075,6 @@ $(document).ready(function () {
         d.amlCreatedStartDate = $('#amlCreatedStartDate').val();
         d.amlCreatedEndDate = $('#amlCreatedEndDate').val();
         d.onLoadCheck = $("input[name='onLoadCheck']").val();
-
       },
     },
     columns: [
@@ -1140,20 +1141,29 @@ $(document).ready(function () {
     var searchField = $('#searchField').val();
 
     $("input[name='onLoadCheck']").val(0);
-    $(".quoteType-error, .searchField-error, .amlCreatedStartDate-error, .amlCreatedEndDate-error").html('').css('color', '');
-    $('#amlCreatedStartDate, #amlCreatedEndDate').css({ 'border-color' : ''});
+    $(
+      '.quoteType-error, .searchField-error, .amlCreatedStartDate-error, .amlCreatedEndDate-error',
+    )
+      .html('')
+      .css('color', '');
+    $('#amlCreatedStartDate, #amlCreatedEndDate').css({ 'border-color': '' });
     $('#amlCreatedStartDateMsg').html('');
 
-    if(searchType != '' && searchField == ''){
-        $('.searchField-error').html('Please select search value').css('color', 'red');
-        $('#searchField').css('border-color', 'red');
-        return false;
-    }else{
-        $('.searchField-error').html('').css('color', '');
-        $('#searchField').css({ 'border-color' : ''});
+    if (searchType != '' && searchField == '') {
+      $('.searchField-error')
+        .html('Please select search value')
+        .css('color', 'red');
+      $('#searchField').css('border-color', 'red');
+      return false;
+    } else {
+      $('.searchField-error').html('').css('color', '');
+      $('#searchField').css({ 'border-color': '' });
     }
 
-    if ( searchType == '' && (amlCreatedStartDate == '' || amlCreatedEndDate == '')) {
+    if (
+      searchType == '' &&
+      (amlCreatedStartDate == '' || amlCreatedEndDate == '')
+    ) {
       $('#amlCreatedStartDateMsg').html('Please select start & end dates');
       $('#amlCreatedStartDate').css('border-color', 'red');
       $('#amlCreatedEndDate').css('border-color', 'red');
@@ -2212,7 +2222,12 @@ $(document).ready(function () {
 
     $.ajax({
       url:
-        '/quotes/lead-history?modelType=' + modelType + '&recordId=' + leadId + '&quoteTypeId=' + quoteTypeId,
+        '/quotes/lead-history?modelType=' +
+        modelType +
+        '&recordId=' +
+        leadId +
+        '&quoteTypeId=' +
+        quoteTypeId,
       type: 'GET',
       success: function (response) {
         var html = '';
@@ -2222,16 +2237,22 @@ $(document).ready(function () {
             html =
               html +
               '<tr><td>' +
-                (leadHistory?.created_at == null ? '' : leadHistory.created_at) +
+              (leadHistory?.created_at == null ? '' : leadHistory.created_at) +
               '</td><td>' +
-                (leadHistory?.created_by?.email ? leadHistory.created_by.email : '') +
-                '</td><td>' +
-                (leadHistory?.previous_quote_status?.text ? leadHistory.previous_quote_status.text : '')  +
-                '</td>' +
+              (leadHistory?.created_by?.email
+                ? leadHistory.created_by.email
+                : '') +
+              '</td><td>' +
+              (leadHistory?.previous_quote_status?.text
+                ? leadHistory.previous_quote_status.text
+                : '') +
+              '</td>' +
               '<td>' +
-                (leadHistory?.current_quote_status?.text ? leadHistory.current_quote_status.text : '')  +
-                '</td><td>' +
-                ((leadHistory?.notes ? leadHistory.notes : '')) +
+              (leadHistory?.current_quote_status?.text
+                ? leadHistory.current_quote_status.text
+                : '') +
+              '</td><td>' +
+              (leadHistory?.notes ? leadHistory.notes : '') +
               '</td></tr>';
           }
         } else {
@@ -2421,22 +2442,27 @@ $(document).ready(function () {
     $('#form_plans_pdf').submit();
   });
 
-  $('select[name="segment_volume[]"]').change(function() {
+  $('select[name="segment_volume[]"]').change(function () {
     var selectedValues = $(this).val();
     $('select[name="segment_value[]"] option').prop('disabled', false);
-    $('select[name="segment_value[]"] option').filter(function() {
+    $('select[name="segment_value[]"] option')
+      .filter(function () {
         return selectedValues.includes($(this).val());
-    }).prop('disabled', true).addClass('unavailable-option');
+      })
+      .prop('disabled', true)
+      .addClass('unavailable-option');
   });
 
-  $('select[name="segment_value[]"]').change(function() {
+  $('select[name="segment_value[]"]').change(function () {
     var selectedValues = $(this).val();
     $('select[name="segment_volume[]"] option').prop('disabled', false);
-    $('select[name="segment_volume[]"] option').filter(function() {
+    $('select[name="segment_volume[]"] option')
+      .filter(function () {
         return selectedValues.includes($(this).val());
-    }).prop('disabled', true).addClass('unavailable-option');
-    });
-
+      })
+      .prop('disabled', true)
+      .addClass('unavailable-option');
+  });
 });
 
 $('#btn_download_plan_pdf_health').on('click', function () {
@@ -2752,57 +2778,57 @@ function sendQuoteDocumentsToCustomer(el) {
 
 // Button: Send One click buy email - Start
 $('#send-one-click-buy-email-btn').on('click', function () {
-    if (confirm('Are you sure send email to customer?')) {
-        var quote_type = $(this).attr('data-quote-type');
-        var quote_uuid = $(this).attr('data-quote-uuid');
-        $('.loader').show();
-        $.ajax({
-            url:
-                '/quotes/' +
-                quote_type +
-                '/' +
-                quote_uuid +
-                '/send-email-one-click-buy',
-            method: 'POST',
-            data: {
-                quote_type_id: $(this).attr('data-quote-type-id'),
-                quote_id: $(this).attr('data-quote-id'),
-                quote_uuid: quote_uuid,
-                quote_cdb_id: $(this).attr('data-quote-cdb-id'),
-                quote_previous_expiry_date: $(this).attr(
-                    'data-quote-previous-expiry-date',
-                ),
-                quote_currently_insured_with: $(this).attr(
-                    'data-quote-currently-insured-with',
-                ),
-                quote_car_make: $(this).attr('data-quote-car-make'),
-                quote_car_model: $(this).attr('data-quote-car-model'),
-                quote_car_year_of_manufacture: $(this).attr(
-                    'data-quote-car-year-of-manufacture',
-                ),
-                quote_previous_policy_number: $(this).attr(
-                    'data-quote-previous-policy-number',
-                ),
-                customer_name: $(this).attr('data-quote-customer-name'),
-                customer_email: $(this).attr('data-quote-customer-email'),
-                advisor_name: $(this).attr('data-quote-advisor-name'),
-                advisor_email: $(this).attr('data-quote-advisor-email'),
-                advisor_mobile_no: $(this).attr('data-quote-advisor-mobile-no'),
-                advisor_landline_no: $(this).attr('data-quote-advisor-landline-no'),
-                _token: $('input[name=_token]').val(),
-            },
-            success: function (data) {
-                $('.loader').hide();
-                alert(data.success);
-            },
-            error: function (jqXHR) {
-                $('.loader').hide();
-                alert(jqXHR.responseJSON.error);
-            },
-        });
-    } else {
-        return false;
-    }
+  if (confirm('Are you sure send email to customer?')) {
+    var quote_type = $(this).attr('data-quote-type');
+    var quote_uuid = $(this).attr('data-quote-uuid');
+    $('.loader').show();
+    $.ajax({
+      url:
+        '/quotes/' +
+        quote_type +
+        '/' +
+        quote_uuid +
+        '/send-email-one-click-buy',
+      method: 'POST',
+      data: {
+        quote_type_id: $(this).attr('data-quote-type-id'),
+        quote_id: $(this).attr('data-quote-id'),
+        quote_uuid: quote_uuid,
+        quote_cdb_id: $(this).attr('data-quote-cdb-id'),
+        quote_previous_expiry_date: $(this).attr(
+          'data-quote-previous-expiry-date',
+        ),
+        quote_currently_insured_with: $(this).attr(
+          'data-quote-currently-insured-with',
+        ),
+        quote_car_make: $(this).attr('data-quote-car-make'),
+        quote_car_model: $(this).attr('data-quote-car-model'),
+        quote_car_year_of_manufacture: $(this).attr(
+          'data-quote-car-year-of-manufacture',
+        ),
+        quote_previous_policy_number: $(this).attr(
+          'data-quote-previous-policy-number',
+        ),
+        customer_name: $(this).attr('data-quote-customer-name'),
+        customer_email: $(this).attr('data-quote-customer-email'),
+        advisor_name: $(this).attr('data-quote-advisor-name'),
+        advisor_email: $(this).attr('data-quote-advisor-email'),
+        advisor_mobile_no: $(this).attr('data-quote-advisor-mobile-no'),
+        advisor_landline_no: $(this).attr('data-quote-advisor-landline-no'),
+        _token: $('input[name=_token]').val(),
+      },
+      success: function (data) {
+        $('.loader').hide();
+        alert(data.success);
+      },
+      error: function (jqXHR) {
+        $('.loader').hide();
+        alert(jqXHR.responseJSON.error);
+      },
+    });
+  } else {
+    return false;
+  }
 });
 // Button: Send One click buy email - End
 
@@ -2844,119 +2870,126 @@ var teamsDataTable = $('.teams-data-table').DataTable({
 });
 
 var renewalBatchesDataTable = $('.renewal-batches-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        // render: function (data, type, row) {
-        //   return (
-        //     "<a href='" +
-        //     config.routes.teams_datatable_route +
-        //     '/' +
-        //     row.id +
-        //     "'>" +
-        //     row.id +
-        //     '</a>'
-        //   );
-        // },
+  ordering: false,
+  info: false,
+  searching: false,
+  bLengthChange: false,
+  serverSide: true,
+  columns: [
+    {
+      data: 'id',
+      name: 'id',
+      // render: function (data, type, row) {
+      //   return (
+      //     "<a href='" +
+      //     config.routes.teams_datatable_route +
+      //     '/' +
+      //     row.id +
+      //     "'>" +
+      //     row.id +
+      //     '</a>'
+      //   );
+      // },
+    },
+    { data: 'name', name: 'name' },
+    { data: 'start_date', name: 'start_date' },
+    { data: 'end_date', name: 'end_date' },
+    {
+      data: 'action',
+      name: 'action',
+      orderable: false,
+      searchable: false,
+      render: function (data, type, row) {
+        return (
+          "<a class='btn btn-info' href='" +
+          config.routes.renewal_batched_datatable_route +
+          '/' +
+          row.id +
+          "/edit'>Edit</a>"
+        );
       },
-      { data: 'name', name: 'name' },
-      { data: 'start_date', name: 'start_date' },
-      { data: 'end_date', name: 'end_date' },
-      { data: 'action', name: 'action', orderable: false, searchable: false,
-            render: function (data, type, row) {
-            return (
-                "<a class='btn btn-info' href='" +
-                config.routes.renewal_batched_datatable_route +
-                '/' +
-                row.id +
-                "/edit'>Edit</a>"
-            );
-            },
-       },
-
-    ],
-  });
+    },
+  ],
+});
 
 /**
  * Commercial keywords datatable
  */
-var commercialKeywordsDataTable = $('.commercial-keywords-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: {
-      url: config.routes.commercial_keywords_datatable_route,
-      data: function (d) {
-        d.name = $('#name').val();
+var commercialKeywordsDataTable = $(
+  '.commercial-keywords-data-table',
+).DataTable({
+  ordering: false,
+  info: false,
+  searching: false,
+  bLengthChange: false,
+  serverSide: true,
+  ajax: {
+    url: config.routes.commercial_keywords_datatable_route,
+    data: function (d) {
+      d.name = $('#name').val();
+    },
+  },
+  columns: [
+    {
+      data: 'id',
+      name: 'id',
+      render: function (data, type, row) {
+        return (
+          "<a href='" +
+          config.routes.commercial_keywords_datatable_route +
+          '/view/' +
+          row.id +
+          "'>" +
+          row.id +
+          '</a>'
+        );
       },
     },
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.commercial_keywords_datatable_route +
-            '/view/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'key', name: 'key' },
-      { data: 'name', name: 'name' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
+    { data: 'key', name: 'key' },
+    { data: 'name', name: 'name' },
+    { data: 'created_at', name: 'created_at' },
+    { data: 'updated_at', name: 'updated_at' },
+  ],
+});
 
 /**
  * Commercial vehicles datatable
  */
-var commercialVehiclesDataTable = $('.commercial-vehicles-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: {
-      url: config.routes.commercial_vehicles_datatable_route,
-      data: function (d) {
-        d.text = $('#text').val();
+var commercialVehiclesDataTable = $(
+  '.commercial-vehicles-data-table',
+).DataTable({
+  ordering: false,
+  info: false,
+  searching: false,
+  bLengthChange: false,
+  serverSide: true,
+  ajax: {
+    url: config.routes.commercial_vehicles_datatable_route,
+    data: function (d) {
+      d.text = $('#text').val();
+    },
+  },
+  columns: [
+    {
+      data: 'id',
+      name: 'id',
+      render: function (data, type, row) {
+        return (
+          "<a href='" +
+          config.routes.commercial_vehicles_datatable_route +
+          '/view/' +
+          row.id +
+          "'>" +
+          row.id +
+          '</a>'
+        );
       },
     },
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.commercial_vehicles_datatable_route +
-            '/view/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'text', name: 'text' },
-      { data: 'code', name: 'code' },
-      { data: 'car_models', name: 'car_models' , title: 'Commercial Car Models'},
-    ],
-  });
+    { data: 'text', name: 'text' },
+    { data: 'code', name: 'code' },
+    { data: 'car_models', name: 'car_models', title: 'Commercial Car Models' },
+  ],
+});
 
 $('#search-teams').submit(function (e) {
   e.preventDefault();
@@ -2968,343 +3001,363 @@ $('#search-teams').submit(function (e) {
 });
 
 $('#search-keywords').submit(function (e) {
-    e.preventDefault();
-    $('.loader').show();
-    commercialKeywordsDataTable.draw();
-    setTimeout(() => {
-      $('.loader').hide();
-    }, 1000);
-  });
+  e.preventDefault();
+  $('.loader').show();
+  commercialKeywordsDataTable.draw();
+  setTimeout(() => {
+    $('.loader').hide();
+  }, 1000);
+});
 
-  $('#search-car-make').submit(function (e) {
-    e.preventDefault();
-    $('.loader').show();
-    commercialVehiclesDataTable.draw();
-    setTimeout(() => {
-      $('.loader').hide();
-    }, 1000);
-  });
+$('#search-car-make').submit(function (e) {
+  e.preventDefault();
+  $('.loader').show();
+  commercialVehiclesDataTable.draw();
+  setTimeout(() => {
+    $('.loader').hide();
+  }, 1000);
+});
 
 // Listen for change events on select1
-$('#rule_type').change(function() {
-    var selectedValue = $(this).val(); // Get the selected value
+$('#rule_type').change(function () {
+  var selectedValue = $(this).val(); // Get the selected value
 
-    if (selectedValue == 1) {
-        $('#lead_source_id_div').show();
-    } else {
-        $('#lead_source_id_div').hide();
-        $('#lead_source_id').val('');
-
-    }
+  if (selectedValue == 1) {
+    $('#lead_source_id_div').show();
+  } else {
+    $('#lead_source_id_div').hide();
+    $('#lead_source_id').val('');
+  }
 });
 
 $('#rule_car_make_id').on('change', function (e) {
-    console.log("changed");
-    var make_code = $('#rule_car_make_id option:selected').attr('data-id');
-    if (!make_code) {
-      console.log("Car make code not found");
-      return;
-    }
-    $.get('/commercial-car-model-by-id?make_code=' + make_code, function (data) {
-      var carmodel = $('#rule_car_model_id').empty();
-      carmodel.append(
-        '<option data-id="" value="">Please select rule car model</option>',
-      );
-      if (data.length > 0) {
-        $.each(data, function (create, carmodelObj) {
-          var option = $('<option/>', { id: create, value: carmodelObj });
-          carmodel.append(
-            '<option data-id="' +
-              carmodelObj.code +
-              '" value="' +
-              carmodelObj.id +
-              '" selected>' +
-              carmodelObj.text +
-              '</option>',
-          );
-        });
-      }else{
+  console.log('changed');
+  var make_code = $('#rule_car_make_id option:selected').attr('data-id');
+  if (!make_code) {
+    console.log('Car make code not found');
+    return;
+  }
+  $.get('/commercial-car-model-by-id?make_code=' + make_code, function (data) {
+    var carmodel = $('#rule_car_model_id').empty();
+    carmodel.append(
+      '<option data-id="" value="">Please select rule car model</option>',
+    );
+    if (data.length > 0) {
+      $.each(data, function (create, carmodelObj) {
+        var option = $('<option/>', { id: create, value: carmodelObj });
         carmodel.append(
-            '<option disabled>No commercial vehicle record found for this car make</option>',
-          );
-      }
-    });
+          '<option data-id="' +
+            carmodelObj.code +
+            '" value="' +
+            carmodelObj.id +
+            '" selected>' +
+            carmodelObj.text +
+            '</option>',
+        );
+      });
+    } else {
+      carmodel.append(
+        '<option disabled>No commercial vehicle record found for this car make</option>',
+      );
+    }
   });
+});
 
 // Add new additional contact modal
 $('#additional-contact-add-btn').on('click', function () {
-    $('#customer-additional-contact-add-modal').modal({ show: true });
+  $('#customer-additional-contact-add-modal').modal({ show: true });
 });
 
 // Make additional email primary
 $('.additional-email-make-primary-btn').on('click', function () {
-    var _this = $(this);
-    if (confirm('Are you sure to make this primary email address?')) {
-        $('.loader').show();
-        $.ajax({
-            url: '/customer-primary-email-check',
-            method: 'POST',
-            data: {
-                key: $(this).attr('data-key'),
-                value: $(this).attr('data-value'),
-                _token: $('input[name=_token]').val(),
-            },
-            success: function (data) {
-                if (data.response === true) {
-                    if (confirm('You are about to set this "email" as the primary contact for this lead. This action will add this lead to the list of other existing leads associated with the same email. \n Are you sure you want to continue?')) {
-                        additionalContactPrimaryConfirmed(_this);
-                    } else {
-                        $('.loader').hide();
-                    }
-                } else {
-                    additionalContactPrimaryConfirmed(_this);
-                }
-            }
-        });
-    } else {
-        return false;
-    }
+  var _this = $(this);
+  if (confirm('Are you sure to make this primary email address?')) {
+    $('.loader').show();
+    $.ajax({
+      url: '/customer-primary-email-check',
+      method: 'POST',
+      data: {
+        key: $(this).attr('data-key'),
+        value: $(this).attr('data-value'),
+        _token: $('input[name=_token]').val(),
+      },
+      success: function (data) {
+        if (data.response === true) {
+          if (
+            confirm(
+              'You are about to set this "email" as the primary contact for this lead. This action will add this lead to the list of other existing leads associated with the same email. \n Are you sure you want to continue?',
+            )
+          ) {
+            additionalContactPrimaryConfirmed(_this);
+          } else {
+            $('.loader').hide();
+          }
+        } else {
+          additionalContactPrimaryConfirmed(_this);
+        }
+      },
+    });
+  } else {
+    return false;
+  }
 });
 
-function additionalContactPrimaryConfirmed(_this){
-    $('.loader').show();
-    var id = _this.attr('data-record-id');
-    var quote_id = _this.attr('data-quote-id');
-    var key = _this.attr('data-key');
-    var value = _this.attr('data-value');
-    var quote_type = _this.attr('data-quote-type');
-    var quote_primary_email_address = _this.attr('data-quote-primary-email-address');
-    var quote_customer_id = _this.attr('data-quote-customer-id');
+function additionalContactPrimaryConfirmed(_this) {
+  $('.loader').show();
+  var id = _this.attr('data-record-id');
+  var quote_id = _this.attr('data-quote-id');
+  var key = _this.attr('data-key');
+  var value = _this.attr('data-value');
+  var quote_type = _this.attr('data-quote-type');
+  var quote_primary_email_address = _this.attr(
+    'data-quote-primary-email-address',
+  );
+  var quote_customer_id = _this.attr('data-quote-customer-id');
 
-    $.ajax({
-        url: '/customer-additional-contact/' + id + '/make-primary',
-        method: 'POST',
-        data: {
-            quote_id: quote_id,
-            key: key,
-            value: value,
-            quote_type: quote_type,
-            quote_primary_email_address: quote_primary_email_address,
-            quote_customer_id: quote_customer_id,
-            _token: $('input[name=_token]').val(),
-        },
-        success: function (data) {
-            $('.loader').hide();
-            if (data.data.message) {
-                alert(data.data.message);
-            } else {
-                alert('Primary Email Updated');
-            }
-            location.reload();
-        }
-    });
+  $.ajax({
+    url: '/customer-additional-contact/' + id + '/make-primary',
+    method: 'POST',
+    data: {
+      quote_id: quote_id,
+      key: key,
+      value: value,
+      quote_type: quote_type,
+      quote_primary_email_address: quote_primary_email_address,
+      quote_customer_id: quote_customer_id,
+      _token: $('input[name=_token]').val(),
+    },
+    success: function (data) {
+      $('.loader').hide();
+      if (data.data.message) {
+        alert(data.data.message);
+      } else {
+        alert('Primary Email Updated');
+      }
+      location.reload();
+    },
+  });
 }
 
 // Delete additional email
 $('.additional-contact-delete-btn').on('click', function () {
-    if (confirm('Are you sure to delete?')) {
-        $('.loader').show();
-        var customer_id = $(this).attr('data-customer-additional-contact-id');
-        $.ajax({
-            url: '/customer-additional-contact/' + customer_id + '/delete',
-            method: 'POST',
-            data: {
-                _token: $('input[name=_token]').val(),
-            },
-            success: function (data) {
-                $('.loader').hide();
-                alert(data.data.message);
-                location.reload();
-            },
-        });
-    } else {
-        return false;
-    }
+  if (confirm('Are you sure to delete?')) {
+    $('.loader').show();
+    var customer_id = $(this).attr('data-customer-additional-contact-id');
+    $.ajax({
+      url: '/customer-additional-contact/' + customer_id + '/delete',
+      method: 'POST',
+      data: {
+        _token: $('input[name=_token]').val(),
+      },
+      success: function (data) {
+        $('.loader').hide();
+        alert(data.data.message);
+        location.reload();
+      },
+    });
+  } else {
+    return false;
+  }
 });
 
 // On Add button click do validate Email/MobileNo
 $('#additional-contact-modal-add-btn').on('click', function () {
-    var additional_mobile_no_reg_exp = new RegExp('[a-zA-Z]');
-    var additional_contact_type = $('#additional_contact_type').val();
-    var additional_contact_val = $('#additional_contact').val();
-    var quote_id = $(this).attr('data-quote-id');
-    var quote_type = $(this).attr('data-quote-type');
-    var customer_id = $(this).attr('data-customer-id');
-    var contact_type_email_enum = $(this).attr('data-contact-type-email-enum');
-    var contact_type_mobile_no_enum = $(this).attr(
-        'data-contact-type-mobile-no-enum',
-    );
+  var additional_mobile_no_reg_exp = new RegExp('[a-zA-Z]');
+  var additional_contact_type = $('#additional_contact_type').val();
+  var additional_contact_val = $('#additional_contact').val();
+  var quote_id = $(this).attr('data-quote-id');
+  var quote_type = $(this).attr('data-quote-type');
+  var customer_id = $(this).attr('data-customer-id');
+  var contact_type_email_enum = $(this).attr('data-contact-type-email-enum');
+  var contact_type_mobile_no_enum = $(this).attr(
+    'data-contact-type-mobile-no-enum',
+  );
 
-    if (
-        additional_contact_type == contact_type_email_enum &&
-        is_valid_email(additional_contact_val) === false
-    ) {
-        validation_div_text(
+  if (
+    additional_contact_type == contact_type_email_enum &&
+    is_valid_email(additional_contact_val) === false
+  ) {
+    validation_div_text(
+      '#additional-contact-modal-validation-msg',
+      'Please enter a valid email address.',
+      'red',
+    );
+    return false;
+  }
+  if (
+    additional_contact_type == contact_type_mobile_no_enum &&
+    (additional_contact_val == '' ||
+      additional_mobile_no_reg_exp.test(additional_contact_val))
+  ) {
+    validation_div_text(
+      '#additional-contact-modal-validation-msg',
+      'Please enter a valid  mobile number.',
+      'red',
+    );
+    return false;
+  } else {
+    $('.loader').show();
+    validation_div_text('#additional-contact-modal-validation-msg', '', '');
+    $.ajax({
+      url: '/customer-additional-contact/add',
+      method: 'POST',
+      data: {
+        quote_id: quote_id,
+        customer_id: customer_id,
+        key: additional_contact_type,
+        value: additional_contact_val,
+        quote_type: quote_type,
+        _token: $('input[name=_token]').val(),
+      },
+      success: function (data) {
+        $('.loader').hide();
+        if (data.error && data.error.message) {
+          validation_div_text(
             '#additional-contact-modal-validation-msg',
-            'Please enter a valid email address.',
+            data.error.message,
             'red',
-        );
-        return false;
-    }
-    if (
-        additional_contact_type == contact_type_mobile_no_enum &&
-        (additional_contact_val == '' ||
-            additional_mobile_no_reg_exp.test(additional_contact_val))
-    ) {
-        validation_div_text(
+          );
+        } else if (data.data.message) {
+          alert('Contact Added.');
+          location.reload();
+        } else {
+          validation_div_text(
             '#additional-contact-modal-validation-msg',
-            'Please enter a valid  mobile number.',
+            'There was an error!',
             'red',
-        );
-        return false;
-    } else {
-        $('.loader').show();
-        validation_div_text('#additional-contact-modal-validation-msg', '', '');
-        $.ajax({
-            url: '/customer-additional-contact/add',
-            method: 'POST',
-            data: {
-                quote_id: quote_id,
-                customer_id: customer_id,
-                key: additional_contact_type,
-                value: additional_contact_val,
-                quote_type: quote_type,
-                _token: $('input[name=_token]').val(),
-            },
-            success: function (data) {
-                $('.loader').hide();
-                if (data.error && data.error.message) {
-                    validation_div_text(
-                        '#additional-contact-modal-validation-msg',
-                        data.error.message,
-                        'red',
-                    );
-                } else if (data.data.message) {
-                    alert('Contact Added.');
-                    location.reload();
-                } else {
-                    validation_div_text(
-                        '#additional-contact-modal-validation-msg',
-                        'There was an error!',
-                        'red',
-                    );
-                }
-            },
-            error: function(err){
-                $('.loader').hide();
-                var errors = err.responseJSON.errors;
-                $.each(errors, function (key, value) {
-                    validation_div_text(
-                        '#additional-contact-modal-validation-msg',
-                        value,
-                        'red',
-                    );
-                });
-            }
+          );
+        }
+      },
+      error: function (err) {
+        $('.loader').hide();
+        var errors = err.responseJSON.errors;
+        $.each(errors, function (key, value) {
+          validation_div_text(
+            '#additional-contact-modal-validation-msg',
+            value,
+            'red',
+          );
         });
-    }
+      },
+    });
+  }
 });
 
 // Make additional mobile_no primary
 $('.additional-mobile-no-make-primary-btn').on('click', function () {
-    if (confirm('Are you sure to make this primary mobile no.?')) {
-        $('.loader').show();
-        $.ajax({
-            url: '/customer-additional-contact/' + 0 + '/make-primary',
-            method: 'POST',
-            data: {
-                quote_id: $(this).attr('data-quote-id'),
-                key: $(this).attr('data-key'),
-                value: $(this).attr('data-value'),
-                quote_type: $(this).attr('data-quote-type'),
-                quote_primary_mobile_no: $(this).attr('data-quote-primary-mobile-no'),
-                quote_customer_id: $(this).attr('data-quote-customer-id'),
-                _token: $('input[name=_token]').val(),
-            },
-            success: function (data) {
-                $('.loader').hide();
-                if (data.data.message) {
-                    alert(data.data.message);
-                } else {
-                    alert('Primary Mobile Updated');
-                }
-                location.reload();
-            },
-        });
-    } else {
-        return false;
-    }
+  if (confirm('Are you sure to make this primary mobile no.?')) {
+    $('.loader').show();
+    $.ajax({
+      url: '/customer-additional-contact/' + 0 + '/make-primary',
+      method: 'POST',
+      data: {
+        quote_id: $(this).attr('data-quote-id'),
+        key: $(this).attr('data-key'),
+        value: $(this).attr('data-value'),
+        quote_type: $(this).attr('data-quote-type'),
+        quote_primary_mobile_no: $(this).attr('data-quote-primary-mobile-no'),
+        quote_customer_id: $(this).attr('data-quote-customer-id'),
+        _token: $('input[name=_token]').val(),
+      },
+      success: function (data) {
+        $('.loader').hide();
+        if (data.data.message) {
+          alert(data.data.message);
+        } else {
+          alert('Primary Mobile Updated');
+        }
+        location.reload();
+      },
+    });
+  } else {
+    return false;
+  }
 });
 
 function is_valid_email(email) {
-    var email_regex =
-        /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
-    return email_regex.test(email);
+  var email_regex =
+    /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+  return email_regex.test(email);
 }
 
 function validation_div_text(id, text, color) {
-    $(id)
-        .text(text)
-        .attr('style', 'color:' + color);
+  $(id)
+    .text(text)
+    .attr('style', 'color:' + color);
 }
 
-  function triggerTest()
-  {
-    console.log("Triggered");
-  }
+function triggerTest() {
+  console.log('Triggered');
+}
 
 var amlDetailKycLogsDatatable = $('.aml-detail-data-table').DataTable({
-    ordering: false,
-    info: true,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    processing: true,
-    ajax: {
-        url: config.routes.aml_kyc_logs_datatable_route,
-        data: {
-            'quote_type_id' : $(location).attr('href').split("/").splice(5)[0],
-            'quote_request_id': $(location).attr('href').split("/").splice(5)[2]
-        }
+  ordering: false,
+  info: true,
+  searching: false,
+  bLengthChange: false,
+  serverSide: true,
+  processing: true,
+  ajax: {
+    url: config.routes.aml_kyc_logs_datatable_route,
+    data: {
+      quote_type_id: $(location).attr('href').split('/').splice(5)[0],
+      quote_request_id: $(location).attr('href').split('/').splice(5)[2],
     },
-    columns: [
-        {
-            data: 'id',
-            name: 'id',
-            render: function(data, type, row){
-                return ( "<a href='" +config.routes.aml_datatable_route +'/' + row.id +"'>" + row.id + '</a>' );
-            }
-        },
-        { data: 'input', name: 'input' },
-        { data: 'search_type', name: 'search_type' },
-        {
-            data: 'screenshot',
-            name: 'screenshot',
-            render: function(data){
-                var imgSrc = data;
-                if (imgSrc != null) {
-                    return ( '<a href="' + imgSrc + '" target="_blank">' + '<img class="img-responsive" src="' + imgSrc + '" alt="screenshot" height="80px" width="80px"></a>' );
-                }
-            }
-        },
-        { data: 'match_found', name: 'match_found', render: function(data, type, row){
-                return ( ( row.match_found > 0) ? 'True' : 'False');
-            }
-        },
-        { data: 'results_found', name: 'results_found' },
-        { data: 'created_at', name: 'created_at' },
-        { data: 'updated_at', name: 'updated_at' },
-    ]
+  },
+  columns: [
+    {
+      data: 'id',
+      name: 'id',
+      render: function (data, type, row) {
+        return (
+          "<a href='" +
+          config.routes.aml_datatable_route +
+          '/' +
+          row.id +
+          "'>" +
+          row.id +
+          '</a>'
+        );
+      },
+    },
+    { data: 'input', name: 'input' },
+    { data: 'search_type', name: 'search_type' },
+    {
+      data: 'screenshot',
+      name: 'screenshot',
+      render: function (data) {
+        var imgSrc = data;
+        if (imgSrc != null) {
+          return (
+            '<a href="' +
+            imgSrc +
+            '" target="_blank">' +
+            '<img class="img-responsive" src="' +
+            imgSrc +
+            '" alt="screenshot" height="80px" width="80px"></a>'
+          );
+        }
+      },
+    },
+    {
+      data: 'match_found',
+      name: 'match_found',
+      render: function (data, type, row) {
+        return row.match_found > 0 ? 'True' : 'False';
+      },
+    },
+    { data: 'results_found', name: 'results_found' },
+    { data: 'created_at', name: 'created_at' },
+    { data: 'updated_at', name: 'updated_at' },
+  ],
 });
 
-$(window).on('load', function(){
-    if($("table").hasClass('aml-detail-data-table')){
-        $('.loader').show();
-        amlDetailKycLogsDatatable.draw();
-        setTimeout(() => {
-            $('.loader').hide();
-        }, 1000);
-    }
+$(window).on('load', function () {
+  if ($('table').hasClass('aml-detail-data-table')) {
+    $('.loader').show();
+    amlDetailKycLogsDatatable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  }
 });
-
-
