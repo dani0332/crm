@@ -7,6 +7,7 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RetentionReportEnum;
+use App\Models\QuoteType;
 use App\Models\UserManager;
 use Carbon\Carbon;
 use App\Services\BaseService;
@@ -22,6 +23,7 @@ class RetentionReportService extends BaseService
 
     private $dateFormat;
     private $policyExpiryColumnName;
+    private $paginateData;
     
     public function __construct() {
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
@@ -29,6 +31,7 @@ class RetentionReportService extends BaseService
         $this->policyExpiryColumnName = 'policy_expiry_date';
         // Stage DB
         // $this->policyExpiryColumnName = 'renewal_expiry_date';
+        $this->paginateData = 12;
     }
 
     /**
@@ -36,7 +39,7 @@ class RetentionReportService extends BaseService
      *
      * @return array
      */
-    public function getReportData($request)
+    public function getReportData($request, $isExport=false)
     {
         // Get the quote type or LOB
         $quoteType = $this->getQuoteType($request);
@@ -52,8 +55,12 @@ class RetentionReportService extends BaseService
         // Build the query based on the model object and request parameters
         $query = $this->buildQuery($quoteModel, $request);
 
-        // Paginate the query results and retain the query string
-        $reportData = $query->paginate(12)->withQueryString();
+        if (!$isExport){
+            // Paginate the query results and retain the query string
+            $reportData = $query->paginate($this->paginateData)->withQueryString();
+        } else {
+            $reportData = $query->get();
+        }
 
         // Add some new column into report date and return the result
         return $this->formatReportData($reportData);
@@ -134,6 +141,9 @@ class RetentionReportService extends BaseService
         // Apply permission-based filters to the query
         $this->applyPermissionFilters($query, $request);
     
+        // Apply personal quote filter
+        $this->applyPersonalQuoteFilter($query, $request);
+
         // Apply additional filters based on the 'displayBy' parameter in the request
         if (isset($request['displayBy'])){
             if ($request['displayBy'] === RetentionReportEnum::BATCH) {
@@ -141,6 +151,15 @@ class RetentionReportService extends BaseService
             } elseif ($request['displayBy'] === RetentionReportEnum::MONTHLY) {
                 $this->applyFilterByMonth($query, $request);
             }
+        }
+    }
+
+    private function applyPersonalQuoteFilter($query, $filters){
+        $quoteType = $this->getQuoteType($filters);
+        $isPersonalQuote = checkPersonalQuotes($quoteType);
+        if ( $isPersonalQuote){
+            $quoteTypeData = QuoteType::where('code', $quoteType)->first();
+            $query->where('quote_type_id', $quoteTypeData->id);
         }
     }
 
@@ -443,6 +462,6 @@ class RetentionReportService extends BaseService
         $this->applyFiltersToQuery($query, $request);
 
         // Return the paginated results with query string
-        return $query->paginate(12)->withQueryString();
+        return $query->paginate($this->paginateData)->withQueryString();
     }
 }
