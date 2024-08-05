@@ -44,6 +44,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  hideFooter: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -273,8 +277,10 @@ const removeSelected = item => {
         </svg>
       </div>
     </Combobox>
-    <p v-if="props.hasError" class="text-sm text-red-500 mt-1">
-      This field is required
-    </p>
+    <div v-show="!props.hideFooter" class="x-input-footer text-xs mt-1">
+      <p v-if="props.hasError" class="text-error-500 dark:text-error-400">
+        This field is required
+      </p>
+    </div>
   </label>
 </template>
