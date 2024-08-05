@@ -337,7 +337,7 @@ function calculateValuesAndHighlight() {
     let advisorRetention = (
       (parseInt(item.renewed) /
         (parseInt(item.total_allocated_leads) - parseInt(item.car_sold))) *
-        // - parseInt(item.early_renewal) // tempory hidden don't remove
+      // - parseInt(item.early_renewal) // tempory hidden don't remove
       100
     ).toFixed(2);
     advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
@@ -355,7 +355,7 @@ function calculateValuesAndHighlight() {
         (parseInt(item.renewed_by_all_advisors) /
           (parseInt(item.total_allocated_leads_by_all_advisors) -
             parseInt(item.car_sold_by_all_advisors))) *
-          // - parseInt(item.early_renewal_by_all_advisors) // tempory hidden don't remove
+        // - parseInt(item.early_renewal_by_all_advisors) // tempory hidden don't remove
         100
       ).toFixed(2);
 
@@ -368,7 +368,7 @@ function calculateValuesAndHighlight() {
       imRetention = (
         (parseInt(item.renewed) /
           (parseInt(item.total_allocated_leads) - parseInt(item.car_sold))) *
-          // - parseInt(item.early_renewal) // tempory hidden don't remove
+        // - parseInt(item.early_renewal) // tempory hidden don't remove
         100
       ).toFixed(2);
 
@@ -383,7 +383,7 @@ function calculateValuesAndHighlight() {
       (parseInt(item[dynamicIndexForRenewedByValueSegment]) /
         (parseInt(item[dynamicIndexForTotalByValueSegment]) -
           parseInt(item[dynamicIndexForCarSoldByValueSegment]))) *
-        // - parseInt(item.early_renewal_by_value_segment) // tempory hidden don't remove
+      // - parseInt(item.early_renewal_by_value_segment) // tempory hidden don't remove
       100
     ).toFixed(2);
     valueSegmentConversion =
@@ -393,7 +393,7 @@ function calculateValuesAndHighlight() {
       (parseInt(item[dynamicIndexForRenewedByVolumeSegment]) /
         (parseInt(item[dynamicIndexForTotalByVolumeSegment]) -
           parseInt(item[dynamicIndexForCarSoldByVolumeSegment]))) *
-        // - parseInt(item.early_renewal_by_volume_segment) // tempory hidden don't remove
+      // - parseInt(item.early_renewal_by_volume_segment) // tempory hidden don't remove
       100
     ).toFixed(2);
     volumeSegmentConversion =
@@ -584,15 +584,12 @@ const calculateMonthlySum = (data, index) => {
     }
 
     renewedCountsList[currentMonthValue] = totalRenewed;
-    totalAllocationList[currentMonthValue] =
-      totalAllocated -
-      totalCarSold;
-      // + totalEarlyRenewal // tempory hidden don't remove
+    totalAllocationList[currentMonthValue] = totalAllocated - totalCarSold;
+    // + totalEarlyRenewal // tempory hidden don't remove
 
     let result =
-      (totalRenewed /
-        (totalAllocated - totalCarSold)) *
-        // - totalEarlyRenewal // tempory hidden don't remove
+      (totalRenewed / (totalAllocated - totalCarSold)) *
+      // - totalEarlyRenewal // tempory hidden don't remove
       100;
 
     return result.toFixed(2);
@@ -850,8 +847,9 @@ watch(
                       (
                         parseInt(item.total_allocated_leads) -
                         parseInt(item.car_sold)
+                      )
                         // + parseInt(item.early_renewal) // tempory hidden don't remove
-                      ).toLocaleString()
+                        .toLocaleString()
                     }}
                   </p>
                 </td>
