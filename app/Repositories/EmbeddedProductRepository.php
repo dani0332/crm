@@ -433,8 +433,8 @@ class EmbeddedProductRepository extends BaseRepository
             info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
             $emailData = (object) [
                 'quoteCdbId' => $short_code.'-'.$quoteObject->code,
-                'customerName' => $quoteObject->customer->first_name.' '.$quoteObject->customer->last_name,
-                'customerEmail' => $quoteObject->customer->email,
+                'customerName' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
+                'customerEmail' => $quoteObject->email,
                 'advisorName' => isset($advisor) ? $advisor->name : null,
                 'advisorEmailAddress' => isset($advisor) ? $advisor->email : null,
                 'productName' => $product_name,
