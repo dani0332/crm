@@ -653,6 +653,7 @@ class SendUpdateLogService
                     'category' => $categoryCode,
                     'option' => $sendUpdateLog->option->code,
                     'send_update_log' => $sendUpdateLog,
+                    'authDetails' => auth()->user(),
                 ]
             );
 
@@ -668,6 +669,7 @@ class SendUpdateLogService
                     'category' => $categoryCode,
                     'send_update_log' => $sendUpdateLog,
                     'reverse_invoice' => $sendUpdateRequest->reversalInvoice,
+                    'authDetails' => auth()->user(),
                 ]
             );
 
