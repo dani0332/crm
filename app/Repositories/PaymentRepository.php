@@ -515,6 +515,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $canCaptureEp = false;
                 Log::error('Error in processMasterPaymentApprove: '.$exception->getMessage());
                 DB::rollBack();
+                $successMessage = false;
             }
 
             if ($canCaptureEp) {
