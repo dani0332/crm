@@ -454,7 +454,8 @@ const saveBookingDetail = isValid => {
       });
       if (props?.bookingDetails?.isLackingOfPayment) {
         notification.error({
-          title: 'Action Needed: Please revise payment details to reflect plan changes.',
+          title:
+            'Action Needed: Please revise payment details to reflect plan changes.',
           position: 'top',
           timeout: 10000,
         });
