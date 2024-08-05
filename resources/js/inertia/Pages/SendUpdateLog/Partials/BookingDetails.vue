@@ -378,6 +378,13 @@ const saveBookingDetail = isValid => {
         title: 'The request has been updated.',
         position: 'top',
       });
+      if (props?.bookingDetails?.isLackingOfPayment) {
+        notification.error({
+          title: 'Action Needed: Please revise payment details to reflect plan changes.',
+          position: 'top',
+          timeout: 10000,
+        });
+      }
       state.isEdit = false;
       location.reload();
     },
