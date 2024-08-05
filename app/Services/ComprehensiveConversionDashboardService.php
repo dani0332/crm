@@ -367,10 +367,14 @@ class ComprehensiveConversionDashboardService extends BaseService
             if ((! empty($filters->insurance_type) && $filters->insurance_type != '')) {
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
                 $query->where('travel_quote_request.coverage_code', $filters->insurance_type);
-            }
-
-            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false') {
-                $query->where('source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+                
+                if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false') {
+                    $query->where('travel_quote_request.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+                }
+            } else {
+                if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false') {
+                    $query->where('personal_quotes.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+                }
             }
         }
 
