@@ -95,7 +95,7 @@ function onSubmit(isValid) {
             }))
           "
           :rules="[isRequired]"
-          :hasError="validteam"
+          :hasError="validTeams"
           autocomplete
         />
       </x-field>
