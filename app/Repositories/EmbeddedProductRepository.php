@@ -299,7 +299,7 @@ class EmbeddedProductRepository extends BaseRepository
             ['is_selected', 1],
         ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
 
-        if(!empty($epId)) {
+        if (! empty($epId)) {
             $ep = $this->where('id', $epId)->first();
             $optionsIds = [];
             if ($ep->prices) {
@@ -430,8 +430,8 @@ class EmbeddedProductRepository extends BaseRepository
             $strategy = $this->createStrategy($short_code, $isAlfredProtect);
             $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
             $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
-            
-            if (!empty($quoteObject->quoteRequestEntityMapping)) {
+
+            if (! empty($quoteObject->quoteRequestEntityMapping)) {
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
             } else {
@@ -442,7 +442,7 @@ class EmbeddedProductRepository extends BaseRepository
             info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
             $emailData = (object) [
                 'quoteCdbId' => $short_code.'-'.$quoteObject->code,
-                'customerName' => $firstName . ' ' . $lastName,
+                'customerName' => $firstName.' '.$lastName,
                 'customerEmail' => $quoteObject->email,
                 'advisorName' => isset($advisor) ? $advisor->name : null,
                 'advisorEmailAddress' => isset($advisor) ? $advisor->email : null,

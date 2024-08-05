@@ -255,7 +255,7 @@ class SukoonDemocranceService
             }
 
             $shortCode = $transaction->product->embeddedProduct->short_code;
-            if (!empty($quote->quoteRequestEntityMapping)) {
+            if (! empty($quote->quoteRequestEntityMapping)) {
                 $firstName = $quote->first_name ?? '';
                 $lastName = $quote->last_name ?? '';
             } else {
