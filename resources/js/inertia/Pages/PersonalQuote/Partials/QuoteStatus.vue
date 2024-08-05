@@ -17,6 +17,8 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useNotifications('toast');
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
     value: status.id,
@@ -72,6 +74,12 @@ watch(
     }
   },
 );
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -145,6 +153,7 @@ watch(
             :loading="quoteStatusForm.processing"
             @click.prevent="onLeadStatus"
             :disabled="allowStatusUpdate"
+            v-if="readOnlyMode.isDisable === true"
           >
             Change Status
           </x-button>

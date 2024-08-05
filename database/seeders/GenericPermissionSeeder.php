@@ -18,6 +18,14 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
+        // ADD Permission to Read only Access LOBS
+        $readOnlyAccessPermission = Permission::where('name', PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS)->first();
+        if (! $readOnlyAccessPermission) {
+            Permission::create([
+                'name' => PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS,
+                'guard_name' => 'web',
+            ]);
+        }
         // Conversion as at report Permissions
         $conversionReportPermissions = [
             PermissionsEnum::CONVERSION_AS_AT_REPORT,

@@ -216,6 +216,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -231,7 +237,7 @@ const linkEntity = () => {
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteDocuments"

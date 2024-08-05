@@ -348,6 +348,12 @@ const linkEntity = () => {
     })
     .finally(() => (loader.tradeDetail = false));
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -355,7 +361,7 @@ const linkEntity = () => {
     <Head title="Group Medical Lead Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
-      <div class="flex gap-2">
+      <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
         <x-button
           v-if="isDuplicateAllowed"
           size="sm"
@@ -606,6 +612,7 @@ const linkEntity = () => {
                   color="primary"
                   class="mt-1"
                   :loading="loader.tradeSearch"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -699,6 +706,7 @@ const linkEntity = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -862,6 +870,7 @@ const linkEntity = () => {
           :disabled="
             quote.quote_status_id == quoteStatusEnum.TransactionApproved
           "
+          v-if="readOnlyMode.isDisable === true"
         >
           Change Status
         </x-button>
@@ -879,9 +888,9 @@ const linkEntity = () => {
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="page.props.quoteType"
-      :payments="quote.payments"      
-    />    
-    <PaymentTableNew 
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="quote.payments"

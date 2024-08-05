@@ -1380,12 +1380,16 @@ const closeModal = v => {
   if (v) disableFollowUp.value = v;
   showfollowup.value = false;
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
 onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
   onLoadAvailablePlansData();
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
-
   // setLeadStatuses();
 });
 
@@ -1712,7 +1716,7 @@ const handlePlanSelected = plan => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
-        <div>
+        <div v-if="readOnlyMode.isDisable === true">
           <Link
             v-if="record?.insly_id"
             :href="`/legacy-policy/${record.insly_id}`"
@@ -1928,7 +1932,7 @@ const handlePlanSelected = plan => {
       <x-divider class="mb-4 mt-4" />
       <div class="flex justify-end mb-4">
         <Link :href="route('car.edit', record.uuid)">
-          <x-button size="sm" color="primary" tag="div">Edit</x-button>
+          <x-button size="sm" color="primary" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
         </Link>
       </div>
     </div>
@@ -2116,6 +2120,7 @@ const handlePlanSelected = plan => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -2213,6 +2218,7 @@ const handlePlanSelected = plan => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -2783,12 +2789,14 @@ const handlePlanSelected = plan => {
             <x-button
               @click.prevent="onTogglePlans(false)"
               :loading="toggleLoader"
+              v-if="readOnlyMode.isDisable === true"
             >
               Show
             </x-button>
             <x-button
               @click.prevent="onTogglePlans(true)"
               :loading="toggleLoader"
+              v-if="readOnlyMode.isDisable === true"
             >
               Hide
             </x-button>
@@ -2809,6 +2817,7 @@ const handlePlanSelected = plan => {
             color="orange"
             class="mr-2"
             :disabled="record.advisor_id != $page.props.auth.user.id"
+            v-if="readOnlyMode.isDisable === true"
           >
             Send OCB Email to Customer
           </x-button>

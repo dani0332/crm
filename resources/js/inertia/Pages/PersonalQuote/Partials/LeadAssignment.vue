@@ -14,6 +14,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['success', 'error']);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 if (!String.prototype.hasOwnProperty('capitalizeFirstChar')) {
   Object.defineProperty(String.prototype, 'capitalizeFirstChar', {
@@ -69,6 +71,13 @@ function onAssignLead(isValid) {
       });
   }
 }
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    setQueryStringFilters();
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -85,6 +94,7 @@ function onAssignLead(isValid) {
             placeholder="Select Advisor"
             class="flex-1 w-auto"
             single
+            v-if="readOnlyMode.isDisable === true"
           />
           <div class="mb-3 md:pt-6">
             <x-button
@@ -92,6 +102,7 @@ function onAssignLead(isValid) {
               size="sm"
               type="submit"
               :loading="assignForm.processing"
+              v-if="readOnlyMode.isDisable === true"
             >
               Assign
             </x-button>

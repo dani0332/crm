@@ -11,6 +11,8 @@ const notification = useNotifications('toast');
 const compareDueDate = useCompareDueDate;
 
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -142,6 +144,12 @@ const onDeleteConfirmation = () => {
     },
   });
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -153,7 +161,7 @@ const onDeleteConfirmation = () => {
     <template #content>
       <x-divider class="mb-4 mt-1" />
       <div class="flex justify-end items-center mb-4">
-        <x-button size="sm" color="orange" @click.prevent="addActivity">
+        <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
           Add Activity
         </x-button>
       </div>
@@ -202,6 +210,7 @@ const onDeleteConfirmation = () => {
               outlined
               :disabled="item.status === 1"
               @click.prevent="onEdit(item)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -212,6 +221,7 @@ const onDeleteConfirmation = () => {
               :disabled="item.status === 1"
               outlined
               @click.prevent="confirmDelete(item.id)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
