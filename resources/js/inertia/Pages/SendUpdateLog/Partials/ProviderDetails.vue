@@ -55,6 +55,11 @@ const onUpdate = () => {
     },
   });
 };
+
+const onCancel = () => {
+  state.isEdit = false;
+  providerDetailsForm.insurance_provider_id = props.sendUpdateLog?.insurance_provider_id || null;
+};
 </script>
 
 <template>
@@ -107,7 +112,7 @@ const onUpdate = () => {
             <x-button
               size="sm"
               color="orange"
-              @click="state.isEdit = false"
+              @click="onCancel"
               :loading="providerDetailsForm.processing"
               :disabled="providerDetailsForm.processing"
             >
