@@ -316,7 +316,7 @@ const onAddUpdate = () => {
       :expanded="sectionExpanded"
     />
 
-    <QuoteDocuments
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
