@@ -67,7 +67,7 @@ class HealthEmailService extends BaseService
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
-            'plans' => $plans ?? [],
+            'plans' => $plans,
         ];
     }
 
